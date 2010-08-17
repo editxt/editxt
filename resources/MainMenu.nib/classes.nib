@@ -1,0 +1,26 @@
+{
+    IBClasses = (
+        {
+            ACTIONS = {
+                closeCurrentDocument = id; 
+                closeCurrentProject = id; 
+                newProject = id; 
+                newWindow = id; 
+                openErrorLog = id; 
+                openPath = id; 
+                saveProjectAs = id; 
+            }; 
+            CLASS = DocumentController; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {textEditCommandsMenu = NSMenu; textMenu = NSMenu; }; 
+            SUPERCLASS = NSDocumentController; 
+        }, 
+        {
+            ACTIONS = {doCustomTextAction = id; }; 
+            CLASS = FirstResponder; 
+            LANGUAGE = ObjC; 
+            SUPERCLASS = NSObject; 
+        }
+    ); 
+    IBVersion = 1; 
+}

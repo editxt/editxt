@@ -1,0 +1,839 @@
+EditXT
+Copywrite (c) 2007-2010 Daniel Miller <millerdev@gmail.com>
+
+This file is part of EditXT, a programmer's text editor for Mac OS X,
+which can be found at http://editxt.org/.
+
+EditXT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+EditXT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+git commands   http://www.kernel.org/pub/software/scm/git/docs/everyday.html
+for svn users  http://git.or.cz/course/svn.html
+
+git config --list           # view configuration
+git fsck                    # cheap, assures repo health
+git count-objects           # how many loose objects are there?
+git gc                      # repack local repo
+git push [origin [branch]]  # push changes to branch on origin
+git pull [origin [branch]]  # merge from branch on origin into active branch
+git merge <local branch>    # merge local branch into active branch
+git reset --soft HEAD^      # undo last commit leaving changes in the index
+git reset --soft ORIG_HEAD  # undo most recent merge leaving changes in index
+
+# run all tests
+./editxt --test
+
+# run a single test
+./editxt --test --tests test_editxt.test_document:TestTextDocument.test_get_with_path_1
+
+# run test automation
+./editxt --nosy
+
+    indent level: 4 spaces
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Top priority (these should all be listed under TODO as well)
+
+find/replace text processors
+work on projects
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Bugs
+
+possible source of close button status fail bug: drag multiple files into
+    document pane
+
+editxt.errorlog ERROR - unexpected error
+Traceback (most recent call last):
+  File "PyObjCTools/AppHelper.pyc", line 235, in runEventLoop
+ValueError: NSInvalidArgumentException - -[NSURL _undoRedoTextOperation:]: unrecognized selector sent to instance 0x31d5fa0
+
+fix bug: drag symlink into documents pane
+    Exception Type:  EXC_BAD_ACCESS (SIGBUS)
+    Exception Codes: KERN_PROTECTION_FAILURE at 0x0000000000000010
+    Crashed Thread:  0  Dispatch queue: com.apple.main-thread
+
+    Thread 0 Crashed:  Dispatch queue: com.apple.main-thread
+    0   libSystem.B.dylib             	0x954574b0 strlen + 16
+    1   com.apple.CoreFoundation      	0x92ff0676 _CFStringAppendFormatAndArgumentsAux + 3894
+    2   com.apple.CoreFoundation      	0x92fef709 _CFStringCreateWithFormatAndArgumentsAux + 105
+    3   com.apple.Foundation          	0x92579a53 -[NSPlaceholderString initWithFormat:locale:arguments:] + 163
+    4   com.apple.Foundation          	0x92579906 +[NSString stringWithFormat:] + 88
+    5   _objc.so                      	0x029ed526 PyObjCErr_AsExc + 1014
+    6   _objc.so                      	0x029ed64d PyObjCErr_ToObjCWithGILState + 29
+    7   _objc.so                      	0x029d0414 method_stub + 756
+    8   _objc.so                      	0x029c2505 ffi_closure_SYSV_inner + 149
+    9   _objc.so                      	0x029c2132 ffi_closure_SYSV + 34
+    10  com.apple.AppKit              	0x936c5123 -[NSOutlineView performDragOperation:] + 280
+    11  com.apple.AppKit              	0x93588879 NSCoreDragReceiveProc + 1457
+    12  com.apple.HIServices          	0x983565fd DoDropMessage + 104
+    13  com.apple.HIServices          	0x98357a36 CoreDragMessageHandler + 1250
+    14  com.apple.CoreFoundation      	0x9309692c __CFMessagePortPerform + 540
+    15  com.apple.CoreFoundation      	0x9300216b __CFRunLoopRun + 6523
+    16  com.apple.CoreFoundation      	0x930000f4 CFRunLoopRunSpecific + 452
+    17  com.apple.CoreFoundation      	0x92ffff21 CFRunLoopRunInMode + 97
+    18  com.apple.HIToolbox           	0x9281d15c RunCurrentEventLoopInMode + 392
+    19  com.apple.HIToolbox           	0x9281ce4d ReceiveNextEventCommon + 158
+    20  com.apple.HIToolbox           	0x9281cd96 BlockUntilNextEventMatchingListInMode + 81
+    21  com.apple.AppKit              	0x9321b0fd _DPSNextEvent + 847
+    22  com.apple.AppKit              	0x9321a93e -[NSApplication nextEventMatchingMask:untilDate:inMode:dequeue:] + 156
+    23  com.apple.AppKit              	0x931dcbc7 -[NSApplication run] + 821
+    24  com.apple.AppKit              	0x931d4c5d NSApplicationMain + 574
+    25  _appmain.so                   	0x044d8b72 objc_NSApplicationMain + 466
+
+
+fix bug: related to Python syntax highlighting and """ string at the end of the file
+    editxt.textcommand ERROR - <function delete_backward at 0x5690c70> failed
+    Traceback (most recent call last):
+     File "editxt/textcommand.pyc", line 480, in do_textview_command_by_selector
+     File "editxt/textcommand.pyc", line 324, in delete_backward
+     File "editxt/document.pyc", line 653, in textStorageDidProcessEditing_
+     File "editxt/syntax.pyc", line 98, in color_text
+     File "editxt/syntax.pyc", line 159, in adjust
+    IndexError: list assignment index out of range
+
+    editxt.errorlog ERROR - unexpected error
+    Traceback (most recent call last):
+     File "PyObjCTools/AppHelper.pyc", line 235, in runEventLoop
+    IndexError: NSRangeException - *** -[NSBigMutableString characterAtIndex:]: Range or index out of bounds
+
+    editxt.textcommand ERROR - <function delete_backward at 0x5690c70> failed
+    Traceback (most recent call last):
+     File "editxt/textcommand.pyc", line 480, in do_textview_command_by_selector
+     File "editxt/textcommand.pyc", line 309, in delete_backward
+    IndexError: string index out of range
+
+    editxt.errorlog ERROR - unexpected error
+    Traceback (most recent call last):
+     File "PyObjCTools/AppHelper.pyc", line 237, in runEventLoop
+    IndexError: NSRangeException - *** -[NSBigMutableString characterAtIndex:]: Range or index out of bounds
+
+fix bug:
+    editxt.errorlog ERROR - unexpected error
+    Traceback (most recent call last):
+      File "PyObjCTools/AppHelper.pyc", line 235, in runEventLoop
+      File "editxt/controls/textview.pyc", line 22, in performFindPanelAction_
+      File "editxt/findpanel.pyc", line 88, in perform_action
+      File "editxt/findpanel.pyc", line 94, in show_find_panel
+    AttributeError: 'NoneType' object has no attribute 'selectText_'
+
+fix bug: try to drag splitview by handle in project bar
+    editxt.errorlog ERROR - unexpected error
+    Traceback (most recent call last):
+      File "/Users/dmiller/Code/EditXT/virtualenv/lib/python2.6/site-packages/
+        pyobjc_framework_Cocoa-2.2-py2.6-macosx-10.3-fat.egg/PyObjCTools/AppHelper.py", line 237, in runEventLoop
+        NSApp().run()
+      File "/Users/dmiller/Code/EditXT/src/editxt/controls/splitview.py", line 212, in mouseDragged_
+        self.splitView.mouseDragged_(event)
+    AttributeError: 'SliderImageView' object has no attribute 'splitView'
+
+fix bug: error on quit
+    2010-06-29 23:24:42.263 EditXTDev[11519:607] *** ObjC exception 'OC_PythonException' (reason: '<type 'exceptions.AttributeError'>: 'NoneType' object has no attribute 'widthTracksTextView'') discarded
+    Stack trace (most recent call last):
+      0x00000002 (in EditXTDev)
+      start (in EditXTDev) + 41
+      _start (in EditXTDev) + 209
+      main (in EditXTDev) + 297
+      py2app_main (in EditXTDev) + 1503
+      PyRun_SimpleFile (in libpython2.6.dylib) + 40
+      PyRun_SimpleFileExFlags (in libpython2.6.dylib) + 867
+      PyRun_FileExFlags (in libpython2.6.dylib) + 168
+      PyEval_EvalCode (in libpython2.6.dylib) + 87
+      PyEval_EvalCodeEx (in libpython2.6.dylib) + 2109
+      PyEval_EvalFrameEx (in libpython2.6.dylib) + 19916
+      PyEval_EvalCodeEx (in libpython2.6.dylib) + 2109
+      PyEval_EvalFrameEx (in libpython2.6.dylib) + 19429
+      builtin_execfile (in libpython2.6.dylib) + 398
+      PyRun_FileExFlags (in libpython2.6.dylib) + 168
+      PyEval_EvalCode (in libpython2.6.dylib) + 87
+      PyEval_EvalCodeEx (in libpython2.6.dylib) + 2109
+      PyEval_EvalFrameEx (in libpython2.6.dylib) + 21862
+      PyEval_EvalFrameEx (in libpython2.6.dylib) + 19916
+      PyEval_EvalCodeEx (in libpython2.6.dylib) + 2109
+      PyEval_EvalFrameEx (in libpython2.6.dylib) + 19429
+      objc_NSApplicationMain (in _appmain.so) + 466
+      NSApplicationMain (in AppKit) + 574
+      -[NSApplication run] (in AppKit) + 917
+      -[NSApplication sendEvent:] (in AppKit) + 4858
+      -[NSApplication _handleKeyEquivalent:] (in AppKit) + 581
+      -[NSMenu performKeyEquivalent:] (in AppKit) + 314
+      -[NSMenu _performActionWithHighlightingForItemAtIndex:] (in AppKit) + 49
+      -[NSCarbonMenuImpl performActionWithHighlightingForItemAtIndex:] (in AppKit) + 174
+      -[NSMenuItem _corePerformAction] (in AppKit) + 435
+      -[NSApplication sendAction:to:from:] (in AppKit) + 112
+      -[NSApplication terminate:] (in AppKit) + 713
+      -[NSNotificationCenter postNotificationName:object:] (in Foundation) + 56
+      -[NSNotificationCenter postNotificationName:object:userInfo:] (in Foundation) + 128
+      _CFXNotificationPostNotification (in CoreFoundation) + 186
+      __CFXNotificationPost (in CoreFoundation) + 947
+      _nsnote_callback (in Foundation) + 176
+      ffi_closure_SYSV (in _objc.so) + 34
+      ffi_closure_SYSV_inner (in _objc.so) + 149
+      method_stub (in _objc.so) + 756
+      PyObjCErr_ToObjCWithGILState (in _objc.so) + 63
+      -[NSException raise] (in CoreFoundation) + 17
+      objc_exception_throw (in libobjc.A.dylib) + 56
+      NSExceptionHandlerExceptionRaiser (in ExceptionHandling) + 182
+    2010-06-29 23:24:42.266 EditXTDev[11519:607] *** Python exception discarded!
+    Traceback (most recent call last):
+      File "/Users/dmiller/Code/EditXT/src/editxt/application.py", line 336, in applicationWillTerminate_
+        self.controller.app_will_terminate(notification.object())
+      File "/Users/dmiller/Code/EditXT/src/editxt/application.py", line 286, in app_will_terminate
+        self.save_open_projects(defaults)
+      File "/Users/dmiller/Code/EditXT/src/editxt/application.py", line 229, in save_open_projects
+        serial = editor.serialize()
+      File "/Users/dmiller/Code/EditXT/src/editxt/editor.py", line 113, in serialize
+        return dict((key, val) for key, val in iter_settings() if val)
+      File "/Users/dmiller/Code/EditXT/src/editxt/editor.py", line 113, in <genexpr>
+        return dict((key, val) for key, val in iter_settings() if val)
+      File "/Users/dmiller/Code/EditXT/src/editxt/editor.py", line 96, in iter_settings
+        serial = project.serialize()
+      File "/Users/dmiller/Code/EditXT/src/editxt/project.py", line 64, in serialize
+        return self.serialize_full()
+      File "/Users/dmiller/Code/EditXT/src/editxt/project.py", line 73, in serialize_full
+        documents = [s for s in states if "path" in s]
+      File "/Users/dmiller/Code/EditXT/src/editxt/project.py", line 72, in <genexpr>
+        states = (d.edit_state for d in self._documents)
+      File "/Users/dmiller/Code/EditXT/src/editxt/document.py", line 279, in _get_edit_state
+        wrap_mode=self.wrap_mode,
+      File "/Users/dmiller/Code/EditXT/src/editxt/document.py", line 178, in _get_wrap_mode
+        wrap = self.text_view.textContainer().widthTracksTextView()
+    AttributeError: 'NoneType' object has no attribute 'widthTracksTextView'
+    2010-06-29 23:24:42.268 EditXTDev[11519:607] <type 'exceptions.AttributeError'>: 'NoneType' object has no attribute 'widthTracksTextView'
+
+profile very slow tests:
+    test_editxt.controls.test_splitview.test_animate_view
+    test_editxt.test_editor.test_toggle_properties_pane
+
+The following two tests fail when test_mockerext is run first followed by the entire test suite
+    ======================================================================
+    ERROR: test_editxt.test_mockerext.test_MockerExt_property(
+      <objective-c class NSObject at 0xa04bdcc0>, <function <lambda> at 0x1830d070>)
+    ----------------------------------------------------------------------
+      ...
+    error: T is overriding existing Objective-C class
+
+    ======================================================================
+    ERROR: Failure: error (PySubclass is overriding existing Objective-C class)
+    ----------------------------------------------------------------------
+      ...
+    error: PySubclass is overriding existing Objective-C class
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+TODO
+
+put the selected text at the top of the recent finds menu (in Find/Replace)
+put text processors in the recent replaces menu
+
+x need some way to view/change settings
+x    option 1 - put menu in the status bar (like TextWrangler)
+x    option 2 - implement document properties view below document selector
+x implement line endings
+x    python -c 'print repr(open("Desktop/newline.txt").read())'
+x implement space-filled tabs
+x    intent with correct character(s) on keypress (tab/shift tab) or auto-indent
+x    prompt to convert file on mode change
+x    delete multiple spaces when deleting backward in space-indent mode
+x    detect indent mode in file when opened (fallback to indent mode specified in syntax definition)
+xx    skip spaces when moving with arrow keys when in space-indent mode
+    convert pasted text
+implement syntax definitions
+x implement file encodings
+x implement word wrap
+x    bug: set view to word-wrap mode, switch to a different document, switch back (no vertical scroll bar)
+x        precondition: the document should not have a vertical scrollbar when NOT in word wrap mode
+x        precondition: it should have a vertical scrollbar when in word wrap mode
+    bug: while scrolled down in a document enable word wrap -> scrolls to top
+
+bug: open editor with two windows saved in prefs
+    (each window having two document views of the same documents,
+        with the same document selected in each window)
+    view document other than the document that opens by default
+    focus second window, view document
+
+x things to put in the document attributes panel:
+x    word wrap
+x    line ending style
+x    spaces instead of tabs
+x    tab width
+x    character encoding
+xx    font - this could remain in the context menu
+x    syntax highlighting type
+
+SERIOUS Bug: sometimes documents do not track dirty status
+    one time this occurred after editing a file on a network share
+    although it has happened at other times when no shared docs were being edited
+Bug: when editing large files sometimes the line below the edited line disappears
+Bug: file encoding should be explicitly set on save
+Bug: document shifts to the left when lines are longer than window width
+Bug: cannot open project in two windows at same time (views are shared, but should not be)
+Bug: window controller hides next window controller on close with dirty documents (while editing clean doc)
+
+Improve LineNumberView implementation
+    Fix drawing of line numbers > 99
+    Implement word-wrap line numbering
+
+Project persistence
+x     When a project with no path is saved it will be saved in the user
+x     preferences. As long as the project is open in the editor and has no path it
+x     will remain in the user preferences. When the project is manually closed or
+x     when the editor is closed and the project has only unsaved documents it will
+x     be removed from the user preferences.
+
+    A project may be saved to disk, at which point it gains a path
+    (project.path is not None). If project path is not None but the file does
+    not exist (e.g. if the file was deleted) then the project will be saved in
+    the user preferences and its path will be discarded.
+    
+Add a recent documents view as the project main view
+    Should allow opening documents that have been closed
+    Should allow commands (diff, etc) between documents
+
+Fix selection changing behavior in documents view:
+x    On startup select current text document
+x    On select document display document's TextView in editor window
+xx    On select project revert selection to previously selected document
+    On collapse project with active document
+        activate most recently active document among visible documents
+        clear text area if no documents are visible
+    On select collapsed project expand project and select most recently selected document
+
+Fix bugs in splitview:
+    combine MailStyle...View and SliderImageView into a single view - 
+        Draw the left, center, and right sides of the view independently
+        MailStyle...View covers SliderImageView when resizing the splitview too
+        small (to the left) (min fixed width ThinSplitView must be about 60)
+    fix bug: SliderImageView cannot collapse/uncollapse its splitview
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Improvement ideas
+
+Add better support for TextCommands
+    make it simple to create/edit text commands
+    put a save hook on the command source file when editing it so that the editor
+        reloads the command(s) in that file when the file is saved
+
+Improve projects:
+    record all open projects on File->Quit
+    allow a new project to be created without first choosing a location where it will be saved
+    allow multiple projects per window (use project name as divider between document "groups")
+    allow document to be opened in new window (and/or dragged to a different window)
+
+Documents list
+    fix drag/move documents - use path instead of index range
+    add context menu
+    allow text commands to be added to documents list text menu
+        svn diff
+        diff with...
+
+Improve text view
+    syntax highlighting for multiple document types
+x    status area in lower-left (beside bottom scrollbar)
+x        current row/column/selection length
+        line-ending style
+x    text view state elements (stored in project file):
+x        scroll position
+x        selection range
+        font setting?
+        word wrap state?
+        line number ruler state?
+
+Preferences system
+    font
+    tab width (custom per syntax definition type and open document)
+    etc.
+
+Add "Search all documents" feature to find/replace dialog
+Make find-count status area into a sliding view in the find/replace text field
+
+Improve TextCommands
+    hotkey handling
+    add more commands
+        hard-wrap
+        sort lines
+        change case (and variants)
+    allow text commands to be added to the context menu
+
+Better syntax highlighting
+    make it faster when transitioning to/from a delimited range near the beginning of a large document
+        http://www.stiefels.net/2008/01/22/syntax-highlighting-for-nstextview-with-flex/
+    more lanugages
+    better language detection (file extension, shebang line, etc.)
+
+Add split view feature (split documents list as well)
+
+Add untitled document to default project on startup.
+    Give default project a name other than "Untitled" on startup so the first
+        document gets some other name
+    Alternate: create a new project and use it to open a document if no projects are open
+
+x Implement project/document relationship.
+
+startup controllflow:
+x     startup (no document)
+x         if default project does not exist:    
+x             write new default project to disk
+x         proj = ProjectDocument(defaultProjectPath)
+x         proj.newTextDocument()
+    startup with text document path
+        if default project does not exist:
+            write new default project to disk
+        proj = ProjectDocument(defaultProjectPath)
+        proj.openTextDocument(path)
+    startup with project
+        proj = ProjectDocument(projectPath)
+
+Show all characters
+    http://stackoverflow.com/questions/300086/display-hidden-characters-in-nstextview
+
+Vertically centered text in document list:
+    http://www.red-sweater.com/blog/148/what-a-difference-a-cell-makes
+
+Quickies reference:
+    http://www.borkware.com/quickies/one?topic=NSTextView
+
+Cocoa Bindings Examples and Hints
+    http://homepage.mac.com/mmalc/CocoaExamples/controllers.html
+    http://www.cocoadevcentral.com/articles/000080.php
+
+File encodings
+  http://rixstep.com/2/2/20080320,00.shtml
+  See TextEdit source code, esp. openWithEncodingAccessory
+
+NSTreeController extensions:
+    http://svn.sbooth.org/play/trunk/ThirdParty/NSTreeController_Extensions/NSTreeController_Extensions.m
+
+NSTreeController and Drag and Drop: http://theocacao.com/document.page/130
+
+Log filtering
+    http://stackoverflow.com/questions/1383254/logging-streamhandler-and-standard-streams
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Completed tasks
+
+x syntax highlighting selection
+x syntax-specific comment
+
+x make textview scroll one screen beyond last character
+
+x fix UTF-8 saving (encoding gets messed up - but cannot reproduce on 2010-05-31)
+
+x bug: recent find/replace list is not always updated
+x implement an error-console of some type to monitor internal errors
+
+x disable auto-reindent and add "Change Indentation" text processor
+
+x fix line numbering (gets messed up when scrollbar starts from top of document)
+
+x fix bug: while this specific error was fixed, there's still a crasher bug
+x that occurs when quitting with dirty documents open
+x   2009-10-08 22:18:32.247 EditXTDev[7293:60b] PyObjC: Converting exception to Objective-C:
+x   Traceback (most recent call last):
+x     File "/Users/dmiller/Code/EditXT/src/editxt/application.py", line 402, in windowDidEndSheet_
+x       self.save_next_document()
+x     File "/Users/dmiller/Code/EditXT/src/editxt/application.py", line 365, in save_next_document
+x       self.save_next_document()
+x     File "/Users/dmiller/Code/EditXT/src/editxt/application.py", line 358, in save_next_document
+x       self.callback(self.should_close)
+x     File "/Users/dmiller/Code/EditXT/src/editxt/application.py", line 323, in callback
+x       perform_selector(delegate, selector, self, result)
+x     File "/Users/dmiller/Code/EditXT/src/editxt/util.py", line 242, in perform_selector
+x       getattr(delegate, sel)(*args)
+x   TypeError: Need 3 arguments, got 2
+
+x fix bug:
+x   Traceback (most recent call last):
+x    File "PyObjCTools/AppHelper.pyc", line 235, in runEventLoop
+x    File "editxt/editor.pyc", line 640, in windowDidBecomeKey_
+x    File "editxt/editor.pyc", line 309, in window_did_become_key
+x    File "editxt/document.pyc", line 540, in check_for_external_changes
+x    File "editxt/document.pyc", line 574, in reload_document
+x   AttributeError: 'NoneType' object has no attribute 'shouldChangeTextInRange_replacementString_'
+
+x use utf-8 encoding by default
+x sort lines text processor
+
+x rename "Error Log" to "EditXT Log" and File menu entry should be "Open Log"
+
+x save prompts for location after discarding changes on file with GitX
+
+x create a version number system
+
+x add more syntax definitions
+
+x drag/drop project in sidebar
+
+x error console
+
+x improve performance of replace all in find panel
+
+x Window controller should resize and set splitter position on load
+x     All windows ever loaded simultaneously will be saved in a list in user defaults like this:
+x         first window settings (index=0)
+x         second window settings (index=1)
+x         ...
+x     When a new window is opened it gets the "next" set of window settings where
+x         the index of the "next" window is the number of windows already open
+x     When a window is closed its settings are saved at the index of the number
+x         of _other_ windows that are still open
+
+x Expand new project in list view on creation.
+x     see "Saving the expand state of a NSOutlineView" - http://gibbston.net/?p=4
+
+x Focus new text document on startup
+xx Make project node in documents view un-selectable
+
+x See window z-order question on this page: http://www.cocoadev.com/index.pl?NSWindow
+x     See NSApplication.orderedWindows()
+
+x Saving (documents, projects, window controllers, application state)
+x     A document becomes dirty with the normal semantics of a document-based app.
+xx     A project becomes dirty when its serialized state changes
+x     When a document is saved the following actions are triggered:
+x         project.save()
+x             document_controller.save_open_projects() -> write projects to user prefs
+x     A project is saved if it is open and dirty when the application terminates.
+
+x Application termination sequence
+x     app termination initiated by user
+x         applicationShouldTerminate_
+x             if there are no dirty documents
+x                 # reviewUnsavedDocumentsWithAlertTitle_ will not be called
+x                 cache window settings (app will terminate after windows are closed)
+x             return NSApplicationShouldTerminate
+x         reviewUnsavedDocumentsWithAlertTitle_
+x             if all documents were reviewed
+x                 cache window settings (app will terminate after windows are closed)
+x             else:
+x                 closeAllDocumentsWithDelegate_
+x                     if all documents were closed
+x                         # note: documents (or windows) should not actually be closed yet
+x                         cache window settings (app will terminate after windows are closed)
+x         # each window gets a windowWillClose_ message here
+x         applicationWillTerminate_
+x             save window positions (cached earlier) overwriting positions
+x 
+x     NSDocumentController reviewUnsavedDocumentsWithAlertTitle:cancellable:\
+x         delegate:didReviewAllSelector:contextInfo:
+x         grab window positions sorted by window z-order here
+x         if there are unsaved documents:
+x             closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_()
+x                 each dirty document is presented to the user to save/close/cancel
+x                     if cancel: exit termination sequence
+x                 the app will not actually close any documents, it will simply save or ignore them
+x         each document (and its window) is closed
+x             (windowWillClose_ is called for each open window; it should not save window state)
+x 
+x     What is the point of all this work?
+x 
+x     EditXT$ ./editxt -- one document (not dirty)
+x     editxt.controllers DEBUG - application should terminate (now)
+x     editxt.controllers DEBUG - application will terminate
+x     editxt.controllers DEBUG - window will close
+x 
+x     EditXT$ ./editxt -- one document (dirty)
+x     editxt.controllers DEBUG - close all documents ... (default implementation)
+x     -- prompt for save of dirty document here
+x     editxt.controllers DEBUG - window will close
+x     editxt.controllers DEBUG - application should terminate (now)
+x     editxt.controllers DEBUG - application will terminate
+x 
+x     EditXT$ ./editxt -- one window, two documents (first dirty, editing second)
+x     editxt.controllers DEBUG - close all documents ... (default implementation)
+x     editxt.controllers DEBUG - window will close -- editor closed here
+x     -- prompt for save of dirty document here
+x     editxt.controllers DEBUG - application should terminate (now)
+x     editxt.controllers DEBUG - application will terminate
+x 
+x     EditXT$ ./editxt -- one window, two documents (first dirty, editing second)
+x     editxt.controllers DEBUG - close all documents ... (custom implementation)
+x     -- prompt for save of dirty document here
+x     editxt.controllers DEBUG - application should terminate (now)
+x     editxt.controllers DEBUG - application will terminate
+x     editxt.controllers DEBUG - window will close -- editor windows closed here
+x 
+x     Plan: custom implementation of closeAllDocuments[...] will not actually
+x     close any windows. Windows will be closed after applicationWillTerminate.
+
+x Bug: quit app with one dirty document that was made dirty in a window that is now closed.
+x    app.find_editor_with_document_view() has a bug that will cause it to find any
+x    editor with a view of the document viewed by the given document view--it
+x    should find the one-and-only editor that owns the given docucment view.
+x Bug: close application with dirty document viewed in multiple windows only works after second quit
+x Bug: close application with dirty document viewed in multiple windows prompts for
+x    save on an unpredictable window
+x Bug: invalidateRuleThickness message is sent to deleted LineNumberRuler when
+x    modifying a document that had been open in a window that is now closed
+
+x Focus new document
+
+x Bug: close window, then quit application -> tries to saved settings for closed
+x     window (which should have been deallocated)
+x Bug: quit application crashes during cleanup - editor.window_will_close() is called after teardown()
+x Bug: close project with a document that is open in another window and project
+x    then close the window of the closed project : the window and window controller
+x    are not deallocated (they are still referenced by the document in the other window)
+
+x Improve project serialization and saving
+
+x Bug: line number ruler does not calculate size correctly
+x Bug: editing is sluggish - caused by implementation of Editor.item_changed(...)
+x Bug: sometimes editor crashes on shutdown due to items in outline view
+x Bug: window is not displayed on EditXT.app startup
+
+x Bug: cannot scroll to end of file (try it on setup.py)
+x Bug: default text commands (tab indent/dedent,  comment selection, etc)
+x Bug: drag document into main textview should open document
+x Bug: document dirty indicator does not update correctly
+
+x Refactor class hierarchy and app configuration
+x Name --(acts in the capacity of)--> Cocoa class(es)
+x     Application -> NSApplication/NSDocumentController
+x         has a list of editor controllers
+x     Editor -> NSWindowController
+x         has a window controller
+x             <EditorWindowController> references
+x                 <Editor>
+x                 docsController references
+x                     <Editor>.projects
+x             breaks link on close
+x         has a list of projects
+x     Project -> ?
+x         has a list of documents
+x     TextDocumentView -> NSTextView + more
+x     TextDocument -> NSDocument
+
+x Add drag/drop handling for documents in sidebar
+x    Ability to drag text file from finder to sidebar
+x        drop at specific position in tree
+x    Ability to rearrange sidebar via drag/drop
+x    Ability to move/copy a text file from one window to another
+x    Ability to move/copy a project from one window to another
+x    Ability to drag project file from finder to sidebar
+
+x Fix document/project/window/app controller closing
+xx NOT SURE HOW TO REPRODUCE: Fix close app with multiple windows open and a
+xx     single dirty document (does not prompt for save)
+x Fix window controller closed on document closed (when multiple windows are open)
+x Fix window controller does not close its documents on close
+x     (should only close documents for which it is the last wc)
+
+x Make a DocumentView class that mediates between TextDocument and EditorWindowController
+x     allowing a document to be open in more than one project/window controller at
+x     once.
+
+x Open a new document when the editor starts up.
+x Show document contents in text view
+
+x DocumentController/Document/Project/EditorWindowController relationships
+x     EWC has projects
+x     project has documents
+x     document has EWC -> document has project
+x     document has no EWC -> document has no project (but a project may still
+x         reference the document??)
+x 
+x     a DocumentController (DC) has zero or more documents
+x     a Document has zero or one (maybe more?) EditorWindowControllers (EWC)
+x     a Project has zero or more documents
+x     a Document has a Project if it has an EWC
+x     a Document does not have a Project if it does not have an EWC
+x 
+x     dragging a document from one project to another moves the document unless
+x     the command key is pressed in which case it is copied
+    
+x Improve projects
+x    use aliases to link to files (and detect changes/moves when they happen)
+x        http://homepage.mac.com/nathan_day/Source%20Documentation/NDAlias/masterTOC.html
+x    improve project file format
+x    remember selected range (and scrollbar location?)
+x    allow more than one open window/project at a time
+x    close current document on Command+W
+?    allow project with no documents to be closed
+x    make main window show before loading projects/files
+x        (give user feedback that the app is actually loading)
+x    remember splitter position
+x    add more "project changed" triggers
+x        document saved (saves project)
+x        document opened, document closed
+x        document moved in sidebar
+x    make open projects have no affect on the number of open documents
+
+x Monitor open files for changes outside the editor
+x    monitor name changes/moves
+x    monitor file data modifications
+x        use os.stat(path)
+
+x Fix bugs related to starting the program for the first time
+x    default project is not saved on close
+x    untitled document textview is hidden!
+x    drag project file into text editor does not do the right thing
+
+x Critical features for usability (in order of criticalness):
+x Find/replace
+x Line numbering (no word wrap support yet)
+x Tab-indent selected lines
+x Comment/uncomment selected lines
+x Syntax highlighting
+x Right margin marker
+
+x Make documents list resize properly (close buttons should always stay to the right of the view)
+xx Integrate TableView scrollbar with SplitView sizer handle
+
+x Fix document close button
+x?    Use standard close (x) image
+x    Allow fast clicking of close buttons to close many documents quickly
+
+x Regular expressions search/replace
+x    http://www.cocoabuilder.com/archive/message/cocoa/2001/10/31/17420
+
+x Hover Buttons in an NSTableView
+x    http://www.fadingred.org/blog/articles/2007/08/11/hovering-buttons-in-an-nstableview/
+x    http://www.fadingred.org/blog/tag/apple/
+
+x Use MailStyleNSSplitView recipe to figure out how to put resize handle on slider
+x     http://www.cocoadev.com/index.pl?MailStyleNSSplitview
+
+x Stop NSSplitView from resizing with Window?
+x    http://www.cocoabuilder.com/archive/message/cocoa/2006/10/13/172647
+
+x Multiple documents per window using the NSDocument framework:
+x     http://www.cocoadev.com/index.pl?DocumentBasedAppWithOneWindowForAllDocuments
+
+x Change name to EditXT ?
+
+x Fix focus issues with TableView (TextView should always have focus)
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Syntax coloring design - use pygments library
+
+xx syntax elements
+xx     valid identifier characters
+xx     keyword / character string without spaces
+xx     range delimiters
+xx         start delim
+xx         end delim
+xx xx        multi-line: yes/no
+xx xx        type: solid color, embedded highlighting
+xx 
+xx When balancing delimiters such as parens, brackets, etc. scan backward or
+xx     forward (depending on type of bracket) from the current character to the
+xx     end of the characters visible on the screen.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+EditXT Design
+
+Slogan: EditXT - the editor that remembers where you were
+
+Discussion of documents in EditXT
+
+There are two kinds of documents in EditXT: text documents and projects. Text
+documents will respond to the complete set of document actions such as New,
+Open, Save, Close, etc. Projects only respond to a subset of these actions;
+namely New Project, Open Project and Close Project. Projects do not need an
+undo manager. 
+
+When a document is opened it may be one of two things: ProjectDocument or TextDocument
+    If it is a ProjectDocument then a new project window should be loaded.
+    If it is a TextDocument then it should be opened in the current project.
+    A new project should be opened if there is no current project.
+        This probably needs to happen at the DocumentController level.
+    
+NSDocumentController (canned ObjC class, not extended)
+    maintains a list of the documents that are currently open
+    options for the "Window" menu:
+xx        list all documents in a hierarchical structure (project has submenu of documents)
+xx        list all documents (not projects)
+        list current document of each project window
+
+NSWindowController
+    Tasks overview:
+        Loading and displaying the window
+        Closing the window when appropriate
+        Customizing the window's title
+        Storing the window's frame (size and location) in the defaults database
+        Cascading the window in relation to other document windows of the application
+    Note that all of these tasks are specific to a ProjectDocument. It would
+    follow that a TextDocument only needs a stub of a window controller, and
+    that is only necessary if/because NSDocument must have a window controller
+    (verify this).
+    
+    Find out how NSDocument is connected to controls (widgets) and how dirty
+    detection happens (through undo manager). The connection is probably this:
+        NSDocument -> UndoManager -> widget
+    there may be some things in between those elements, what are they?
+
+Options for ProjectDocument (PD) and TextDocument (TD)
+    See this first: http://www.cocoadev.com/index.pl?DocumentBasedAppWithOneWindowForAllDocuments
+    PD inherits NSDocument
+      pros
+        it loads and saves data to a file (but only programatically)
+        it is has a window
+        it can take advantage of NSWindowController
+        it should appear in the top level of the Window menu
+      cons
+        a project is never explicitly saved (it is saved when a document is saved)
+    TD inherits NSDocument
+      pros
+        it loads and saves data to a file
+        it needs an undo manager
+      cons
+        it does not have its own window
+        it cannot take advantage of NSWindowController
+        it should not appear in the top level of the Window menu
+
+ProjectDocument
+    menu actions:
+        new project (maybe prompt to create new proj. with all open documents?)
+        open project
+        close project
+    is represented by a file
+    contains multiple documents
+    does not need undo/redo capability
+    can be opened/closed (saved?? must happen without user interaction)
+        the only time a project will ever be saved is when the user modifies and
+        saves at least one text document
+
+TextDocument
+    is represented by a file
+    can be opened, closed, saved, reverted, etc. (all the normal file operations)
+    Attributes:
+        name
+        path
+        icon
+        syntax_def
+        length (number of lines)
+        width (number of characters, lazily calculated based on lines that have been seen)
+        current_line
+
+The WindowController for TextDocument will NOT manage an actual window. Instead
+    it will manage an entry in the document list as well as the text view (contents?)
+    for its document, as well as any other resources associated with the document.
+
+problem: the inherited NSDocument implementation of ProjectDocument thinks
+    the ProjectDocument is dirty if the contents of the textview have been
+    changed since the main text view is part of the project window.
+side affects
+    project window prompts for save (as name of project) on close (we do not want this)
+    TextDocument does not know it is dirty
+implications:
+    ProjectDocument needs to override parts of NSDocument that cause the save prompt.
+    TextDocument needs to prompt for save if it is dirty when its project is closed.
+
+Q. What is the biggest text file that this editor must easily handle without
+excessive delays in loading, searching, etc.?
+A. As large as can be comfortably navigated with the scrollbar on the side of
+the main text view.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+

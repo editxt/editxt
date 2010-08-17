@@ -1,0 +1,8 @@
+*.pyc
+*~.nib
+.DS_Store
+/build
+/dist
+/virtualenv
+/ztemp
+

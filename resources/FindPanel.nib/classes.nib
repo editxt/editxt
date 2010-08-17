@@ -1,0 +1,29 @@
+{
+    IBClasses = (
+        {
+            ACTIONS = {
+                panelCountFindText = id; 
+                panelCountReplaceText = id; 
+                panelFindNext = id; 
+                panelFindPrevious = id; 
+                panelMarkAll = id; 
+                panelReplace = id; 
+                panelReplaceAll = id; 
+                panelReplaceAllInSelection = id; 
+                recentFindSelected = id; 
+                recentReplaceSelected = id; 
+                regexHelp = id; 
+            }; 
+            CLASS = FindController; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                "find_text" = NSTextField; 
+                "replace_text" = NSTextField; 
+                "status_label" = id; 
+            }; 
+            SUPERCLASS = NSWindowController; 
+        }, 
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }
+    ); 
+    IBVersion = 1; 
+}
