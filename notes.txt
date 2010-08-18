@@ -1,5 +1,5 @@
 EditXT
-Copywrite (c) 2007-2010 Daniel Miller <millerdev@gmail.com>
+Copyright (c) 2007-2010 Daniel Miller <millerdev@gmail.com>
 
 This file is part of EditXT, a programmer's text editor for Mac OS X,
 which can be found at http://editxt.org/.
@@ -60,6 +60,8 @@ Known issues
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority (these should all be listed under TODO as well)
+
+add github page for editxt.org
 
 find/replace text processors
 work on projects
