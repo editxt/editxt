@@ -17,18 +17,16 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-git commands   http://www.kernel.org/pub/software/scm/git/docs/everyday.html
-for svn users  http://git.or.cz/course/svn.html
+    HACK set indent level: 4 spaces
 
-git config --list           # view configuration
-git fsck                    # cheap, assures repo health
-git count-objects           # how many loose objects are there?
-git gc                      # repack local repo
-git push [origin [branch]]  # push changes to branch on origin
-git pull [origin [branch]]  # merge from branch on origin into active branch
-git merge <local branch>    # merge local branch into active branch
-git reset --soft HEAD^      # undo last commit leaving changes in the index
-git reset --soft ORIG_HEAD  # undo most recent merge leaving changes in index
+# Python environment setup
+# RECOMMENDED/OPTIONAL setup virtualenv (http://pypi.python.org/pypi/virtualenv)
+# install pip (http://pypi.python.org/pypi/pip)
+# install dependencies:
+$ pip install --requirement=libs.txt
+
+# build EditXTDev.app development/test package
+$ python setup.py py2app -A
 
 # run all tests
 ./editxt --test
@@ -39,7 +37,12 @@ git reset --soft ORIG_HEAD  # undo most recent merge leaving changes in index
 # run test automation
 ./editxt --nosy
 
-    indent level: 4 spaces
+# run EditXT in dev mode
+./editxt
+
+# package EditXT.app
+$ python setup.py py2app
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority (these should all be listed under TODO as well)
 

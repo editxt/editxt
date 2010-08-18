@@ -26,6 +26,13 @@ from datetime import datetime
 from distutils.core import setup
 from subprocess import Popen, PIPE
 
+if hasattr(sys, 'real_prefix'):
+    # HACK fixes for py2app + virtualenv
+    if sys.prefix.endswith("/.."):
+        sys.prefix = os.path.normpath(sys.prefix)
+    if sys.exec_prefix.endswith("/.."):
+        sys.exec_prefix = os.path.normpath(sys.exec_prefix)
+
 import py2app
 
 version = "1.0.0"
@@ -90,7 +97,7 @@ setup(
             CFBundleGetInfoString = "%s %s.%s" % (version, revision, gitrev),
             CFBundleShortVersionString = version,
             CFBundleVersion = revision + "." + gitrev,
-            CFBundleIdentifier = "com.editxt." + appname,
+            CFBundleIdentifier = "org.editxt." + appname,
             CFBundleIconFile = "PythonApplet.icns",
             CFBundleDocumentTypes = [
                 dict(
@@ -118,13 +125,13 @@ setup(
 #                   CFBundleTypeRole="Editor",
 #                   #NSDocumentClass="Project",
 #                   LSHandlerRank="Owner",
-#                   LSItemContentTypes=["com.editxt.project"],
+#                   LSItemContentTypes=["org.editxt.project"],
 #                   CFBundleTypeExtensions=["edxt"],
 #               ),
             ],
 #           UTExportedTypeDeclarations = [
 #               dict(
-#                   UTTypeIdentifier="com.editxt.project",
+#                   UTTypeIdentifier="org.editxt.project",
 #                   UTTypeDescription="EditXT project format",
 #                   UTTypeConformsTo=["public.plain-text"],
 #                   #UTTypeIconFile=???,
@@ -162,4 +169,15 @@ setup(
         #("../Frameworks", ("lib/Frameworks/NDAlias.framework",)),
     ],
 )
+
+if dev and hasattr(sys, 'real_prefix'):
+    # HACK patch __boot__.py to work with virtualenv
+    bootfile = os.path.join("dist", appname + ".app",
+        "Contents/Resources/__boot__.py")
+    with open(bootfile, "rb") as file:
+        original = file.read()
+    sitepaths = [p for p in sys.path if p.startswith(sys.real_prefix)]
+    bootfunc = u"import sys; sys.path[:0] = %r\n\n" % sitepaths
+    with open(bootfile, "wb") as file:
+        file.write(bootfunc.encode('utf-8') + original)
 

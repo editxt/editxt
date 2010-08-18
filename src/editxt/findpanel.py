@@ -25,7 +25,6 @@ import time
 
 from AppKit import *
 from Foundation import *
-from PyObjCTools.KeyValueCoding import kvc
 
 import editxt.constants as const
 from editxt import app
