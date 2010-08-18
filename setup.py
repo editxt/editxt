@@ -49,6 +49,11 @@ else:
     appname = "EditXT"
     sys.path.append("src")
 
+package = ('--package' in sys.argv)
+if package:
+    assert not dev, 'cannot package dev build'
+    sys.argv.remove('--package')
+
 # get git revision information
 def proc_out(cmd):
     proc = Popen(cmd, stdout=PIPE, close_fds=True)
@@ -180,4 +185,23 @@ if dev and hasattr(sys, 'real_prefix'):
     bootfunc = u"import sys; sys.path[:0] = %r\n\n" % sitepaths
     with open(bootfile, "wb") as file:
         file.write(bootfunc.encode('utf-8') + original)
+
+if package:
+    from contextlib import closing
+    from os.path import join
+    from zipfile import ZipFile, ZIP_DEFLATED
+    distpath = join(thisdir, 'dist')
+    zip_file = '%s-v%s.zip' % (appname, version)
+    print 'packaging for distribution: %s' % zip_file
+    zip_path = join(distpath, zip_file)
+    zip = ZipFile(zip_path, "w", ZIP_DEFLATED)
+    with closing(zip):
+        zip.write(join(thisdir, 'COPYING'), 'COPYING')
+        zip.write(join(thisdir, 'README.txt'), 'README.txt')
+        app_path = join(thisdir, 'dist', appname + '.app')
+        trimlen = len(distpath) + 1
+        for dirpath, dirnames, filenames in os.walk(app_path):
+            zpath = dirpath[trimlen:]
+            for filename in filenames:
+                zip.write(join(dirpath, filename), join(zpath, filename))
 
