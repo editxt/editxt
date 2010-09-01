@@ -96,7 +96,7 @@ setup(
         # when switching to EditXT with Exposé). Luckily everything seems to
         # work as expected without it!!
         #argv_emulation=True,
-        packages=["test_editxt"],
+        #packages=["test_editxt"],
         #frameworks=["lib/Frameworks/NDAlias.framework"],
         plist=dict(
             CFBundleGetInfoString = "%s %s.%s" % (version, revision, gitrev),

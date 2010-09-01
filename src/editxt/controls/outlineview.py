@@ -205,6 +205,13 @@ class OutlineView(NSOutlineView):
     def frameDidChange_(self, notification):
         self.resetCursorRects()
 
+    def _mouseInside(self):
+        if self.window() is not None and self.superview() is not None:
+            mloc = self.window().mouseLocationOutsideOfEventStream()
+            mloc = self.superview().convertPoint_fromView_(mloc, None)
+            return self.hitTest_(mloc) is not None
+        return False
+
     def resetCursorRects(self):
         # stop any existing tracking
         if self.trackingTag != -1:
@@ -213,25 +220,21 @@ class OutlineView(NSOutlineView):
             self.window().remove_mouse_moved_responder(self)
 
         # Add a tracking rect if our superview and window are ready
-        if self.trackMouseEvents() and self.superview() and self.window() and NSApp():
-            event = NSApp().currentEvent()
-            if event is not None:
-                mloc = self.convertPoint_fromView_(event.locationInWindow(), None)
-                rect = self.bounds()
-                inside = self.mouse_inRect_(mloc, rect)
-
-                self.trackingTag = self.addTrackingRect_owner_userData_assumeInside_(
-                    rect, self, 0, inside)
-                if inside:
-                    self.mouseEntered_(None)
+        if self.trackMouseEvents() and self.window() is not None:
+            inside = self._mouseInside()
+            self.trackingTag = self.addTrackingRect_owner_userData_assumeInside_(
+                self.bounds(), self, 0, inside)
+            if inside:
+                self.mouseEntered_(None)
 
     def mouseEntered_(self, event):
         self.window().add_mouse_moved_responder(self)
         super(OutlineView, self).mouseEntered_(event)
 
     def mouseExited_(self, event):
-        self.window().remove_mouse_moved_responder(self)
-        self.mouseMoved_(event)
+        if not self._mouseInside():
+            self.window().remove_mouse_moved_responder(self)
+            self.mouseMoved_(event)
         super(OutlineView, self).mouseExited_(event)
 
     def exitPreviousCell(self):

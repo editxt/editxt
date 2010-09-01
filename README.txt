@@ -38,10 +38,6 @@ Features:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Known issues:
 
-- sometimes the close (X) buttons in the document pane stop displaying the
-  dirty status of the documents. This is VERY ANNOYING, I wish I could find a
-  way to reproduce this bug.
-
 - changing the tab width when in tab-indent mode does not automatically update
   the width of tabs. Recommendation: use spaces not tabs for indentation.
 

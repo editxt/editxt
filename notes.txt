@@ -49,16 +49,11 @@ $ python setup.py py2app --package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority (these should all be listed under TODO as well)
 
-add github page for editxt.org
-
 find/replace text processors
 work on projects
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Bugs
-
-possible source of close button status fail bug: drag multiple files into
-    document pane
 
 editxt.errorlog ERROR - unexpected error
 Traceback (most recent call last):
@@ -238,6 +233,18 @@ The following two tests fail when test_mockerext is run first followed by the en
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 TODO
+
+Projects:
+    Most important new features to implement:
+        Allow project to be open in more than one window at once
+        Enhanced recent documents list
+        Remember editor settings per document
+        Save project to file (.edxt)
+        Add subclass of NSDocument to represent project document
+
+    project.Project - plain python object, manages list of DocInfo objects
+    project.ProjectView - what used to be project.Project
+    document.DocInfo - plain python object, manages document info
 
 put the selected text at the top of the recent finds menu (in Find/Replace)
 put text processors in the recent replaces menu
@@ -428,6 +435,72 @@ Log filtering
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Completed tasks
+
+x known/reproducible sources of close button status fail bug:
+x   FIXED!!! finally
+x   rename project in documents pane
+x       Initial setup: open editor with
+x           single project (project)
+x               containing single document (test.py)
+x 
+x       - slowly move mouse in/out of hover button (normal tracking/drawing)
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=0.0 y=0.0> NORMAL
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=0.0 y=0.0> NORMAL
+x       editxt.controls.window DEBUG - add responder: <OutlineView: 0x3fc41c0>
+x       editxt.controls.cells DEBUG - mouse move to point: <NSPoint x=137.0 y=12.0> NORMAL -> NORMAL
+x       editxt.controls.cells DEBUG - mouse move to point: <NSPoint x=136.0 y=12.0> NORMAL -> HOVER
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=136.0 y=12.0> HOVER
+x       editxt.controls.cells DEBUG - mouse move to point: <NSPoint x=136.0 y=11.0> HOVER -> HOVER
+x       editxt.controls.cells DEBUG - mouse move to point: <NSPoint x=135.0 y=11.0> HOVER -> HOVER
+x       ...
+x       editxt.controls.cells DEBUG - mouse move to point: <NSPoint x=134.0 y=11.0> HOVER -> HOVER
+x       editxt.controls.cells DEBUG - mouse move to point: <NSPoint x=137.0 y=11.0> HOVER -> NORMAL
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=137.0 y=11.0> NORMAL
+x       editxt.controls.window DEBUG - remove responder: <OutlineView: 0x3fc41c0>
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=137.0 y=11.0> NORMAL
+x 
+x       - mouse in from left
+x       editxt.controls.window DEBUG - add responder: <OutlineView: 0x3fc41c0>
+x 
+x       - double-click ****** (fireworks!) hover buttons do not work (except for top item)
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=137.0 y=15.0> NORMAL
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=137.0 y=15.0> NORMAL
+x       editxt.controls.outlineview DEBUG - resetCursorRects # culprit?
+x       editxt.controls.window DEBUG - remove responder: <OutlineView: 0x3fc41c0>
+x       editxt.controls.window DEBUG - add responder: <OutlineView: 0x3fc41c0>
+x 
+x       - tab (after this mouse-move events are not tracked until mouse out/in)
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=137.0 y=15.0> NORMAL
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=137.0 y=15.0> NORMAL
+x       editxt.controls.outlineview DEBUG - resetCursorRects
+x       editxt.controls.window DEBUG - remove responder: <OutlineView: 0x3fc41c0>
+x 
+x       - mouse out
+x       editxt.controls.window DEBUG - remove responder: <OutlineView: 0x3fc41c0>
+x 
+x       - mouse in (from left)
+x       editxt.controls.window DEBUG - add responder: <OutlineView: 0x3fc41c0>
+x 
+x       - mouse move over hover button
+x       editxt.controls.cells DEBUG - mouse move to point: <NSPoint x=119.0 y=33.0> NORMAL -> NORMAL
+x 
+x       editxt.controls.cells DEBUG - mouse move to point: <NSPoint x=120.0 y=33.0> NORMAL -> HOVER
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=120.0 y=33.0> HOVER
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=120.0 y=33.0> NORMAL
+x 
+x       editxt.controls.cells DEBUG - mouse move to point: <NSPoint x=121.0 y=33.0> NORMAL -> HOVER
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=121.0 y=33.0> HOVER
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=121.0 y=33.0> NORMAL
+x 
+x       editxt.controls.cells DEBUG - mouse move to point: <NSPoint x=121.0 y=34.0> NORMAL -> HOVER
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=121.0 y=34.0> HOVER
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=121.0 y=34.0> NORMAL
+x 
+x       - mouse out
+x       editxt.controls.cells DEBUG - mouse move to point: <NSPoint x=119.0 y=34.0> NORMAL -> NORMAL
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=119.0 y=34.0> NORMAL
+x       editxt.controls.cells DEBUG - draw: <NSPoint x=119.0 y=34.0> NORMAL
+x       editxt.controls.window DEBUG - remove responder: <OutlineView: 0x3fc41c0>
 
 x syntax highlighting selection
 x syntax-specific comment

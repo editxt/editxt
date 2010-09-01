@@ -24,7 +24,7 @@ from objc import Category
 from AppKit import *
 from Foundation import *
 
-log = logging.getLogger("editxt.controls.outlineview")
+log = logging.getLogger(__name__)
 
 ICON_PADDING = -23.0
 
@@ -110,6 +110,10 @@ BUTTON_STATE_NORMAL = "NORMAL"
 BUTTON_STATE_PRESSED = "PRESSED"
 
 class HoverButtonCell(NSButtonCell):
+    """Hover button cell
+
+    A single cell instance is used for an entire column in NSOutlineView.
+    """
 
     delegate = objc.ivar("delegate")
 
@@ -117,7 +121,7 @@ class HoverButtonCell(NSButtonCell):
         self.setBordered_(False)
         self.setButtonType_(NSMomentaryChangeButton)
         self.setImagePosition_(NSImageOnly)
-        self._state = BUTTON_STATE_NORMAL
+        self.hover_info = (None, False) # (<mouse location>, <bool pressed>)
         self.maxImageWidth = 128
         self.mouseLocation = NSMakePoint(0.0, 0.0)
 
@@ -132,54 +136,51 @@ class HoverButtonCell(NSButtonCell):
         return self
 
     def buttonImageForFrame_inView_(self, frame, view):
+        point, pressed = self.hover_info
+        if point is not None and NSPointInRect(point, frame):
+            if pressed:
+                state = BUTTON_STATE_PRESSED
+            else:
+                state = BUTTON_STATE_HOVER
+        else:
+            state = BUTTON_STATE_NORMAL
         row = view.rowAtPoint_(frame.origin)
-        return self.delegate.hoverButtonCell_imageForState_row_(view, self._state, row)
+        return self.delegate.hoverButtonCell_imageForState_row_(self, state, row)
 
     def mouseEnteredInvalidatesForFrame_(self, frame):
+        #log.debug("enter: %s", frame.origin)
         return False
 
     def mouseExitedInvalidatesForFrame_(self, frame):
-        if self._state != BUTTON_STATE_NORMAL:
-            self._state = BUTTON_STATE_NORMAL
+        #log.debug("exit: %s", frame.origin)
+        self.hover_info = (None, False)
         return True
 
     def mouseMoveToPoint_invalidatesForFrame_(self, point, frame):
-        origState = self._state
-        if NSPointInRect(point, frame):
-            self._state = BUTTON_STATE_HOVER
-        else:
-            self._state = BUTTON_STATE_NORMAL
-        self.mouseLocation = point
-        return self._state != origState
+        #log.debug("move: %s", point)
+        self.hover_info = (point, False)
+        return True
 
     def mouseUpAtPoint_invalidatesForFrame_(self, point, frame):
-        if NSPointInRect(point, frame):
-            self._state = BUTTON_STATE_HOVER
-            # if point inside, call the action
-            #self.target().performSelector_withObject_(self.action(), self)
-            row = self.controlView().rowAtPoint_(frame.origin)
+        #log.debug("up: %s", point)
+        old_point = self.hover_info[0]
+        if old_point is not None and NSPointInRect(old_point, frame) \
+            and NSPointInRect(point, frame):
+            row = self.controlView().rowAtPoint_(point)
             self.delegate.hoverButton_rowClicked_(self, row)
-        else:
-            self._state = BUTTON_STATE_NORMAL
-        self.mouseLocation = point
+        self.hover_info = (point, False)
         return True
 
     def trackMouseAtPoint_invalidatesForFrame_redraw_(self, point, frame, redraw):
-        # if point inside, track
-        if NSPointInRect(point, frame):
-            self._state = BUTTON_STATE_PRESSED
-            self.mouseLocation = point
-            return True, True
-        return False, redraw
+        #log.debug("track: %s", point)
+        self.hover_info = (point, True)
+        return True, True
 
     def continueTrackingMouseAtPoint_invalidatesForFrame_redraw_(self, point, frame, redraw):
-        origState = self._state
-        if NSPointInRect(point, frame):
-            self._state = BUTTON_STATE_PRESSED
-        else:
-            self._state = BUTTON_STATE_NORMAL
-        self.mouseLocation = point
-        return False, (self._state != origState)
+        #log.debug("continue: %s", point)
+        #self.hover_info = (point, True)
+        #return True, True
+        return True, False
 
     def buttonRectForFrame_imageSize_(self, frame, size):
         dest = NSMakeRect(frame.origin.x, frame.origin.y, size.width, size.height)
@@ -216,10 +217,10 @@ class HoverButtonCell(NSButtonCell):
         one hover button to the next then the previous button may remain in the
         hovered state even though the mouse has moved out of its frame.
         """
-        # update just in case some change was made in the view that wasn't reflected by events
-        if not NSPointInRect(self.mouseLocation, frame):
-            self._state = BUTTON_STATE_NORMAL
-
+        # if log.isEnabledFor(logging.DEBUG):
+        #   point = self.hover_info[0]
+        #   inside = False if point is None else NSPointInRect(point, frame)
+        #   log.debug("draw: %s inside=%s", self.hover_info, inside)
         image = self.buttonImageForFrame_inView_(frame, view)
         if image is not None:
             dest = self.buttonRectForFrame_imageSize_(frame, image.size())
