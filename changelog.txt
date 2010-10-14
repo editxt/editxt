@@ -22,7 +22,9 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
-2010-08-16 - Added GPLv3 license and released on github.com
+2010-10-13 - 1.0.1 - Fixed undo and document pane hover bugs.
+
+2010-08-16 - 1.0.0 - Added GPLv3 license and released on github.com
 
 2007-12-29 - Initial development. During this period, as soon as it was
     functional enough for day-to-day use, EditXT was used as the primary
