@@ -35,7 +35,7 @@ if hasattr(sys, 'real_prefix'):
 
 import py2app
 
-version = "1.0.0"
+version = "1.0.1"
 revision = datetime.now().strftime("%Y%m%d")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

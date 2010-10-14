@@ -587,6 +587,12 @@ class Editor(object):
             self.current_view = focus
         return accepted
 
+    def undo_manager(self):
+        doc = self.wc.document()
+        if doc is None:
+            return NSUndoManager.alloc().init()
+        return doc.undoManager()
+
 
 class EditorWindowController(NSWindowController):
 
@@ -666,6 +672,9 @@ class EditorWindowController(NSWindowController):
             if doc is not None and doc.is_dirty:
                 return self.dirtyImages[state]
         return self.cleanImages[state]
+
+    def undo_manager(self):
+        return self.editor.undo_manager()
 
     def windowDidBecomeKey_(self, notification):
         self.editor.window_did_become_key(notification.object())

@@ -25,7 +25,7 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 # install dependencies:
 $ pip install --requirement=libs.txt
 
-# build EditXTDev.app development/test package
+# build development/test bundle (EditXTDev.app, necessary for ./editxt script)
 $ python setup.py py2app -A
 
 # run all tests
@@ -435,6 +435,75 @@ Log filtering
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Completed tasks
+
+x More of the undo bug...FOUND IT!!!
+x   editxt.controls.window INFO - <EditorWindow at 0x15ec8b70>.undoManager() -> <UndoManager: 0x136890>
+x 
+x   # ... type 'x'
+x   editxt.document INFO - <UndoManager at 0x15f63390>.setActionName_(u'Typing')
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.textStorageDidProcessEditing_( x )
+x 
+x   # ... undo
+x   editxt.document INFO - <UndoManager at 0x15f63390>.undoMenuTitleForUndoActionName_(u'Typing')
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.textStorageDidProcessEditing_(  )
+x 
+x   # ... type 'y'
+x   editxt.document INFO - <UndoManager at 0x15f63390>.setActionName_(u'Typing')
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.textStorageDidProcessEditing_( y )
+x 
+x   # ... document is dirty
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.isDocumentEdited() -> True
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.windowControllers()
+x   editxt.controls.window INFO - <EditorWindow at 0x15f63250>.setDocumentEdited_(True)
+x 
+x   # ... double-click project name (to rename)
+x   # hypothesis: this causes the NSResponder chain to ask for an undo  manager.
+x   # When it gets to window.undoManager(), the window looks for an active document
+x   # with an undo manager, but there is no active document (Project is not a
+x   # subclass of NSDocument, and the window's doocument is None), so the window
+x   # creates its own undo manager and that then takes the place of any other
+x   # undo manager for documents in the window.
+x 
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.isDocumentEdited() -> True
+x   editxt.editor INFO - <Editor at 0x15f4cbf0>.should_select_item(...)
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.isDocumentEdited() -> True
+x   editxt.editor INFO - <Editor at 0x15f4cbf0>.selected_view_changed()
+x   editxt.controls.window INFO - <EditorWindow at 0x15f639d0>.setDocumentEdited_(False)
+x   editxt.editor INFO - <Editor at 0x15f4cbf0>.should_edit_item(...)
+x 
+x   # *** EditorWindow.undoManager changed!
+x   # *** is this the bug? before <EditorWindow at 0x15f63a90>.undoManager() -> <UndoManager: 0x136890>
+x   editxt.controls.window INFO - <EditorWindow at 0x15f63b70>.undoManager() -> <NSUndoManager: 0x19c350>
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.isDocumentEdited() -> True (x6)
+x   editxt.editor INFO - <Editor at 0x15f4cbf0>.should_select_item(...)
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.isDocumentEdited() -> True
+x   editxt.editor INFO - <Editor at 0x15f4cbf0>.selected_view_changed()
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.addWindowController_(<EditorWindowController: 0x413cf40>)
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.isDocumentEdited() -> True
+x   editxt.controls.window INFO - <EditorWindow at 0x15f63cd0>.setDocumentEdited_(True)
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.update_syntaxer()
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.lastComponentOfFileName()
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.check_for_external_changes(<EditorWindow: 0x58a7c0>)
+x   editxt.editor INFO - <Editor at 0x15f4cbf0>.find_project_with_document_view(<TextDocumentView: 0x140230>)
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.isDocumentEdited() -> True
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.isDocumentEdited() -> True
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.isDocumentEdited() -> True
+x   editxt.controls.window INFO - <EditorWindow at 0x15f63ef0>.undoManager() -> <NSUndoManager: 0x19c350>
+x   editxt.controls.window INFO - <EditorWindow at 0x15f63ef0>.undoManager() -> <NSUndoManager: 0x19c350>
+x   editxt.controls.window INFO - <EditorWindow at 0x15f63ef0>.undoManager() -> <NSUndoManager: 0x19c350>
+x 
+x   # type 'x'
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.textStorageDidProcessEditing_( yx )
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.undoManager() -> <UndoManager: 0x136890>
+x   # undo
+x   editxt.controls.window INFO - <EditorWindow at 0x15f63ef0>.undo_(<NSMenuItem: 0x554dc0 Undo Typing>)
+x   editxt.controls.window INFO - <EditorWindow at 0x15f63ef0>.undoManager() -> <NSUndoManager: 0x19c350>
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.textStorageDidProcessEditing_( y )
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.undoManager() -> <UndoManager: 0x136890>
+x   # type 'y'
+x   editxt.controls.window INFO - <EditorWindow at 0x15f63ef0>.undoManager() -> <NSUndoManager: 0x19c350> (x3)
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.textStorageDidProcessEditing_( yy )
+x   editxt.document INFO - <TextDocument at 0x15f633d0>.undoManager() -> <UndoManager: 0x136890>
 
 x known/reproducible sources of close button status fail bug:
 x   FIXED!!! finally

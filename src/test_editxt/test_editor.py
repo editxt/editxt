@@ -1218,6 +1218,27 @@ def test_accept_dropped_items():
             yield test, c(items=[item, it3(offset=offset)], act=act)
             yield test, c(items=[it3(offset=offset), item], act=act)
 
+def test_undo_manager():
+    def test(c):
+        m = Mocker()
+        wc = m.mock(EditorWindowController)
+        ed = Editor(wc)
+        if not c.has_doc:
+            doc = None
+        else:
+            doc = m.mock(NSDocument)
+            doc.undoManager() >> "<undo_manager>"
+        wc.document() >> doc
+        with m:
+            result = ed.undo_manager()
+            if c.has_doc:
+                eq_(result, "<undo_manager>")
+            else:
+                assert isinstance(result, NSUndoManager), result
+    c = TestConfig(has_doc=True)
+    yield test, c
+    yield test, c(has_doc=False)
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # EditorWindowController tests
 
@@ -1373,6 +1394,16 @@ def test_outlineView_toolTipForCell_rect_tableColumn_item_mouseLocation_():
         assert result[0] == "test tip"
         assert result[1] is rect
 
+def test_EditorWindowController_undo_manager():
+    wc = EditorWindowController.alloc().init()
+    m = Mocker()
+    win = m.mock(NSWindow)
+    wc.editor = m.mock(Editor)
+    wc.editor.undo_manager() >> "<undo_manager>"
+    with m:
+        result = wc.undo_manager()
+        eq_(result, "<undo_manager>")
+
 def test_windowDidBecomeKey_():
     wc = EditorWindowController.alloc().init()
     m = Mocker()
@@ -1381,7 +1412,6 @@ def test_windowDidBecomeKey_():
     ed.window_did_become_key(notif.object() >> m.mock(NSWindow))
     with m:
         wc.windowDidBecomeKey_(notif)
-
 
 def test_windowShouldClose_():
     wc = EditorWindowController.alloc().init()
