@@ -17,7 +17,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    HACK set indent level: 4 spaces
+    set indent level: 4 spaces
 
 # Python environment setup
 # RECOMMENDED/OPTIONAL setup virtualenv (http://pypi.python.org/pypi/virtualenv)
@@ -51,9 +51,14 @@ Top priority (these should all be listed under TODO as well)
 
 find/replace text processors
 work on projects
+wrap text at column command
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Bugs
+
+Bug: save file that has had changes discarded with GitX while open in EditXT
+    Should not prompt for save location
+    Possibly should show confirm overwrite sheet
 
 editxt.errorlog ERROR - unexpected error
 Traceback (most recent call last):
@@ -93,6 +98,44 @@ fix bug: drag symlink into documents pane
     24  com.apple.AppKit              	0x931d4c5d NSApplicationMain + 574
     25  _appmain.so                   	0x044d8b72 objc_NSApplicationMain + 466
 
+Bug: selected document out of sync with active document on drag-n-drop
+    (reported by Joel on Oct 15, 2010)
+    * open a new project
+    * open two additional new documents (the document panel on the left should
+      now look as follows)
+        untitled project
+            Untitled
+            Untitled 2
+            Untitled 3
+    * type something unique in each of the three untitled documents
+      (for identifying the active document later)
+    * select (activate) the first document "Untitled"
+    * drag and drop "Untitled" below "Untitled 3"
+    BUG: observe; "Untitled" is still the active document, but "Untitled 3" is
+    now the selected document in the left pane.
+    EXPECTED: "Untitled" should still be the selected document.
+
+    Final note: There are some other drag-and-drop actions that cause this
+    behavior, I haven't been able to identify them all.
+
+Bug: closing duplicate dirty file (reported by Joel on Jul 20, 2010)
+    * Open EditXT
+    * Open a file
+    * Make a change to the file
+    * If only one project is available, create a new one
+    * In the document browser, drag the above-mentioned dirty file into a different project
+    * Observe; the dirty file now exists in both projects (expected)
+    * Close one of the two (duplicate) files
+
+    BUG: Observe; the user is prompted to save the file.
+    EXPECTED: The document should "close" (or rather, simply be removed from
+    that project) silently because it still exists in another project.
+    
+    On second thought... I don't know what the best result here WOULD be.  Say
+    the user has LOTS of projects/documents open, some of the documents are
+    open in multiple projects (for whatever reason); if (s)he closes a dirty
+    file (not remembering that it exists in other project(s)), maybe it is best
+    to get the save dialog.  I don't know, what do you think?
 
 fix bug: related to Python syntax highlighting and """ string at the end of the file
     editxt.textcommand ERROR - <function delete_backward at 0x5690c70> failed

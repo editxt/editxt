@@ -197,6 +197,7 @@ if package:
     zip_path = join(distpath, zip_file)
     zip = ZipFile(zip_path, "w", ZIP_DEFLATED)
     with closing(zip):
+        zip.write(join(thisdir, 'changelog.txt'), 'changelog.txt')
         zip.write(join(thisdir, 'COPYING'), 'COPYING')
         zip.write(join(thisdir, 'README.txt'), 'README.txt')
         app_path = join(thisdir, 'dist', appname + '.app')
