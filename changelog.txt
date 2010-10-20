@@ -22,6 +22,9 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
+????-??-?? - 1.x.x - Fixed bug in backspace at end of line with trailing
+    whitespace.
+
 2010-10-13 - 1.0.1 - Fixed undo and document pane hover bugs.
 
 2010-08-16 - 1.0.0 - Added GPLv3 license and released on github.com

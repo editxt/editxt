@@ -360,6 +360,8 @@ def delete_backward(textview, sender):
                 maxdel = size
             if delete > maxdel:
                 delete = maxdel
+            elif delete < sel[0] - i:
+                delete = 1
         sel = (sel[0] - delete, delete)
     if textview.shouldChangeTextInRange_replacementString_(sel, u""):
         textview.textStorage().replaceCharactersInRange_withString_(sel, u"")
