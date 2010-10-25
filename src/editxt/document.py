@@ -377,6 +377,18 @@ class TextDocumentView(NSObject):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+class UndoManager(NSUndoManager):
+    """HACK custom undo manager that can prevent actions from being removed"""
+
+    def init(self):
+        self.should_remove = True
+        return super(UndoManager, self).init()
+
+    def removeAllActions(self):
+        if self.should_remove:
+            super(UndoManager, self).removeAllActions()
+
+
 class TextDocument(NSDocument):
 
     @classmethod
@@ -401,6 +413,7 @@ class TextDocument(NSDocument):
 
     def init(self):
         super(TextDocument, self).init()
+        self.setUndoManager_(UndoManager.alloc().init())
         self.id = doc_id_gen.next()
         self.icon_cache = (None, None)
         self.document_attrs = {
@@ -581,9 +594,9 @@ class TextDocument(NSDocument):
         url = self.fileURL()
         if url is None or not os.path.exists(url.path()):
             return
-        textstore = self.text_storage
         undo = self.undoManager()
-        self.setUndoManager_(NSUndoManager.alloc().init())
+        undo.should_remove = False
+        textstore = self.text_storage
         self.text_storage = NSTextStorage.alloc().init()
         try:
             ok, err = self.revertToContentsOfURL_ofType_error_(
@@ -591,7 +604,7 @@ class TextDocument(NSDocument):
         finally:
             tempstore = self.text_storage
             self.text_storage = textstore
-            self.setUndoManager_(undo)
+            undo.should_remove = True
         if not ok:
             log.warn(u"could not reload document: %s", err)
             return # TODO report err

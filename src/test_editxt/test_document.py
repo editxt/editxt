@@ -960,7 +960,6 @@ def test_reload_document():
         app = m.replace("editxt.app", passthrough=False)
         doc_log = m.replace("editxt.document.log")
         fileURL = m.method(doc.fileURL)
-        setUndo = m.method(doc.setUndoManager_)
         fw = m.mock(NSFileWrapper)
         ts = m.mock(NSTextStorage)
         doc_ts = doc.text_storage = m.mock(NSTextStorage)
@@ -971,14 +970,14 @@ def test_reload_document():
         path = url.path() >> "<path>"
         if not exists(path) >> c.exists:
             return end()
-        realundo = m.method(doc.undoManager)() >> m.mock(NSUndoManager)
-        setUndo(ANY)
+        undo = m.method(doc.undoManager)() >> m.mock(NSUndoManager)
+        undo.should_remove = False
         ts_class = m.replace(NSTextStorage, passthrough=False)
         (ts_class.alloc() >> ts).init() >> ts
         m.method(doc.revertToContentsOfURL_ofType_error_)(
             url, m.method(doc.fileType)() >> "<type>", None) \
             >> (c.read2_success, "<err>")
-        setUndo(realundo)
+        undo.should_remove = True
         if not c.read2_success:
             doc_log.warn(ANY, "<err>")
             return end()
@@ -996,7 +995,7 @@ def test_reload_document():
         if not any(c.view_state):
             # TODO reload without undo
             doc_ts.replaceCharactersInRange_withString_(range, text)
-            realundo.removeAllActions()
+            undo.removeAllActions()
             return end()
         if tv.shouldChangeTextInRange_replacementString_(range, text) >> True:
             # TODO get edit_state of each document view
