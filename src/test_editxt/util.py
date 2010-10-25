@@ -91,30 +91,21 @@ def do_method_pass_through(attr, inner_obj_class, outer_obj, token, method,
 
 class TestConfig(object):
     def __init__(self, *args, **kw):
-        self.__dict__["_TestConfig__data"] = dict(*args, **kw)
+        self.__dict__.update(*args, **kw)
     def __iter__(self):
-        return self.__data.iteritems()
-    def __call__(self, *args, **kw):
-        new = TestConfig(self.__data)
-        new.__data.update(*args, **kw)
-        return new
+        return self.__dict__.iteritems()
+    def __call__(self, **kw):
+        return TestConfig(self.__dict__, **kw)
     def __contains__(self, name):
-        return name in self.__data
-    def __getattr__(self, name):
-        try:
-            return self.__data[name]
-        except KeyError:
-            raise AttributeError(name)
+        return name in self.__dict__
     def __getitem__(self, name):
-        return self.__data[name]
+        return self.__dict__[name]
     def _get(self, name, default):
-        return self.__data.get(name, default)
+        return getattr(self, name, default)
     def __len__(self):
-        return len(self.__data)
-    def __setattr__(self, name, value):
-        self.__data[name] = value
+        return len(self.__dict__)
     def __repr__(self):
-        val = ", ".join("%s=%r" % (k, v) for k, v in sorted(self.__data.items()))
+        val = ", ".join("%s=%r" % kv for kv in sorted(self.__dict__.items()))
         return "(%s)" % val
 
 @contextmanager

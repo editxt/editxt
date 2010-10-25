@@ -1,14 +1,44 @@
+"""logmeta - a metaclass factory for method call logging
+
+Examples:
+log = logging.getLogger(__name__)
+
+class Document(NSDocument):
+    from logmeta import logmeta
+    __metaclass__ = logmeta(log,
+        ignore=["Representation", "eadFromFile", "riteToFile",
+            "revertToSavedFromFile_ofType_", "initWithContentsOfFile_ofType_",
+            "fileName", "fileURL", "hasUnautosavedChanges", "isDocumentEdited"],
+        override=["[Dd]ocument", "[Ss]ave", "[Ff]ile", "[Rr]ead", "URL", "^_[a-z]"],
+        verbose=["ileModif"]
+    )
+
+class Window(NSWindow):
+    from logmeta import logmeta
+    __metaclass__ = logmeta(log,
+        ingore="(?i)key.*val",
+        override=["[Dd]ocument", "[Ss]ave"],
+        verbose="^setDocument_$"
+    )
+
+"""
 import re
 import inspect
 from itertools import chain
 
-def logmeta(log, ignore=None, override=None, verbose=None):
+DEFAULT_IGNORE = ("^pyobjc", "^CA_", "^methodFor", "__", ":", "^logmeta$")
+
+def logmeta(log, ignore=None, override=None, verbose=None, local_override=False,
+    default_ignore=DEFAULT_IGNORE):
     """Create a metaclass that wraps methods with logging decorators
 
     ignore - list of regular expressions matching methods to ignore
     override - list of regular expressions matching methods in base classes
         that should be overridden for the purpose of logging.
     verbose - list of regular expressions matching methods to log verbosely
+    local_override - override all methods defined in the class to which
+        the metaclass is applied. Defaults to False.
+    default_ignore - list of default ignore patterns.
     """
     def regexps(value):
         if value is None:
@@ -16,24 +46,33 @@ def logmeta(log, ignore=None, override=None, verbose=None):
         elif isinstance(value, str):
             value = [value]
         return [re.compile(v) for v in value]
-    ignore = regexps(ignore)
+    ignore = regexps(ignore) + regexps(default_ignore)
     override = regexps(override)
     verbose = regexps(verbose)
-    def should_wrap(attr, item, classdict=()):
-        return (
-            hasattr(item, "__call__") and
+    def should_wrap(attr, item, ignore, override, wrapped):
+        return (hasattr(item, "__call__") and
             #(inspect.isfunction(item) or isinstance(item, objc_selector)) and
-            attr not in classdict and
-            "__" not in attr and
-            ":" not in attr and
+            not attr in wrapped and
             not any(e.search(attr) for e in ignore) and
-            not attr.startswith(("pyobjc", "CA_", "methodFor"))
-        )
+            any(e.search(attr) for e in override))
+    def short_repr(value):
+        try:
+            v = repr(value)
+        except UnicodeEncodeError:
+            v = repr(unicode(value))
+        if len(v) > 100:
+            v = "%s...%s" % (v[:10], v[-10:])
+        return v
 
     class LogMeta(type):
 
         def __new__(cls, classname, bases, classdict):
             log.info("%s : installing loggers", classname)
+            if local_override:
+                overlocal = regexps("^%s$" % n for n in classdict)
+            else:
+                overlocal = override
+            wrapped = set()
             for attr, item in sorted(classdict.items()):
                 if attr == "logmeta" and item is logmeta:
                     # omit logmeta, which was probably not intended to be a
@@ -43,41 +82,38 @@ def logmeta(log, ignore=None, override=None, verbose=None):
                     #     __metaclass__ = logmeta(log)
                     classdict.pop(attr)
                     continue
-                if should_wrap(attr, item):
+                if should_wrap(attr, item, ignore, overlocal, wrapped):
                     classdict[attr] = cls.logwrap(classname, attr, item)
+                    wrapped.add(attr)
             if override:
                 for baseclass in bases:
                     for attr, item in sorted(baseclass.__dict__.items()):
-                        if any(e.search(attr) for e in ignore):
-                            continue
-                        if not any(e.search(attr) for e in override):
-                            continue
-                        elif attr in classdict:
-                            #log.warn("OVERRIDE EXISTS: %s", attr)
-                            continue
-                        classdict[attr] = cls.logwrap(classname, attr, item, True)
+                        if should_wrap(attr, item, ignore, override, wrapped):
+                            classdict[attr] = cls.logwrap(classname, attr, item,
+                                baseclass.__name__)
+                            wrapped.add(attr)
             cls.class_ = super(LogMeta, cls).__new__(cls, classname, bases, classdict)
             return cls.class_
 
         @classmethod
-        def logwrap(cls, classname, name, method, baseoverride=False):
-            log.info("    %s", name)
+        def logwrap(cls, classname, name, method, basename=None):
+            log.info("    %s.%s", basename or classname, name)
             vlog = any(e.search(name) for e in verbose)
             def wrapper(f, *args, **kw):
                 if isinstance(method, staticmethod):
                     _o = classname
                 else:
                     _o = "<%s at 0x%x>" % (classname, id(args[0]))
-                _a = (repr(a) for a in args[1:])
-                _k = ('%s=%r' % (kv) for kv in sorted(kw.iteritems()))
+                _a = (short_repr(a) for a in args[1:])
+                _k = ('%s=%s' % (k, short_repr(v)) for k, v in sorted(kw.iteritems()))
                 argstr = ", ".join(chain(_a, _k))
                 if vlog:
                     try:
                         rval = f(*args, **kw)
-                        log.info("%s.%s(%s) -> %r", _o, name, argstr, rval)
+                        log.info(u"%s.%s(%s) -> %r", _o, name, argstr, rval)
                         return rval
                     except Exception, exc:
-                        log.info("%s.%s(%s) raised %s", _o, name, argstr, rval, exc)
+                        log.info(u"%s.%s(%s) raised %s", _o, name, argstr, rval, exc)
                         raise
                 log.info("%s.%s(%s)", _o, name, unicode(argstr).decode("UTF-8"))
                 return f(*args, **kw)

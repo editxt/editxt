@@ -63,7 +63,8 @@ Bug: save file that has had changes discarded with GitX while open in EditXT
 editxt.errorlog ERROR - unexpected error
 Traceback (most recent call last):
   File "PyObjCTools/AppHelper.pyc", line 235, in runEventLoop
-ValueError: NSInvalidArgumentException - -[NSURL _undoRedoTextOperation:]: unrecognized selector sent to instance 0x31d5fa0
+ValueError: NSInvalidArgumentException - -[NSURL _undoRedoTextOperation:]:
+    unrecognized selector sent to instance 0x31d5fa0
 
 fix bug: drag symlink into documents pane
     Exception Type:  EXC_BAD_ACCESS (SIGBUS)
@@ -183,7 +184,9 @@ fix bug: try to drag splitview by handle in project bar
     AttributeError: 'SliderImageView' object has no attribute 'splitView'
 
 fix bug: error on quit
-    2010-06-29 23:24:42.263 EditXTDev[11519:607] *** ObjC exception 'OC_PythonException' (reason: '<type 'exceptions.AttributeError'>: 'NoneType' object has no attribute 'widthTracksTextView'') discarded
+    2010-06-29 23:24:42.263 EditXTDev[11519:607] *** ObjC exception 'OC_PythonException'
+        (reason: '<type 'exceptions.AttributeError'>:
+        'NoneType' object has no attribute 'widthTracksTextView'') discarded
     Stack trace (most recent call last):
       0x00000002 (in EditXTDev)
       start (in EditXTDev) + 41
@@ -254,7 +257,8 @@ fix bug: error on quit
       File "/Users/dmiller/Code/EditXT/src/editxt/document.py", line 178, in _get_wrap_mode
         wrap = self.text_view.textContainer().widthTracksTextView()
     AttributeError: 'NoneType' object has no attribute 'widthTracksTextView'
-    2010-06-29 23:24:42.268 EditXTDev[11519:607] <type 'exceptions.AttributeError'>: 'NoneType' object has no attribute 'widthTracksTextView'
+    2010-06-29 23:24:42.268 EditXTDev[11519:607] <type 'exceptions.AttributeError'>:
+        'NoneType' object has no attribute 'widthTracksTextView'
 
 profile very slow tests:
     test_editxt.controls.test_splitview.test_animate_view
@@ -478,6 +482,131 @@ Log filtering
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Completed tasks
+
+x Bug: save after auto-reload prompts "The location of the document XXX cannot be determined"
+x # Take 1
+x # load setup.py in editor (has unstaged changes)
+x 
+x # discard changes in git
+x editxt.document INFO - <TextDocument at 0x5f63c10>.isDocumentEdited()
+x editxt.document INFO - <TextDocument at 0x5f63c10>.reload_document()
+x editxt.document INFO - <TextDocument at 0x5f63c10>.isDocumentEdited()
+x editxt.document INFO - <TextDocument at 0x5f63c10>.isDocumentEdited()
+x editxt.document INFO - <TextDocument at 0x5f63c10>.hasUnautosavedChanges()
+x editxt.document INFO - <TextDocument at 0x5f63c10>.isDocumentEdited()
+x editxt.document INFO - <TextDocument at 0x5f63c10>.isDocumentEdited()
+x editxt.document INFO - <TextDocument at 0x5f63c10>.isDocumentEdited()
+x editxt.document INFO - <TextDocument at 0x5f63c10>.hasUnautosavedChanges()
+x editxt.document INFO - <TextDocument at 0x5f63c10>.isDocumentEdited()
+x 
+x # save -> The location of document "setup.py" cannot be determined. Cancel / Save As...
+x editxt.document INFO - <TextDocument at 0x5f63c10>.saveDocument_(<NSMenuItem: 0x2c4db20 Save>)
+x editxt.document INFO - <TextDocument at 0x5f63c10>.saveDocumentWithDelegate_didSaveSelector_contextInfo_(None, None, 0L)
+x 
+x # Save As...
+x editxt.document INFO - <TextDocument at 0x5f63c10>.runModalSavePanelForSaveOperation_delegate_didSaveSelector_contextInfo_(1, None, None, 0L)
+x editxt.document INFO - <TextDocument at 0x5f63c10>.writableTypesForSaveOperation_(1)
+x editxt.document INFO - <TextDocument at 0x5f63c10>.shouldRunSavePanelWithAccessoryView()
+x editxt.document INFO - <TextDocument at 0x5f63c10>.prepareSavePanel_(<NSSavePanel: 0x10f160>)
+x 
+x Save sheet when file has moved but mod time has not changed:
+x       This document has been renamed to “setup.pyx”.
+x       It will be saved under this new name, or you can provide another name.
+x 
+x       (Save As... [Space])  (Cancel) (Save [Enter])
+x 
+x   We want a similar sheet if the file has been modified:
+x       The document “setup.py” has been modified since it was last saved.
+x       It will replace the modified file, or you can provide another name.
+x 
+x       (Save As... [Space])  (Cancel) (Save [Enter])
+x 
+x def test_saveDocumentWithDelegate_didSaveSelector_contextInfo_():
+x   from editxt.controls.alert import Alert
+x   def test(c):
+x       def end():
+x           with m:
+x               doc.saveDocumentWithDelegate_didSaveSelector_contextInfo_(de, se, 0)
+x           return
+x       m = Mocker()
+x       app = m.replace("editxt.document.app")
+x       doc = TextDocument.alloc().init()
+x       extmod = m.method(doc.is_externally_modified)
+x       savedoc = m.method(doc._super_save)
+x       save_op = m.method(
+x           doc.saveToURL_ofType_forSaveOperation_delegate_didSaveSelector_contextInfo_)
+x       save_as_op = m.method(
+x           doc.runModalSavePanelForSaveOperation_delegate_didSaveSelector_contextInfo_)
+x       al_class = m.replace(Alert, passthrough=False)
+x       de = object(); se = object()
+x       if not (extmod() >> c.extmod):
+x           savedoc(de, se, 0)
+x           return end()
+x       view = app.find_view_with_document(doc) \
+x           >> (m.mock(TextDocumentView) if c.has_win else None)
+x       if not c.has_win:
+x           savedoc(de, se, 0)
+x           return end()
+x       win = view.window() >> m.mock(NSWindow)
+x       alert = al_class.alloc() >> m.mock(Alert); alert.init() >> alert
+x       alert.setMessageText_(ANY)
+x       alert.setInformativeText_(ANY)
+x       alert.addButtonWithTitle_("Save")
+x       alert.addButtonWithTitle_("Cancel")
+x       alert.addButtonWithTitle_("Save As...")
+x       def callback(win, method):
+x           method(c.button)
+x           return True
+x       expect(alert.beginSheetModalForWindow_withCallback_(win, ANY)) \
+x           .call(callback)
+x       if c.button == NSAlertFirstButtonReturn:
+x           save_op(m.method(doc.fileURL)() >> "<url>",
+x               m.method(doc.fileType)() >> "<type>",
+x               NSSaveOperation, de, se, 0)
+x       elif c.button == NSAlertThirdButtonReturn:
+x           save_as_op(NSSaveAsOperation, de, se, 0)
+x       return end()
+x   c = TestConfig()
+x   yield test, c(extmod=False)
+x   yield test, c(extmod=True, has_win=False)
+x   yield test, c(extmod=True, has_win=True, button=NSAlertFirstButtonReturn)
+x   yield test, c(extmod=True, has_win=True, button=NSAlertSecondButtonReturn)
+x   yield test, c(extmod=True, has_win=True, button=NSAlertThirdButtonReturn)
+x 
+x   def saveDocumentWithDelegate_didSaveSelector_contextInfo_(
+x       self, delegate, selector, context):
+x       import pdb; pdb.set_trace()
+x       if self.is_externally_modified():
+x           view = app.find_view_with_document(self)
+x       else:
+x           view = None
+x       if view is None:
+x           self._super_save(delegate, selector, context)
+x           return
+x       def callback(code):
+x           if code == NSAlertFirstButtonReturn:
+x               self.saveToURL_ofType_forSaveOperation_delegate_didSaveSelector_contextInfo_(
+x                   self.fileURL(), self.fileType(), NSSaveOperation, delegate, selector, 0)
+x           elif code == NSAlertThirdButtonReturn:
+x               self.runModalSavePanelForSaveOperation_delegate_didSaveSelector_contextInfo_(
+x                   NSSaveAsOperation, delegate, selector, 0)
+x       alert = Alert.alloc().init()
+x       alert.setMessageText_(u"The document “%s” has been modified "
+x           "since it was last saved." % self.displayName())
+x       alert.setInformativeText_(u"You can provide another name "
+x           "if you do not want to replace it.")
+x       alert.addButtonWithTitle_("Save")
+x       alert.addButtonWithTitle_("Cancel")
+x       alert.addButtonWithTitle_("Save As...")
+x       alert.beginSheetModalForWindow_withCallback_(view.window(), callback)
+x 
+x   def _super_save(self, delegate, selector, context):
+x       # this method makes it easier to test
+x       # saveDocumentWithDelegate_didSaveSelector_contextInfo_
+x       super(TextDocument, self) \
+x           .saveDocumentWithDelegate_didSaveSelector_contextInfo_(
+x               delegate, selector, context)
+x 
 
 x More of the undo bug...FOUND IT!!!
 x   editxt.controls.window INFO - <EditorWindow at 0x15ec8b70>.undoManager() -> <UndoManager: 0x136890>
