@@ -159,9 +159,20 @@ class Application(object):
         ed.current_view = doc_view
 
     def iter_views_of_document(self, doc):
-        for editor in self.editors:
+        for editor in self.iter_editors():
             for view in editor.iter_views_of_document(doc):
                 yield view
+
+#   def find_view_with_document(self, doc):
+#       """find a view of the given document
+# 
+#       Returns a view in the topmost window with the given document, or None
+#       if there are no views of this document.
+#       """
+#       try:
+#           return self.iter_views_of_document(doc).next()
+#       except StopIteration:
+#           return None
 
     def count_views_of_document(self, doc):
         return len(list(self.iter_views_of_document(doc)))

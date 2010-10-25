@@ -23,7 +23,8 @@ This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
 ????-??-?? - 1.x.x - Fixed bug in backspace at end of line with trailing
-    whitespace.
+    whitespace. Fixed bug in document auto-reload which caused a prompt to
+    "Save As..." on next save.
 
 2010-10-13 - 1.0.1 - Fixed undo and document pane hover bugs.
 

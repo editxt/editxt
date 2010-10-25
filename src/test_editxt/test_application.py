@@ -316,7 +316,8 @@ def test_Application_iter_views_of_document():
         doc = m.mock(TextDocument)
         views = []
         total_views = 0
-        ac.editors = eds = []
+        #ac.editors = eds = []
+        eds = []
         for view_count in config:
             ed = m.mock(Editor)
             eds.append(ed)
@@ -324,6 +325,7 @@ def test_Application_iter_views_of_document():
             vws = [m.mock(TextDocumentView) for i in xrange(view_count)]
             ed.iter_views_of_document(doc) >> vws
             views.extend(vws)
+        m.method(ac.iter_editors)() >> eds
         with m:
             result = list(ac.iter_views_of_document(doc))
             eq_(result, views)
@@ -331,6 +333,24 @@ def test_Application_iter_views_of_document():
     yield test, [0]
     yield test, [1]
     yield test, [2, 3, 4]
+
+# def test_find_view_with_document():
+#   def test(c):
+#       ac = Application()
+#       m = Mocker()
+#       vw = m.mock(TextDocumentView) if c.has_view else None
+#       doc = m.mock(TextDocument)
+#       vws = m.method(ac.iter_views_of_document)(doc) >> m.mock()
+#       if c.has_view:
+#           vws.next() >> vw
+#       else:
+#           expect(vws.next()).throw(StopIteration)
+#       with m:
+#           result = ac.find_view_with_document(doc)
+#           eq_(result, vw)
+#   c = TestConfig()
+#   yield test, c(has_view=True)
+#   yield test, c(has_view=False)
 
 def test_iter_editors_with_view_of_document():
     def test(c):

@@ -845,148 +845,143 @@ def test_TextDocument_reset_text_attributes():
         doc.reset_text_attributes(INDENT_SIZE)
         eq_(doc.default_text_attributes(), attrs)
 
-def test_setFileURL_():
-    def test(c):
-        m = Mocker()
-        url = NSURL.fileURLWithPath_("/tmp/test.txt")
-        filestat = m.replace("editxt.util.filestat")
-        filestat(url.path()) >> c.statres
-        doc = TextDocument.alloc().init()
-        with m:
-            eq_(doc._filestat, None)
-            doc.setFileURL_(url)
-            eq_(doc.fileURL(), url)
-            eq_(doc._filestat, c.statres)
-    c = TestConfig()
-    yield test, c(statres="<stat>")
+def test_setFileModificationDate_():
+    from datetime import datetime
+    dt = NSDate.date()
+    doc = TextDocument.alloc().init()
+    eq_(doc.fileModificationDate(), None)
+    eq_(doc._filestat, None)
+    doc._filestat = "<checked>"
+    doc.setFileModificationDate_(dt)
+    eq_(doc._filestat, None)
+    eq_(doc.fileModificationDate(), dt)
 
-def test_writeToURL_ofType_forSaveOperation_originalContentsURL_error_():
-    from editxt.util import filestat
+def test_is_externally_modified():
     def test(c):
-        path = "/tmp/editxt_test.txt"
-        assert not os.path.exists(path), "file exists: %s" % path
-        try:
-            m = Mocker()
-            nsapp = m.replace("editxt.application.NSApp", passthrough=False)
-            nsapp().orderedWindows() >> []
-            absURL = NSURL.fileURLWithPath_(path)
-            cntURL = None
-            doc = TextDocument.alloc().init()
-            doc.update_syntaxer = lambda **kw:None # prevent error (editxt.app is not setup)
-            eq_(doc._filestat, None)
-            with m:
-                doc.writeToURL_ofType_forSaveOperation_originalContentsURL_error_(
-                    absURL, "Text Document", c.op, cntURL, None)
-            if c.savestat:
-                eq_(doc._filestat, filestat(path))
-            else:
-                eq_(doc._filestat, None)
-            assert os.path.exists(path), "missing: %s" % path
-        finally:
-            if os.path.exists(path):
-                os.remove(path)
-    c = TestConfig(savestat=True)
-    yield test, c(op=NSSaveOperation)
-    yield test, c(op=NSSaveAsOperation)
-    yield test, c(op=NSSaveToOperation, savestat=False)
-    yield test, c(op=NSAutosaveOperation, savestat=False)
+        """check if this document has been externally modified
+
+        is_externally_modified returns True, False or None. If a file exists at the
+        path of this document then return (True if the document has been modified by
+        another program else False). However, if there is no file at the path of
+        this document this function will return None.
+        """
+        m = Mocker()
+        doc = TextDocument.alloc().init()
+        exists = m.replace("os.path.exists")
+        fileURL = m.method(doc.fileURL)
+        modDate = m.method(doc.fileModificationDate)
+        url = fileURL() >> (None if c.url_is_none else m.mock(NSURL))
+        path = "<path>"
+        if not c.url_is_none:
+            url.path() >> path
+            if (exists(path) >> c.exists):
+                url.getResourceValue_forKey_error_(
+                    None, NSURLContentModificationDateKey, None) \
+                    >> (c.date_ok, c.loc_stat, None)
+                if c.date_ok:
+                    modDate() >> c.ext_stat
+        with m:
+            eq_(doc.is_externally_modified(), c.rval)
+    c = TestConfig(url_is_none=False, exists=True)
+    yield test, c(url_is_none=True, rval=None)
+    yield test, c(exists=False, rval=None)
+    yield test, c(ext_stat=1, loc_stat=None, date_ok=False, rval=None)
+    yield test, c(ext_stat=1, loc_stat=None, date_ok=True, rval=True)
+    yield test, c(ext_stat=1, loc_stat=1, date_ok=True, rval=False)
+    yield test, c(ext_stat=1, loc_stat=0, date_ok=True, rval=True)
+    yield test, c(ext_stat=1, loc_stat=2, date_ok=True, rval=True)
 
 def test_check_for_external_changes():
+    from editxt.controls.alert import Alert
     def test(c):
         def end(): # this allows us to return early (reducing nested if's)
             with m:
                 eq_(doc._filestat, c.prestat)
                 doc.check_for_external_changes(win)
-                if not c.url_is_none and c.exists and c.prestat != c.modstat:
-                    eq_(doc._filestat, c.modstat)
-                else:
-                    eq_(doc._filestat, c.prestat)
+                eq_(doc._filestat,
+                    (c.prestat if not c.extmod or c.win_is_none else c.modstat))
         m = Mocker()
         doc = TextDocument.alloc().init()
-        doc._filestat = c.prestat
-        win = None if c.win_is_none else m.mock(NSWindow)
-        nsa_class = m.replace(NSAlert, passthrough=False)
-        alert = m.mock(NSAlert)
+        win = None
+        nsa_class = m.replace(Alert, passthrough=False)
+        alert = m.mock(Alert)
         displayName = m.method(doc.displayName)
         isdirty = m.method(doc.isDocumentEdited)
-        exists = m.replace("os.path.exists")
         filestat = m.replace("editxt.util.filestat")
-        fileURL = m.method(doc.fileURL)
-        url = fileURL() >> (None if c.url_is_none else m.mock(NSURL))
-        path = "<path>"
-        if c.url_is_none:
-            return end()
-        (url.path() << path).count(2 if c.exists else 1)
-        if not (exists(path) >> c.exists):
-            return end()
-        filestat(path) >> c.modstat
-        if not c.prestat or c.prestat == c.modstat:
+        reload = m.method(doc.reload_document)
+        m.method(doc.is_externally_modified)() >> c.extmod
+        if not c.extmod:
             return end()
         if isdirty() >> c.isdirty:
             if c.win_is_none:
                 return end()
+            win = m.mock(NSWindow)
+            if c.prestat is not None:
+                doc._filestat = c.prestat
+            path = (m.method(doc.fileURL)() >> m.mock(NSURL)).path() >> "<path>"
+            filestat(path) >> c.modstat
+            if c.prestat == c.modstat:
+                return end()
             (nsa_class.alloc() >> alert).init() >> alert
             displayName() >> "test.txt"
-            alert.setMessageText_("'test.txt' Source Document Changed")
-            alert.setInformativeText_("Discard changes and reload?")
-            alert.addButtonWithTitle_("Reload")
-            alert.addButtonWithTitle_("Cancel")
-            alert.beginSheetModalForWindow_modalDelegate_didEndSelector_contextInfo_(
-                win, doc, "reloadAlertDidEnd:returnCode:contextInfo:", 0)
+            alert.setMessageText_(u"“test.txt” source document changed")
+            alert.setInformativeText_(u"Discard changes and reload?")
+            alert.addButtonWithTitle_(u"Reload")
+            alert.addButtonWithTitle_(u"Cancel")
+            def callback(win, method):
+                method(NSAlertFirstButtonReturn if c.reload else None)
+                return True
+            expect(alert.beginSheetModalForWindow_withCallback_(win, ANY)) \
+                .call(callback)
+            if c.reload:
+                reload()
         else:
-            m.method(doc.reload_document)()
-        end()
-    c = TestConfig(url_is_none=False, exists=True, isdirty=True, win_is_none=False, prestat=None)
-    yield test, c(url_is_none=True)
-    yield test, c(exists=False)
-    c = c(prestat=(1, 2), modstat=(3, 4))
-    yield test, c(prestat=None)
-    yield test, c(isdirty=False, modstat=(1, 2))
-    yield test, c(isdirty=False)
-    yield test, c(win_is_none=True)
-    yield test, c
-
-def test_reloadAlertDidEnd_returnCode_contextInfo_():
-    eq_(TextDocument.reloadAlertDidEnd_returnCode_contextInfo_.signature, 'v@:@ii')
-    def test(c):
-        m = Mocker()
-        doc = TextDocument.alloc().init()
-        reload = m.method(doc.reload_document)
-        alert = m.mock(NSAlert)
-        if c.code == NSAlertFirstButtonReturn:
             reload()
-        with m:
-            doc.reloadAlertDidEnd_returnCode_contextInfo_(alert, c.code, 0)
-    c = TestConfig(code=None)
-    yield test, c
-    yield test, c(code=NSAlertFirstButtonReturn)
+        end()
+    c = TestConfig(extmod=True, isdirty=True, prestat=None)
+    yield test, c(extmod=None)
+    yield test, c(extmod=False)
+    yield test, c(isdirty=False, win_is_none=True)
+    yield test, c(isdirty=True, win_is_none=True)
+    yield test, c(isdirty=True, win_is_none=False, modstat=1, reload=True)
+    yield test, c(isdirty=True, win_is_none=False, modstat=1, prestat=1)
+    yield test, c(isdirty=True, win_is_none=False, modstat=1, prestat=0, reload=True)
+    yield test, c(isdirty=True, win_is_none=False, modstat=1, prestat=0, reload=False)
 
 def test_reload_document():
     def test(c):
         def end():
             with m:
                 doc.reload_document()
+                eq_(doc.text_storage, doc_ts)
         m = Mocker()
         doc = TextDocument.alloc().init()
         perform_clear_undo = m.method(doc.performSelector_withObject_afterDelay_)
         app = m.replace("editxt.app", passthrough=False)
+        doc_log = m.replace("editxt.document.log")
         fileURL = m.method(doc.fileURL)
+        setUndo = m.method(doc.setUndoManager_)
         fw = m.mock(NSFileWrapper)
         ts = m.mock(NSTextStorage)
         doc_ts = doc.text_storage = m.mock(NSTextStorage)
         url = fileURL() >> (None if c.url_is_none else m.mock(NSURL))
-        path = "<path>"
         if c.url_is_none:
             return end()
         exists = m.replace("os.path.exists")
-        (url.path() << path).count(2 if c.exists else 1)
+        path = url.path() >> "<path>"
         if not exists(path) >> c.exists:
             return end()
-        fw_class = m.replace(NSFileWrapper, passthrough=False)
-        (fw_class.alloc() >> fw).initWithPath_(path) >> fw
-        if not fw.isRegularFile() >> c.is_reg_file:
+        realundo = m.method(doc.undoManager)() >> m.mock(NSUndoManager)
+        setUndo(ANY)
+        ts_class = m.replace(NSTextStorage, passthrough=False)
+        (ts_class.alloc() >> ts).init() >> ts
+        m.method(doc.revertToContentsOfURL_ofType_error_)(
+            url, m.method(doc.fileType)() >> "<type>", None) \
+            >> (c.read2_success, "<err>")
+        setUndo(realundo)
+        if not c.read2_success:
+            doc_log.warn(ANY, "<err>")
             return end()
-        data = fw.regularFileContents() >> "<data>"
         tv = m.mock(NSTextView)
         def views():
             for text_view_exists in c.view_state:
@@ -996,23 +991,13 @@ def test_reload_document():
         views = list(views()) # why on earth is the intermediate var necessary?
         # I don't know, but it turns to None if we don't do it!! ???
         app.iter_views_of_document(doc) >> views
-        if not any(c.view_state):
-            # TODO reload without undo
-            dc = m.method(NSDocumentController.sharedDocumentController)() >> \
-                m.mock(NSDocumentController)
-            dc.typeForContentsOfURL_error_(url, None) >> ("<doctype>", None)
-            read_data = m.method(doc.readFromData_ofType_error_)
-            read_data(data, "<doctype>", None) >> (True, None)
-            return end()
-        filestat = m.replace("editxt.util.filestat")
-        ts_class = m.replace(NSTextStorage, passthrough=False)
-        (ts_class.alloc() >> ts).init() >> ts
-        m.method(doc.read_data_into_textstorage)(data, ts) >> \
-            (c.read2_success, None)
-        if not c.read2_success:
-            return end()
         text = ts.string() >> "<string>"
         range = NSRange(0, doc_ts.length() >> 10)
+        if not any(c.view_state):
+            # TODO reload without undo
+            doc_ts.replaceCharactersInRange_withString_(range, text)
+            realundo.removeAllActions()
+            return end()
         if tv.shouldChangeTextInRange_replacementString_(range, text) >> True:
             # TODO get edit_state of each document view
             # TODO diff the two text blocks and change chunks of text
@@ -1022,7 +1007,6 @@ def test_reload_document():
             doc_ts.replaceCharactersInRange_withString_(range, text)
             tv.didChangeText()
             tv.breakUndoCoalescing()
-            filestat(path)
             # TODO restore edit states
             # HACK use timed invocation to allow didChangeText notification
             # to update change count before _clearUndo is invoked
@@ -1049,38 +1033,6 @@ def test_clearChanges():
     m.method(doc.updateChangeCount_)(NSChangeCleared)
     with m:
         doc._clearChanges()
-
-#     def _reloadDocument(self):
-#         """Reload document with the given URL
-#
-#         This implementation allows the user to undo beyond the reload. The
-#         down-side is that it may use a lot of memory if the document is very
-#         large.
-#         """
-#         url = self.fileURL()
-#         if not os.path.exists(url.path()):
-#             return
-#         wrapper = NSFileWrapper.alloc().initWithPath_(url.path())
-#         if wrapper.isRegularFile():
-#             data = wrapper.regularFileContents()
-#             tempstore = NSTextStorage.alloc().init()
-#             success, attrs = tempstore.readFromData_options_documentAttributes_(data, {})
-#             text = tempstore.string()
-#             range = NSRange(0, self.textStorage.length())
-#             if self.textView.shouldChangeTextInRange_replacementString_(range, text):
-#                 state = self.documentState
-#                 self.textStorage.replaceCharactersInRange_withString_(range, text)
-#                 self.documentState = state
-#                 self.textView.didChangeText()
-#                 self.textView.breakUndoCoalescing()
-#                 self._filestat = filestat(url.path())
-#                 # HACK use timed invocation to allow didChangeText notification
-#                 # to update change count before _clearUndo is invoked
-#                 self.performSelector_withObject_afterDelay_("_clearUndo", self, 0)
-#
-#     def _clearUndo(self):
-#         self.updateChangeCount_(NSChangeCleared)
-
 
 class TestTextDocument(MockerTestCase):
 

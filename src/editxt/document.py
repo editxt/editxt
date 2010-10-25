@@ -512,18 +512,9 @@ class TextDocument(NSDocument):
 #                 self.text_view.breakUndoCoalescing()
         return (data, err)
 
-    def writeToURL_ofType_forSaveOperation_originalContentsURL_error_(self,
-        abs_url, doctype, saveop, orig_url, error):
-        success, err = super(TextDocument, self). \
-            writeToURL_ofType_forSaveOperation_originalContentsURL_error_(
-                abs_url, doctype, saveop, orig_url, None)
-        if success and saveop in (NSSaveOperation, NSSaveAsOperation):
-            self._filestat = filestat(abs_url.path())
-        return success, err
-
-    def setFileURL_(self, url):
-        self._filestat = filestat(url.path())
-        return super(TextDocument, self).setFileURL_(url)
+    def setFileModificationDate_(self, date):
+        super(TextDocument, self).setFileModificationDate_(date)
+        self._filestat = None
 
     def analyze_content(self):
         from editxt.textcommand import iterlines
@@ -547,34 +538,36 @@ class TextDocument(NSDocument):
         if mode is not None:
             self.indent_mode = mode
 
-    def check_for_external_changes(self, window):
+    def is_externally_modified(self):
+        """check if this document has been modified by another program"""
         url = self.fileURL()
-        if url is None or not os.path.exists(url.path()):
+        if url is not None and os.path.exists(url.path()):
+            ok, mdate, err = url.getResourceValue_forKey_error_(
+                None, NSURLContentModificationDateKey, None)
+            if ok:
+                return self.fileModificationDate() != mdate
+        return None
+
+    def check_for_external_changes(self, window):
+        if not self.is_externally_modified():
             return
-        modstat = filestat(url.path())
-        if self._filestat is None:
-            self._filestat = modstat
-            return
-        if self._filestat == modstat:
-            return
-        self._filestat = modstat
         if self.isDocumentEdited():
             if window is None:
                 return # ignore change (no gui for alert)
-            alert = NSAlert.alloc().init()
-            alert.setMessageText_("'%s' Source Document Changed" % self.displayName())
-            alert.setInformativeText_("Discard changes and reload?")
-            alert.addButtonWithTitle_("Reload")
-            alert.addButtonWithTitle_("Cancel")
-            alert.beginSheetModalForWindow_modalDelegate_didEndSelector_contextInfo_(
-                window, self, "reloadAlertDidEnd:returnCode:contextInfo:", 0
-            )
+            stat = filestat(self.fileURL().path())
+            if self._filestat == stat:
+                return
+            self._filestat = stat
+            def callback(code):
+                if code == NSAlertFirstButtonReturn:
+                    self.reload_document()
+            alert = Alert.alloc().init()
+            alert.setMessageText_(u"“%s” source document changed" % self.displayName())
+            alert.setInformativeText_(u"Discard changes and reload?")
+            alert.addButtonWithTitle_(u"Reload")
+            alert.addButtonWithTitle_(u"Cancel")
+            alert.beginSheetModalForWindow_withCallback_(window, callback)
         else:
-            self.reload_document()
-
-    @objc.signature('v@:@ii')
-    def reloadAlertDidEnd_returnCode_contextInfo_(self, alert, code, context):
-        if code == NSAlertFirstButtonReturn: # "Reload" button pressed
             self.reload_document()
 
     @refactor("improve undo after reload - use difflib to replace changed text only")
@@ -588,34 +581,36 @@ class TextDocument(NSDocument):
         url = self.fileURL()
         if url is None or not os.path.exists(url.path()):
             return
-        path = url.path()
-        wrapper = NSFileWrapper.alloc().initWithPath_(path)
-        if not wrapper.isRegularFile():
-            return
-        data = wrapper.regularFileContents()
+        textstore = self.text_storage
+        undo = self.undoManager()
+        self.setUndoManager_(NSUndoManager.alloc().init())
+        self.text_storage = NSTextStorage.alloc().init()
+        try:
+            ok, err = self.revertToContentsOfURL_ofType_error_(
+                url, self.fileType(), None)
+        finally:
+            tempstore = self.text_storage
+            self.text_storage = textstore
+            self.setUndoManager_(undo)
+        if not ok:
+            log.warn(u"could not reload document: %s", err)
+            return # TODO report err
         textview = None
         for view in app.iter_views_of_document(self):
             textview = view.text_view
             if textview is not None:
                 break
-        if textview is None:
-            dc = NSDocumentController.sharedDocumentController()
-            doctype, err = dc.typeForContentsOfURL_error_(url, None)
-            self.readFromData_ofType_error_(data, doctype, None)
-            return
-        tempstore = NSTextStorage.alloc().init()
-        success, err = self.read_data_into_textstorage(data, tempstore)
-        if not success:
-            return # fail on error
         text = tempstore.string()
-        range = NSRange(0, self.text_storage.length())
-        if textview.shouldChangeTextInRange_replacementString_(range, text):
+        range = NSRange(0, textstore.length())
+        if textview is None:
+            textstore.replaceCharactersInRange_withString_(range, text)
+            undo.removeAllActions()
+        elif textview.shouldChangeTextInRange_replacementString_(range, text):
             #state = self.documentState
-            self.text_storage.replaceCharactersInRange_withString_(range, text)
+            textstore.replaceCharactersInRange_withString_(range, text)
             #self.documentState = state
             textview.didChangeText()
             textview.breakUndoCoalescing()
-            self._filestat = filestat(path)
             # HACK use timed invocation to allow didChangeText notification
             # to update change count before _clearUndo is invoked
             self.performSelector_withObject_afterDelay_("_clearChanges", self, 0)

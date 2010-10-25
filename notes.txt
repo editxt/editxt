@@ -521,6 +521,9 @@ x       It will replace the modified file, or you can provide another name.
 x 
 x       (Save As... [Space])  (Cancel) (Save [Enter])
 x 
+x Some code that was written to intercept the save and present a custom prompt
+x if the document was externally modified (not needed in the end)
+x 
 x def test_saveDocumentWithDelegate_didSaveSelector_contextInfo_():
 x   from editxt.controls.alert import Alert
 x   def test(c):
