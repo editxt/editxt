@@ -22,7 +22,6 @@ import sys
 import timeit
 
 sys.path.append("src")
-import sitelibs
 
 logging.basicConfig(
     format='%(levelname)s - %(message)s',
@@ -37,6 +36,55 @@ def eq(v0, v1):
         print v1
         print
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# if vs strcat
+# string.rfind(u"\n", ...) vs NSString.lineRangeForRange_(...).location
+
+init = """
+import string, random
+lines = ["".join(random.choice(string.letters) for i in xrange(80)) for j in xrange(100)]
+
+f0 = lambda line, leading: (leading + line) if leading else line
+f1 = lambda line, leading: leading + line
+"""
+
+trials = [
+
+'[f0(line, "    ") for line in lines]',
+'[f1(line, "    ") for line in lines]',
+
+'[f0(line, "") for line in lines]',
+'[f1(line, "") for line in lines]',
+
+]
+n = 100000
+
+# trial 0: 4.61961889267
+# trial 1: 4.24296498299
+
+# trial 2: 3.24405217171
+# trial 3: 3.34566116333
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+try:
+    exec init
+    v0 = eval(trials[0])
+    v1 = eval(trials[1])
+    eq(v0, v1)
+except Exception:
+    log.error("trial equality test failed", exc_info=True)
+    print
+
+for i, trial in enumerate(trials):
+    t = timeit.Timer(trial, init)
+    v1 = t.timeit(n)
+    print "# trial %i:" % i, v1
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+'''
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # prime generator
 
@@ -93,26 +141,6 @@ n = 50
 # trial 0: 4.21483492851
 # trial 1: 0.391325950623
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-try:
-    exec init
-    v0 = eval(trials[0])
-    v1 = eval(trials[1])
-    eq(v0, v1)
-except Exception:
-    log.error("trial equality test failed", exc_info=True)
-    print
-
-for i, trial in enumerate(trials):
-    t = timeit.Timer(trial, init)
-    v1 = t.timeit(n)
-    print "# trial %i:" % i, v1
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-'''
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # string.rfind(u"\n", ...) vs NSString.lineRangeForRange_(...).location
 

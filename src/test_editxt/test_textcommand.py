@@ -49,6 +49,7 @@ def test_load_commands():
         tc.CommentText,
         tc.IndentLine,
         tc.DedentLine,
+        tc.WrapLines,
         tc.SortLines,
         tc.ChangeIndentation,
     ]
@@ -378,11 +379,13 @@ def test_panel_actions():
             act.execute(tv, None)
     c = TestConfig()
 
-    from editxt.textcommand import SortLines, ChangeIndentation
+    from editxt.textcommand import SortLines, WrapLines, ChangeIndentation
     from editxt.sortlines import SortLinesController
+    from editxt.wraplines import WrapLinesController
     from editxt.changeindent import ChangeIndentationController
 
     yield test, c(action=SortLines, mod="sortlines", ctl=SortLinesController)
+    yield test, c(action=WrapLines, mod="wraplines", ctl=WrapLinesController)
     yield test, c(action=ChangeIndentation, mod="changeindent", ctl=ChangeIndentationController)
 
 # def test():

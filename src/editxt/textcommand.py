@@ -84,6 +84,7 @@ def load_commands():
             CommentText(),
             IndentLine(),
             DedentLine(),
+            WrapLines(),
             SortLines(),
             ChangeIndentation(),
         ],
@@ -223,6 +224,21 @@ class SortLines(TextCommand):
     def execute(self, textview, sender):
         from editxt.sortlines import SortLinesController
         SortLinesController.create_with_textview(textview).begin_sheet(sender)
+
+
+class WrapLines(SelectionCommand):
+
+    name = "wrapLines"
+
+    def title(self):
+        return u"Wrap Lines"
+
+    def preferred_hotkey(self):
+        return ("\\", NSCommandKeyMask)
+
+    def execute(self, textview, sender):
+        from editxt.wraplines import WrapLinesController
+        WrapLinesController.create_with_textview(textview).begin_sheet(sender)
 
 
 class ChangeIndentation(TextCommand):
