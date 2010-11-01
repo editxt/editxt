@@ -505,7 +505,7 @@ class TextDocument(NSDocument):
                     self.document_attrs = attrs
                 break
             if err:
-                log.warn(err)
+                log.error(err)
             options.pop(NSCharacterEncodingDocumentAttribute, None)
         return success, err
 
@@ -606,7 +606,7 @@ class TextDocument(NSDocument):
             self.text_storage = textstore
             undo.should_remove = True
         if not ok:
-            log.warn(u"could not reload document: %s", err)
+            log.error(u"could not reload document: %s", err)
             return # TODO report err
         textview = None
         for view in app.iter_views_of_document(self):

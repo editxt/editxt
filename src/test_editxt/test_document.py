@@ -979,7 +979,7 @@ def test_reload_document():
             >> (c.read2_success, "<err>")
         undo.should_remove = True
         if not c.read2_success:
-            doc_log.warn(ANY, "<err>")
+            doc_log.error(ANY, "<err>")
             return end()
         tv = m.mock(NSTextView)
         def views():
