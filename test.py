@@ -20,6 +20,7 @@
 import logging
 import sys
 import timeit
+import traceback
 
 sys.path.append("src")
 
@@ -37,8 +38,59 @@ def eq(v0, v1):
         print
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# issubclass(x, y) vs x in (m, n) vs not (x is m or x is n)
+
+init = """
+class End(object): pass
+class LastLine(End): pass
+class NewParagraph(End): pass
+values = ["", "abc", LastLine, NewParagraph]
+
+t0 = lambda v: issubclass(v, End)
+t1 = lambda v: v in (LastLine, NewParagraph)
+t2 = lambda v: not (v is LastLine or v is NewParagraph)
+"""
+
+trials = [
+
+'[t0(v) for v in values]',
+'[t1(v) for v in values]',
+'[t2(v) for v in values]',
+
+]
+n = 100000
+
+# trial 0 failed: TypeError: issubclass() arg 1 must be a class
+# trial 1: 0.241290092468
+# trial 2: 0.187973022461
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+try:
+    exec init
+    v0 = eval(trials[0])
+    v1 = eval(trials[1])
+    eq(v0, v1)
+except Exception:
+    log.error("trial equality test failed", exc_info=True)
+    print
+
+for i, trial in enumerate(trials):
+    try:
+        t = timeit.Timer(trial, init)
+        v1 = t.timeit(n)
+    except Exception, ex:
+        print "# trial %i failed: %s" % (i, ex)
+        traceback.print_exc()
+    else:
+        print "# trial %i:" % i, v1
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+'''
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # if vs strcat
-# string.rfind(u"\n", ...) vs NSString.lineRangeForRange_(...).location
 
 init = """
 import string, random
@@ -65,26 +117,6 @@ n = 100000
 # trial 2: 3.24405217171
 # trial 3: 3.34566116333
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-try:
-    exec init
-    v0 = eval(trials[0])
-    v1 = eval(trials[1])
-    eq(v0, v1)
-except Exception:
-    log.error("trial equality test failed", exc_info=True)
-    print
-
-for i, trial in enumerate(trials):
-    t = timeit.Timer(trial, init)
-    v1 = t.timeit(n)
-    print "# trial %i:" % i, v1
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-'''
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # prime generator
 

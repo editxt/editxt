@@ -155,6 +155,7 @@ setup(
         'resources/FindPanel.nib',
         'resources/OpenPath.nib',
         'resources/SortLines.nib',
+        'resources/WrapLines.nib',
         'resources/ChangeIndentation.nib',
         'resources/images/close-hover.png',
         'resources/images/close-normal.png',

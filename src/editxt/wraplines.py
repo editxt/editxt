@@ -39,8 +39,8 @@ class WrapLinesController(SheetController):
 
     NIB_NAME = u"WrapLines"
     OPTIONS_DEFAULTS = dict(
-        wrap_at_col=80,
-        indent_like_first=True,
+        wrap_column=80,
+        indent=True,
     )
 
     def wrap_(self, sender):
@@ -61,31 +61,42 @@ def wrap_selected_lines(textview, options):
 def wraplines(lines, options):
     lines = iter(lines)
     width = options.wrap_column
-    frag = lines.next().rstrip()
-    leading = WHITESPACE.match(frag).group()
-    if leading:
-        frag = frag.lstrip()
-        firstlen = width - len(leading)
-        if firstlen > 0:
+    indent = u""
+    leading = None
+    while True:
+        while True:
+            frag = lines.next().rstrip()
+            if frag:
+                break
+            yield u""
+        if leading is None:
+            leading = WHITESPACE.match(frag).group()
+        frag = frag.strip()
+        if leading:
+            firstlen = width - len(leading)
+            if firstlen < 1:
+                firstlen = 1
             line, frag = get_line(frag, lines, firstlen)
             yield leading + line
-            if not options.indent:
-                leading = u""
-    while frag is not None:
-        line, frag = get_line(frag, lines, width)
-        yield leading + line if line else line
-    if line:
-        yield u""
+            if options.indent:
+                width = firstlen
+                indent = leading
+        while frag is not None:
+            line, frag = get_line(frag, lines, width)
+            yield indent + line if line else line
+        if line:
+            yield u""
 
 def get_line(frag, lines, width, ws=u" \t"):
     while True:
         while len(frag) < width:
             try:
-                nextline = lines.next()
+                nextline = lines.next().strip()
             except StopIteration:
                 return frag, None
-            if nextline:
-                frag = frag + u" " + nextline.strip()
+            if not nextline:
+                return frag, None
+            frag = frag + u" " + nextline
         if len(frag) == width:
             return frag, u""
         for i in xrange(width, 0, -1):
