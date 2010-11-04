@@ -54,13 +54,14 @@ def test_wrap_selected_lines():
         opts = "<options>"
         tv = m.mock(TextView)
         ts = tv.textStorage() >> m.mock(NSTextStorage)
-        wrap = m.replace("editxt.wraplines.wraplines", passthrough=False)
+        wrap = m.replace(wraplines)
         iterlines = m.replace("editxt.wraplines.iterlines")
         text = tv.string() >> NSString.stringWithString_(c.text)
         sel = (0, len(text)) if c.sel is None else c.sel
         sel = text.lineRangeForRange_(tv.selectedRange() >> sel)
+        eol = tv.doc_view.document.eol >> m.mock()
         lines = iterlines(text, sel) >> "<lines>"
-        wrap(lines, opts) >> [c.result]
+        eol.join(wrap(lines, opts, tv) >> [c.result]) >> c.result
         tv.shouldChangeTextInRange_replacementString_(sel, c.result) >> True
         output = []
         def callback(range, text):
@@ -77,12 +78,17 @@ def test_wrap_selected_lines():
 
 def test_wraplines():
     def test(c):
+        m = Mocker()
+        tv = m.mock(TextView)
+        if c.ind:
+            tv.doc_view.document.comment_token >> c.comment
         opts = TestConfig(wrap_column=c.wid, indent=c.ind)
         if c._get("debug", False):
             import pdb; pdb.set_trace()
-        output = "\n".join(wraplines(c.text.split("\n"), opts))
-        eq_(c.result, output)
-    c = TestConfig(wid=30, ind=False, sel=None)
+        with m:
+            output = "\n".join(wraplines(c.text.split("\n"), opts, tv))
+            eq_(c.result, output)
+    c = TestConfig(wid=30, ind=False, sel=None, comment="#")
     yield test, c(text=u"Hello world", result=u"Hello\nworld\n", wid=1)
     yield test, c(text=u"Hello world", result=u"Hello\nworld\n", wid=4)
     yield test, c(text=u"Hello world", result=u"Hello\nworld\n", wid=5)
@@ -128,7 +134,22 @@ def test_wraplines():
     yield test, c(text=u"  Hello world, hi\n", result=u"  Hello\n  world,\n  hi\n", wid=10)
     yield test, c(text=u"  Hello world, hi\n", result=u"  Hello\n  world, hi\n", wid=11)
 
-    # edge: multiple paragraphs (start new paragraph on blank line)
+    for comment in ("#", "//", "xxx"):
+        def d(text, result, wid):
+            ln = len(comment) - 1
+            return c(
+                text=text.replace("#", comment),
+                result=result.replace("#", comment),
+                wid=wid + ln,
+                comment=comment,
+            )
+        yield test, d(text=u"  # abc def", result=u"  # abc def\n", wid=11)
+        yield test, d(text=u"  # abc def", result=u"  # abc\n  # def\n", wid=10)
+        yield test, d(text=u"  # abc\n  # def\n", result=u"  # abc def\n", wid=11)
+        yield test, d(text=u"  # abc\n  # def\n  # ghi\n",
+                    result=u"  # abc def\n  # ghi\n", wid=11)
+        yield test, d(text=u"  # abc\n  # def\n  # ghi\n",
+                    result=u"  # abc\n  # def\n  # ghi\n", wid=10)
 
     yield test, c(text=u"Lorem ipsum dolor sit amet, consectetur adipisicing "
         "elit, sed do eiusmod tempor incididunt ut labore et dolore magna "

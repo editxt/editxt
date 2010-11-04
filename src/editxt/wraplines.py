@@ -32,7 +32,7 @@ from editxt.textcommand import iterlines
 
 log = logging.getLogger("editxt.wraplines")
 
-WHITESPACE = re.compile("[ \t]*")
+WHITESPACE = re.compile(r"[ \t]*")
 
 class WrapLinesController(SheetController):
     """Window controller for sort lines text command"""
@@ -51,16 +51,25 @@ class WrapLinesController(SheetController):
 def wrap_selected_lines(textview, options):
     text = textview.string()
     sel = text.lineRangeForRange_(textview.selectedRange())
+    eol = textview.doc_view.document.eol
     lines = iterlines(text, sel)
-    output = "\n".join(wraplines(lines, options))
+    output = eol.join(wraplines(lines, options, textview))
     if textview.shouldChangeTextInRange_replacementString_(sel, output):
         textview.textStorage().replaceCharactersInRange_withString_(sel, output)
         textview.didChangeText()
         textview.setSelectedRange_((sel[0], len(output)))
 
-def wraplines(lines, options):
+def wraplines(lines, options, textview):
     lines = iter(lines)
     width = options.wrap_column
+    if options.indent:
+        token = re.escape(textview.doc_view.document.comment_token)
+        if token:
+            regexp = re.compile(r"^[ \t]*(?:%s *)?" % token)
+        else:
+            regexp = WHITESPACE
+    else:
+        regexp = WHITESPACE
     indent = u""
     leading = None
     while True:
@@ -70,33 +79,34 @@ def wraplines(lines, options):
                 break
             yield u""
         if leading is None:
-            leading = WHITESPACE.match(frag).group()
-        frag = frag.strip()
+            leading = regexp.match(frag).group()
+        frag = regexp.sub(u"", frag, 1)
         if leading:
             firstlen = width - len(leading)
             if firstlen < 1:
                 firstlen = 1
-            line, frag = get_line(frag, lines, firstlen)
+            line, frag = get_line(frag, lines, firstlen, regexp)
             yield leading + line
             if options.indent:
                 width = firstlen
                 indent = leading
         while frag is not None:
-            line, frag = get_line(frag, lines, width)
+            line, frag = get_line(frag, lines, width, regexp)
             yield indent + line if line else line
         if line:
             yield u""
 
-def get_line(frag, lines, width, ws=u" \t"):
+def get_line(frag, lines, width, regexp, ws=u" \t"):
     while True:
         while len(frag) < width:
             try:
-                nextline = lines.next().strip()
+                nextline = lines.next()
             except StopIteration:
                 return frag, None
+            nextline = regexp.sub(u"", nextline, 1)
             if not nextline:
                 return frag, None
-            frag = frag + u" " + nextline
+            frag = frag + u" " + nextline if frag else nextline
         if len(frag) == width:
             return frag, u""
         for i in xrange(width, 0, -1):
