@@ -105,12 +105,16 @@ class IntTransformer(NSValueTransformer):
     def transformedValue_(self, value):
         if value is None:
             return None
+        if isinstance(value, (basestring, NSString)):
+            return NSDecimalNumber.decimalNumberWithString_(value)
         return NSDecimalNumber.numberWithInt_(value)
 
     def reverseTransformedValue_(self, value):
         if value is None:
             return None
-        return int(str(value))
+        if isinstance(value, basestring):
+            return int(float(value))
+        return value.integerValue()
 
 
 class AbstractNameTransformer(NSValueTransformer):

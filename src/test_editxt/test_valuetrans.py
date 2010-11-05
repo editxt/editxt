@@ -73,11 +73,18 @@ def test_int_transformer():
     def test(func, val, trans):
         eq_(func(val), trans)
     def ftest(func, val):
-        tval = NSDecimalNumber.numberWithInt_(val)
+        if isinstance(val, basestring):
+            tval = NSDecimalNumber.decimalNumberWithString_(val)
+        else:
+            tval = NSDecimalNumber.numberWithInt_(val)
         test(func, val, tval)
         eq_(type(func(val)), type(tval))
     def rtest(func, val):
-        tval = NSDecimalNumber.numberWithInt_(val)
+        if isinstance(val, basestring):
+            tval = val
+            val = int(float(val))
+        else:
+            tval = NSDecimalNumber.numberWithInt_(val)
         test(func, tval, val)
         eq_(type(func(tval)), type(val))
     trans = IntTransformer.alloc().init()
@@ -88,6 +95,8 @@ def test_int_transformer():
     yield ftest, trans.transformedValue_, 0
     yield ftest, trans.transformedValue_, 1
     yield ftest, trans.transformedValue_, 100
+    yield ftest, trans.transformedValue_, "100"
+    yield ftest, trans.transformedValue_, "6.0"
     # reverse transformations
     yield test, trans.reverseTransformedValue_, None, None
     yield rtest, trans.reverseTransformedValue_, -100
@@ -95,6 +104,8 @@ def test_int_transformer():
     yield rtest, trans.reverseTransformedValue_, 0
     yield rtest, trans.reverseTransformedValue_, 1
     yield rtest, trans.reverseTransformedValue_, 100
+    yield rtest, trans.reverseTransformedValue_, "100"
+    yield rtest, trans.reverseTransformedValue_, "6.0"
 
 def test_encoding_transformer():
     from editxt.valuetrans import CharacterEncodingTransformer
