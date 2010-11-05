@@ -77,16 +77,19 @@ def test_wrap_selected_lines():
     yield test, c(text=u"Hello\nworld", result=u"Hello", sel=(0, 5))
 
 def test_wraplines():
+    from editxt.wraplines import iterlines
     def test(c):
         m = Mocker()
         tv = m.mock(TextView)
         if c.ind:
             tv.doc_view.document.comment_token >> c.comment
         opts = TestConfig(wrap_column=c.wid, indent=c.ind)
+        text = NSString.stringWithString_(c.text)
+        sel = (0, len(c.text))
         if c._get("debug", False):
             import pdb; pdb.set_trace()
         with m:
-            output = "\n".join(wraplines(c.text.split("\n"), opts, tv))
+            output = "\n".join(wraplines(iterlines(text, sel), opts, tv))
             eq_(c.result, output)
     c = TestConfig(wid=30, ind=False, sel=None, comment="#")
     yield test, c(text=u"Hello world", result=u"Hello\nworld\n", wid=1)
@@ -111,6 +114,8 @@ def test_wraplines():
     yield test, c(text=u"Hi      world", result=u"Hi world\n", wid=8)
     yield test, c(text=u"Hi      world", result=u"Hi world\n", wid=9)
     yield test, c(text=u"Hi      my friend", result=u"Hi my\nfriend\n", wid=9)
+    yield test, c(text=u"abc def ghi\nmno pqr stu\n",
+                result=u"abc def\nghi mno\npqr stu\n", wid=7)
 
     yield test, c(text=u"      abc def ghi", result=u"      abc\ndef\nghi\n", wid=5)
     yield test, c(text=u"      abc def ghi", result=u"      abc\ndef\nghi\n", wid=6)
@@ -150,12 +155,3 @@ def test_wraplines():
                     result=u"  # abc def\n  # ghi\n", wid=11)
         yield test, d(text=u"  # abc\n  # def\n  # ghi\n",
                     result=u"  # abc\n  # def\n  # ghi\n", wid=10)
-
-    yield test, c(text=u"Lorem ipsum dolor sit amet, consectetur adipisicing "
-        "elit, sed do eiusmod tempor incididunt ut labore et dolore magna "
-        "aliqua.\n", result=u"Lorem ipsum dolor sit amet,\nconsectetur "
-        "adipisicing elit,\nsed do eiusmod tempor\nincididunt ut labore et "
-        "dolore\nmagna aliqua.\n")
-
-# def test():
-#   raise Exception("stop")

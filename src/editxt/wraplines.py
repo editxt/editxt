@@ -60,7 +60,6 @@ def wrap_selected_lines(textview, options):
         textview.setSelectedRange_((sel[0], len(output)))
 
 def wraplines(lines, options, textview):
-    lines = iter(lines)
     width = options.wrap_column
     if options.indent:
         token = re.escape(textview.doc_view.document.comment_token)
@@ -100,7 +99,7 @@ def get_line(frag, lines, width, regexp, ws=u" \t"):
     while True:
         while len(frag) < width:
             try:
-                nextline = lines.next()
+                nextline = lines.next().rstrip()
             except StopIteration:
                 return frag, None
             nextline = regexp.sub(u"", nextline, 1)
