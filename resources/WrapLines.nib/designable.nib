@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="2"/>
+			<integer value="1"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -39,14 +39,15 @@
 				<string key="NSClassName">NSApplication</string>
 			</object>
 			<object class="NSWindowTemplate" id="1005">
-				<int key="NSWindowStyleMask">79</int>
+				<int key="NSWindowStyleMask">71</int>
 				<int key="NSWindowBacking">2</int>
 				<string key="NSWindowRect">{{196, 380}, {259, 130}}</string>
 				<int key="NSWTFlags">805307392</int>
 				<string key="NSWindowTitle">Wrap Lines</string>
 				<string key="NSWindowClass">NSPanel</string>
 				<nil key="NSViewClass"/>
-				<string key="NSWindowContentMaxSize">{1.79769e+308, 1.79769e+308}</string>
+				<string key="NSWindowContentMaxSize">{259, 130}</string>
+				<string key="NSWindowContentMinSize">{259, 130}</string>
 				<object class="NSView" key="NSWindowView" id="1006">
 					<reference key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
@@ -254,7 +255,8 @@
 					<reference key="NSSuperview"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {1680, 1028}}</string>
-				<string key="NSMaxSize">{1.79769e+308, 1.79769e+308}</string>
+				<string key="NSMinSize">{259, 152}</string>
+				<string key="NSMaxSize">{259, 152}</string>
 			</object>
 			<object class="NSUserDefaultsController" id="210864670">
 				<bool key="NSSharedInstance">YES</bool>
@@ -572,10 +574,10 @@
 					<boolean value="NO"/>
 					<string>{196, 240}</string>
 					<string>{{357, 418}, {480, 270}}</string>
-					<boolean value="NO"/>
-					<boolean value="NO"/>
-					<string>{1600, 258}</string>
-					<string>{442, 258}</string>
+					<boolean value="YES"/>
+					<boolean value="YES"/>
+					<string>{259, 130}</string>
+					<string>{259, 130}</string>
 					<object class="NSMutableDictionary">
 						<string key="NS.key.0">ToolTip</string>
 						<object class="IBToolTipAttribute" key="NS.object.0">

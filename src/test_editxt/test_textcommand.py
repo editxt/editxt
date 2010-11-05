@@ -49,6 +49,7 @@ def test_load_commands():
         tc.CommentText,
         tc.IndentLine,
         tc.DedentLine,
+        tc.WrapAtMargin,
         tc.WrapLines,
         tc.SortLines,
         tc.ChangeIndentation,
@@ -387,6 +388,23 @@ def test_panel_actions():
     yield test, c(action=SortLines, mod="sortlines", ctl=SortLinesController)
     yield test, c(action=WrapLines, mod="wraplines", ctl=WrapLinesController)
     yield test, c(action=ChangeIndentation, mod="changeindent", ctl=ChangeIndentationController)
+
+def test_wrap_to_margin_guide():
+    from editxt.textcommand import WrapAtMargin
+    from editxt.wraplines import WrapLinesController, wrap_selected_lines
+    act = WrapAtMargin()
+    m = Mocker()
+    tv = m.mock(NSTextView)
+    wrap = m.replace(wrap_selected_lines, passthrough=False)
+    ctl_class = m.replace(WrapLinesController)
+    ctl = ctl_class.shared_controller() >> m.mock(WrapLinesController)
+    opts = m.replace("editxt.commandbase.Options")() >> m.mock()
+    wrap_opts = ctl.opts >> m.mock()
+    opts.wrap_column = const.DEFAULT_RIGHT_MARGIN
+    opts.indent = wrap_opts.indent >> "<indent>"
+    wrap(tv, opts)
+    with m:
+        act.execute(tv, None)
 
 # def test():
 #   assert False, "stop"

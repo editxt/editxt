@@ -24,6 +24,7 @@ import objc
 from AppKit import *
 from Foundation import *
 
+import editxt.constants as const
 from editxt import app
 from editxt.findpanel import FindController
 
@@ -73,12 +74,13 @@ class TextView(NSTextView):
         try:
             return self._marginParams
         except AttributeError:
+            drm = const.DEFAULT_RIGHT_MARGIN
             font = self.doc_view.document.default_text_attributes()[NSFontAttributeName]
             charw = font.advancementForGlyph_(ord(u" ")).width
             padding = self.textContainer().lineFragmentPadding()
             color1 = NSColor.colorWithCalibratedRed_green_blue_alpha_(0.9, 0.9, 0.9, 1.0)
             color2 = NSColor.colorWithCalibratedRed_green_blue_alpha_(0.97, 0.97, 0.97, 1.0)
-            self._marginParams = mp = (charw * 80 + padding, color1, color2)
+            self._marginParams = mp = (charw * drm + padding, color1, color2)
             return mp
 
     def drawViewBackgroundInRect_(self, rect):

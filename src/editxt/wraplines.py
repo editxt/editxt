@@ -39,7 +39,7 @@ class WrapLinesController(SheetController):
 
     NIB_NAME = u"WrapLines"
     OPTIONS_DEFAULTS = dict(
-        wrap_column=80,
+        wrap_column=const.DEFAULT_RIGHT_MARGIN,
         indent=True,
     )
 
