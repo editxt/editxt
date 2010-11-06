@@ -140,13 +140,14 @@ def test_wraplines():
     yield test, c(text=u"  Hello world, hi\n", result=u"  Hello\n  world, hi\n", wid=11)
 
     for comment in ("#", "//", "xxx"):
-        def d(text, result, wid):
+        def d(text, result, wid, **kw):
             ln = len(comment) - 1
             return c(
                 text=text.replace("#", comment),
                 result=result.replace("#", comment),
                 wid=wid + ln,
                 comment=comment,
+                **kw
             )
         yield test, d(text=u"  # abc def", result=u"  # abc def\n", wid=11)
         yield test, d(text=u"  # abc def", result=u"  # abc\n  # def\n", wid=10)
@@ -155,3 +156,5 @@ def test_wraplines():
                     result=u"  # abc def\n  # ghi\n", wid=11)
         yield test, d(text=u"  # abc\n  # def\n  # ghi\n",
                     result=u"  # abc\n  # def\n  # ghi\n", wid=10)
+        yield test, d(text=u"  # abc\n\n  # def ---\n",
+                    result=u"  # abc\n  # \n  # def ---\n", wid=11)

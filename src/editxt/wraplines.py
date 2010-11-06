@@ -62,38 +62,47 @@ def wrap_selected_lines(textview, options):
 def wraplines(lines, options, textview):
     width = options.wrap_column
     if options.indent:
-        token = re.escape(textview.doc_view.document.comment_token)
-        if token:
-            regexp = re.compile(r"^[ \t]*(?:%s *)?" % token)
+        comment = re.escape(textview.doc_view.document.comment_token)
+        if comment:
+            regexp = re.compile(r"^[ \t]*(?:%s *)?" % comment)
         else:
             regexp = WHITESPACE
     else:
+        comment = False
         regexp = WHITESPACE
-    indent = u""
-    leading = None
+    indent = None
+    line = leading = u""
     while True:
         while True:
-            frag = lines.next().rstrip()
+            try:
+                frag = lines.next().rstrip()
+            except StopIteration:
+                if line:
+                    yield u""
+                raise StopIteration
             if frag:
+                if line:
+                    yield leading if comment else u""
                 break
             yield u""
-        if leading is None:
-            leading = regexp.match(frag).group()
-        frag = regexp.sub(u"", frag, 1)
-        if leading:
-            firstlen = width - len(leading)
-            if firstlen < 1:
-                firstlen = 1
-            line, frag = get_line(frag, lines, firstlen, regexp)
-            yield leading + line
-            if options.indent:
-                width = firstlen
-                indent = leading
+        if indent is None:
+            indent = regexp.match(frag).group()
+            comment = comment and bool(indent.strip())
+            frag = regexp.sub(u"", frag, 1)
+            if indent:
+                firstlen = width - len(indent)
+                if firstlen < 1:
+                    firstlen = 1
+                line, frag = get_line(frag, lines, firstlen, regexp)
+                yield indent + line
+                if options.indent:
+                    width = firstlen
+                    leading = indent
+        else:
+            frag = regexp.sub(u"", frag, 1)
         while frag is not None:
             line, frag = get_line(frag, lines, width, regexp)
-            yield indent + line if line else line
-        if line:
-            yield u""
+            yield leading + line if line else line
 
 def get_line(frag, lines, width, regexp, ws=u" \t"):
     while True:
