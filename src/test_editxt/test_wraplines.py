@@ -86,12 +86,14 @@ def test_wraplines():
         opts = TestConfig(wrap_column=c.wid, indent=c.ind)
         text = NSString.stringWithString_(c.text)
         sel = (0, len(c.text))
-        if c._get("debug", False):
-            import pdb; pdb.set_trace()
         with m:
+            if c._get("debug", False):
+                import pdb; pdb.set_trace()
             output = "\n".join(wraplines(iterlines(text, sel), opts, tv))
             eq_(c.result, output)
-    c = TestConfig(wid=30, ind=False, sel=None, comment="#")
+    c = TestConfig(ind=False)
+    yield test, c(text=u"", result=u"\n", wid=80)
+    yield test, c(text=u"\n", result=u"\n", wid=80)
     yield test, c(text=u"Hello world", result=u"Hello\nworld\n", wid=1)
     yield test, c(text=u"Hello world", result=u"Hello\nworld\n", wid=4)
     yield test, c(text=u"Hello world", result=u"Hello\nworld\n", wid=5)
@@ -129,7 +131,7 @@ def test_wraplines():
     yield test, c(text=u"abc\n \ndef ghi", result=u"abc\n\ndef ghi\n", wid=8)
     yield test, c(text=u"abc\n\n\ndef ghi", result=u"abc\n\n\ndef ghi\n", wid=8)
 
-    c = c(ind=True)
+    c = c(ind=True, comment="#")
     yield test, c(text=u"  Hello world", result=u"  Hello\n  world\n", wid=1)
     yield test, c(text=u"  Hello world", result=u"  Hello\n  world\n", wid=6)
     yield test, c(text=u"  Hello world", result=u"  Hello\n  world\n", wid=7)
@@ -158,3 +160,5 @@ def test_wraplines():
                     result=u"  # abc\n  # def\n  # ghi\n", wid=10)
         yield test, d(text=u"  # abc\n\n  # def ---\n",
                     result=u"  # abc\n  # \n  # def ---\n", wid=11)
+        yield test, d(text=u"  # abc\n\n\n  # def ---\n",
+                    result=u"  # abc\n  # \n  # \n  # def ---\n", wid=11)
