@@ -68,8 +68,8 @@ for line in proc_out(["git", "status"]):
 if changes:
     gitrev += "+"
     if not dev:
-        response = raw_input("Build with uncommitted changes? [Y/n] ")
-        if response.strip() and response.lower() != "y":
+        response = raw_input("Build with uncommitted changes? [Y/n] ").strip()
+        if response and response.lower() not in ["y", "yes"]:
             print "aborted."
             sys.exit()
 print "building %s %s %s.%s" % (appname, version, revision, gitrev)
