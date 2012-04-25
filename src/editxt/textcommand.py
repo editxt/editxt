@@ -82,6 +82,7 @@ def load_commands():
         # A list of TextCommand arguments
         text_menu_commands=[
             CommentText(),
+            PadCommentText(),
             IndentLine(),
             DedentLine(),
             WrapAtMargin(),
@@ -117,6 +118,8 @@ class SelectionCommand(TextCommand):
 
 class CommentText(SelectionCommand):
 
+    PAD = False
+
     def title(self):
         return u"(Un)comment Selected Lines"
 
@@ -135,12 +138,25 @@ class CommentText(SelectionCommand):
             comment_token,
             textview.doc_view.document.indent_mode,
             textview.doc_view.document.indent_size,
+            type(self).PAD,
         )
         seltext = u"".join(func(line, *args) for line in iterlines(text, sel))
         if textview.shouldChangeTextInRange_replacementString_(sel, seltext):
             textview.textStorage().replaceCharactersInRange_withString_(sel, seltext)
             textview.setSelectedRange_((sel[0], len(seltext)))
             textview.didChangeText()
+
+
+class PadCommentText(CommentText):
+
+    PAD = True
+
+    def title(self):
+        return u"(Un)comment + Space Selected Lines"
+
+    def preferred_hotkey(self):
+        return (",", NSCommandKeyMask | NSShiftKeyMask)
+
 
 def is_comment_range(text, range, comment_token):
     comments = 0
@@ -151,8 +167,10 @@ def is_comment_range(text, range, comment_token):
             comments += 1
     return comments == 2 or (i < 1 and comments)
 
-def comment_line(text, token, indent_mode, indent_size):
-    if indent_mode == const.INDENT_MODE_SPACE:
+def comment_line(text, token, indent_mode, indent_size, pad=False):
+    if not pad:
+        prefix = token
+    elif indent_mode == const.INDENT_MODE_SPACE:
         lentoken = len(token)
         prespace = len(text) - len(text.lstrip(u" "))
         if lentoken + 1 < indent_size and prespace:
@@ -165,18 +183,18 @@ def comment_line(text, token, indent_mode, indent_size):
         prefix = token + u" "
     return prefix + text
 
-def uncomment_line(text, token, indent_mode, indent_size):
+def uncomment_line(text, token, indent_mode, indent_size, pad=False):
     line = text
     nolead = text.lstrip()
     if nolead.startswith(token):
         lentoken = len(token)
-        if nolead[lentoken] == u" ":
+        if nolead[lentoken] == u" " and pad:
             lentoken += 1
         line = nolead[lentoken:]
         lentoken = len(text) - len(nolead)
         if lentoken > 0:
             line = text[:lentoken] + line
-        if indent_mode == const.INDENT_MODE_SPACE:
+        if indent_mode == const.INDENT_MODE_SPACE and pad:
             prespace = len(line) - len(line.lstrip(u" "))
             fillchars = indent_size - (prespace % indent_size)
             if fillchars != indent_size:

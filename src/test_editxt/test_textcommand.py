@@ -47,6 +47,7 @@ def test_load_commands():
     import editxt.textcommand as tc
     types = [
         tc.CommentText,
+        tc.PadCommentText,
         tc.IndentLine,
         tc.DedentLine,
         tc.WrapAtMargin,
@@ -98,8 +99,8 @@ def test_is_comment_range():
 def test_comment_line():
     from editxt.textcommand import comment_line
     def test(c):
-        eq_(comment_line(c.old, c.token, c.imode, c.isize), c.new)
-    c = TestConfig(token="x", imode=const.INDENT_MODE_TAB, isize=2)
+        eq_(comment_line(c.old, c.token, c.imode, c.isize, c.pad), c.new)
+    c = TestConfig(token="x", imode=const.INDENT_MODE_TAB, isize=2, pad=True)
     yield test, c(old=u"", new=u"x ")
     yield test, c(old=u"\n", new=u"x \n")
     yield test, c(old=u"abc\n", new=u"x abc\n")
@@ -118,15 +119,33 @@ def test_comment_line():
     yield test, c(old=u"    abc\n", new=u"x   abc\n")
     yield test, c(old=u"        abc\n", new=u"x       abc\n")
 
+    c = c(imode=const.INDENT_MODE_TAB, isize=2, pad=False)
+    yield test, c(old=u"", new=u"x")
+    yield test, c(old=u"\n", new=u"x\n")
+    yield test, c(old=u"abc\n", new=u"xabc\n")
+    yield test, c(old=u"\tabc\n", new=u"x\tabc\n")
+    yield test, c(old=u"  abc\n", new=u"x  abc\n")
+    c = c(isize=2, imode=const.INDENT_MODE_SPACE)
+    yield test, c(old=u"abc\n", new=u"xabc\n")
+    yield test, c(old=u"  abc\n", new=u"x  abc\n")
+    yield test, c(old=u"    abc\n", new=u"x    abc\n")
+    c = c(isize=3)
+    yield test, c(old=u"abc\n", new=u"xabc\n")
+    yield test, c(old=u"   abc\n", new=u"x   abc\n")
+    yield test, c(old=u"      abc\n", new=u"x      abc\n")
+    c = c(isize=4)
+    yield test, c(old=u"abc\n", new=u"xabc\n")
+    yield test, c(old=u"    abc\n", new=u"x    abc\n")
+    yield test, c(old=u"        abc\n", new=u"x        abc\n")
+
 def test_uncomment_line():
     from editxt.textcommand import uncomment_line
     def test(c):
-        eq_(uncomment_line(c.old, c.token, c.imode, c.isize), c.new)
-    c = TestConfig(token="x", imode=const.INDENT_MODE_TAB, isize=4)
+        eq_(uncomment_line(c.old, c.token, c.imode, c.isize, c.pad), c.new)
+    c = TestConfig(token="x", imode=const.INDENT_MODE_TAB, isize=4, pad=True)
     yield test, c(old="", new="")
     yield test, c(old="\n", new="\n")
     yield test, c(old="x \n", new="\n")
-    yield test, c(old="x abc\n", new="abc\n")
     yield test, c(old="x abc\n", new="abc\n")
     yield test, c(old="  xabc\n", new="  abc\n")
     yield test, c(old="  x abc\n", new="  abc\n")
@@ -172,6 +191,54 @@ def test_uncomment_line():
     yield test, c(old="x       abc\n", new="        abc\n")
     yield test, c(old="x        abc\n", new="        abc\n")
     yield test, c(old="x         abc\n", new="        abc\n")
+
+    c = c(imode=const.INDENT_MODE_TAB, isize=4, pad=False)
+    yield test, c(old="", new="")
+    yield test, c(old="\n", new="\n")
+    yield test, c(old="x \n", new=" \n")
+    yield test, c(old="x abc\n", new=" abc\n")
+    yield test, c(old="  xabc\n", new="  abc\n")
+    yield test, c(old="  x abc\n", new="   abc\n")
+    yield test, c(old="\txabc\n", new="\tabc\n")
+    yield test, c(old="\tx abc\n", new="\t abc\n")
+    yield test, c(old="\tx\tabc\n", new="\t\tabc\n")
+    yield test, c(old="\tx \tabc\n", new="\t \tabc\n")
+    c = c(token="xx")
+    yield test, c(old="", new="")
+    yield test, c(old="\n", new="\n")
+    yield test, c(old="x \n", new="x \n")
+    yield test, c(old="xx \n", new=" \n")
+    c = c(token="x", imode=const.INDENT_MODE_SPACE)
+    yield test, c(old="", new="")
+    yield test, c(old="\n", new="\n")
+    yield test, c(old="x \n", new=" \n")
+    c = c(isize=2)
+    yield test, c(old="xabc\n", new="abc\n")
+    yield test, c(old="x abc\n", new=" abc\n")
+    yield test, c(old="x  abc\n", new="  abc\n")
+    yield test, c(old="x   abc\n", new="   abc\n")
+    yield test, c(old="x    abc\n", new="    abc\n")
+    yield test, c(old="x     abc\n", new="     abc\n")
+    c = c(isize=3)
+    yield test, c(old="xabc\n", new="abc\n")
+    yield test, c(old="x abc\n", new=" abc\n")
+    yield test, c(old="x  abc\n", new="  abc\n")
+    yield test, c(old="x   abc\n", new="   abc\n")
+    yield test, c(old="x    abc\n", new="    abc\n")
+    yield test, c(old="x     abc\n", new="     abc\n")
+    yield test, c(old="x      abc\n", new="      abc\n")
+    yield test, c(old="x       abc\n", new="       abc\n")
+    c = c(isize=4)
+    yield test, c(old="xabc\n", new="abc\n")
+    yield test, c(old="x abc\n", new=" abc\n")
+    yield test, c(old="x  abc\n", new="  abc\n")
+    yield test, c(old="x   abc\n", new="   abc\n")
+    yield test, c(old="x    abc\n", new="    abc\n")
+    yield test, c(old="x     abc\n", new="     abc\n")
+    yield test, c(old="x      abc\n", new="      abc\n")
+    yield test, c(old="x       abc\n", new="       abc\n")
+    yield test, c(old="x        abc\n", new="        abc\n")
+    yield test, c(old="x         abc\n", new="         abc\n")
 
 def test_text_commands():
     from editxt.document import TextDocument
