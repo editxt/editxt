@@ -28,6 +28,9 @@ the source repository for the gory details of what actually happened.
   - Fixed bug in backspace at end of line with trailing whitespace.
   - Fixed bug in document auto-reload which caused a prompt to "Save As..."
     on next save.
+  - Fixed bug: crash on OS X Lion due to no current project in settings file on
+    launch. 'NSNull' object has no attribute 'indexAtPosition_' in editor.py
+    line 290, in get_current_project.
 
 2010-10-13 - 1.0.1 - Fixed undo and document pane hover bugs.
 
