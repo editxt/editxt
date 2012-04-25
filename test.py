@@ -38,31 +38,47 @@ def eq(v0, v1):
         print
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# issubclass(x, y) vs x in (m, n) vs not (x is m or x is n)
+# if x vs try vs if x is y
 
 init = """
-class End(object): pass
-class LastLine(End): pass
-class NewParagraph(End): pass
-values = ["", "abc", LastLine, NewParagraph]
+class X(object):
+    def __init__(self):
+        self.slots = None
+x = X()
 
-t0 = lambda v: issubclass(v, End)
-t1 = lambda v: v in (LastLine, NewParagraph)
-t2 = lambda v: not (v is LastLine or v is NewParagraph)
+def control():
+    return x.slots
+
+def t0():
+    try:
+        return x.slots
+    except AttributeError:
+        pass
+
+def t1(create=True):
+    if create:
+        return x.slots
+
+def t2(create=True):
+    if create is True:
+        return x.slots
+
 """
 
 trials = [
 
-'[t0(v) for v in values]',
-'[t1(v) for v in values]',
-'[t2(v) for v in values]',
+'control()',
+'t0()',
+'t1()',
+'t2()',
 
 ]
-n = 100000
+n = 1000000
 
-# trial 0 failed: TypeError: issubclass() arg 1 must be a class
-# trial 1: 0.241290092468
-# trial 2: 0.187973022461
+# trial 0: 0.220976114273
+# trial 1: 0.262070178986
+# trial 2: 0.248097896576
+# trial 3: 0.299978971481
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -89,6 +105,101 @@ for i, trial in enumerate(trials):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 '''
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# if [] vs if x == ['y']
+
+init = """
+def t0(row=['a', 'b', 'c', 'd']):
+    if row:
+        pass
+
+def t1(row=['a', 'b', 'c', 'd'], check=['y']):
+    if row == check:
+        pass
+
+"""
+
+trials = [
+
+'t0()',
+'t1()',
+
+]
+n = 100000
+
+# trial 0: 0.0194828510284
+# trial 1: 0.0232598781586
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# if x vs try vs if x is y
+
+init = """
+class X(object):
+    def __init__(self):
+        self.slots = None
+x = X()
+
+def control():
+    return x.slots
+
+def t0():
+    try:
+        return x.slots
+    except AttributeError:
+        pass
+
+def t1(create=True):
+    if create:
+        return x.slots
+
+def t2(create=True):
+    if create is True:
+        return x.slots
+
+"""
+
+trials = [
+
+'control()',
+'t0()',
+'t1()',
+'t2()',
+
+]
+n = 1000000
+
+# trial 0: 0.220976114273
+# trial 1: 0.262070178986
+# trial 2: 0.248097896576
+# trial 3: 0.299978971481
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# issubclass(x, y) vs x in (m, n) vs not (x is m or x is n)
+
+init = """
+class End(object): pass
+class LastLine(End): pass
+class NewParagraph(End): pass
+values = ["", "abc", LastLine, NewParagraph]
+
+t0 = lambda v: issubclass(v, End)
+t1 = lambda v: v in (LastLine, NewParagraph)
+t2 = lambda v: not (v is LastLine or v is NewParagraph)
+"""
+
+trials = [
+
+'[t0(v) for v in values]',
+'[t1(v) for v in values]',
+'[t2(v) for v in values]',
+
+]
+n = 100000
+
+# trial 0 failed: TypeError: issubclass() arg 1 must be a class
+# trial 1: 0.241290092468
+# trial 2: 0.187973022461
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # if vs strcat
 
