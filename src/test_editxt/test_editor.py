@@ -493,7 +493,7 @@ def test_find_project_with_path():
     yield test, c(paths=[path(0), path(1), path(2), path(1)])
 
 def test_get_current_project():
-    def test(docsController_is_not_none, path_config, create=False, null=None):
+    def test(docsController_is_not_none, path_config, create=False):
         proj = None
         m = Mocker()
         ed = Editor(m.mock(EditorWindowController))
@@ -501,7 +501,7 @@ def test_get_current_project():
         ed.wc.docsController >> (tc if docsController_is_not_none else None)
         if docsController_is_not_none:
             path = m.mock(NSIndexPath)
-            tc.selectionIndexPath() >> (path if path_config is not None else null)
+            tc.selectionIndexPath() >> (path if path_config is not None else None)
             if path_config is not None:
                 index = path_config[0]
                 path.indexAtPosition_(0) >> index
@@ -520,8 +520,6 @@ def test_get_current_project():
     for create in (True, False):
         yield test, True, None, create
         yield test, False, None, create
-        yield test, True, None, create, NSNull.null()
-        yield test, False, None, create, NSNull.null()
     yield test, True, [0]
     yield test, True, [0, 0]
 

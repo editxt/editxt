@@ -286,7 +286,7 @@ class Editor(object):
         docs_controller = self.wc.docsController
         if docs_controller is not None:
             path = docs_controller.selectionIndexPath()
-            if path not in [None, NSNull.null()]:
+            if path is not None:
                 index = path.indexAtPosition_(0)
                 path2 = NSIndexPath.indexPathWithIndex_(index)
                 return docs_controller.objectAtArrangedIndexPath_(path2)
