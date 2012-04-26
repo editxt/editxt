@@ -67,8 +67,11 @@ class ErrorLog(object):
     def unexpected_error():
         """error handler function for objc.AppHelper.runEventLoop"""
         from editxt import app
-        app.open_error_log(set_current=False)
         log.error("unexpected error", exc_info=True)
+        try:
+            app.open_error_log(set_current=False)
+        except Exception:
+            log.error("cannot open error log", exc_info=True)
         return True
 
 def create_error_log_document(closefunc):

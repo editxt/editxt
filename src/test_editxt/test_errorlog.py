@@ -95,16 +95,23 @@ def test_ErrorLog_flush():
     el.flush() # no op
 
 def test_ErrorLog_unexpected_error():
-    from editxt import app as app_
-    from editxt.errorlog import log as log_
-    m = Mocker()
-    el = ErrorLog()
-    app = m.replace(app_, passthrough=False)
-    log = m.replace(log_, passthrough=False)
-    app.open_error_log(set_current=False)
-    log.error("unexpected error", exc_info=True)
-    with m:
-        assert el.unexpected_error()
+    def test(c):
+        from editxt import app as app_
+        from editxt.errorlog import log as log_
+        m = Mocker()
+        el = ErrorLog()
+        app = m.replace(app_, passthrough=False)
+        log = m.replace(log_, passthrough=False)
+        log.error("unexpected error", exc_info=True)
+        open_error = app.open_error_log(set_current=False)
+        if c.open_fail:
+            expect(open_error).throw(Exception)
+            log.error("cannot open error log", exc_info=True)
+        with m:
+            assert el.unexpected_error()
+    c = TestConfig()
+    yield test, c(open_fail=False)
+    yield test, c(open_fail=True)
 
 def test_create_error_log_document():
     from editxt.document import TextDocument
