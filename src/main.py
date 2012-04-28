@@ -56,9 +56,9 @@ DEFAULT_LOGGING_CONFIG = {
     'disable_existing_loggers': False,
 }
 
-def setup(nib_path=None):
-    import editxt.application
-    editxt.app = editxt.application.Application()
+def init(app):
+    import editxt
+    editxt.app = app
 
     # initialize class definitions
     import editxt.controls.cells
@@ -73,30 +73,27 @@ def setup(nib_path=None):
     import editxt.document
     import editxt.findpanel
 
-class CommandArgs(object):
-    def __init__(self, argv):
-        self.argv = list(argv)
-    def pop(self, name, default=False):
-        if name in self.argv:
-            self.argv.remove(name)
-            return True
-        return default
-
 def main():
-    if "--test" in sys.argv or "--pdb" in sys.argv:
+    argv = list(sys.argv)
+
+    if "--test" in argv or "--pdb" in argv:
         DEFAULT_LOGGING_CONFIG['handlers']['console']['level'] = 'DEBUG'
     logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
-    setup()
-    argv = list(sys.argv)
+
     use_pdb = "--pdb" in argv
     if use_pdb:
         argv.remove("--pdb")
         objc.setVerbose(1)
+
     if "--test" in argv:
-        import noserunner
-        sys.exit(not noserunner.run(argv))
+        from noserunner import TestApplication
+        app = TestApplication(argv)
     else:
-        AppHelper.runEventLoop(argv, errlog.unexpected_error, pdb=use_pdb)
+        from editxt.application import Application
+        app = Application()
+    init(app)
+
+    AppHelper.runEventLoop(argv, errlog.unexpected_error, pdb=use_pdb)
 
 if __name__ == '__main__':
     main()

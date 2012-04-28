@@ -27,6 +27,7 @@ import sys
 import editxt
 import test_editxt
 import test_editxt.mockerext as mockerext
+from editxt.application import Application
 from test_editxt.util import unittest_print_first_failures_last, \
     install_nose_tools_better_eq, install_pdb_trace_for_nose
 
@@ -52,16 +53,6 @@ def run(argv=None):
     install_pdb_trace_for_nose()
     mockerext.install()
     os.chdir(os.path.dirname(test_editxt.__file__))
-
-    # HACK create shared document controller for tests
-    from editxt.application import DocumentController
-    DocumentController.alloc().init()
-
-    # Initialize NSApplication before running tests to prevent error:
-    # kCGErrorInvalidConnection: CGSGetCurrentCursorLocation: Invalid connection
-    # http://lists.apple.com/archives/Cocoa-dev/2002/Jun/msg01403.html
-    from AppKit import NSApplication
-    NSApplication.sharedApplication()
 
     if argv is None:
         argv = list(sys.argv)
@@ -111,6 +102,23 @@ def run(argv=None):
         sys.stdout.write("\n")
 
     return nose.run(argv=argv, addplugins=plugins)
+
+
+class TestApplication(Application):
+
+    def __init__(self, argv):
+        self.argv = argv
+        super(TestApplication, self).__init__()
+
+    def application_will_finish_launching(self, app, doc_ctrl):
+        try:
+            run(self.argv)
+        finally:
+            from AppKit import NSApp
+            NSApp().terminate_(NSApp())
+
+    def app_will_terminate(self, app):
+        pass # do not call super, which saves document settings
 
 
 skipdebug = [""]
