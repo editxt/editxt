@@ -419,7 +419,7 @@ class DocumentSavingDelegate(NSObject):
         document.canCloseDocumentWithDelegate_shouldCloseSelector_contextInfo_(
             self, "document:shouldClose:contextInfo:", 0)
 
-    @objc.signature('v@:@ci')
+    @objc.typedSelector('v@:@ci')
     def document_shouldClose_contextInfo_(self, doc, should_close, context):
         self.document_called_back = True
         if not should_close:
@@ -428,7 +428,7 @@ class DocumentSavingDelegate(NSObject):
         if self.sheet_did_end:
             self.save_next_document()
 
-    @objc.signature('v@:@')
+    @objc.typedSelector('v@:@')
     def windowDidEndSheet_(self, notification):
         self.sheet_did_end = True
         NSNotificationCenter.defaultCenter().removeObserver_name_object_(

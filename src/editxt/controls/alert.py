@@ -29,13 +29,13 @@ log = logging.getLogger("editxt.controls.alert")
 
 class Caller(NSObject):
 
-    @objc.namedselector("init:")
+    @objc.namedSelector("init:")
     def init(self, callback):
         self = super(Caller, self).init()
         self.callback = callback
         return self
 
-    @objc.signature('v@:@ii')
+    @objc.typedSelector('v@:@ii')
     def alertDidEnd_returnCode_contextInfo_(self, alert, code, context):
         self.callback(code)
 

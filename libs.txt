@@ -23,4 +23,4 @@ modulegraph==0.8
 py2app==0.5.2
 nose==0.11.4
 mocker==1.0
-pyobjc==2.2
+#pyobjc==2.3

@@ -199,7 +199,7 @@ class ThinSplitView(NSSplitView):
 
 class RedrawOnAnimationEndedDelegate(NSObject):
 
-    @objc.namedselector("init:")
+    @objc.namedSelector("init:")
     def init(self, view):
         super(RedrawOnAnimationEndedDelegate, self).init()
         self.view = view

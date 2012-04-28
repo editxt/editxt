@@ -66,15 +66,13 @@ def test_create_and_init():
 
 @check_app_state
 def test_create_with_path():
-    m = Mocker()
     path = "/temp/non-existent/project.edxt"
     assert not os.path.exists(path)
-    with m:
-        result = Project.create_with_path(path)
-        try:
-            eq_(result.path, path)
-        finally:
-            result.close()
+    result = Project.create_with_path(path)
+    try:
+        eq_(result.path, path)
+    finally:
+        result.close()
 
 @check_app_state
 def test_create_with_serial():
@@ -531,7 +529,7 @@ def test_close():
         docs.append(dv)
         dv.close()
     iter(proj._documents); m.generate(docs)
-    proj._documents.__length_hint__ >> len(docs)
+    #proj._documents.__length_hint__ >> len(docs)
     #proj._documents.setItems_([])
     with m:
         proj.close()

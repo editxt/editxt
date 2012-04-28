@@ -335,7 +335,7 @@ class TextDocumentView(NSObject):
         else:
             editor.discard_and_focus_recent(self)
 
-    @objc.signature('v@:@ii')
+    @objc.typedSelector('v@:@ii')
     def document_shouldClose_contextInfo_(self, doc, should_close, info):
         editor = app.context.pop(info)
         if should_close:

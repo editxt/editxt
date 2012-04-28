@@ -265,7 +265,7 @@ def perform_selector(delegate, selector, *args):
 class Invoker(NSObject):
     """NSInvocation factory for python methods"""
 
-    @objc.namedselector("init:")
+    @objc.namedSelector("init:")
     def init(self, callback):
     	self = super(Invoker, self).init()
         self.callback = callback
@@ -379,7 +379,7 @@ class KVOLink(object):
 
 class _KVOLink(NSObject):
 
-    @objc.namedselector("init:")
+    @objc.namedSelector("init:")
     def init(self, subjects):
         self = super(_KVOLink, self).init()
         self.subjects = subjects

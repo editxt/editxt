@@ -17,34 +17,42 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    set indent level: 4 spaces
+Building and packaging
 
-# Python environment setup
-# RECOMMENDED/OPTIONAL setup virtualenv (http://pypi.python.org/pypi/virtualenv)
-# install pip (http://pypi.python.org/pypi/pip)
-# install dependencies:
-$ pip install --requirement=libs.txt
+Python environment setup. RECOMMENDED: use a virtualenv
+(http://pypi.python.org/pypi/virtualenv). Install dependencies::
 
-# build development/test bundle (EditXTDev.app, necessary for ./editxt script)
-$ python setup.py py2app -A
+    pip install --requirement=libs.txt
 
-# run all tests
-./editxt --test
+    # pyobjc installation is tricky (this sequence worked on Python 2.7.3)
+    easy_install "pyobjc==2.3"
+    easy_install "pyobjc-core==2.3"
+    easy_install "pyobjc==2.3"
+    easy_install "pyobjc==2.3"
 
-# run a single test
-./editxt --test --tests test_editxt.test_document:TestTextDocument.test_get_with_path_1
+Build development/test bundle (EditXTDev.app, necessary for ./editxt script)::
 
-# run test automation
-./editxt --nosy
+    python setup.py py2app -A
 
-# run EditXT in dev mode
-./editxt
+Run tests::
 
-# build EditXT.app
-$ python setup.py py2app
+    ./editxt --test
 
-# build EditXT.app and package in a zip file for distribution
-$ python setup.py py2app --package
+    # single test::
+    ./editxt --test --tests test_editxt.test_document:TestTextDocument.test_get_with_path_1
+
+    # test automation
+    ./editxt --nosy
+
+    # run EditXT in dev mode
+    ./editxt
+
+Build/package EditXT.app::
+
+    python setup.py py2app
+
+    # package in a zip file for distribution::
+    python setup.py py2app --package
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority (these should all be listed under TODO as well)
@@ -482,6 +490,10 @@ Log filtering
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Completed tasks
+
+x Error: The Text Document type doesn't map to any NSDocumentClass
+x   Problem: constants.TEXT_DOCUMENT is set to the value of CFBundleTypeName
+x   Solution: it should be set to the value of an item in LSItemContentTypes
 
 x Bug: save after auto-reload prompts "The location of the document XXX cannot be determined"
 x # Take 1
