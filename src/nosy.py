@@ -17,12 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import glob,os,stat,time
+import nose
 import subprocess
 import sys
-
-import nose
-
+import threading
 from datetime import datetime
+
+try:
+    import fsevents
+except ImportError:
+    fsevents = None
 
 CHECK_EXTS = (".py",) # ".nib")
 
@@ -45,27 +49,78 @@ def modulize(paths, relto):
 def set_title(value):
     sys.stdout.write('\033]0;%s\007' % value)
 
-def start(root=None, wait=2):
+def polling_fs_runner(root, callback, rate=2):
     status = {}
+    val=0
+    try:
+        while True:
+            testfiles = list(check(root, status))
+            if testfiles:
+                callback(testfiles)
+            time.sleep(rate)
+    except KeyboardInterrupt:
+        pass
+
+def mac_fs_events_runner(root, callback):
+    monitor_mask = (
+        fsevents.IN_MODIFY |
+        fsevents.IN_CREATE |
+        fsevents.IN_DELETE |
+        fsevents.IN_MOVED_FROM |
+        fsevents.IN_MOVED_TO
+    )
+    def set_callback_event(event):
+        if event.mask & monitor_mask and event.name.endswith(CHECK_EXTS):
+            files.append(event.name)
+            callback_event.set()
+    files = []
+    callback_event = threading.Event()
+    stream = fsevents.Stream(set_callback_event, root, file_events=True)
+    observer = fsevents.Observer()
+    observer.schedule(stream)
+    observer.start()
+    callback_event.set() # set initially to invoke callback immediately
+    try:
+        while True:
+            if callback_event.wait(5):
+                callback_event.clear()
+                testfiles, files = files, []
+                callback(testfiles)
+    except:
+        observer.unschedule(stream)
+        observer.stop()
+        observer.join()
+
+def make_test_callback(srcpath):
+    def run_tests(testfiles):
+        testmods = list(modulize(testfiles, srcpath))
+        set_title('testing...')
+        testmods.append("--test-all-on-pass")
+        print "\n" + "#" * 70
+        result = subprocess.call(sys.argv + testmods)
+        set_title('FAIL' if result else 'OK')
+        print datetime.now().strftime("%m/%d/%Y %H:%M:%S").rjust(70), " ",
+        sys.stdout.flush()
+    return run_tests
+
+def start(root=None, wait=2):
     if root is None:
         root = os.getcwd()
     srcpath = root + os.sep
     assert os.path.exists(srcpath)
-    val=0
+
+    if fsevents is not None:
+        print 'using MacFSEvents'
+        test_runner = mac_fs_events_runner
+    else:
+        print 'using polling test runner (slow, inefficient)'
+        test_runner = polling_fs_runner
+    run_tests = make_test_callback(srcpath)
     try:
-        while (True):
-            testmods = list(modulize(check(root, status), srcpath))
-            if testmods:
-                set_title('testing...')
-                testmods.append("--test-all-on-pass")
-                print "\n" + "#" * 70
-                result = subprocess.call(sys.argv + testmods)
-                set_title('FAIL' if result else 'OK')
-                print datetime.now().strftime("%m/%d/%Y %H:%M:%S").rjust(70), " ",
-                sys.stdout.flush()
-            time.sleep(wait)
+        test_runner(root, run_tests)
     finally:
         set_title('')
+        print
 
 if __name__ == "__main__":
     start()

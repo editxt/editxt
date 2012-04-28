@@ -30,6 +30,9 @@ Python environment setup. RECOMMENDED: use a virtualenv
     easy_install "pyobjc==2.3"
     easy_install "pyobjc==2.3"
 
+    # optional (for efficient test runner)
+    pip install MacFSEvents
+
 Build development/test bundle (EditXTDev.app, necessary for ./editxt script)::
 
     python setup.py py2app -A
