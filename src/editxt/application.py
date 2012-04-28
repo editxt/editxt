@@ -29,7 +29,7 @@ from PyObjCTools import AppHelper
 
 import editxt
 import editxt.constants as const
-from editxt.errorlog import ErrorLog
+from editxt.errorlog import errlog
 from editxt.util import ContextMap, perform_selector, untested
 from editxt.valuetrans import register_value_transformers
 
@@ -48,7 +48,6 @@ class Application(object):
         self.editors = []
         self.path_opener = None
         self.context = ContextMap()
-        self.error_log = ErrorLog.log()
         register_value_transformers()
 
     @classmethod
@@ -126,7 +125,7 @@ class Application(object):
 
     def open_error_log(self, set_current=True):
         from editxt.document import TextDocumentView
-        doc = self.error_log.document
+        doc = errlog.document
         try:
             view = self.iter_views_of_document(doc).next()
         except StopIteration:

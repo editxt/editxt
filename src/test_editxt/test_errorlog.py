@@ -42,9 +42,9 @@ log = logging.getLogger("test_editxt.text_errorlog")
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ErrorConsoleView tests
 
-def test_ErrorLog_log():
-    el = ErrorLog.log()
-    assert ErrorLog.log() is el
+#def test_ErrorLog_log():
+#    el = ErrorLog.log()
+#    assert ErrorLog.log() is el
 
 def test_ErrorLog_init():
     el = ErrorLog()

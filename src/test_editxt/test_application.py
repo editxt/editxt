@@ -62,7 +62,6 @@ def test_application_init():
         app = Application()
         eq_(app.editors, [])
         assert isinstance(app.context, ContextMap)
-        assert isinstance(app.error_log, ErrorLog)
 
 def test_app_support_path():
     def test(c):
@@ -232,6 +231,7 @@ def test_open_documents_with_paths():
 
 
 def test_open_error_log():
+    import editxt.application as mod
     from editxt.errorlog import ErrorLog
     def test(c):
         m = Mocker()
@@ -239,7 +239,7 @@ def test_open_error_log():
         dv = m.mock(TextDocumentView)
         dv_class = m.replace(TextDocumentView)
         app = Application()
-        err = m.property(app.error_log, "document").value >> m.mock(TextDocument)
+        err = m.property(mod.errlog, "document").value >> m.mock(TextDocument)
         idocs = m.method(app.iter_views_of_document)(err) >> m.mock()
         if c.is_open:
             idocs.next() >> dv

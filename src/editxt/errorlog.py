@@ -32,13 +32,6 @@ class ErrorLog(object):
     implements the portion of the file protocol needed by logging.StreamHandler
     """
 
-    @classmethod
-    def log(cls):
-        global _log
-        if _log is None:
-            _log = ErrorLog()
-        return _log
-
     def __init__(self):
         self.text = NSTextStorage.alloc().initWithString_attributes_(u"", {})
         self._document = None
@@ -91,3 +84,5 @@ def create_error_log_document(closefunc):
                 closefunc()
                 super(ErrorLogDocument, self).close()
     return ErrorLogDocument.alloc().init()
+
+errlog = ErrorLog()
