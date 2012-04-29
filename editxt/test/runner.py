@@ -23,6 +23,7 @@ import nose.tools
 import pdb
 import os
 import sys
+from os.path import abspath, dirname
 
 import editxt
 import editxt.test
@@ -45,14 +46,14 @@ def run(argv=None):
      --with-test-timer : print the ten slowest tests after the test run
      --test-all-on-pass : run all tests if specified tests pass
     """
-    srcpath = os.path.dirname(__file__)
+    srcpath = dirname(dirname(abspath(editxt.__file__)))
 
     editxt.testing = True # for editxt.utils.untested
     unittest_print_first_failures_last()
     install_nose_tools_better_eq()
     install_pdb_trace_for_nose()
     mockerext.install()
-    os.chdir(os.path.dirname(editxt.__file__))
+    os.chdir(srcpath)
 
     if argv is None:
         argv = list(sys.argv)
@@ -67,14 +68,14 @@ def run(argv=None):
         if mod.startswith("-"):
             argv.insert(index, mod)
             break
-        if mod.endswith("__init__"):
+        if mod.endswith(("__init__", "runner")):
             continue
-        if mod.startswith("editxt."):
-            mod = ".test.test_".join(mod.rsplit(".", 1))
-        elif mod.startswith("test_"):
+        if mod.startswith("editxt.test."):
             pkg, name = mod.rsplit(".", 1)
             if not name.startswith("test_"):
                 mod = pkg + ".test_" + name
+        elif mod.startswith("editxt."):
+            mod = ".test.test_".join(mod.rsplit(".", 1))
         else:
             continue
         path = os.path.join(srcpath, mod.replace(".", os.sep) + ".py")
@@ -85,7 +86,7 @@ def run(argv=None):
             argv.insert(index, rawmod)
             index += 1
 
-    #augment_tests(testmods)
+    #augment_checks(testmods)
     plugins = [TestTimerPlugin()]
 
     testall = "--test-all-on-pass" in argv
@@ -123,7 +124,7 @@ class TestApplication(Application):
 
 skipdebug = [""]
 
-def augment_tests(testmods):
+def augment_checks(testmods):
     """temporary test augmentation to track down errors that only show up
     when tests were run in a nondeterministic order
     """
