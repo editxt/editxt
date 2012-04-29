@@ -24,7 +24,7 @@ from Foundation import NSRange
 
 from editxt.util import load_image
 
-log = logging.getLogger("editxt.controls.splitview")
+log = logging.getLogger(__name__)
 
 
 class ThinSplitView(NSSplitView):

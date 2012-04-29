@@ -29,7 +29,7 @@ from Foundation import *
 import editxt.constants as const
 from editxt.commandbase import SheetController
 
-log = logging.getLogger("editxt.changeindent")
+log = logging.getLogger(__name__)
 
 
 class ChangeIndentationController(SheetController):

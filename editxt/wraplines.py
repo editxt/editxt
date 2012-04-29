@@ -30,7 +30,7 @@ import editxt.constants as const
 from editxt.commandbase import SheetController
 from editxt.textcommand import iterlines
 
-log = logging.getLogger("editxt.wraplines")
+log = logging.getLogger(__name__)
 
 WHITESPACE = re.compile(r"[ \t]*")
 

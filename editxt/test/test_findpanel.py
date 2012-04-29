@@ -35,7 +35,7 @@ from editxt.controls.textview import TextView
 from editxt.findpanel import FindController, FindOptions, FoundRange
 from editxt.findpanel import FORWARD, BACKWARD
 
-log = logging.getLogger("editxt.text_findpanel")
+log = logging.getLogger(__name__)
 
 # log.debug("""TODO
 #     implement TextDocumentView.pasteboard_data()

@@ -35,7 +35,7 @@ from editxt.changeindent import ChangeIndentationController
 from editxt.controls.textview import TextView
 from editxt.document import TextDocumentView
 
-log = logging.getLogger("editxt.test_changeindent")
+log = logging.getLogger(__name__)
 
 
 def test_ChangeIndentationController_load_options():

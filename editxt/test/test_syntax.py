@@ -34,7 +34,7 @@ import editxt.constants as const
 from editxt.syntax import SyntaxFactory, SyntaxCache, SyntaxDefinition
 from editxt.syntax import NoHighlight, PLAIN_TEXT
 
-log = logging.getLogger("editxt.text_syntax")
+log = logging.getLogger(__name__)
 
 def test_SyntaxFactory_init():
     sf = SyntaxFactory()

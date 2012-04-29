@@ -37,7 +37,7 @@ from editxt.project import Project
 
 from editxt.test.util import do_method_pass_through, TestConfig
 
-log = logging.getLogger("test_editxt.test_application")
+log = logging.getLogger(__name__)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # test editxt.app global

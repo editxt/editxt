@@ -27,7 +27,7 @@ from objc import Category
 from editxt.controls.cells import HoverButtonCell
 from editxt.util import representedObject
 
-log = logging.getLogger("editxt.controls.outlineview")
+log = logging.getLogger(__name__)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

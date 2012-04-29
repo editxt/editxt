@@ -37,7 +37,7 @@ from editxt.valuetrans import register_value_transformers
 # DistutilsPlatformError: invalid Python installation: unable to open ...
 # .../Editxt.app/Contents/Resources/include/python2.5/pyconfig.h (No such file or directory)
 
-log = logging.getLogger("editxt.application")
+log = logging.getLogger(__name__)
 
 
 doc_id_gen = count()

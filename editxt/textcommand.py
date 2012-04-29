@@ -29,7 +29,7 @@ from Foundation import *
 import editxt.constants as const
 from editxt.util import register_undo_callback
 
-log = logging.getLogger("editxt.textcommand")
+log = logging.getLogger(__name__)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Text command system interface

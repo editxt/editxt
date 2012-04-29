@@ -37,7 +37,7 @@ from editxt.document import TextDocumentView, TextDocument, doc_id_gen
 from editxt.util import KVOList, untested
 
 
-log = logging.getLogger("editxt.project")
+log = logging.getLogger(__name__)
 
 
 class Project(NSObject):

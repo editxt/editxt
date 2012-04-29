@@ -30,7 +30,7 @@ import editxt.constants as const
 
 from editxt.test.util import TestConfig
 
-log = logging.getLogger("editxt.test_valuetrans")
+log = logging.getLogger(__name__)
 
 
 def test_wrap_mode_transformer():

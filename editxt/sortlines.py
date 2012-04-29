@@ -30,7 +30,7 @@ import editxt.constants as const
 from editxt.commandbase import SheetController
 from editxt.textcommand import iterlines
 
-log = logging.getLogger("editxt.sortlines")
+log = logging.getLogger(__name__)
 
 
 class SortLinesController(SheetController):

@@ -38,7 +38,7 @@ from editxt.util import representedObject
 
 from editxt.test.util import do_method_pass_through, TestConfig
 
-log = logging.getLogger("editxt.test_editor")
+log = logging.getLogger(__name__)
 # log.debug("""TODO test
 #     Editor.iter_dropped_paths
 #     Editor.iter_dropped_id_list

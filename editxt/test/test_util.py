@@ -31,7 +31,7 @@ import editxt.constants as const
 from editxt.util import KVOList
 from editxt.test.util import TestConfig
 
-log = logging.getLogger("editxt.test_util")
+log = logging.getLogger(__name__)
 
 def test_create_kvolist():
     lst = KVOList.alloc().init()

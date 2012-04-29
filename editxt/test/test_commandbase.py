@@ -36,7 +36,7 @@ from editxt.commandbase import BaseCommandController, Options
 from editxt.commandbase import SheetController, PanelController
 from editxt.util import KVOProxy
 
-log = logging.getLogger("editxt.test_commandbase")
+log = logging.getLogger(__name__)
 
 def setup(controller_class, nib_name="TestController"):
     def setup_controller(func):

@@ -28,7 +28,7 @@ import nose.tools
 
 from editxt.util import untested
 
-log = logging.getLogger("editxt.util")
+log = logging.getLogger(__name__)
 
 
 def todo_remove(obj):

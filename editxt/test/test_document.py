@@ -38,7 +38,7 @@ from editxt.document import TextDocument, TextDocumentView
 from editxt.project import Project
 from editxt.util import KVOList
 
-log = logging.getLogger("editxt.text_document")
+log = logging.getLogger(__name__)
 
 # log.debug("""TODO
 #     implement TextDocumentView.pasteboard_data()

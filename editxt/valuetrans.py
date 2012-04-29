@@ -25,7 +25,7 @@ from Foundation import *
 
 import editxt.constants as const
 
-log = logging.getLogger("editxt.valuetrans")
+log = logging.getLogger(__name__)
 
 
 class KeyValueTransformer(NSValueTransformer):

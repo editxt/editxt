@@ -27,7 +27,7 @@ from Foundation import *
 from editxt import app
 from editxt.util import untested
 
-log = logging.getLogger("editxt.controls.linenumberview")
+log = logging.getLogger(__name__)
 
 
 class LineNumberView(NSRulerView):

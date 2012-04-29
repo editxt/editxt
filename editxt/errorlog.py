@@ -22,7 +22,7 @@ from AppKit import NSTextStorage, NSDocument, NSChangeDone, NSChangeCleared
 
 import editxt.constants as const
 
-log = logging.getLogger("editxt.errorlog")
+log = logging.getLogger(__name__)
 
 _log = None
 

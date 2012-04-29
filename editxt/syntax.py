@@ -34,7 +34,7 @@ from Foundation import NSRange, NSUnionRange
 
 import editxt.constants as const
 
-log = logging.getLogger("editxt.syntax")
+log = logging.getLogger(__name__)
 
 
 SYNTAX_RANGE_ATTRIBUTE = u"SYNTAX_RANGE_ATTRIBUTE"

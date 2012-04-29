@@ -30,7 +30,7 @@ import editxt.constants as const
 
 from editxt.textcommand import TextCommand, TextCommandController
 
-log = logging.getLogger("editxt.test_textcommand")
+log = logging.getLogger(__name__)
 
 
 def test_TextCommand():

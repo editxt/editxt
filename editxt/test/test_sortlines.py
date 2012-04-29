@@ -34,7 +34,7 @@ import editxt.constants as const
 from editxt.controls.textview import TextView
 from editxt.sortlines import SortLinesController, sortlines
 
-log = logging.getLogger("editxt.test_sortlines")
+log = logging.getLogger(__name__)
 
 
 def test_SortLinesController_sort_():

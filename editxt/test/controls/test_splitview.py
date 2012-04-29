@@ -32,7 +32,7 @@ import editxt.constants as const
 from editxt.controls.splitview import ThinSplitView, RedrawOnAnimationEndedDelegate
 from editxt.controls.splitview import SliderImageView
 
-log = logging.getLogger("editxt.controls.text_splitview")
+log = logging.getLogger(__name__)
 
 # log.debug("""TODO
 #     implement TextDocumentView.pasteboard_data()

@@ -24,7 +24,7 @@ import objc
 from AppKit import *
 from Foundation import *
 
-log = logging.getLogger("editxt.controls.tableview")
+log = logging.getLogger(__name__)
 
 
 class TableView(NSOutlineView):

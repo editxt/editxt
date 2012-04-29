@@ -36,7 +36,7 @@ from editxt.project import Project
 from editxt.util import KVOList, RecentItemStack, load_image, perform_selector
 from editxt.util import untested, message, representedObject
 
-log = logging.getLogger("editxt.editor")
+log = logging.getLogger(__name__)
 
 class Error(Exception): pass
 

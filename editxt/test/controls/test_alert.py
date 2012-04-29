@@ -28,7 +28,7 @@ from Foundation import *
 
 from editxt.controls.alert import Alert, Caller
 
-log = logging.getLogger("editxt.controls.test_alert")
+log = logging.getLogger(__name__)
 
 
 def test_Caller_alertDidEnd_returnCode_contextInfo_signature():

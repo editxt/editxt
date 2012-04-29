@@ -23,7 +23,7 @@ from AppKit import *
 from Foundation import *
 
 
-log = logging.getLogger("editxt.controls.statscrollview")
+log = logging.getLogger(__name__)
 
 
 class StatusbarScrollView(NSScrollView):

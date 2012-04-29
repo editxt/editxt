@@ -40,7 +40,7 @@ from editxt.textcommand import replace_newlines, change_indentation
 from editxt.util import KVOList, KVOProxy, KVOLink, untested, refactor
 from editxt.util import fetch_icon, filestat, register_undo_callback
 
-log = logging.getLogger("editxt.document")
+log = logging.getLogger(__name__)
 
 class Error(Exception): pass
 

@@ -31,7 +31,7 @@ from editxt.test.util import TestConfig, untested
 import editxt.constants as const
 from editxt.controls.textview import TextView
 
-log = logging.getLogger("editxt.controls.text_textview")
+log = logging.getLogger(__name__)
 
 # log.debug("""TODO
 #     implement TextDocumentView.pasteboard_data()

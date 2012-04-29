@@ -28,7 +28,7 @@ from Foundation import *
 
 import editxt.constants as const
 
-log = logging.getLogger("editxt.util")
+log = logging.getLogger(__name__)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # testing annotation utilities

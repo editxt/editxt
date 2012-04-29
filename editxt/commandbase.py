@@ -31,7 +31,7 @@ from editxt import app
 from editxt.controls.alert import Caller
 from editxt.util import KVOProxy, KVOLink
 
-log = logging.getLogger("editxt.sortlines")
+log = logging.getLogger(__name__)
 
 
 class Options(object):

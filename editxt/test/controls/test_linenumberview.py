@@ -32,7 +32,7 @@ import editxt.constants as const
 from editxt.controls.linenumberview import LineNumberView
 from editxt.controls.textview import TextView
 
-log = logging.getLogger("editxt.controls.text_linenumberview")
+log = logging.getLogger(__name__)
 
 # log.debug("""TODO
 #     implement TextDocumentView.pasteboard_data()

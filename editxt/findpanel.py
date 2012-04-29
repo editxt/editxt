@@ -31,7 +31,7 @@ from editxt import app
 from editxt.commandbase import PanelController, Options
 from editxt.util import KVOProxy, KVOLink
 
-log = logging.getLogger("editxt.findpanel")
+log = logging.getLogger(__name__)
 
 
 ACTION_FIND_SELECTED_TEXT = 101

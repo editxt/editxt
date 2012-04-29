@@ -28,7 +28,7 @@ import editxt.constants as const
 from editxt import app
 from editxt.findpanel import FindController
 
-log = logging.getLogger("editxt.controls.textview")
+log = logging.getLogger(__name__)
 
 
 class TextView(NSTextView):

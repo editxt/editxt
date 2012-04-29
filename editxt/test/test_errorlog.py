@@ -33,7 +33,7 @@ from editxt.test.util import TestConfig, untested, check_app_state
 import editxt.constants as const
 from editxt.errorlog import ErrorLog, create_error_log_document
 
-log = logging.getLogger("test_editxt.text_errorlog")
+log = logging.getLogger(__name__)
 
 # log.debug("""TODO
 #     implement TextDocumentView.pasteboard_data()

@@ -34,7 +34,7 @@ import editxt.constants as const
 from editxt.controls.textview import TextView
 from editxt.wraplines import WrapLinesController, wrap_selected_lines, wraplines
 
-log = logging.getLogger("editxt.test_wraplines")
+log = logging.getLogger(__name__)
 
 
 def test_WrapLinesController_wrap_():

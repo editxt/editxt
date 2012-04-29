@@ -35,7 +35,7 @@ from editxt.project import Project
 
 from editxt.test.util import TestConfig, check_app_state
 
-log = logging.getLogger("editxt.test_project")
+log = logging.getLogger(__name__)
 # log.debug("""TODO
 #     Project.is_dirty - should be True after a document is dragged within the project
 # """)
