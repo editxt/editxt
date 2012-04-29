@@ -64,6 +64,18 @@ find/replace text processors
 work on projects
 wrap text at column command
 
+
+Used this (wrong) command to replace test_editxt:
+
+    find editxt -type f -exec sed -i "" 's/test_editxt/editxt/g' {} \;
+
+Should have used this:
+
+    find editxt -type f -exec sed -i "" 's/test_editxt/editxt.test/g' {} \;
+
+
+find editxt -type f -exec sed -i "" 's/logging.getLogger\\("[^"]+"\\)/logging.getLogger(__name__)/g' {} \;
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Bugs
 

@@ -3,7 +3,7 @@
 .DS_Store
 /build
 /dist
+/editxt/test/.noseids
 /pages
 /virtualenv
 /ztemp
-/src/test_editxt/.noseids

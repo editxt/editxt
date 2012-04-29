@@ -23,7 +23,7 @@ import shutil
 import sys
 
 from datetime import datetime
-from distutils.core import setup
+from setuptools import setup
 from subprocess import Popen, PIPE
 
 if hasattr(sys, 'real_prefix'):
@@ -47,7 +47,6 @@ if "-A" in sys.argv:
 else:
     dev = False
     appname = "EditXT"
-    sys.path.append("src")
 
 package = ('--package' in sys.argv)
 if package:
@@ -89,14 +88,14 @@ else:
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 setup(
     name=appname,
-    app=['src/main.py'],
+    app=['boot.py'],
     options=dict(py2app=dict(
         # argv_emulation causes the app to launch in a strange mode that does
         # not play nicely with Exposé (the window does not come to the front
         # when switching to EditXT with Exposé). Luckily everything seems to
         # work as expected without it!!
         #argv_emulation=True,
-        #packages=["test_editxt"],
+        packages=["editxt"],
         #frameworks=["lib/Frameworks/NDAlias.framework"],
         plist=dict(
             CFBundleGetInfoString = "%s %s.%s" % (version, revision, gitrev),
