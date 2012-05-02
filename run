@@ -27,7 +27,7 @@ if "--nosy" in sys.argv:
     import editxt.test.nosy as nosy
     sys.argv.remove("--nosy")
     sys.argv.append("--test")
-    nosy.start(root=thisdir)
+    nosy.start(root=os.path.join(thisdir, 'editxt'))
 else:
     cmd = list(sys.argv) + ["--pdb"]
     cmd[0] = os.path.join(thisdir, "dist/EditXTDev.app/Contents/MacOS/EditXTDev")

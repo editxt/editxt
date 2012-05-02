@@ -1,9 +1,9 @@
 *.pyc
 *~.nib
 .DS_Store
+.noseids
 /build
 /dist
-/editxt/test/.noseids
 /pages
 /virtualenv
 /ztemp

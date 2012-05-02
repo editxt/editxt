@@ -1,5 +1,5 @@
 # EditXT
-# Copyright (c) 2007-2010 Daniel Miller <millerdev@gmail.com>
+# Copyright 2007-2012 Daniel Miller <millerdev@gmail.com>
 # 
 # This file is part of EditXT, a programmer's text editor for Mac OS X,
 # which can be found at http://editxt.org/.
@@ -21,6 +21,6 @@ altgraph==0.7.0
 macholib==1.3
 modulegraph==0.8
 py2app==0.5.2
-nose==0.11.4
+nose==1.1.2
 mocker==1.0
 #pyobjc==2.3

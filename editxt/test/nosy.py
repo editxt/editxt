@@ -16,12 +16,14 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import print_function
 import glob,os,stat,time
 import nose
 import subprocess
 import sys
 import threading
 from datetime import datetime
+from nose.tools import nottest
 
 try:
     import fsevents
@@ -91,15 +93,16 @@ def mac_fs_events_runner(root, callback):
         observer.stop()
         observer.join()
 
+@nottest
 def make_test_callback(srcpath):
     def run_tests(testfiles):
         testmods = list(modulize(testfiles, srcpath))
         set_title('testing...')
         testmods.append("--test-all-on-pass")
-        print "\n" + "#" * 70
+        print("\n" + "#" * 70)
         result = subprocess.call(sys.argv + testmods)
         set_title('FAIL' if result else 'OK')
-        print datetime.now().strftime("%m/%d/%Y %H:%M:%S").rjust(70), " ",
+        print(datetime.now().strftime("%m/%d/%Y %H:%M:%S").rjust(70) + " ")
         sys.stdout.flush()
     return run_tests
 
@@ -107,20 +110,20 @@ def start(root=None, wait=2):
     if root is None:
         root = os.getcwd()
     srcpath = root + os.sep
-    assert os.path.exists(srcpath)
+    assert os.path.exists(srcpath), srcpath
 
     if fsevents is not None:
-        print 'using MacFSEvents'
+        print('using MacFSEvents to watch %s' % root)
         test_runner = mac_fs_events_runner
     else:
-        print 'using polling test runner (slow, inefficient)'
+        print('using (slow) polling test runner to watch %s' % root)
         test_runner = polling_fs_runner
     run_tests = make_test_callback(srcpath)
     try:
         test_runner(root, run_tests)
     finally:
         set_title('')
-        print
+        print()
 
 if __name__ == "__main__":
     start()
