@@ -1,5 +1,5 @@
 EditXT - a programmer's text editor for Mac OS X
-Copyright (c) 2007-2010 Daniel Miller <millerdev@gmail.com>
+Copyright 2007-2012 Daniel Miller <millerdev@gmail.com>
 Website: http://editxt.org/
 
 EditXT is free software: you can redistribute it and/or modify

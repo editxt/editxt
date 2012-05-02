@@ -1,5 +1,5 @@
 EditXT
-Copyright (c) 2007-2010 Daniel Miller <millerdev@gmail.com>
+Copyright 2007-2012 Daniel Miller <millerdev@gmail.com>
 
 This file is part of EditXT, a programmer's text editor for Mac OS X,
 which can be found at http://editxt.org/.
@@ -22,7 +22,7 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
-????-??-?? - 1.x.x
+????-??-?? - 1.1.0
   - Added non-padded (un)comment text command. This is now the default comment
     mode (SHIFT+COMMA). Moved old command to SHIFT+COMMAND+COMMA.
   - Improve button text in find/replace dialog.
@@ -32,6 +32,9 @@ the source repository for the gory details of what actually happened.
   - Fixed bug: crash on OS X Lion due to no current project in settings file on
     launch. 'NSNull' object has no attribute 'indexAtPosition_' in editor.py
     line 290, in get_current_project.
+  - Internal: upgrade to PyObjC 2.3 and Python 2.7.3.
+  - Internal: improve logging configuration.
+  - Internal: major package reorganization.
 
 2010-10-13 - 1.0.1 - Fixed undo and document pane hover bugs.
 

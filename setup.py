@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # EditXT
-# Copyright (c) 2007-2010 Daniel Miller <millerdev@gmail.com>
+# Copyright 2007-2012 Daniel Miller <millerdev@gmail.com>
 #
 # This file is part of EditXT, a programmer's text editor for Mac OS X,
 # which can be found at http://editxt.org/.
@@ -35,7 +35,7 @@ if hasattr(sys, 'real_prefix'):
 
 import py2app
 
-version = "1.0.1"
+version = "1.1.0"
 revision = datetime.now().strftime("%Y%m%d")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -101,7 +101,7 @@ setup(
             CFBundleGetInfoString = "%s %s.%s" % (version, revision, gitrev),
             CFBundleShortVersionString = version,
             CFBundleVersion = revision + "." + gitrev,
-            NSHumanReadableCopyright = u'© 2010 Daniel Miller',
+            NSHumanReadableCopyright = u'© 2012 Daniel Miller',
             CFBundleIdentifier = "org.editxt." + appname,
             CFBundleIconFile = "PythonApplet.icns",
             CFBundleDocumentTypes = [
