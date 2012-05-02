@@ -62,7 +62,6 @@ Top priority (these should all be listed under TODO as well)
 
 find/replace text processors
 work on projects
-wrap text at column command
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Bugs
@@ -493,6 +492,8 @@ Log filtering
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Completed tasks
+
+x wrap text at column command
 
 x Error: The Text Document type doesn't map to any NSDocumentClass
 x   Problem: constants.TEXT_DOCUMENT is set to the value of CFBundleTypeName
