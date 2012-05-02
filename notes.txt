@@ -42,7 +42,7 @@ Run tests::
     ./editxt --test
 
     # single test::
-    ./editxt --test --tests test_editxt.test_document:TestTextDocument.test_get_with_path_1
+    ./editxt --test --tests editxt.test.test_document:TestTextDocument.test_get_with_path_1
 
     # test automation
     ./editxt --nosy

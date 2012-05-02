@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # EditXT
-# Copyright (c) 2007-2010 Daniel Miller <millerdev@gmail.com>
+# Copyright 2007-2012 Daniel Miller <millerdev@gmail.com>
 #
 # This file is part of EditXT, a programmer's text editor for Mac OS X,
 # which can be found at http://editxt.org/.
@@ -282,10 +282,12 @@ def test_context_map_pop_with_default():
 from editxt.util import fetch_icon, load_image, filestat
 
 def test_fetch_icon_data():
+    from os.path import abspath, dirname, join
+    root = dirname(dirname(abspath(__file__)))
     for args in (
         (None, False),
-        ("some/path/that/does/not/exist.txt", False),
-        ("../resources/template.txt", True),
+        ("/some/path/that/does/not/exist.txt", False),
+        (join(root, "../resources/template.txt"), True),
     ):
         yield do_fetch_icon, args
 
