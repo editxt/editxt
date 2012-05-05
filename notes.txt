@@ -465,6 +465,9 @@ x         proj.newTextDocument()
     startup with project
         proj = ProjectDocument(projectPath)
 
+Other editors (ideas)
+    http://www.sublimetext.com/blog/
+
 Show all characters
     http://stackoverflow.com/questions/300086/display-hidden-characters-in-nstextview
 
