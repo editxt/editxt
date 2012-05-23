@@ -115,7 +115,7 @@ class HoverButtonCell(NSButtonCell):
     A single cell instance is used for an entire column in NSOutlineView.
     """
 
-    delegate = objc.ivar("delegate")
+    delegate = objc.IBOutlet()
 
     def _init(self):
         self.setBordered_(False)
