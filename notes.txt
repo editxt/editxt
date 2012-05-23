@@ -25,10 +25,9 @@ Python environment setup. RECOMMENDED: use a virtualenv
     pip install --requirement=libs.txt
 
     # pyobjc installation is tricky (this sequence worked on Python 2.7.3)
-    easy_install "pyobjc==2.3"
     easy_install "pyobjc-core==2.3"
-    easy_install "pyobjc==2.3"
-    easy_install "pyobjc==2.3"
+    easy_install "pyobjc-framework-Cocoa==2.3"
+    easy_install "pyobjc-framework-ExceptionHandling==2.3"
 
     # optional (for efficient test runner)
     pip install MacFSEvents
@@ -62,6 +61,10 @@ Top priority (these should all be listed under TODO as well)
 
 find/replace text processors
 work on projects
+    fix drag/drop: do not copy from project to project unless command is pressed
+save untitled and unsaved documents in a temporary location
+    allow naming unsaved documents like naming projects
+    save undo stack?
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Bugs

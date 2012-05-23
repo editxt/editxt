@@ -123,7 +123,6 @@ class HoverButtonCell(NSButtonCell):
         self.setImagePosition_(NSImageOnly)
         self.hover_info = (None, False) # (<mouse location>, <bool pressed>)
         self.maxImageWidth = 128
-        self.mouseLocation = NSMakePoint(0.0, 0.0)
 
     def init(self):
         self = super(HoverButtonCell, self).init()

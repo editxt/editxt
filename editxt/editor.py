@@ -666,7 +666,7 @@ class EditorWindowController(NSWindowController):
     def hoverButtonCell_imageForState_row_(self, cell, state, row):
         if state is BUTTON_STATE_NORMAL and self.docsView.isRowSelected_(row):
             state = BUTTON_STATE_SELECTED
-        if self.docsView.numberOfRows() > row:
+        if row >= 0 and row < self.docsView.numberOfRows():
             item = self.docsView.itemAtRow_(row)
             doc = self.docsView.realItemForOpaqueItem_(item)
             if doc is not None and doc.is_dirty:

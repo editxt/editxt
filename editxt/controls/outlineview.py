@@ -34,22 +34,21 @@ log = logging.getLogger(__name__)
 # NSTreeControllers and NSOutlineView categories
 
 class NSTreeController(Category(NSTreeController)):
-    # Category to make NSTreeController more useable
-    #
-    # Based on extension by Wil Shipley
-    # http://www.wilshipley.com/blog/2006/04/pimp-my-code-part-10-whining-about.html
-    #
-    # See also:
-    # http://jonathandann.wordpress.com/2008/04/06/using-nstreecontroller/
-    # http://www.cocoabuilder.com/archive/message/cocoa/2008/5/18/207078
+    """Category to make NSTreeController more useable
+
+    Based on extension by Wil Shipley
+    http://www.wilshipley.com/blog/2006/04/pimp-my-code-part-10-whining-about.html
+
+    See also:
+    http://jonathandann.wordpress.com/2008/04/06/using-nstreecontroller/
+    http://www.cocoabuilder.com/archive/message/cocoa/2008/5/18/207078
+    """
 
     def setSelectedObject_(self, obj):
         self.setSelectedObjects_([obj])
 
     def setSelectedObjects_(self, objects):
-        paths = []
-        for obj in objects:
-            paths.append(self.indexPathForObject_(obj))
+        paths = [self.indexPathForObject_(obj) for obj in objects]
         self.setSelectionIndexPaths_(paths)
 
     def objectAtArrangedIndexPath_(self, path):
@@ -91,46 +90,24 @@ class NSTreeController(Category(NSTreeController)):
         return None
 
 class NSOutlineView(Category(NSOutlineView)):
-    # Category to improve usability of NSOutlineView
-    #
-    # Based on extension by Wil Shipley
-    # http://www.wilshipley.com/blog/2006/04/pimp-my-code-part-10-whining-about.html
-    #
-    # See also:
-    # http://jonathandann.wordpress.com/2008/04/06/using-nstreecontroller/
-    # http://www.cocoabuilder.com/archive/message/cocoa/2008/5/18/207078
+    """Category to improve usability of NSOutlineView
+
+    Originally based on extension by Wil Shipley
+    http://www.wilshipley.com/blog/2006/04/pimp-my-code-part-10-whining-about.html
+
+    See also:
+    http://jonathandann.wordpress.com/2008/04/06/using-nstreecontroller/
+    http://www.cocoabuilder.com/archive/message/cocoa/2008/5/18/207078
+    """
 
     def realItemForOpaqueItem_(self, item):
-        realItem, index = self._realItemForOpaqueItem_outlineRowIndex_items_(
-            item, 0, self._treeController().content())
-        return realItem
+        return representedObject(item)
 
     def iterVisibleObjects(self):
         """Iterate (row, visible object) pairs"""
         for row in xrange(self.numberOfRows()):
             item = self.itemAtRow_(row)
             yield row, representedObject(item)
-
-    def _treeController(self):
-        return self.infoForBinding_("content").objectForKey_("NSObservedObject")
-
-    def _realItemForOpaqueItem_outlineRowIndex_items_(self, item, index, realItems):
-        for realItem in realItems:
-            if index >= self.numberOfRows():
-                break
-            opaqueItem = self.itemAtRow_(index)
-            if opaqueItem is item:
-                return realItem, index
-            if self.isItemExpanded_(opaqueItem):
-                childItems = realItem.valueForKeyPath_(
-                    self._treeController().childrenKeyPath())
-                realItem, index = self._realItemForOpaqueItem_outlineRowIndex_items_(
-                    item, index + 1, childItems)
-                if realItem is not None:
-                    return realItem, index
-            else:
-                index += 1
-        return None, index
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

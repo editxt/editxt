@@ -1,10 +1,10 @@
-"""logmeta - a metaclass factory for method call logging
+"""logmeta - a metaclass factory for method call logging (for debugging)
 
 Examples:
 log = logging.getLogger(__name__)
 
 class Document(NSDocument):
-    from logmeta import logmeta
+    from editxt.test.logmeta import logmeta
     __metaclass__ = logmeta(log,
         ignore=["Representation", "eadFromFile", "riteToFile",
             "revertToSavedFromFile_ofType_", "initWithContentsOfFile_ofType_",
@@ -14,9 +14,9 @@ class Document(NSDocument):
     )
 
 class Window(NSWindow):
-    from logmeta import logmeta
+    from editxt.test.logmeta import logmeta
     __metaclass__ = logmeta(log,
-        ingore="(?i)key.*val",
+        ignore="(?i)key.*val",
         override=["[Dd]ocument", "[Ss]ave"],
         verbose="^setDocument_$"
     )
@@ -92,8 +92,9 @@ def logmeta(log, ignore=None, override=None, verbose=None, local_override=False,
                             classdict[attr] = cls.logwrap(classname, attr, item,
                                 baseclass.__name__)
                             wrapped.add(attr)
-            cls.class_ = super(LogMeta, cls).__new__(cls, classname, bases, classdict)
-            return cls.class_
+            return super(LogMeta, cls).__new__(cls, classname, bases, classdict)
+            #cls.class_ = super(LogMeta, cls).__new__(cls, classname, bases, classdict)
+            #return cls.class_
 
         @classmethod
         def logwrap(cls, classname, name, method, basename=None):
@@ -113,7 +114,7 @@ def logmeta(log, ignore=None, override=None, verbose=None, local_override=False,
                         log.info(u"%s.%s(%s) -> %r", _o, name, argstr, rval)
                         return rval
                     except Exception, exc:
-                        log.info(u"%s.%s(%s) raised %s", _o, name, argstr, rval, exc)
+                        log.info(u"%s.%s(%s) raised %s", _o, name, argstr, exc)
                         raise
                 log.info("%s.%s(%s)", _o, name, unicode(argstr).decode("UTF-8"))
                 return f(*args, **kw)
