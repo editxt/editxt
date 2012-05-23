@@ -22,13 +22,14 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
-????-??-?? - 1.1.0
+2012-05-22 - 1.1.0
   - Added non-padded (un)comment text command. This is now the default comment
     mode (SHIFT+COMMA). Moved old command to SHIFT+COMMAND+COMMA.
   - Improve button text in find/replace dialog.
   - Fixed bug in backspace at end of line with trailing whitespace.
   - Fixed bug in document auto-reload which caused a prompt to "Save As..."
     on next save.
+  - Fixed bug: crash on OS X Lion when collapsing project.
   - Fixed bug: crash on OS X Lion due to no current project in settings file on
     launch. 'NSNull' object has no attribute 'indexAtPosition_' in editor.py
     line 290, in get_current_project.
@@ -44,4 +45,3 @@ the source repository for the gory details of what actually happened.
     functional enough for day-to-day use, EditXT was used as the primary
     editor with which to further develop itself. In addition to that,
     EditXT was also used on a daily basis for other software development.
-
