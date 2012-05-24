@@ -318,7 +318,8 @@ class Application(object):
 
 class DocumentController(NSDocumentController):
 
-    textMenu = objc.ivar("textMenu")
+    textMenu = objc.IBOutlet()
+    textEditCommandsMenu = objc.IBOutlet()
 
     @property
     def controller(self):
@@ -456,9 +457,7 @@ class DocumentSavingDelegate(NSObject):
 
 class OpenPathController(NSWindowController):
 
-    # not sure if this is correct
-    # hastily added after changing baseclass from NibClassBuilder
-    paths = objc.ivar("paths")
+    paths = objc.IBOutlet()
 
     def windowDidLoad(self):
         LNFT = const.LARGE_NUMBER_FOR_TEXT

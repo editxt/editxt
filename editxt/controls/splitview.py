@@ -33,8 +33,8 @@ class ThinSplitView(NSSplitView):
     Note: this view does not support more than two subviews
     """
     
-    resizeSlider = objc.ivar("resizeSlider")
-    fixedSizeView = objc.ivar("fixedSizeView")
+    resizeSlider = objc.IBOutlet()
+    fixedSizeView = objc.IBOutlet()
 
     def awakeFromNib(self):
         # resizeOffset is set to a non-null (float) value representing the
@@ -221,7 +221,7 @@ from editxt.util import load_image
 
 class SliderImageView(NSImageView):
 
-    splitView = objc.ivar("splitView")
+    splitView = objc.IBOutlet()
 
     def awakeFromNib(self):
         self.setImage_(load_image("docsbar-sizer.png"))

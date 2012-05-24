@@ -107,9 +107,9 @@ class FindController(PanelController):
         #search_selection_only = False,
     )
 
-    find_text = objc.ivar("find_text")
-    replace_text = objc.ivar("replace_text")
-    status_label = objc.ivar("status_label")
+    find_text = objc.IBOutlet()
+    replace_text = objc.IBOutlet()
+    status_label = objc.IBOutlet()
 
     def initWithWindowNibName_(self, name):
         self = super(FindController, self).initWithWindowNibName_(name)
