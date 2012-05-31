@@ -256,6 +256,7 @@ def test_save_and_load_project_with_path():
         m = Mocker()
         doc = m.mock(TextDocumentView)
         doc.edit_state >> {"path": "xyz"}
+        doc.project = proj
         with m:
             proj.append_document_view(doc)
             proj.save_with_path(path)
@@ -303,6 +304,7 @@ def test_create_document_view_with_state():
     dv_class = m.replace("editxt.document.TextDocumentView")
     dv = m.mock(TextDocumentView)
     dv_class.create_with_state(state) >> dv
+    dv.project = proj
     with m:
         result = proj.create_document_view_with_state(state)
         eq_(result, dv)
@@ -331,6 +333,7 @@ def test_append_document_view():
     #assert not proj.is_dirty
     m = Mocker()
     doc = m.mock(TextDocumentView)
+    doc.project = proj
     with m:
         proj.append_document_view(doc)
     assert doc in proj.documents()
@@ -367,20 +370,25 @@ def test_append_document_view_already_in_project():
     proj = Project.create()
     m = Mocker()
     dv = m.mock(TextDocumentView)
+    dv.project = proj
     with m:
         proj.append_document_view(dv)
         proj.append_document_view(dv)
         assert len(proj.documents()) == 1
 
 def test_remove_document_view():
+    class MockView(object):
+        project = None
     project = Project.create()
-    doc = object()
-    project.append_document_view(doc)
+    doc = MockView()
+    project.insert_document_view(0, doc)
     assert doc in project.documents()
+    eq_(doc.project, project)
     #project.is_dirty = False
     project.remove_document_view(doc)
     #assert project.is_dirty
     assert doc not in project.documents()
+    eq_(doc.project, None)
 
 def test_find_view_with_document():
     DOC = "the document we're looking for"

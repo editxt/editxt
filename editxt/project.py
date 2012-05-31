@@ -222,6 +222,7 @@ class Project(NSObject):
             if dv is view or dv.document is view.document:
                 return dv
         self._documents.append(view)
+        view.project = self
         #self.is_dirty = True
         return view
 
@@ -237,6 +238,7 @@ class Project(NSObject):
             if dv is view or dv.document is view.document:
                 return dv
         self._documents.insert(index, view)
+        view.project = self
         #self.is_dirty = True
         return view
 
@@ -248,6 +250,7 @@ class Project(NSObject):
         """
         if doc_view in self._documents:
             self._documents.remove(doc_view)
+            doc_view.project = None
             #self.is_dirty = True
 
     def find_view_with_document(self, doc):

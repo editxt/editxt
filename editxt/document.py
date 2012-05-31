@@ -83,6 +83,7 @@ class TextDocumentView(NSObject):
         self = super(TextDocumentView, self).init()
         self._documents = KVOList.alloc().init()
         self.id = doc_id_gen.next()
+        self.project = None
         self.document = document
         self.text_view = None
         self.scroll_view = None
@@ -343,6 +344,8 @@ class TextDocumentView(NSObject):
 
     def close(self):
         doc = self.document
+        if self.project is not None:
+            self.project.remove_document_view(self)
         if doc is not None:
             if self.text_view is not None:
                 self.scroll_view.removeFromSuperview()

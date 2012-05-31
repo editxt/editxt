@@ -60,6 +60,7 @@ def verify_document_view_interface(dv):
     assert dn is not None
     icon = dv.icon()
     if isinstance(dv, TextDocumentView):
+        assert dv.project is None, dv.project
         assert icon is not None
         dv.setDisplayName_("something") # should be a no-op
         assert dv.displayName() == dn
@@ -622,9 +623,13 @@ def test_TextDocumentView_close():
     def test(c):
         m = Mocker()
         doc = m.mock(TextDocument)
-        proj = m.mock(Project)
         dv = TextDocumentView.alloc().init_with_document(doc)
         app = m.replace("editxt.app", Application)
+        if c.project_is_none:
+            dv.project = None
+        else:
+            dv.project = proj = m.mock(Project)
+            proj.remove_document_view(dv)
         if c.tv_is_none:
             dv.scroll_view = None
             dv.text_view = None
@@ -653,9 +658,11 @@ def test_TextDocumentView_close():
         assert dv.scroll_view is None
         assert dv.text_view is None
         assert dv.document is None
-    c = TestConfig(app_views=0, wcs=[], tv_is_none=False, ts_is_none=False)
+    c = TestConfig(app_views=0, wcs=[],
+        project_is_none=False, tv_is_none=False, ts_is_none=False)
     wc = lambda n:TestConfig(num_views=n)
     yield test, c
+    yield test, c(project_is_none=True)
     yield test, c(ts_is_none=True)
     yield test, c(tv_is_none=True)
     for num_views in (1, 2):
