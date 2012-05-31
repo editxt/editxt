@@ -61,6 +61,7 @@ Top priority (these should all be listed under TODO as well)
 
 work on projects
     fix drag/drop: do not copy from project to project unless command is pressed
+        pasteboard needs to uniquely identify project and/or docview
     add "undo close document" for project
         project will need a concept of recent documents
     implement close document (COMMAND+W)

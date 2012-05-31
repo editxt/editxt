@@ -404,17 +404,25 @@ class Editor(object):
     # drag/drop logic ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def is_project_drag(self, info):
+        """Return True if only projects are being dropped else False"""
         pb = info.draggingPasteboard()
         t = pb.availableTypeFromArray_(self.supported_drag_types)
         if t == const.DOC_ID_LIST_PBOARD_TYPE:
-            ids = self.iter_dropped_id_list(pb)
-            return all(isinstance(ident, Project) for ident in ids)
+            items = self.iter_dropped_id_list(pb)
+            return all(isinstance(item, Project) for item in items)
         elif t == NSFilenamesPboardType:
             paths = pb.propertyListForType_(NSFilenamesPboardType)
             return all(Project.is_project_path(path) for path in paths)
         return False
 
     def write_items_to_pasteboard(self, outline_view, items, pboard):
+        """Write dragged items to pasteboard
+
+        :param outline_view: The OutlineView containing the items.
+        :param items: A list of opaque outline view item objects.
+        :param pboard: NSPasteboard object.
+        :returns: True if items were written else False.
+        """
         data = defaultdict(list)
         for item in items:
             item = outline_view.realItemForOpaqueItem_(item)
@@ -479,6 +487,15 @@ class Editor(object):
         return NSDragOperationGeneric
 
     def accept_drop(self, outline_view, info, item, index):
+        """Accept drop operation
+
+        :param outline_view: The OutlineView on which the drop occurred.
+        :param info: NSDraggingInfo object.
+        :param item: The parent item in the outline view.
+        :param index: The index in the outline view or parent item at which the
+            drop occurred.
+        :returns: True if the drop was accepted, otherwise False.
+        """
         pb = info.draggingPasteboard()
         t = pb.availableTypeFromArray_(self.supported_drag_types)
         action = None
@@ -488,16 +505,16 @@ class Editor(object):
         elif t == NSFilenamesPboardType:
             items = self.iter_dropped_paths(pb)
         else:
-            assert t is None
+            assert t is None, t
             return False
         parent = None if item is None else representedObject(item)
         return self.accept_dropped_items(items, parent, index, action)
 
     def iter_dropped_id_list(self, pasteboard):
+        """Iterate TextDocument objects referenced by pasteboard (if any)"""
         IDLT = const.DOC_ID_LIST_PBOARD_TYPE
         if not pasteboard.types().containsObject_(IDLT):
             raise StopIteration()
-        dc = NSDocumentController.sharedDocumentController()
         for ident in pasteboard.propertyListForType_(IDLT):
             item = editxt.app.find_item_with_id(ident)
             if item is not None:
@@ -507,7 +524,6 @@ class Editor(object):
         from editxt.document import TextDocument
         if not pasteboard.types().containsObject_(NSFilenamesPboardType):
             raise StopIteration()
-        dc = NSDocumentController.sharedDocumentController()
         for path in pasteboard.propertyListForType_(NSFilenamesPboardType):
             if Project.is_project_path(path):
                 proj = editxt.app.find_project_with_path(path)
@@ -528,7 +544,7 @@ class Editor(object):
             index = 0
         else:
             proj_index = len(self.projects) # insert projects at end of list
-            assert isinstance(project, Project)
+            assert isinstance(project, Project), project
             if index < 0:
                 index = len(project.documents())
         accepted = False
