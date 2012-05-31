@@ -100,16 +100,21 @@ def make_test_callback(srcpath):
         set_title('testing...')
         testmods.append("--test-all-on-pass")
         print("\n" + "#" * 70)
+        print(' '.join(sys.argv + testmods))
         result = subprocess.call(sys.argv + testmods)
         set_title('FAIL' if result else 'OK')
-        print(datetime.now().strftime("%m/%d/%Y %H:%M:%S").rjust(70) + " ")
+        now = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+        print(now.rjust(70) + " ", end="")
         sys.stdout.flush()
     return run_tests
 
 def start(root=None, wait=2):
     if root is None:
         root = os.getcwd()
-    srcpath = root + os.sep
+    if os.path.basename(root) == 'editxt':
+        srcpath = os.path.dirname(root) + os.sep
+    else:
+        srcpath = root + os.sep
     assert os.path.exists(srcpath), srcpath
 
     if fsevents is not None:

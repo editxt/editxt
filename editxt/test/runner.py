@@ -68,7 +68,7 @@ def run(argv=None):
         if mod.startswith("-"):
             argv.insert(index, mod)
             break
-        if mod.endswith(("__init__", "runner")):
+        if mod.endswith(("__init__", "runner", "nosy")):
             continue
         if mod.startswith("editxt.test."):
             pkg, name = mod.rsplit(".", 1)
