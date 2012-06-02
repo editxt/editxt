@@ -139,6 +139,17 @@ class MockExt(mocker.Mock):
         return self.__mocker_act__("setattr", (name, value))
 
 
+class DeferredRepr(object):
+    """HACK __repr__ might call other mocked methods; thus must be deferred"""
+    def __init__(self, obj):
+        self.obj = obj
+    def __repr__(self):
+        try:
+            return repr(self.obj)
+        except Exception:
+            return '<%s>' % type(self.obj).__name__
+
+
 class MockerExt(mocker.Mocker):
     """Enhanced Mocker class"""
 
@@ -163,7 +174,7 @@ class MockerExt(mocker.Mocker):
     def property(self, obj, name, verify=True):
         """Create a PropertyMock that replaces a property of class_"""
         event = self._get_replay_restore_event()
-        mock = self.mock(property, name=repr(obj))
+        mock = self.mock(property, name=DeferredRepr(obj))
         return PropertyReplacer.replace(obj, name, event, mock, verify)
 
 
@@ -294,50 +305,6 @@ class MethodReplacer(mocker.Task):
                 assert objtype.__name__ != "type"
             else:
                 raise TypeError("unknown method type: %r" % method)
-
-#       if name is None:
-#           name = method.__name__
-#       if hasattr(method, "im_class"):
-#           if obj is None and class_ is None:
-#               class_ = method.im_class
-#               obj = method.im_self
-#           if class_ is type:
-#               # class method handler
-#               meth = classmethod(method.im_func)
-#               class_ = type(obj.__name__, (object,), {name: meth})
-#       elif isinstance(method, types.FunctionType):
-#           # static method handler
-#           if obj is None:
-#               raise TypeError("cannot determine object of method "
-#                   "(hint: provide object and method name)")
-#           method = staticmethod(method)
-#           class_ = type(obj.__name__, (object,), {name: method})
-#       elif isinstance(method, objc_selector):
-#           #if not hasattr(method, "callable"):
-#           #    import nose.tools; nose.tools.set_trace()
-#           if ":" in name:
-#               name = name.replace(":", "_")
-#           obj = method.self
-#           if hasattr(method, "callable"):
-#               # use a dynamically created class so mocker will verify the
-#               # method signature against the real python method
-#               class_ = type(method.definingClass.__name__, (object,), \
-#                   {name: method.callable})
-#           elif obj is not None:
-#               class_ = type(method.definingClass.__name__, (object,), \
-#                   {name: method}) # TODO verify that signature is checked on mocked call
-#           else:
-#               raise TypeError("unhandled selector: %r\nIt's probably a "
-#                   "native selector, try Mocker.replace(...)" % method)
-#           if obj is None:
-#               obj = method.definingClass
-#       else:
-#           raise TypeError("unknown method type: %r" % method)
-#       if isinstance(obj, type):
-#           objtype = obj
-#       else:
-#           objtype = type(obj)
-
         self.obj = obj
         self.replaced = rep = ReplacedMethod(objtype, name, func, class_)
         self.mock = mock_factory(rep.class_, name="<%s>" % rep.class_.__name__)

@@ -362,6 +362,10 @@ class TextDocumentView(NSObject):
                 doc.close()
             self.document = None
 
+    def __repr__(self):
+        name = 'N/A' if self.document is None else self.displayName()
+        return '<%s 0x%x name=%s>' % (type(self).__name__, id(self), name)
+
     # TextView delegate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     @untested

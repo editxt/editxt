@@ -210,8 +210,19 @@ class Editor(object):
             self.current_view = selected[0]
 
     def add_document_view(self, doc_view):
+        """Add document view to current project
+
+        This does nothing if the current project already contains a view of the
+        document encapsulated by doc_view.
+
+        :returns: The document view from the current project.
+        """
         proj = self.get_current_project(create=True)
-        return proj.append_document_view(doc_view)
+        view = proj.document_view_for_document(doc_view.document)
+        if view is None:
+            view = doc_view
+            proj.append_document_view(doc_view)
+        return view
 
     def iter_views_of_document(self, doc):
         for project in self.projects:
@@ -535,6 +546,15 @@ class Editor(object):
 
     @untested("untested with non-null project and index < 0")
     def accept_dropped_items(self, items, project, index, action):
+        """Insert dropped items into the document tree
+
+        :param items: A sequence of dropped projects and/or documents.
+        :param project: The parent project into which items are being dropped.
+        :param index: The index in the outline view or parent project at which
+            the drop occurred.
+        :param action: The type of drop: None (unspecified), MOVE, or COPY.
+        :returns: True if the items were accepted, otherwise False.
+        """
         if project is None:
             # a new project will be created if/when needed
             if index < 0:
@@ -549,54 +569,66 @@ class Editor(object):
                 index = len(project.documents())
         accepted = False
         focus = None
+        is_move = action is not const.COPY
         self.suspend_recent_updates()
         try:
             for item in items:
                 accepted = True
-                if isinstance(item, TextDocumentView) and action is not None:
-                    item = item.document
                 if isinstance(item, Project):
+                    if not is_move:
+                        raise NotImplementedError('cannot copy project yet')
+                    editors = editxt.app.find_editors_with_project(item)
+                    assert len(editors) < 2, editors
                     if item in self.projects:
-                        if action is const.MOVE:
-                            pindex = self.projects.index(item)
-                            if pindex == proj_index:
-                                continue
-                            step = 0 if pindex - proj_index > 0 else -1
-                            # BEGIN HACK crash on remove project with documents
-                            pdocs = item.documents()
-                            docs, pdocs[:] = list(pdocs), []
-                            self.projects.remove(item) # this line should be all that's necessary
-                            pdocs.extend(docs)
-                            # END HACK
-                            self.projects.insert(proj_index + step, item)
-                            proj_index += step + 1
-                            focus = item
+                        editor = self
+                        pindex = self.projects.index(item)
+                        if pindex == proj_index:
+                            continue
+                        if pindex - proj_index <= 0:
+                            proj_index -= 1
                     else:
-                        self.projects.insert(proj_index, item)
-                        proj_index += 1
-                        focus = item
-                elif project is None:
-                    project = Project.create()
-                    view = TextDocumentView.create_with_document(item)
-                    focus = project.append_document_view(view)
-                    self.projects.insert(proj_index, project)
+                        editor = editors[0]
+
+                    # BEGIN HACK crash on remove project with documents
+                    pdocs = item.documents()
+                    docs, pdocs[:] = list(pdocs), []
+                    editor.projects.remove(item) # this line should be all that's necessary
+                    pdocs.extend(docs)
+                    # END HACK
+
+                    self.projects.insert(proj_index, item)
                     proj_index += 1
-                    index = 1 # insert subsequent documents after first document
-                else:
-                    view = project.document_view_for_document(item)
-                    if view is not None:
-                        if action is const.MOVE:
-                            vindex = project.documents().index(view)
-                            if vindex == index:
-                                continue
-                            step = 0 if vindex - index > 0 else -1
-                            project.remove_document_view(view)
-                            focus = project.insert_document_view(index + step, view)
-                            index += step + 1
+                    focus = item
+                    continue
+
+                if project is None:
+                    if isinstance(item, TextDocumentView) and is_move:
+                        view = item
+                        item.project.remove_document_view(view)
                     else:
                         view = TextDocumentView.create_with_document(item)
-                        focus = project.insert_document_view(index, view)
-                        index += 1
+                    project = Project.create()
+                    self.projects.insert(proj_index, project)
+                    proj_index += 1
+                    index = 0
+                else:
+                    if isinstance(item, TextDocumentView):
+                        view, item = item, item.document
+                    else:
+                        view = project.document_view_for_document(item)
+                    if is_move and view is not None:
+                        if view.project == project:
+                            vindex = project.documents().index(view)
+                            if vindex in [index - 1, index]:
+                                continue
+                            if vindex - index <= 0:
+                                index -= 1
+                        view.project.remove_document_view(view)
+                    else:
+                        view = TextDocumentView.create_with_document(item)
+                project.insert_document_view(index, view)
+                focus = view
+                index += 1
         finally:
             self.resume_recent_updates()
         if focus is not None:

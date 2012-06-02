@@ -120,6 +120,9 @@ class KVOList(NSObject):
     def __iter__(self):
         return iter(self._items)
 
+    def __repr__(self):
+        return '<KVOList %r>' % list(self)
+
     def append(self, obj):
         self.mutableArrayValueForKey_("items").append(obj)
 

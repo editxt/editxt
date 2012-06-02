@@ -203,45 +203,24 @@ class Project(NSObject):
             raise Exception(err)
         dc.addDocument_(doc)
         dv = TextDocumentView.create_with_document(doc)
-        return self.append_document_view(dv)
+        self.append_document_view(dv)
+        return dv
 
     def create_document_view_with_state(self, state):
         dv = TextDocumentView.create_with_state(state)
-        dv = self.append_document_view(dv)
+        self.append_document_view(dv)
         return dv
 
     def append_document_view(self, view):
-        """Add view to the end of this projects document views
-
-        Returns the appended view or an existing view in this project with the
-        same document as the given view. You should always use the returned
-        view after calling this method if you need to work with a view that
-        belongs to this project.
-        """
-        for dv in self._documents:
-            if dv is view or dv.document is view.document:
-                return dv
+        """Add view to the end of this projects document views"""
         self._documents.append(view)
         view.project = self
-        #self.is_dirty = True
-        return view
 
     def insert_document_view(self, index, view):
         """Insert view at index in this projects document views
-
-        Returns the inserted view or an existing view in this project with the
-        same document as the given view. You should always use the returned
-        view after calling this method if you need to work with a view that
-        belongs to this project.
         """
-        for dv in self._documents:
-            if dv is view or dv.document is view.document:
-                return dv
         self._documents.insert(index, view)
         view.project = self
-        #self.is_dirty = True
-        return view
-
 
     def remove_document_view(self, doc_view):
         """Remove view from this projects document views
@@ -289,6 +268,9 @@ class Project(NSObject):
         for dv in list(self._documents):
             dv.close()
         #self._documents.setItems_([])
+
+    def __repr__(self):
+        return '<%s 0x%x name=%s>' % (type(self).__name__, id(self), self.name)
 
 
 #     @staticmethod

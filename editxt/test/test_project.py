@@ -367,14 +367,12 @@ def test_dirty_documents():
     yield do_test, "dcd"
 
 def test_append_document_view_already_in_project():
+    class Fake(object): pass
     proj = Project.create()
-    m = Mocker()
-    dv = m.mock(TextDocumentView)
-    dv.project = proj
-    with m:
-        proj.append_document_view(dv)
-        proj.append_document_view(dv)
-        assert len(proj.documents()) == 1
+    dv = Fake()
+    proj.append_document_view(dv)
+    proj.append_document_view(dv)
+    assert len(proj.documents()) == 2, proj.documents()
 
 def test_remove_document_view():
     class MockView(object):

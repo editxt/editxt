@@ -524,15 +524,21 @@ def test_get_current_project():
     yield test, True, [0, 0]
 
 def test_add_document_view():
-    m = Mocker()
-    ed = Editor(None)
-    dv = m.mock(TextDocumentView)
-    proj = m.mock(Project)
-    get_current_project = m.method(ed.get_current_project)
-    get_current_project(create=True) >> proj
-    proj.append_document_view(dv)
-    with m:
-        ed.add_document_view(dv)
+    def test(has_view):
+        m = Mocker()
+        ed = Editor(None)
+        doc = TextDocument.alloc().init()
+        dv = TextDocumentView.create_with_document(doc)
+        assert dv.project is None, dv.project
+        proj = Project.create()
+        if has_view:
+            proj.append_document_view(dv)
+        m.method(ed.get_current_project)(create=True) >> proj
+        with m:
+            ed.add_document_view(dv)
+        eq_(len(proj.documents()), 1, proj.documents())
+    yield test, False
+    yield test, True
 
 def test_Editor_iter_views_of_document():
     DOC = "the document we're looking for"
@@ -1109,114 +1115,177 @@ def test_iter_dropped_paths():
     yield test, c(paths=[path(proj, 1, True), path(doc, 1), path(proj, 2)])
 
 def test_accept_dropped_items():
+    class MatchingName(object):
+        def __init__(self, name, rmap):
+            self.name = name
+            self.rmap = rmap
+        def __repr__(self):
+            return '<MatchingName %s>' % self.name
+        def __eq__(self, other):
+            return other.displayName() == self.name or (
+                other.displayName() == self.name.lower()
+                and
+                self.rmap[self.name.lower()] != other
+            )
+        def __ne__(self, other):
+            return not self.__eq__(other)
+
     def test(c):
+        def get_parent_index(drop, offset=0):
+            if any(v in '0123456789' for v in drop[0]):
+                assert all(v in '0123456789' for v in drop[0]), drop
+                return None, pindex
+            return project, dindex + offset
+
         m = Mocker()
         ed = Editor(None)
-        dv_class = m.replace("editxt.document.TextDocumentView")
-        #Project.alloc = m.replace(Project.alloc, passthrough=False)
-        palloc = m.method(Project.alloc)
-        suspend_recent_updates = m.method(ed.suspend_recent_updates)
-        resume_recent_updates = m.method(ed.resume_recent_updates)
-        cv = m.property(ed, "current_view")
-        ed.projects = projects = m.mock(list)
-        # TODO investigate where NSDraggingInfo went during the upgrade to 10.5
-        info = m.mock() #NSDraggingInfo)
-        index = c.index
-        if c.parent_is_none:
-            parent = None
-            proj = None
-            if c.index < 0:
-                proj_index = 0
+        current_view = m.property(ed, 'current_view')
+        map = {}
+        rmap = {}
+        drop = {}
+        pindex = dindex = -1
+        project = None
+        for i, char in enumerate(c.init + ' '):
+            if char == ' ':
+                if i == c.drop[1]:
+                    parent, index = get_parent_index(c.drop, 1)
+                dindex = -1
+                continue
+            if char in '0123456789':
+                item = project = Project.create()
+                item.name = char
+                ed.projects.append(item)
+                pindex += 1
             else:
-                proj_index = c.index
-        else:
-            item = m.mock()
-            len(projects); m.result(c.num_projects)
-            proj_index = c.num_projects
-            parent = proj = m.mock(Project)
-        dindex = index
-        types = {"p": Project, "d": TextDocument, "v": TextDocumentView}
-        items = []
-        focus = None
-        suspend_recent_updates()
-        for it in c.items:
-            item = m.mock(types[it.type], type=types[it.type])
-            items.append(item)
-            if it.type == "v" and c.act is not None:
-                item = (item.document >> m.mock(TextDocument))
-            if it.type == "p":
-                item in projects; m.result(it.in_parent)
-                if it.in_parent:
-                    if c.act is const.MOVE:
-                        projects.index(item) >> (proj_index + it.offset)
-                        if it.offset != 0:
-                            step = 0 if it.offset > 0 else -1
-                            item.documents() >> [] # HACK
-                            projects.remove(item)
-                            projects.insert(proj_index + step, item)
-                            proj_index += step + 1
-                            focus = item
-                else:
-                    projects.insert(proj_index, item)
-                    proj_index += 1
-                    focus = item
-            elif proj is None:
-                view = (dv_class.create_with_document(item) >>
-                    m.mock(TextDocumentView))
-                proj = m.mock(Project)
-                (palloc() >> proj).init() >> proj
-                focus = proj.append_document_view(view) >> view
-                projects.insert(proj_index, proj)
-                proj_index += 1
-                dindex = 1
-            else:
-                view = m.mock(TextDocumentView)
-                proj.document_view_for_document(item) >> (view if it.in_parent else None)
-                if it.in_parent:
-                    if c.act is const.MOVE:
-                        proj.documents().index(view) >> (dindex + it.offset)
-                        if it.offset != 0:
-                            step = 0 if it.offset > 0 else -1
-                            proj.remove_document_view(view)
-                            proj.insert_document_view(dindex + step, view) >> view
-                            dindex += step + 1
-                            focus = view
-                else:
-                    dv_class.create_with_document(item) >> view
-                    focus = proj.insert_document_view(dindex, view) >> view
-                    dindex += 1
-        resume_recent_updates()
-        if focus is not None:
-            cv.value = focus
+                doc = TextDocument.alloc().init()
+                doc.setFileURL_(NSURL.fileURLWithPath_(char))
+                item = TextDocumentView.create_with_document(doc)
+                project.append_document_view(item)
+                dindex += 1
+            map[item] = char
+            rmap[char] = item
+            if i == c.drop[1]:
+                parent, index = get_parent_index(c.drop)
+            if char in c.drop[0]:
+                drop[char] = item
+        for char in c.drop[0]:
+            if char not in rmap and char not in '0123456789':
+                drop[char] = rmap[char] = TextDocument.alloc().init()
+                drop[char].setFileURL_(NSURL.fileURLWithPath_(char))
+        items = [drop[char] for char in c.drop[0]]
+
+        act = None if len(c.drop) == 2 else \
+            ({'move': const.MOVE, 'copy':const.COPY}[c.drop[2]])
+
+        if c.result and c.focus:
+            current_view.value = MatchingName(c.focus, rmap)
+
+        print('drop(%s) %s at %s of %s' % (act, c.drop[0], index, parent))
         with m:
-            result = ed.accept_dropped_items(items, parent, index, c.act)
-            eq_(result, c.result)
-    c = TestConfig(result=True, index=0, num_projects=0, parent_is_none=True, act=None)
-    item = TestConfig(type="d", in_parent=False)
-    for items in [
-        [],
-        [item],
-        [item(type="v")],
-        [item(type="p")],
-        [item, item(type="p"), item],
-        [item(type="p"), item, item(type="p")],
-    ]:
-        for index in (0, 3):
-            yield test, c(items=items, result=bool(items), index=index)
-    c = c(parent_is_none=False, index=3, num_projects=1)
-    it2 = item(in_parent=True)
-    for act in (None, const.MOVE, const.COPY):
-        for offset in (-2, 0, 1, 2):
-            yield test, c(items=[it2(offset=offset)], act=act)
-            yield test, c(items=[item, it2(offset=offset)], act=act)
-            yield test, c(items=[it2(offset=offset), item], act=act)
-    c = c(num_projects=3, index=0)
-    it3 = item(type="p", in_parent=True)
-    for act in (None, const.MOVE, const.COPY):
-        for offset in (-2, 0, 1, 2):
-            yield test, c(items=[it3(offset=offset)], act=act)
-            yield test, c(items=[item, it3(offset=offset)], act=act)
-            yield test, c(items=[it3(offset=offset), item], act=act)
+            result = ed.accept_dropped_items(items, parent, index, act)
+
+        eq_(result, c.result)
+        final = []
+        next_project = str(int(max(v for v in c.init if v in '0123456789')) + 1)
+        for project in ed.projects:
+            final.append(' ' + map.get(project, next_project))
+            for view in project.documents():
+                final.append(map.get(view, view.displayName().upper()))
+        eq_(str(''.join(final)), c.final)
+
+    # number = project
+    # letter = document
+    # capital letter = new view of document
+    # space before project allows drop on project (insert at end)
+    # so ' 0abc 1 2de' is...
+    #   project 0
+    #       document a
+    #       document b
+    #       document c
+    #   project 1
+    #   project 2
+    #       document d
+    #       document e
+
+    c = TestConfig(init=' 0abc 1 2de', result=True, focus='')
+
+    yield test, c(drop=('', 0), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 1), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 2), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 3), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 4), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 5), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 6), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 7), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 8), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 9), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 10), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 11), final=' 0abc 1 2de', result=False)
+
+    yield test, c(drop=('a', 0), final=' 3a 0bc 1 2de', focus='a')
+    yield test, c(drop=('a', 1), final=' 0bca 1 2de', focus='a')
+    yield test, c(drop=('a', 2), final=' 0abc 1 2de')
+    yield test, c(drop=('a', 3), final=' 0abc 1 2de')
+    yield test, c(drop=('a', 4), final=' 0bac 1 2de', focus='a')
+    yield test, c(drop=('a', 5), final=' 0bca 1 2de', focus='a')
+    yield test, c(drop=('a', 6), final=' 0bc 1a 2de', focus='a')
+    yield test, c(drop=('a', 7), final=' 0bc 1a 2de', focus='a')
+    yield test, c(drop=('a', 8), final=' 0bc 1 2dea', focus='a')
+    yield test, c(drop=('a', 9), final=' 0bc 1 2ade', focus='a')
+    yield test, c(drop=('a', 10), final=' 0bc 1 2dae', focus='a')
+    yield test, c(drop=('a', 11), final=' 0bc 1 2dea', focus='a')
+
+    yield test, c(drop=('f', 0), final=' 3F 0abc 1 2de', focus='F')
+    yield test, c(drop=('f', 1), final=' 0abcF 1 2de', focus='F')
+    yield test, c(drop=('f', 2), final=' 0Fabc 1 2de', focus='F')
+    yield test, c(drop=('f', 3), final=' 0aFbc 1 2de', focus='F')
+    yield test, c(drop=('f', 4), final=' 0abFc 1 2de', focus='F')
+    yield test, c(drop=('f', 5), final=' 0abcF 1 2de', focus='F')
+    yield test, c(drop=('f', 6), final=' 0abc 1F 2de', focus='F')
+    yield test, c(drop=('f', 7), final=' 0abc 1F 2de', focus='F')
+    yield test, c(drop=('f', 8), final=' 0abc 1 2deF', focus='F')
+    yield test, c(drop=('f', 9), final=' 0abc 1 2Fde', focus='F')
+    yield test, c(drop=('f', 10), final=' 0abc 1 2dFe', focus='F')
+    yield test, c(drop=('f', 11), final=' 0abc 1 2deF', focus='F')
+
+    yield test, c(drop=('2', 0), final=' 2de 0abc 1', focus='2')
+    yield test, c(drop=('2', 1), final=' 2de 0abc 1', focus='2')
+    yield test, c(drop=('2', 2), final=' 2de 0abc 1', focus='2')
+    yield test, c(drop=('2', 3), final=' 2de 0abc 1', focus='2')
+    yield test, c(drop=('2', 4), final=' 2de 0abc 1', focus='2')
+    yield test, c(drop=('2', 5), final=' 2de 0abc 1', focus='2')
+    yield test, c(drop=('2', 6), final=' 0abc 2de 1', focus='2')
+    yield test, c(drop=('2', 7), final=' 0abc 2de 1', focus='2')
+    yield test, c(drop=('2', 8), final=' 0abc 1 2de', focus='')
+    yield test, c(drop=('2', 9), final=' 0abc 1 2de', focus='')
+    yield test, c(drop=('2', 10), final=' 0abc 1 2de', focus='')
+    yield test, c(drop=('2', 11), final=' 0abc 1 2de', focus='')
+
+    yield test, c(drop=('', 0, 'copy'), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 1, 'copy'), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 2, 'copy'), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 3, 'copy'), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 4, 'copy'), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 5, 'copy'), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 6, 'copy'), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 7, 'copy'), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 8, 'copy'), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 9, 'copy'), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 10, 'copy'), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 11, 'copy'), final=' 0abc 1 2de', result=False)
+
+    yield test, c(drop=('a', 0, 'copy'), final=' 3A 0abc 1 2de', focus='A')
+    yield test, c(drop=('a', 1, 'copy'), final=' 0abcA 1 2de', focus='A')
+    yield test, c(drop=('a', 2, 'copy'), final=' 0Aabc 1 2de', focus='A')
+    yield test, c(drop=('a', 3, 'copy'), final=' 0aAbc 1 2de', focus='A')
+    yield test, c(drop=('a', 4, 'copy'), final=' 0abAc 1 2de', focus='A')
+    yield test, c(drop=('a', 5, 'copy'), final=' 0abcA 1 2de', focus='A')
+    yield test, c(drop=('a', 6, 'copy'), final=' 0abc 1A 2de', focus='A')
+    yield test, c(drop=('a', 7, 'copy'), final=' 0abc 1A 2de', focus='A')
+    yield test, c(drop=('a', 8, 'copy'), final=' 0abc 1 2deA', focus='A')
+    yield test, c(drop=('a', 9, 'copy'), final=' 0abc 1 2Ade', focus='A')
+    yield test, c(drop=('a', 10, 'copy'), final=' 0abc 1 2dAe', focus='A')
+    yield test, c(drop=('a', 11, 'copy'), final=' 0abc 1 2deA', focus='A')
 
 def test_undo_manager():
     def test(c):
