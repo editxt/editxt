@@ -1052,7 +1052,6 @@ class TestTextDocument(MockerTestCase):
         doc.close()
         eq_(len(dc.documents()), 0)
 
-
     def test_get_with_path_2(self):
         path = self.makeFile(content="", suffix="txt")
         url = NSURL.fileURLWithPath_(path)
@@ -1064,13 +1063,16 @@ class TestTextDocument(MockerTestCase):
         doc1.close()
         eq_(len(dc.documents()), 0)
 
-    def test_get_with_path_fails(self):
+    def test_get_with_path_3(self):
         from tempfile import mktemp
-        from editxt.document import Error
-        path = mktemp(suffix="txt")
-        assert_raises(Error, TextDocument.get_with_path, path)
-        assert not os.path.exists(path), \
-            "critical failure: %s exists (but should not)" % path
+        path = path = mktemp(suffix="txt")
+        dc = NSDocumentController.sharedDocumentController()
+        eq_(len(dc.documents()), 0)
+        doc = TextDocument.get_with_path(path)
+        assert not os.path.exists(path), "%s exists (but should not)" % path
+        eq_(doc.fileURL().path(), path)
+        doc.close()
+        eq_(len(dc.documents()), 0)
 
     def test_untitled_displayName(self):
         dc = NSDocumentController.sharedDocumentController()
@@ -1121,64 +1123,6 @@ class TestTextDocument(MockerTestCase):
         icon = doc.icon()
         assert isinstance(icon, NSImage)
         eq_(doc.icon_cache, ("", icon))
-
-#     def test_icon_for_real_file(self):
-#         from editxt.util import fetch_icon
-#         dc = NSDocumentController.sharedDocumentController()
-#         path = self.makeFile(content="", prefix="text", suffix=".txt")
-#         url = NSURL.fileURLWithPath_(path)
-#         doc, err = dc.makeDocumentWithContentsOfURL_ofType_error_(url, TEXT_DOCUMENT)
-#         assert doc.icon().TIFFRepresentation() == fetch_icon(doc.file_path).TIFFRepresentation()
-
-#     def _setup_new_document_with_main_view(self):
-#         class MockView(object):
-#             def bounds(self):
-#                 return NSMakeRect(0, 0, 200, 200)
-#             def addSubview_(self, view):
-#                 pass
-#         dc = NSDocumentController.sharedDocumentController()
-#         content = "test content"
-#         path = self.makeFile(content=content, prefix="text", suffix=".txt")
-#         url = NSURL.fileURLWithPath_(path)
-#         doc, err = dc.makeDocumentWithContentsOfURL_ofType_error_(url, TEXT_DOCUMENT)
-#         doc.makeWindowControllers()
-#         doc.set_main_view(MockView())
-#         return doc
-#
-#     def test_document_font_after_load(self):
-#         doc = self._setup_new_document_with_main_view()
-#         attrs = doc.default_text_attributes()
-#         assert doc.text_view.font() == attrs[NSFontAttributeName]
-
-#     def test_document_is_in_project_documents(self):
-#         dc = NSDocumentController.sharedDocumentController()
-#         wcs = []
-#         for x in xrange(3):
-#             doc = self._setup_new_document_with_main_view()
-#             prj = doc.project
-#             assert doc in prj.documents()
-#             wc = doc.windowControllers()[0]
-#             if wcs:
-#                 assert wc in wcs
-#             else:
-#                 wcs.append(wc)
-
-def test_get_with_path():
-    from editxt.document import TEXT_DOCUMENT, Error
-    def test(c):
-        assert not os.path.exists(c.path), c.path
-        m = Mocker()
-        dc = m.method(NSDocumentController.sharedDocumentController)() >> \
-            m.mock(NSDocumentController)
-        dc.typeForContentsOfURL_error_(ANY, None) >> (TEXT_DOCUMENT, None)
-        dc.documentForURL_(ANY) >> None
-        dc.makeDocumentWithContentsOfURL_ofType_error_(
-            ANY, TEXT_DOCUMENT, None) >> (None, None)
-        with m:
-            assert_raises(Error, TextDocument.get_with_path, c.path)
-        assert not os.path.exists(c.path), c.path
-    c = TestConfig(path="/file.txt")
-    yield test, c
 
 def test_readFromData_ofType_error_():
     def test(c):

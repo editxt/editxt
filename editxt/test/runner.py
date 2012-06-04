@@ -111,6 +111,12 @@ class TestApplication(Application):
         self.argv = argv
         super(TestApplication, self).__init__()
 
+    @property
+    def syntax_factory(self):
+        obj = type('TestSyntaxFactory', (object,), {})()
+        obj.get_definition = lambda fn:None
+        return obj
+
     def application_will_finish_launching(self, app, doc_ctrl):
         try:
             run(self.argv)

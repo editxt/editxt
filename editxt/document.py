@@ -409,13 +409,20 @@ class TextDocument(NSDocument):
         dc = NSDocumentController.sharedDocumentController()
         doc = dc.documentForURL_(url)
         if doc is None:
-            doctype, err = dc.typeForContentsOfURL_error_(url, None)
-            doc, err = dc.makeDocumentWithContentsOfURL_ofType_error_(url, doctype, None)
-            if err is not None:
-                raise Error(err.localizedFailureReason())
-            if doc is None:
-                raise Error("could not open document: %s" % path)
-            dc.addDocument_(doc)
+            if os.path.exists(path):
+                doctype, err = dc.typeForContentsOfURL_error_(url, None)
+                doc, err = dc.makeDocumentWithContentsOfURL_ofType_error_(
+                    url, doctype, None)
+                if err is not None:
+                    raise Error(err.localizedFailureReason())
+                if doc is None:
+                    raise Error("could not open document: %s" % path)
+                dc.addDocument_(doc)
+            else:
+                doc, err = dc.makeUntitledDocumentOfType_error_(
+                    const.TEXT_DOCUMENT, None)
+                doc.setFileURL_(url)
+                doc.update_syntaxer()
         return doc
 
     def init(self):

@@ -94,7 +94,7 @@ class Application(object):
         wc.showWindow_(self)
         return ed
 
-    def open_path(self):
+    def open_path_dialog(self):
         if self.path_opener is None:
             opc = OpenPathController.alloc().initWithWindowNibName_("OpenPath")
             opc.showWindow_(self)
@@ -115,7 +115,7 @@ class Application(object):
             editor = self.create_editor()
         focus = None
         for path in paths:
-            if os.path.isfile(path):
+            if os.path.isfile(path) or not os.path.exists(path):
                 view = TextDocumentView.create_with_path(path)
                 focus = editor.add_document_view(view)
             else:
@@ -326,7 +326,7 @@ class DocumentController(NSDocumentController):
         return editxt.app
 
     def openPath_(self, sender):
-        self.controller.open_path()
+        self.controller.open_path_dialog()
 
     def closeCurrentDocument_(self, sender):
         raise NotImplementedError()
@@ -345,6 +345,10 @@ class DocumentController(NSDocumentController):
 
     def openErrorLog_(self, sender):
         self.controller.open_error_log()
+
+    def application_openFiles_(self, app, filenames):
+        self.controller.open_documents_with_paths(filenames)
+        app.replyToOpenOrPrint_(0) # success
 
     def applicationShouldOpenUntitledFile_(self, app):
         return False

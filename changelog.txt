@@ -22,6 +22,11 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
+? - 1.1.x
+  - Create new (empty) document when opening non-existent path from command
+    line.
+  - Always move (do not copy) document or project on internal drag.
+
 2012-05-22 - 1.1.0
   - Added non-padded (un)comment text command. This is now the default comment
     mode (SHIFT+COMMA). Moved old command to SHIFT+COMMAND+COMMA.

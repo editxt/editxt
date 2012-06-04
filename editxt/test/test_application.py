@@ -161,7 +161,7 @@ def test_create_editor():
     yield test, ("<serial data>",)
     yield test, ()
 
-def test_open_path():
+def test_open_path_dialog():
     from editxt.application import OpenPathController
     def test(c):
         app = Application()
@@ -177,7 +177,7 @@ def test_open_path():
             opc.showWindow_(app)
         app.path_opener.populateWithClipboard()
         with m:
-            app.open_path()
+            app.open_path_dialog()
     c = TestConfig(exists=False)
     yield test, c
     yield test, c(exists=True)
@@ -212,11 +212,9 @@ def test_open_documents_with_paths():
             m.method(app.create_editor)() >> ed
         focus = None
         for p in c.paths:
-            if exists(p.path) >> p.exists:
-                dv = dv_class.create_with_path(p.path) >> m.mock(TextDocumentView)
-                focus = ed.add_document_view(dv) >> dv
-            else:
-                alog.info(ANY, p.path)
+            exists(p.path) >> p.exists
+            dv = dv_class.create_with_path(p.path) >> m.mock(TextDocumentView)
+            focus = ed.add_document_view(dv) >> dv
         if focus is not None:
             ed.current_view = dv
         with m:
@@ -805,7 +803,7 @@ def test_openPath_():
     dc = DocumentController.sharedDocumentController()
     m = Mocker()
     app = m.replace("editxt.app", type=Application)
-    app.open_path()
+    app.open_path_dialog()
     with m:
         dc.openPath_(None)
 

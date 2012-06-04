@@ -57,17 +57,16 @@ Build/package EditXT.app::
     python setup.py py2app --package
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Top priority (these should all be listed under TODO as well)
+Top priority
 
 work on projects
-    fix drag/drop: do not copy from project to project unless command is pressed
-        pasteboard needs to uniquely identify project and/or docview
     add "undo close document" for project
         project will need a concept of recent documents
     implement close document (COMMAND+W)
 save untitled and unsaved documents in a temporary location
     allow naming unsaved documents like naming projects
     save undo stack?
+save settings in ~/.editxt/config
 find/replace text processors
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -502,6 +501,11 @@ Log filtering
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Completed tasks
+
+x edit non-existent document from command line should create new (unsaved) document
+
+x fix drag/drop: do not copy from project to project unless command is pressed
+x   pasteboard needs to uniquely identify project and/or docview
 
 x wrap text at column command
 
