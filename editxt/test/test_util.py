@@ -23,6 +23,7 @@ import os
 
 import objc
 from mocker import Mocker, expect, ANY, MATCH
+from nose.plugins.skip import SkipTest
 from nose.tools import eq_, assert_raises
 from AppKit import *
 from Foundation import *
@@ -279,7 +280,7 @@ def test_context_map_pop_with_default():
     eq_(map.pop(1000, "default"), "default")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-from editxt.util import fetch_icon, load_image, filestat
+from editxt.util import fetch_icon, load_image, filestat, user_path
 
 def test_fetch_icon_data():
     from os.path import abspath, dirname, join
@@ -335,6 +336,16 @@ def test_filestat():
             eq_(result, res)
     yield test, True
     yield test, False
+
+def test_user_path():
+    home = os.path.expanduser('~')
+    if not os.getenv('HOME'):
+        raise SkipTest("os.getenv('HOME') -> %r" % os.getenv('HOME'))
+    def test(input, output):
+        eq_(user_path(input), output)
+    yield test, '%s-not/file.txt' % home, '%s-not/file.txt' % home
+    yield test, '%s/file.txt' % home, '~/file.txt'
+    yield test, '%s/../%s/file' % (home, os.path.basename(home)), '~/file'
 
 def test_Invoker_invoke():
     from editxt.util import Invoker

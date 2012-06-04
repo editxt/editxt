@@ -258,6 +258,14 @@ def filestat(path):
     return None
 
 
+def user_path(path):
+    """Return path with user home prefix replaced with ~ if applicable"""
+    home = os.path.expanduser('~')
+    if os.path.normpath(path).startswith(home + os.sep):
+        path = '~' + os.path.normpath(path)[len(home):]
+    return path
+
+
 @untested
 def perform_selector(delegate, selector, *args):
     # this is the supported way to call a selector on a delegate:

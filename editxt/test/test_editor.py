@@ -622,13 +622,13 @@ def test_item_changed():
     yield test, c(objs=["p", "d", "D", "P"], row=2)
 
 def test_tool_tip_for_item():
-    def test(doctype):
+    def test(doctype, null_path):
         m = Mocker()
         view = m.mock(NSOutlineView)
         if doctype is not None:
             tip = "test_tip"
             doc = m.mock(doctype)
-            doc.file_path >> tip
+            (doc.file_path << (None if null_path else tip)).count(1, 2)
         else:
             tip = doc = None
         item = m.mock()
@@ -636,9 +636,10 @@ def test_tool_tip_for_item():
         with m:
             ed = Editor(None)
             result_tip = ed.tooltip_for_item(view, item)
-            eq_(result_tip, tip)
+            eq_(result_tip, (None if null_path else tip))
     for doctype in (TextDocument, Project, None):
-        yield test, doctype
+        yield test, doctype, True
+        yield test, doctype, False
 
 def test_should_edit_item():
     def test(c):

@@ -34,7 +34,7 @@ from editxt.controls.cells import BUTTON_STATE_HOVER, BUTTON_STATE_NORMAL, BUTTO
 from editxt.document import TextDocumentView
 from editxt.project import Project
 from editxt.util import KVOList, RecentItemStack, load_image, perform_selector
-from editxt.util import untested, message, representedObject
+from editxt.util import untested, message, representedObject, user_path
 
 log = logging.getLogger(__name__)
 
@@ -317,7 +317,8 @@ class Editor(object):
 
     def tooltip_for_item(self, view, item):
         it = view.realItemForOpaqueItem_(item)
-        return None if it is None else it.file_path
+        null = it is None or it.file_path is None
+        return None if null else user_path(it.file_path)
 
     def should_edit_item(self, col, item):
         if col.isEditable():
@@ -723,6 +724,12 @@ class EditorWindowController(NSWindowController):
 
     def undo_manager(self):
         return self.editor.undo_manager()
+
+    def windowTitleForDocumentDisplayName_(self, name):
+        view = self.editor.current_view
+        if view is not None and view.file_path is not None:
+            return user_path(view.file_path)
+        return name
 
     def windowDidBecomeKey_(self, notification):
         self.editor.window_did_become_key(notification.object())
