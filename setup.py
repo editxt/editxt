@@ -192,7 +192,7 @@ if package:
     from os.path import join
     from zipfile import ZipFile, ZIP_DEFLATED
     distpath = join(thisdir, 'dist')
-    zip_file = '%s-v%s.zip' % (appname, version)
+    zip_file = '%s-v%s-%s.zip' % (appname, version, gitrev)
     print 'packaging for distribution: %s' % zip_file
     zip_path = join(distpath, zip_file)
     zip = ZipFile(zip_path, "w", ZIP_DEFLATED)
@@ -200,6 +200,7 @@ if package:
         zip.write(join(thisdir, 'changelog.txt'), 'changelog.txt')
         zip.write(join(thisdir, 'COPYING'), 'COPYING')
         zip.write(join(thisdir, 'README.txt'), 'README.txt')
+        zip.write(join(thisdir, 'bin/xt.py'), 'xt')
         app_path = join(thisdir, 'dist', appname + '.app')
         trimlen = len(distpath) + 1
         for dirpath, dirnames, filenames in os.walk(app_path):

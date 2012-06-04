@@ -1,11 +1,9 @@
 #! /usr/bin/python
-# Do it with python because bash escaping is too painful.
-# The 'open' command only works with existing files:
-#   #! /bin/bash
-#   open -a EditXT.app "$@"
+# Put this file somewhere on your path if you wish to interact with EditXT from
+# the command line.
 import os
 import sys
-from optparse import OptionParser
+from optparse import OptionParser, SUPPRESS_HELP
 from subprocess import call
 
 APP_NAME = 'EditXT'
@@ -21,10 +19,9 @@ def main(args):
         description='%s command line interface' % APP_NAME,
         usage="usage: %prog [options] [files]",
     )
-    parser.add_option('--dev', action='store_true',
-        help="Target %sDev rather than %s." % (APP_NAME, APP_NAME))
+    parser.add_option('--dev', action='store_true', help=SUPPRESS_HELP)
     parser.add_option('--debug-osascript', action='store_true',
-        help="Print applescript prior to executing it.")
+        help="Print AppleScript prior to executing it.")
 
     options, filenames = parser.parse_args(args)
 

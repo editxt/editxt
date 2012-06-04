@@ -23,6 +23,7 @@ This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
 ? - 1.1.x
+  - Add "xt" command line script to packaged app.
   - Display full path in window title and document tooltips.
   - Fix cursor column status view: left-most position is now 0 instead of 1.
   - Create new (empty) document when opening non-existent path from command
