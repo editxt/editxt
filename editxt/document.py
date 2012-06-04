@@ -378,7 +378,7 @@ class TextDocumentView(NSObject):
         i = index
         while i > 0 and text[i - 1] != u"\n":
             i -= 1
-        col = (index - i) + 1
+        col = (index - i)
         sel = range.length
         self.scroll_view.statusView.updateLine_column_selection_(line, col, sel)
 
