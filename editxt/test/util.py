@@ -17,12 +17,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import with_statement
+from __future__ import absolute_import
 
 import inspect
 import logging
 from contextlib import contextmanager
-from mocker import Mocker
 from nose import with_setup
 import nose.tools
 
@@ -72,6 +71,7 @@ def install_pdb_trace_for_nose():
 
 def do_method_pass_through(attr, inner_obj_class, outer_obj, token, method,
         ext_args=(), int_args=None, returns=None):
+    from mocker import Mocker # late import so mockerext is installed
     def inject_wc(args):
         return [(outer_obj if a is token else a) for a in args]
     if int_args is None:
@@ -82,7 +82,7 @@ def do_method_pass_through(attr, inner_obj_class, outer_obj, token, method,
     if isinstance(method, basestring):
         method = (method, method)
     outer_method, inner_method = method
-    inner_obj = m.replace(getattr(outer_obj, attr), inner_obj_class, passthrough=False)
+    inner_obj = m.replace(outer_obj, attr, spec=inner_obj_class)
     setattr(outer_obj, attr, inner_obj)
     getattr(inner_obj, inner_method)(*int_args) >> returns
     with m:
@@ -110,6 +110,7 @@ class TestConfig(object):
 
 @contextmanager
 def replattr(*args, **kw):
+    sigchk = kw.pop('sigcheck', True)
     dict_replace = kw.pop('dict', False)
     if kw:
         raise ValueError('unrecognized keyword arguments: %s' % ', '.join(kw))
@@ -120,7 +121,7 @@ def replattr(*args, **kw):
     for obj, attr, value in args:
         try:
             temp = obj[attr] if dict_replace else getattr(obj, attr)
-            if (inspect.isfunction(temp) or inspect.ismethod(temp)):
+            if sigchk and (inspect.isfunction(temp) or inspect.ismethod(temp)):
                 as0 = inspect.getargspec(temp)
                 as1 = inspect.getargspec(value)
                 if as0 != as1:

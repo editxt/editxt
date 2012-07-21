@@ -28,11 +28,13 @@ from AppKit import *
 from Foundation import *
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
-from editxt.test.util import TestConfig, untested, check_app_state
+from editxt.test.util import TestConfig, untested, check_app_state, replattr
 
+import editxt
 import editxt.constants as const
+import editxt.document as mod
 from editxt.constants import TEXT_DOCUMENT
-from editxt.application import DocumentController
+from editxt.application import Application, DocumentController
 from editxt.editor import Editor, EditorWindowController
 from editxt.document import TextDocument, TextDocumentView
 from editxt.project import Project
@@ -159,8 +161,6 @@ def test_TextDocumentView_window():
 def test_document_set_main_view_of_window():
     from editxt.constants import LARGE_NUMBER_FOR_TEXT
     from editxt.controls.linenumberview import LineNumberView
-    from editxt.controls.textview import TextView
-    from editxt.controls.statscrollview import StatusbarScrollView
 
     def test(c):
         m = Mocker()
@@ -173,16 +173,18 @@ def test_document_set_main_view_of_window():
         ewc = m.mock(EditorWindowController)
         dv.props = props = m.mock(dict)
         view = m.mock(NSView)
-        tv = m.mock(TextView)
-        sv = m.mock(StatusbarScrollView)
+        tv = m.mock(mod.TextView)
+        sv = m.mock(mod.StatusbarScrollView)
+        lm_class = m.replace(mod, 'NSLayoutManager')
+        tc_class = m.replace(mod, 'NSTextContainer')
+        sv_class = m.replace(mod, 'StatusbarScrollView')
+        tv_class = m.replace(mod, 'TextView')
         frame = (view.bounds() >> m.mock())
         if c.sv_is_none:
-            lm_class = m.replace("editxt.document.NSLayoutManager")
             lm = m.mock(NSLayoutManager)
             lm_class.alloc().init() >> lm
             doc.text_storage >> ts
             ts.addLayoutManager_(lm)
-            tc_class = m.replace("editxt.document.NSTextContainer")
             tc = m.mock(NSTextContainer)
             tc_class.alloc() >> tc
             size = m.mock(NSSize)
@@ -193,13 +195,11 @@ def test_document_set_main_view_of_window():
             #tc.setWidthTracksTextView_(False)
             #tc.setContainerSize_(NSMakeSize(LARGE_NUMBER_FOR_TEXT, LARGE_NUMBER_FOR_TEXT))
 
-            sv_class = m.replace("editxt.controls.statscrollview.StatusbarScrollView")
             sv_class.alloc().initWithFrame_(frame) >> sv
             sv.setHasHorizontalScroller_(True)
             sv.setHasVerticalScroller_(True)
             sv.setAutoresizingMask_(NSViewWidthSizable | NSViewHeightSizable)
 
-            tv_class = m.replace("editxt.controls.textview.TextView")
             tv_class.alloc() >> tv
             tv.initWithFrame_textContainer_(frame, tc) >> tv
             #tv.layoutManager().replaceTextStorage_(doc.text_storage)
@@ -301,6 +301,8 @@ def test_set_wrap_mode():
 def test_TextDocumentView_document_properties():
     def test(c):
         m = Mocker()
+        regundo = m.replace(mod, 'register_undo_callback', sigcheck=False)
+        repnl = m.replace(mod, 'replace_newlines', sigcheck=False)
         doc = m.mock(TextDocument)
         dv = TextDocumentView.create_with_document(doc)
         dv.props = m.mock() # KVOProxy
@@ -337,18 +339,16 @@ def test_TextDocumentView_document_properties():
 
     def do(x):
         c, m = x.c, x.m
-        regundo = m.replace("editxt.util.register_undo_callback", passthrough=False)
-        rep = m.replace("editxt.textcommand.replace_newlines")
         undoman = x.doc.undoManager() >> x.m.mock(NSUndoManager)
         undoman.isUndoing() >> c.undoing
         if not c.undoing:
             undoman.isRedoing() >> c.redoing
         if not (c.undoing or c.redoing):
-            rep(x.dv.text_view, const.EOLS[x.c.value])
+            x.repnl(x.dv.text_view, const.EOLS[x.c.value])
         setattr(x.doc.props, c.attr, c.value)
         def _undo(undoman, undo):
             undo()
-        expect(regundo(undoman, ANY)).call(_undo)
+        expect(x.regundo(undoman, ANY)).call(_undo)
         setattr(x.dv.props, c.attr, c.default)
     c = TestConfig(do=do, attr="newline_mode",
         default=const.NEWLINE_MODE_UNIX, undoing=False, redoing=False)
@@ -369,7 +369,7 @@ def test_TextDocumentView_prompt():
         doc = m.mock(TextDocument)
         dv = TextDocumentView.create_with_document(doc)
         dv_window = m.method(dv.window)
-        alert_class = m.replace(Alert, passthrough=False)
+        alert_class = m.replace(mod, 'Alert')
         callback = m.mock(name="callback")
         win = dv_window() >> (m.mock(NSWindow) if c.has_window else None)
         if c.has_window:
@@ -407,8 +407,8 @@ def test_TextDocumentView_change_indentation():
     SPC = const.INDENT_MODE_SPACE
     def test(c):
         m = Mocker()
-        regundo = m.replace("editxt.util.register_undo_callback", passthrough=False)
-        convert = m.replace("editxt.textcommand.change_indentation", passthrough=False)
+        regundo = m.replace(mod, 'register_undo_callback', sigcheck=False)
+        convert = m.replace(mod, 'change_indentation', sigcheck=False)
         doc = m.mock(TextDocument)
         dv = TextDocumentView.create_with_document(doc)
         tv = dv.text_view = m.mock(NSTextView)
@@ -577,12 +577,11 @@ def test_reset_edit_state():
 
 
 def test_perform_close():
-    from editxt.application import Application
     def test(num_views):
         m = Mocker()
         doc = m.mock(TextDocument)
         dv = TextDocumentView.alloc().init_with_document(doc)
-        app = m.replace("editxt.app", type=Application)
+        app = m.replace(mod, 'app')
         ed = m.mock(Editor)
         app.iter_editors_with_view_of_document(doc) >> (ed for x in xrange(num_views))
         if num_views == 1:
@@ -601,10 +600,9 @@ def test_perform_close():
         yield test, num_views
 
 def test_document_shouldClose_contextInfo_():
-    from editxt.application import Application
     def test(should_close):
         m = Mocker()
-        app = m.replace("editxt.app", type=Application)
+        app = m.replace(mod, 'app')
         doc = m.mock(TextDocument)
         dv = TextDocumentView.alloc().init_with_document(doc)
         ed = m.mock(Editor)
@@ -618,13 +616,12 @@ def test_document_shouldClose_contextInfo_():
     yield test, False
 
 def test_TextDocumentView_close():
-    from editxt.application import Application
     from editxt.editor import Editor
     def test(c):
         m = Mocker()
         doc = m.mock(TextDocument)
         dv = TextDocumentView.alloc().init_with_document(doc)
-        app = m.replace("editxt.app", Application)
+        app = m.replace(mod, 'app')
         if c.project_is_none:
             dv.project = None
         else:
@@ -676,7 +673,7 @@ def test_KVOProxy_create():
     from editxt.util import KVOProxy
     def test(class_, factory):
         m = Mocker()
-        proxy = m.replace("editxt.util.KVOProxy")
+        proxy = m.replace(mod, 'KVOProxy', spec=KVOProxy, sigcheck=False)
         def cb(value):
             return isinstance(value, class_)
         proxy(MATCH(cb)) >> m.mock(KVOProxy)
@@ -824,8 +821,8 @@ def test_TextDocument_default_text_attributes():
 def test_TextDocument_reset_text_attributes():
     INDENT_SIZE = 42
     m = Mocker()
-    app = m.replace("editxt.app")
-    ps_class = m.replace(NSParagraphStyle, passthrough=False)
+    app = m.replace(mod, 'app')
+    ps_class = m.replace(mod, 'NSParagraphStyle')
     doc = TextDocument.alloc().init()
     ts = doc.text_storage = m.mock(NSTextStorage)
     undoer = m.method(doc.undoManager)
@@ -874,20 +871,21 @@ def test_is_externally_modified():
         """
         m = Mocker()
         doc = TextDocument.alloc().init()
-        exists = m.replace("os.path.exists")
+        def exists(path):
+            return c.exists
         fileURL = m.method(doc.fileURL)
         modDate = m.method(doc.fileModificationDate)
         url = fileURL() >> (None if c.url_is_none else m.mock(NSURL))
         path = "<path>"
         if not c.url_is_none:
             url.path() >> path
-            if (exists(path) >> c.exists):
+            if c.exists:
                 url.getResourceValue_forKey_error_(
                     None, NSURLContentModificationDateKey, None) \
                     >> (c.date_ok, c.loc_stat, None)
                 if c.date_ok:
                     modDate() >> c.ext_stat
-        with m:
+        with replattr(os.path, 'exists', exists), m:
             eq_(doc.is_externally_modified(), c.rval)
     c = TestConfig(url_is_none=False, exists=True)
     yield test, c(url_is_none=True, rval=None)
@@ -901,8 +899,10 @@ def test_is_externally_modified():
 def test_check_for_external_changes():
     from editxt.controls.alert import Alert
     def test(c):
+        def filestat(path):
+            return c.modstat
         def end(): # this allows us to return early (reducing nested if's)
-            with m:
+            with replattr(mod, 'filestat', filestat), m:
                 eq_(doc._filestat, c.prestat)
                 doc.check_for_external_changes(win)
                 eq_(doc._filestat,
@@ -910,11 +910,10 @@ def test_check_for_external_changes():
         m = Mocker()
         doc = TextDocument.alloc().init()
         win = None
-        nsa_class = m.replace(Alert, passthrough=False)
+        nsa_class = m.replace(mod, 'Alert')
         alert = m.mock(Alert)
         displayName = m.method(doc.displayName)
         isdirty = m.method(doc.isDocumentEdited)
-        filestat = m.replace("editxt.util.filestat")
         reload = m.method(doc.reload_document)
         m.method(doc.is_externally_modified)() >> c.extmod
         if not c.extmod:
@@ -926,7 +925,7 @@ def test_check_for_external_changes():
             if c.prestat is not None:
                 doc._filestat = c.prestat
             path = (m.method(doc.fileURL)() >> m.mock(NSURL)).path() >> "<path>"
-            filestat(path) >> c.modstat
+            #filestat(path) >> c.modstat
             if c.prestat == c.modstat:
                 return end()
             (nsa_class.alloc() >> alert).init() >> alert
@@ -958,14 +957,17 @@ def test_check_for_external_changes():
 def test_reload_document():
     def test(c):
         def end():
-            with m:
+            with replattr(os.path, 'exists', exists), m:
                 doc.reload_document()
                 eq_(doc.text_storage, doc_ts)
         m = Mocker()
+        def exists(path):
+            return c.exists
         doc = TextDocument.alloc().init()
         perform_clear_undo = m.method(doc.performSelector_withObject_afterDelay_)
-        app = m.replace("editxt.app", passthrough=False)
-        doc_log = m.replace("editxt.document.log")
+        app = m.replace(mod, 'app')
+        doc_log = m.replace(mod, 'log')
+        ts_class = m.replace(mod, 'NSTextStorage')
         fileURL = m.method(doc.fileURL)
         fw = m.mock(NSFileWrapper)
         ts = m.mock(NSTextStorage)
@@ -973,13 +975,11 @@ def test_reload_document():
         url = fileURL() >> (None if c.url_is_none else m.mock(NSURL))
         if c.url_is_none:
             return end()
-        exists = m.replace("os.path.exists")
         path = url.path() >> "<path>"
-        if not exists(path) >> c.exists:
+        if not c.exists:
             return end()
         undo = m.method(doc.undoManager)() >> m.mock(NSUndoManager)
         undo.should_remove = False
-        ts_class = m.replace(NSTextStorage, passthrough=False)
         (ts_class.alloc() >> ts).init() >> ts
         m.method(doc.revertToContentsOfURL_ofType_error_)(
             url, m.method(doc.fileType)() >> "<type>", None) \
@@ -1095,9 +1095,8 @@ class TestTextDocument(MockerTestCase):
         assert doc.text_storage.string() == content
 
     def test_saveDocument(self):
-        from editxt.application import Application
         m = Mocker()
-        app = m.replace("editxt.app", type=Application, passthrough=False)
+        app = m.replace(mod, 'app')
         dc = NSDocumentController.sharedDocumentController()
         path = self.makeFile(content="", prefix="text", suffix=".txt")
         file = open(path)
@@ -1212,11 +1211,10 @@ def test_analyze_content():
 
 def test_makeWindowControllers():
     def test(ed_is_none):
-        from editxt.application import Application
         doc = TextDocument.alloc().init()
         m = Mocker()
-        app = m.replace("editxt.app", type=Application)
-        dv_class = m.replace("editxt.document.TextDocumentView")
+        app = m.replace('editxt.app'); m.replace(mod, 'app', mock=app)
+        dv_class = m.replace(mod, 'TextDocumentView')
         dv = m.mock(TextDocumentView)
         ed = m.mock(Editor)
         app.current_editor() >> (None if ed_is_none else ed)
@@ -1257,7 +1255,7 @@ def test_update_syntaxer():
     from editxt.syntax import SyntaxCache, SyntaxDefinition
     def test(c):
         m = Mocker()
-        app = m.replace("editxt.app", passthrough=False)
+        app = m.replace(mod, 'app')
         doc = TextDocument.alloc().init()
         doc.text_storage = ts = m.mock(NSTextStorage)
         m.property(doc, "syntaxdef")
@@ -1304,10 +1302,9 @@ def test_textStorageDidProcessEditing_():
         doc.textStorageDidProcessEditing_(None)
 
 def test_updateChangeCount_():
-    from editxt.application import Application
     m = Mocker()
     doc = TextDocument.alloc().init()
-    app = m.replace("editxt.app", type=Application, passthrough=False)
+    app = m.replace(mod, 'app')
     ctype = 0
     app.item_changed(doc, ctype)
     with m:

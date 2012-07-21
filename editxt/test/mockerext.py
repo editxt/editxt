@@ -186,11 +186,14 @@ class MockerExt(mocker.Mocker):
             assert '.' in obj, 'invalid replacement specifier: %s' % obj
             obj, attr = obj.rsplit('.', 1)
             obj = import_module(obj)
-        if kw.get('dict'):
-            object = obj[attr]
+        if 'mock' in kw:
+            mock = kw.pop('mock')
         else:
-            object = getattr(obj, attr)
-        mock = self.proxy(object, spec, type, name, count, passthrough)
+            if kw.get('dict'):
+                object = obj[attr]
+            else:
+                object = getattr(obj, attr)
+            mock = self.proxy(object, spec, type, name, count, passthrough)
         event = self._get_replay_restore_event()
         event.add_task(AttributeReplacer(obj, attr, mock, kw))
         return mock

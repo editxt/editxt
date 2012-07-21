@@ -29,13 +29,15 @@ from Foundation import *
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import *
 
+import editxt
 import editxt.constants as const
+import editxt.application as mod
 from editxt.application import Application, DocumentController, DocumentSavingDelegate
 from editxt.editor import EditorWindowController, Editor
 from editxt.document import TextDocumentView, TextDocument
 from editxt.project import Project
 
-from editxt.test.util import do_method_pass_through, TestConfig
+from editxt.test.util import do_method_pass_through, TestConfig, replattr
 
 log = logging.getLogger(__name__)
 
@@ -57,18 +59,21 @@ def test_application_init():
     from editxt.util import ContextMap
     from editxt.errorlog import ErrorLog
     m = Mocker()
-    m.replace("editxt.valuetrans.register_value_transformers", passthrough=False)()
-    with m:
+    reg_vtrans = []
+    def vtrans():
+        reg_vtrans.append(1)
+    with replattr(mod, 'register_value_transformers', vtrans), m:
         app = Application()
         eq_(app.editors, [])
         assert isinstance(app.context, ContextMap)
+        assert reg_vtrans
 
 def test_app_support_path():
     def test(c):
         m = Mocker()
-        search_path = m.replace(NSSearchPathForDirectoriesInDomains, passthrough=False)
-        nstemp = m.replace(NSTemporaryDirectory, passthrough=False)
-        nsb = m.replace(NSBundle)
+        search_path = m.replace(mod, 'NSSearchPathForDirectoriesInDomains')
+        nstemp = m.replace(mod, 'NSTemporaryDirectory')
+        nsb = m.replace(mod, 'NSBundle')
         paths = [m.mock(NSString)] if c.has_paths else []
         appname = "App Name"
         search_path(NSApplicationSupportDirectory, NSUserDomainMask, True) >> paths
@@ -86,14 +91,14 @@ def test_app_support_path():
     yield test, c(has_paths=True)
 
 def test_init_syntax_definitions():
-    from editxt.syntax import SyntaxFactory
+    import editxt.syntax as syntax
     m = Mocker()
     app = Application()
-    sf_class = m.replace(SyntaxFactory, spec=False, passthrough=False)
-    app_log = m.replace("editxt.application.log", passthrough=False)
-    nsb = m.replace(NSBundle)
+    SyntaxFactory = m.replace(syntax, 'SyntaxFactory', spec=False)
+    app_log = m.replace("editxt.application.log")
+    nsb = m.replace(mod, 'NSBundle')
     app_support_path = m.method(Application.app_support_path)
-    sf = sf_class() >> m.mock(SyntaxFactory)
+    sf = SyntaxFactory() >> m.mock(syntax.SyntaxFactory)
     rsrc_path = nsb.mainBundle().resourcePath() >> "/resources/syntax"
     asup_path = app_support_path() >> "/app_support/syntax"
     for path in [rsrc_path, asup_path]:
@@ -112,20 +117,20 @@ def test_syntaxdefs():
         eq_(app.syntaxdefs, "<definitions>")
 
 def test_application_will_finish_launching():
-    from editxt.textcommand import TextCommandController
+    import editxt.textcommand as txtcmd
     def test(eds_config):
         app = Application()
         m = Mocker()
         create_editor = m.method(app.create_editor)
         nsapp = m.mock(NSApplication)
-        ud_class = m.replace("editxt.application.NSUserDefaults")
+        ud_class = m.replace(mod, 'NSUserDefaults')
         ud = ud_class.standardUserDefaults() >> m.mock(NSUserDefaults)
         ud.arrayForKey_(const.WINDOW_CONTROLLERS_DEFAULTS_KEY) >> eds_config
-        cmd_class = m.replace("editxt.textcommand.TextCommandController")
+        cmd_class = m.replace(txtcmd, 'TextCommandController')
         dc = m.mock(DocumentController)
         menu = dc.textMenu >> m.mock(NSMenu)
         m.method(app.init_syntax_definitions)()
-        tc = cmd_class(menu) >> m.mock(TextCommandController)
+        tc = cmd_class(menu) >> m.mock(txtcmd.TextCommandController)
         tc.load_commands()
         if eds_config:
             for ed_config in eds_config:
@@ -140,15 +145,15 @@ def test_application_will_finish_launching():
     yield test, ["project 1", "project 2"]
 
 def test_create_editor():
-    from editxt.editor import Editor
+    import editxt.editor as editor #import Editor
     def test(args):
         ac = Application()
         m = Mocker()
-        ed_class = m.replace("editxt.editor.Editor", passthrough=False)
-        wc_class = m.replace("editxt.editor.EditorWindowController", passthrough=False)
-        wc = wc_class.alloc() >> m.mock(EditorWindowController)
+        ed_class = m.replace(editor, 'Editor')
+        wc_class = m.replace(editor, 'EditorWindowController')
+        wc = wc_class.alloc() >> m.mock(editor.EditorWindowController)
         wc.initWithWindowNibName_("EditorWindow") >> wc
-        ed = ed_class(wc, args[0] if args else None) >> m.mock(Editor)
+        ed = ed_class(wc, args[0] if args else None) >> m.mock(editor.Editor)
         wc.editor = ed
         #ed = wc.controller >> m.mock(Editor)
         #wc_class.create_with_serial_data(args[0] if args else None) >> wc
@@ -162,12 +167,11 @@ def test_create_editor():
     yield test, ()
 
 def test_open_path_dialog():
-    from editxt.application import OpenPathController
     def test(c):
         app = Application()
         m = Mocker()
-        opc_class = m.replace(OpenPathController, passthrough=False)
-        opc = m.mock(OpenPathController)
+        opc_class = m.replace(mod, 'OpenPathController')
+        opc = m.mock(mod.OpenPathController)
         m.property(app, "path_opener").value >> (opc if c.exists else None)
         if c.exists:
             app.path_opener.window().makeKeyAndOrderFront_(app)
@@ -200,13 +204,14 @@ def test_new_project():
     yield test, False
 
 def test_open_documents_with_paths():
+    import editxt.document as edoc
     def test(c):
         m = Mocker()
         app = Application()
-        exists = m.replace("os.path.isfile")
-        alog = m.replace("editxt.application.log", passthrough=False)
+        exists = lambda path: True
+        alog = m.replace(mod, 'log')
         ed = m.mock(Editor)
-        dv_class = m.replace(TextDocumentView, passthrough=False)
+        dv_class = m.replace(edoc, 'TextDocumentView')
         m.method(app.current_editor)() >> (ed if c.has_editor else None)
         if not c.has_editor:
             m.method(app.create_editor)() >> ed
@@ -217,7 +222,7 @@ def test_open_documents_with_paths():
             focus = ed.add_document_view(dv) >> dv
         if focus is not None:
             ed.current_view = dv
-        with m:
+        with replattr(os.path, 'isfile', exists), m:
             app.open_documents_with_paths([p.path for p in c.paths])
     c = TestConfig(has_editor=True)
     p = lambda p, e: TestConfig(path=p, exists=e)
@@ -230,12 +235,13 @@ def test_open_documents_with_paths():
 
 def test_open_error_log():
     import editxt.application as mod
+    import editxt.document as edoc
     from editxt.errorlog import ErrorLog
     def test(c):
         m = Mocker()
         ed = m.mock(Editor)
         dv = m.mock(TextDocumentView)
-        dv_class = m.replace(TextDocumentView)
+        dv_class = m.replace(edoc, 'TextDocumentView')
         app = Application()
         err = m.property(mod.errlog, "document").value >> m.mock(TextDocument)
         idocs = m.method(app.iter_views_of_document)(err) >> m.mock()
@@ -451,7 +457,7 @@ def test_iter_editors():
         """
         ac = Application()
         m = Mocker()
-        app_class = m.replace("editxt.application.NSApp")
+        app_class = m.replace(mod, 'NSApp')
         app = app_class()
         eds = {}
         unordered_eds = []
@@ -651,7 +657,7 @@ def test_save_open_projects():
     def test(eds_config, ud_is_none=False):
         ac = Application()
         m = Mocker()
-        df_class = m.replace("editxt.application.NSUserDefaults")
+        df_class = m.replace(mod, 'NSUserDefaults')
         eds = []
         mac = m.patch(ac)
         mac.iter_editors() >> eds
@@ -683,7 +689,7 @@ def test_load_window_settings():
         ac = Application()
         m = Mocker()
         defaults = m.mock(NSUserDefaults)
-        df_class = m.replace("editxt.application.NSUserDefaults")
+        df_class = m.replace(mod, 'NSUserDefaults')
         eds = [m.mock(Editor) for x in xrange(ed_count)]
         if add_eds:
             df_class.standardUserDefaults() >> defaults
@@ -714,7 +720,7 @@ def test_save_window_settings():
     def do_save_window_settings(ed_count, close_ed, wsets, default_settings, all_settings):
         m = Mocker()
         ac = Application()
-        df_class = m.replace("editxt.application.NSUserDefaults")
+        df_class = m.replace(mod, 'NSUserDefaults')
         defaults = MockUserDefaults()
         defaults.setObject_forKey_(default_settings, const.WINDOW_SETTINGS_DEFAULTS_KEY)
         ac.editors = eds = [m.mock(Editor) for x in xrange(ed_count)]
@@ -739,7 +745,6 @@ def test_save_window_settings():
 def test_save_window_settings_with_unknown_editor():
     ac = Application()
     m = Mocker()
-    df_class = m.replace("editxt.application.NSUserDefaults")
     ed = m.mock(Editor)
     with m:
         ac.save_window_settings(ed)
@@ -748,7 +753,7 @@ def test_app_will_terminate():
     def test(ed_config):
         ac = Application()
         m = Mocker()
-        df_class = m.replace("editxt.application.NSUserDefaults")
+        df_class = m.replace(mod, 'NSUserDefaults')
         iter_editors = m.method(ac.iter_editors)
         save_open_projects = m.method(ac.save_open_projects)
         discard_editor = m.method(ac.discard_editor)
@@ -793,7 +798,7 @@ def test_applicationShouldOpenUntitledFile_():
 def test_applicationWillFinishLaunching_():
     dc = DocumentController.sharedDocumentController()
     m = Mocker()
-    app = m.replace("editxt.app", type=Application)
+    app = m.replace(editxt, 'app')
     nsapp = m.mock(NSApplication)
     app.application_will_finish_launching(nsapp, dc)
     with m:
@@ -802,7 +807,7 @@ def test_applicationWillFinishLaunching_():
 def test_openPath_():
     dc = DocumentController.sharedDocumentController()
     m = Mocker()
-    app = m.replace("editxt.app", type=Application)
+    app = m.replace(editxt, 'app')
     app.open_path_dialog()
     with m:
         dc.openPath_(None)
@@ -830,7 +835,7 @@ def test_newProject_():
 def test_newWindow_():
     dc = DocumentController.sharedDocumentController()
     m = Mocker()
-    app = m.replace("editxt.app", type=Application)
+    app = m.replace(editxt, 'app')
     app.create_editor()
     with m:
         dc.newWindow_(None)
@@ -838,7 +843,7 @@ def test_newWindow_():
 def test_openErrorLog_():
     dc = DocumentController.sharedDocumentController()
     m = Mocker()
-    app = m.replace("editxt.app", type=Application)
+    app = m.replace(editxt, 'app')
     app.open_error_log()
     with m:
         dc.openErrorLog_(None)
@@ -846,7 +851,7 @@ def test_openErrorLog_():
 def test_applicationWillTerminate():
     dc = NSDocumentController.sharedDocumentController()
     m = Mocker()
-    app = m.replace("editxt.app", type=Application)
+    app = m.replace(editxt, 'app')
     notif = m.mock() # NSApplicationWillTerminateNotification
     nsapp = m.mock(NSApplication)
     app.app_will_terminate(notif.object() >> nsapp)
@@ -854,13 +859,14 @@ def test_applicationWillTerminate():
         dc.applicationWillTerminate_(notif)
 
 def test_closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_():
+    import editxt.util as util
     context = 42
     dc = NSDocumentController.sharedDocumentController()
     m = Mocker()
-    app = m.replace("editxt.app", type=Application)
-    perf_sel = m.replace("editxt.util.perform_selector", passthrough=False)
-    dsd_class = m.replace("editxt.application.DocumentSavingDelegate",
-        spec=False, passthrough=False)
+    app = m.replace(editxt, 'app')
+    def perf_sel(delegate, selector, *args):
+        should_term(*args)
+    dsd_class = m.replace(mod, 'DocumentSavingDelegate', spec=False)
     docs = m.mock()
     app.iter_dirty_documents() >> docs
     selector = "_docController:shouldTerminate:context:"
@@ -869,14 +875,12 @@ def test_closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_():
         callback("<result>")
         return True
     should_term = delegate._docController_shouldTerminate_context_
-    expect(perf_sel(delegate, selector, dc, "<result>", context)).call(
-        lambda *a:should_term(dc, "<result>", context))
     should_term(dc, "<result>", context)
     saver = m.mock(DocumentSavingDelegate)
     dsd_class.alloc() >> saver
     saver.init_callback_(docs, MATCH(test_callback)) >> saver
     saver.save_next_document()
-    with m:
+    with replattr(mod, 'perform_selector', perf_sel), m:
         dc.closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_(
             delegate, selector, context)
 
@@ -896,9 +900,10 @@ def test_DocumentSavingDelegate_init():
 def test_save_next_document():
     def do_test(doctype, doc_window_is_front=True):
         m = Mocker()
-        app = m.replace("editxt.app", type=Application)
+        app = m.replace(editxt, 'app')
         docs = m.mock()
         dc = m.mock(DocumentController)
+        note_ctr = m.replace(mod, 'NSNotificationCenter')
         controller = m.mock()
         callback = m.mock()
         context = 0
@@ -918,7 +923,6 @@ def test_save_next_document():
                 app.set_current_document_view(doc)
                 win = m.mock()
                 doc.window() >> win
-                note_ctr = m.replace("editxt.application.NSNotificationCenter")
                 note_ctr.defaultCenter().addObserver_selector_name_object_(
                     saver, "windowDidEndSheet:", NSWindowDidEndSheetNotification, win)
                 document = doc.document >> m.mock(TextDocument)
@@ -981,7 +985,7 @@ def test_windowDidEndSheet_():
         notif = m.mock(NSNotification)
         win = m.mock(NSWindow)
         notif.object() >> win
-        note_ctr = m.replace("editxt.application.NSNotificationCenter")
+        note_ctr = m.replace(mod, 'NSNotificationCenter')
         note_ctr.defaultCenter().removeObserver_name_object_(
             saver, NSWindowDidEndSheetNotification, win)
         save_next_document = m.method(saver.save_next_document)
@@ -1035,7 +1039,7 @@ def test_OpenPathController_populateWithClipboard():
 def test_OpenPathController_textView_doCommandBySelector_():
     def test(c):
         m = Mocker()
-        nsapp = m.replace(NSApp, spec=False, passthrough=False)
+        nsapp = m.replace(mod, 'NSApp', spec=False)
         opc = OpenPathController.alloc().init()
         tv = m.mock(NSTextView)
         if c.sel == "insertNewline:":
@@ -1060,7 +1064,7 @@ def test_OpenPathController_open_():
     from editxt.textcommand import iterlines
     def test(c):
         m = Mocker()
-        app = m.replace("editxt.app", passthrough=False)
+        app = m.replace(editxt, 'app')
         opc = OpenPathController.alloc().init()
         paths = m.property(opc, "paths").value >> m.mock(NSTextView)
         paths.textStorage().string() >> c.text

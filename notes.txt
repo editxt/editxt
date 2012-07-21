@@ -59,6 +59,8 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+speed up tests
+    m\.replace\(([^,\)]+)(:?(, [^p][^\)]+)?)(?:, passthrough=False)?\)
 work on projects
     add "undo close document" for project
         project will need a concept of recent documents

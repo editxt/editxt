@@ -34,9 +34,12 @@ from editxt.application import Application, DocumentController, DocumentSavingDe
 from editxt.editor import EditorWindowController, Editor
 from editxt.document import TextDocumentView, TextDocument
 from editxt.project import Project
+from editxt.test.noseplugins import slow_skip
 from editxt.util import representedObject
 
-from editxt.test.util import do_method_pass_through, TestConfig
+from editxt.test.util import do_method_pass_through, TestConfig, replattr
+
+import editxt.editor as mod
 
 log = logging.getLogger(__name__)
 # log.debug("""TODO test
@@ -74,10 +77,15 @@ def test_window_did_load():
         ws = m.property(ed, "window_settings")
         deserialize = m.method(ed.deserialize)
         new_project = m.method(ed.new_project)
-        _load_image = m.replace("editxt.util.load_image")
-        def load_image(value):
-            img = m.mock()
-            _load_image(value) >> img
+        load_image_cache = {}
+        _load_image = m.mock()
+        def load_image(name):
+            try:
+                img = load_image_cache[name]
+                _load_image(name)
+            except KeyError:
+                img = load_image_cache[name] = m.mock()
+                _load_image(name) >> img
             return img
 
         wc.setShouldCloseDocument_(False)
@@ -88,11 +96,11 @@ def test_window_did_load():
         wc.propsViewButton.setImage_(load_image(const.PROPS_DOWN_BUTTON_IMAGE))
         wc.propsViewButton.setAlternateImage_(load_image(const.PROPS_UP_BUTTON_IMAGE))
 
-        app = m.replace("editxt.app", type=Application)
+        app = m.replace(mod.editxt, 'app')
         ws.value = (app.load_window_settings(ed) >> "<settings>")
 
         win = ed.wc.window() >> m.mock(NSWindow)
-        note_ctr = m.replace("editxt.application.NSNotificationCenter")
+        note_ctr = m.replace(mod, 'NSNotificationCenter')
         note_ctr.defaultCenter().addObserver_selector_name_object_(
             ed.wc, "windowDidBecomeKey:", NSWindowDidBecomeKeyNotification, win)
 
@@ -119,7 +127,7 @@ def test_window_did_load():
         else:
             new_project()
 
-        with m:
+        with replattr(mod, 'load_image', load_image), m:
             ed.window_did_load()
             eq_(len(ed.projects), (1 if serial_data else 0))
             assert ed.serial_data is None
@@ -164,7 +172,8 @@ def test_deserialize():
 def test_serialize():
     def test(c):
         m = Mocker()
-        exists = m.replace("os.path.exists", passthrough=False)
+        def exists(path):
+            return True
         ed = Editor(None)
         ed.projects = projs = []
         ed.recent = c.recent
@@ -186,7 +195,6 @@ def test_serialize():
                 if d > 0:
                     path = "/path/do/file%s.txt" % d
                     (dv.file_path << path).count(2)
-                    exists(path) >> True
                     dv.id >> d
                     items[d] = (i, j - offset)
                 else:
@@ -198,7 +206,7 @@ def test_serialize():
             data["project_serials"] = psets
         if rits:
             data["recent_items"] = rits
-        with m:
+        with replattr(os.path, 'exists', exists), m:
             result = ed.serialize()
             eq_(result, data)
     c = TestConfig()
@@ -212,7 +220,7 @@ def test_discard_and_focus_recent():
     from editxt.util import RecentItemStack
     def test(c):
         m = Mocker()
-        app = m.replace("editxt.app", type=Application)
+        app = m.replace(mod.editxt, 'app')
         ed = Editor(m.mock(EditorWindowController))
         ed.projects = projs = []
         ed.recent = m.mock(RecentItemStack)
@@ -387,7 +395,7 @@ def test_resume_recent_updates():
 def test_new_project():
     m = Mocker()
     ed = Editor(None)
-    proj_class = m.replace(Project)
+    proj_class = m.replace(mod, 'Project')
     cv = m.property(ed, "current_view")
     proj = proj_class.create() >> m.mock(Project)
     view = proj.create_document_view() >> m.mock(TextDocumentView)
@@ -399,12 +407,13 @@ def test_new_project():
 
 def test_toggle_properties_pane():
     from editxt.controls.splitview import ThinSplitView
+    slow_skip()
     def test(c):
         m = Mocker()
-        nsanim = m.replace(NSViewAnimation, passthrough=False)
-        nsdict = m.replace(NSDictionary, passthrough=False)
-        nsval = m.replace(NSValue, passthrough=False)
-        nsarr = m.replace(NSArray, passthrough=False)
+        nsanim = m.replace(mod, 'NSViewAnimation')
+        nsdict = m.replace(mod, 'NSDictionary')
+        nsval = m.replace(mod, 'NSValue')
+        nsarr = m.replace(mod, 'NSArray')
         wc = m.mock(EditorWindowController)
         ed = Editor(wc)
         tree_view = m.mock(NSScrollView); (wc.docsScrollview << tree_view).count(2)
@@ -464,8 +473,11 @@ def test_find_project_with_document_view():
 def test_find_project_with_path():
     def test(c):
         m = Mocker()
-        exists = m.replace("os.path.exists", passthrough=False)
-        samefile = m.replace("os.path.samefile", passthrough=False)
+        def exists(path):
+            return True
+        def samefile(f1, f2):
+            eq_(f2, c.path)
+            return f1 == f2
         ed = Editor(None)
         ed.projects = projects = []
         found_proj = None
@@ -476,11 +488,12 @@ def test_find_project_with_path():
                 proj.file_path >> path
                 if path is None:
                     continue
-                exists(path) >> True
-                samefile(path, c.path) >> (path == c.path)
                 if path == c.path:
                     found_proj = proj
-        with m:
+        with replattr(
+            (os.path, 'exists', exists),
+            (os.path, 'samefile', samefile),
+        ), m:
             result = ed.find_project_with_path(c.path)
             eq_(result, found_proj)
     def path(i):
@@ -499,19 +512,19 @@ def test_get_current_project():
         ed = Editor(m.mock(EditorWindowController))
         tc = m.mock(NSTreeController)
         ed.wc.docsController >> (tc if docsController_is_not_none else None)
+        ip_class = m.replace(mod, 'NSIndexPath')
+        proj_class = m.replace(mod, 'Project')
         if docsController_is_not_none:
             path = m.mock(NSIndexPath)
             tc.selectionIndexPath() >> (path if path_config is not None else None)
             if path_config is not None:
                 index = path_config[0]
                 path.indexAtPosition_(0) >> index
-                ip_class = m.replace("editxt.editor.NSIndexPath")
                 path2 = m.mock(NSIndexPath)
                 ip_class.indexPathWithIndex_(index) >> path2
                 proj = m.mock(Project)
                 tc.objectAtArrangedIndexPath_(path2) >> proj
         if create and proj is None:
-            proj_class = m.replace("editxt.project.Project")
             proj = m.mock(Project)
             proj_class.create() >> proj
         with m:
@@ -698,12 +711,13 @@ def test_window_did_become_key():
     yield test, c(has_current=True, view_type=Project)
 
 def test_window_should_close():
+    import editxt.application
     def test(c):
         m = Mocker()
         win = m.mock(NSWindow)
         editor = Editor(m.mock(EditorWindowController))
-        dsd_class = m.replace("editxt.application.DocumentSavingDelegate")
-        app = m.replace("editxt.app", type=Application)
+        dsd_class = m.replace('editxt.application.DocumentSavingDelegate')
+        app = m.replace(editxt, 'app')
         dsd = m.mock(DocumentSavingDelegate)
         dirty_docs = []
         projs = editor.projects = []
@@ -753,7 +767,7 @@ def test_window_will_close():
     def test(window_settings_loaded, num_projects):
         ed = Editor(None)
         m = Mocker()
-        app = m.replace("editxt.app", type=Application)
+        app = m.replace(mod.editxt, 'app')
         ed.window_settings_loaded = window_settings_loaded
         with m.order():
             if window_settings_loaded:
@@ -888,7 +902,8 @@ def test_write_items_to_pasteboard():
         ed = Editor(None)
         ov = m.mock(NSOutlineView)
         pb = m.mock(NSPasteboard)
-        path_exists = m.replace("os.path.exists")
+        def path_exists(path):
+            return True
         items = []
         if c.items:
             types = [const.DOC_ID_LIST_PBOARD_TYPE]
@@ -903,7 +918,6 @@ def test_write_items_to_pasteboard():
                 data[const.DOC_ID_LIST_PBOARD_TYPE].append(ident)
                 dragitem.file_path >> item.path
                 if item.path is not None:
-                    path_exists(item.path) >> True
                     if NSFilenamesPboardType not in data:
                         types.append(NSFilenamesPboardType)
                     data[NSFilenamesPboardType].append(item.path)
@@ -911,7 +925,7 @@ def test_write_items_to_pasteboard():
                 pb.declareTypes_owner_(types, None)
                 for dtype, ddata in data.iteritems():
                     pb.setPropertyList_forType_(ddata, dtype)
-        with m:
+        with replattr(os.path, 'exists', path_exists), m:
             result = ed.write_items_to_pasteboard(ov, items, pb)
             eq_(result, c.result)
     c = TestConfig(result=True)
@@ -1041,7 +1055,7 @@ def test_iter_dropped_id_list():
     def test(c):
         m = Mocker()
         ed = Editor(None)
-        app = m.replace("editxt.app", type=Application)
+        app = m.replace(mod.editxt, 'app')
         pb = m.mock(NSPasteboard)
         result_items = []
         pb.types().containsObject_(const.DOC_ID_LIST_PBOARD_TYPE) >> c.has_ids
@@ -1067,12 +1081,13 @@ def test_iter_dropped_id_list():
     yield test, c(ids=[ix(0), ix(1, False)])
 
 def test_iter_dropped_paths():
+    import editxt.document
     def test(c):
         m = Mocker()
         ed = Editor(None)
         ed.find_project_with_path = m.method(ed.find_project_with_path)
-        app = m.replace("editxt.app", type=Application)
-        doc_class = m.replace("editxt.document.TextDocument", passthrough=False)
+        app = m.replace(editxt, 'app')
+        doc_class = m.replace('editxt.document.TextDocument')
         create_with_path = m.method(Project.create_with_path)
         pb = m.mock(NSPasteboard)
         dc = m.mock(DocumentController)
@@ -1348,7 +1363,7 @@ def test_windowDidLoad():
 def test_syntaxDefNames():
     m = Mocker()
     wc = EditorWindowController.alloc().init()
-    app = app = m.replace("editxt.app", type=Application)
+    app = m.replace(mod.editxt, 'app')
     defs = [type("FakeDef", (object,), {"name": "Fake Syntax"})()]
     (app.syntaxdefs << defs).count(2)
     names = [d.name for d in defs]

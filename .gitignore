@@ -2,6 +2,7 @@
 *~.nib
 .DS_Store
 .noseids
+/EditXT.egg-info
 /build
 /dist
 /pages

@@ -89,6 +89,7 @@ else:
 setup(
     name=appname,
     app=['boot.py'],
+    version=version,
     options=dict(py2app=dict(
         # argv_emulation causes the app to launch in a strange mode that does
         # not play nicely with Exposé (the window does not come to the front
@@ -174,6 +175,12 @@ setup(
         ("syntaxdefs", glob.glob("resources/syntaxdefs/*")),
         #("../Frameworks", ("lib/Frameworks/NDAlias.framework",)),
     ],
+    entry_points={
+        'nose.plugins': [
+            'skip-slow = editxt.test.noseplugins:SkipSlowTests',
+            'list-slowest = editxt.test.noseplugins:ListSlowestTests',
+        ]
+    },
 )
 
 if dev and hasattr(sys, 'real_prefix'):

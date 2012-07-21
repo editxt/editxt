@@ -29,8 +29,7 @@ from nose.tools import *
 from editxt.test.util import TestConfig, untested
 
 import editxt.constants as const
-from editxt.controls.splitview import ThinSplitView, RedrawOnAnimationEndedDelegate
-from editxt.controls.splitview import SliderImageView
+import editxt.controls.splitview as mod
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +42,7 @@ log = logging.getLogger(__name__)
 def test_is_view_visibile():
     def test(c):
         m = Mocker()
-        sv = ThinSplitView.alloc().init()
+        sv = mod.ThinSplitView.alloc().init()
         view = m.method(sv.subviews)()[c.index] >> m.mock(NSView)
         if m.method(sv.isVertical)() >> c.vertical:
             view.bounds().size.width >> c.thick
@@ -65,7 +64,7 @@ def test_is_view_visibile():
 def test_show_view():
     def test(c):
         m = Mocker()
-        sv = ThinSplitView.alloc().init()
+        sv = mod.ThinSplitView.alloc().init()
         view = m.method(sv.subviews)()[c.index] >> m.mock(NSView)
         rect = view.frame() >> m.mock(NSRect)
         if m.method(sv.isVertical)() >> c.vertical:
@@ -93,7 +92,7 @@ def test_show_view():
 def test_hide_view():
     def test(c):
         m = Mocker()
-        sv = ThinSplitView.alloc().init()
+        sv = mod.ThinSplitView.alloc().init()
         view = m.method(sv.subviews)()[c.index] >> m.mock(NSView)
         rect = view.frame() >> m.mock(NSRect)
         if m.method(sv.isVertical)() >> c.vertical:
@@ -118,25 +117,15 @@ def test_hide_view():
 def test_animate_view():
     def test(c):
         m = Mocker()
-        sv = ThinSplitView.alloc().init()
-        nsanim = m.replace(NSViewAnimation, passthrough=False)
-        nsdict = m.replace(NSDictionary, passthrough=False)
-        nsval = m.replace(NSValue, passthrough=False)
-        nsarr = m.replace(NSArray, passthrough=False)
+        sv = mod.ThinSplitView.alloc().init()
+        nsanim = m.replace(mod, 'NSViewAnimation')
         view = m.mock(NSView)
-        rect = m.mock(NSRect)
-        rval = nsval.valueWithRect_(rect) >> m.mock()
-        resize = nsdict.dictionaryWithObjectsAndKeys_(
-            view, NSViewAnimationTargetKey,
-            rval, NSViewAnimationEndFrameKey,
-            None,
-        ) >> m.mock(NSDictionary)
-        anims = nsarr.arrayWithObject_(resize) >> m.mock(NSArray)
+        rect = NSMakeRect(0, 0, 1, 1)
         anim = nsanim.alloc() >> m.mock(NSViewAnimation)
-        anim.initWithViewAnimations_(anims) >> anim
+        anim.initWithViewAnimations_(ANY) >> anim
         anim.setDuration_(0.5)
         if c.delegate:
-            delegate = m.mock(RedrawOnAnimationEndedDelegate)
+            delegate = m.mock(mod.RedrawOnAnimationEndedDelegate)
             anim.setDelegate_(delegate)
         else:
             delegate = None
@@ -151,5 +140,5 @@ def test_animate_view():
 # SplitView-related tests
 
 def test_SliderImageView_splitView():
-    vw = SliderImageView.alloc().init()
+    vw = mod.SliderImageView.alloc().init()
     assert hasattr(vw, "splitView")
