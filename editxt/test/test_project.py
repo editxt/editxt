@@ -28,7 +28,8 @@ from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import *
 
 import editxt.constants as const
-from editxt.application import DocumentController
+import editxt.project as mod
+from editxt.application import Application, DocumentController
 from editxt.editor import Editor, EditorWindowController
 from editxt.document import TextDocumentView, TextDocument
 from editxt.project import Project
@@ -88,9 +89,8 @@ def test_create_with_serial():
 
 @check_app_state
 def test_init_with_serial():
-    from editxt.project import KVOList
     m = Mocker()
-    kvo_class = m.replace(KVOList)
+    kvo_class = m.replace(mod, 'KVOList')
     deserialize = m.method(Project.deserialize)
     reset_cache = m.method(Project.reset_serial_cache)
     docs = kvo_class.alloc().init() >> []
@@ -167,9 +167,9 @@ def test_deserialize_project():
     def test(serial):
         m = Mocker()
         proj = Project.create()
-        log = m.replace("editxt.project.log", passthrough=False)
-        nsdat = m.replace(NSData, passthrough=False)
-        nspls = m.replace(NSPropertyListSerialization, passthrough=False)
+        log = m.replace(mod, 'log')
+        nsdat = m.replace(mod, 'NSData')
+        nspls = m.replace(mod, 'NSPropertyListSerialization')
         create_document_view_with_state = m.method(Project.create_document_view_with_state)
         create_document_view = m.method(Project.create_document_view)
         proj._documents = docs = m.mock(KVOList)
@@ -210,10 +210,9 @@ def test_deserialize_project():
 
 def test_save():
     def test(proj_has_path, is_changed):
-        from editxt.application import Application
         m = Mocker()
         proj = Project.create()
-        app = m.replace("editxt.app", type=Application)
+        app = m.replace(mod, 'app')
         save_with_path = m.method(proj.save_with_path)
         reset_cache = m.method(proj.reset_serial_cache)
         m.method(proj.serialize_full)() >> "<serial>"
@@ -236,7 +235,7 @@ def test_save():
 def test_save_with_path_when_project_has_a_path():
     m = Mocker()
     path = "<path>"
-    nsdict = m.replace(NSMutableDictionary, passthrough=False)
+    nsdict = m.replace(mod, 'NSMutableDictionary')
     proj = Project.create()
     proj.name = "<name>"
     serial = proj.serialize()
@@ -301,7 +300,7 @@ def test_create_document_view_with_state():
     proj = Project.create()
     m = Mocker()
     state = m.mock()
-    dv_class = m.replace("editxt.document.TextDocumentView")
+    dv_class = m.replace(mod, 'TextDocumentView')
     dv = m.mock(TextDocumentView)
     dv_class.create_with_state(state) >> dv
     dv.project = proj
@@ -313,11 +312,11 @@ def test_create_document_view_with_state():
 def test_create_document_view():
     proj = Project.create()
     m = Mocker()
-    nsdc = m.replace("AppKit.NSDocumentController")
+    nsdc = m.replace(mod, 'NSDocumentController')
     append_document_view = m.method(proj.append_document_view)
     dc = m.mock(NSDocumentController)
     doc = m.mock(TextDocument)
-    dv_class = m.replace("editxt.document.TextDocumentView")
+    dv_class = m.replace(mod, 'TextDocumentView')
     dv = m.mock(TextDocumentView)
     nsdc.sharedDocumentController() >> dc
     dc.makeUntitledDocumentOfType_error_(const.TEXT_DOCUMENT, None) >> (doc, None)
@@ -472,12 +471,12 @@ def test_set_main_view_of_window():
         proj.set_main_view_of_window(view, win) # for now this does nothing
 
 def test_perform_close():
-    from editxt.application import DocumentSavingDelegate, Application
+    import editxt.application as xtapp
     def test(c):
         proj = Project.create()
         m = Mocker()
-        dsd_class = m.replace("editxt.application.DocumentSavingDelegate")
-        app = m.replace("editxt.app", type=Application)
+        dsd_class = m.replace(xtapp, 'DocumentSavingDelegate')
+        app = m.replace(mod, 'app')
         ed = m.mock(Editor)
         app.find_editors_with_project(proj) >> [ed for x in xrange(c.num_eds)]
         if c.num_eds == 1:
@@ -497,7 +496,7 @@ def test_perform_close():
                 return True
             def do_callback():
                 callback[0](c.should_close)
-            saver = m.mock(DocumentSavingDelegate)
+            saver = m.mock(xtapp.DocumentSavingDelegate)
             dsd_class.alloc() >> saver
             saver.init_callback_(MATCH(check_docs), MATCH(get_callback)) >> saver
             expect(saver.save_next_document()).call(do_callback)

@@ -246,7 +246,6 @@ class Project(NSObject):
         pass # TODO add project-specific view?
 
     def perform_close(self, editor):
-        from editxt import app
         from editxt.application import DocumentSavingDelegate
         if app.find_editors_with_project(self) == [editor]:
             def dirty_docs():
