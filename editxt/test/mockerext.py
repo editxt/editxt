@@ -22,6 +22,8 @@ import logging
 import mocker
 import types
 import weakref
+from editxt.test.util import replattr
+from importlib import import_module
 
 log = logging.getLogger(__name__)
 
@@ -176,6 +178,41 @@ class MockerExt(mocker.Mocker):
         event = self._get_replay_restore_event()
         mock = self.mock(property, name=DeferredRepr(obj))
         return PropertyReplacer.replace(obj, name, event, mock, verify)
+
+    def replace(self, obj, attr=None, spec=True, type=True, name=None,
+                count=True, passthrough=False, **kw):
+        if attr is None:
+            assert isinstance(obj, basestring), repr(obj)
+            assert '.' in obj, 'invalid replacement specifier: %s' % obj
+            obj, attr = obj.rsplit('.', 1)
+            obj = import_module(obj)
+        if kw.get('dict'):
+            object = obj[attr]
+        else:
+            object = getattr(obj, attr)
+        mock = self.proxy(object, spec, type, name, count, passthrough)
+        event = self._get_replay_restore_event()
+        event.add_task(AttributeReplacer(obj, attr, mock, kw))
+        return mock
+
+
+class AttributeReplacer(mocker.Task):
+    """Task which installs and deinstalls proxy mocks.
+
+    This task will replace an attribute on an object with a mock.
+    """
+
+    def __init__(self, obj, attr, mock, kw):
+        self.__mocker_replace__ = False
+        self.replargs = (obj, attr, mock)
+        self.replkw = kw
+
+    def replay(self):
+        self.ctx = replattr(*self.replargs, **self.replkw)
+        self.ctx.__enter__()
+
+    def restore(self):
+        self.ctx.__exit__(None, None, None)
 
 
 class ReplacedMethod(object):
