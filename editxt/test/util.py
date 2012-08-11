@@ -109,14 +109,17 @@ class TestConfig(object):
         return "(%s)" % val
 
 @contextmanager
-def replattr(*args):
+def replattr(*args, **kw):
+    dict_replace = kw.pop('dict', False)
+    if kw:
+        raise ValueError('unrecognized keyword arguments: %s' % ', '.join(kw))
     if len(args) == 3 and isinstance(args[1], basestring):
         args = [args]
     errors = []
     temps = []
     for obj, attr, value in args:
         try:
-            temp = getattr(obj, attr)
+            temp = obj[attr] if dict_replace else getattr(obj, attr)
             if (inspect.isfunction(temp) or inspect.ismethod(temp)):
                 as0 = inspect.getargspec(temp)
                 as1 = inspect.getargspec(value)
@@ -126,17 +129,26 @@ def replattr(*args):
                         value.__name__, inspect.formatargspec(*as1),
                     ))
             temps.append(temp)
-            setattr(obj, attr, value)
+            if dict_replace:
+                obj[attr] = value
+            else:
+                setattr(obj, attr, value)
         except Exception, ex:
-            log.error("cannot replace attribute: %s", attr, exc_info=True)
+            rtype = 'key' if dict_replace else 'attribute'
+            log.error("cannot replace %s: %s", rtype, attr, exc_info=True)
             errors.append(str(ex))
     try:
         yield
     finally:
         for (obj, attr, value), temp in zip(args, temps):
-            setattr(obj, attr, temp)
-            if getattr(obj, attr) is not temp:
-                errors.append("%r is not %r" % (getattr(obj, attr), temp))
+            if dict_replace:
+                obj[attr] = temp
+                if obj[attr] is not temp:
+                    errors.append("%r is not %r" % (obj[attr], temp))
+            else:
+                setattr(obj, attr, temp)
+                if getattr(obj, attr) is not temp:
+                    errors.append("%r is not %r" % (getattr(obj, attr), temp))
     assert not errors, "\n".join(errors)
 
 def check_app_state(test):
