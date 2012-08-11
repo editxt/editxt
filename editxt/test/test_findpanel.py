@@ -31,6 +31,7 @@ from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state
 
 import editxt.constants as const
+import editxt.findpanel as mod
 from editxt.controls.textview import TextView
 from editxt.findpanel import FindController, FindOptions, FoundRange
 from editxt.findpanel import FORWARD, BACKWARD
@@ -91,15 +92,14 @@ def test_FindController_perform_action():
     def test(c):
         m = Mocker()
         fc = FindController.create()
-        flog = m.replace("editxt.findpanel.log", passthrough=False)
+        flog = m.replace("editxt.findpanel.log")
         sender = m.mock()
         (sender.tag() << c.tag).count(1, 2)
         func = None
-        for tag, meth in list(fc.action_registry.items()):
+        for tag, meth in fc.action_registry.items():
+            fc.action_registry[tag] = temp = m.mock(meth)
             if tag == c.tag:
-                func = m.replace(meth, passthrough=False)
-            else:
-                fc.action_registry[tag] = m.mock(meth)
+                func = temp
         if c.fail:
             flog.info(ANY, c.tag)
         else:
@@ -167,7 +167,7 @@ def test_FindController_actions():
     yield test, c(meth="find_selected_text_reverse", do=do, saved=False)
 
     def do(m, c, fc, sender):
-        beep = m.replace(NSBeep, passthrough=False)
+        beep = m.replace(mod, 'NSBeep')
         dobeep = True
         tv = m.method(fc.find_target)() >> (m.mock(TextView) if c.has_tv else None)
         if c.has_tv:
@@ -233,7 +233,7 @@ def test_FindController_actions():
     yield test, c(meth="recentReplaceSelected_", do=do, prop="replace_text")
 
     def do(m, c, fc, sender):
-        ws = m.replace(NSWorkspace, passthrough=False)
+        ws = m.replace(mod, 'NSWorkspace')
         url = NSURL.URLWithString_(const.REGEX_HELP_URL)
         (ws.sharedWorkspace() >> m.mock(NSWorkspace)).openURL_(url)
     yield test, c(meth="regexHelp_", do=do)
@@ -262,7 +262,7 @@ def test_FindController_find():
     def test(c):
         m = Mocker()
         fc = FindController.shared_controller()
-        beep = m.replace(NSBeep, passthrough=False)
+        beep = m.replace(mod, 'NSBeep')
         dobeep = True
         direction = "<direction>"
         _find = m.method(fc._find)
@@ -340,7 +340,7 @@ def test_FindController__replace_all():
     def test(c):
         m = Mocker()
         fc = FindController.shared_controller()
-        beep = m.replace(NSBeep, passthrough=False)
+        beep = m.replace(mod, 'NSBeep')
         dobeep = True
         tv = m.method(fc.find_target)() >> (m.mock(TextView) if c.has_tv else None)
         ftext = m.property(fc, "find_value").value >> c.ftext
@@ -406,7 +406,7 @@ def test_FindController_count_occurrences():
     import re
     def test(c):
         m = Mocker()
-        beep = m.replace(NSBeep, passthrough=False)
+        beep = m.replace(mod, 'NSBeep')
         fc = FindController.shared_controller()
         flash = m.method(fc.flash_status_text)
         regexfind = m.method(fc.regexfinditer)
@@ -447,7 +447,7 @@ def test_FindController_find_target():
     def test(c):
         m = Mocker()
         fc = FindController.shared_controller()
-        app = m.replace("editxt.app", passthrough=False)
+        app = m.replace(mod, "app")
         x = expect(app.iter_editors().next())
         if c.has_ed:
             ed = m.mock(Editor)
@@ -497,8 +497,8 @@ def test_FindOptions_dependent_options():
 def test_FindController_load_options():
     def test(c):
         m = Mocker()
-        nsud = m.replace(NSUserDefaults, passthrough=False)
-        nspb = m.replace(NSPasteboard, passthrough=False)
+        nsud = m.replace('editxt.commandbase.NSUserDefaults')
+        nspb = m.replace(mod, 'NSPasteboard')
         defaults = nsud.standardUserDefaults() >> m.mock(NSUserDefaults)
         defaults.dictionaryForKey_(const.FIND_PANEL_OPTIONS_KEY) >> c.state
         pboard = nspb.pasteboardWithName_(NSFindPboard)
@@ -534,8 +534,8 @@ def test_FindController_save_options():
         fc = FindController.create()
         fc.opts = opts = FindOptions()
         opts.find_text = c.astate.get("find_text", u"")
-        nsud = m.replace(NSUserDefaults)
-        nspb = m.replace(NSPasteboard)
+        nsud = m.replace('editxt.commandbase.NSUserDefaults')
+        nspb = m.replace(mod, 'NSPasteboard')
         if "find_text" in c.astate:
             pboard = nspb.pasteboardWithName_(NSFindPboard)
             pboard.declareTypes_owner_([NSStringPboardType], None)
