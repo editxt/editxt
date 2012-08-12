@@ -29,7 +29,7 @@ from nose.tools import *
 from editxt.test.util import TestConfig, untested
 
 import editxt.constants as const
-from editxt.controls.linenumberview import LineNumberView
+import editxt.controls.linenumberview as mod
 from editxt.controls.textview import TextView
 
 log = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ class MockScrollView(object):
 def create_lnv(textview=None, scrollview=None):
     if scrollview is None:
         scrollview = MockScrollView()
-    lnv = LineNumberView.alloc().initWithScrollView_orientation_(
+    lnv = mod.LineNumberView.alloc().initWithScrollView_orientation_(
         scrollview, NSVerticalRuler)
     if textview is not None:
         lnv.textview = textview
@@ -58,7 +58,7 @@ def test_create():
     sv = m.mock(NSScrollView)
     tv = m.mock(TextView)
     sv.documentView() >> tv
-    not_class = m.replace(NSNotificationCenter)
+    not_class = m.replace(mod, 'NSNotificationCenter')
     notifier = not_class.defaultCenter() >> m.mock(NSNotificationCenter)
     notifier.addObserver_selector_name_object_(ANY, "invalidateRuleThickness",
         NSTextDidChangeNotification, tv)

@@ -30,6 +30,7 @@ from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state, replattr
 
+import editxt.commandbase as mod
 import editxt.constants as const
 from editxt.controls.textview import TextView
 from editxt.commandbase import BaseCommandController, Options
@@ -103,7 +104,7 @@ class FakeController(BaseCommandController):
 def test_BaseCommandController_load_options():
     def test(c):
         m = Mocker()
-        ud = m.replace(NSUserDefaults, passthrough=False)
+        ud = m.replace(mod, 'NSUserDefaults')
         sd = ud.standardUserDefaults() >> m.mock(NSUserDefaults)
         ctl = FakeController.create()
         state = sd.dictionaryForKey_(ctl.OPTIONS_KEY) >> (
@@ -119,7 +120,7 @@ def test_BaseCommandController_load_options():
 
 def test_BaseCommandController_save_options():
     m = Mocker()
-    ud = m.replace(NSUserDefaults, passthrough=False)
+    ud = m.replace(mod, 'NSUserDefaults')
     sd = ud.standardUserDefaults() >> m.mock(NSUserDefaults)
     ctl = FakeController.create()
     opts = ctl.opts
@@ -151,11 +152,11 @@ def test_SheetController_begin_sheet():
     slc = SheetController.create_with_textview(tv)
     def cb(callback):
         return callback.__name__ == "sheet_did_end" and callback.self is slc
-    clr_class = m.replace("editxt.controls.alert.Caller", passthrough=None)
+    clr_class = m.replace(mod, "Caller")
     clr = clr_class.alloc().init(MATCH(cb)) >> m.mock(Caller)
     win = tv.window() >> m.mock(NSWindow)
     pnl = m.method(slc.window)() >> m.mock(NSPanel)
-    nsapp = m.replace(NSApp, spec=False, passthrough=False)
+    nsapp = m.replace(mod, 'NSApp', spec=False)
     nsapp.beginSheet_modalForWindow_modalDelegate_didEndSelector_contextInfo_(
         pnl, win, clr, "alertDidEnd:returnCode:contextInfo:", 0)
     with m:

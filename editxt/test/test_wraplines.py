@@ -31,6 +31,7 @@ from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state
 
 import editxt.constants as const
+import editxt.wraplines as mod
 from editxt.controls.textview import TextView
 from editxt.wraplines import WrapLinesController, wrap_selected_lines, wraplines
 
@@ -39,7 +40,7 @@ log = logging.getLogger(__name__)
 
 def test_WrapLinesController_wrap_():
     m = Mocker()
-    cmd = m.replace(wrap_selected_lines)
+    cmd = m.replace(mod, 'wrap_selected_lines')
     tv = m.mock(TextView)
     ctl = WrapLinesController.create_with_textview(tv)
     cmd(tv, ctl.opts)
@@ -54,7 +55,7 @@ def test_wrap_selected_lines():
         opts = "<options>"
         tv = m.mock(TextView)
         ts = tv.textStorage() >> m.mock(NSTextStorage)
-        wrap = m.replace(wraplines)
+        wrap = m.replace(mod, 'wraplines')
         iterlines = m.replace("editxt.wraplines.iterlines")
         text = tv.string() >> NSString.stringWithString_(c.text)
         sel = (0, len(text)) if c.sel is None else c.sel

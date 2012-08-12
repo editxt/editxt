@@ -301,8 +301,8 @@ def test_set_wrap_mode():
 def test_TextDocumentView_document_properties():
     def test(c):
         m = Mocker()
-        regundo = m.replace(mod, 'register_undo_callback', sigcheck=False)
-        repnl = m.replace(mod, 'replace_newlines', sigcheck=False)
+        regundo = m.replace(mod, 'register_undo_callback')
+        repnl = m.replace(mod, 'replace_newlines')
         doc = m.mock(TextDocument)
         dv = TextDocumentView.create_with_document(doc)
         dv.props = m.mock() # KVOProxy
@@ -407,8 +407,8 @@ def test_TextDocumentView_change_indentation():
     SPC = const.INDENT_MODE_SPACE
     def test(c):
         m = Mocker()
-        regundo = m.replace(mod, 'register_undo_callback', sigcheck=False)
-        convert = m.replace(mod, 'change_indentation', sigcheck=False)
+        regundo = m.replace(mod, 'register_undo_callback')
+        convert = m.replace(mod, 'change_indentation')
         doc = m.mock(TextDocument)
         dv = TextDocumentView.create_with_document(doc)
         tv = dv.text_view = m.mock(NSTextView)
@@ -673,7 +673,7 @@ def test_KVOProxy_create():
     from editxt.util import KVOProxy
     def test(class_, factory):
         m = Mocker()
-        proxy = m.replace(mod, 'KVOProxy', spec=KVOProxy, sigcheck=False)
+        proxy = m.replace(mod, 'KVOProxy', spec=KVOProxy)
         def cb(value):
             return isinstance(value, class_)
         proxy(MATCH(cb)) >> m.mock(KVOProxy)

@@ -39,7 +39,7 @@ log = logging.getLogger(__name__)
 
 def test_SortLinesController_sort_():
     m = Mocker()
-    sort = m.replace(sortlines, passthrough=False)
+    sort = m.replace('editxt.sortlines.sortlines')
     tv = m.mock(TextView)
     slc = SortLinesController.create_with_textview(tv)
     sort(tv, slc.opts)

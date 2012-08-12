@@ -29,6 +29,7 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
+import editxt.util as mod
 from editxt.util import KVOList
 from editxt.test.util import TestConfig
 
@@ -359,12 +360,12 @@ def test_Invoker_invoke():
     eq_(called, [1, 1])
 
 def test_register_undo():
-    from editxt.util import Invoker, register_undo_callback
+    from editxt.util import register_undo_callback
     m = Mocker()
-    inv_class = m.replace(Invoker)
+    inv_class = m.replace(mod, 'Invoker')
     cb = m.mock()
     und = m.mock(NSUndoManager)
-    inv = inv_class.alloc().init(cb) >> m.mock(Invoker)
+    inv = inv_class.alloc().init(cb) >> m.mock(mod.Invoker)
     und.registerUndoWithTarget_selector_object_(inv_class, "invoke:", inv)
     with m:
         register_undo_callback(und, cb)

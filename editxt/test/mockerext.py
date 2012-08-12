@@ -193,6 +193,8 @@ class MockerExt(mocker.Mocker):
                 object = obj[attr]
             else:
                 object = getattr(obj, attr)
+            if inspect.isfunction(object) or inspect.ismethod(object):
+                kw.setdefault('sigcheck', False)
             mock = self.proxy(object, spec, type, name, count, passthrough)
         event = self._get_replay_restore_event()
         event.add_task(AttributeReplacer(obj, attr, mock, kw))

@@ -27,7 +27,7 @@ from Foundation import *
 from editxt.test.util import TestConfig
 
 import editxt.constants as const
-
+import editxt.textcommand as mod
 from editxt.textcommand import TextCommand, TextCommandController
 
 log = logging.getLogger(__name__)
@@ -436,11 +436,12 @@ def test_text_commands():
         yield test, c(input=u"\n        ", output=u"\n    ", oldsel=(9+i, 0), newsel=(5+i, 0))
 
 def test_panel_actions():
+    import sys
     def test(c):
         act = c.action()
         m = Mocker()
         tv = m.mock(NSTextView)
-        mod = m.replace("editxt." + c.mod, passthrough=False)
+        mod = m.replace(sys.modules, "editxt." + c.mod, dict=True)
         ctl = getattr(mod, c.ctl.__name__).create_with_textview(tv) >> m.mock(c.ctl)
         ctl.begin_sheet(None)
         with m:
@@ -462,8 +463,8 @@ def test_wrap_to_margin_guide():
     act = WrapAtMargin()
     m = Mocker()
     tv = m.mock(NSTextView)
-    wrap = m.replace(wrap_selected_lines, passthrough=False)
-    ctl_class = m.replace(WrapLinesController)
+    wrap = m.replace('editxt.wraplines.wrap_selected_lines')
+    ctl_class = m.replace('editxt.wraplines.WrapLinesController')
     ctl = ctl_class.shared_controller() >> m.mock(WrapLinesController)
     opts = m.replace("editxt.commandbase.Options")() >> m.mock()
     wrap_opts = ctl.opts >> m.mock()
@@ -612,10 +613,9 @@ def test_TextCommandController_add_command():
     def test(c):
         m = Mocker()
         menu = m.mock(NSMenu)
-        mi_class = m.replace(NSMenuItem, passthrough=False)
+        mi_class = m.replace(mod, 'NSMenuItem')
         ctl = TextCommandController(menu)
-        cmds = m.replace(ctl.commands)
-        handlers = m.replace(ctl.input_handlers, passthrough=False)
+        handlers = m.replace(ctl, 'input_handlers')
         validate = m.method(ctl.validate_hotkey)
         cmd = m.mock(TextCommand)
         tag = cmd._TextCommandController__tag = ctl.tagger.next() + 1
@@ -626,9 +626,9 @@ def test_TextCommandController_add_command():
         mi.setKeyEquivalentModifierMask_("<keymask>")
         mi.setTag_(tag)
         menu.insertItem_atIndex_(mi, tag)
-        ctl.commands[tag] = cmd
         with m:
             ctl.add_command(cmd, None)
+            assert ctl.commands[tag] is cmd, (ctl.commands[tag], cmd)
     c = TestConfig()
     yield test, c
     #yield test, c
@@ -642,12 +642,12 @@ def test_TextCommandController_validate_hotkey():
 def test_TextCommandController_is_textview_command_enabled():
     def test(c):
         m = Mocker()
-        lg = m.replace("editxt.textcommand.log", passthrough=False)
+        lg = m.replace("editxt.textcommand.log")
         mi = m.mock(NSMenuItem)
         tv = m.mock(NSTextView)
         tc = m.mock(TextCommand)
         tcc = TextCommandController(None)
-        cmds = m.replace(tcc.commands)
+        cmds = m.replace(tcc, 'commands')
         cmd = cmds.get(mi.tag() >> 42) >> (tc if c.has_command else None)
         if c.has_command:
             if c.error:
@@ -667,12 +667,12 @@ def test_TextCommandController_is_textview_command_enabled():
 def test_TextCommandController_do_textview_command():
     def test(c):
         m = Mocker()
-        lg = m.replace("editxt.textcommand.log", passthrough=False)
+        lg = m.replace("editxt.textcommand.log")
         mi = m.mock(NSMenuItem)
         tv = m.mock(NSTextView)
         tc = m.mock(TextCommand)
         tcc = TextCommandController(None)
-        cmds = m.replace(tcc.commands)
+        cmds = m.replace(tcc, 'commands')
         cmd = cmds.get(mi.tag() >> 42) >> (tc if c.has_command else None)
         if c.has_command:
             cmd.execute(tv, mi)
@@ -689,13 +689,13 @@ def test_TextCommandController_do_textview_command():
 def test_TextCommandController_do_textview_command_by_selector():
     def test(c):
         m = Mocker()
-        lg = m.replace("editxt.textcommand.log", passthrough=False)
+        lg = m.replace("editxt.textcommand.log")
         tv = m.mock(NSTextView)
         tc = m.mock(TextCommand)
         tcc = TextCommandController(None)
         sel = "<selector>"
         callback = m.mock()
-        handlers = m.replace(tcc.input_handlers)
+        handlers = m.replace(tcc, 'input_handlers')
         cmd = handlers.get(sel) >> (callback if c.has_selector else None)
         if c.has_selector:
             callback(tv, None)

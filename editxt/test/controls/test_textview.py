@@ -29,6 +29,7 @@ from nose.tools import *
 from editxt.test.util import TestConfig, untested
 
 import editxt.constants as const
+import editxt.controls.textview as mod
 from editxt.controls.textview import TextView
 
 log = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ def test_TextView_performFindPanelAction_():
     from editxt.findpanel import FindController
     m = Mocker()
     tv = TextView.alloc().init()
-    fc = m.replace("editxt.findpanel.FindController")
+    fc = m.replace(mod, "FindController")
     sender = m.mock()
     (fc.shared_controller() >> m.mock(FindController)).perform_action(sender)
     with m:
@@ -53,7 +54,7 @@ def test_TextView_performTextCommand_():
     from editxt.textcommand import TextCommandController
     m = Mocker()
     tv = TextView.alloc().init()
-    tc = m.replace("editxt.app").text_commander >> m.mock(TextCommandController)
+    tc = m.replace(mod, "app").text_commander >> m.mock(TextCommandController)
     sender = m.mock()
     tc.do_textview_command(tv, sender)
     with m:
@@ -63,7 +64,7 @@ def test_TextView_doCommandBySelector_():
     from editxt.textcommand import TextCommandController
     m = Mocker()
     tv = TextView.alloc().init()
-    tc = m.replace("editxt.app").text_commander >> m.mock(TextCommandController)
+    tc = m.replace(mod, "app").text_commander >> m.mock(TextCommandController)
     selector = m.mock()
     tc.do_textview_command_by_selector(tv, selector) >> True # omit super call
     with m:
@@ -74,7 +75,7 @@ def test_TextView_validateUserInterfaceItem_():
     from editxt.textcommand import TextCommandController
     def test(c):
         m = Mocker()
-        fc = m.replace("editxt.findpanel.FindController", passthrough=False)
+        fc = m.replace(mod, "FindController")
         tv = TextView.alloc().init()
         item = m.mock(NSMenuItem)
         expectation = (item.action() << c.action)
@@ -84,7 +85,7 @@ def test_TextView_validateUserInterfaceItem_():
                 validate_action(tag) >> True
         elif c.action == "performTextCommand:":
             expectation.count(2)
-            tc = m.replace("editxt.app").text_commander >> m.mock(TextCommandController)
+            tc = m.replace(mod, "app").text_commander >> m.mock(TextCommandController)
             tc.is_textview_command_enabled(tv, item) >> True
         else:
             raise NotImplementedError # left untested because I don't know how to mock a super call

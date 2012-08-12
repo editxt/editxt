@@ -31,6 +31,7 @@ from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state
 
 import editxt.constants as const
+import editxt.syntax as mod
 from editxt.syntax import SyntaxFactory, SyntaxCache, SyntaxDefinition
 from editxt.syntax import NoHighlight, PLAIN_TEXT
 
@@ -45,9 +46,9 @@ def test_SyntaxFactory_load_definitions():
     def test(c):
         m = Mocker()
         sf = SyntaxFactory()
-        log = m.replace("editxt.syntax.log", passthrough=False)
-        glob = m.replace("glob.glob", passthrough=False)
-        exists = m.replace("os.path.exists", passthrough=False)
+        log = m.replace("editxt.syntax.log")
+        glob = m.replace("glob.glob")
+        exists = m.replace("os.path.exists")
         load = sf.load_definition = m.mock()
         if c.path and exists(c.path) >> c.exists:
             info = {
@@ -108,7 +109,7 @@ def test_SyntaxFactory_load_definition():
     def test(c):
         m = Mocker()
         sf = SyntaxFactory()
-        execf = m.replace(execfile, passthrough=False)
+        execf = m.replace(__builtins__, 'execfile', dict=True)
         def do(filename, ns):
             ns.update(__builtins__="__builtins__")
             return ns.update(c.info)
@@ -156,7 +157,7 @@ def test_SyntaxFactory_index_definitions():
     }
     defs = sorted([text1, text2, python], key=lambda d:(d.name, id(d)))
     m = Mocker()
-    vt = m.replace(NSValueTransformer, passthrough=False)
+    vt = m.replace(mod, 'NSValueTransformer')
     st = vt.valueTransformerForName_("SyntaxDefTransformer") >> \
         m.mock(SyntaxDefTransformer)
     st.update_definitions(defs)

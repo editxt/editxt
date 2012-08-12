@@ -31,6 +31,7 @@ from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state
 
 import editxt.constants as const
+import editxt.errorlog as mod
 from editxt.errorlog import ErrorLog, create_error_log_document
 
 log = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ def test_ErrorLog_document():
         from editxt.document import TextDocument
         m = Mocker()
         el = ErrorLog()
-        doc_factory = m.replace("editxt.errorlog.create_error_log_document", passthrough=False)
+        doc_factory = m.replace(mod, "create_error_log_document")
         doc = m.mock(TextDocument)
         if not c.created:
             doc_factory(ANY) >> doc
@@ -96,12 +97,10 @@ def test_ErrorLog_flush():
 
 def test_ErrorLog_unexpected_error():
     def test(c):
-        from editxt import app as app_
-        from editxt.errorlog import log as log_
         m = Mocker()
         el = ErrorLog()
-        app = m.replace(app_, passthrough=False)
-        log = m.replace(log_, passthrough=False)
+        app = m.replace('editxt.app')
+        log = m.replace(mod, 'log')
         log.error("unexpected error", exc_info=True)
         open_error = app.open_error_log(set_current=False)
         if c.open_fail:
