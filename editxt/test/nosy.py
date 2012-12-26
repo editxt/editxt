@@ -75,6 +75,9 @@ def mac_fs_events_runner(root, callback):
         if event.mask & monitor_mask and event.name.endswith(CHECK_EXTS):
             files.append(event.name)
             callback_event.set()
+        elif event.mask & fsevents.IN_DELETE \
+                and os.path.basename(event.name) == '.noseids':
+            callback_event.set()
     files = []
     callback_event = threading.Event()
     stream = fsevents.Stream(set_callback_event, root, file_events=True)
@@ -96,9 +99,11 @@ def mac_fs_events_runner(root, callback):
 @nottest
 def make_test_callback(srcpath):
     def run_tests(testfiles):
-        testmods = list(modulize(testfiles, srcpath))
-        set_title('testing...')
-        testmods.append("--test-all-on-pass")
+        testmods = []
+# uncomment to run tests on last changed module(s) only
+#        testmods = list(modulize(testfiles, srcpath))
+#        set_title('testing...')
+#        testmods.append("--test-all-on-pass")
         print("\n" + "#" * 70)
         print(' '.join(sys.argv + testmods))
         result = subprocess.call(sys.argv + testmods)
@@ -125,7 +130,7 @@ def start(root=None, wait=2):
         test_runner = polling_fs_runner
     run_tests = make_test_callback(srcpath)
     try:
-        test_runner(root, run_tests)
+        test_runner(srcpath, run_tests)
     finally:
         set_title('')
         print()

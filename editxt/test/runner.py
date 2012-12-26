@@ -83,7 +83,8 @@ def run(argv=None):
             testmods.add(mod)
         else:
             log.warn("test module not found: %s", mod)
-            argv.insert(index, rawmod)
+            if not rawmod.startswith('editxt.'):
+                argv.insert(index, rawmod)
             index += 1
 
     #augment_checks(testmods)
@@ -102,6 +103,7 @@ def run(argv=None):
 
         sys.stdout.write("\n")
 
+    log.info('nose argv: %r', argv)
     return nose.run(argv=argv, addplugins=plugins)
 
 
