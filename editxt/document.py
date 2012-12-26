@@ -346,6 +346,7 @@ class TextDocumentView(NSObject):
         doc = self.document
         if self.project is not None:
             self.project.remove_document_view(self)
+            self.project = None
         if doc is not None:
             if self.text_view is not None:
                 self.scroll_view.removeFromSuperview()

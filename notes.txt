@@ -74,6 +74,9 @@ find/replace text processors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Bugs
 
+Bug: memory leak
+    TODO track it down and fix it
+
 Bug: save file that has had changes discarded with GitX while open in EditXT
     Should not prompt for save location
     Possibly should show confirm overwrite sheet
