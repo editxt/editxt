@@ -18,5 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
-app = None # will be the singleton instance of editxt.application.Application
+# TODO make __version__ more specific (include date and git revision)
+__version__ = "1.2.0"
 
+app = None # will be the singleton instance of editxt.application.Application

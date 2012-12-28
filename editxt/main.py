@@ -17,16 +17,32 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+"""
+EditXT - Programmers text editor
+
+Usage:
+    xt [--profile=DIR]
+    xt -h | --help
+    xt --version
+
+Options:
+    -h --help       Show this help screen.
+    --version       Show version.
+    --profile=DIR   Profile directory.
+"""
 import logging.config
 import os
 import sys
 
+import docopt
 import objc
 from PyObjCTools import AppHelper
 
 import editxt
 import editxt.hacks
 from editxt.errorlog import errlog
+
+docopt.exit = sys.exit # Fix for Python 2
 
 DEFAULT_LOGGING_CONFIG = {
     'version': 1,
@@ -55,10 +71,9 @@ DEFAULT_LOGGING_CONFIG = {
     'disable_existing_loggers': False,
 }
 
-def init(app):
-    import editxt
-    editxt.app = app
 
+def run(app, argv, use_pdb):
+    # TODO move into PyObjC-specific application init
     # initialize class definitions
     import editxt.controls.cells
     import editxt.controls.linenumberview
@@ -72,9 +87,10 @@ def init(app):
     import editxt.document
     import editxt.findpanel
 
-def main():
-    argv = list(sys.argv)
+    AppHelper.runEventLoop(argv, errlog.unexpected_error, pdb=use_pdb)
 
+
+def main(argv=sys.argv[1:]):
     if "--test" in argv or "--pdb" in argv:
         DEFAULT_LOGGING_CONFIG['handlers']['console']['level'] = 'DEBUG'
     logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
@@ -89,7 +105,10 @@ def main():
         app = TestApplication(argv)
     else:
         from editxt.application import Application
-        app = Application()
-    init(app)
+        doc = __doc__.replace('Profile directory.',
+            'Profile directory [default: ~/.%s].' % Application.name().lower())
+        opts = docopt.docopt(doc, argv, version=editxt.__version__)
+        app = Application(opts['--profile'])
 
-    AppHelper.runEventLoop(argv, errlog.unexpected_error, pdb=use_pdb)
+    editxt.app = app
+    run(app, argv, use_pdb)

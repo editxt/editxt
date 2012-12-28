@@ -44,25 +44,27 @@ doc_id_gen = count()
 
 class Application(object):
 
-    def __init__(self):
+    def __init__(self, profile=None):
+        if profile is None:
+            profile = '~/.' + self.name().lower()
+        self.profile_path = os.path.expanduser(profile)
         self.editors = []
         self.path_opener = None
         self.context = ContextMap()
         register_value_transformers()
 
     @classmethod
-    def app_support_path(cls):
-        paths = NSSearchPathForDirectoriesInDomains(
-            NSApplicationSupportDirectory, NSUserDomainMask, True)
-        path = paths[0] if paths else NSTemporaryDirectory()
-        appname = NSBundle.mainBundle().objectForInfoDictionaryKey_(u"CFBundleExecutable")
-        path = unicode(path.stringByAppendingPathComponent_(appname))
-        return path
+    def name(cls):
+        return NSBundle.mainBundle().objectForInfoDictionaryKey_(u"CFBundleName")
+
+    @classmethod
+    def resource_path(cls):
+        return NSBundle.mainBundle().resourcePath()
 
     def init_syntax_definitions(self):
         from editxt.syntax import SyntaxFactory
         self.syntax_factory = sf = SyntaxFactory()
-        paths = [NSBundle.mainBundle().resourcePath(), self.app_support_path()]
+        paths = [self.resource_path(), self.profile_path]
         for path in paths:
             path = os.path.join(path, const.SYNTAX_DEFS_DIR)
             sf.load_definitions(path)

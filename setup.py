@@ -35,7 +35,7 @@ if hasattr(sys, 'real_prefix'):
 
 import py2app
 
-version = "1.1.0"
+from editxt import __version__ as version
 revision = datetime.now().strftime("%Y%m%d")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

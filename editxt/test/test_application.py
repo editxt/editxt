@@ -68,40 +68,24 @@ def test_application_init():
         assert isinstance(app.context, ContextMap)
         assert reg_vtrans
 
-def test_app_support_path():
-    def test(c):
-        m = Mocker()
-        search_path = m.replace(mod, 'NSSearchPathForDirectoriesInDomains')
-        nstemp = m.replace(mod, 'NSTemporaryDirectory')
-        nsb = m.replace(mod, 'NSBundle')
-        paths = [m.mock(NSString)] if c.has_paths else []
-        appname = "App Name"
-        search_path(NSApplicationSupportDirectory, NSUserDomainMask, True) >> paths
-        nsb.mainBundle().objectForInfoDictionaryKey_(u"CFBundleExecutable") >> appname
-        if c.has_paths:
-            path = paths[0]
-        else:
-            path = nstemp() >> m.mock(NSString)
-        asup_path = unicode(os.path.join("/path/to/app_support", appname))
-        path.stringByAppendingPathComponent_(appname) >> asup_path
-        with m:
-            result = Application.app_support_path()
-    c = TestConfig(has_paths=False)
-    yield test, c
-    yield test, c(has_paths=True)
+def test_profile_path():
+    def test(profile, profile_path):
+        app = Application(profile)
+        eq_(app.profile_path, profile_path)
+    appname = Application.name().lower()
+    yield test, None, os.path.expanduser('~/.' + appname)
+    yield test, '~/.editxt', os.path.expanduser('~/.editxt')
+    yield test, '/xt-profile', '/xt-profile'
 
 def test_init_syntax_definitions():
     import editxt.syntax as syntax
     m = Mocker()
-    app = Application()
+    app = Application(profile='/editxtdev/syntax')
+    rsrc_path = m.method(app.resource_path)() >> "/tmp/resources"
     SyntaxFactory = m.replace(syntax, 'SyntaxFactory', spec=False)
-    app_log = m.replace("editxt.application.log")
-    nsb = m.replace(mod, 'NSBundle')
-    app_support_path = m.method(Application.app_support_path)
     sf = SyntaxFactory() >> m.mock(syntax.SyntaxFactory)
-    rsrc_path = nsb.mainBundle().resourcePath() >> "/resources/syntax"
-    asup_path = app_support_path() >> "/app_support/syntax"
-    for path in [rsrc_path, asup_path]:
+    app_log = m.replace("editxt.application.log")
+    for path in [rsrc_path, '/editxtdev/syntax']:
         sf.load_definitions(os.path.join(path, const.SYNTAX_DEFS_DIR))
     sf.index_definitions()
     with m:

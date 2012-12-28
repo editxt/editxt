@@ -59,8 +59,61 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-speed up tests
-    m\.replace\(([^,\)]+)(:?(, [^p][^\)]+)?)(?:, passthrough=False)?\)
+refactor object hierarchy to make it more modular and easier to add features
+    app.documents - {id: Document}
+    app.editors - [Editor]
+    ? app.current_editor - Editor
+    app.config_root
+    app.right_margin
+    app.syntaxdefs - [SyntaxDefinition]
+    ? app.extensions - [Extension]
+    app.history - [...] recently closed editors
+
+    document.path
+    document.newline_style
+    document.indent_style
+    document.indent_width
+    document.syntax
+    document.encoding
+    document.realpath
+    document.id - hash of realpath?
+    ? document.views - [View]
+
+    editor.groups - [Group]
+    editor.current_group - Group
+    editor.config - settings like is_config_pane_visible
+    editor.history - [...] recently closed groups
+
+    group.name
+    group.expanded - bool, is group expanded
+    group.views - [View]
+    group.current_view - View
+    group.history - [...] recently closed views
+
+    view.document - Document
+    view.group - Group
+    view.position - position of document in view
+    view.cursor - cursor position
+    view.wrap_lines
+
+    syntax.name
+    syntax.path
+    syntax.indent_style
+    syntax.indent_width
+    syntax.newline_style
+    ? syntax.wordsets
+    ...
+
+move all configuration into ~/.editxt
+    .editxt
+        cache
+        ext
+        syntax
+        config.yaml
+        state.yaml
+    allow launch with a given profile
+        editxt -c ~/.editxt-temp
+
 work on projects
     add "undo close document" for project
         project will need a concept of recent documents
@@ -506,6 +559,9 @@ Log filtering
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Completed tasks
+
+x speed up tests
+x   m\.replace\(([^,\)]+)(:?(, [^p][^\)]+)?)(?:, passthrough=False)?\)
 
 x edit non-existent document from command line should create new (unsaved) document
 
