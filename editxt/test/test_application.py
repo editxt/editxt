@@ -80,12 +80,12 @@ def test_profile_path():
 def test_init_syntax_definitions():
     import editxt.syntax as syntax
     m = Mocker()
-    app = Application(profile='/editxtdev/syntax')
+    app = Application(profile='/editxtdev')
     rsrc_path = m.method(app.resource_path)() >> "/tmp/resources"
     SyntaxFactory = m.replace(syntax, 'SyntaxFactory', spec=False)
     sf = SyntaxFactory() >> m.mock(syntax.SyntaxFactory)
     app_log = m.replace("editxt.application.log")
-    for path in [rsrc_path, '/editxtdev/syntax']:
+    for path in [rsrc_path, '/editxtdev']:
         sf.load_definitions(os.path.join(path, const.SYNTAX_DEFS_DIR))
     sf.index_definitions()
     with m:

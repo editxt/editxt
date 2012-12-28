@@ -172,7 +172,7 @@ setup(
         'resources/images/docsbar-props-up.png',
         'resources/images/docsbar-sizer.png',
         'resources/mytextcommand.py',
-        ("syntaxdefs", glob.glob("resources/syntaxdefs/*")),
+        ("syntax", glob.glob("resources/syntax/*")),
         #("../Frameworks", ("lib/Frameworks/NDAlias.framework",)),
     ],
     entry_points={

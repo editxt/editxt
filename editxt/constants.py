@@ -24,7 +24,7 @@ UNTITLED_PROJECT_NAME = "untitled project"
 PROJECT_EXT = u"edxt"
 # PROJECT_TYPE = u"EditXT Project"
 TEXT_DOCUMENT = u"public.plain-text"
-SYNTAX_DEFS_DIR = "syntaxdefs"
+SYNTAX_DEFS_DIR = "syntax"
 SYNTAX_DEF_EXTENSION = ".syntax.py"
 LOG_NAME = "EditXT Log"
 
