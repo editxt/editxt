@@ -222,7 +222,7 @@ def test_save():
             proj.serial_cache = "<invalid-cache>"
             if proj_has_path:
                 save_with_path(proj.path)
-            app.save_open_projects()
+            app.save_editor_states()
             reset_cache()
         else:
             proj.serial_cache = "<serial>"

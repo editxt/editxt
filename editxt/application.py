@@ -17,6 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+import glob
 import logging
 import objc
 import os
@@ -30,7 +31,7 @@ from PyObjCTools import AppHelper
 import editxt
 import editxt.constants as const
 from editxt.errorlog import errlog
-from editxt.util import ContextMap, perform_selector, untested
+from editxt.util import ContextMap, perform_selector, dump_yaml, load_yaml
 from editxt.valuetrans import register_value_transformers
 
 #from editxt.test.util import todo_remove # NOTE: this import causes error on start app:
@@ -82,18 +83,17 @@ class Application(object):
         self.init_syntax_definitions()
         self.text_commander = tc = TextCommandController(doc_ctrl.textMenu)
         tc.load_commands()
-        defaults = NSUserDefaults.standardUserDefaults()
-        settings = defaults.arrayForKey_(const.WINDOW_CONTROLLERS_DEFAULTS_KEY)
-        if settings:
-            for serials in reversed(settings):
-                self.create_editor(serials)
+        states = list(self.iter_saved_editor_states())
+        if states:
+            for state in reversed(states):
+                self.create_editor(state)
         else:
             self.create_editor()
 
-    def create_editor(self, data=None):
+    def create_editor(self, state=None):
         from editxt.editor import EditorWindowController, Editor
         wc = EditorWindowController.alloc().initWithWindowNibName_("EditorWindow")
-        ed = Editor(wc, data)
+        ed = Editor(wc, state)
         wc.editor = ed
         self.editors.append(ed)
         wc.showWindow_(self)
@@ -255,70 +255,103 @@ class Application(object):
             pass
         editor.close()
 
-    def save_open_projects(self, defaults=None):
-        if defaults is None:
-            defaults = NSUserDefaults.standardUserDefaults()
-        data = []
-        for editor in self.iter_editors():
-            serial = editor.serialize()
-            if serial: data.append(serial)
-        defaults.setObject_forKey_(data, const.WINDOW_CONTROLLERS_DEFAULTS_KEY)
+    def setup_profile(self, editors=False):
+        """Ensure that profile dir exists
 
-    def load_window_settings(self, editor):
-        try:
-            index = self.editors.index(editor)
-        except ValueError:
-            pass
-        else:
-            defaults = NSUserDefaults.standardUserDefaults()
-            settings = defaults.arrayForKey_(const.WINDOW_SETTINGS_DEFAULTS_KEY)
-            if settings is not None and len(settings) > index:
-                return settings[index]
-        return {}
+        This will create the profile directory if it does not exist.
 
-    def _save_window_settings(self, new_settings, defaults):
-        END = object()
-        new_settings = chain(new_settings, repeat(END))
-        old_settings = defaults.arrayForKey_(const.WINDOW_SETTINGS_DEFAULTS_KEY)
-        if old_settings is None:
-            old_settings = []
-        settings = NSMutableArray.alloc().init()
-        for old in old_settings:
-            new = new_settings.next()
-            if new is None or new is END:
-                settings.append(old)
-            else:
-                settings.append(new)
-        for item in new_settings:
-            if item is END:
-                break
-            if item is None:
-                settings.append({})
-            else:
-                settings.append(item)
-        defaults.setObject_forKey_(settings, const.WINDOW_SETTINGS_DEFAULTS_KEY)
+        :returns: True on success, otherwise False.
+        """
+        if not ('.' in self._setup_profile or os.path.isdir(self.profile_path)):
+            try:
+                os.mkdir(self.profile_path)
+            except OSError:
+                log.error('cannot create %s', self.profile_path, exc_info=True)
+                return False
+            self._setup_profile.add('.')
+        if editors and 'editors' not in self._setup_profile:
+            editors_path = os.path.join(self.profile_path, const.EDITORS_DIR)
+            if not os.path.exists(editors_path):
+                try:
+                    os.mkdir(editors_path)
+                except OSError:
+                    log.error('cannot create %s', editors_path, exc_info=True)
+                    return False
+            self._setup_profile.add('editors')
+        return True
 
-    def save_window_settings(self, editor):
-        if editor not in self.editors:
-            return #raise Error("unknown window controller")
-        index = len(self.editors) - 1
-        if index > 4:
-            return # do not save settings for more than five windows
-        settings = [None for i in xrange(index)]
-        settings.append(editor.window_settings)
+    def _legacy_editor_states(self):
+        # TODO remove once all users have upraded to new state persistence
         defaults = NSUserDefaults.standardUserDefaults()
-        self._save_window_settings(settings, defaults)
+        serials = defaults.arrayForKey_(const.WINDOW_CONTROLLERS_DEFAULTS_KEY)
+        settings = defaults.arrayForKey_(const.WINDOW_SETTINGS_DEFAULTS_KEY)
+        for serial, setting in zip(serials, chain(settings, repeat(None))):
+            try:
+                state = dict(serial)
+                if setting is not None:
+                    state['window_settings'] = setting
+                yield state
+            except Exception:
+                log.warn('cannot load legacy state: %r', serial)
+
+    def iter_saved_editor_states(self):
+        """Yield saved editor states"""
+        editors_path = os.path.join(self.profile_path, const.EDITORS_DIR)
+        if not os.path.exists(editors_path):
+            for state in self._legacy_editor_states():
+                yield state
+            return
+        state_glob = os.path.join(editors_path, const.EDITOR_STATE.format('*'))
+        for path in sorted(glob.glob(state_glob)):
+            try:
+                with open(path) as f:
+                    yield load_yaml(f)
+            except Exception:
+                log.error('cannot load %s', path, exc_info=True)
+
+    def save_editor_state(self, editor, ident=None):
+        """Save a single editor's state
+
+        :param editor: The editor with state to be saved.
+        :param ident: The identifier to use when saving editor state. It
+            is assumed that the profile has been setup when this
+            argument is provided; ``editor.id`` will be used when
+            not provided.
+        :returns: The name of the state file.
+        """
+        if ident is None:
+            raise NotImplementedError
+            ident = editor.id
+        self.setup_profile(editors=True)
+        state_name = const.EDITOR_STATE.format(ident)
+        state_file = os.path.join(
+            self.profile_path, const.EDITORS_DIR, state_name)
+        state = editor.state
+        try:
+            with open(state_file, 'wb') as fh:
+                dump_yaml(state, fh)
+        except Exception:
+            log.error('cannot write %s\n%s\n',
+                state_file, dump_yaml(state), exc_info=True)
+        return state_name
+
+    def save_editor_states(self):
+        """Save all editors' states"""
+        editors_path = os.path.join(self.profile_path, const.EDITORS_DIR)
+        old_glob = os.path.join(editors_path, const.EDITOR_STATE.format('*'))
+        old = {os.path.basename(name) for name in glob.glob(old_glob)}
+        for i, editor in enumerate(self.iter_editors()):
+            state_name = self.save_editor_state(editor, i)
+            old.discard(state_name)
+        for name in old:
+            state_file = os.path.join(editors_path, name)
+            try:
+                os.remove(state_file)
+            except Exception:
+                log.error('cannot remove %s', state_file, exc_info=True)
 
     def app_will_terminate(self, app):
-        settings = (
-            editor.window_settings
-            for editor in reversed(list(self.iter_editors(app)))
-            if editor.window_settings_loaded
-        )
-        defaults = NSUserDefaults.standardUserDefaults()
-        self._save_window_settings(settings, defaults)
-        self.save_open_projects(defaults)
-        defaults.synchronize()
+        self.save_editor_states()
 
 
 class DocumentController(NSDocumentController):

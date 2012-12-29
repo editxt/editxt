@@ -531,7 +531,7 @@ class TextDocument(NSDocument):
             .dataFromRange_documentAttributes_error_(range, attrs, None)
         if err is None:
             self.update_syntaxer()
-            app.save_open_projects()
+            app.save_editor_states()
 #             if self.project is not None:
 #                 self.project.save()
 #                 self.updateSyntaxer()

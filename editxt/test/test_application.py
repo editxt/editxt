@@ -36,8 +36,9 @@ from editxt.application import Application, DocumentController, DocumentSavingDe
 from editxt.editor import EditorWindowController, Editor
 from editxt.document import TextDocumentView, TextDocument
 from editxt.project import Project
+from editxt.util import load_yaml
 
-from editxt.test.util import do_method_pass_through, TestConfig, replattr
+from editxt.test.util import do_method_pass_through, TestConfig, replattr, tempdir
 
 log = logging.getLogger(__name__)
 
@@ -108,8 +109,7 @@ def test_application_will_finish_launching():
         create_editor = m.method(app.create_editor)
         nsapp = m.mock(NSApplication)
         ud_class = m.replace(mod, 'NSUserDefaults')
-        ud = ud_class.standardUserDefaults() >> m.mock(NSUserDefaults)
-        ud.arrayForKey_(const.WINDOW_CONTROLLERS_DEFAULTS_KEY) >> eds_config
+        m.method(app.iter_saved_editor_states)() >> iter(eds_config)
         cmd_class = m.replace(txtcmd, 'TextCommandController')
         dc = m.mock(DocumentController)
         menu = dc.textMenu >> m.mock(NSMenu)
@@ -637,59 +637,6 @@ def test_item_changed():
     yield test, c(eds=3)
     yield test, c(eds=1, item_type="p")
 
-def test_save_open_projects():
-    def test(eds_config, ud_is_none=False):
-        ac = Application()
-        m = Mocker()
-        df_class = m.replace(mod, 'NSUserDefaults')
-        eds = []
-        mac = m.patch(ac)
-        mac.iter_editors() >> eds
-        settings = []
-        for i, ed_config in enumerate(eds_config):
-            ed = m.mock(Editor)
-            eds.append(ed)
-            serial = ed.serialize() >> (("<serial %s>" % i)
-                if ed_config else None)
-            if serial:
-                settings.append(serial)
-        ud = m.mock(NSUserDefaults)
-        if ud_is_none:
-            df_class.standardUserDefaults() >> ud
-            args = ()
-        else:
-            args = (ud,)
-        ud.setObject_forKey_(settings, const.WINDOW_CONTROLLERS_DEFAULTS_KEY)
-        with m:
-            ac.save_open_projects(*args)
-    yield test, []
-    yield test, [1]
-    yield test, [0]
-    yield test, [1, 1]
-    yield test, [1, 0]
-
-def test_load_window_settings():
-    def test(ed_count, all_settings, result, add_eds=True):
-        ac = Application()
-        m = Mocker()
-        defaults = m.mock(NSUserDefaults)
-        df_class = m.replace(mod, 'NSUserDefaults')
-        eds = [m.mock(Editor) for x in xrange(ed_count)]
-        if add_eds:
-            df_class.standardUserDefaults() >> defaults
-            defaults.arrayForKey_(const.WINDOW_SETTINGS_DEFAULTS_KEY) >> all_settings
-            ac.editors = eds
-        with m:
-            window_settings = ac.load_window_settings(eds[-1])
-        eq_(window_settings, result)
-    ws = "settings"
-    yield test, 1, [ws], {}, False
-    yield test, 1, None, {}
-    yield test, 1, [], {}
-    yield test, 1, [ws], ws
-    yield test, 2, [ws], {}
-    yield test, 2, [None, ws, None], ws
-
 class MockUserDefaults(object):
     def __init__(self):
         self.synced = False
@@ -700,69 +647,117 @@ class MockUserDefaults(object):
     def synchronize(self):
         self.synced = True
 
-def test_save_window_settings():
-    def do_save_window_settings(ed_count, close_ed, wsets, default_settings, all_settings):
-        m = Mocker()
-        ac = Application()
-        df_class = m.replace(mod, 'NSUserDefaults')
-        defaults = MockUserDefaults()
-        defaults.setObject_forKey_(default_settings, const.WINDOW_SETTINGS_DEFAULTS_KEY)
-        ac.editors = eds = [m.mock(Editor) for x in xrange(ed_count)]
-        if close_ed < 6:
-            df_class.standardUserDefaults() >> defaults
-            eds[close_ed-1].window_settings >> wsets
-        with m:
-            ac.save_window_settings(eds[close_ed-1])
-            saved = defaults.arrayForKey_(const.WINDOW_SETTINGS_DEFAULTS_KEY)
-            eq_(saved, all_settings)
-    ws = "settings"
-    yield do_save_window_settings, 1, 1, ws, None, [ws]
-    yield do_save_window_settings, 2, 2, ws, None, [{}, ws]
-    yield do_save_window_settings, 2, 1, ws, None, [{}, ws]
-    yield do_save_window_settings, 1, 1, ws, [{}], [ws]
-    yield do_save_window_settings, 2, 2, ws, [{}, {}], [{}, ws]
-    yield do_save_window_settings, 2, 2, ws, [{}, {}, {}], [{}, ws, {}]
-    yield do_save_window_settings, 3, 1, ws, [{}, {}, {}, {}], [{}, {}, ws, {}]
-    yield do_save_window_settings, 5, 5, ws, [{}, {}, {}, {}, {}], [{}, {}, {}, {}, ws]
-    yield do_save_window_settings, 6, 6, ws, [{}, {}, {}, {}, {}], [{}, {}, {}, {}, {}]
+def test_setup_profile_exists():
+    with tempdir() as tmp:
+        app = Application(tmp)
+        eq_(app.setup_profile(), True)
 
-def test_save_window_settings_with_unknown_editor():
-    ac = Application()
-    m = Mocker()
-    ed = m.mock(Editor)
-    with m:
-        ac.save_window_settings(ed)
+def test_setup_profile_parent_exists():
+    with tempdir() as tmp:
+        path = os.path.join(tmp, 'profile')
+        app = Application(path)
+        eq_(app.setup_profile(), True)
+        assert os.path.exists(path), path
+
+def test_setup_profile_parent_missing():
+    with tempdir() as tmp:
+        path = os.path.join(tmp, 'missing', 'profile')
+        app = Application(path)
+        eq_(app.setup_profile(), False)
+        assert not os.path.exists(path), path
+
+def test_setup_profile_at_file():
+    with tempdir() as tmp:
+        path = os.path.join(tmp, 'profile')
+        with open(path, 'w') as fh: pass
+        app = Application(path)
+        eq_(app.setup_profile(), False)
+        assert os.path.isfile(path), path
+
+def test_iter_saved_editor_states():
+    def test(states):
+        with tempdir() as tmp:
+            state_path = os.path.join(tmp, const.EDITORS_DIR)
+            if states:
+                # setup previous state
+                m = Mocker()
+                app = Application(tmp)
+                def iter_editors():
+                    for ident in states:
+                        yield TestConfig(state=[ident])
+                m.method(app.iter_editors)() >> iter_editors()
+                with m:
+                    app.save_editor_states()
+                assert os.listdir(state_path), state_path
+            app = Application(tmp)
+
+            # TODO remove when removing _legacy_editor_states
+            m = Mocker()
+            if not states:
+                m.method(app._legacy_editor_states)() >> []
+            with m:
+
+                result = list(app.iter_saved_editor_states())
+            eq_(result, [[id] for id in states])
+    yield test, []
+    yield test, [3, 1, 2, 0]
+
+def test_save_editor_state():
+    def test(c):
+        with tempdir() as tmp:
+            state_path = os.path.join(tmp, const.EDITORS_DIR)
+            editor = TestConfig(state=[42], id=9)
+            args = (editor.id,) if c.with_id else ()
+            app = Application(tmp)
+            state_name = app.save_editor_state(editor, *args)
+            assert os.path.isdir(state_path), state_path
+            with open(os.path.join(state_path, state_name)) as f:
+                eq_(load_yaml(f), [42])
+    c = TestConfig()
+    yield test, c(with_id=True)
+    #yield test, c(with_id=False) not implemented
+
+def test_save_editor_states():
+    def mock_editors(mock_iter_editors, editors):
+        def iter_editors():
+            for ident in editors:
+                yield TestConfig(state=[ident])
+        mock_iter_editors() >> iter_editors()
+    def test(c):
+        with tempdir() as tmp:
+            state_path = os.path.join(tmp, const.EDITORS_DIR)
+            if c.previous:
+                # setup previous state
+                m = Mocker()
+                app = Application(tmp)
+                mock_editors(m.method(app.iter_editors), c.previous)
+                with m:
+                    app.save_editor_states()
+                assert os.listdir(state_path), state_path
+
+            m = Mocker()
+            app = Application(tmp)
+            mock_editors(m.method(app.iter_editors), c.editors)
+            with m:
+                app.save_editor_states()
+            assert os.path.isdir(state_path), state_path
+            states = sorted(os.listdir(state_path))
+            eq_(len(states), len(c.editors), states)
+            for ident, state in zip(c.editors, states):
+                with open(os.path.join(state_path, state)) as f:
+                    eq_(load_yaml(f), [ident])
+    c = TestConfig(editors=[], previous=[10, 20, 30])
+    yield test, c
+    yield test, c(editors=[1, 2])
+    yield test, c(editors=[1, 2, 3, 4])
 
 def test_app_will_terminate():
     def test(ed_config):
-        ac = Application()
+        app = Application()
         m = Mocker()
-        df_class = m.replace(mod, 'NSUserDefaults')
-        iter_editors = m.method(ac.iter_editors)
-        save_open_projects = m.method(ac.save_open_projects)
-        discard_editor = m.method(ac.discard_editor)
-        nsapp = m.mock()
-        ac.editors = eds = []
-        all_settings = []
-        for i in ed_config:
-            ed = m.mock(Editor)
-            eds.append(ed)
-            ed.window_settings_loaded >> (i != 2)
-            if i != 2:
-                settings = "<settings %s>" % i
-                all_settings.append(settings)
-                ed.window_settings >> settings
-        iter_editors(nsapp) >> reversed(eds)
-        defaults = df_class.standardUserDefaults() >> MockUserDefaults()
-        save_open_projects(defaults)
+        m.method(app.save_editor_states)() >> None
         with m:
-            ac.app_will_terminate(nsapp)
-        result = defaults.arrayForKey_(const.WINDOW_SETTINGS_DEFAULTS_KEY)
-        eq_(result, all_settings)
-        assert defaults.synced
-    yield test, []
-    yield test, [0]
-    yield test, [1, 2, 0]
+            ap.app_will_terminate(None)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # DocumentController tests

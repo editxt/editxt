@@ -21,6 +21,9 @@ from __future__ import absolute_import
 
 import inspect
 import logging
+import os
+import shutil
+import tempfile
 from contextlib import contextmanager
 from nose import with_setup
 import nose.tools
@@ -175,3 +178,13 @@ def profile(test, *args):
             sys.stdout = stdout
     return (prof_test, test, args)
 
+
+@contextmanager
+def tempdir(*args, **kw):
+    delete = kw.pop("delete", True)
+    path = tempfile.mkdtemp(*args, **kw)
+    try:
+        yield path
+    finally:
+        if delete and os.path.exists(path):
+            shutil.rmtree(path)

@@ -120,7 +120,7 @@ class Project(NSObject):
         if self.serial_cache != self.serialize_full():
             if self.path is not None:
                 self.save_with_path(self.path)
-            app.save_open_projects()
+            app.save_editor_states()
             self.reset_serial_cache()
 
     def save_with_path(self, path):

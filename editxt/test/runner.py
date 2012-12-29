@@ -103,7 +103,7 @@ def run(argv=None):
 
         sys.stdout.write("\n")
 
-    log.info('nose argv: %r', argv)
+    log.info('nose argv: %s', ' '.join(argv))
     return nose.run(argv=argv, addplugins=plugins)
 
 
@@ -193,7 +193,7 @@ class TestTimerPlugin(nose.plugins.Plugin):
         del self.start
 
     def finalize(self, result):
-        print "Ten slowest tests:"
+        print("Ten slowest tests:")
         key = lambda it: it[1]
         for test, time in sorted(self.results, key=key, reverse=True)[:10]:
-            print test, "...", time
+            print(test, "...", time)

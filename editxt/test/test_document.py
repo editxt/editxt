@@ -1108,7 +1108,7 @@ class TestTextDocument(MockerTestCase):
         m.method(doc.update_syntaxer)()
         doc.text_storage.mutableString().appendString_(content)
         app.item_changed(doc, 2)
-        app.save_open_projects()
+        app.save_editor_states()
         with m:
             doc.saveDocument_(None)
             with closing(open(path)) as file:

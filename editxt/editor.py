@@ -47,10 +47,10 @@ class Editor(object):
 
     supported_drag_types = [const.DOC_ID_LIST_PBOARD_TYPE, NSFilenamesPboardType]
 
-    def __init__(self, window_controller, serial_data=None):
+    def __init__(self, window_controller, state=None):
         self._current_view = None
         self.wc = window_controller
-        self.serial_data = serial_data
+        self.state = state
         self.projects = KVOList.alloc().init()
         self.recent = self._suspended_recent = RecentItemStack(20)
         self.window_settings_loaded = False
@@ -84,20 +84,18 @@ class Editor(object):
 
         wc.docsView.registerForDraggedTypes_(self.supported_drag_types)
 
-        self.deserialize(self.serial_data)
-        self.serial_data = None
+        self._setstate(self._state)
+        self._state = None
 
         if not self.projects:
             self.new_project()
 
-        self.window_settings = editxt.app.load_window_settings(self)
-
-    def deserialize(self, data):
-        if data:
-            for serial in data.get("project_serials", []):
+    def _setstate(self, state):
+        if state:
+            for serial in state.get("project_serials", []):
                 proj = Project.create_with_serial(serial)
                 self.projects.append(proj)
-            for proj_index, doc_index in data.get("recent_items", []):
+            for proj_index, doc_index in state.get("recent_items", []):
                 if proj_index < len(self.projects):
                     proj = self.projects[proj_index]
                     if doc_index == "<project>":
@@ -105,9 +103,13 @@ class Editor(object):
                     elif doc_index < len(proj.documents()):
                         doc = proj.documents()[doc_index]
                         self.recent.push(doc.id)
+            if 'window_settings' in state:
+                self.window_settings = state['window_settings']
             self.discard_and_focus_recent(None)
 
-    def serialize(self):
+    def __getstate__(self):
+        if self._state is not None:
+            return self._state
         def iter_settings():
             indexes = {}
             serials = []
@@ -129,7 +131,14 @@ class Editor(object):
                 if pair is not None:
                     rits.append(pair)
             yield "recent_items", rits
-        return dict((key, val) for key, val in iter_settings() if val)
+            yield "window_settings", self.window_settings
+        return {key: val for key, val in iter_settings() if val}
+
+    def __setstate__(self, state):
+        assert not hasattr(self, '_state'), 'can only be called once'
+        self._state = state
+
+    state = property(__getstate__, __setstate__)
 
     def discard_and_focus_recent(self, item):
         ident = None if item is None else item.id
@@ -370,8 +379,6 @@ class Editor(object):
         return False
 
     def window_will_close(self):
-        if self.window_settings_loaded:
-            editxt.app.save_window_settings(self)
         editxt.app.discard_editor(self)
 
     def _get_window_settings(self):

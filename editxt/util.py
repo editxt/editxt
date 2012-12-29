@@ -23,6 +23,7 @@ import sys
 import types
 
 import objc
+import yaml
 from AppKit import *
 from Foundation import *
 
@@ -60,6 +61,28 @@ def message(text, info=""):
             log.info("%s: %s %s%s", text, description, ctx, infotext)
         return obj
     return _message
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# yaml load/dump
+
+def yaml_dumper_loader():
+    try:
+        from yaml import CDumper as Dumper, CLoader as Loader
+    except ImportError:
+        log.warn('falling back to non-optimized YAML dumper/loader')
+        from yaml import Dumper, Loader
+    while True:
+        yield Dumper, Loader
+yaml_dumper_loader = yaml_dumper_loader()
+
+def dump_yaml(*args, **kw):
+    kw.setdefault('Dumper', next(yaml_dumper_loader)[0])
+    kw.setdefault('indent', 2)
+    return yaml.dump(*args, **kw)
+
+def load_yaml(*args, **kw):
+    kw.setdefault('Loader', next(yaml_dumper_loader)[1])
+    return yaml.load(*args, **kw)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -61,21 +61,20 @@ def test_EditorConroller__init__():
         if c.args:
             assert ed.wc is c.args[0]
         if len(c.args) > 1:
-            assert ed.serial_data is c.args[1]
+            assert ed.state is c.args[1]
     c = TestConfig(args=())
     yield test, c(args=("<window controller>",))
-    yield test, c(args=("<window controller>", "<serial data>"))
+    yield test, c(args=("<window controller>", "<state data>"))
 
 def test_window_did_load():
-    def test(serial_data):
+    def test(state):
         import editxt.controls.cells as cells
         from editxt.editor import BUTTON_STATE_SELECTED
         from editxt.util import load_image
         m = Mocker()
-        ed = Editor(m.mock(EditorWindowController))
+        ed = Editor(m.mock(EditorWindowController), state)
         wc = ed.wc
-        ws = m.property(ed, "window_settings")
-        deserialize = m.method(ed.deserialize)
+        _setstate = m.method(ed._setstate)
         new_project = m.method(ed.new_project)
         load_image_cache = {}
         _load_image = m.mock()
@@ -95,9 +94,6 @@ def test_window_did_load():
         wc.propsViewButton.setRefusesFirstResponder_(True)
         wc.propsViewButton.setImage_(load_image(const.PROPS_DOWN_BUTTON_IMAGE))
         wc.propsViewButton.setAlternateImage_(load_image(const.PROPS_UP_BUTTON_IMAGE))
-
-        app = m.replace(mod.editxt, 'app')
-        ws.value = (app.load_window_settings(ed) >> "<settings>")
 
         win = ed.wc.window() >> m.mock(NSWindow)
         note_ctr = m.replace(mod, 'NSNotificationCenter')
@@ -120,22 +116,21 @@ def test_window_did_load():
         wc.docsView.registerForDraggedTypes_(
             [const.DOC_ID_LIST_PBOARD_TYPE, NSFilenamesPboardType])
 
-        ed.serial_data = serial_data
-        deserialize(serial_data)
-        if serial_data:
+        _setstate(state)
+        if state:
             ed.projects = [m.mock(Project)]
         else:
             new_project()
 
         with replattr(mod, 'load_image', load_image), m:
             ed.window_did_load()
-            eq_(len(ed.projects), (1 if serial_data else 0))
-            assert ed.serial_data is None
+            eq_(len(ed.projects), (1 if state else 0))
+            assert ed._state is None
             #assert ed.window_settings == "<settings>"
     yield test, None
     yield test, "<serial data>"
 
-def test_deserialize():
+def test__setstate():
     from editxt.util import RecentItemStack
     def test(data):
         m = Mocker()
@@ -144,6 +139,7 @@ def test_deserialize():
         create_with_serial = m.method(Project.create_with_serial)
         ed.projects = projs = m.mock(list)
         ed.recent = m.mock(RecentItemStack)
+        ws = m.property(ed, 'window_settings')
         if data:
             for serial in data.get("project_serials", []):
                 proj = create_with_serial(serial) >> m.mock(Project)
@@ -162,14 +158,17 @@ def test_deserialize():
                             doc = docs[di] >> m.mock(TextDocumentView)
                             ed.recent.push(doc.id >> m.mock())
             ed.discard_and_focus_recent(None)
+            if 'window_settings' in data:
+                ws.value = data['window_settings']
         with m:
-            ed.deserialize(data)
+            ed._setstate(data)
     yield test, None
     yield test, dict()
     yield test, dict(project_serials=["<serial>"])
     yield test, dict(recent_items=[(0, 2), (0, 0), (0, "<project>"), (0, 1), (1, 0)])
+    yield test, dict(window_settings="<window_settings>")
 
-def test_serialize():
+def test_state():
     def test(c):
         m = Mocker()
         def exists(path):
@@ -177,6 +176,7 @@ def test_serialize():
         ed = Editor(None)
         ed.projects = projs = []
         ed.recent = c.recent
+        m.property(ed, 'window_settings').value >> '<settings>'
         psets = []
         items = {}
         for i, p in enumerate(c.projs):
@@ -201,15 +201,14 @@ def test_serialize():
                     offset += 1
                     dv.file_path >> None
         rits = [items[ri] for ri in c.recent if ri in items]
-        data = {}
+        data = {'window_settings': '<settings>'}
         if psets:
             data["project_serials"] = psets
         if rits:
             data["recent_items"] = rits
         with replattr(os.path, 'exists', exists), m:
-            result = ed.serialize()
-            eq_(result, data)
-    c = TestConfig()
+            eq_(ed.state, data)
+    c = TestConfig(window='<settings>')
     p = lambda ident, docs=(), **kw:TestConfig(id=ident, docs=docs, **kw)
     yield test, c(projs=[], recent=[])
     yield test, c(projs=[p(42)], recent=[42])
@@ -770,8 +769,6 @@ def test_window_will_close():
         app = m.replace(mod.editxt, 'app')
         ed.window_settings_loaded = window_settings_loaded
         with m.order():
-            if window_settings_loaded:
-                app.save_window_settings(ed)
             app.discard_editor(ed)
         with m:
             ed.window_will_close()

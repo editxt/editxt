@@ -93,7 +93,6 @@ def run(app, argv, use_pdb):
 def main(argv=sys.argv[1:]):
     if "--test" in argv or "--pdb" in argv:
         DEFAULT_LOGGING_CONFIG['handlers']['console']['level'] = 'DEBUG'
-    logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
 
     use_pdb = "--pdb" in argv
     if use_pdb:
@@ -104,6 +103,7 @@ def main(argv=sys.argv[1:]):
         from editxt.test.runner import TestApplication
         app = TestApplication(argv)
     else:
+        logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
         from editxt.application import Application
         doc = __doc__.replace('Profile directory.',
             'Profile directory [default: ~/.%s].' % Application.name().lower())
