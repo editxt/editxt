@@ -117,11 +117,11 @@ class Editor(object):
                 serial = project.serialize()
                 if serial:
                     serials.append(serial)
-                indexes[project.id] = (i, "<project>")
+                indexes[project.id] = [i, "<project>"]
                 offset = 0
                 for j, doc in enumerate(project.documents()):
                     if doc.file_path and os.path.exists(doc.file_path):
-                        indexes[doc.id] = (i, j - offset)
+                        indexes[doc.id] = [i, j - offset]
                     else:
                         offset += 1
             yield "project_serials", serials
@@ -383,7 +383,7 @@ class Editor(object):
 
     def _get_window_settings(self):
         return dict(
-            frame_string=self.wc.window().stringWithSavedFrame(),
+            frame_string=str(self.wc.window().stringWithSavedFrame()), # coerce from unicode
             splitter_pos=self.wc.splitView.fixedSideThickness(),
             properties_hidden=(self.wc.propsViewButton.state() == NSOnState),
         )

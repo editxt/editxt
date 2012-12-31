@@ -165,7 +165,7 @@ def test__setstate():
     yield test, None
     yield test, dict()
     yield test, dict(project_serials=["<serial>"])
-    yield test, dict(recent_items=[(0, 2), (0, 0), (0, "<project>"), (0, 1), (1, 0)])
+    yield test, dict(recent_items=[[0, 2], [0, 0], [0, "<project>"], [0, 1], [1, 0]])
     yield test, dict(window_settings="<window_settings>")
 
 def test_state():
@@ -186,7 +186,7 @@ def test_state():
             psets.append(pserial)
             # setup for recent items
             proj.id >> p.id
-            items[p.id] = (i, "<project>")
+            items[p.id] = [i, "<project>"]
             docs = proj.documents() >> []
             offset = 0
             for j, d in enumerate(p.docs):
@@ -196,7 +196,7 @@ def test_state():
                     path = "/path/do/file%s.txt" % d
                     (dv.file_path << path).count(2)
                     dv.id >> d
-                    items[d] = (i, j - offset)
+                    items[d] = [i, j - offset]
                 else:
                     offset += 1
                     dv.file_path >> None

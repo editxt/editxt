@@ -294,8 +294,8 @@ class TextDocumentView(NSObject):
             sel = self.text_view.selectedRange()
             sp = self.scroll_view.contentView().bounds().origin
             state = dict(
-                selection=(sel.location, sel.length),
-                scrollpoint=(sp.x, sp.y),
+                selection=[sel.location, sel.length],
+                scrollpoint=[sp.x, sp.y],
                 wrap_mode=self.wrap_mode,
             )
         else:
@@ -305,8 +305,8 @@ class TextDocumentView(NSObject):
         return state
     def _set_edit_state(self, state):
         if self.text_view is not None:
-            point = state.get("scrollpoint", (0, 0))
-            sel = state.get("selection", (0, 0))
+            point = state.get("scrollpoint", [0, 0])
+            sel = state.get("selection", [0, 0])
             self.props.wrap_mode = state.get("wrap_mode", const.LINE_WRAP_NONE)
             length = self.document.text_storage.length() - 1
             if length > 0:

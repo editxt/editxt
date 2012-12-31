@@ -465,8 +465,8 @@ def test_get_edit_state():
             sp.y >> "<sp.y>"
             dv.wrap_mode >> c.wrap_mode
             state = dict(
-                selection=("<sel.location>", "<sel.length>"),
-                scrollpoint=("<sp.x>", "<sp.y>"),
+                selection=["<sel.location>", "<sel.length>"],
+                scrollpoint=["<sp.x>", "<sp.y>"],
                 wrap_mode=c.wrap_mode,
             )
         (dv.file_path << ("<path>" if c.path_is_valid else None)).count(1, 2)
