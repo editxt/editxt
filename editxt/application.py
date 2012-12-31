@@ -48,6 +48,9 @@ class Application(object):
         if profile is None:
             profile = '~/.' + self.name().lower()
         self.profile_path = os.path.expanduser(profile)
+        assert os.path.isabs(self.profile_path), \
+            'profile path cannot be relative (%s)' % self.profile_path
+        self._setup_profile = set()
         self.editors = []
         self.path_opener = None
         self.context = ContextMap()
