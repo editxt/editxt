@@ -43,6 +43,7 @@ import editxt.hacks
 from editxt.errorlog import errlog
 
 docopt.exit = sys.exit # Fix for Python 2
+log = logging.getLogger(__name__)
 
 DEFAULT_LOGGING_CONFIG = {
     'version': 1,
@@ -91,24 +92,31 @@ def run(app, argv, use_pdb):
 
 
 def main(argv=sys.argv[1:]):
-    if "--test" in argv or "--pdb" in argv:
-        DEFAULT_LOGGING_CONFIG['handlers']['console']['level'] = 'DEBUG'
+    try:
+        if "--test" in argv or "--pdb" in argv:
+            DEFAULT_LOGGING_CONFIG['handlers']['console']['level'] = 'DEBUG'
 
-    use_pdb = "--pdb" in argv
-    if use_pdb:
-        argv.remove("--pdb")
-        objc.setVerbose(1)
+        use_pdb = "--pdb" in argv
+        if use_pdb:
+            argv.remove("--pdb")
+            objc.setVerbose(1)
 
-    if "--test" in argv:
-        from editxt.test.runner import TestApplication
-        app = TestApplication(argv)
-    else:
-        logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
-        from editxt.application import Application
-        doc = __doc__.replace('Profile directory.',
-            'Profile directory [default: %s].' % Application.default_profile())
-        opts = docopt.docopt(doc, argv, version=editxt.__version__)
-        app = Application(opts['--profile'])
+        if "--test" in argv:
+            from editxt.test.runner import TestApplication
+            app = TestApplication(argv)
+        else:
+            logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
+            from editxt.application import Application
+            doc = __doc__.replace('Profile directory.',
+                'Profile directory [default: %s].'
+                .format(Application.default_profile_xyz()))
+            opts = docopt.docopt(doc, argv, version=editxt.__version__)
+            app = Application(opts['--profile'])
 
-    editxt.app = app
-    run(app, argv, use_pdb)
+        editxt.app = app
+        run(app, argv, use_pdb)
+    except Exception as err:
+        if len(logging.root.handlers) == 0:
+            logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
+        log.error('unhandled error', exc_info=True)
+        sys.exit(1)

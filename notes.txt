@@ -77,8 +77,10 @@ refactor object hierarchy to make it more modular and easier to add features
     app.documents - {id: Document}
     app.editors - [Editor]
     ? app.current_editor - Editor
-    app.config_root
-    app.right_margin
+    app.profile_path
+    app.config.right_margin
+    app.config.font
+    app.config.font_size
     app.syntaxdefs - [SyntaxDefinition]
     ? app.extensions - [Extension]
     app.history - [...] recently closed editors
@@ -117,29 +119,6 @@ refactor object hierarchy to make it more modular and easier to add features
     syntax.newline_style
     ? syntax.wordsets
     ...
-
-move all configuration into ~/.editxt
-    .editxt
-        cache
-            document-N
-                ...
-        editors
-            editor-N.yaml
-        ext
-        syntax
-        config.yaml
-    TODO
-x   - rename (de)serialize to __(get|set)state__
-x       editor
-xx      project
-x   - include editor window settings in editor state
-x   - load editor state from profile, fall back NSDefaults
-x   - load legacy window settings in application_will_finish_launching when loading project state
-    - ?? use recently closed window settings (from editor state) for new window
-        alternative: use default settings when loading a new window (easy)
-        alternative: use window_settings of current editor, fall back to defaults
-x    - allow launch with a given profile
-x        editxt --profile=~/.editxt-temp
 
 work on projects
     add "undo close document" for project
@@ -586,6 +565,32 @@ Log filtering
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Completed tasks
+
+x Prevent modal popup:
+x   (xt)::EditXT$ ./xt --help
+x   Traceback (most recent call last):
+x     File "/Users/dmiller/code/EditXT/dist/EditXTDev.app/Contents/Resources/__boot__.py", line 60, in <module>
+x       _run(('\x00\x00\x00\x00\x01\x06\x00\x02\x00\x00\x05Users\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc8\xeeO*H+\x00\x00\x01\xc2zN\x07boot.py\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xc2\xc0\xe1\xcb\xc6\x03\x0b\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\xff\xff\x00\x00I\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x08\x00\x00\xc8\xee\x87j\x00\x00\x00\x11\x00\x08\x00\x00\xcb\xc6;K\x00\x00\x00\x0e\x00\x10\x00\x07\x00b\x00o\x00o\x00t\x00.\x00p\x00y\x00\x0f\x00\x0c\x00\x05\x00U\x00s\x00e\x00r\x00s\x00\x12\x00\x1c/dmiller/code/EditXT/boot.py\x00\x13\x00\x06/Users\x00\x15\x00\x02\x00\x0e\xff\xff\x00\x00', '/Users/dmiller/code/EditXT/boot.py'))
+x     File "/Users/dmiller/code/EditXT/dist/EditXTDev.app/Contents/Resources/__boot__.py", line 56, in _run
+x       execfile(path, globals(), globals())
+x     File "/Users/dmiller/code/EditXT/boot.py", line 22, in <module>
+x       editxt.main.main()
+x     File "/Users/dmiller/code/EditXT/editxt/main.py", line 110, in main
+x       .format(Application.default_profile()))
+x   AttributeError: type object 'Application' has no attribute 'default_profile'
+
+x move all configuration into ~/.editxt
+x   - rename (de)serialize to __(get|set)state__
+x       editor
+xx      project
+x   - include editor window settings in editor state
+x   - load editor state from profile, fall back NSDefaults
+x   - load legacy window settings in application_will_finish_launching when loading project state
+x   - ?? use recently closed window settings (from editor state) for new window
+x       alternative: use default settings when loading a new window (easy)
+x       alternative: use window_settings of current editor, fall back to defaults
+x    - allow launch with a given profile
+x        editxt --profile=~/.editxt-temp
 
 x speed up tests
 x   m\.replace\(([^,\)]+)(:?(, [^p][^\)]+)?)(?:, passthrough=False)?\)
@@ -1177,6 +1182,17 @@ xx     end of the characters visible on the screen.
 EditXT Design
 
 Slogan: EditXT - the editor that remembers where you were
+
+Profile structure:
+    .editxt
+        cache
+            document-N
+                ...
+        editors
+            editor-N.yaml
+        ext
+        syntax
+        config.yaml
 
 Discussion of documents in EditXT
 
