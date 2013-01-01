@@ -129,17 +129,17 @@ move all configuration into ~/.editxt
         syntax
         config.yaml
     TODO
-    - rename (de)serialize to __(get|set)state__
+x   - rename (de)serialize to __(get|set)state__
 x       editor
-        project
+xx      project
 x   - include editor window settings in editor state
 x   - load editor state from profile, fall back NSDefaults
 x   - load legacy window settings in application_will_finish_launching when loading project state
     - ?? use recently closed window settings (from editor state) for new window
         alternative: use default settings when loading a new window (easy)
         alternative: use window_settings of current editor, fall back to defaults
-    - allow launch with a given profile
-        editxt -c ~/.editxt-temp
+x    - allow launch with a given profile
+x        editxt --profile=~/.editxt-temp
 
 work on projects
     add "undo close document" for project

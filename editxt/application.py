@@ -47,7 +47,7 @@ class Application(object):
 
     def __init__(self, profile=None):
         if profile is None:
-            profile = '~/.' + self.name().lower()
+            profile = self.default_profile()
         self.profile_path = os.path.expanduser(profile)
         assert os.path.isabs(self.profile_path), \
             'profile path cannot be relative (%s)' % self.profile_path
@@ -64,6 +64,10 @@ class Application(object):
     @classmethod
     def resource_path(cls):
         return NSBundle.mainBundle().resourcePath()
+
+    @classmethod
+    def default_profile(cls):
+        return '~/.' + cls.name().lower()
 
     def init_syntax_definitions(self):
         from editxt.syntax import SyntaxFactory
@@ -282,6 +286,15 @@ class Application(object):
 
     def _legacy_editor_states(self):
         # TODO remove once all users have upraded to new state persistence
+        def pythonify(value):
+            if isinstance(value, (basestring, int, float, bool)):
+                return value
+            if isinstance(value, (dict, NSDictionary)):
+                return {k: pythonify(v) for k, v in value.iteritems()}
+            if isinstance(value, (list, NSArray)):
+                return [pythonify(v) for v in value]
+            raise ValueError('unknown value type: {} {}'
+                .format(type(value), repr(value)))
         defaults = NSUserDefaults.standardUserDefaults()
         serials = defaults.arrayForKey_(const.WINDOW_CONTROLLERS_DEFAULTS_KEY)
         settings = defaults.arrayForKey_(const.WINDOW_SETTINGS_DEFAULTS_KEY)
@@ -290,16 +303,18 @@ class Application(object):
                 state = dict(serial)
                 if setting is not None:
                     state['window_settings'] = setting
-                yield state
+                yield pythonify(state)
             except Exception:
-                log.warn('cannot load legacy state: %r', serial)
+                log.warn('cannot load legacy state: %r', serial, exc_info=True)
 
     def iter_saved_editor_states(self):
         """Yield saved editor states"""
         editors_path = os.path.join(self.profile_path, const.EDITORS_DIR)
         if not os.path.exists(editors_path):
-            for state in self._legacy_editor_states():
-                yield state
+            if self.profile_path == os.path.expanduser(self.default_profile()):
+                # TODO remove once all users have upraded
+                for state in self._legacy_editor_states():
+                    yield state
             return
         state_glob = os.path.join(editors_path, const.EDITOR_STATE.format('*'))
         for path in sorted(glob.glob(state_glob)):

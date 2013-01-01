@@ -690,14 +690,7 @@ def test_iter_saved_editor_states():
                     app.save_editor_states()
                 assert os.listdir(state_path), state_path
             app = Application(tmp)
-
-            # TODO remove when removing _legacy_editor_states
-            m = Mocker()
-            if not states:
-                m.method(app._legacy_editor_states)() >> []
-            with m:
-
-                result = list(app.iter_saved_editor_states())
+            result = list(app.iter_saved_editor_states())
             eq_(result, [[id] for id in states])
     yield test, []
     yield test, [3, 1, 2, 0]
