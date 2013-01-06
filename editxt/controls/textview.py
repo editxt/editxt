@@ -35,6 +35,27 @@ class TextView(NSTextView):
 
     doc_view = objc.ivar("doc_view")
 
+    def goto_line(self, num):
+        eol = self.doc_view.document.eol
+        assert len(eol) > 0, repr(eol)
+        text = self.string()
+        line = 1
+        tlen = len(text)
+        index = 0
+        while line < num:
+            frange = (index, tlen - index)
+            found = text.rangeOfString_options_range_(eol, 0, frange)
+            if not found.length:
+                break
+            index = found.location + found.length
+            line += 1
+        if line == num:
+            range = (index, 0)
+            self.setSelectedRange_(range)
+            self.scrollRangeToVisible_(range)
+        else:
+            NSBeep()
+
     # Find panel amd TextCommand interaction ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def performFindPanelAction_(self, sender):

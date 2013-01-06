@@ -47,6 +47,7 @@ def test_load_commands():
     import editxt.textcommand as tc
     types = [
         tc.ShowCommandBar,
+        tc.GotoLine,
         tc.CommentText,
         tc.PadCommentText,
         tc.IndentLine,

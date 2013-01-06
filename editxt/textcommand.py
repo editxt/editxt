@@ -103,6 +103,7 @@ def load_commands():
         # A list of TextCommand arguments
         text_menu_commands=[
             ShowCommandBar(),
+            GotoLine(),
             CommentText(),
             PadCommentText(),
             IndentLine(),
@@ -148,6 +149,28 @@ class ShowCommandBar(TextCommand):
             NSBeep()
         else:
             editor.command.activate()
+
+
+class GotoLine(TextCommand):
+
+    aliases = ['goto']
+    lookup_with_parse_args = True
+
+    def title(self):
+        return "Goto Line"
+
+    def parse_args(self, text):
+        try:
+            return int(text.strip())
+        except (ValueError, TypeError):
+            pass
+
+    def execute(self, textview, sender, args=None):
+        if args is None:
+            ShowCommandBar.execute(textview, sender)
+            return
+        assert isinstance(args, (int, long)), 'invalid line number: %r' % (args,)
+        textview.text_view.goto_line(args)
 
 
 class SelectionCommand(TextCommand):
