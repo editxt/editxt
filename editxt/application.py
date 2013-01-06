@@ -289,7 +289,7 @@ class Application(object):
     def _legacy_editor_states(self):
         # TODO remove once all users have upraded to new state persistence
         def pythonify(value):
-            if isinstance(value, (basestring, int, float, bool)):
+            if isinstance(value, (basestring, int, long, float, bool)):
                 return value
             if isinstance(value, (dict, NSDictionary)):
                 return {k: pythonify(v) for k, v in value.iteritems()}
@@ -300,6 +300,7 @@ class Application(object):
         defaults = NSUserDefaults.standardUserDefaults()
         serials = defaults.arrayForKey_(const.WINDOW_CONTROLLERS_DEFAULTS_KEY)
         settings = defaults.arrayForKey_(const.WINDOW_SETTINGS_DEFAULTS_KEY)
+        serials = list(reversed(serials))
         for serial, setting in zip(serials, chain(settings, repeat(None))):
             try:
                 state = dict(serial)

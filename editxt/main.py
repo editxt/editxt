@@ -93,6 +93,9 @@ def run(app, argv, use_pdb):
 
 def main(argv=sys.argv[1:]):
     try:
+        # HACK remove strange argument passed by OS X
+        argv = [a for a in argv if not a.startswith('-psn')]
+
         if "--test" in argv or "--pdb" in argv:
             DEFAULT_LOGGING_CONFIG['handlers']['console']['level'] = 'DEBUG'
 

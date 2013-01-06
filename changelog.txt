@@ -22,7 +22,10 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
-? - 1.1.x
+2013-01-05 - 1.2.0
+  - Add command bar (needs more work, but it's minimally usable).
+  - Add "Goto Line" command.
+  - Store app config and state in ~/.editxt.
   - Add "xt" command line script to packaged app.
   - Display full path in window title and document tooltips.
   - Fix cursor column status view: left-most position is now 0 instead of 1.
