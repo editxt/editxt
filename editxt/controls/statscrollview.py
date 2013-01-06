@@ -22,6 +22,7 @@ import logging
 from AppKit import *
 from Foundation import *
 
+from editxt.controls.commandview import CommandView
 
 log = logging.getLogger(__name__)
 
@@ -31,36 +32,46 @@ class StatusbarScrollView(NSScrollView):
     def initWithFrame_(self, frame):
         super(StatusbarScrollView, self).initWithFrame_(frame)
         rect = NSMakeRect(0, 0, 0, NSScroller.scrollerWidth())
+        self.commandView = CommandView.alloc().initWithFrame(rect)
+        self.addSubview_(self.commandView)
         self.statusView = StatusView.alloc().initWithFrame_(rect)
         self.addSubview_(self.statusView)
         return self
 
     def tile(self):
         super(StatusbarScrollView, self).tile()
-        cv = self.contentView()
-        sv = self.statusView
-        vs = self.verticalScroller()
-        hs = self.horizontalScroller()
-        if cv and sv and vs and hs:
+        content = self.contentView()
+        status = self.statusView
+        vscroll = self.verticalScroller()
+        hscroll = self.horizontalScroller()
+        if content and status and vscroll and hscroll:
             scrollw = NSScroller.scrollerWidth()
             rect = self.bounds()
-            arect, brect = NSDivideRect(rect, None, None, scrollw, NSMaxYEdge) # (status+scrollers) | (ruler+content+vscroller)
+            arect, brect = NSDivideRect(rect, None, None, scrollw, NSMaxYEdge) # (status+hscroller) | (ruler+content+vscroller)
             crect, drect = NSDivideRect(brect, None, None, scrollw, NSMaxXEdge) # vscroller | (ruler+content)
-            vs.setFrame_(crect)
-            rv = self.verticalRulerView()
-            if rv:
-                rulew = rv.calculate_thickness()
-                erect, frect = NSDivideRect(drect, None, None, rulew, NSMinXEdge) # ruler | content
-                rv.setFrame_(erect)
-                cv.setFrame_(frect)
+            vscroll.setFrame_(crect)
+            ruler = self.verticalRulerView()
+            if self.commandView:
+                # TODO height sould be relative to font size
+                commandh = 18.0 #NSScroller.scrollerWidth()
+                erect, frect = NSDivideRect(drect, None, None, commandh, NSMaxYEdge) # command | (ruler+content)
+                self.commandView.setFrame_(erect)
+                drect = frect
             else:
-                cv.setFrame_(drect)
+                self.commandView.setFrame_(NSZeroRect)
+            if ruler:
+                rulew = ruler.calculate_thickness()
+                erect, frect = NSDivideRect(drect, None, None, rulew, NSMinXEdge) # ruler | content
+                ruler.setFrame_(erect)
+                content.setFrame_(frect)
+            else:
+                content.setFrame_(drect)
                 rulew = 0
-            svwidth = sv.tileWithRuleWidth_(rulew)
+            svwidth = status.tileWithRuleWidth_(rulew)
             grect, hrect = NSDivideRect(arect, None, None, svwidth, NSMinXEdge) # status | scrollers
-            sv.setFrame_(grect)
+            status.setFrame_(grect)
             arect, brect = NSDivideRect(hrect, None, None, scrollw, NSMaxXEdge) # vscroller | hscroller
-            hs.setFrame_(hrect)
+            hscroll.setFrame_(hrect)
 
 
 class StatusView(NSView):

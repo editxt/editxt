@@ -46,6 +46,7 @@ def test_TextCommand():
 def test_load_commands():
     import editxt.textcommand as tc
     types = [
+        tc.ShowCommandBar,
         tc.CommentText,
         tc.PadCommentText,
         tc.IndentLine,
@@ -585,6 +586,65 @@ def test_TextCommandController_init():
         eq_(ctl.input_handlers, {})
         eq_(ctl.editems, {})
 
+def test_TextCommandController_lookup():
+    class TestCommand(TextCommand):
+        def __init__(self, *aliases):
+            self.aliases = aliases or None
+        def title(self):
+            return "Command"
+        def __repr__(self):
+            return "TestCommand%s" % (self.aliases or (),)
+    def test(c):
+        m = Mocker()
+        menu = m.mock(NSMenu)
+        ctl = TextCommandController(menu)
+        for command in c.commands:
+            ctl.add_command(command, None)
+            menu.insertItem_atIndex_(ANY, ANY)
+        eq_(ctl.lookup(c.lookup), c.result)
+    cmd = TestCommand('cmd', 'cm')
+    cm2 = TestCommand('cmd')
+    no = TestCommand()
+    c = TestConfig(commands=[], lookup='cmd', result=None)
+    yield test, c
+    yield test, c(commands=[no])
+    yield test, c(commands=[cmd], result=cmd)
+    yield test, c(commands=[cmd, cm2], result=cm2)
+    yield test, c(commands=[cmd, cm2], lookup='cm', result=cmd)
+
+def test_TextCommandController_lookup_full_command():
+    class TestCommand(TextCommand):
+        def __init__(self, *aliases):
+            self.aliases = aliases or None
+        def title(self):
+            return "Command"
+        def __repr__(self):
+            return "TestCommand%s" % (self.aliases or (),)
+    class IntCommand(TestCommand):
+        lookup_with_parse_args = True
+        def title(self):
+            return "IntCommand"
+        def parse_args(self, command_text):
+            try:
+                return int(command_text)
+            except (TypeError, ValueError):
+                pass
+    def test(c):
+        m = Mocker()
+        menu = m.mock(NSMenu)
+        ctl = TextCommandController(menu)
+        for command in c.commands:
+            ctl.add_command(command, None)
+            menu.insertItem_atIndex_(ANY, ANY)
+        eq_(ctl.lookup_full_command(c.lookup), c.result)
+    cmd = TestCommand('cmd', 'cm')
+    num = IntCommand()
+    c = TestConfig(commands=[], lookup='cmd', result=None)
+    yield test, c
+    yield test, c(commands=[cmd])
+    yield test, c(commands=[num])
+    yield test, c(commands=[num], lookup='123', result=(num, 123))
+
 def test_TextCommandController_load_commands():
     def test(c):
         m = Mocker()
@@ -618,6 +678,8 @@ def test_TextCommandController_add_command():
         handlers = m.replace(ctl, 'input_handlers')
         validate = m.method(ctl.validate_hotkey)
         cmd = m.mock(TextCommand)
+        cmd.aliases >> []
+        cmd.lookup_with_parse_args >> False
         tag = cmd._TextCommandController__tag = ctl.tagger.next() + 1
         validate(cmd.preferred_hotkey() >> "<hotkey>") >> ("<hotkey>", "<keymask>")
         mi = mi_class.alloc() >> m.mock(NSMenuItem)

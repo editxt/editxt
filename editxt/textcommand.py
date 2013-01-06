@@ -46,6 +46,9 @@ def load_commands():
 
 class TextCommand(object):
 
+    aliases = None
+    """Optional: a list of aliases used for the command bar"""
+
     def title(self):
         """Return the title of this command (a unicode string)"""
         raise NotImplementedError()
@@ -63,7 +66,25 @@ class TextCommand(object):
     def is_enabled(self, textview, sender):
         return True
 
-    def execute(self, textview, sender):
+    def parse_args(self, command_text):
+        """Return command arguments parsed from the raw command text.
+
+        :param command_text: Raw command text entered in the command bar
+            excluding the leading alias portion of the command plus one space.
+        :returns: Command arguments to be passed as the ``args`` parameter
+            of ``execute``; None if the command is invalid.
+        """
+        return command_text.split()
+
+    lookup_with_parse_args = False
+
+    def execute(self, textview, sender, args=None):
+        """Execute the command
+
+        :param textview: The current textview.
+        :param sender: Who triggered this method?
+        :param args: Command-bar arguments returned by ``self.parse_args``.
+        """
         raise NotImplementedError()
 
     def tag(self):
@@ -81,6 +102,7 @@ def load_commands():
 
         # A list of TextCommand arguments
         text_menu_commands=[
+            ShowCommandBar(),
             CommentText(),
             PadCommentText(),
             IndentLine(),
@@ -108,6 +130,24 @@ def load_commands():
             #"deleteForward:": delete_forward,
         }
     )
+
+
+class ShowCommandBar(TextCommand):
+
+    def title(self):
+        return u"Command Bar"
+
+    def preferred_hotkey(self):
+        return (";", NSCommandKeyMask)
+
+    @classmethod
+    def execute(cls, textview, sender):
+        from editxt import app
+        editor = app.find_editor_with_document_view(textview.doc_view)
+        if editor is None:
+            NSBeep()
+        else:
+            editor.command.activate()
 
 
 class SelectionCommand(TextCommand):
@@ -515,6 +555,7 @@ class TextCommandController(object):
         self.menu = menu
         self.commands = commands = {}
         self.commands_by_path = bypath = defaultdict(list)
+        self.lookup_full_commands = []
         self.input_handlers = {}
         self.editems = editems = {}
 #         ntc = menu.itemAtIndex_(1) # New Text Command menu item
@@ -523,12 +564,24 @@ class TextCommandController(object):
 #         etc = menu.itemAtIndex_(2).submenu() # Edit Text Command menu
         #self.load_commands()
 
+    def lookup(self, alias):
+        return self.commands.get(alias)
+
+    def lookup_full_command(self, command_text):
+        for command in self.lookup_full_commands:
+            try:
+                args = command.parse_args(command_text)
+            except Exception:
+                log.warn('cannot parse command: %s', command_text, exc_info=True)
+                continue
+            if args is not None:
+                return command, args
+
     @classmethod
     def iter_command_modules(self):
         """Iterate text commands, yield (<command file path>, <command instance>)"""
         # load local (built-in) commands
-        from editxt.textcommand import load_commands as load_locals
-        yield None, load_locals()
+        yield None, load_commands()
 
     def load_commands(self):
         for path, reg in self.iter_command_modules():
@@ -546,6 +599,15 @@ class TextCommandController(object):
         # HACK tag will not be the correct index if an item is ever removed
         self.menu.insertItem_atIndex_(item, tag)
         self.commands[tag] = command
+        if command.lookup_with_parse_args:
+            self.lookup_full_commands.insert(0, command)
+        if command.aliases:
+            for alias in command.aliases:
+                if isinstance(alias, basestring):
+                    self.commands[alias] = command
+                else:
+                    log.warn('invalid command alias (%r) for %s loaded from %s',
+                        alias, command, path)
 
     def validate_hotkey(self, value):
         if value is not None:

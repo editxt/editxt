@@ -41,7 +41,7 @@ Python environment setup. RECOMMENDED: use a virtualenv
     pip install --download=. PyYAML
     tar xf PyYAML-3.10.tar.gz
     cd PyYAML-3.10
-    CFLAGS="-L$VIRTUAL_ENV/lib" python setup.py --with-libyaml install
+    CFLAGS="-L$VIRTUAL_ENV/lib -I$VIRTUAL_ENV/include" python setup.py --with-libyaml install
 
     # optional (for efficient test runner)
     pip install MacFSEvents
@@ -72,6 +72,11 @@ Build/package EditXT.app::
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
+
+Add command bar:
+x   command text entry widget
+x   menu entry/hotkey to activate command bar
+    jump to line command
 
 refactor object hierarchy to make it more modular and easier to add features
     app.documents - {id: Document}

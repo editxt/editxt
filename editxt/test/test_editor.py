@@ -62,6 +62,7 @@ def test_EditorConroller__init__():
             assert ed.wc is c.args[0]
         if len(c.args) > 1:
             assert ed.state is c.args[1]
+        eq_(ed.command.editor, ed)
     c = TestConfig(args=())
     yield test, c(args=("<window controller>",))
     yield test, c(args=("<window controller>", "<state data>"))

@@ -108,8 +108,8 @@ def main(argv=sys.argv[1:]):
             logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
             from editxt.application import Application
             doc = __doc__.replace('Profile directory.',
-                'Profile directory [default: %s].'
-                .format(Application.default_profile_xyz()))
+                'Profile directory [default: {}].'
+                .format(Application.default_profile()))
             opts = docopt.docopt(doc, argv, version=editxt.__version__)
             app = Application(opts['--profile'])
 

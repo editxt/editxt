@@ -22,6 +22,7 @@ import objc
 import os
 import re
 import time
+import weakref
 
 from AppKit import *
 from Foundation import *
@@ -116,3 +117,44 @@ class SheetController(BaseCommandController):
 
 class PanelController(BaseCommandController):
     """abstract window controller for panel-based text command"""
+
+
+class CommandBar(object):
+
+    def __init__(self, editor):
+        self._editor = weakref.ref(editor)
+
+    @property
+    def editor(self):
+        return self._editor()
+
+    def activate(self):
+        # abstract to a PyObjC-specific subclass when implementing other frontend
+        view = self.editor.current_view
+        if view is None:
+            NSBeep()
+            return
+        view.scroll_view.commandView.activate(self)
+
+    def execute(self, text):
+        args = text.split()
+        if not args:
+            return
+        command = app.text_commander.lookup(args[0])
+        if command is not None:
+            argstr = text[len(args[0]) + 1:]
+            args = command.parse_args(argstr)
+        else:
+            argstr = text
+            command, args = app.text_commander.lookup_full_command(argstr)
+            if command is None:
+                self.message('unknown command: {}'.format(argstr))
+                return
+        if args is None:
+            self.message('invalid command arguments: {}'.format(argstr))
+            return
+        command.execute(self.editor.current_view, self, args)
+
+    def message(self, text):
+        log.warn(text)
+        NSBeep()

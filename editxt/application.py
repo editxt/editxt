@@ -55,6 +55,8 @@ class Application(object):
         self.editors = []
         self.path_opener = None
         self.context = ContextMap()
+        self.syntax_factory = None
+        self.text_commander = None
         register_value_transformers()
 
     @classmethod

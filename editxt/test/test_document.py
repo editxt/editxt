@@ -1068,10 +1068,14 @@ class TestTextDocument(MockerTestCase):
         path = path = mktemp(suffix="txt")
         dc = NSDocumentController.sharedDocumentController()
         eq_(len(dc.documents()), 0)
-        doc = TextDocument.get_with_path(path)
-        assert not os.path.exists(path), "%s exists (but should not)" % path
-        eq_(doc.fileURL().path(), path)
-        doc.close()
+        m = Mocker()
+        factory = m.mock()
+        factory.get_definition(os.path.basename(path)) >> None
+        with replattr(mod.app, 'syntax_factory', factory), m:
+            doc = TextDocument.get_with_path(path)
+            assert not os.path.exists(path), "%s exists (but should not)" % path
+            eq_(doc.fileURL().path(), path)
+            doc.close()
         eq_(len(dc.documents()), 0)
 
     def test_untitled_displayName(self):

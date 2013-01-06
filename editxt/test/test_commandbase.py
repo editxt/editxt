@@ -54,6 +54,52 @@ def setup(controller_class, nib_name="TestController"):
     return setup_controller
         
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# CommandBar tests
+
+def test_CommandBar_editor():
+    editor = type('Editor', (object,), {})()
+    cmd = mod.CommandBar(editor)
+    eq_(cmd.editor, editor)
+    # NOTE the following depends on CPython weakref behavior
+    del editor
+    eq_(cmd.editor, None)
+
+def test_CommandBar_execute():
+    from editxt.textcommand import TextCommand, TextCommandController
+    def test(c):
+        m = Mocker()
+        editor = m.mock()
+        beep = m.replace(mod, 'NSBeep')
+        commander = m.replace(mod.app, 'text_commander', spec=TextCommandController)
+        bar = mod.CommandBar(editor)
+        args = c.text.split()
+        if args:
+            command = m.mock(TextCommand)
+            if c.lookup == 'first':
+                commander.lookup(args[0]) >> command
+                command.parse_args(c.argstr) >> c.args
+            elif c.lookup == 'full':
+                commander.lookup(args[0]) >> None
+                commander.lookup_full_command(c.text) >> (command, c.args)
+            else:
+                assert c.lookup == None, c.lookup
+            if c.args is not None:
+                view = editor.current_view >> '<view>'
+                command.execute(view, bar, '<args>')
+            else:
+                beep()
+        with m:
+            bar.execute(c.text)
+    c = TestConfig(text='', args='<args>')
+    yield test, c
+    yield test, c(text='cmd x y z', argstr='x y z', lookup='first')
+    yield test, c(text='cmd  x y  z', argstr=' x y  z', lookup='first')
+    yield test, c(text='123 456', lookup='full')
+    yield test, c(text='cmd', argstr='', lookup='first', args=None)
+    yield test, c(text='123 456', lookup='full', args=None)
+    yield test, c(lookup=None, args=None)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # BaseCommandController tests
 
 @setup(BaseCommandController)
