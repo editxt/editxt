@@ -26,7 +26,7 @@ PROJECT_EXT = u"edxt"
 TEXT_DOCUMENT = u"public.plain-text"
 SYNTAX_DEFS_DIR = "syntax"
 SYNTAX_DEF_EXTENSION = ".syntax.py"
-EDITORS_DIR = 'editors'
+STATE_DIR = 'state'
 EDITOR_STATE = 'editor-{}.yaml'
 LOG_NAME = "EditXT Log"
 

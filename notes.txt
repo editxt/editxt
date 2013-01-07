@@ -73,10 +73,14 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+BUG: CPU pegged on shutdown when many documents open
+
 Add command bar:
 x   command text entry widget
 x   menu entry/hotkey to activate command bar
-    jump to line command
+x   jump to line command
+    command/arg auto-complete
+    contextual command help
 
 refactor object hierarchy to make it more modular and easier to add features
     app.documents - {id: Document}

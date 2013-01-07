@@ -677,7 +677,7 @@ def test_setup_profile_at_file():
 def test_iter_saved_editor_states():
     def test(states):
         with tempdir() as tmp:
-            state_path = os.path.join(tmp, const.EDITORS_DIR)
+            state_path = os.path.join(tmp, const.STATE_DIR)
             if states:
                 # setup previous state
                 m = Mocker()
@@ -698,7 +698,7 @@ def test_iter_saved_editor_states():
 def test_save_editor_state():
     def test(c):
         with tempdir() as tmp:
-            state_path = os.path.join(tmp, const.EDITORS_DIR)
+            state_path = os.path.join(tmp, const.STATE_DIR)
             editor = TestConfig(state=[42], id=9)
             args = (editor.id,) if c.with_id else ()
             app = Application(tmp)
@@ -718,7 +718,7 @@ def test_save_editor_states():
         mock_iter_editors() >> iter_editors()
     def test(c):
         with tempdir() as tmp:
-            state_path = os.path.join(tmp, const.EDITORS_DIR)
+            state_path = os.path.join(tmp, const.STATE_DIR)
             if c.previous:
                 # setup previous state
                 m = Mocker()

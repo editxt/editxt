@@ -276,12 +276,12 @@ class Application(object):
                 return False
             self._setup_profile.add('.')
         if editors and 'editors' not in self._setup_profile:
-            editors_path = os.path.join(self.profile_path, const.EDITORS_DIR)
-            if not os.path.exists(editors_path):
+            state_path = os.path.join(self.profile_path, const.STATE_DIR)
+            if not os.path.exists(state_path):
                 try:
-                    os.mkdir(editors_path)
+                    os.mkdir(state_path)
                 except OSError:
-                    log.error('cannot create %s', editors_path, exc_info=True)
+                    log.error('cannot create %s', state_path, exc_info=True)
                     return False
             self._setup_profile.add('editors')
         return True
@@ -312,14 +312,14 @@ class Application(object):
 
     def iter_saved_editor_states(self):
         """Yield saved editor states"""
-        editors_path = os.path.join(self.profile_path, const.EDITORS_DIR)
-        if not os.path.exists(editors_path):
+        state_path = os.path.join(self.profile_path, const.STATE_DIR)
+        if not os.path.exists(state_path):
             if self.profile_path == os.path.expanduser(self.default_profile()):
                 # TODO remove once all users have upraded
                 for state in self._legacy_editor_states():
                     yield state
             return
-        state_glob = os.path.join(editors_path, const.EDITOR_STATE.format('*'))
+        state_glob = os.path.join(state_path, const.EDITOR_STATE.format('*'))
         for path in sorted(glob.glob(state_glob)):
             try:
                 with open(path) as f:
@@ -343,7 +343,7 @@ class Application(object):
         self.setup_profile(editors=True)
         state_name = const.EDITOR_STATE.format(ident)
         state_file = os.path.join(
-            self.profile_path, const.EDITORS_DIR, state_name)
+            self.profile_path, const.STATE_DIR, state_name)
         state = editor.state
         try:
             with open(state_file, 'wb') as fh:
@@ -355,14 +355,14 @@ class Application(object):
 
     def save_editor_states(self):
         """Save all editors' states"""
-        editors_path = os.path.join(self.profile_path, const.EDITORS_DIR)
-        old_glob = os.path.join(editors_path, const.EDITOR_STATE.format('*'))
+        state_path = os.path.join(self.profile_path, const.STATE_DIR)
+        old_glob = os.path.join(state_path, const.EDITOR_STATE.format('*'))
         old = {os.path.basename(name) for name in glob.glob(old_glob)}
         for i, editor in enumerate(self.iter_editors()):
             state_name = self.save_editor_state(editor, i)
             old.discard(state_name)
         for name in old:
-            state_file = os.path.join(editors_path, name)
+            state_file = os.path.join(state_path, name)
             try:
                 os.remove(state_file)
             except Exception:
