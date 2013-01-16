@@ -93,9 +93,6 @@ def run(app, argv, use_pdb):
 
 def main(argv=list(sys.argv)):
     try:
-        # HACK remove strange argument passed by OS X
-        argv = [a for a in argv if not a.startswith('-psn')]
-
         if "--test" in argv or "--pdb" in argv:
             DEFAULT_LOGGING_CONFIG['handlers']['console']['level'] = 'DEBUG'
 
@@ -108,14 +105,22 @@ def main(argv=list(sys.argv)):
             from editxt.test.runner import TestApplication
             app = TestApplication(argv)
         else:
-            argv = argv[1:] # drop program name
             logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
             from editxt.application import Application
+            argv = argv[1:] # drop program name
             doc = __doc__.replace('Profile directory.',
                 'Profile directory [default: {}].'
                 .format(Application.default_profile()))
-            opts = docopt.docopt(doc, argv, version=editxt.__version__)
-            app = Application(opts['--profile'])
+            try:
+                opts = docopt.docopt(doc, argv, version=editxt.__version__)
+            except docopt.DocoptExit, err:
+                # HACK ignore unrecognized arguments passed by Mac OS X
+                if 'is not recognized' in str(err):
+                    log.warn('argument parse error: %s\nargv: %r', err, argv)
+                    opts = {}
+                else:
+                    raise
+            app = Application(opts.get('--profile'))
 
         editxt.app = app
         run(app, argv, use_pdb)
