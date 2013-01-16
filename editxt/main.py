@@ -91,7 +91,7 @@ def run(app, argv, use_pdb):
     AppHelper.runEventLoop(argv, errlog.unexpected_error, pdb=use_pdb)
 
 
-def main(argv=sys.argv[1:]):
+def main(argv=list(sys.argv)):
     try:
         # HACK remove strange argument passed by OS X
         argv = [a for a in argv if not a.startswith('-psn')]
@@ -108,6 +108,7 @@ def main(argv=sys.argv[1:]):
             from editxt.test.runner import TestApplication
             app = TestApplication(argv)
         else:
+            argv = argv[1:] # drop program name
             logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
             from editxt.application import Application
             doc = __doc__.replace('Profile directory.',
