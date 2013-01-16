@@ -349,10 +349,6 @@ fix bug: error on quit
     2010-06-29 23:24:42.268 EditXTDev[11519:607] <type 'exceptions.AttributeError'>:
         'NoneType' object has no attribute 'widthTracksTextView'
 
-profile very slow tests:
-    test_editxt.controls.test_splitview.test_animate_view
-    test_editxt.test_editor.test_toggle_properties_pane
-
 The following two tests fail when test_mockerext is run first followed by the entire test suite
     ======================================================================
     ERROR: test_editxt.test_mockerext.test_MockerExt_property(

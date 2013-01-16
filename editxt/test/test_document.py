@@ -626,6 +626,7 @@ def test_TextDocumentView_close():
             dv.project = None
         else:
             dv.project = proj = m.mock(Project)
+            proj.closing >> False
             proj.remove_document_view(dv)
         if c.tv_is_none:
             dv.scroll_view = None

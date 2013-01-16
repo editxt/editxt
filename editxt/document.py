@@ -344,7 +344,7 @@ class TextDocumentView(NSObject):
 
     def close(self):
         doc = self.document
-        if self.project is not None:
+        if self.project is not None and not self.project.closing:
             self.project.remove_document_view(self)
             self.project = None
         if doc is not None:

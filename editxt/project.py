@@ -68,6 +68,7 @@ class Project(NSObject):
         self.expanded = True
         self.is_dirty = False
         self._documents = KVOList.alloc().init()
+        self.closing = False
         self.reset_serial_cache()
         return self
 
@@ -264,9 +265,13 @@ class Project(NSObject):
             editor.discard_and_focus_recent(self)
 
     def close(self):
-        for dv in list(self._documents):
-            dv.close()
-        #self._documents.setItems_([])
+        self.closing = True
+        try:
+            for dv in list(self._documents):
+                dv.close()
+            #self._documents.setItems_([])
+        finally:
+            self.closing = False
 
     def __repr__(self):
         return '<%s 0x%x name=%s>' % (type(self).__name__, id(self), self.name)
