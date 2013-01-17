@@ -116,7 +116,7 @@ def main(argv=list(sys.argv)):
             except docopt.DocoptExit, err:
                 # HACK ignore unrecognized arguments passed by Mac OS X
                 if 'is not recognized' in str(err):
-                    log.warn('argument parse error: %s\nargv: %r', err, argv)
+                    log.debug('argument parse error: %s\nargv: %r', err, argv)
                     opts = {}
                 else:
                     raise
