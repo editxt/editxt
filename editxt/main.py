@@ -36,7 +36,7 @@ import sys
 
 import docopt
 import objc
-from PyObjCTools import AppHelper
+from PyObjCTools import AppHelper, Debugging
 
 import editxt
 import editxt.hacks
@@ -75,6 +75,12 @@ DEFAULT_LOGGING_CONFIG = {
 
 def run(app, argv, use_pdb):
     # TODO move into PyObjC-specific application init
+
+    # HACK monkey-patch pyobc exception handler to use our logger
+    Debugging.NSLog = lambda x, y=None: log.error(x if y is None else y)
+    if not use_pdb:
+        Debugging.installExceptionHandler()
+
     # initialize class definitions
     import editxt.controls.cells
     import editxt.controls.linenumberview
