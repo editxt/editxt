@@ -80,7 +80,10 @@ def test_CommandBar_execute():
                 command.parse_args(c.argstr) >> c.args
             elif c.lookup == 'full':
                 commander.lookup(args[0]) >> None
-                commander.lookup_full_command(c.text) >> (command, c.args)
+                if c.args is None:
+                    commander.lookup_full_command(c.text) >> (None, None)
+                else:
+                    commander.lookup_full_command(c.text) >> (command, c.args)
             else:
                 assert c.lookup == None, c.lookup
             if c.args is not None:
@@ -90,14 +93,13 @@ def test_CommandBar_execute():
                 beep()
         with m:
             bar.execute(c.text)
-    c = TestConfig(text='', args='<args>')
-    yield test, c
+    c = TestConfig(args='<args>')
+    yield test, c(text='')
     yield test, c(text='cmd x y z', argstr='x y z', lookup='first')
     yield test, c(text='cmd  x y  z', argstr=' x y  z', lookup='first')
     yield test, c(text='123 456', lookup='full')
     yield test, c(text='cmd', argstr='', lookup='first', args=None)
     yield test, c(text='123 456', lookup='full', args=None)
-    yield test, c(lookup=None, args=None)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # BaseCommandController tests

@@ -640,7 +640,7 @@ def test_TextCommandController_lookup_full_command():
         eq_(ctl.lookup_full_command(c.lookup), c.result)
     cmd = TestCommand('cmd', 'cm')
     num = IntCommand()
-    c = TestConfig(commands=[], lookup='cmd', result=None)
+    c = TestConfig(commands=[], lookup='cmd', result=(None, None))
     yield test, c
     yield test, c(commands=[cmd])
     yield test, c(commands=[num])

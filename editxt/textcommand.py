@@ -599,6 +599,7 @@ class TextCommandController(object):
                 continue
             if args is not None:
                 return command, args
+        return None, None
 
     @classmethod
     def iter_command_modules(self):
