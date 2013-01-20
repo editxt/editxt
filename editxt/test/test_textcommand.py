@@ -28,37 +28,69 @@ from editxt.test.util import TestConfig
 
 import editxt.constants as const
 import editxt.textcommand as mod
-from editxt.textcommand import TextCommand, TextCommandController
+from editxt.textcommand import TextCommandController
 
 log = logging.getLogger(__name__)
 
 
-def test_TextCommand():
-    tc = TextCommand()
-    assert_raises(NotImplementedError, tc.title)
-    assert_raises(NotImplementedError, tc.execute, None, None)
-    eq_(tc.preferred_hotkey(), None)
-    assert tc.is_enabled(None, None)
-    assert_raises(AttributeError, tc.tag)
-    tc._TextCommandController__tag = 42
-    eq_(tc.tag(), 42)
+def test_command_decorator_defaults():
+    @mod.command
+    def cmd(textview, sender, args):
+        pass
+
+    assert cmd.is_text_command
+    eq_(cmd.title, None)
+    eq_(cmd.hotkey, None)
+    eq_(cmd.names, ['cmd'])
+    eq_(cmd.is_enabled(None, None), True)
+    eq_(cmd.parse_args('abc def'), ['abc', 'def'])
+    eq_(cmd.lookup_with_parse_args, False)
+
+
+def test_command_decorator_with_args():
+    @mod.command(names='abc', title='Title', hotkey=(',', 0),
+        is_enabled=lambda *a:False,
+        parse_args=lambda *a:42, lookup_with_parse_args=True)
+    def cmd(textview, sender, args):
+        pass
+
+    assert cmd.is_text_command
+    assert not hasattr(cmd, 'name')
+    eq_(cmd.title, 'Title')
+    eq_(cmd.hotkey, (',', 0))
+    eq_(cmd.names, ['abc'])
+    eq_(cmd.is_enabled(None, None), False)
+    eq_(cmd.parse_args('abc def'), 42)
+    eq_(cmd.lookup_with_parse_args, True)
+
+
+def test_command_decorator_names():
+    def test(input, output):
+        @mod.command(names=input)
+        def cmd(textview, sender, args):
+            pass
+        eq_(cmd.names, output)
+    yield test, None, ['cmd']
+    yield test, '', ['cmd']
+    yield test, 'abc def', ['abc', 'def']
+    yield test, ['abc', 'def'], ['abc', 'def']
+
 
 def test_load_commands():
     import editxt.textcommand as tc
-    types = [
-        tc.ShowCommandBar,
-        tc.GotoLine,
-        tc.CommentText,
-        tc.PadCommentText,
-        tc.IndentLine,
-        tc.DedentLine,
-        tc.WrapAtMargin,
-        tc.WrapLines,
-        tc.SortLines,
-        tc.ChangeIndentation,
-    ]
     cmds = tc.load_commands()
-    eq_([type(c) for c in cmds["text_menu_commands"]], types)
+    eq_(cmds["text_menu_commands"], [
+        tc.show_command_bar,
+        tc.goto_line,
+        tc.comment_text,
+        tc.pad_comment_text,
+        tc.indent_lines,
+        tc.dedent_lines,
+        tc.wrap_at_margin,
+        tc.wrap_lines,
+        tc.sort_lines,
+        tc.reindent,
+    ])
     eq_(set(cmds["input_handlers"]), set([
         "insertTab:",
         "insertBacktab:",
@@ -272,7 +304,7 @@ def test_text_commands():
         if c.scroll:
             tv.scrollRangeToVisible_(ANY)
         with m:
-            c.method(tv, None)
+            c.method(tv, None, None)
             if "text" in result:
                 eq_(result.text, c.output)
             else:
@@ -332,7 +364,7 @@ def test_text_commands():
         yield test, c(input=u"\n x", output=u"\n\n x", oldsel=(1 + i, 0))
 
 
-    c = cbase(method=tc.tab_indent)
+    c = cbase(method=tc.indent_lines)
     for eol in eols:
         i = len(eol) - 1
         c = c(eol=eol, mode=const.INDENT_MODE_TAB, scroll=False)
@@ -365,7 +397,7 @@ def test_text_commands():
         yield test, c(input=u" x", output=u" x  ", oldsel=(2, 0), scroll=True)
 
 
-    c = cbase(method=tc.tab_dedent, scroll=False)
+    c = cbase(method=tc.dedent_lines, scroll=False)
     for eol in eols:
         i = len(eol) - 1
         c = c(eol=eol, mode=const.INDENT_MODE_TAB, size=2)
@@ -440,29 +472,27 @@ def test_text_commands():
 def test_panel_actions():
     import sys
     def test(c):
-        act = c.action()
         m = Mocker()
         tv = m.mock(NSTextView)
         mod = m.replace(sys.modules, "editxt." + c.mod, dict=True)
         ctl = getattr(mod, c.ctl.__name__).create_with_textview(tv) >> m.mock(c.ctl)
         ctl.begin_sheet(None)
         with m:
-            act.execute(tv, None)
+            c.action(tv, None, None)
     c = TestConfig()
 
-    from editxt.textcommand import SortLines, WrapLines, ChangeIndentation
+    from editxt.textcommand import sort_lines, wrap_lines, reindent
     from editxt.sortlines import SortLinesController
     from editxt.wraplines import WrapLinesController
     from editxt.changeindent import ChangeIndentationController
 
-    yield test, c(action=SortLines, mod="sortlines", ctl=SortLinesController)
-    yield test, c(action=WrapLines, mod="wraplines", ctl=WrapLinesController)
-    yield test, c(action=ChangeIndentation, mod="changeindent", ctl=ChangeIndentationController)
+    yield test, c(action=sort_lines, mod="sortlines", ctl=SortLinesController)
+    yield test, c(action=wrap_lines, mod="wraplines", ctl=WrapLinesController)
+    yield test, c(action=reindent, mod="changeindent", ctl=ChangeIndentationController)
 
 def test_wrap_to_margin_guide():
-    from editxt.textcommand import WrapAtMargin
+    from editxt.textcommand import wrap_at_margin
     from editxt.wraplines import WrapLinesController, wrap_selected_lines
-    act = WrapAtMargin()
     m = Mocker()
     tv = m.mock(NSTextView)
     wrap = m.replace('editxt.wraplines.wrap_selected_lines')
@@ -474,7 +504,7 @@ def test_wrap_to_margin_guide():
     opts.indent = wrap_opts.indent >> "<indent>"
     wrap(tv, opts)
     with m:
-        act.execute(tv, None)
+        wrap_at_margin(tv, None, None)
 
 # def test():
 #   assert False, "stop"
@@ -588,24 +618,22 @@ def test_TextCommandController_init():
         eq_(ctl.editems, {})
 
 def test_TextCommandController_lookup():
-    class TestCommand(TextCommand):
-        def __init__(self, *aliases):
-            self.aliases = aliases or None
-        def title(self):
-            return "Command"
-        def __repr__(self):
-            return "TestCommand%s" % (self.aliases or (),)
     def test(c):
         m = Mocker()
         menu = m.mock(NSMenu)
         ctl = TextCommandController(menu)
         for command in c.commands:
             ctl.add_command(command, None)
-            menu.insertItem_atIndex_(ANY, ANY)
         eq_(ctl.lookup(c.lookup), c.result)
-    cmd = TestCommand('cmd', 'cm')
-    cm2 = TestCommand('cmd')
-    no = TestCommand()
+    @mod.command(names="cmd cm")
+    def cmd(*args):
+        pass
+    @mod.command(names="cmd")
+    def cm2(*args):
+        pass
+    @mod.command
+    def no(*args):
+        pass
     c = TestConfig(commands=[], lookup='cmd', result=None)
     yield test, c
     yield test, c(commands=[no])
@@ -614,22 +642,6 @@ def test_TextCommandController_lookup():
     yield test, c(commands=[cmd, cm2], lookup='cm', result=cmd)
 
 def test_TextCommandController_lookup_full_command():
-    class TestCommand(TextCommand):
-        def __init__(self, *aliases):
-            self.aliases = aliases or None
-        def title(self):
-            return "Command"
-        def __repr__(self):
-            return "TestCommand%s" % (self.aliases or (),)
-    class IntCommand(TestCommand):
-        lookup_with_parse_args = True
-        def title(self):
-            return "IntCommand"
-        def parse_args(self, command_text):
-            try:
-                return int(command_text)
-            except (TypeError, ValueError):
-                pass
     def test(c):
         m = Mocker()
         menu = m.mock(NSMenu)
@@ -638,8 +650,12 @@ def test_TextCommandController_lookup_full_command():
             ctl.add_command(command, None)
             menu.insertItem_atIndex_(ANY, ANY)
         eq_(ctl.lookup_full_command(c.lookup), c.result)
-    cmd = TestCommand('cmd', 'cm')
-    num = IntCommand()
+    @mod.command(names="cm")
+    def cmd(*args):
+        pass
+    @mod.command(parse_args=mod.parse_line_number, lookup_with_parse_args=True)
+    def num(*args):
+        pass
     c = TestConfig(commands=[], lookup='cmd', result=(None, None))
     yield test, c
     yield test, c(commands=[cmd])
@@ -678,14 +694,15 @@ def test_TextCommandController_add_command():
         ctl = TextCommandController(menu)
         handlers = m.replace(ctl, 'input_handlers')
         validate = m.method(ctl.validate_hotkey)
-        cmd = m.mock(TextCommand)
-        cmd.aliases >> []
+        cmd = m.mock()
+        cmd.names >> []
         cmd.lookup_with_parse_args >> False
         tag = cmd._TextCommandController__tag = ctl.tagger.next() + 1
-        validate(cmd.preferred_hotkey() >> "<hotkey>") >> ("<hotkey>", "<keymask>")
+        validate(cmd.hotkey >> "<hotkey>") >> ("<hotkey>", "<keymask>")
         mi = mi_class.alloc() >> m.mock(NSMenuItem)
+        (cmd.title << "<title>").count(2)
         mi.initWithTitle_action_keyEquivalent_(
-            cmd.title() >> "<title>", "performTextCommand:" ,"<hotkey>") >> mi
+            '<title>', "performTextCommand:" ,"<hotkey>") >> mi
         mi.setKeyEquivalentModifierMask_("<keymask>")
         mi.setTag_(tag)
         menu.insertItem_atIndex_(mi, tag)
@@ -708,16 +725,16 @@ def test_TextCommandController_is_textview_command_enabled():
         lg = m.replace("editxt.textcommand.log")
         mi = m.mock(NSMenuItem)
         tv = m.mock(NSTextView)
-        tc = m.mock(TextCommand)
+        tc = m.mock()
         tcc = TextCommandController(None)
         cmds = m.replace(tcc, 'commands')
-        cmd = cmds.get(mi.tag() >> 42) >> (tc if c.has_command else None)
+        cmds.get(mi.tag() >> 42) >> (tc if c.has_command else None)
         if c.has_command:
             if c.error:
-                expect(cmd.is_enabled(tv, mi)).throw(Exception)
+                expect(tc.is_enabled(tv, mi)).throw(Exception)
                 lg.error("%s.is_enabled failed", ANY, exc_info=True)
             else:
-                cmd.is_enabled(tv, mi) >> c.enabled
+                tc.is_enabled(tv, mi) >> c.enabled
         with m:
             result = tcc.is_textview_command_enabled(tv, mi)
             eq_(result, c.enabled)
@@ -733,12 +750,12 @@ def test_TextCommandController_do_textview_command():
         lg = m.replace("editxt.textcommand.log")
         mi = m.mock(NSMenuItem)
         tv = m.mock(NSTextView)
-        tc = m.mock(TextCommand)
+        tc = m.mock()
         tcc = TextCommandController(None)
         cmds = m.replace(tcc, 'commands')
-        cmd = cmds.get(mi.tag() >> 42) >> (tc if c.has_command else None)
+        cmds.get(mi.tag() >> 42) >> (tc if c.has_command else None)
         if c.has_command:
-            cmd.execute(tv, mi)
+            tc(tv, mi, None)
             if c.error:
                 m.throw(Exception)
                 lg.error("%s.execute failed", ANY, exc_info=True)
@@ -754,14 +771,13 @@ def test_TextCommandController_do_textview_command_by_selector():
         m = Mocker()
         lg = m.replace("editxt.textcommand.log")
         tv = m.mock(NSTextView)
-        tc = m.mock(TextCommand)
         tcc = TextCommandController(None)
         sel = "<selector>"
         callback = m.mock()
         handlers = m.replace(tcc, 'input_handlers')
         cmd = handlers.get(sel) >> (callback if c.has_selector else None)
         if c.has_selector:
-            callback(tv, None)
+            callback(tv, None, None)
             if c.error:
                 m.throw(Exception)
                 lg.error("%s failed", callback, exc_info=True)

@@ -65,7 +65,7 @@ def test_CommandBar_editor():
     eq_(cmd.editor, None)
 
 def test_CommandBar_execute():
-    from editxt.textcommand import TextCommand, TextCommandController
+    from editxt.textcommand import TextCommandController
     def test(c):
         m = Mocker()
         editor = m.mock()
@@ -74,7 +74,7 @@ def test_CommandBar_execute():
         bar = mod.CommandBar(editor)
         args = c.text.split()
         if args:
-            command = m.mock(TextCommand)
+            command = m.mock()
             if c.lookup == 'first':
                 commander.lookup(args[0]) >> command
                 command.parse_args(c.argstr) >> c.args
@@ -88,7 +88,7 @@ def test_CommandBar_execute():
                 assert c.lookup == None, c.lookup
             if c.args is not None:
                 view = editor.current_view >> '<view>'
-                command.execute(view, bar, '<args>')
+                command(view, bar, '<args>')
             else:
                 beep()
         with m:

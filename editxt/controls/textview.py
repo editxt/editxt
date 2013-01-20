@@ -56,7 +56,7 @@ class TextView(NSTextView):
         else:
             NSBeep()
 
-    # Find panel amd TextCommand interaction ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Find panel amd text command interaction ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def performFindPanelAction_(self, sender):
         FindController.shared_controller().perform_action(sender)

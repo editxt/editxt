@@ -153,8 +153,8 @@ class CommandBar(object):
         if args is None:
             self.message('invalid command arguments: {}'.format(argstr))
             return
-        command.execute(self.editor.current_view, self, args)
+        command(self.editor.current_view, self, args)
 
-    def message(self, text):
-        log.warn(text)
+    def message(self, text, exc_info=None):
+        log.info(text, exc_info=exc_info)
         NSBeep()

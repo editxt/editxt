@@ -36,59 +36,52 @@ log = logging.getLogger(__name__)
 
 """
 The primary interface for loading text commands into EditXT is a module-level
-function that returns a list of command objects provided by the module:
+function that returns a list of command functions provided by the module:
 
 def load_commands():
-    return [
-        TextCommandInstance(),
-    ]
+    return [decorated_text_command, ...]
 """
 
-class TextCommand(object):
 
-    aliases = None
-    """Optional: a list of aliases used for the command bar"""
+def command(func=None, names=None, title=None, hotkey=None,
+            is_enabled=None, parse_args=None, lookup_with_parse_args=False):
+    """Text command decorator
 
-    def title(self):
-        """Return the title of this command (a unicode string)"""
-        raise NotImplementedError()
+    Text command signature: `text_command(textview, sender, args)`
+    Both `sender` and `args` will be `None` in some contexts.
 
-    def preferred_hotkey(self):
-        """Get the preferred hotkey for this text command
-
-        Returns a tuple or None. If a tuple is returned it should contain two
-        values: (<key string>, <modifier mask>). For more info see NSMenuItem
-        setKeyEquivalent: and setKeyEquivalentModifierMask: in the Cocoa
-        documentation.
-        """
-        return None # no hotkey by default
-
-    def is_enabled(self, textview, sender):
-        return True
-
-    def parse_args(self, command_text):
-        """Return command arguments parsed from the raw command text.
-
-        :param command_text: Raw command text entered in the command bar
-            excluding the leading alias portion of the command plus one space.
-        :returns: Command arguments to be passed as the ``args`` parameter
-            of ``execute``; None if the command is invalid.
-        """
-        return command_text.split()
-
-    lookup_with_parse_args = False
-
-    def execute(self, textview, sender, args=None):
-        """Execute the command
-
-        :param textview: The current textview.
-        :param sender: Who triggered this method?
-        :param args: Command-bar arguments returned by ``self.parse_args``.
-        """
-        raise NotImplementedError()
-
-    def tag(self):
-        return self._TextCommandController__tag
+    :param names: One or more names that can be typed in the command bar to
+       invoke the command. This can be a space-delimited string or a list of
+       strings. Defaults to the decorated callable's `__name__`.
+    :param title: The command title displayed in Text menu. Not in menu if None.
+    :param hotkey: Preferred command hotkey tuple: `(<key char>, <key mask>)`.
+        Ignored if title is None.
+    :param is_enabled: A callable that returns a boolean value indicating if
+        the command is enabled in the Text menu. Always enabled if None.
+        Signature: `is_enabled(textview, sender)`.
+    :param parse_args: A callable that takes a string and returns a tuple of
+        arguments to be passed to the command as the `args` parameter.
+        Use the default command parser, which simply splits the string,
+        if `None`. Signature: `parse_args(command_text)`. May return
+        `None` if arguments cannot be parsed or are not recognized.
+    :param lookup_with_parse_args: If True, use the `parse_args` callable to
+        lookup the command. The command's argument parser should return None
+        if it receives a text string that cannot be executed.
+    """
+    if isinstance(names, basestring):
+        names = names.split()
+    def command_decorator(func):
+        func.is_text_command = True
+        func.names = names or [func.__name__]
+        func.title = title
+        func.hotkey = hotkey
+        func.is_enabled = is_enabled or (lambda textview, sender: True)
+        func.parse_args = parse_args or (lambda text: text.split())
+        func.lookup_with_parse_args = lookup_with_parse_args
+        return func
+    if func is None:
+        return command_decorator
+    return command_decorator(func)
 
 
 SEPARATOR = object()
@@ -100,28 +93,28 @@ def load_commands():
     return dict(
         #document_menu_commands=[],
 
-        # A list of TextCommand arguments
+        # A list of text commands
         text_menu_commands=[
-            ShowCommandBar(),
-            GotoLine(),
-            CommentText(),
-            PadCommentText(),
-            IndentLine(),
-            DedentLine(),
-            WrapAtMargin(),
-            WrapLines(),
-            SortLines(),
-            ChangeIndentation(),
+            show_command_bar,
+            goto_line,
+            comment_text,
+            pad_comment_text,
+            indent_lines,
+            dedent_lines,
+            wrap_at_margin,
+            wrap_lines,
+            sort_lines,
+            reindent,
         ],
 
         # A dict of of NSResponder selectors mapped to callbacks
         #
-        # Each callback should have the same signature as TextCommand.execute
-        # The second argument (sender) will always be None when executed in
-        # this context.
+        # Each callback should have the same signature as a text command.
+        # The second and third arguments (sender, args) will always be None
+        # when executed in this context.
         input_handlers={
-            "insertTab:": tab_indent,
-            "insertBacktab:": tab_dedent,
+            "insertTab:": indent_lines,
+            "insertBacktab:": dedent_lines,
             "insertNewline:": insert_newline,
             "moveToBeginningOfLine:": move_to_beginning_of_line,
             "moveToLeftEndOfLine:": move_to_beginning_of_line,
@@ -133,93 +126,82 @@ def load_commands():
     )
 
 
-class ShowCommandBar(TextCommand):
-
-    def title(self):
-        return u"Command Bar"
-
-    def preferred_hotkey(self):
-        return (";", NSCommandKeyMask)
-
-    @classmethod
-    def execute(cls, textview, sender):
-        from editxt import app
-        editor = app.find_editor_with_document_view(textview.doc_view)
-        if editor is None:
-            NSBeep()
-        else:
-            editor.command.activate()
+@command(title=u"Command Bar", hotkey=(";", NSCommandKeyMask))
+def show_command_bar(textview, sender, args):
+    """Show the command bar"""
+    from editxt import app
+    editor = app.find_editor_with_document_view(textview.doc_view)
+    if editor is None:
+        NSBeep()
+    else:
+        editor.command.activate()
 
 
-class GotoLine(TextCommand):
+def parse_line_number(text):
+    try:
+        return int(text.strip())
+    except (ValueError, TypeError):
+        pass
 
-    aliases = ['goto']
-    lookup_with_parse_args = True
-
-    def title(self):
-        return "Goto Line"
-
-    def parse_args(self, text):
-        try:
-            return int(text.strip())
-        except (ValueError, TypeError):
-            pass
-
-    def execute(self, textview, sender, args=None):
-        if args is None:
-            ShowCommandBar.execute(textview, sender)
-            return
-        assert isinstance(args, (int, long)), 'invalid line number: %r' % (args,)
-        textview.text_view.goto_line(args)
+@command(names='goto', title=u"Goto Line",
+    parse_args=parse_line_number,
+    lookup_with_parse_args=True)
+def goto_line(textview, sender, args):
+    """Jump to a line in the document"""
+    if args is None:
+        show_command_bar(textview, sender, None)
+        return
+    assert isinstance(args, (int, long)), 'invalid line number: %r' % (args,)
+    textview.text_view.goto_line(args)
 
 
-class SelectionCommand(TextCommand):
-
-    def is_enabled(self, textview, sender):
-        return textview.selectedRange().length > 0
+def has_selection(textview, sender):
+    return textview.selectedRange().length > 0
 
 
-class CommentText(SelectionCommand):
+@command(title=u"(Un)comment Selected Lines",
+    hotkey=(",", NSCommandKeyMask),
+    is_enabled=has_selection)
+def comment_text(textview, sender, args):
+    """Comment/uncomment the selected text region
 
-    PAD = False
+    The region is uncommented if the first two lines start with comment
+    characters. Otherwise, the region is commented.
+    """
+    _comment_text(textview, sender, args, False)
 
-    def title(self):
-        return u"(Un)comment Selected Lines"
+@command(title=u"(Un)comment + Space Selected Lines",
+    hotkey=(",", NSCommandKeyMask | NSShiftKeyMask),
+    is_enabled=has_selection)
+def pad_comment_text(textview, sender, args):
+    """Comment/uncomment + space the selected text region
 
-    def preferred_hotkey(self):
-        return (",", NSCommandKeyMask)
+    The region is uncommented if the first two lines start with comment
+    characters. Otherwise, the region is commented. When commenting the
+    region, each line is prefixed with an additional space if it does
+    not begin with a space or tab character.
+    """
+    _comment_text(textview, sender, args, True)
 
-    def execute(self, textview, sender):
-        text = textview.string()
-        sel = text.lineRangeForRange_(textview.selectedRange())
-        comment_token = textview.doc_view.document.comment_token
-        if is_comment_range(text, sel, comment_token):
-            func = uncomment_line
-        else:
-            func = comment_line
-        args = (
-            comment_token,
-            textview.doc_view.document.indent_mode,
-            textview.doc_view.document.indent_size,
-            type(self).PAD,
-        )
-        seltext = u"".join(func(line, *args) for line in iterlines(text, sel))
-        if textview.shouldChangeTextInRange_replacementString_(sel, seltext):
-            textview.textStorage().replaceCharactersInRange_withString_(sel, seltext)
-            textview.setSelectedRange_((sel[0], len(seltext)))
-            textview.didChangeText()
-
-
-class PadCommentText(CommentText):
-
-    PAD = True
-
-    def title(self):
-        return u"(Un)comment + Space Selected Lines"
-
-    def preferred_hotkey(self):
-        return (",", NSCommandKeyMask | NSShiftKeyMask)
-
+def _comment_text(textview, sender, args, pad):
+    text = textview.string()
+    sel = text.lineRangeForRange_(textview.selectedRange())
+    comment_token = textview.doc_view.document.comment_token
+    if is_comment_range(text, sel, comment_token):
+        func = uncomment_line
+    else:
+        func = comment_line
+    args = (
+        comment_token,
+        textview.doc_view.document.indent_mode,
+        textview.doc_view.document.indent_size,
+        pad,
+    )
+    seltext = u"".join(func(line, *args) for line in iterlines(text, sel))
+    if textview.shouldChangeTextInRange_replacementString_(sel, seltext):
+        textview.textStorage().replaceCharactersInRange_withString_(sel, seltext)
+        textview.setSelectedRange_((sel[0], len(seltext)))
+        textview.didChangeText()
 
 def is_comment_range(text, range, comment_token):
     comments = 0
@@ -265,101 +247,10 @@ def uncomment_line(text, token, indent_mode, indent_size, pad=False):
     return line
 
 
-class IndentLine(SelectionCommand):
-
-    name = "tabIndent"
-
-    def title(self):
-        return u"Indent Selected Lines"
-
-    def preferred_hotkey(self):
-        return ("]", NSCommandKeyMask)
-
-    def execute(self, textview, sender):
-        tab_indent(textview, sender)
-
-
-class DedentLine(TextCommand):
-
-    name = "tabDedent"
-
-    def title(self):
-        return u"Un-indent Selected Lines"
-
-    def preferred_hotkey(self):
-        return ("[", NSCommandKeyMask)
-
-    def execute(self, textview, sender):
-        tab_dedent(textview, sender)
-
-
-class SortLines(TextCommand):
-
-    name = "sortLines"
-
-    def title(self):
-        return u"Sort Lines..."
-
-    def preferred_hotkey(self):
-        return None
-
-    def execute(self, textview, sender):
-        from editxt.sortlines import SortLinesController
-        SortLinesController.create_with_textview(textview).begin_sheet(sender)
-
-
-class WrapLines(SelectionCommand):
-
-    name = "wrapLines"
-
-    def title(self):
-        return u"Hard Wrap..."
-
-    def preferred_hotkey(self):
-        return ("\\", NSCommandKeyMask | NSShiftKeyMask)
-
-    def execute(self, textview, sender):
-        from editxt.wraplines import WrapLinesController
-        WrapLinesController.create_with_textview(textview).begin_sheet(sender)
-
-
-class WrapAtMargin(SelectionCommand):
-
-    name = "wrapAtMargin"
-
-    def title(self):
-        return u"Hard Wrap At Margin"
-
-    def preferred_hotkey(self):
-        return ("\\", NSCommandKeyMask)
-
-    def execute(self, textview, sender):
-        from editxt.commandbase import Options
-        from editxt.wraplines import WrapLinesController, wrap_selected_lines
-        opts = Options()
-        ctl = WrapLinesController.shared_controller()
-        opts.wrap_column = const.DEFAULT_RIGHT_MARGIN
-        opts.indent = ctl.opts.indent
-        wrap_selected_lines(textview, opts)
-
-
-class ChangeIndentation(TextCommand):
-
-    name = "changeIndentation"
-
-    def title(self):
-        return u"Change Indentation"
-
-    def preferred_hotkey(self):
-        return None
-
-    def execute(self, textview, sender):
-        from editxt.changeindent import ChangeIndentationController
-        ctl = ChangeIndentationController.create_with_textview(textview)
-        ctl.begin_sheet(sender)
-
-
-def tab_indent(textview, sender):
+@command(title=u"Indent Selected Lines",
+    hotkey=("]", NSCommandKeyMask),
+    is_enabled=has_selection)
+def indent_lines(textview, sender, args):
     indent_mode = textview.doc_view.document.indent_mode
     if indent_mode == const.INDENT_MODE_TAB:
         istr = u"\t"
@@ -391,7 +282,9 @@ def tab_indent(textview, sender):
         else:
             textview.scrollRangeToVisible_((sel[0] + len(seltext), 0))
 
-def tab_dedent(textview, sender):
+
+@command(title=u"Un-indent Selected Lines", hotkey=("[", NSCommandKeyMask))
+def dedent_lines(textview, sender, args):
     def dedent(line, spt=textview.doc_view.document.indent_size):
         if not line.strip():
             return line.lstrip(u" \t")
@@ -414,9 +307,48 @@ def tab_dedent(textview, sender):
             textview.setSelectedRange_((sel[0], len(seltext)))
             textview.didChangeText()
 
+
+@command(names='sort', title=u"Sort Lines...")
+def sort_lines(textview, sender, args):
+    from editxt.sortlines import SortLinesController
+    sorter = SortLinesController.create_with_textview(textview)
+    if args is None:
+        sorter.begin_sheet(sender)
+    else:
+        raise NotImplementedError
+
+
+@command(title=u"Hard Wrap...",
+    hotkey=("\\", NSCommandKeyMask | NSShiftKeyMask),
+    is_enabled=has_selection)
+def wrap_lines(textview, sender, args):
+    from editxt.wraplines import WrapLinesController
+    WrapLinesController.create_with_textview(textview).begin_sheet(sender)
+
+
+@command(title=u"Hard Wrap At Margin",
+    hotkey=("\\", NSCommandKeyMask),
+    is_enabled=has_selection)
+def wrap_at_margin(textview, sender, args):
+    from editxt.commandbase import Options
+    from editxt.wraplines import WrapLinesController, wrap_selected_lines
+    opts = Options()
+    ctl = WrapLinesController.shared_controller()
+    opts.wrap_column = const.DEFAULT_RIGHT_MARGIN
+    opts.indent = ctl.opts.indent
+    wrap_selected_lines(textview, opts)
+
+
+@command(title=u"Change Indentation")
+def reindent(textview, sender, args):
+    from editxt.changeindent import ChangeIndentationController
+    ctl = ChangeIndentationController.create_with_textview(textview)
+    ctl.begin_sheet(sender)
+
+
 _ws = re.compile(ur"([\t ]+)", re.UNICODE | re.MULTILINE)
 
-def insert_newline(textview, sender):
+def insert_newline(textview, sender, args):
     eol = textview.doc_view.document.eol
     sel = textview.selectedRange()
     text = textview.string()
@@ -435,7 +367,7 @@ def insert_newline(textview, sender):
         textview.didChangeText()
         textview.scrollRangeToVisible_((sel[0] + len(eol), 0))
 
-def move_to_beginning_of_line(textview, sender):
+def move_to_beginning_of_line(textview, sender, args):
     eol = textview.doc_view.document.eol
     sel = textview.selectedRange()
     text = textview.string()
@@ -453,9 +385,9 @@ def move_to_beginning_of_line(textview, sender):
     textview.setSelectedRange_(new)
     textview.scrollRangeToVisible_(new)
 
-#def move_to_beginning_of_line_and_modify_selection(textview, sender):
+#def move_to_beginning_of_line_and_modify_selection(textview, sender, args):
 
-def delete_backward(textview, sender):
+def delete_backward(textview, sender, args):
     if textview.doc_view.document.indent_mode == const.INDENT_MODE_TAB:
         textview.deleteBackward_(sender)
         return
@@ -614,24 +546,25 @@ class TextCommandController(object):
             self.input_handlers.update(reg.get("input_handlers", {}))
 
     def add_command(self, command, path):
-        command.__tag = tag = self.tagger.next()
-        hotkey, keymask = self.validate_hotkey(command.preferred_hotkey())
-        item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
-            command.title(), "performTextCommand:", hotkey)
-        item.setKeyEquivalentModifierMask_(keymask)
-        item.setTag_(tag)
-        # HACK tag will not be the correct index if an item is ever removed
-        self.menu.insertItem_atIndex_(item, tag)
-        self.commands[tag] = command
+        if command.title is not None:
+            command.__tag = tag = self.tagger.next()
+            hotkey, keymask = self.validate_hotkey(command.hotkey)
+            item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+                command.title, "performTextCommand:", hotkey)
+            item.setKeyEquivalentModifierMask_(keymask)
+            item.setTag_(tag)
+            # HACK tag will not be the correct index if an item is ever removed
+            self.menu.insertItem_atIndex_(item, tag)
+            self.commands[tag] = command
         if command.lookup_with_parse_args:
             self.lookup_full_commands.insert(0, command)
-        if command.aliases:
-            for alias in command.aliases:
-                if isinstance(alias, basestring):
-                    self.commands[alias] = command
-                else:
+        if command.names:
+            for alias in command.names:
+                if not isinstance(alias, basestring) or ' ' in alias:
                     log.warn('invalid command alias (%r) for %s loaded from %s',
                         alias, command, path)
+                else:
+                    self.commands[alias] = command
 
     def validate_hotkey(self, value):
         if value is not None:
@@ -653,7 +586,7 @@ class TextCommandController(object):
         command = self.commands.get(sender.tag())
         if command is not None:
             try:
-                command.execute(textview, sender)
+                command(textview, sender, None)
             except Exception:
                 log.error("%s.execute failed", type(command).__name__, exc_info=True)
 
@@ -662,174 +595,8 @@ class TextCommandController(object):
         callback = self.input_handlers.get(selector)
         if callback is not None:
             try:
-                callback(textview, None)
+                callback(textview, None, None)
                 return True
             except Exception:
                 log.error("%s failed", callback, exc_info=True)
         return False
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# OLD TextCommandController
-
-# class TextCommandController(object):
-#
-#     def commandIterator(self):
-#         """Iterate text commands, yield (<command file path>, <command instance>)"""
-#         # load local (built-in) commands
-#         for command in loadCommands():
-#             name = getattr(command, "name", None)
-#             if name is not None:
-#                 self.namedCommands[name] = command
-#             yield None, command
-#         # load user commands
-# #         bypath = self.commandsByPath
-# #         tcpath = self.userCommandPath()
-# #         for filename in sorted(os.listdir(tcpath)):
-# #             if filename.endswith(".py"):
-# #                 path = os.path.join(tcpath, filename)
-# #                 mod =  {}
-# #                 try:
-# #                     execfile(path, mod)
-# #                     for command in mod["loadCommands"]():
-# #                         bypath[path].append(command)
-# #                         yield path, command
-# #                 except Exception:
-# #                     log.error("cannot load text command module: %s", filename, exc_info=True)
-#
-#     def __init__(self, menu):
-#         super(TextCommandController, self).init()
-#         self.menu = menu
-#         self.namedCommands = {}
-#         self.commands = commands = {}
-#         self.commandsByPath = bypath = defaultdict(list)
-#         self.editems = editems = {}
-#         ntc = menu.itemAtIndex_(1) # New Text Command menu item
-#         ntc.setTarget_(self)
-#         ntc.setAction_("newTextCommand:")
-#         etc = menu.itemAtIndex_(2).submenu() # Edit Text Command menu
-#         for ident, (path, command) in enumerate(self.commandIterator()):
-#             command._tag = ident
-#             item = self.createMenuItemForCommand_(command)
-#             menu.insertItem_atIndex_(item, ident)
-#             commands[ident] = command
-#             if path is not None:
-#                 editem = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
-#                     command.title(), "editTextCommand:", u"")
-#                 editem.setTarget_(self)
-#                 editem.setTag_(ident)
-#                 etc.addItem_(editem)
-#                 editems[ident] = path
-#         return self
-#
-#     def createMenuItemForCommand_(self, command):
-#         hotkey, keymask = self.validateHotkey_(command.preferred_hotkey())
-#         item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
-#             command.title(), "performTextCommand:", hotkey)
-#         item.setKeyEquivalentModifierMask_(keymask)
-#         item.setTag_(command._tag)
-#         return item
-#
-#     def userCommandPath(self):
-#         sdc = NSDocumentController.sharedDocumentController()
-#         aspath = sdc.appSupportPath()
-#         if not os.path.exists(aspath):
-#             os.mkdir(aspath)
-#         tcpath = os.path.join(aspath, "TextCommands")
-#         if not os.path.exists(tcpath):
-#             os.mkdir(tcpath)
-#         return tcpath
-#
-#     def newTextCommand_(self, sender):
-#         sdc = NSDocumentController.sharedDocumentController()
-#         project = sdc.currentProject
-#         rcpath = NSBundle.mainBundle().resourcePath()
-#         temp = os.path.join(rcpath, "mytextcommand.py")
-#         doc = project.openDocumentWithPath_(temp)
-#         if doc is None:
-#             doc = project.newDocument()
-#         tcpath = self.userCommandPath()
-#         url = NSURL.fileURLWithPath_(os.path.join(tcpath, "mytextcommand.py"))
-#         doc.setFileURL_(url)
-#         doc.registerSaveHook_(self.onSaveTextCommand_)
-#
-#     def editTextCommand_(self, editem):
-#         # get text command info from menu tag
-#         path = self.editems.get(editem.tag())
-#         if path is not None and os.path.exists(path):
-#             sdc = NSDocumentController.sharedDocumentController()
-#             project = sdc.currentProject
-#             doc = project.openDocumentWithPath_(path)
-#             if doc is not None:
-#                 doc.registerSaveHook_(self.onSaveTextCommand_)
-#
-#     def onSaveTextCommand_(self, doc):
-#         url = doc.fileURL()
-#         if url is not None:
-#             path = url.path()
-#             # get commands that are about to be reloaded
-#             oldcommands = list(self.commandsByPath[path])
-#
-#             # reload command module
-#             newcommands = []
-#             mod =  {}
-#             try:
-#                 execfile(path, mod)
-#                 for command in mod["loadCommands"]():
-#                     newcommands.append(command)
-#             except Exception:
-#                 log.error("cannot load text command module: %s", filename, exc_info=True)
-#
-#             # replace existing commands in menu as needed
-#             offset = max(self.commands) + 1
-#             addcommands = []
-#             for i, newcmd in enumerate(newcommands):
-#                 if i < len(oldcommands):
-#                     oldcmd = oldcommands[i]
-#                     index = oldcmd.tag()
-#                 else:
-#                     addcommands.append(newcmd)
-#                     continue
-#                 newcmd._tag = oldcmd.tag()
-#                 hotkey, keymask = self.validateHotkey_(newcmd.preferred_hotkey())
-#                 item = self.menu.itemAtIndex_(oldcmd.tag())
-#                 item.setTitle_(newcmd.title())
-#                 item.setKeyEquivalent_(hotkey)
-#                 item.setKeyEquivalentModifierMask_(keymask)
-#                 item.setTag_(oldcmd.tag())
-#                 self.commands[oldcmd.tag()] = newcmd
-#
-#             # put new commands in menu as needed
-#             offset = max(self.commands) + 1
-#             for ident, command in enumerate(addcommands):
-#                 ident = ident + offset
-#                 command._tag = ident
-#                 item = self.createMenuItemForCommand_(command)
-#                 self.menu.insertItem_atIndex_(item, ident)
-#                 self.commands[ident] = command
-#
-#     def validateHotkey_(self, keytup):
-#         if keytup is not None:
-#             assert len(keytup) == 2, "invalid hotkey tuple: %r" % (keytup,)
-#             # TODO check if a hot key is already in use; ignore if it is
-#             return keytup
-#         return u"", 0
-#
-#     def validateTextCommand_forTextView_(self, menuitem, textview):
-#         command = self.commands.get(menuitem.tag())
-#         if command is not None:
-#             try:
-#                 return command.is_enabled(textview, menuitem)
-#             except Exception:
-#                 log.error("%s.is_enabled failed", type(command).__name__, exc_info=True)
-#         return False
-#
-#     def performTextCommand_forTextView_(self, sender, textview):
-#         command = self.commands.get(sender.tag())
-#         if command is not None:
-#             try:
-#                 command.execute(textview, sender)
-#             except Exception:
-#                 log.error("%s.execute failed", type(command).__name__, exc_info=True)
-#
-#     def performNamedCommand_forTextView_(self, name, textview):
-#         self.performTextCommand_forTextView_(self.namedCommands[name], textview)
