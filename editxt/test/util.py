@@ -22,6 +22,7 @@ from __future__ import absolute_import
 import inspect
 import logging
 import os
+import re
 import shutil
 import tempfile
 from contextlib import contextmanager
@@ -154,6 +155,30 @@ def replattr(*args, **kw):
                 if getattr(obj, attr) is not temp:
                     errors.append("%r is not %r" % (getattr(obj, attr), temp))
     assert not errors, "\n".join(errors)
+
+
+def assert_raises(*args, **kw):
+    if len(args) == 1:
+        msg = kw.pop('msg', None)
+        if kw:
+            raise AssertionError('invalid kwargs: {!r}'.format(kwargs))
+        @contextmanager
+        def raises():
+            try:
+                yield
+                raise AssertionError('{} not raised'.format(args[0]))
+            except args[0] as err:
+                if isinstance(msg, basestring):
+                    eq_(str(err), msg)
+                elif hasattr(msg, 'search'):
+                    assert msg.search(str(err)), \
+                        '{!r} does not match {!r}'.foramt(msg.pattern, str(err))
+                elif msg is not None:
+                    msg(err)
+        return raises()
+    else:
+        nose.tools.assert_raises(*args, **kw)
+
 
 def check_app_state(test):
     def checker(when):
