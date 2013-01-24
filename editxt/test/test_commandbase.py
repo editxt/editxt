@@ -77,7 +77,10 @@ def test_CommandBar_execute():
             command = m.mock()
             if c.lookup == 'first':
                 commander.lookup(args[0]) >> command
-                command.parse_args(c.argstr) >> c.args
+                if isinstance(c.args, Exception):
+                    expect(command.parse_args(c.argstr)).throw(c.args)
+                else:
+                    command.parse_args(c.argstr) >> c.args
             elif c.lookup == 'full':
                 commander.lookup(args[0]) >> None
                 if c.args is None:
@@ -86,20 +89,25 @@ def test_CommandBar_execute():
                     commander.lookup_full_command(c.text) >> (command, c.args)
             else:
                 assert c.lookup == None, c.lookup
-            if c.args is not None:
-                view = editor.current_view >> '<view>'
-                command(view, bar, '<args>')
-            else:
+            if c.args is None or isinstance(c.args, Exception):
                 beep()
+            else:
+                view = editor.current_view >> '<view>'
+                res = command(view, bar, '<args>') << None
+                if c.error:
+                    res.throw(Exception('bang!'))
+                    beep()
         with m:
             bar.execute(c.text)
-    c = TestConfig(args='<args>')
+    c = TestConfig(args='<args>', error=False)
     yield test, c(text='')
     yield test, c(text='cmd x y z', argstr='x y z', lookup='first')
     yield test, c(text='cmd  x y  z', argstr=' x y  z', lookup='first')
+    yield test, c(text='cmd x ', argstr='x ', lookup='first', args=Exception())
     yield test, c(text='123 456', lookup='full')
     yield test, c(text='cmd', argstr='', lookup='first', args=None)
     yield test, c(text='123 456', lookup='full', args=None)
+    yield test, c(text='123 456', lookup='full', error=True)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # BaseCommandController tests

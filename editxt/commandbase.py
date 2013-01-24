@@ -63,7 +63,12 @@ class CommandBar(object):
         command = app.text_commander.lookup(args[0])
         if command is not None:
             argstr = text[len(args[0]) + 1:]
-            args = command.parse_args(argstr)
+            try:
+                args = command.parse_args(argstr)
+            except Exception:
+                msg = 'argument parse error: {}'.format(argstr)
+                self.message(msg, exc_info=True)
+                return
         else:
             argstr = text
             command, args = app.text_commander.lookup_full_command(argstr)
@@ -73,7 +78,10 @@ class CommandBar(object):
         if args is None:
             self.message('invalid command arguments: {}'.format(argstr))
             return
-        command(self.editor.current_view, self, args)
+        try:
+            command(self.editor.current_view, self, args)
+        except Exception:
+            self.message('error in command: {}'.format(command), exc_info=True)
 
     def message(self, text, exc_info=None):
         log.info(text, exc_info=exc_info)
