@@ -65,6 +65,7 @@ def test_CommandBar_editor():
     eq_(cmd.editor, None)
 
 def test_CommandBar_execute():
+    from editxt.document import TextDocumentView
     from editxt.textcommand import TextCommandController
     def test(c):
         m = Mocker()
@@ -73,7 +74,11 @@ def test_CommandBar_execute():
         commander = m.replace(mod.app, 'text_commander', spec=TextCommandController)
         bar = mod.CommandBar(editor)
         args = c.text.split()
-        if args:
+        if args and not c.current:
+            editor.current_view >> None
+            beep()
+        elif args:
+            view = editor.current_view >> m.mock(TextDocumentView)
             command = m.mock()
             if c.lookup == 'first':
                 commander.lookup(args[0]) >> command
@@ -92,19 +97,20 @@ def test_CommandBar_execute():
             if c.args is None or isinstance(c.args, Exception):
                 beep()
             else:
-                view = editor.current_view >> '<view>'
-                res = command(view, bar, '<args>') << None
+                view.text_view >> '<view>'
+                res = expect(command('<view>', bar, '<args>'))
                 if c.error:
                     res.throw(Exception('bang!'))
                     beep()
         with m:
             bar.execute(c.text)
-    c = TestConfig(args='<args>', error=False)
+    c = TestConfig(args='<args>', error=False, current=True)
     yield test, c(text='')
     yield test, c(text='cmd x y z', argstr='x y z', lookup='first')
     yield test, c(text='cmd  x y  z', argstr=' x y  z', lookup='first')
     yield test, c(text='cmd x ', argstr='x ', lookup='first', args=Exception())
     yield test, c(text='123 456', lookup='full')
+    yield test, c(text='123 456', lookup='full', current=False)
     yield test, c(text='cmd', argstr='', lookup='first', args=None)
     yield test, c(text='123 456', lookup='full', args=None)
     yield test, c(text='123 456', lookup='full', error=True)

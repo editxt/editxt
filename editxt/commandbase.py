@@ -57,6 +57,10 @@ class CommandBar(object):
         args = text.split()
         if not args:
             return
+        doc_view = self.editor.current_view
+        if doc_view is None:
+            NSBeep()
+            return
         command = app.text_commander.lookup(args[0])
         if command is not None:
             argstr = text[len(args[0]) + 1:]
@@ -76,7 +80,7 @@ class CommandBar(object):
             self.message('invalid command arguments: {}'.format(argstr))
             return
         try:
-            command(self.editor.current_view, self, args)
+            command(doc_view.text_view, self, args)
         except Exception:
             self.message('error in command: {}'.format(command), exc_info=True)
 
