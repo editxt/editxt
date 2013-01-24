@@ -32,7 +32,7 @@ from editxt.test.util import TestConfig, untested, check_app_state
 
 import editxt.constants as const
 from editxt.controls.textview import TextView
-from editxt.sortlines import SortLinesController, sortlines
+from editxt.sortlines import SortLinesController, SortOptions, sortlines
 
 log = logging.getLogger(__name__)
 
@@ -57,10 +57,10 @@ jkl 4 1 246
     
 """
     def test(c):
-        opts = TestConfig(
-            sort_selection=c.opts._get("sel", False),
-            reverse_sort=c.opts._get("rev", False),
-            ignore_leading_ws=c.opts._get("ign", False),
+        opts = SortOptions(
+            selection=c.opts._get("sel", False),
+            reverse=c.opts._get("rev", False),
+            ignore_leading_whitespace=c.opts._get("ign", False),
             numeric_match=c.opts._get("num", False),
             regex_sort=c.opts._get("reg", False),
             search_pattern=c.opts._get("sch", ""),
@@ -70,7 +70,7 @@ jkl 4 1 246
         tv = m.mock(TextView)
         ts = tv.textStorage() >> m.mock(NSTextStorage)
         text = tv.string() >> NSString.stringWithString_(c.text)
-        if opts.sort_selection:
+        if opts.selection:
             sel = tv.selectedRange() >> c.sel
             sel = text.lineRangeForRange_(sel)
         else:
@@ -81,7 +81,7 @@ jkl 4 1 246
             output.append(text)
         expect(ts.replaceCharactersInRange_withString_(sel, ANY)).call(callback)
         tv.didChangeText()
-        if opts.sort_selection:
+        if opts.selection:
             tv.setSelectedRange_(sel)
         with m:
             sortlines(tv, opts)

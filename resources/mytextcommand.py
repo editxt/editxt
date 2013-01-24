@@ -14,11 +14,10 @@ set of attributes. The attributes are most conveniently applied with the
     is_enabled - A callable that returns a boolean value indicating if
         the command is enabled in the Text menu. Always enabled if None.
         Signature: `is_enabled(textview, sender)`.
-    parse_args - A callable that takes a string and returns a tuple of
+    parse_args - A callable that takes a string and returns a sequence of
         arguments to be passed to the command as the `args` parameter.
-        Use the default command parser, which simply splits the string,
-        if `None`. Signature: `parse_args(command_text)`. May return
-        `None` if arguments cannot be parsed or are not recognized.
+        Defaults to `string.split`. Signature: `parse_args(command_text)`.
+        May return `None` if arguments cannot be parsed or are not recognized.
     lookup_with_parse_args - If True, use the `parse_args` callable to
         lookup the command. The command's argument parser should return None
         if it receives a text string that cannot be executed.

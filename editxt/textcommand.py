@@ -27,6 +27,8 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
+from editxt.commandparser import (Bool, Int, String, Regex, CommandParser,
+    Options, Error, ArgumentError, ParseError)
 from editxt.util import register_undo_callback
 
 log = logging.getLogger(__name__)
@@ -59,11 +61,10 @@ def command(func=None, names=None, title=None, hotkey=None,
     :param is_enabled: A callable that returns a boolean value indicating if
         the command is enabled in the Text menu. Always enabled if None.
         Signature: `is_enabled(textview, sender)`.
-    :param parse_args: A callable that takes a string and returns a tuple of
-        arguments to be passed to the command as the `args` parameter.
-        Use the default command parser, which simply splits the string,
-        if `None`. Signature: `parse_args(command_text)`. May return
-        `None` if arguments cannot be parsed or are not recognized.
+    :param parse_args: A callable that takes a string and returns a sequence
+        of arguments to be passed to the command as the `args` parameter.
+        Defaults to `string.split`. Signature: `parse_args(command_text)`.
+        May return `None` if arguments cannot be parsed or are not recognized.
     :param lookup_with_parse_args: If True, use the `parse_args` callable to
         lookup the command. The command's argument parser should return None
         if it receives a text string that cannot be executed.
@@ -308,22 +309,36 @@ def dedent_lines(textview, sender, args):
             textview.didChangeText()
 
 
-@command(names='sort', title=u"Sort Lines...")
+@command(names='sort', title=u"Sort Lines...",
+    parse_args=CommandParser(
+        Bool('selection sel s', 'all a', True),
+        Bool('reverse rev r', default=False),
+        Bool('ignore-leading-whitespace lstrip i'),
+        Regex('sort_regex', True),
+    ))
 def sort_lines(textview, sender, args):
-    from editxt.sortlines import SortLinesController
-    sorter = SortLinesController.create_with_textview(textview)
+    from editxt.sortlines import SortLinesController, sortlines
     if args is None:
+        sorter = SortLinesController.create_with_textview(textview)
         sorter.begin_sheet(sender)
     else:
-        raise NotImplementedError
+        sortlines(textview, args)
 
 
-@command(title=u"Hard Wrap...",
+@command(names='wrap', title=u"Hard Wrap...",
     hotkey=("\\", NSCommandKeyMask | NSShiftKeyMask),
-    is_enabled=has_selection)
+    is_enabled=has_selection,
+    parse_args=CommandParser( # TODO test
+        Int('wrap_column'),
+        Bool('indent i', 'no-indent n', True),
+    ))
 def wrap_lines(textview, sender, args):
-    from editxt.wraplines import WrapLinesController
-    WrapLinesController.create_with_textview(textview).begin_sheet(sender)
+    from editxt.wraplines import WrapLinesController, wrap_selected_lines
+    if args is None:
+        wrapper = WrapLinesController.create_with_textview(textview)
+        wrapper.begin_sheet(sender)
+    else:
+        wrap_selected_lines(textview, args)
 
 
 @command(title=u"Hard Wrap At Margin",

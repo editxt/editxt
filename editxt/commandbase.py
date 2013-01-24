@@ -29,14 +29,11 @@ from Foundation import *
 
 import editxt.constants as const
 from editxt import app
+from editxt.commandparser import Options
 from editxt.controls.alert import Caller
 from editxt.util import KVOProxy, KVOLink
 
 log = logging.getLogger(__name__)
-
-
-class Options(object):
-    """default options class"""
 
 
 class CommandBar(object):

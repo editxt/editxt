@@ -27,20 +27,30 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt.commandbase import SheetController
+from editxt.commandbase import SheetController, Options
 from editxt.textcommand import iterlines
 
 log = logging.getLogger(__name__)
+
+
+class SortOptions(Options):
+
+    @property
+    def sort_regex(self):
+        if self.regex_sort:
+            return (self.search_pattern, self.match_pattern)
+        return (None, None)
 
 
 class SortLinesController(SheetController):
     """Window controller for sort lines text command"""
 
     NIB_NAME = u"SortLines"
+    OPTIONS_CLASS = SortOptions
     OPTIONS_DEFAULTS = dict(
-        sort_selection=False,
-        reverse_sort=False,
-        ignore_leading_ws=False,
+        selection=False,
+        reverse=False,
+        ignore_leading_whitespace=False,
         numeric_match=False,
         regex_sort=False,
         search_pattern="",
@@ -54,13 +64,16 @@ class SortLinesController(SheetController):
 
 def sortlines(textview, opts):
     text = textview.string()
-    regex = re.compile(opts.search_pattern) if opts.regex_sort else None
-    if opts.match_pattern:
-        groups = [int(g.strip()) for g in opts.match_pattern.split("\\") if g.strip()]
+    if opts.sort_regex[0]:
+        regex = re.compile(opts.sort_regex[0])
+        if opts.sort_regex[1]:
+            groups = [int(g.strip()) for g in opts.sort_regex[1].split("\\") if g.strip()]
+        else:
+            groups = None
     else:
-        groups = None
+        regex = None
     def key(line):
-        if opts.ignore_leading_ws:
+        if opts.ignore_leading_whitespace:
             line = line.lstrip()
         if regex is not None:
             match = regex.search(line)
@@ -75,13 +88,13 @@ def sortlines(textview, opts):
                     matched = tuple(matched.get(g - 1, "") for g in groups)
                 line = (0,) + matched
         return line
-    if opts.sort_selection:
+    if opts.selection:
         range = text.lineRangeForRange_(textview.selectedRange())
     else:
         range = (0, len(text))
-    output = "".join(sorted(iterlines(text, range), key=key, reverse=opts.reverse_sort))
+    output = "".join(sorted(iterlines(text, range), key=key, reverse=opts.reverse))
     if textview.shouldChangeTextInRange_replacementString_(range, output):
         textview.textStorage().replaceCharactersInRange_withString_(range, output)
         textview.didChangeText()
-        if opts.sort_selection:
+        if opts.selection:
             textview.setSelectedRange_(range)
