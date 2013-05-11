@@ -27,8 +27,8 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt.commandparser import (Bool, Int, String, Regex, CommandParser,
-    Options, Error, ArgumentError, ParseError)
+from editxt.commandparser import (Bool, Int, String, Regex, VarArgs,
+    CommandParser, Options, Error, ArgumentError, ParseError)
 from editxt.util import register_undo_callback
 
 log = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ def load_commands():
 
 
 def command(func=None, names=None, title=None, hotkey=None,
-            is_enabled=None, parse_args=None, lookup_with_parse_args=False):
+            is_enabled=None, arg_parser=None, lookup_with_arg_parser=False):
     """Text command decorator
 
     Text command signature: `text_command(textview, sender, args)`
@@ -61,13 +61,11 @@ def command(func=None, names=None, title=None, hotkey=None,
     :param is_enabled: A callable that returns a boolean value indicating if
         the command is enabled in the Text menu. Always enabled if None.
         Signature: `is_enabled(textview, sender)`.
-    :param parse_args: A callable that takes a string and returns a sequence
-        of arguments to be passed to the command as the `args` parameter.
-        Defaults to `string.split`. Signature: `parse_args(command_text)`.
-        May return `None` if arguments cannot be parsed or are not recognized.
-    :param lookup_with_parse_args: If True, use the `parse_args` callable to
-        lookup the command. The command's argument parser should return None
-        if it receives a text string that cannot be executed.
+    :param arg_parser: An object inplementing the `CommandParser` interface.
+        Defaults to `CommandParser(VarArgs("args"))`.
+    :param lookup_with_arg_parser: If True, use the `arg_parser.parse` to
+        lookup the command. The parser should return None if it receives
+        a text string that cannot be parsed.
     """
     if isinstance(names, basestring):
         names = names.split()
@@ -77,8 +75,8 @@ def command(func=None, names=None, title=None, hotkey=None,
         func.title = title
         func.hotkey = hotkey
         func.is_enabled = is_enabled or (lambda textview, sender: True)
-        func.parse_args = parse_args or (lambda text: text.split())
-        func.lookup_with_parse_args = lookup_with_parse_args
+        func.arg_parser = arg_parser or CommandParser(VarArgs("args"))
+        func.lookup_with_arg_parser = lookup_with_arg_parser
         return func
     if func is None:
         return command_decorator
@@ -138,22 +136,15 @@ def show_command_bar(textview, sender, args):
         editor.command.activate()
 
 
-def parse_line_number(text):
-    try:
-        return int(text.strip())
-    except (ValueError, TypeError):
-        pass
-
 @command(names='goto', title=u"Goto Line",
-    parse_args=parse_line_number,
-    lookup_with_parse_args=True)
-def goto_line(textview, sender, args):
+    arg_parser=CommandParser(Int("line")),
+    lookup_with_arg_parser=True)
+def goto_line(textview, sender, opts):
     """Jump to a line in the document"""
-    if args is None:
+    if opts is None or opts.line is None:
         show_command_bar(textview, sender, None)
         return
-    assert isinstance(args, (int, long)), 'invalid line number: %r' % (args,)
-    textview.text_view.goto_line(args)
+    textview.goto_line(opts.line)
 
 
 def has_selection(textview, sender):
@@ -310,7 +301,7 @@ def dedent_lines(textview, sender, args):
 
 
 @command(names='sort', title=u"Sort Lines...",
-    parse_args=CommandParser(
+    arg_parser=CommandParser(
         Bool('selection sel s', 'all a', True),
         Bool('reverse rev r', default=False),
         Bool('ignore-leading-whitespace lstrip i'),
@@ -328,7 +319,7 @@ def sort_lines(textview, sender, args):
 @command(names='wrap', title=u"Hard Wrap...",
     hotkey=("\\", NSCommandKeyMask | NSShiftKeyMask),
     is_enabled=has_selection,
-    parse_args=CommandParser( # TODO test
+    arg_parser=CommandParser( # TODO test
         Int('wrap_column'),
         Bool('indent i', 'no-indent n', True),
     ))
@@ -540,13 +531,19 @@ class TextCommandController(object):
     def lookup_full_command(self, command_text):
         for command in self.lookup_full_commands:
             try:
-                args = command.parse_args(command_text)
+                args = command.arg_parser.parse(command_text)
+            except ArgumentError:
+                continue
             except Exception:
                 log.warn('cannot parse command: %s', command_text, exc_info=True)
                 continue
             if args is not None:
                 return command, args
         return None, None
+
+    def get_completions(self, text, index):
+        # TODO implement this
+        return []
 
     @classmethod
     def iter_command_modules(self):
@@ -571,7 +568,7 @@ class TextCommandController(object):
             # HACK tag will not be the correct index if an item is ever removed
             self.menu.insertItem_atIndex_(item, tag)
             self.commands[tag] = command
-        if command.lookup_with_parse_args:
+        if command.lookup_with_arg_parser:
             self.lookup_full_commands.insert(0, command)
         if command.names:
             for alias in command.names:

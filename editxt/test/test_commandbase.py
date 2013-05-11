@@ -83,9 +83,9 @@ def test_CommandBar_execute():
             if c.lookup == 'first':
                 commander.lookup(args[0]) >> command
                 if isinstance(c.args, Exception):
-                    expect(command.parse_args(c.argstr)).throw(c.args)
+                    expect(command.arg_parser.parse(c.argstr)).throw(c.args)
                 else:
-                    command.parse_args(c.argstr) >> c.args
+                    command.arg_parser.parse(c.argstr) >> c.args
             elif c.lookup == 'full':
                 commander.lookup(args[0]) >> None
                 if c.args is None:
@@ -114,6 +114,42 @@ def test_CommandBar_execute():
     yield test, c(text='cmd', argstr='', lookup='first', args=None)
     yield test, c(text='123 456', lookup='full', args=None)
     yield test, c(text='123 456', lookup='full', error=True)
+
+def test_get_completion_hints():
+    from editxt.commandparser import CommandParser, Bool, Regex
+    from editxt.document import TextDocumentView
+    from editxt.textcommand import TextCommandController, command
+    def test(c):
+        m = Mocker()
+        editor = m.mock()
+        beep = m.replace(mod, 'NSBeep')
+        commander = m.replace(mod.app, 'text_commander', spec=TextCommandController)
+        bar = mod.CommandBar(editor)
+        args = c.text.split()
+        index = len(c.text) if c.index is None else c.index
+        if args:
+            @command(arg_parser=CommandParser(
+                Bool('selection sel s', 'all a', True),
+                Regex('sort_regex', True),
+            ))
+            def cmd(textview, sender, args):
+                raise NotImplementedError("should not get here")
+            commander.lookup(args[0]) >> (cmd if c.match == "simple" else None)
+            if c.match == "parse":
+                @command
+                def cmd(textview, sender, args):
+                    raise NotImplementedError("should not get here")
+                commander.lookup_full_command(c.text) >> (cmd, c.args)
+            elif not c.match:
+                commander.lookup_full_command(c.text) >> (None, None)
+                commander.get_completions(c.text, index) >> "<commands>"
+        with m:
+            eq_(bar.get_completion_hints(c.text, index), c.expect)
+    c = TestConfig(index=None, match="simple", args="<args>")
+    yield test, c(text='', expect=None)
+    yield test, c(text='cmd', expect=(" selection sort_regex", []))
+    yield test, c(text='/', match="parse", expect=(" ...", []))
+    yield test, c(text='cmd', match=None, expect=("", "<commands>"))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # BaseCommandController tests

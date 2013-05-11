@@ -181,10 +181,10 @@ def test_Regex():
 arg_parser = CommandParser(Bool('arg'))
 
 def test_CommandParser_empty():
-    eq_(arg_parser(''), Options(arg=None))
+    eq_(arg_parser.parse(''), Options(arg=None))
 
 def test_CommandParser():
-    eq_(arg_parser('arg'), Options(arg=True))
+    eq_(arg_parser.parse('arg'), Options(arg=True))
 
 def test_CommandParser_incomplete():
     parser = CommandParser(Bool('arg'))
@@ -193,14 +193,14 @@ def test_CommandParser_incomplete():
         eq_(err.errors, [ParseError("'a' not in 'arg'", Bool('arg'), 0, 1)])
     print assert_raises
     with assert_raises(ArgumentError, msg=check):
-        parser('a')
+        parser.parse('a')
 
 def test_CommandParser_order():
     def test(text, result):
         if isinstance(result, Options):
-            eq_(parser(text), result)
+            eq_(parser.parse(text), result)
         else:
-            assert_raises(result, parser, text)
+            assert_raises(result, parser.parse, text)
     parser = CommandParser(
         Bool('selection sel s'),
         Bool('reverse rev r'),

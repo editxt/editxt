@@ -79,10 +79,10 @@ Add command bar:
 x   command text entry widget
 x   menu entry/hotkey to activate command bar
 x   jump to line command
-    history
     command argument shadow text
-    command/arg auto-complete
+    history
     contextual command help
+    command/arg auto-complete
     convert commands with gui to work with command bar
 x       wrap command
 x       sort command

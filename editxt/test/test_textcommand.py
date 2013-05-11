@@ -28,6 +28,7 @@ from editxt.test.util import TestConfig
 
 import editxt.constants as const
 import editxt.textcommand as mod
+from editxt.commandparser import ArgumentError, CommandParser, Int, Options
 from editxt.textcommand import TextCommandController
 
 log = logging.getLogger(__name__)
@@ -43,14 +44,14 @@ def test_command_decorator_defaults():
     eq_(cmd.hotkey, None)
     eq_(cmd.names, ['cmd'])
     eq_(cmd.is_enabled(None, None), True)
-    eq_(cmd.parse_args('abc def'), ['abc', 'def'])
-    eq_(cmd.lookup_with_parse_args, False)
+    eq_(cmd.arg_parser.parse('abc def'), Options(args=['abc', 'def']))
+    eq_(cmd.lookup_with_arg_parser, False)
 
 
 def test_command_decorator_with_args():
     @mod.command(names='abc', title='Title', hotkey=(',', 0),
         is_enabled=lambda *a:False,
-        parse_args=lambda *a:42, lookup_with_parse_args=True)
+        arg_parser=CommandParser(Int("value")), lookup_with_arg_parser=True)
     def cmd(textview, sender, args):
         pass
 
@@ -60,8 +61,10 @@ def test_command_decorator_with_args():
     eq_(cmd.hotkey, (',', 0))
     eq_(cmd.names, ['abc'])
     eq_(cmd.is_enabled(None, None), False)
-    eq_(cmd.parse_args('abc def'), 42)
-    eq_(cmd.lookup_with_parse_args, True)
+    with assert_raises(ArgumentError):
+        cmd.arg_parser.parse('abc def')
+    eq_(cmd.arg_parser.parse('42'), Options(value=42))
+    eq_(cmd.lookup_with_arg_parser, True)
 
 
 def test_command_decorator_names():
@@ -667,14 +670,16 @@ def test_TextCommandController_lookup_full_command():
     @mod.command(names="cm")
     def cmd(*args):
         pass
-    @mod.command(parse_args=mod.parse_line_number, lookup_with_parse_args=True)
+    @mod.command(
+        arg_parser=CommandParser(Int("value")),
+        lookup_with_arg_parser=True)
     def num(*args):
         pass
     c = TestConfig(commands=[], lookup='cmd', result=(None, None))
     yield test, c
     yield test, c(commands=[cmd])
     yield test, c(commands=[num])
-    yield test, c(commands=[num], lookup='123', result=(num, 123))
+    yield test, c(commands=[num], lookup='123', result=(num, Options(value=123)))
 
 def test_TextCommandController_load_commands():
     def test(c):
@@ -710,7 +715,7 @@ def test_TextCommandController_add_command():
         validate = m.method(ctl.validate_hotkey)
         cmd = m.mock()
         cmd.names >> []
-        cmd.lookup_with_parse_args >> False
+        cmd.lookup_with_arg_parser >> False
         tag = cmd._TextCommandController__tag = ctl.tagger.next() + 1
         validate(cmd.hotkey >> "<hotkey>") >> ("<hotkey>", "<keymask>")
         mi = mi_class.alloc() >> m.mock(NSMenuItem)

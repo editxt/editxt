@@ -65,7 +65,7 @@ class CommandBar(object):
         if command is not None:
             argstr = text[len(args[0]) + 1:]
             try:
-                args = command.parse_args(argstr)
+                args = command.arg_parser.parse(argstr)
             except Exception:
                 msg = 'argument parse error: {}'.format(argstr)
                 self.message(msg, exc_info=True)
@@ -83,6 +83,30 @@ class CommandBar(object):
             command(doc_view.text_view, self, args)
         except Exception:
             self.message('error in command: {}'.format(command), exc_info=True)
+
+    def get_completion_hints(self, text, cursor_index):
+        """Get completion hints
+
+        :returns: A tuple:
+
+            - incomplete arguments placeholder text
+            - autocomplete list for text at cursor_index
+
+        """
+        args = text.split()
+        if not args:
+            return
+        command = app.text_commander.lookup(args[0])
+        if command is not None:
+            argstr = text[len(args[0]) + 1:]
+        else:
+            argstr = text
+            command, args = app.text_commander.lookup_full_command(argstr)
+        if command is not None:
+            placeholder = command.arg_parser.get_placeholder(argstr)
+            completions = command.arg_parser.get_completions(text, cursor_index)
+            return placeholder, completions
+        return "", app.text_commander.get_completions(text, cursor_index)
 
     def message(self, text, exc_info=None):
         log.info(text, exc_info=exc_info)

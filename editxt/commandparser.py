@@ -58,6 +58,59 @@ Command parser specification:
 """
 import re
 
+
+class CommandParser(object):
+    """Text command parser
+
+    :params *argspec: Argument specifiers.
+    """
+
+    def __init__(self, *argspec):
+        self.argspec = argspec
+        # TODO assert no duplicate arg names
+
+    def parse(self, text):
+        """Parse arguments from the given text
+
+        :param text: Command text.
+        :raises: `ArgumentError` if the text string is invalid.
+        :returns: `Options` object with argument values as attributes.
+        """
+        opts = Options()
+        errors = []
+        index = 0
+        for arg in self.argspec:
+            try:
+                value, index = arg.consume(text, index)
+            except ParseError, err:
+                errors.append(err)
+                index = err.parse_index
+            else:
+                setattr(opts, arg.name, value)
+        if errors:
+            msg = u'invalid arguments: {}'.format(text)
+            raise ArgumentError(msg, opts, errors)
+        return opts
+
+    def get_placeholder(self, text):
+        """Get placeholder string to follow the given command text
+
+        :param text: Command text.
+        :returns: A string of placeholder text, which can be used as a
+            hint about remaining arguments to be entered.
+        """
+        return " " + " ".join(a.placeholder for a in self.argspec)
+
+    def get_completions(self, text, cursor_index):
+        """Get completions for the argument being entered at index
+
+        :param text: Command text.
+        :param cursor_index: Index of cursor in text.
+        :returns: A list of possible values for the argument at index.
+        """
+        return []
+
+
 def tokenize(text):
     return text.split()
 
@@ -76,6 +129,15 @@ class Type(object):
         self.args = [name, default]
         self.name = name
         self.default = default
+
+    @property
+    def placeholder(self):
+        if not hasattr(self, "_placeholder"):
+            return self.name
+        return self._placeholder
+    @placeholder.setter
+    def placeholder(self, value):
+        self._placeholder = value
 
     def __eq__(self, other):
         if not issubclass(type(self), type(other)):
@@ -97,6 +159,17 @@ class Type(object):
                 args.append('{}={!r}'.format(name, value))
         args.extend(repr(a) for a in reversed(self.args[:-len(defaults)]))
         return '{}({})'.format(type(self).__name__, ', '.join(reversed(args)))
+
+    def consume(self, text, index):
+        """Consume argument value from text starting at index
+
+        :param text: Text from which to consume argument value.
+        :param index: Index into text from which to start consuming.
+        :raises: ParseError if argument could not be consumed.
+        :returns: A tuple (<argument value>, <index>) where the index is
+            the index following the last consumed character.
+        """
+        raise NotImplementedError("abstract method")
 
     def _consume(self, text, index, convert):
         if index >= len(text):
@@ -195,6 +268,17 @@ class String(Type):
         raise ParseError(msg, self, index, len(text))
 
 
+class VarArgs(Type):
+    """Consume all remaining arguments by splitting the string"""
+
+    def __init__(self, name, placeholder="..."):
+        self.name = name
+        self.placeholder = placeholder
+
+    def consume(self, text, index):
+        return text[index:].split(), len(text)
+
+
 class Regex(Type):
 
     NON_DELIMITERS = r'.^$*+?[]{}\()'
@@ -265,31 +349,11 @@ class Regex(Type):
         return value, index
 
 
-class CommandParser(object):
-
-    def __init__(self, *argspec):
-        self.argspec = argspec
-        # TODO assert no duplicate arg names
-
-    def __call__(self, text):
-        opts = Options()
-        errors = []
-        index = 0
-        for arg in self.argspec:
-            try:
-                value, index = arg.consume(text, index)
-            except ParseError, err:
-                errors.append(err)
-                index = err.parse_index
-            else:
-                setattr(opts, arg.name, value)
-        if errors:
-            msg = u'invalid arguments: {}'.format(text)
-            raise ArgumentError(msg, opts, errors)
-        return opts
-
-
 class Options(object):
+    """Parsed argument container
+
+    Argument values are attributes.
+    """
 
     def __init__(self, **opts):
         self.__dict__.update(opts)
