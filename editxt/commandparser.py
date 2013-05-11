@@ -90,6 +90,9 @@ class CommandParser(object):
         if errors:
             msg = u'invalid arguments: {}'.format(text)
             raise ArgumentError(msg, opts, errors)
+        if index < len(text):
+            msg = u'unexpected argument(s): ' + text[index:]
+            raise ArgumentError(msg, opts, errors)
         return opts
 
     def get_placeholder(self, text):
@@ -171,11 +174,24 @@ class Type(object):
         """
         raise NotImplementedError("abstract method")
 
-    def _consume(self, text, index, convert):
+    def consume_token(self, text, index):
+        """Consume one token from text starting at index
+
+        This consumes all text up to (including) the next space in the
+        string. The returned token will not contain spaces. If the
+        character at index is a space, then the argument should use its
+        default value and the first element of the returned tuple will
+        be `None`.
+
+        :param text: Command text.
+        :param index: Index from which to consume argument.
+        :returns: A tuple (<token string or `None`>, <index>) where index
+            is the index following the last consumed character in text.
+        """
         if index >= len(text):
-            return self.default, index
+            return None, index
         elif text[index] == ' ':
-            return self.default, index + 1
+            return None, index + 1
         end = text.find(' ', index)
         if end < 0:
             token = text[index:]
@@ -183,7 +199,7 @@ class Type(object):
         else:
             token = text[index:end]
             end += 1
-        return convert(token, index, end), end
+        return token, end
 
 
 class Bool(Type):
@@ -202,26 +218,28 @@ class Bool(Type):
         return identifier(self.true_names[0])
 
     def consume(self, text, index):
-        def convert(token, index, end):
-            if token in self.true_names:
-                return True
-            if token in self.false_names:
-                return False
-            names = ' '.join(self.true_names + self.false_names)
-            msg = '{!r} not in {!r}'.format(token, names)
-            raise ParseError(msg, self, index, end)
-        return super(Bool, self)._consume(text, index, convert)
+        token, end = self.consume_token(text, index)
+        if token is None:
+            return self.default, end
+        if token in self.true_names:
+            return True, end
+        if token in self.false_names:
+            return False, end
+        names = ' '.join(self.true_names + self.false_names)
+        msg = '{!r} not in {!r}'.format(token, names)
+        raise ParseError(msg, self, index, end)
 
 
 class Int(Type):
 
     def consume(self, text, index):
-        def convert(token, index, end):
-            try:
-                return int(token)
-            except (ValueError, TypeError) as err:
-                raise ParseError(str(err), self, index, end)
-        return super(Int, self)._consume(text, index, convert)
+        token, end = self.consume_token(text, index)
+        if token is None:
+            return self.default, end
+        try:
+            return int(token), end
+        except (ValueError, TypeError) as err:
+            raise ParseError(str(err), self, index, end)
 
 
 class String(Type):
@@ -243,7 +261,7 @@ class String(Type):
         if index >= len(text):
             return self.default, index
         if text[index] not in ['"', "'"]:
-            return super(String, self)._consume(text, index, lambda t, *a: t)
+            return self.consume_token(text, index)
         delim = text[index]
         chars, esc = [], 0
         escapes = self.ESCAPES
@@ -296,10 +314,9 @@ class Regex(Type):
             return self.default, index
         no_delim = self.NON_DELIMITERS
         if text[index] in no_delim or self.WORDCHAR.match(text[index]):
-            convert = lambda t, *a: t
-            expr, index = super(Regex, self)._consume(text, index, convert)
+            expr, index = self.consume_token(text, index)
             if self.replace:
-                repl, index = super(Regex, self)._consume(text, index, convert)
+                repl, index = self.consume_token(text, index)
                 if repl == self.default and self.default == (None, None):
                     repl = None
                 return (re.compile(expr, self.flags), repl), index

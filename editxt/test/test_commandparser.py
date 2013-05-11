@@ -186,6 +186,10 @@ def test_CommandParser_empty():
 def test_CommandParser():
     eq_(arg_parser.parse('arg'), Options(arg=True))
 
+def test_CommandParser_too_many_args():
+    with assert_raises(ArgumentError, msg="unexpected argument(s): unexpected"):
+        arg_parser.parse('arg unexpected')
+
 def test_CommandParser_incomplete():
     parser = CommandParser(Bool('arg'))
     def check(err):

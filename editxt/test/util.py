@@ -169,7 +169,7 @@ def assert_raises(*args, **kw):
                 raise AssertionError('{} not raised'.format(args[0]))
             except args[0] as err:
                 if isinstance(msg, basestring):
-                    eq_(str(err), msg)
+                    nose.tools.eq_(str(err), msg)
                 elif hasattr(msg, 'search'):
                     assert msg.search(str(err)), \
                         '{!r} does not match {!r}'.foramt(msg.pattern, str(err))
