@@ -72,7 +72,7 @@ class CommandParser(object):
     def parse(self, text):
         """Parse arguments from the given text
 
-        :param text: Command text.
+        :param text: Argument string.
         :raises: `ArgumentError` if the text string is invalid.
         :returns: `Options` object with argument values as attributes.
         """
@@ -82,7 +82,7 @@ class CommandParser(object):
         for arg in self.argspec:
             try:
                 value, index = arg.consume(text, index)
-            except ParseError, err:
+            except ParseError as err:
                 errors.append(err)
                 index = err.parse_index
             else:
@@ -98,16 +98,29 @@ class CommandParser(object):
     def get_placeholder(self, text):
         """Get placeholder string to follow the given command text
 
-        :param text: Command text.
+        :param text: Argument string.
         :returns: A string of placeholder text, which can be used as a
             hint about remaining arguments to be entered.
         """
-        return " " + " ".join(a.placeholder for a in self.argspec)
+        index = 0
+        args = iter(self.argspec)
+        while index < len(text):
+            arg = next(args, None)
+            if arg is None:
+                return ""
+            try:
+                value, index = arg.consume(text, index)
+            except ParseError as err:
+                index = err.parse_index
+        placeholders = [a.placeholder for a in args]
+        if text and not text.endswith(" "):
+            placeholders.insert(0, "")
+        return " ".join(placeholders)
 
     def get_completions(self, text, cursor_index):
         """Get completions for the argument being entered at index
 
-        :param text: Command text.
+        :param text: Argument string.
         :param cursor_index: Index of cursor in text.
         :returns: A list of possible values for the argument at index.
         """
@@ -183,7 +196,7 @@ class Type(object):
         default value and the first element of the returned tuple will
         be `None`.
 
-        :param text: Command text.
+        :param text: Argument string.
         :param index: Index from which to consume argument.
         :returns: A tuple (<token string or `None`>, <index>) where index
             is the index following the last consumed character in text.

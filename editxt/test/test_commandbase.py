@@ -116,7 +116,7 @@ def test_CommandBar_execute():
     yield test, c(text='123 456', lookup='full', error=True)
 
 def test_get_completion_hints():
-    from editxt.commandparser import CommandParser, Bool, Regex
+    from editxt.commandparser import CommandParser, Bool, Regex, VarArgs
     from editxt.document import TextDocumentView
     from editxt.textcommand import TextCommandController, command
     def test(c):
@@ -136,20 +136,43 @@ def test_get_completion_hints():
                 raise NotImplementedError("should not get here")
             commander.lookup(args[0]) >> (cmd if c.match == "simple" else None)
             if c.match == "parse":
-                @command
-                def cmd(textview, sender, args):
+                @command(arg_parser=CommandParser(
+                    Regex('search_pattern'),
+                    VarArgs("args"),
+                ))
+                def search(textview, sender, args):
                     raise NotImplementedError("should not get here")
-                commander.lookup_full_command(c.text) >> (cmd, c.args)
+                commander.lookup_full_command(c.text) >> (search, c.args)
             elif not c.match:
                 commander.lookup_full_command(c.text) >> (None, None)
                 commander.get_completions(c.text, index) >> "<commands>"
         with m:
             eq_(bar.get_completion_hints(c.text, index), c.expect)
     c = TestConfig(index=None, match="simple", args="<args>")
-    yield test, c(text='', expect=None)
+    yield test, c(text='', expect=("", []))
     yield test, c(text='cmd', expect=(" selection sort_regex", []))
-    yield test, c(text='/', match="parse", expect=(" ...", []))
-    yield test, c(text='cmd', match=None, expect=("", "<commands>"))
+    yield test, c(text='cmd ', expect=("selection sort_regex", []))
+    yield test, c(text='cmd s', expect=(" sort_regex", []))
+    yield test, c(text='cmd se', expect=("", []))
+    yield test, c(text='cmd sel', expect=(" sort_regex", []))
+    yield test, c(text='cmd sel ', expect=("sort_regex", []))
+    yield test, c(text='cmd sel /', expect=("", []))
+    yield test, c(text='cmd a', expect=(" sort_regex", []))
+    yield test, c(text='cmd a ', expect=("sort_regex", []))
+    yield test, c(text='cmd all', expect=(" sort_regex", []))
+    yield test, c(text='cmd all ', expect=("sort_regex", []))
+    yield test, c(text='cmd x', expect=("", []))
+    yield test, c(text='cmd x ', expect=("", []))
+    yield test, c(text='cmd  ', expect=("sort_regex", []))
+    yield test, c(text='cmd  /', expect=("", []))
+    yield test, c(text='cmd   ', expect=("", []))
+    yield test, c(text='/', expect=("", []), match="parse")
+    yield test, c(text='/x', expect=("", []), match="parse")
+    yield test, c(text='/x ', expect=("", []), match="parse")
+    yield test, c(text='/x/ ', expect=("...", []), match="parse")
+    yield test, c(text='/x/  ', expect=("", []), match="parse")
+    yield test, c(text='/x/ a', expect=("", []), match="parse")
+    yield test, c(text='cmd', expect=("", "<commands>"), match=None)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # BaseCommandController tests

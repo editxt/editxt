@@ -95,17 +95,19 @@ class CommandBar(object):
         """
         args = text.split()
         if not args:
-            return
+            return "", []
         command = app.text_commander.lookup(args[0])
         if command is not None:
             argstr = text[len(args[0]) + 1:]
+            prefix = " " if args[0] == text else ""
         else:
             argstr = text
+            prefix = ""
             command, args = app.text_commander.lookup_full_command(argstr)
         if command is not None:
             placeholder = command.arg_parser.get_placeholder(argstr)
             completions = command.arg_parser.get_completions(text, cursor_index)
-            return placeholder, completions
+            return prefix + placeholder, completions
         return "", app.text_commander.get_completions(text, cursor_index)
 
     def message(self, text, exc_info=None):
