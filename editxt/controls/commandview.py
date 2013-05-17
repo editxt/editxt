@@ -71,7 +71,7 @@ class CommandView(NSTextField):
     def controlTextDidChange_(self, notification):
         if notification.object() is self and self.command is not None:
             text = self.stringValue()
-            self.placeholder = self.command.get_completion_hints(text, None)[0]
+            self.placeholder = self.command.get_placeholder(text)
 
     def textDidEndEditing_(self, notification):
         super(CommandView, self).textDidEndEditing_(notification)

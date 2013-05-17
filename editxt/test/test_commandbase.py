@@ -115,7 +115,7 @@ def test_CommandBar_execute():
     yield test, c(text='123 456', lookup='full', args=None)
     yield test, c(text='123 456', lookup='full', error=True)
 
-def test_get_completion_hints():
+def test_get_placeholder():
     from editxt.commandparser import CommandParser, Bool, Regex, VarArgs
     from editxt.document import TextDocumentView
     from editxt.textcommand import TextCommandController, command
@@ -126,7 +126,6 @@ def test_get_completion_hints():
         commander = m.replace(mod.app, 'text_commander', spec=TextCommandController)
         bar = mod.CommandBar(editor)
         args = c.text.split()
-        index = len(c.text) if c.index is None else c.index
         if args:
             @command(arg_parser=CommandParser(
                 Bool('selection sel s', 'all a', True),
@@ -145,34 +144,33 @@ def test_get_completion_hints():
                 commander.lookup_full_command(c.text) >> (search, c.args)
             elif not c.match:
                 commander.lookup_full_command(c.text) >> (None, None)
-                commander.get_completions(c.text, index) >> "<commands>"
         with m:
-            eq_(bar.get_completion_hints(c.text, index), c.expect)
-    c = TestConfig(index=None, match="simple", args="<args>")
-    yield test, c(text='', expect=("", []))
-    yield test, c(text='cmd', expect=(" selection sort_regex", []))
-    yield test, c(text='cmd ', expect=("selection sort_regex", []))
-    yield test, c(text='cmd s', expect=(" sort_regex", []))
-    yield test, c(text='cmd se', expect=("", []))
-    yield test, c(text='cmd sel', expect=(" sort_regex", []))
-    yield test, c(text='cmd sel ', expect=("sort_regex", []))
-    yield test, c(text='cmd sel /', expect=("", []))
-    yield test, c(text='cmd a', expect=(" sort_regex", []))
-    yield test, c(text='cmd a ', expect=("sort_regex", []))
-    yield test, c(text='cmd all', expect=(" sort_regex", []))
-    yield test, c(text='cmd all ', expect=("sort_regex", []))
-    yield test, c(text='cmd x', expect=("", []))
-    yield test, c(text='cmd x ', expect=("", []))
-    yield test, c(text='cmd  ', expect=("sort_regex", []))
-    yield test, c(text='cmd  /', expect=("", []))
-    yield test, c(text='cmd   ', expect=("", []))
-    yield test, c(text='/', expect=("", []), match="parse")
-    yield test, c(text='/x', expect=("", []), match="parse")
-    yield test, c(text='/x ', expect=("", []), match="parse")
-    yield test, c(text='/x/ ', expect=("...", []), match="parse")
-    yield test, c(text='/x/  ', expect=("", []), match="parse")
-    yield test, c(text='/x/ a', expect=("", []), match="parse")
-    yield test, c(text='cmd', expect=("", "<commands>"), match=None)
+            eq_(bar.get_placeholder(c.text), c.expect)
+    c = TestConfig(match="simple", args="<args>")
+    yield test, c(text='', expect="")
+    yield test, c(text='cmd', expect=" selection sort_regex")
+    yield test, c(text='cmd ', expect="selection sort_regex")
+    yield test, c(text='cmd s', expect=" sort_regex")
+    yield test, c(text='cmd se', expect="")
+    yield test, c(text='cmd sel', expect=" sort_regex")
+    yield test, c(text='cmd sel ', expect="sort_regex")
+    yield test, c(text='cmd sel /', expect="")
+    yield test, c(text='cmd a', expect=" sort_regex")
+    yield test, c(text='cmd a ', expect="sort_regex")
+    yield test, c(text='cmd all', expect=" sort_regex")
+    yield test, c(text='cmd all ', expect="sort_regex")
+    yield test, c(text='cmd x', expect="")
+    yield test, c(text='cmd x ', expect="")
+    yield test, c(text='cmd  ', expect="sort_regex")
+    yield test, c(text='cmd  /', expect="")
+    yield test, c(text='cmd   ', expect="")
+    yield test, c(text='/', expect="", match="parse")
+    yield test, c(text='/x', expect="", match="parse")
+    yield test, c(text='/x ', expect="", match="parse")
+    yield test, c(text='/x/ ', expect="...", match="parse")
+    yield test, c(text='/x/  ', expect="", match="parse")
+    yield test, c(text='/x/ a', expect="", match="parse")
+    yield test, c(text='cmd', expect="", match=None)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # BaseCommandController tests

@@ -84,18 +84,11 @@ class CommandBar(object):
         except Exception:
             self.message('error in command: {}'.format(command), exc_info=True)
 
-    def get_completion_hints(self, text, cursor_index):
-        """Get completion hints
-
-        :returns: A tuple:
-
-            - incomplete arguments placeholder text
-            - autocomplete list for text at cursor_index
-
-        """
+    def get_placeholder(self, text):
+        """Get arguments placeholder text"""
         args = text.split()
         if not args:
-            return "", []
+            return ""
         command = app.text_commander.lookup(args[0])
         if command is not None:
             argstr = text[len(args[0]) + 1:]
@@ -105,10 +98,8 @@ class CommandBar(object):
             prefix = ""
             command, args = app.text_commander.lookup_full_command(argstr)
         if command is not None:
-            placeholder = command.arg_parser.get_placeholder(argstr)
-            completions = command.arg_parser.get_completions(text, cursor_index)
-            return prefix + placeholder, completions
-        return "", app.text_commander.get_completions(text, cursor_index)
+            return prefix + command.arg_parser.get_placeholder(argstr)
+        return ""
 
     def message(self, text, exc_info=None):
         log.info(text, exc_info=exc_info)
