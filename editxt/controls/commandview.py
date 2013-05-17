@@ -18,12 +18,19 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+import math
 
-from AppKit import NSFocusRingTypeNone, NSFont, NSTextField
+from AppKit import (NSAttributedString, NSColor, NSFocusRingTypeNone, NSFont,
+    NSFontAttributeName, NSForegroundColorAttributeName,
+    NSNotification, NSTextField, NSTextFieldCell)
 
 log = logging.getLogger(__name__)
 
 class CommandView(NSTextField):
+
+    @classmethod
+    def cellClass(cls):
+        return CommandViewCell
 
     def initWithFrame(self, rect):
         super(CommandView, self).initWithFrame_(rect)
@@ -34,6 +41,7 @@ class CommandView(NSTextField):
         self.setAction_('doCommand:')
         self.setDelegate_(self)
         self.command = None
+        self.placeholder = ""
         return self
 
     def __nonzero__(self):
@@ -42,6 +50,8 @@ class CommandView(NSTextField):
     def activate(self, command, initial_text=""):
         self.command = command
         self.setStringValue_(initial_text)
+        self.controlTextDidChange_(NSNotification
+            .notificationWithName_object_("activate", self))
         #self.performSelector_withObject_afterDelay_("selectText:", self, 0)
         # possibly use setSelectedRange
         # http://jeenaparadies.net/weblog/2009/apr/focus-a-nstextfield
@@ -57,6 +67,11 @@ class CommandView(NSTextField):
 
     def doCommand_(self, sender):
         self.command.execute(self.stringValue())
+
+    def controlTextDidChange_(self, notification):
+        if notification.object() is self and self.command is not None:
+            text = self.stringValue()
+            self.placeholder = self.command.get_completion_hints(text, None)[0]
 
     def textDidEndEditing_(self, notification):
         super(CommandView, self).textDidEndEditing_(notification)
@@ -79,3 +94,33 @@ class CommandView(NSTextField):
     def _redraw(self):
         self.superview().tile()
         self.superview().setNeedsDisplay_(True)
+
+
+class CommandViewCell(NSTextFieldCell):
+
+    PLACEHOLDER_OFFSET = 2 # aline placeholder with text in field
+
+    def drawsBackground(self):
+        return False
+
+    def draw_placeholder(self, frame, view):
+        # get width of text in field
+        text = view.stringValue()
+        attrs = {
+            NSFontAttributeName: view.font(),
+            NSForegroundColorAttributeName: NSColor.lightGrayColor(),
+        }
+        text_width = text.sizeWithAttributes_(attrs).width
+
+        # draw placeholder text starting from that point
+        placeholder = NSAttributedString.alloc() \
+            .initWithString_attributes_(view.placeholder, attrs)
+        rect = self.titleRectForBounds_(frame)
+        rect.origin.x += self.PLACEHOLDER_OFFSET + text_width
+        rect.size.width = math.ceil(placeholder.size().width)
+        placeholder.drawInRect_(rect)
+
+    def drawInteriorWithFrame_inView_(self, frame, view):
+        if view.placeholder:
+            self.draw_placeholder(frame, view)
+        super(CommandViewCell, self).drawInteriorWithFrame_inView_(frame, view)
