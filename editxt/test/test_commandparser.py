@@ -43,7 +43,7 @@ def make_type_checker(arg):
     return test
 
 def test_Bool():
-    arg = Bool('arg-ument arg a')
+    arg = Bool('arg-ument arg a', 'nope')
     eq_(str(arg), 'arg-ument')
     eq_(arg.name, 'arg_ument')
 
@@ -56,17 +56,17 @@ def test_Bool():
     yield test, '', 3, (None, 3)
     yield test, 'arg arg', 0, (True, 4)
     yield test, 'arg', 1, \
-        ParseError("'rg' not in 'arg-ument arg a'", arg, 1, 3)
+        ParseError("'rg' not in 'arg-ument arg a nope'", arg, 1, 3)
     yield test, 'args', 0, \
-        ParseError("'args' not in 'arg-ument arg a'", arg, 0, 4)
+        ParseError("'args' not in 'arg-ument arg a nope'", arg, 0, 4)
     yield test, 'args arg', 0, \
-        ParseError("'args' not in 'arg-ument arg a'", arg, 0, 5)
+        ParseError("'args' not in 'arg-ument arg a nope'", arg, 0, 5)
 
 def test_Bool_default_true():
     arg = Bool('true t', 'false f', True)
     eq_(str(arg), 'true')
     eq_(arg.name, 'true')
-    eq_(repr(arg), "Bool('true t', false='false f', default=True)")
+    eq_(repr(arg), "Bool('true t', 'false f', default=True)")
 
     test = make_type_checker(arg)
     yield test, '', 0, (True, 0)
@@ -82,8 +82,8 @@ def test_Bool_default_true():
 def test_Bool_repr():
     def test(rep, args):
         eq_(repr(Bool(*args[0], **args[1])), rep)
-    yield test, "Bool('arg-ument arg a')", Args('arg-ument arg a')
-    yield test, "Bool('arg a', default=False)", Args('arg a', default=False)
+    yield test, "Bool('arg-ument arg a', 'no')", Args('arg-ument arg a', 'no')
+    yield test, "Bool('y', 'n', default=False)", Args('y', 'n', default=False)
 
 def test_Int():
     arg = Int('num')
@@ -178,23 +178,23 @@ def test_Regex():
     yield test, '/abc/def/y  def', 0, \
         ParseError('unknown flag: y', arg, 9, 9)
 
-arg_parser = CommandParser(Bool('arg'))
+arg_parser = CommandParser(Bool('yes', 'no'))
 
 def test_CommandParser_empty():
-    eq_(arg_parser.parse(''), Options(arg=None))
+    eq_(arg_parser.parse(''), Options(yes=None))
 
 def test_CommandParser():
-    eq_(arg_parser.parse('arg'), Options(arg=True))
+    eq_(arg_parser.parse('yes'), Options(yes=True))
 
 def test_CommandParser_too_many_args():
     with assert_raises(ArgumentError, msg="unexpected argument(s): unexpected"):
-        arg_parser.parse('arg unexpected')
+        arg_parser.parse('yes unexpected')
 
 def test_CommandParser_incomplete():
-    parser = CommandParser(Bool('arg'))
+    parser = CommandParser(Bool('arg', 'no'))
     def check(err):
         eq_(err.options, Options())
-        eq_(err.errors, [ParseError("'a' not in 'arg'", Bool('arg'), 0, 1)])
+        eq_(err.errors, [ParseError("'a' not in 'arg no'", Bool('arg', 'no'), 0, 1)])
     print assert_raises
     with assert_raises(ArgumentError, msg=check):
         parser.parse('a')
@@ -206,8 +206,8 @@ def test_CommandParser_order():
         else:
             assert_raises(result, parser.parse, text)
     parser = CommandParser(
-        Bool('selection sel s'),
-        Bool('reverse rev r'),
+        Bool('selection sel s', 'all'),
+        Bool('reverse rev r', 'forward'),
     )
     tt = Options(selection=True, reverse=True)
     yield test, 'selection reverse', tt

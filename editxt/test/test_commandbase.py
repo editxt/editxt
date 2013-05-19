@@ -137,16 +137,16 @@ def test_get_placeholder():
             if c.match == "parse":
                 @command(arg_parser=CommandParser(
                     Regex('search_pattern'),
-                    VarArgs("args"),
+                    VarArgs("args", placeholder="..."),
                 ))
                 def search(textview, sender, args):
                     raise NotImplementedError("should not get here")
-                commander.lookup_full_command(c.text) >> (search, c.args)
+                commander.lookup_full_command(c.text) >> (search, "<args>")
             elif not c.match:
                 commander.lookup_full_command(c.text) >> (None, None)
         with m:
             eq_(bar.get_placeholder(c.text), c.expect)
-    c = TestConfig(match="simple", args="<args>")
+    c = TestConfig(match="simple")
     yield test, c(text='', expect="")
     yield test, c(text='cmd', expect=" selection sort_regex")
     yield test, c(text='cmd ', expect="selection sort_regex")
@@ -171,6 +171,59 @@ def test_get_placeholder():
     yield test, c(text='/x/  ', expect="", match="parse")
     yield test, c(text='/x/ a', expect="", match="parse")
     yield test, c(text='cmd', expect="", match=None)
+
+def test_get_completions():
+    from editxt.commandparser import CommandParser, Bool, Regex, VarArgs
+    from editxt.document import TextDocumentView
+    from editxt.textcommand import TextCommandController, command
+    def test(c):
+        m = Mocker()
+        editor = m.mock()
+        beep = m.replace(mod, 'NSBeep')
+        commander = m.replace(mod.app, 'text_commander', spec=TextCommandController)
+        bar = mod.CommandBar(editor)
+        args = c.text.split()
+        @command(arg_parser=CommandParser(
+            Bool('selection s', 'all a', True),
+            Bool('reverse r', 'forward f', default=False),
+            Regex('sort_regex', True),
+        ))
+        def cmd(textview, sender, args):
+            raise NotImplementedError("should not get here")
+        if len(args) < 2 and not c.text.endswith(" "):
+            commander.commands >> {"cmd": cmd, "foo": cmd, 1: cmd}
+        else:
+            commander.lookup(args[0]) >> \
+                (cmd if args[0] in ["cmd", "foo"] else None)
+            if c.text.startswith("/"):
+                @command(arg_parser=CommandParser(
+                    Regex('search_pattern'),
+                    Bool('yes y', 'no n', True),
+                ))
+                def search(textview, sender, args):
+                    raise NotImplementedError("should not get here")
+                commander.lookup_full_command(c.text) >> (search, "<args>")
+            elif args[0] not in ["cmd", "foo"]:
+                commander.lookup_full_command(c.text) >> (None, None)
+        with m:
+            eq_(bar.get_completions(c.text), c.expect)
+    c = TestConfig()
+    yield test, c(text='x', expect=([], -1))
+    yield test, c(text='', expect=(["cmd", "foo"], 0))
+    yield test, c(text='c', expect=(["cmd"], 0))
+    yield test, c(text='cm', expect=(["cmd"], 0))
+    yield test, c(text='cmd', expect=(["cmd"], 0))
+    yield test, c(text='cmx', expect=([], -1))
+    yield test, c(text='cmd ', expect=(["selection", "all"], 0))
+    yield test, c(text='cmd s', expect=(["selection"], 0))
+    yield test, c(text='cmd se', expect=(["selection"], 0))
+    yield test, c(text='cmd selection', expect=(["selection"], 0))
+    yield test, c(text='cmd sec', expect=([], -1))
+    yield test, c(text='cmd s ', expect=(["forward", "reverse"], 0))
+    yield test, c(text='cmd s r', expect=(["reverse"], 0))
+    yield test, c(text='/', expect=([], -1))
+    yield test, c(text='/a', expect=([], -1))
+    yield test, c(text='/abc/ ', expect=(["yes", "no"], 0))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # BaseCommandController tests

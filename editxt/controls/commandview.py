@@ -42,6 +42,7 @@ class CommandView(NSTextField):
         self.setDelegate_(self)
         self.command = None
         self.placeholder = ""
+        self._last_completions = [None]
         return self
 
     def __nonzero__(self):
@@ -82,14 +83,52 @@ class CommandView(NSTextField):
             self.deactivate()
             return True
         if selector == "insertTab:":
-            # TODO invoke command completion
+            self.complete(textview)
             return True
         if selector == "insertBacktab:":
             # ignore
             return True
         return False
 
-    #def control_textView_completions_forPartialWordRange_indexOfSelectedItem_(
+    def get_completions(self, textview, range=None):
+        if range is None:
+            range = textview.selectedRanges()[0].rangeValue()
+        index = range.location + range.length
+        text = textview.string()
+        if index < len(text):
+            text = text[:index]
+        if self._last_completions[0] == text:
+            return self._last_completions
+        words, default_index = self.command.get_completions(text)
+        self._last_completions = text, words, default_index
+        return text, words, default_index
+
+    def complete(self, textview):
+        text, words, default_index = self.get_completions(textview)
+        if len(words) == 1:
+            # replace immediately with single suggestion
+            word = words[0]
+            index = len(text) - len(word)
+            if index < 0:
+                index = 0
+            while index < len(text):
+                if word.startswith(text[index:]):
+                    break
+                index += 1
+            assert len(text) >= index, (text, index)
+            range = (index, len(text) - index)
+            word += " "
+            if textview.shouldChangeTextInRange_replacementString_(range, word):
+                textview.replaceCharactersInRange_withString_(range, word)
+                textview.didChangeText()
+        else:
+            # show menu of replacements
+            textview.complete_(self)
+
+    def control_textView_completions_forPartialWordRange_indexOfSelectedItem_(
+            self, control, textview, words, range, item_index):
+        words, default_index = self.get_completions(textview, range)[1:]
+        return [w + " " for w in words], default_index
 
     def _redraw(self):
         self.superview().tile()

@@ -111,20 +111,34 @@ class CommandParser(object):
             try:
                 value, index = arg.consume(text, index)
             except ParseError as err:
-                index = err.parse_index
-        placeholders = [a.placeholder for a in args]
-        if text and not text.endswith(" "):
-            placeholders.insert(0, "")
-        return " ".join(placeholders)
+                return ""
+        return " ".join(arg.placeholder for arg in args)
 
-    def get_completions(self, text, cursor_index):
+    def get_completions(self, text):
         """Get completions for the argument being entered at index
 
         :param text: Argument string.
-        :param cursor_index: Index of cursor in text.
         :returns: A list of possible values for the argument at index.
         """
-        return []
+        index = 0
+        args = iter(self.argspec)
+        while index < len(text):
+            arg = next(args, None)
+            if arg is None:
+                return []
+            pre = index
+            try:
+                value, index = arg.consume(text, index)
+            except ParseError as err:
+                index = err.parse_index
+            if index == len(text) and text[-1] != " ":
+                args = iter([arg])
+                index = pre
+                break
+        arg = next(args, None)
+        if arg is None:
+            return []
+        return arg.get_completions(text[index:])
 
 
 def tokenize(text):
@@ -179,6 +193,9 @@ class Type(object):
     def consume(self, text, index):
         """Consume argument value from text starting at index
 
+        This consumes the argument value and discards a trailing
+        space (if present).
+
         :param text: Text from which to consume argument value.
         :param index: Index into text from which to start consuming.
         :raises: ParseError if argument could not be consumed.
@@ -214,12 +231,20 @@ class Type(object):
             end += 1
         return token, end
 
+    def get_completions(self, text):
+        """Get argument value completions
+
+        :param text: Argument value prefix.
+        :returns: A list of possible completions for given prefix.
+        """
+        return []
+
 
 class Bool(Type):
 
-    def __init__(self, names, false='', default=None):
-        self.args = [names, false, default]
-        self.true_names = names.split()
+    def __init__(self, true, false, default=None):
+        self.args = [true, false, default]
+        self.true_names = true.split()
         self.false_names = false.split()
         self.default = default
 
@@ -241,6 +266,13 @@ class Bool(Type):
         names = ' '.join(self.true_names + self.false_names)
         msg = '{!r} not in {!r}'.format(token, names)
         raise ParseError(msg, self, index, end)
+
+    def get_completions(self, text):
+        if self.default:
+            names = [self.true_names[0], self.false_names[0]]
+        else:
+            names = [self.false_names[0], self.true_names[0]]
+        return [v for v in names if v.startswith(text)] # and len(v) > len(text))
 
 
 class Int(Type):
@@ -302,7 +334,7 @@ class String(Type):
 class VarArgs(Type):
     """Consume all remaining arguments by splitting the string"""
 
-    def __init__(self, name, placeholder="..."):
+    def __init__(self, name, placeholder=""):
         self.name = name
         self.placeholder = placeholder
 
@@ -443,4 +475,4 @@ class ParseError(Error):
 
     @property
     def parse_index(self):
-        return self.args[2]
+        return self.args[3]

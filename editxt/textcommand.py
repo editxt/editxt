@@ -302,9 +302,9 @@ def dedent_lines(textview, sender, args):
 
 @command(names='sort', title=u"Sort Lines...",
     arg_parser=CommandParser(
-        Bool('selection sel s', 'all a', True),
-        Bool('reverse rev r', default=False),
-        Bool('ignore-leading-whitespace lstrip i'),
+        Bool('selection s', 'all a', True),
+        Bool('reverse r', 'forward f', False),
+        Bool('ignore-leading-whitespace i', 'sort-leading-whitespace s'),
         Regex('sort_regex', True),
     ))
 def sort_lines(textview, sender, args):

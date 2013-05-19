@@ -84,22 +84,54 @@ class CommandBar(object):
         except Exception:
             self.message('error in command: {}'.format(command), exc_info=True)
 
-    def get_placeholder(self, text):
-        """Get arguments placeholder text"""
+    def _find_command(self, text):
+        """Get a tuple (command, argument_string)
+
+        :returns: A tuple ``(command, argument_string)``. ``command`` will be
+        ``None`` if no matching command is found.
+        """
         args = text.split()
         if not args:
-            return ""
+            return None, text
         command = app.text_commander.lookup(args[0])
         if command is not None:
             argstr = text[len(args[0]) + 1:]
-            prefix = " " if args[0] == text else ""
         else:
             argstr = text
-            prefix = ""
             command, args = app.text_commander.lookup_full_command(argstr)
+        return command, argstr
+
+    def get_placeholder(self, text):
+        """Get arguments placeholder text"""
+        command, argstr = self._find_command(text)
         if command is not None:
-            return prefix + command.arg_parser.get_placeholder(argstr)
+            placeholder = command.arg_parser.get_placeholder(argstr)
+            prefix = " " if placeholder and not text.endswith(" ") else ""
+            return prefix + placeholder
         return ""
+
+    def get_completions(self, text):
+        """Get completions for the word at the end of the given command string
+
+        :param text: Command string.
+        :returns: A tuple consisting of a list of potential completions
+        and/or replacements for the word at the end of the command text,
+        and the index of the item that should be selected (-1 for no
+        selection).
+        """
+        if len(text.split()) < 2 and not text.endswith(" "):
+            words = sorted(name
+                for name in app.text_commander.commands
+                if isinstance(name, basestring) and name.startswith(text))
+            index = 0 if words else -1
+        else:
+            command, argstr = self._find_command(text)
+            if command is not None:
+                words = command.arg_parser.get_completions(argstr)
+                index = (0 if words else -1)
+            else:
+                words, index = [], -1
+        return words, index
 
     def message(self, text, exc_info=None):
         log.info(text, exc_info=exc_info)
