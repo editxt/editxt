@@ -25,7 +25,7 @@ from nose.tools import eq_
 from editxt.test.util import assert_raises, TestConfig
 
 from editxt.commandparser import (Bool, Int, String, Regex, CommandParser,
-    Options, Error, ArgumentError, ParseError)
+    identifier, Options, Error, ArgumentError, ParseError)
 
 log = logging.getLogger(__name__)
 
@@ -42,10 +42,17 @@ def make_type_checker(arg):
             eq_(arg.consume(text, start), expect)
     return test
 
+def test_identifier():
+    def test(name, ident):
+        eq_(identifier(name), ident)
+    yield test, "arg", "arg"
+    yield test, "arg_ument", "arg_ument"
+    yield test, "arg-ument", "arg_ument"
+
 def test_Bool():
     arg = Bool('arg-ument arg a', 'nope')
-    eq_(str(arg), 'arg-ument')
-    eq_(arg.name, 'arg_ument')
+    eq_(str(arg), 'nope')
+    eq_(arg.name, 'arg-ument')
 
     test = make_type_checker(arg)
     yield test, 'arg-ument', 0, (True, 9)

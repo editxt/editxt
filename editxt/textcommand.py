@@ -304,8 +304,8 @@ def dedent_lines(textview, sender, args):
     arg_parser=CommandParser(
         Bool('selection s', 'all a', True),
         Bool('reverse r', 'forward f', False),
-        Bool('ignore-leading-whitespace i', 'sort-leading-whitespace s'),
-        Regex('sort_regex', True),
+        Bool('ignore-leading-whitespace i', 'sort-leading-whitespace s', False),
+        Regex('sort-regex', True),
     ))
 def sort_lines(textview, sender, args):
     from editxt.sortlines import SortLinesController, sortlines

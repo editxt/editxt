@@ -86,7 +86,7 @@ class CommandParser(object):
                 errors.append(err)
                 index = err.parse_index
             else:
-                setattr(opts, arg.name, value)
+                setattr(opts, identifier(arg.name), value)
         if errors:
             msg = u'invalid arguments: {}'.format(text)
             raise ArgumentError(msg, opts, errors)
@@ -112,7 +112,7 @@ class CommandParser(object):
                 value, index = arg.consume(text, index)
             except ParseError as err:
                 return ""
-        return " ".join(arg.placeholder for arg in args)
+        return " ".join(str(arg) for arg in args)
 
     def get_completions(self, text):
         """Get completions for the argument being entered at index
@@ -160,22 +160,13 @@ class Type(object):
         self.name = name
         self.default = default
 
-    @property
-    def placeholder(self):
-        if not hasattr(self, "_placeholder"):
-            return self.name
-        return self._placeholder
-    @placeholder.setter
-    def placeholder(self, value):
-        self._placeholder = value
-
     def __eq__(self, other):
         if not issubclass(type(self), type(other)):
             return False
         return self.args == other.args
 
     def __str__(self):
-        return self.name
+        return getattr(self, 'placeholder', self.name)
 
     def __repr__(self):
         argnames = self.__init__.im_func.func_code.co_varnames
@@ -248,12 +239,13 @@ class Bool(Type):
         self.false_names = false.split()
         self.default = default
 
-    def __str__(self):
+    @property
+    def name(self):
         return self.true_names[0]
 
     @property
-    def name(self):
-        return identifier(self.true_names[0])
+    def placeholder(self):
+        return self.true_names[0] if self.default else self.false_names[0]
 
     def consume(self, text, index):
         token, end = self.consume_token(text, index)

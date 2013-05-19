@@ -129,6 +129,7 @@ def test_get_placeholder():
         if args:
             @command(arg_parser=CommandParser(
                 Bool('selection sel s', 'all a', True),
+                Bool('yes', 'no', False),
                 Regex('sort_regex', True),
             ))
             def cmd(textview, sender, args):
@@ -148,22 +149,22 @@ def test_get_placeholder():
             eq_(bar.get_placeholder(c.text), c.expect)
     c = TestConfig(match="simple")
     yield test, c(text='', expect="")
-    yield test, c(text='cmd', expect=" selection sort_regex")
-    yield test, c(text='cmd ', expect="selection sort_regex")
-    yield test, c(text='cmd s', expect=" sort_regex")
+    yield test, c(text='cmd', expect=" selection no sort_regex")
+    yield test, c(text='cmd ', expect="selection no sort_regex")
+    yield test, c(text='cmd s', expect=" no sort_regex")
     yield test, c(text='cmd se', expect="")
-    yield test, c(text='cmd sel', expect=" sort_regex")
-    yield test, c(text='cmd sel ', expect="sort_regex")
+    yield test, c(text='cmd sel', expect=" no sort_regex")
+    yield test, c(text='cmd sel ', expect="no sort_regex")
     yield test, c(text='cmd sel /', expect="")
-    yield test, c(text='cmd a', expect=" sort_regex")
-    yield test, c(text='cmd a ', expect="sort_regex")
-    yield test, c(text='cmd all', expect=" sort_regex")
-    yield test, c(text='cmd all ', expect="sort_regex")
+    yield test, c(text='cmd a', expect=" no sort_regex")
+    yield test, c(text='cmd a ', expect="no sort_regex")
+    yield test, c(text='cmd all', expect=" no sort_regex")
+    yield test, c(text='cmd all ', expect="no sort_regex")
     yield test, c(text='cmd x', expect="")
     yield test, c(text='cmd x ', expect="")
-    yield test, c(text='cmd  ', expect="sort_regex")
+    yield test, c(text='cmd   ', expect="sort_regex")
     yield test, c(text='cmd  /', expect="")
-    yield test, c(text='cmd   ', expect="")
+    yield test, c(text='cmd    ', expect="")
     yield test, c(text='/', expect="", match="parse")
     yield test, c(text='/x', expect="", match="parse")
     yield test, c(text='/x ', expect="", match="parse")
