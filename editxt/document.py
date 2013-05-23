@@ -30,13 +30,13 @@ import editxt.constants as const
 
 from editxt import app
 from editxt.application import doc_id_gen
+from editxt.commands import change_indentation, iterlines, replace_newlines
 from editxt.constants import TEXT_DOCUMENT, LARGE_NUMBER_FOR_TEXT
 from editxt.controls.alert import Alert
 from editxt.controls.linenumberview import LineNumberView
 from editxt.controls.statscrollview import StatusbarScrollView
 from editxt.controls.textview import TextView
 from editxt.syntax import SyntaxCache
-from editxt.textcommand import replace_newlines, change_indentation
 from editxt.util import KVOList, KVOProxy, KVOLink, untested, refactor
 from editxt.util import fetch_icon, filestat, register_undo_callback
 
@@ -545,7 +545,6 @@ class TextDocument(NSDocument):
         self._filestat = None
 
     def analyze_content(self):
-        from editxt.textcommand import iterlines
         text = self.text_storage.string()
         start, end, cend = text.getLineStart_end_contentsEnd_forRange_(
             None, None, None, (0, 0))

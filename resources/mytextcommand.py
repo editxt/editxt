@@ -24,7 +24,7 @@ set of attributes. The attributes are most conveniently applied with the
 """
 import logging
 from AppKit import NSCommandKeyMask, NSControlKeyMask, NSAlternateKeyMask
-from editxt.textcommand import command
+from editxt.commands import command
 
 log = logging.getLogger(__name__)
 

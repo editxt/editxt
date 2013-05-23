@@ -32,6 +32,7 @@ from editxt.test.util import TestConfig, untested, check_app_state, replattr
 
 import editxt.commandbase as mod
 import editxt.constants as const
+from editxt.commands import command
 from editxt.controls.textview import TextView
 from editxt.commandbase import BaseCommandController, Options
 from editxt.commandbase import SheetController, PanelController
@@ -118,7 +119,7 @@ def test_CommandBar_execute():
 def test_get_placeholder():
     from editxt.commandparser import CommandParser, Bool, Regex, VarArgs
     from editxt.document import TextDocumentView
-    from editxt.textcommand import TextCommandController, command
+    from editxt.textcommand import TextCommandController
     def test(c):
         m = Mocker()
         editor = m.mock()
@@ -176,7 +177,7 @@ def test_get_placeholder():
 def test_get_completions():
     from editxt.commandparser import CommandParser, Bool, Regex, VarArgs
     from editxt.document import TextDocumentView
-    from editxt.textcommand import TextCommandController, command
+    from editxt.textcommand import TextCommandController
     def test(c):
         m = Mocker()
         editor = m.mock()

@@ -30,6 +30,7 @@ from PyObjCTools import AppHelper
 
 import editxt
 import editxt.constants as const
+from editxt.commands import iterlines
 from editxt.errorlog import errlog
 from editxt.util import ContextMap, perform_selector, dump_yaml, load_yaml
 from editxt.valuetrans import register_value_transformers
@@ -565,7 +566,6 @@ class OpenPathController(NSWindowController):
 
     def open_(self, sender):
         from editxt import app
-        from editxt.textcommand import iterlines
         paths = iterlines(self.paths.textStorage().string())
         app.open_documents_with_paths([p.strip() for p in paths if p.strip()])
         self.window().orderOut_(self)

@@ -33,6 +33,7 @@ import editxt
 import editxt.constants as const
 import editxt.application as mod
 from editxt.application import Application, DocumentController, DocumentSavingDelegate
+from editxt.commands import iterlines
 from editxt.editor import EditorWindowController, Editor
 from editxt.document import TextDocumentView, TextDocument
 from editxt.project import Project
@@ -1033,7 +1034,6 @@ def test_OpenPathController_textView_doCommandBySelector_():
 
 def test_OpenPathController_open_():
     # TODO accept wildcards in filenames?
-    from editxt.textcommand import iterlines
     def test(c):
         m = Mocker()
         app = m.replace(editxt, 'app')
