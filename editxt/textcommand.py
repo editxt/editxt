@@ -18,18 +18,121 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+import weakref
 from collections import defaultdict
 from itertools import count
 
 from AppKit import *
 from Foundation import *
 
+from editxt import app
 from editxt.commandparser import ArgumentError
 
 log = logging.getLogger(__name__)
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# TextCommandController
+
+class CommandBar(object):
+
+    def __init__(self, editor):
+        self._editor = weakref.ref(editor)
+
+    @property
+    def editor(self):
+        return self._editor()
+
+    def activate(self):
+        # abstract to a PyObjC-specific subclass when implementing other frontend
+        view = self.editor.current_view
+        if view is None:
+            NSBeep()
+            return
+        view.scroll_view.commandView.activate(self)
+
+    def execute(self, text):
+        args = text.split()
+        if not args:
+            return
+        doc_view = self.editor.current_view
+        if doc_view is None:
+            NSBeep()
+            return
+        command = app.text_commander.lookup(args[0])
+        if command is not None:
+            argstr = text[len(args[0]) + 1:]
+            try:
+                args = command.arg_parser.parse(argstr)
+            except Exception:
+                msg = 'argument parse error: {}'.format(argstr)
+                self.message(msg, exc_info=True)
+                return
+        else:
+            argstr = text
+            command, args = app.text_commander.lookup_full_command(argstr)
+            if command is None:
+                self.message('unknown command: {}'.format(argstr))
+                return
+        if args is None:
+            self.message('invalid command arguments: {}'.format(argstr))
+            return
+        try:
+            command(doc_view.text_view, self, args)
+        except Exception:
+            self.message('error in command: {}'.format(command), exc_info=True)
+
+    def _find_command(self, text):
+        """Get a tuple (command, argument_string)
+
+        :returns: A tuple ``(command, argument_string)``. ``command`` will be
+        ``None`` if no matching command is found.
+        """
+        args = text.split()
+        if not args:
+            return None, text
+        command = app.text_commander.lookup(args[0])
+        if command is not None:
+            argstr = text[len(args[0]) + 1:]
+        else:
+            argstr = text
+            command, args = app.text_commander.lookup_full_command(argstr)
+        return command, argstr
+
+    def get_placeholder(self, text):
+        """Get arguments placeholder text"""
+        command, argstr = self._find_command(text)
+        if command is not None:
+            placeholder = command.arg_parser.get_placeholder(argstr)
+            prefix = " " if placeholder and not text.endswith(" ") else ""
+            return prefix + placeholder
+        return ""
+
+    def get_completions(self, text):
+        """Get completions for the word at the end of the given command string
+
+        :param text: Command string.
+        :returns: A tuple consisting of a list of potential completions
+        and/or replacements for the word at the end of the command text,
+        and the index of the item that should be selected (-1 for no
+        selection).
+        """
+        if len(text.split()) < 2 and not text.endswith(" "):
+            words = sorted(name
+                for name in app.text_commander.commands
+                if isinstance(name, basestring) and name.startswith(text))
+            index = 0 if words else -1
+        else:
+            command, argstr = self._find_command(text)
+            if command is not None:
+                words = command.arg_parser.get_completions(argstr)
+                index = (0 if words else -1)
+            else:
+                words, index = [], -1
+        return words, index
+
+    def message(self, text, exc_info=None):
+        log.info(text, exc_info=exc_info)
+        NSBeep()
+
+
 
 class TextCommandController(object):
 
