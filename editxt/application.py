@@ -32,6 +32,7 @@ import editxt
 import editxt.constants as const
 from editxt.commands import iterlines
 from editxt.errorlog import errlog
+from editxt.textcommand import TextCommandController
 from editxt.util import ContextMap, perform_selector, dump_yaml, load_yaml
 from editxt.valuetrans import register_value_transformers
 
@@ -57,7 +58,7 @@ class Application(object):
         self.path_opener = None
         self.context = ContextMap()
         self.syntax_factory = None
-        self.text_commander = None
+        self.text_commander = TextCommandController()
         register_value_transformers()
 
     @classmethod
@@ -86,10 +87,8 @@ class Application(object):
         return self.syntax_factory.definitions
 
     def application_will_finish_launching(self, app, doc_ctrl):
-        from editxt.textcommand import TextCommandController
         self.init_syntax_definitions()
-        self.text_commander = tc = TextCommandController(doc_ctrl.textMenu)
-        tc.load_commands()
+        self.text_commander.load_commands(doc_ctrl.textMenu)
         states = list(self.iter_saved_editor_states())
         if states:
             for state in reversed(states):
@@ -100,7 +99,7 @@ class Application(object):
     def create_editor(self, state=None):
         from editxt.editor import EditorWindowController, Editor
         wc = EditorWindowController.alloc().initWithWindowNibName_("EditorWindow")
-        ed = Editor(wc, state)
+        ed = Editor(self, wc, state)
         wc.editor = ed
         self.editors.append(ed)
         wc.showWindow_(self)

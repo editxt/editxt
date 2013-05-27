@@ -221,6 +221,31 @@ class RecentItemStack(object):
                     break
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+from weakref import WeakValueDictionary
+
+class WeakProperty(property):
+
+    def __init__(self):
+        self.refs = WeakValueDictionary()
+
+    def __get__(self, obj, type_=None):
+        if obj is None:
+            return self
+        try:
+            return self.refs[obj]
+        except KeyError:
+            raise AttributeError(obj)
+
+    def __set__(self, obj, value):
+        self.refs[obj] = value
+
+    def __delete__(self, obj):
+        try:
+            del self.refs[obj]
+        except KeyError:
+            raise AttributeError(obj)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 from itertools import count
 
 class ContextMap(object):

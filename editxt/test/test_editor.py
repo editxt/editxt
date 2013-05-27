@@ -29,6 +29,7 @@ from Foundation import NSRect
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import *
 
+import editxt
 import editxt.constants as const
 from editxt.application import Application, DocumentController, DocumentSavingDelegate
 from editxt.editor import EditorWindowController, Editor
@@ -55,7 +56,7 @@ log = logging.getLogger(__name__)
 
 def test_EditorConroller__init__():
     def test(c):
-        ed = Editor(*c.args)
+        ed = Editor(editxt.app, *c.args)
         assert len(ed.projects) == 0
         assert len(ed.recent) == 0
         if c.args:
@@ -73,7 +74,7 @@ def test_window_did_load():
         from editxt.editor import BUTTON_STATE_SELECTED
         from editxt.util import load_image
         m = Mocker()
-        ed = Editor(m.mock(EditorWindowController), state)
+        ed = Editor(editxt.app, m.mock(EditorWindowController), state)
         wc = ed.wc
         _setstate = m.method(ed._setstate)
         new_project = m.method(ed.new_project)
@@ -135,7 +136,7 @@ def test__setstate():
     from editxt.util import RecentItemStack
     def test(data):
         m = Mocker()
-        ed = Editor(m.mock(EditorWindowController))
+        ed = Editor(editxt.app, m.mock(EditorWindowController))
         ed.discard_and_focus_recent = m.method(ed.discard_and_focus_recent)
         create_with_serial = m.method(Project.create_with_serial)
         ed.projects = projs = m.mock(list)
@@ -174,7 +175,7 @@ def test_state():
         m = Mocker()
         def exists(path):
             return True
-        ed = Editor(None)
+        ed = Editor(editxt.app, None)
         ed.projects = projs = []
         ed.recent = c.recent
         m.property(ed, 'window_settings').value >> '<settings>'
@@ -220,10 +221,10 @@ def test_discard_and_focus_recent():
     from editxt.util import RecentItemStack
     def test(c):
         m = Mocker()
-        app = m.replace(mod.editxt, 'app')
-        ed = Editor(m.mock(EditorWindowController))
+        ed = Editor(editxt.app, m.mock(EditorWindowController))
         ed.projects = projs = []
         ed.recent = m.mock(RecentItemStack)
+        app = m.replace(ed, 'app')
         new_current_view = None
         cv = m.property(ed, "current_view")
         lookup = {}
@@ -289,7 +290,7 @@ def test_discard_and_focus_recent():
     yield test, c(id=0, recent=[0, 10, 2, 1, 3, 5, 7])
 
 def test_get_current_view():
-    ed = Editor(None)
+    ed = Editor(editxt.app, None)
     ed._current_view = obj = object()
     eq_(ed.current_view, obj)
 
@@ -298,7 +299,7 @@ def test_set_current_view():
     def test(c):
         m = Mocker()
         wc = m.mock(EditorWindowController)
-        ed = Editor(wc)
+        ed = Editor(editxt.app, wc)
         add_document_view = m.method(ed.add_document_view)
         ed.recent = m.mock(RecentItemStack)
         dv = (None if c.view_class is None else m.mock(c.view_class))
@@ -357,7 +358,7 @@ def test_selected_view_changed():
     def test(c):
         m = Mocker()
         wc = m.mock(EditorWindowController)
-        ed = Editor(wc)
+        ed = Editor(editxt.app, wc)
         cv = m.property(ed, "current_view")
         sel = [m.mock() for x in xrange(c.numsel)]
         wc.docsController.selectedObjects() >> sel
@@ -377,7 +378,7 @@ def test_selected_view_changed():
 
 def test_suspend_recent_updates():
     from editxt.util import RecentItemStack
-    ed = Editor(None)
+    ed = Editor(editxt.app, None)
     real = ed.recent
     assert real is not None
     ed.suspend_recent_updates()
@@ -386,7 +387,7 @@ def test_suspend_recent_updates():
 
 def test_resume_recent_updates():
     from editxt.util import RecentItemStack
-    ed = Editor(None)
+    ed = Editor(editxt.app, None)
     real = ed.recent
     ed.suspend_recent_updates()
     ed.resume_recent_updates()
@@ -394,7 +395,7 @@ def test_resume_recent_updates():
 
 def test_new_project():
     m = Mocker()
-    ed = Editor(None)
+    ed = Editor(editxt.app, None)
     proj_class = m.replace(mod, 'Project')
     cv = m.property(ed, "current_view")
     proj = proj_class.create() >> m.mock(Project)
@@ -415,7 +416,7 @@ def test_toggle_properties_pane():
         nsval = m.replace(mod, 'NSValue')
         nsarr = m.replace(mod, 'NSArray')
         wc = m.mock(EditorWindowController)
-        ed = Editor(wc)
+        ed = Editor(editxt.app, wc)
         tree_view = m.mock(NSScrollView); (wc.docsScrollview << tree_view).count(2)
         prop_view = m.mock(NSView); (wc.propsView << prop_view).count(2, 3)
         tree_rect = tree_view.frame() >> m.mock(NSRect)
@@ -459,7 +460,7 @@ def test_toggle_properties_pane():
     yield test, c(is_on=False, mid_resize=False)
 
 def test_find_project_with_document_view():
-    ed = Editor(None)
+    ed = Editor(editxt.app, None)
     doc = object()
     proj = Project.create()
     dv = TextDocumentView.alloc().init_with_document(doc)
@@ -478,7 +479,7 @@ def test_find_project_with_path():
         def samefile(f1, f2):
             eq_(f2, c.path)
             return f1 == f2
-        ed = Editor(None)
+        ed = Editor(editxt.app, None)
         ed.projects = projects = []
         found_proj = None
         for path in c.paths:
@@ -509,7 +510,7 @@ def test_get_current_project():
     def test(docsController_is_not_none, path_config, create=False):
         proj = None
         m = Mocker()
-        ed = Editor(m.mock(EditorWindowController))
+        ed = Editor(editxt.app, m.mock(EditorWindowController))
         tc = m.mock(NSTreeController)
         ed.wc.docsController >> (tc if docsController_is_not_none else None)
         ip_class = m.replace(mod, 'NSIndexPath')
@@ -539,7 +540,7 @@ def test_get_current_project():
 def test_add_document_view():
     def test(has_view):
         m = Mocker()
-        ed = Editor(None)
+        ed = Editor(editxt.app, None)
         doc = TextDocument.alloc().init()
         dv = TextDocumentView.create_with_document(doc)
         assert dv.project is None, dv.project
@@ -556,7 +557,7 @@ def test_add_document_view():
 def test_Editor_iter_views_of_document():
     DOC = "the document we're looking for"
     def test(config, total_views):
-        ed = Editor(None)
+        ed = Editor(editxt.app, None)
         m = Mocker()
         views = []
         doc = m.mock(TextDocument)
@@ -580,7 +581,7 @@ def test_Editor_iter_views_of_document():
 def test_should_select_item():
     def test(item_type, expected_result):
         from editxt.controls.outlineview import OutlineView
-        ed = Editor(None)
+        ed = Editor(editxt.app, None)
         m = Mocker()
         ov = m.mock(OutlineView)
         it = object() # outline view item
@@ -595,7 +596,7 @@ def test_should_select_item():
 def test_item_changed():
     def test(c):
         m = Mocker()
-        ed = Editor(m.mock(EditorWindowController))
+        ed = Editor(editxt.app, m.mock(EditorWindowController))
         vw = ed.wc.docsView >> (None if c.view_is_none else m.mock(NSOutlineView))
         item = None
         if not (c.view_is_none or c.item_is_none):
@@ -647,7 +648,7 @@ def test_tool_tip_for_item():
         item = m.mock()
         view.realItemForOpaqueItem_(item) >> doc
         with m:
-            ed = Editor(None)
+            ed = Editor(editxt.app, None)
             result_tip = ed.tooltip_for_item(view, item)
             eq_(result_tip, (None if null_path else tip))
     for doctype in (TextDocument, Project, None):
@@ -657,7 +658,7 @@ def test_tool_tip_for_item():
 def test_should_edit_item():
     def test(c):
         m = Mocker()
-        ed = Editor(None)
+        ed = Editor(editxt.app, None)
         item = m.mock()
         col = m.mock(NSTableColumn)
         if (col.isEditable() >> c.col_is_editable):
@@ -677,7 +678,7 @@ def test_should_edit_item():
 def test_close_button_clicked():
     def test(row, num_rows, doc_class=None):
         m = Mocker()
-        ed = Editor(m.mock(EditorWindowController))
+        ed = Editor(editxt.app, m.mock(EditorWindowController))
         ed.recent = m.mock()
         dv = ed.wc.docsView >> m.mock(NSOutlineView)
         dv.numberOfRows() >> num_rows
@@ -697,7 +698,7 @@ def test_close_button_clicked():
 def test_window_did_become_key():
     def test(c):
         m = Mocker()
-        ed = Editor(None)
+        ed = Editor(editxt.app, None)
         win = m.mock(NSWindowController)
         cv = m.property(ed, "current_view")
         dv = cv.value >> (m.mock(c.view_type) if c.has_current else None)
@@ -715,9 +716,9 @@ def test_window_should_close():
     def test(c):
         m = Mocker()
         win = m.mock(NSWindow)
-        editor = Editor(m.mock(EditorWindowController))
         dsd_class = m.replace('editxt.application.DocumentSavingDelegate')
-        app = m.replace(editxt, 'app')
+        editor = Editor(editxt.app, m.mock(EditorWindowController))
+        app = m.replace(editor, 'app')
         dsd = m.mock(DocumentSavingDelegate)
         dirty_docs = []
         projs = editor.projects = []
@@ -765,10 +766,10 @@ def test_window_should_close():
 
 def test_window_will_close():
     def test(window_settings_loaded, num_projects):
-        ed = Editor(None)
         m = Mocker()
-        app = m.replace(mod.editxt, 'app')
+        ed = Editor(editxt.app, None)
         ed.window_settings_loaded = window_settings_loaded
+        app = m.replace(ed, 'app')
         with m.order():
             app.discard_editor(ed)
         with m:
@@ -786,7 +787,7 @@ def test_get_window_settings():
             properties_hidden=c.props_hidden,
         )
         m = Mocker()
-        ed = Editor(m.mock(EditorWindowController))
+        ed = Editor(editxt.app, m.mock(EditorWindowController))
         ed.wc.window().stringWithSavedFrame() >> settings["frame_string"]
         ed.wc.splitView.fixedSideThickness() >> settings["splitter_pos"]
         ed.wc.propsViewButton.state() >> (NSOnState if c.props_hidden else NSOffState)
@@ -798,7 +799,7 @@ def test_get_window_settings():
     yield test, c(props_hidden=False)
 
 def test_set_window_settings_with_null_settings():
-    ed = Editor(None)
+    ed = Editor(editxt.app, None)
     m = Mocker()
     settings = m.mock(dict)
     settings.get("frame_string") >> None
@@ -810,7 +811,7 @@ def test_set_window_settings_with_null_settings():
 def test_set_window_settings():
     from editxt.controls.splitview import ThinSplitView
     m = Mocker()
-    ed = Editor(m.mock(EditorWindowController))
+    ed = Editor(editxt.app, m.mock(EditorWindowController))
     fs = "<test frame string>"
     sp = "<test splitter position>"
     (ed.wc.window() >> m.mock(NSWindow)).setFrameFromString_(fs)
@@ -833,7 +834,7 @@ def test_close():
     def test(c):
         m = Mocker()
         wc = m.mock(EditorWindowController)
-        ed = Editor(wc)
+        ed = Editor(editxt.app, wc)
         ed.projects = []
         ed.window_settings_loaded = c.ws_loaded
         for x in xrange(3):
@@ -859,7 +860,7 @@ def test_close():
 def test_is_project_drag():
     def test(c):
         m = Mocker()
-        ed = Editor(None)
+        ed = Editor(editxt.app, None)
         ed.iter_dropped_id_list = m.method(ed.iter_dropped_id_list)
         pb = m.mock(NSPasteboard)
         result_items = []
@@ -897,7 +898,7 @@ def test_is_project_drag():
 def test_write_items_to_pasteboard():
     def test(c):
         m = Mocker()
-        ed = Editor(None)
+        ed = Editor(editxt.app, None)
         ov = m.mock(NSOutlineView)
         pb = m.mock(NSPasteboard)
         def path_exists(path):
@@ -938,7 +939,7 @@ def test_write_items_to_pasteboard():
 def test_validate_drop():
     def test(config):
         m = Mocker()
-        ed = Editor(m.mock(EditorWindowController))
+        ed = Editor(editxt.app, m.mock(EditorWindowController))
         ov = m.mock(NSOutlineView)
         # TODO investigate where NSDraggingInfo went during the upgrade to 10.5
         info = m.mock() #NSDraggingInfo)
@@ -1014,7 +1015,7 @@ def test_validate_drop():
 def test_accept_drop():
     def test(c):
         m = Mocker()
-        ed = Editor(m.mock(EditorWindowController))
+        ed = Editor(editxt.app, m.mock(EditorWindowController))
         ed.accept_dropped_items = m.method(ed.accept_dropped_items)
         ed.iter_dropped_id_list = m.method(ed.iter_dropped_id_list)
         ed.iter_dropped_paths = m.method(ed.iter_dropped_paths)
@@ -1052,8 +1053,8 @@ def test_accept_drop():
 def test_iter_dropped_id_list():
     def test(c):
         m = Mocker()
-        ed = Editor(None)
-        app = m.replace(mod.editxt, 'app')
+        ed = Editor(editxt.app, None)
+        app = m.replace(ed, 'app')
         pb = m.mock(NSPasteboard)
         result_items = []
         pb.types().containsObject_(const.DOC_ID_LIST_PBOARD_TYPE) >> c.has_ids
@@ -1082,9 +1083,9 @@ def test_iter_dropped_paths():
     import editxt.document
     def test(c):
         m = Mocker()
-        ed = Editor(None)
+        ed = Editor(editxt.app, None)
         ed.find_project_with_path = m.method(ed.find_project_with_path)
-        app = m.replace(editxt, 'app')
+        app = m.replace(ed, 'app')
         doc_class = m.replace('editxt.document.TextDocument')
         create_with_path = m.method(Project.create_with_path)
         pb = m.mock(NSPasteboard)
@@ -1152,7 +1153,7 @@ def test_accept_dropped_items():
             return project, dindex + offset
 
         m = Mocker()
-        ed = Editor(None)
+        ed = Editor(editxt.app, None)
         current_view = m.property(ed, 'current_view')
         map = {}
         rmap = {}
@@ -1305,7 +1306,7 @@ def test_undo_manager():
     def test(c):
         m = Mocker()
         wc = m.mock(EditorWindowController)
-        ed = Editor(wc)
+        ed = Editor(editxt.app, wc)
         if not c.has_doc:
             doc = None
         else:

@@ -103,7 +103,7 @@ def test_syntaxdefs():
         eq_(app.syntaxdefs, "<definitions>")
 
 def test_application_will_finish_launching():
-    import editxt.textcommand as txtcmd
+    from editxt.textcommand import TextCommandController
     def test(eds_config):
         app = Application()
         m = Mocker()
@@ -111,12 +111,11 @@ def test_application_will_finish_launching():
         nsapp = m.mock(NSApplication)
         ud_class = m.replace(mod, 'NSUserDefaults')
         m.method(app.iter_saved_editor_states)() >> iter(eds_config)
-        cmd_class = m.replace(txtcmd, 'TextCommandController')
+        tc = m.replace(app, 'text_commander', spec=TextCommandController)
         dc = m.mock(DocumentController)
         menu = dc.textMenu >> m.mock(NSMenu)
         m.method(app.init_syntax_definitions)()
-        tc = cmd_class(menu) >> m.mock(txtcmd.TextCommandController)
-        tc.load_commands()
+        tc.load_commands(menu)
         if eds_config:
             for ed_config in eds_config:
                 create_editor(ed_config)
@@ -138,7 +137,7 @@ def test_create_editor():
         wc_class = m.replace(editor, 'EditorWindowController')
         wc = wc_class.alloc() >> m.mock(editor.EditorWindowController)
         wc.initWithWindowNibName_("EditorWindow") >> wc
-        ed = ed_class(wc, args[0] if args else None) >> m.mock(editor.Editor)
+        ed = ed_class(ac, wc, args[0] if args else None) >> m.mock(editor.Editor)
         wc.editor = ed
         #ed = wc.controller >> m.mock(Editor)
         #wc_class.create_with_serial_data(args[0] if args else None) >> wc

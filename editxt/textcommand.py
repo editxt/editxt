@@ -19,7 +19,6 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import json
 import logging
-import weakref
 from collections import defaultdict
 from itertools import count
 from os.path import exists, join
@@ -27,21 +26,21 @@ from os.path import exists, join
 from AppKit import *
 from Foundation import *
 
-from editxt import app
 from editxt.commandparser import ArgumentError
 from editxt.commands import load_commands
+from editxt.util import WeakProperty
 
 log = logging.getLogger(__name__)
 
 
 class CommandBar(object):
 
-    def __init__(self, editor):
-        self._editor = weakref.ref(editor)
+    editor = WeakProperty()
+    text_commander = WeakProperty()
 
-    @property
-    def editor(self):
-        return self._editor()
+    def __init__(self, editor, text_commander):
+        self.editor = editor
+        self.text_commander = text_commander
 
     def activate(self):
         # abstract to a PyObjC-specific subclass when implementing other frontend
@@ -59,7 +58,7 @@ class CommandBar(object):
         if doc_view is None:
             NSBeep()
             return
-        command = app.text_commander.lookup(args[0])
+        command = self.text_commander.lookup(args[0])
         if command is not None:
             argstr = text[len(args[0]) + 1:]
             try:
@@ -70,7 +69,7 @@ class CommandBar(object):
                 return
         else:
             argstr = text
-            command, args = app.text_commander.lookup_full_command(argstr)
+            command, args = self.text_commander.lookup_full_command(argstr)
             if command is None:
                 self.message('unknown command: {}'.format(argstr))
                 return
@@ -91,12 +90,12 @@ class CommandBar(object):
         args = text.split()
         if not args:
             return None, text
-        command = app.text_commander.lookup(args[0])
+        command = self.text_commander.lookup(args[0])
         if command is not None:
             argstr = text[len(args[0]) + 1:]
         else:
             argstr = text
-            command, args = app.text_commander.lookup_full_command(argstr)
+            command, args = self.text_commander.lookup_full_command(argstr)
         return command, argstr
 
     def get_placeholder(self, text):
@@ -119,7 +118,7 @@ class CommandBar(object):
         """
         if len(text.split()) < 2 and not text.endswith(" "):
             words = sorted(name
-                for name in app.text_commander.commands
+                for name in self.text_commander.commands
                 if isinstance(name, basestring) and name.startswith(text))
             index = 0 if words else -1
         else:
@@ -139,9 +138,8 @@ class CommandBar(object):
 
 class TextCommandController(object):
 
-    def __init__(self, menu):
+    def __init__(self):
         self.tagger = count()
-        self.menu = menu
         self.commands = commands = {}
         self.commands_by_path = bypath = defaultdict(list)
         self.lookup_full_commands = []
@@ -179,13 +177,13 @@ class TextCommandController(object):
         # load local (built-in) commands
         yield None, load_commands()
 
-    def load_commands(self):
+    def load_commands(self, menu):
         for path, reg in self.iter_command_modules():
             for command in reg.get("text_menu_commands", []):
-                self.add_command(command, path)
+                self.add_command(command, path, menu)
             self.input_handlers.update(reg.get("input_handlers", {}))
 
-    def add_command(self, command, path):
+    def add_command(self, command, path, menu):
         if command.title is not None:
             command.__tag = tag = self.tagger.next()
             hotkey, keymask = self.validate_hotkey(command.hotkey)
@@ -194,7 +192,7 @@ class TextCommandController(object):
             item.setKeyEquivalentModifierMask_(keymask)
             item.setTag_(tag)
             # HACK tag will not be the correct index if an item is ever removed
-            self.menu.insertItem_atIndex_(item, tag)
+            menu.insertItem_atIndex_(item, tag)
             self.commands[tag] = command
         if command.lookup_with_arg_parser:
             self.lookup_full_commands.insert(0, command)

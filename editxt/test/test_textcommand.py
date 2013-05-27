@@ -41,11 +41,16 @@ log = logging.getLogger(__name__)
 
 def test_CommandBar_editor():
     editor = type('Editor', (object,), {})()
-    cmd = mod.CommandBar(editor)
+    text_commander = type('TextCommandController', (object,), {})()
+    cmd = mod.CommandBar(editor, text_commander)
     eq_(cmd.editor, editor)
+    eq_(cmd.text_commander, text_commander)
     # NOTE the following depends on CPython weakref behavior
-    del editor
-    eq_(cmd.editor, None)
+    del editor, text_commander
+    with assert_raises(AttributeError):
+        cmd.editor
+    with assert_raises(AttributeError):
+        cmd.text_commander
 
 def test_CommandBar_execute():
     from editxt.document import TextDocumentView
@@ -54,8 +59,8 @@ def test_CommandBar_execute():
         m = Mocker()
         editor = m.mock()
         beep = m.replace(mod, 'NSBeep')
-        commander = m.replace(mod.app, 'text_commander', spec=TextCommandController)
-        bar = mod.CommandBar(editor)
+        commander = m.mock(TextCommandController)
+        bar = mod.CommandBar(editor, commander)
         args = c.text.split()
         if args and not c.current:
             editor.current_view >> None
@@ -106,8 +111,8 @@ def test_get_placeholder():
         m = Mocker()
         editor = m.mock()
         beep = m.replace(mod, 'NSBeep')
-        commander = m.replace(mod.app, 'text_commander', spec=TextCommandController)
-        bar = mod.CommandBar(editor)
+        commander = m.mock(TextCommandController)
+        bar = mod.CommandBar(editor, commander)
         args = c.text.split()
         if args:
             @command(arg_parser=CommandParser(
@@ -164,8 +169,8 @@ def test_get_completions():
         m = Mocker()
         editor = m.mock()
         beep = m.replace(mod, 'NSBeep')
-        commander = m.replace(mod.app, 'text_commander', spec=TextCommandController)
-        bar = mod.CommandBar(editor)
+        commander = m.mock(TextCommandController)
+        bar = mod.CommandBar(editor, commander)
         args = c.text.split()
         @command(arg_parser=CommandParser(
             Bool('selection s', 'all a', True),
@@ -216,8 +221,7 @@ def test_TextCommandController_init():
     m = Mocker()
     menu = m.mock(NSMenu)
     with m:
-        ctl = TextCommandController(menu)
-        eq_(ctl.menu, menu)
+        ctl = TextCommandController()
         eq_(ctl.commands, {})
         eq_(ctl.commands_by_path, {})
         eq_(ctl.input_handlers, {})
@@ -227,9 +231,9 @@ def test_TextCommandController_lookup():
     def test(c):
         m = Mocker()
         menu = m.mock(NSMenu)
-        ctl = TextCommandController(menu)
+        ctl = TextCommandController()
         for command in c.commands:
-            ctl.add_command(command, None)
+            ctl.add_command(command, None, menu)
         eq_(ctl.lookup(c.lookup), c.result)
     @command(names="cmd cm")
     def cmd(*args):
@@ -251,9 +255,9 @@ def test_TextCommandController_lookup_full_command():
     def test(c):
         m = Mocker()
         menu = m.mock(NSMenu)
-        ctl = TextCommandController(menu)
+        ctl = TextCommandController()
         for command in c.commands:
-            ctl.add_command(command, None)
+            ctl.add_command(command, None, menu)
             menu.insertItem_atIndex_(ANY, ANY)
         eq_(ctl.lookup_full_command(c.lookup), c.result)
     @command(names="cm")
@@ -274,7 +278,7 @@ def test_TextCommandController_load_commands():
     def test(c):
         m = Mocker()
         menu = m.mock(NSMenu)
-        ctl = TextCommandController(menu)
+        ctl = TextCommandController()
         handlers = ctl.input_handlers = m.mock(dict)
         add = m.method(ctl.add_command)
         mod = m.mock(dict)
@@ -282,14 +286,14 @@ def test_TextCommandController_load_commands():
         cmds = []; mod.get("text_menu_commands", []) >> cmds
         for i in xrange(c.commands):
             cmd = "<command %s>" % i
-            add(cmd, "<path>")
+            add(cmd, "<path>", menu)
             cmds.append(cmd)
         hnds = mod.get("input_handlers", {}) >> {}
         for i in xrange(c.handlers):
             hnds["handle%s" % i] = "<handle %s>" % i
         handlers.update(hnds)
         with m:
-            ctl.load_commands()
+            ctl.load_commands(menu)
     c = TestConfig()
     yield test, c(commands=0, handlers=0)
     yield test, c(commands=2, handlers=2)
@@ -299,7 +303,7 @@ def test_TextCommandController_add_command():
         m = Mocker()
         menu = m.mock(NSMenu)
         mi_class = m.replace(mod, 'NSMenuItem')
-        ctl = TextCommandController(menu)
+        ctl = TextCommandController()
         handlers = m.replace(ctl, 'input_handlers')
         validate = m.method(ctl.validate_hotkey)
         cmd = m.mock()
@@ -315,14 +319,14 @@ def test_TextCommandController_add_command():
         mi.setTag_(tag)
         menu.insertItem_atIndex_(mi, tag)
         with m:
-            ctl.add_command(cmd, None)
+            ctl.add_command(cmd, None, menu)
             assert ctl.commands[tag] is cmd, (ctl.commands[tag], cmd)
     c = TestConfig()
     yield test, c
     #yield test, c
 
 def test_TextCommandController_validate_hotkey():
-    tc = TextCommandController(None)
+    tc = TextCommandController()
     eq_(tc.validate_hotkey(None), (u"", 0))
     eq_(tc.validate_hotkey(("a", 1)), ("a", 1))
     assert_raises(AssertionError, tc.validate_hotkey, ("a", "b", "c"))
@@ -334,7 +338,7 @@ def test_TextCommandController_is_textview_command_enabled():
         mi = m.mock(NSMenuItem)
         tv = m.mock(NSTextView)
         tc = m.mock()
-        tcc = TextCommandController(None)
+        tcc = TextCommandController()
         cmds = m.replace(tcc, 'commands')
         cmds.get(mi.tag() >> 42) >> (tc if c.has_command else None)
         if c.has_command:
@@ -359,7 +363,7 @@ def test_TextCommandController_do_textview_command():
         mi = m.mock(NSMenuItem)
         tv = m.mock(NSTextView)
         tc = m.mock()
-        tcc = TextCommandController(None)
+        tcc = TextCommandController()
         cmds = m.replace(tcc, 'commands')
         cmds.get(mi.tag() >> 42) >> (tc if c.has_command else None)
         if c.has_command:
@@ -379,7 +383,7 @@ def test_TextCommandController_do_textview_command_by_selector():
         m = Mocker()
         lg = m.replace("editxt.textcommand.log")
         tv = m.mock(NSTextView)
-        tcc = TextCommandController(None)
+        tcc = TextCommandController()
         sel = "<selector>"
         callback = m.mock()
         handlers = m.replace(tcc, 'input_handlers')
