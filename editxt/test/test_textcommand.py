@@ -17,14 +17,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import with_statement
+import json
 import logging
+from os.path import join
 
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_, assert_raises
 from AppKit import *
 from Foundation import *
-from editxt.test.util import TestConfig
+from editxt.test.util import TestConfig, tempdir
 
 import editxt.constants as const
 import editxt.textcommand as mod
@@ -395,3 +396,62 @@ def test_TextCommandController_do_textview_command_by_selector():
     yield test, c(has_selector=False)
     yield test, c(error=True)
     yield test, c(error=False, result=True)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# CommandHistory tests
+
+def test_CommandHistory__iter__():
+    def test(files, lookups):
+        # :param files: List of items representing history files, each
+        #               being a list of commands.
+        # :param lookups: List of tuples (<history index>, <command text>), ...]
+        index = []
+        pattern = mod.CommandHistory.FILENAME_PATTERN
+        with tempdir() as tmp:
+            for i, value in enumerate(files):
+                index.append(pattern.format(i))
+                if value is not None:
+                    with open(join(tmp, pattern.format(i)), "wb") as fh:
+                        for command in reversed(value):
+                            fh.write(json.dumps(command) + "\n")
+            with open(join(tmp, mod.CommandHistory.INDEX_FILENAME), "wb") as fh:
+                json.dump(index, fh)
+
+            history = mod.CommandHistory(tmp, 3, 5)
+            eq_(list(enumerate(history)), lookups)
+
+    yield test, [], []
+    yield test, [None, None, ["command {}".format(i) for i in range(3)]], [
+        (0, "command 0"),
+        (1, "command 1"),
+        (2, "command 2"),
+    ]
+    yield test, [["command {}".format(i)] for i in range(3)], [
+        (0, "command 0"),
+        (1, "command 1"),
+        (2, "command 2"),
+    ]
+    yield test, \
+        [["command {}".format(i + p * 3)
+            for i in xrange(3)] for p in xrange(5)], \
+        [(i, "command {}".format(i)) for i in xrange(15)]
+
+def test_CommandHistory_append():
+    def test(appends, lookups):
+        with tempdir() as tmp:
+            history = mod.CommandHistory(tmp, 3, 5)
+            for item in appends:
+                history.append(item)
+
+            history = mod.CommandHistory(tmp, 3, 5)
+            eq_(list(enumerate(history)), lookups)
+
+    yield test, [], []
+    yield test, "a", [(0, "a")]
+    yield test, "abac", [(0, "c"), (1, "a"), (2, "b")]
+    yield test, "abcdefghiabca", [
+        (0, "a"), (1, "c"), (2, "b"),
+        (3, "i"), (4, "h"), (5, "g"),
+        (6, "f"), (7, "e"), (8, "d"),
+        (9, "c"), (10, "b"), (11, "a")
+    ]
