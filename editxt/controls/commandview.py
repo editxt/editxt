@@ -20,9 +20,9 @@
 import logging
 import math
 
-from AppKit import (NSAttributedString, NSColor, NSFocusRingTypeNone, NSFont,
-    NSFontAttributeName, NSForegroundColorAttributeName,
-    NSNotification, NSTextField, NSTextFieldCell)
+from AppKit import (NSAttributedString, NSBeep, NSColor, NSFocusRingTypeNone,
+    NSFont, NSFontAttributeName, NSForegroundColorAttributeName,
+    NSNotification, NSString, NSTextField, NSTextFieldCell)
 
 log = logging.getLogger(__name__)
 
@@ -63,6 +63,7 @@ class CommandView(NSTextField):
         view = self.command.editor.current_view
         if view is not None:
             self.window().makeFirstResponder_(view.text_view)
+        self.command.reset()
         self.command = None
         self._redraw()
 
@@ -87,6 +88,14 @@ class CommandView(NSTextField):
             return True
         if selector == "insertBacktab:":
             # ignore
+            return True
+        if selector == "moveUp:":
+            assert view is self, (view, self)
+            self.navigate_history()
+            return True
+        if selector == "moveDown:":
+            assert view is self, (view, self)
+            self.navigate_history(forward=True)
             return True
         return False
 
@@ -129,6 +138,16 @@ class CommandView(NSTextField):
             self, control, textview, words, range, item_index):
         words, default_index = self.get_completions(textview, range)[1:]
         return [w + " " for w in words], default_index
+
+    def navigate_history(self, forward=False):
+        # Convert old_text to unicode to make control.setStringValue_ work.
+        # Have no idea why it does not work without this.
+        old_text = unicode(self.stringValue())
+        text = self.command.get_history(old_text, forward)
+        if text is None:
+            NSBeep()
+            return
+        self.setStringValue_(text)
 
     def _redraw(self):
         self.superview().tile()

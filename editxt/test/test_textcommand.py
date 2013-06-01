@@ -42,6 +42,7 @@ log = logging.getLogger(__name__)
 def test_CommandBar_editor():
     editor = type('Editor', (object,), {})()
     text_commander = type('TextCommandController', (object,), {})()
+    #history = type('CommandHistory', (object,), {})()
     cmd = mod.CommandBar(editor, text_commander)
     eq_(cmd.editor, editor)
     eq_(cmd.text_commander, text_commander)
@@ -90,6 +91,9 @@ def test_CommandBar_execute():
                 if c.error:
                     res.throw(Exception('bang!'))
                     beep()
+                else:
+                    history = commander.history >> m.mock(mod.CommandHistory)
+                    history.append(c.text)
         with m:
             bar.execute(c.text)
     c = TestConfig(args='<args>', error=False, current=True)
@@ -103,7 +107,7 @@ def test_CommandBar_execute():
     yield test, c(text='123 456', lookup='full', args=None)
     yield test, c(text='123 456', lookup='full', error=True)
 
-def test_get_placeholder():
+def test_CommandBar_get_placeholder():
     from editxt.commandparser import CommandParser, Bool, Regex, VarArgs
     from editxt.document import TextDocumentView
     from editxt.textcommand import TextCommandController
@@ -161,7 +165,7 @@ def test_get_placeholder():
     yield test, c(text='/x/ a', expect="", match="parse")
     yield test, c(text='cmd', expect="", match=None)
 
-def test_get_completions():
+def test_CommandBar_get_completions():
     from editxt.commandparser import CommandParser, Bool, Regex, VarArgs
     from editxt.document import TextDocumentView
     from editxt.textcommand import TextCommandController
@@ -214,6 +218,127 @@ def test_get_completions():
     yield test, c(text='/a', expect=([], -1))
     yield test, c(text='/abc/ ', expect=(["yes", "no"], 0))
 
+def test_CommandBar_get_history():
+    with tempdir() as tmp:
+        history = mod.CommandHistory(tmp)
+        for item in reversed("abc"):
+            history.append(item)
+        editor = type("FakeEditor", (object,), {})()
+        commander = TextCommandController(history)
+        bar = mod.CommandBar(editor, commander)
+
+        eq_(bar.get_history(""), "a")
+        eq_(bar.get_history("a", forward=True), "")
+        eq_(bar.get_history("", forward=True), None)
+        eq_(bar.get_history("", forward=True), None)
+        eq_(bar.get_history("x"), "a")
+        eq_(bar.get_history("a"), "b")
+        eq_(bar.get_history("by"), "c")
+        eq_(bar.get_history("c"), None)
+        eq_(bar.get_history("c"), None)
+        eq_(bar.get_history("c", forward=True), "by")
+        eq_(bar.get_history("bz", forward=True), "a")
+        eq_(bar.get_history("a"), "bz")
+        eq_(bar.get_history("b", forward=True), "a")
+        eq_(bar.get_history("a"), "b")
+        eq_(bar.get_history("b", forward=True), "a")
+        eq_(bar.get_history("a", forward=True), "x")
+        eq_(bar.get_history("x", forward=True), None)
+
+def test_CommandBar_get_history_concurrently():
+    with tempdir() as tmp:
+        history = mod.CommandHistory(tmp)
+        for item in reversed("abc"):
+            history.append(item)
+        editor = type("FakeEditor", (object,), {})()
+        commander = TextCommandController(history)
+        bar1 = mod.CommandBar(editor, commander)
+        bar2 = mod.CommandBar(editor, commander)
+        bar3 = mod.CommandBar(editor, commander)
+        bar4 = mod.CommandBar(editor, commander)
+
+        eq_(bar1.get_history("x"), "a")
+
+        eq_(bar2.get_history(""), "a")
+        eq_(bar2.get_history("y"), "b")
+
+        eq_(bar3.get_history(""), "a")
+        eq_(bar3.get_history("a"), "b")
+        eq_(bar3.get_history("z"), "c") # <-- "z" will move to 0 (with "b")
+
+        history.append("b")
+
+        # current index "a", "x" in new command buffer
+        eq_(bar1.get_history("a"), "c")
+        eq_(bar1.get_history("c"), None)
+        eq_(bar1.get_history("c", True), "a")
+        eq_(bar1.get_history("a", True), "b")
+        eq_(bar1.get_history("b", True), "x")
+        eq_(bar1.get_history("x", True), None)
+
+        # current index "b", "y" at 0
+        eq_(bar2.get_history("B"), "y") # <-- "B" now at 0
+        eq_(bar2.get_history("y"), "c")
+        eq_(bar2.get_history("c"), None)
+        eq_(bar2.get_history("c", True), "y")
+        eq_(bar2.get_history("y", True), "B")
+        eq_(bar2.get_history("B", True), "")
+        eq_(bar2.get_history("", True), None)
+
+        # current index "c", "z" at 1
+        eq_(bar3.get_history("c"), None)
+        eq_(bar3.get_history("C", True), "a")
+        eq_(bar3.get_history("a"), "C")
+        eq_(bar3.get_history("C", True), "a")
+        eq_(bar3.get_history("a", True), "z")
+        eq_(bar3.get_history("z", True), "") # <-- "z" moved to 0
+        eq_(bar3.get_history("", True), None)
+
+        eq_(bar4.get_history("A", True), None)
+        eq_(bar4.get_history("A"), "b")
+        eq_(bar4.get_history("b"), "a")
+        eq_(bar4.get_history("a"), "c")
+        eq_(bar4.get_history("c"), None)
+        eq_(bar4.get_history("c", True), "a")
+        eq_(bar4.get_history("a", True), "b")
+        eq_(bar4.get_history("b", True), "A")
+        eq_(bar4.get_history("A", True), None)
+
+def test_CommandBar_history_reset_on_execute():
+    from editxt.document import TextDocumentView
+    from editxt.textcommand import CommandHistory, TextCommandController
+    with tempdir() as tmp:
+        m = Mocker()
+        editor = m.mock()
+        history = CommandHistory(tmp)
+        commander = TextCommandController(history)
+        bar = mod.CommandBar(editor, commander)
+        args = ["cmd"]
+        view = editor.current_view >> m.mock(TextDocumentView)
+        view.text_view >> '<view>'
+        @command
+        def cmd(textview, sender, args):
+            pass
+        commander.add_command(cmd, None, None)
+        with m:
+            bar.get_history("cmd")
+            bar.execute("cmd")
+            eq_(bar.history_view, None)
+            eq_(list(history), ["cmd"])
+
+def test_CommandBar_reset():
+    with tempdir() as tmp:
+        editor = type("Editor", (object,), {})()
+        history = mod.CommandHistory(tmp)
+        commander = mod.TextCommandController(history)
+        bar = mod.CommandBar(editor, commander)
+        eq_(bar.get_history(""), None)
+        assert bar.history_view is not None
+        assert bar.history_view in history.views
+        bar.reset()
+        eq_(bar.history_view, None)
+        assert bar.history_view not in history.views
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # TextControllerCommand tests
 
@@ -221,7 +346,8 @@ def test_TextCommandController_init():
     m = Mocker()
     menu = m.mock(NSMenu)
     with m:
-        ctl = TextCommandController()
+        ctl = TextCommandController("<history>")
+        eq_(ctl.history, "<history>")
         eq_(ctl.commands, {})
         eq_(ctl.commands_by_path, {})
         eq_(ctl.input_handlers, {})
@@ -231,7 +357,7 @@ def test_TextCommandController_lookup():
     def test(c):
         m = Mocker()
         menu = m.mock(NSMenu)
-        ctl = TextCommandController()
+        ctl = TextCommandController("<history>")
         for command in c.commands:
             ctl.add_command(command, None, menu)
         eq_(ctl.lookup(c.lookup), c.result)
@@ -255,7 +381,7 @@ def test_TextCommandController_lookup_full_command():
     def test(c):
         m = Mocker()
         menu = m.mock(NSMenu)
-        ctl = TextCommandController()
+        ctl = TextCommandController("<history>")
         for command in c.commands:
             ctl.add_command(command, None, menu)
             menu.insertItem_atIndex_(ANY, ANY)
@@ -278,7 +404,7 @@ def test_TextCommandController_load_commands():
     def test(c):
         m = Mocker()
         menu = m.mock(NSMenu)
-        ctl = TextCommandController()
+        ctl = TextCommandController("<history>")
         handlers = ctl.input_handlers = m.mock(dict)
         add = m.method(ctl.add_command)
         mod = m.mock(dict)
@@ -303,7 +429,7 @@ def test_TextCommandController_add_command():
         m = Mocker()
         menu = m.mock(NSMenu)
         mi_class = m.replace(mod, 'NSMenuItem')
-        ctl = TextCommandController()
+        ctl = TextCommandController("<history>")
         handlers = m.replace(ctl, 'input_handlers')
         validate = m.method(ctl.validate_hotkey)
         cmd = m.mock()
@@ -326,7 +452,7 @@ def test_TextCommandController_add_command():
     #yield test, c
 
 def test_TextCommandController_validate_hotkey():
-    tc = TextCommandController()
+    tc = TextCommandController("<history>")
     eq_(tc.validate_hotkey(None), (u"", 0))
     eq_(tc.validate_hotkey(("a", 1)), ("a", 1))
     assert_raises(AssertionError, tc.validate_hotkey, ("a", "b", "c"))
@@ -338,7 +464,7 @@ def test_TextCommandController_is_textview_command_enabled():
         mi = m.mock(NSMenuItem)
         tv = m.mock(NSTextView)
         tc = m.mock()
-        tcc = TextCommandController()
+        tcc = TextCommandController("<history>")
         cmds = m.replace(tcc, 'commands')
         cmds.get(mi.tag() >> 42) >> (tc if c.has_command else None)
         if c.has_command:
@@ -363,7 +489,7 @@ def test_TextCommandController_do_textview_command():
         mi = m.mock(NSMenuItem)
         tv = m.mock(NSTextView)
         tc = m.mock()
-        tcc = TextCommandController()
+        tcc = TextCommandController("<history>")
         cmds = m.replace(tcc, 'commands')
         cmds.get(mi.tag() >> 42) >> (tc if c.has_command else None)
         if c.has_command:
@@ -383,7 +509,7 @@ def test_TextCommandController_do_textview_command_by_selector():
         m = Mocker()
         lg = m.replace("editxt.textcommand.log")
         tv = m.mock(NSTextView)
-        tcc = TextCommandController()
+        tcc = TextCommandController("<history>")
         sel = "<selector>"
         callback = m.mock()
         handlers = m.replace(tcc, 'input_handlers')

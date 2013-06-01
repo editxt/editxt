@@ -41,6 +41,7 @@ class CommandBar(object):
     def __init__(self, editor, text_commander):
         self.editor = editor
         self.text_commander = text_commander
+        self.history_view = None
 
     def activate(self):
         # abstract to a PyObjC-specific subclass when implementing other frontend
@@ -51,6 +52,7 @@ class CommandBar(object):
         view.scroll_view.commandView.activate(self)
 
     def execute(self, text):
+        self.reset()
         args = text.split()
         if not args:
             return
@@ -80,6 +82,8 @@ class CommandBar(object):
             command(doc_view.text_view, self, args)
         except Exception:
             self.message('error in command: {}'.format(command), exc_info=True)
+        else:
+            self.text_commander.history.append(text)
 
     def _find_command(self, text):
         """Get a tuple (command, argument_string)
@@ -130,15 +134,25 @@ class CommandBar(object):
                 words, index = [], -1
         return words, index
 
+    def get_history(self, current_text, forward=False):
+        if self.history_view is None:
+            self.history_view = self.text_commander.history.view()
+        return self.history_view.get(current_text, forward)
+
     def message(self, text, exc_info=None):
         log.info(text, exc_info=exc_info)
         NSBeep()
 
+    def reset(self):
+        view, self.history_view = self.history_view, None
+        if view is not None:
+            self.text_commander.history.discard_view(view)
 
 
 class TextCommandController(object):
 
-    def __init__(self):
+    def __init__(self, history):
+        self.history = history
         self.tagger = count()
         self.commands = commands = {}
         self.commands_by_path = bypath = defaultdict(list)
@@ -252,6 +266,7 @@ class CommandHistory(object):
         self.pages = None
         self.zeropage = None
         self.zerofile = None
+        self.views = set()
 
     def _initialize(self):
         self.pages = []
@@ -319,11 +334,23 @@ class CommandHistory(object):
         if self.zeropage is None:
             self._initialize()
         zero = self.zeropage
-        removed = False
-        while command in zero:
+        moved = None
+        removed = []
+        try:
+            moved = zero.index(command)
+        except ValueError:
+            pass
+        else:
             zero.remove(command)
-            removed = True
-        if removed:
+            while True:
+                try:
+                    removed.append(zero.index(command))
+                except ValueError:
+                    break
+                zero.remove(command)
+        if moved is not None:
+            for view in self.views:
+                view.update(moved, removed)
             # rewrite entire file because a command was moved
             zero.append(command)
             zeropath = join(self.store_dir, self.zerofile)
@@ -350,6 +377,8 @@ class CommandHistory(object):
             except Exception:
                 log.warn("cannot write %s", index_file, exc_info=True)
             mode = "wb"
+        for view in self.views:
+            view.update()
         zeropath = join(self.store_dir, self.zerofile)
         try:
             with open(zeropath, mode) as fh:
@@ -383,3 +412,76 @@ class CommandHistory(object):
 
         :param index: Integer index of command in history.
         """
+
+    def view(self):
+        view = HistoryView(self)
+        self.views.add(view)
+        return view
+
+    def discard_view(self, view):
+        self.views.discard(view)
+
+
+class HistoryView(object):
+    """A history view that can be kept consistent when history is updated"""
+
+    history = WeakProperty()
+
+    def __init__(self, history):
+        self.history = history
+        self.history_index = -1
+        self.history_edits = {}
+        self.current_history = None
+
+    def update(self, moved=None, removed=()):
+        """Update this view's pointers to reflect a history change
+
+        :param moved: Index of a command that was moved in history.
+        :param removed: List of indices of commands that were removed from
+        history.
+        """
+        moved_edit = None
+        if moved is None or self.history_index < moved:
+            self.history_index += 1
+        elif self.history_index == moved:
+            self.history_index = 0
+        if self.history_edits:
+            moved_edit = self.history_edits.pop(moved, None)
+            for index in sorted(self.history_edits, reverse=True):
+                if index < 0:
+                    continue
+                if moved is None or index < moved:
+                    self.history_edits[index + 1] = self.history_edits.pop(index)
+            if moved_edit is not None:
+                self.history_edits[0] = moved_edit
+        if removed:
+            raise NotImplementedError(removed)
+
+    def get(self, current_text, forward=False):
+        """Get next command in history
+
+        :param current_text: Current command text (saved for later traversal).
+        :param forward: Get older command if false (default) else newer.
+        :returns: Text of next command in history.
+        """
+        last_index = self.history_index
+        index = last_index + (-1 if forward else 1)
+        if index < -1:
+            return None
+        if index == -1:
+            text = self.history_edits.get(-1, "")
+        else:
+            text = self.history[index]
+            if text is None:
+                return None
+        if current_text != self.current_history:
+            self.history_edits[last_index] = current_text
+        else:
+            self.history_edits.pop(last_index, None)
+        if index in self.history_edits:
+            self.history_index = index
+            self.current_history = text
+            return self.history_edits[index]
+        self.history_index = index
+        self.current_history = text
+        return text

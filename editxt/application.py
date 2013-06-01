@@ -32,7 +32,7 @@ import editxt
 import editxt.constants as const
 from editxt.commands import iterlines
 from editxt.errorlog import errlog
-from editxt.textcommand import TextCommandController
+from editxt.textcommand import CommandHistory, TextCommandController
 from editxt.util import ContextMap, perform_selector, dump_yaml, load_yaml
 from editxt.valuetrans import register_value_transformers
 
@@ -58,7 +58,8 @@ class Application(object):
         self.path_opener = None
         self.context = ContextMap()
         self.syntax_factory = None
-        self.text_commander = TextCommandController()
+        command_history = CommandHistory(self.profile_path)
+        self.text_commander = TextCommandController(command_history)
         register_value_transformers()
 
     @classmethod
