@@ -80,14 +80,17 @@ x   command text entry widget
 x   menu entry/hotkey to activate command bar
 x   jump to line command
 x   command argument placeholder text
-    history
-    contextual command help
-x   command/arg auto-complete
+x   history
     convert commands with gui to work with command bar
 x       wrap command
 x       sort command
         find/replace
         change indentation
+    contextual command help
+    list history
+    filter history
+    delete history item
+x   command/arg auto-complete
 
 refactor object hierarchy to make it more modular and easier to add features
     app.documents - {id: Document}

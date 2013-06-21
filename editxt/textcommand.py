@@ -474,14 +474,12 @@ class HistoryView(object):
             text = self.history[index]
             if text is None:
                 return None
-        if current_text != self.current_history:
+        if last_index < 0 or current_text != self.current_history:
             self.history_edits[last_index] = current_text
         else:
             self.history_edits.pop(last_index, None)
-        if index in self.history_edits:
-            self.history_index = index
-            self.current_history = text
-            return self.history_edits[index]
         self.history_index = index
         self.current_history = text
+        if index in self.history_edits:
+            return self.history_edits[index]
         return text

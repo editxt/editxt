@@ -219,31 +219,71 @@ def test_CommandBar_get_completions():
     yield test, c(text='/abc/ ', expect=(["yes", "no"], 0))
 
 def test_CommandBar_get_history():
-    with tempdir() as tmp:
-        history = mod.CommandHistory(tmp)
-        for item in reversed("abc"):
-            history.append(item)
-        editor = type("FakeEditor", (object,), {})()
-        commander = TextCommandController(history)
-        bar = mod.CommandBar(editor, commander)
+    def test(nav):
+        with tempdir() as tmp:
+            history = mod.CommandHistory(tmp)
+            for item in reversed("abc"):
+                history.append(item)
+            editor = type("FakeEditor", (object,), {})()
+            commander = TextCommandController(history)
+            bar = mod.CommandBar(editor, commander)
 
-        eq_(bar.get_history(""), "a")
-        eq_(bar.get_history("a", forward=True), "")
-        eq_(bar.get_history("", forward=True), None)
-        eq_(bar.get_history("", forward=True), None)
-        eq_(bar.get_history("x"), "a")
-        eq_(bar.get_history("a"), "b")
-        eq_(bar.get_history("by"), "c")
-        eq_(bar.get_history("c"), None)
-        eq_(bar.get_history("c"), None)
-        eq_(bar.get_history("c", forward=True), "by")
-        eq_(bar.get_history("bz", forward=True), "a")
-        eq_(bar.get_history("a"), "bz")
-        eq_(bar.get_history("b", forward=True), "a")
-        eq_(bar.get_history("a"), "b")
-        eq_(bar.get_history("b", forward=True), "a")
-        eq_(bar.get_history("a", forward=True), "x")
-        eq_(bar.get_history("x", forward=True), None)
+            for input, direction, history in nav:
+                dirchar = "v" if direction else "A"
+                print("{}({!r}, {!r})".format(dirchar, input, history))
+                eq_(bar.get_history(input, forward=direction), history)
+
+    A = lambda input, history: (input, False, history) # moveUp
+    v = lambda input, history: (input, True, history)  # moveDown
+
+    yield test, [
+        A("", "a"),
+        v("a", ""),
+        v("", None),
+        v("", None),
+    ]
+
+    yield test, [
+        A("!", "a"),
+        A("a", "b"),
+        A("by", "c"),
+        A("c", None),
+        A("c", None),
+        v("c", "by"),
+        v("bz", "a"),
+        A("a", "bz"),
+        v("bz", "a"),
+        v("a", "!"),
+        v("!", None),
+        v("!", None),
+    ]
+
+    yield test, [
+        A("", "a"),
+        A("x", "b"),
+        v("b", "x"),
+        v("a", ""),
+        A("", "a"),
+    ]
+
+    yield test, [
+        A("x", "a"),
+        v("a", "x"),
+        A("x", "a"),
+        v("a", "x"),
+        A("x", "a"),
+    ]
+
+    yield test, [
+        A("-", "a"),
+        A("ax", "b"),
+        v("b", "ax"),
+        A("ax", "b"),
+        v("b", "ax"),
+        A("ax", "b"),
+        v("b", "ax"),
+        v("ax", "-"),
+    ]
 
 def test_CommandBar_get_history_concurrently():
     with tempdir() as tmp:

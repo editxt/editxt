@@ -63,8 +63,9 @@ class CommandView(NSTextField):
         view = self.command.editor.current_view
         if view is not None:
             self.window().makeFirstResponder_(view.text_view)
-        self.command.reset()
-        self.command = None
+        if self.command is not None:
+            self.command.reset()
+            self.command = None
         self._redraw()
 
     def doCommand_(self, sender):
