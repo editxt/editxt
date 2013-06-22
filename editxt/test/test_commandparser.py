@@ -52,7 +52,7 @@ def test_identifier():
 def test_Choice():
     arg = Choice('arg-ument', 'nope', 'nah')
     eq_(str(arg), 'arg-ument')
-    eq_(arg.name, 'arg-ument')
+    eq_(arg.name, 'arg_ument')
 
     test = make_type_checker(arg)
     yield test, 'arg-ument', 0, ("arg-ument", 9)

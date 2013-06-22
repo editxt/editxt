@@ -22,6 +22,7 @@ Command parser specification:
 
 - Arguments are space-delimited.
 - Arguments must be in order.
+- Argument names must be valid Python identifiers.
 - Some examples:
 
     CommandParser(
@@ -34,7 +35,7 @@ Command parser specification:
         's r'               : selection = 'selection',  reverse = True
         'all reverse'       : selection = 'all',        reverse = True
         'a f'               : selection = 'all',        reverse = False
-        ''                  : selection  ='selection',  reverse = False
+        ''                  : selection = 'selection',  reverse = False
 
     CommandParser(
         Regex('regex'),
@@ -89,7 +90,7 @@ class CommandParser(object):
                 errors.append(err)
                 index = err.parse_index
             else:
-                setattr(opts, identifier(arg.name), value)
+                setattr(opts, arg.name, value)
         if errors:
             msg = u'invalid arguments: {}'.format(text)
             raise ArgumentError(msg, opts, errors)
@@ -148,11 +149,12 @@ def tokenize(text):
     return text.split()
 
 
-IDENTIFIER_PATTERN = re.compile('^[a-zA-Z_]+$')
+IDENTIFIER_PATTERN = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*$')
 
 def identifier(name):
     ident = name.replace('-', '_')
-    assert IDENTIFIER_PATTERN.match(ident), 'invalid name: %s' % name
+    if not IDENTIFIER_PATTERN.match(ident):
+        raise ValueError('invalid name: %s' % name)
     return ident
 
 
@@ -160,8 +162,11 @@ class Type(object):
     """Base command argument type used to parse argument values"""
 
     def __init__(self, name, default=None):
-        self.args = [name, default]
-        self.name = name
+        if not hasattr(self, 'args'):
+            self.args = [name, default]
+        if not hasattr(self, 'placeholder'):
+            self.placeholder = name
+        self.name = identifier(name)
         self.default = default
 
     def __eq__(self, other):
@@ -170,7 +175,7 @@ class Type(object):
         return self.args == other.args
 
     def __str__(self):
-        return getattr(self, 'placeholder', self.name)
+        return self.placeholder
 
     def __repr__(self):
         argnames = self.__init__.im_func.func_code.co_varnames
@@ -282,8 +287,8 @@ class Choice(Type):
                     map.pop(key)
                 else:
                     map[key] = value
-        self.name = kw.pop('name', names[0])
         self.placeholder = names[0]
+        super(Choice, self).__init__(kw.pop('name', names[0]), map[names[0]])
         if kw:
             raise ValueError("unexpected arguments: %r" % (kw,))
 
@@ -307,7 +312,7 @@ class Choice(Type):
         """
         token, end = self.consume_token(text, index)
         if token is None:
-            return self.mapping[self.names[0]], end
+            return self.default, end
         if token in self.mapping:
             return self.mapping[token], end
         names = ', '.join(n for n in self.names if n.startswith(token))
@@ -383,8 +388,9 @@ class VarArgs(Type):
     """Consume all remaining arguments by splitting the string"""
 
     def __init__(self, name, placeholder=""):
-        self.name = name
+        self.args = [name, placeholder]
         self.placeholder = placeholder
+        super(VarArgs, self).__init__(name)
 
     def consume(self, text, index):
         return text[index:].split(), len(text)
@@ -397,10 +403,10 @@ class Regex(Type):
 
     def __init__(self, name, replace=False, default=None, flags=re.U | re.M):
         self.args = [name, replace, default, flags]
-        self.name = name
         self.replace = replace
-        self.default = (None, None) if replace and default is None else default
         self.flags = flags
+        default = (None, None) if replace and default is None else default
+        super(Regex, self).__init__(name, default)
 
     def consume(self, text, index):
         if index >= len(text):
