@@ -108,7 +108,7 @@ def test_CommandBar_execute():
     yield test, c(text='123 456', lookup='full', error=True)
 
 def test_CommandBar_get_placeholder():
-    from editxt.commandparser import CommandParser, Bool, Regex, VarArgs
+    from editxt.commandparser import CommandParser, Choice, Regex, VarArgs
     from editxt.document import TextDocumentView
     from editxt.textcommand import TextCommandController
     def test(c):
@@ -120,8 +120,8 @@ def test_CommandBar_get_placeholder():
         args = c.text.split()
         if args:
             @command(arg_parser=CommandParser(
-                Bool('selection sel s', 'all a', True),
-                Bool('yes', 'no', False),
+                Choice(('selection', True), ('all', False)),
+                Choice(('no', False), ('yes', True)),
                 Regex('sort_regex', True),
             ))
             def cmd(textview, sender, args):
@@ -144,7 +144,7 @@ def test_CommandBar_get_placeholder():
     yield test, c(text='cmd', expect=" selection no sort_regex")
     yield test, c(text='cmd ', expect="selection no sort_regex")
     yield test, c(text='cmd s', expect=" no sort_regex")
-    yield test, c(text='cmd se', expect="")
+    yield test, c(text='cmd sx', expect="")
     yield test, c(text='cmd sel', expect=" no sort_regex")
     yield test, c(text='cmd sel ', expect="no sort_regex")
     yield test, c(text='cmd sel /', expect="")
@@ -166,7 +166,7 @@ def test_CommandBar_get_placeholder():
     yield test, c(text='cmd', expect="", match=None)
 
 def test_CommandBar_get_completions():
-    from editxt.commandparser import CommandParser, Bool, Regex, VarArgs
+    from editxt.commandparser import CommandParser, Choice, Regex, VarArgs
     from editxt.document import TextDocumentView
     from editxt.textcommand import TextCommandController
     def test(c):
@@ -177,8 +177,8 @@ def test_CommandBar_get_completions():
         bar = mod.CommandBar(editor, commander)
         args = c.text.split()
         @command(arg_parser=CommandParser(
-            Bool('selection s', 'all a', True),
-            Bool('reverse r', 'forward f', default=False),
+            Choice(('selection', True), ('all', False)),
+            Choice(('forward', False), ('reverse', True), name='reverse'),
             Regex('sort_regex', True),
         ))
         def cmd(textview, sender, args):
@@ -191,7 +191,7 @@ def test_CommandBar_get_completions():
             if c.text.startswith("/"):
                 @command(arg_parser=CommandParser(
                     Regex('search_pattern'),
-                    Bool('yes y', 'no n', True),
+                    Choice(('yes', True), ('no', False)),
                 ))
                 def search(textview, sender, args):
                     raise NotImplementedError("should not get here")

@@ -25,35 +25,38 @@ Command parser specification:
 - Some examples:
 
     CommandParser(
-        Bool('selection sel s'),
-        Bool('reverse rev r'),
+        Choice('selection all'),
+        Choice(('forward', False), ('reverse', True), name='reverse'),
     )
     matches:
-        'selection reverse'
-        'sel rev'
-        's r'
+        'selection reverse' : selection = 'selection',  reverse = True
+        'sel rev'           : selection = 'selection',  reverse = True
+        's r'               : selection = 'selection',  reverse = True
+        'all reverse'       : selection = 'all',        reverse = True
+        'a f'               : selection = 'all',        reverse = False
+        ''                  : selection  ='selection',  reverse = False
 
     CommandParser(
         Regex('regex'),
-        Bool('bool b'),
+        Choice(('no-opt', False), ('opt', True), name='opt'),
         Int('num'),
     )
     matches:
-        '/^abc$/ bool 123'
-        '/^abc$/ b 123'
-        '/^abc$/b 123'
+        '/^abc$/ opt 123'
+        '/^abc$/ o 123'
+        '/^abc$/o 123'
 
 - An arguments may be skipped by entering an extra space:
 
     CommandParser(
-        Bool('bool b'),
+        Choice(('yes', True), ('no', False), name='bool'),
         Regex('regex'),
         Int('num', default=42),
     )
     matches:
-        'bool'      : bool = True, regex = None, num = 42
-        ' /abc/ 1'  : bool = False, regex = re.compile('abc'), num = 1
-        ' /abc/'     : bool = False, regex = re.compile('abc'), num = None
+        'y'         : bool = True, regex = None, num = 42
+        ' /abc/ 1'  : bool = None, regex = re.compile('abc'), num = 1
+        ' /abc/'    : bool = None, regex = re.compile('abc'), num = None
         '  1'  : bool = False, regex = None, num = 1
 """
 import re
@@ -154,6 +157,7 @@ def identifier(name):
 
 
 class Type(object):
+    """Base command argument type used to parse argument values"""
 
     def __init__(self, name, default=None):
         self.args = [name, default]
@@ -231,40 +235,92 @@ class Type(object):
         return []
 
 
-class Bool(Type):
+class Choice(Type):
+    """A multiple-choice argument type
 
-    def __init__(self, true, false, default=None):
-        self.args = [true, false, default]
-        self.true_names = true.split()
-        self.false_names = false.split()
-        self.default = default
+    Choices are names without spaces. At least one choice name is
+    required, more are usually provided.
 
-    @property
-    def name(self):
-        return self.true_names[0]
+    :param *choices: Two or more choice names or name/value pairs. Choices
+    may be specified as a single space-delimited string, or one or more
+    positional arguments consisting of either strings that do not
+    contain spaces, or tuples in the form ("name-string", <value>). The
+    value is the name in the case where name/value pairs are not given.
+    The first choice is the default.
+    :param name: Optional name, defaults to the first choice name. Must
+    be specified as a keyword argument.
+    """
 
-    @property
-    def placeholder(self):
-        return self.true_names[0] if self.default else self.false_names[0]
+    def __init__(self, *choices, **kw):
+        self.args = choices
+        self.kwargs = kw.copy()
+        if len(choices) == 1 and isinstance(choices[0], basestring):
+            choices = choices[0].split()
+        if len(choices) < 2:
+            raise ValueError('at least two choices are required')
+        self.mapping = map = {}
+        self.names = names = []
+        for choice in choices:
+            if not isinstance(choice, basestring):
+                try:
+                    name, value = choice
+                except (TypeError, ValueError):
+                    raise ValueError("invalid choice: %r" % (choice,))
+            else:
+                name = value = choice
+            if not isinstance(name, basestring) or not name or ' ' in name:
+                raise ValueError("invalid choice name: %r" % (name,))
+            names.append(name)
+            if name in map:
+                raise ValueError("ambiguous name: %r" % (name,))
+            map[name] = value
+            for i in range(1, len(name)):
+                key = name[:i]
+                if key in names:
+                    raise ValueError("ambiguous name: %r" % (key,))
+                if key in map:
+                    map.pop(key)
+                else:
+                    map[key] = value
+        self.name = kw.pop('name', names[0])
+        self.placeholder = names[0]
+        if kw:
+            raise ValueError("unexpected arguments: %r" % (kw,))
+
+    def __eq__(self, other):
+        if not issubclass(type(self), type(other)):
+            return False
+        return self.args == other.args and self.kwargs == other.kwargs
+
+    def __repr__(self):
+        args = [repr(a) for a in self.args]
+        args.extend('{}={!r}'.format(name, value)
+                    for name, value in sorted(self.kwargs.iteritems()))
+        return '{}({})'.format(type(self).__name__, ', '.join(args))
 
     def consume(self, text, index):
+        """Consume a single choice name starting at index
+
+        The token at index may be a complete choice name or a prefix
+        that uniquely identifies any choice. Return the default (first)
+        choice value if there is no token to consume.
+        """
         token, end = self.consume_token(text, index)
         if token is None:
-            return self.default, end
-        if token in self.true_names:
-            return True, end
-        if token in self.false_names:
-            return False, end
-        names = ' '.join(self.true_names + self.false_names)
-        msg = '{!r} not in {!r}'.format(token, names)
+            return self.mapping[self.names[0]], end
+        if token in self.mapping:
+            return self.mapping[token], end
+        names = ', '.join(n for n in self.names if n.startswith(token))
+        if names:
+            msg = '{!r} is ambiguous: {}'.format(token, names)
+        else:
+            names = ', '.join(self.names)
+            msg = '{!r} does not match any of: {}'.format(token, names)
         raise ParseError(msg, self, index, end)
 
     def get_completions(self, text):
-        if self.default:
-            names = [self.true_names[0], self.false_names[0]]
-        else:
-            names = [self.false_names[0], self.true_names[0]]
-        return [v for v in names if v.startswith(text)] # and len(v) > len(text))
+        """List choice names that complete the given command text"""
+        return [n for n in self.names if n.startswith(text)]
 
 
 class Int(Type):

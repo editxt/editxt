@@ -24,7 +24,7 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt.commandparser import (Bool, Int, String, Regex, VarArgs,
+from editxt.commandparser import (Choice, Int, String, Regex, VarArgs,
     CommandParser, Options)
 
 log = logging.getLogger(__name__)
@@ -295,9 +295,12 @@ def dedent_lines(textview, sender, args):
 
 @command(names='sort', title=u"Sort Lines...",
     arg_parser=CommandParser(
-        Bool('selection s', 'all a', True),
-        Bool('reverse r', 'forward f', False),
-        Bool('ignore-leading-whitespace i', 'sort-leading-whitespace s', False),
+        Choice(('selection', True), ('all', False)),
+        Choice(('forward', False), ('reverse', True), name='reverse'),
+        Choice(
+            ('sort-leading-whitespace', False),
+            ('ignore-leading-whitespace', True),
+            name='ignore-leading-whitespace'),
         Regex('sort-regex', True),
     ))
 def sort_lines(textview, sender, args):
@@ -314,7 +317,7 @@ def sort_lines(textview, sender, args):
     is_enabled=has_selection,
     arg_parser=CommandParser( # TODO test
         Int('wrap_column'),
-        Bool('indent i', 'no-indent n', True),
+        Choice(('indent', True), ('no-indent', False)),
     ))
 def wrap_lines(textview, sender, args):
     from editxt.wraplines import WrapLinesController, wrap_selected_lines

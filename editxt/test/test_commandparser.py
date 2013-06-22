@@ -24,7 +24,7 @@ from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_
 from editxt.test.util import assert_raises, TestConfig
 
-from editxt.commandparser import (Bool, Int, String, Regex, CommandParser,
+from editxt.commandparser import (Choice, Int, String, Regex, CommandParser,
     identifier, Options, Error, ArgumentError, ParseError)
 
 log = logging.getLogger(__name__)
@@ -49,31 +49,53 @@ def test_identifier():
     yield test, "arg_ument", "arg_ument"
     yield test, "arg-ument", "arg_ument"
 
-def test_Bool():
-    arg = Bool('arg-ument arg a', 'nope')
-    eq_(str(arg), 'nope')
+def test_Choice():
+    arg = Choice('arg-ument', 'nope', 'nah')
+    eq_(str(arg), 'arg-ument')
     eq_(arg.name, 'arg-ument')
 
+    test = make_type_checker(arg)
+    yield test, 'arg-ument', 0, ("arg-ument", 9)
+    yield test, 'arg', 0, ("arg-ument", 3)
+    yield test, 'a', 0, ("arg-ument", 1)
+    yield test, 'a', 1, ("arg-ument", 1)
+    yield test, '', 0, ("arg-ument", 0)
+    yield test, '', 3, ("arg-ument", 3)
+    yield test, 'arg arg', 0, ("arg-ument", 4)
+    yield test, 'nope', 0, ("nope", 4)
+    yield test, 'nop', 0, ("nope", 3)
+    yield test, 'no', 0, ("nope", 2)
+    yield test, 'nah', 0, ("nah", 3)
+    yield test, 'na', 0, ("nah", 2)
+
+    arg = Choice(('arg-ument', True), ('nope', False), ('nah', ""))
     test = make_type_checker(arg)
     yield test, 'arg-ument', 0, (True, 9)
     yield test, 'arg', 0, (True, 3)
     yield test, 'a', 0, (True, 1)
-    yield test, 'a', 1, (None, 1)
-    yield test, '', 0, (None, 0)
-    yield test, '', 3, (None, 3)
+    yield test, 'a', 1, (True, 1)
+    yield test, '', 0, (True, 0)
+    yield test, '', 3, (True, 3)
     yield test, 'arg arg', 0, (True, 4)
+    yield test, 'nope', 0, (False, 4)
+    yield test, 'nop', 0, (False, 3)
+    yield test, 'no', 0, (False, 2)
+    yield test, 'nah', 0, ("", 3)
+    yield test, 'na', 0, ("", 2)
+    yield test, 'n', 0, \
+        ParseError("'n' is ambiguous: nope, nah", arg, 0, 1)
     yield test, 'arg', 1, \
-        ParseError("'rg' not in 'arg-ument arg a nope'", arg, 1, 3)
+        ParseError("'rg' does not match any of: arg-ument, nope, nah", arg, 1, 3)
     yield test, 'args', 0, \
-        ParseError("'args' not in 'arg-ument arg a nope'", arg, 0, 4)
+        ParseError("'args' does not match any of: arg-ument, nope, nah", arg, 0, 4)
     yield test, 'args arg', 0, \
-        ParseError("'args' not in 'arg-ument arg a nope'", arg, 0, 5)
+        ParseError("'args' does not match any of: arg-ument, nope, nah", arg, 0, 5)
 
-def test_Bool_default_true():
-    arg = Bool('true t', 'false f', True)
+def test_Choice_default_first():
+    arg = Choice(('true', True), ('false', False))
     eq_(str(arg), 'true')
     eq_(arg.name, 'true')
-    eq_(repr(arg), "Bool('true t', 'false f', default=True)")
+    eq_(repr(arg), "Choice(('true', True), ('false', False))")
 
     test = make_type_checker(arg)
     yield test, '', 0, (True, 0)
@@ -82,15 +104,22 @@ def test_Bool_default_true():
     yield test, 'false', 0, (False, 5)
     yield test, 'f', 0, (False, 1)
     yield test, 'True', 0, \
-        ParseError("'True' not in 'true t false f'", arg, 0, 4)
+        ParseError("'True' does not match any of: true, false", arg, 0, 4)
     yield test, 'False', 0, \
-        ParseError("'False' not in 'true t false f'", arg, 0, 5)
+        ParseError("'False' does not match any of: true, false", arg, 0, 5)
 
-def test_Bool_repr():
+def test_Choice_strings():
+    arg = Choice('maybe yes no', name='yes')
+    eq_(str(arg), 'maybe')
+    eq_(arg.name, 'yes')
+    eq_(repr(arg), "Choice('maybe yes no', name='yes')")
+
+def test_Choice_repr():
     def test(rep, args):
-        eq_(repr(Bool(*args[0], **args[1])), rep)
-    yield test, "Bool('arg-ument arg a', 'no')", Args('arg-ument arg a', 'no')
-    yield test, "Bool('y', 'n', default=False)", Args('y', 'n', default=False)
+        eq_(repr(Choice(*args[0], **args[1])), rep)
+    yield test, "Choice('arg-ument no')", Args('arg-ument no')
+    yield test, "Choice('arg-ument', 'no')", Args('arg-ument', 'no')
+    yield test, "Choice('y', 'n', name='abc')", Args('y', 'n', name='abc')
 
 def test_Int():
     arg = Int('num')
@@ -185,10 +214,10 @@ def test_Regex():
     yield test, '/abc/def/y  def', 0, \
         ParseError('unknown flag: y', arg, 9, 9)
 
-arg_parser = CommandParser(Bool('yes', 'no'))
+arg_parser = CommandParser(Choice(('yes', True), ('no', False)))
 
 def test_CommandParser_empty():
-    eq_(arg_parser.parse(''), Options(yes=None))
+    eq_(arg_parser.parse(''), Options(yes=True))
 
 def test_CommandParser():
     eq_(arg_parser.parse('yes'), Options(yes=True))
@@ -198,10 +227,10 @@ def test_CommandParser_too_many_args():
         arg_parser.parse('yes unexpected')
 
 def test_CommandParser_incomplete():
-    parser = CommandParser(Bool('arg', 'no'))
+    parser = CommandParser(Choice('arg', 'all'))
     def check(err):
         eq_(err.options, Options())
-        eq_(err.errors, [ParseError("'a' not in 'arg no'", Bool('arg', 'no'), 0, 1)])
+        eq_(err.errors, [ParseError("'a' is ambiguous: arg, all", Choice('arg', 'all'), 0, 1)])
     print assert_raises
     with assert_raises(ArgumentError, msg=check):
         parser.parse('a')
@@ -213,8 +242,8 @@ def test_CommandParser_order():
         else:
             assert_raises(result, parser.parse, text)
     parser = CommandParser(
-        Bool('selection sel s', 'all'),
-        Bool('reverse rev r', 'forward'),
+        Choice(('selection', True), ('all', False)),
+        Choice(('forward', False), ('reverse', True), name='reverse'),
     )
     tt = Options(selection=True, reverse=True)
     yield test, 'selection reverse', tt
@@ -223,14 +252,14 @@ def test_CommandParser_order():
     yield test, 'r s', ArgumentError
     yield test, 's r', tt
     yield test, 'rev', ArgumentError
-    yield test, 'sel', Options(selection=True, reverse=None)
+    yield test, 'sel', Options(selection=True, reverse=False)
     yield test, 'r', ArgumentError
-    yield test, 's', Options(selection=True, reverse=None)
+    yield test, 's', Options(selection=True, reverse=False)
 
 #def test_
 #    CommandParser(
 #        Regex('regex'),
-#        Bool('bool b'),
+#        Choice('bool b'),
 #        Int('num'),
 #    )
 #    matches:
