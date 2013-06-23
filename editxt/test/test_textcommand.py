@@ -401,10 +401,10 @@ def test_TextCommandController_lookup():
         for command in c.commands:
             ctl.add_command(command, None, menu)
         eq_(ctl.lookup(c.lookup), c.result)
-    @command(names="cmd cm")
+    @command(name="cmd cm")
     def cmd(*args):
         pass
-    @command(names="cmd")
+    @command(name="cmd")
     def cm2(*args):
         pass
     @command
@@ -426,7 +426,7 @@ def test_TextCommandController_lookup_full_command():
             ctl.add_command(command, None, menu)
             menu.insertItem_atIndex_(ANY, ANY)
         eq_(ctl.lookup_full_command(c.lookup), c.result)
-    @command(names="cm")
+    @command(name="cm")
     def cmd(*args):
         pass
     @command(

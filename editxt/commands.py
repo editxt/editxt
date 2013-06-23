@@ -41,16 +41,15 @@ def load_commands():
 """
 
 
-def command(func=None, names=None, title=None, hotkey=None,
+def command(func=None, name=None, title=None, hotkey=None,
             is_enabled=None, arg_parser=None, lookup_with_arg_parser=False):
     """Text command decorator
 
     Text command signature: `text_command(textview, sender, args)`
     Both `sender` and `args` will be `None` in some contexts.
 
-    :param names: One or more names that can be typed in the command bar to
-       invoke the command. This can be a space-delimited string or a list of
-       strings. Defaults to the decorated callable's `__name__`.
+    :param name: A name that can be typed in the command bar to invoke the
+        command. Defaults to the decorated callable's `__name__`.
     :param title: The command title displayed in Text menu. Not in menu if None.
     :param hotkey: Preferred command hotkey tuple: `(<key char>, <key mask>)`.
         Ignored if title is None.
@@ -63,11 +62,12 @@ def command(func=None, names=None, title=None, hotkey=None,
         lookup the command. The parser should return None if it receives
         a text string that cannot be parsed.
     """
-    if isinstance(names, basestring):
-        names = names.split()
+    if isinstance(name, basestring):
+        name = name.split()
     def command_decorator(func):
         func.is_text_command = True
-        func.names = names or [func.__name__]
+        func.name = name[0] if name else func.__name__
+        func.names = name or [func.__name__]
         func.title = title
         func.hotkey = hotkey
         func.is_enabled = is_enabled or (lambda textview, sender: True)
@@ -129,7 +129,7 @@ def show_command_bar(textview, sender, args):
         editor.command.activate()
 
 
-@command(names='goto', title=u"Goto Line",
+@command(name='goto', title=u"Goto Line",
     arg_parser=CommandParser(Int("line")),
     lookup_with_arg_parser=True)
 def goto_line(textview, sender, opts):
@@ -293,7 +293,7 @@ def dedent_lines(textview, sender, args):
             textview.didChangeText()
 
 
-@command(names='sort', title=u"Sort Lines...",
+@command(name='sort', title=u"Sort Lines...",
     arg_parser=CommandParser(
         Choice(('selection', True), ('all', False)),
         Choice(('forward', False), ('reverse', True), name='reverse'),
@@ -312,7 +312,7 @@ def sort_lines(textview, sender, args):
         sortlines(textview, args)
 
 
-@command(names='wrap', title=u"Hard Wrap...",
+@command(name='wrap', title=u"Hard Wrap...",
     hotkey=("\\", NSCommandKeyMask | NSShiftKeyMask),
     is_enabled=has_selection,
     arg_parser=CommandParser( # TODO test

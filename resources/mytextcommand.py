@@ -5,9 +5,8 @@ set of attributes. The attributes are most conveniently applied with the
 @command decorator, which supplies defaults and allows them to be overridden.
 
 @command decorator parameters:
-    names - One or more names that can be typed in the command bar to
-    	invoke the command. This can be a space-delimited string or a list of
-        strings. Defaults to the decorated callable's `__name__`.
+    name - A name that can be typed in the command bar to invoke the
+        command. Defaults to the decorated callable's `__name__`.
     title - The command title displayed in Text menu. Not in menu if None.
     hotkey - Preferred command hotkey tuple: `(<key char>, <key mask>)`.
         Ignored if title is None.
