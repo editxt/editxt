@@ -97,6 +97,7 @@ def load_commands():
             wrap_lines,
             sort_lines,
             reindent,
+            find,
         ],
 
         # A dict of of NSResponder selectors mapped to callbacks
@@ -291,6 +292,33 @@ def dedent_lines(textview, sender, args):
             textview.textStorage().replaceCharactersInRange_withString_(sel, seltext)
             textview.setSelectedRange_((sel[0], len(seltext)))
             textview.didChangeText()
+
+
+@command(arg_parser=CommandParser(
+    Regex('pattern', replace=True),
+    Choice('regex literal-text word', name='search_type'),
+    Choice(('find-next next', 'find_next'),
+        ('find-previous previous', 'find_previous'),
+        ('replace-one one', 'replace_one'),
+        ('replace-all all', 'replace_all'),
+        ('replace-in-selection in-selection selection', 'replace_all_in_selection'),
+        name='action'),
+    Choice(('wrap', True), ('no-wrap', False), name='wrap_around'),
+), lookup_with_arg_parser=True)
+def find(textview, sender, args):
+    from editxt.findpanel import Finder, FindOptions
+    assert args is not None, sender
+    action = args.__dict__.pop('action')
+    search_type = args.__dict__.pop('search_type')
+    find, replace = args.__dict__.pop('pattern')
+    opts = FindOptions(**args.__dict__)
+    opts.find_text = find.pattern
+    opts.replace_text = replace or ""
+    opts.ignore_case = bool(find.flags & re.IGNORECASE)
+    opts.match_entire_word = (search_type == 'word')
+    opts.regular_expression = (search_type == "regex")
+    finder = Finder(lambda:textview, opts)
+    getattr(finder, action)(sender)
 
 
 @command(name='sort', title=u"Sort Lines...",

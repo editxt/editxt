@@ -91,6 +91,7 @@ def test_load_commands():
         mod.wrap_lines,
         mod.sort_lines,
         mod.reindent,
+        mod.find,
     ])
     eq_(set(cmds["input_handlers"]), set([
         "insertTab:",
@@ -465,6 +466,57 @@ def test_text_commands():
         yield test, c(input=u"\n      ", output=u"\n    ", oldsel=(7+i, 0), newsel=(5+i, 0))
         yield test, c(input=u"\n       ", output=u"\n    ", oldsel=(8+i, 0), newsel=(5+i, 0))
         yield test, c(input=u"\n        ", output=u"\n    ", oldsel=(9+i, 0), newsel=(5+i, 0))
+
+def test_find_command():
+    from editxt.findpanel import Finder, FindOptions
+    def test(c):
+        assert int(c.regex) + int(c.match_word) < 2, c
+        opts = FindOptions(**{opt: c[key] for key, opt in {
+            "find": "find_text",
+            "replace": "replace_text",
+            "regex": "regular_expression",
+            "ignore_case": "ignore_case",
+            "match_word": "match_entire_word",
+            "wrap": "wrap_around",
+        }.items()})
+        m = Mocker()
+        tv = m.mock(NSTextView)
+        finder_cls = m.replace("editxt.findpanel.Finder")
+        def check_opts(get_tv, args):
+            eq_(get_tv(), tv)
+            eq_(args, opts)
+        finder = m.mock(Finder)
+        (finder_cls(ANY, ANY) << finder).call(check_opts)
+        getattr(finder, c.action)("<sender>")
+        with m:
+            args = mod.find.arg_parser.parse(c.input)
+            mod.find(tv, "<sender>", args)
+
+    c = TestConfig(find="", replace="", regex=True, ignore_case=False,
+                   match_word=False, wrap=True, action="find_next")
+    yield test, c(input=u"/abc", find="abc")
+    yield test, c(input=u";abc", find="abc")
+    yield test, c(input=u";abc\;", find=r"abc\;")
+    yield test, c(input=u"/\/abc\//", find=r"\/abc\/")
+    yield test, c(input=u"/abc/def", find="abc", replace="def")
+    yield test, c(input=u"/abc/def/", find="abc", replace="def")
+    yield test, c(input=u"/abc/def/i", find="abc", replace="def", ignore_case=True)
+    yield test, c(input=u" abc def i", find="abc", replace="def", ignore_case=True)
+    yield test, c(input=u";abc;def;i", find="abc", replace="def", ignore_case=True)
+    yield test, c(input=u"#abc#def#i", find="abc", replace="def", ignore_case=True)
+    yield test, c(input=u",abc,def,i", find="abc", replace="def", ignore_case=True)
+    yield test, c(input=u"'abc'def'i", find="abc", replace="def", ignore_case=True)
+    yield test, c(input=u'"abc"def"i', find="abc", replace="def", ignore_case=True)
+    yield test, c(input=u" ab\ c def i", find=r"ab\ c", replace="def", ignore_case=True)
+    yield test, c(input=u"/abc// r", find="abc", regex=True)
+    yield test, c(input=u"/abc// l", find="abc", regex=False, match_word=False)
+    yield test, c(input=u"/abc// w", find="abc", regex=False, match_word=True)
+    yield test, c(input=u"/abc//  p", find="abc", action="find_previous")
+    yield test, c(input=u"/abc//  previous", find="abc", action="find_previous")
+    yield test, c(input=u"/abc//  o", find="abc", action="replace_one")
+    yield test, c(input=u"/abc//  a", find="abc", action="replace_all")
+    yield test, c(input=u"/abc//  i", find="abc", action="replace_all_in_selection")
+    yield test, c(input=u"/abc//   n", find="abc", wrap=False)
 
 def test_panel_actions():
     import sys

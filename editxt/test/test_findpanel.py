@@ -143,7 +143,7 @@ def test_FindController_actions():
         if "do" in c:
             c.do(m, c, fc, sender)
         else:
-            m.method(fc, c.real)(*c.args)
+            m.method(fc.finder, c.real)(*c.args)
         with m:
             getattr(fc, c.meth)(sender)
     c = TestConfig()
@@ -154,7 +154,7 @@ def test_FindController_actions():
         m.method(fc.set_find_text_with_selection)(sender)
         m.method(fc.save_options)() >> c.saved
         if c.saved:
-            m.method(fc.find_next)(sender)
+            m.method(fc.finder.find_next)(sender)
     yield test, c(meth="find_selected_text", do=do, saved=True)
     yield test, c(meth="find_selected_text", do=do, saved=False)
 
@@ -162,21 +162,21 @@ def test_FindController_actions():
         m.method(fc.set_find_text_with_selection)(sender)
         m.method(fc.save_options)() >> c.saved
         if c.saved:
-            m.method(fc.find_previous)(sender)
+            m.method(fc.finder.find_previous)(sender)
     yield test, c(meth="find_selected_text_reverse", do=do, saved=True)
     yield test, c(meth="find_selected_text_reverse", do=do, saved=False)
 
     def do(m, c, fc, sender):
         beep = m.replace(mod, 'NSBeep')
         dobeep = True
-        tv = m.method(fc.find_target)() >> (m.mock(TextView) if c.has_tv else None)
+        tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
         if c.has_tv:
-            opts = m.property(fc, "opts").value >> m.mock()
-            rtext = m.property(fc, "replace_value").value >> "abc"
+            opts = m.property(fc.finder, "opts").value >> m.mock()
+            rtext = m.property(fc.finder, "replace_value").value >> "abc"
             opts.regular_expression >> c.regex
             rfr = FoundRange(None) if c.rfr else None
             if c.regex:
-                (m.property(fc, "recently_found_range").value << rfr).count(1,2)
+                (m.property(fc.finder, "recently_found_range").value << rfr).count(1,2)
             range = tv.selectedRange() >> m.mock()
             tv.shouldChangeTextInRange_replacementString_(range, rtext) >> c.act
             if c.act:
@@ -186,7 +186,7 @@ def test_FindController_actions():
                 dobeep = False
         if dobeep:
             beep()
-    cx = c(meth="replace", do=do, has_tv=True, regex=True, rfr=True, act=True)
+    cx = c(meth="replace_one", do=do, has_tv=True, regex=True, rfr=True, act=True)
     yield test, cx
     yield test, cx(has_tv=False)
     yield test, cx(regex=False)
@@ -194,31 +194,31 @@ def test_FindController_actions():
     yield test, cx(act=False)
 
     def do(m, c, fc, sender):
-        m.method(fc._replace_all)(c.sel_only)
+        m.method(fc.finder._replace_all)(c.sel_only)
     yield test, c(meth="replace_all", do=do, sel_only=False)
     yield test, c(meth="replace_all_in_selection", do=do, sel_only=True)
 
     def do(m, c, fc, sender):
-        m.method(fc.replace)(sender)
-        m.method(fc.find_next)(sender)
+        m.method(fc.finder.replace_one)(sender)
+        m.method(fc.finder.find_next)(sender)
     yield test, c(meth="replace_and_find_next", do=do)
 
     def do(m, c, fc, sender):
         if m.method(fc.save_options)() >> c.saved:
             (m.method(fc.window)() >> m.mock(NSWindow)).orderOut_(sender)
-            m.method(fc, c.real)(sender)
+            m.method(fc.finder, c.real)(sender)
     for saved in (True, False):
         cx = c(saved=saved, do=do)
         yield test, cx(meth="panelFindNext_", real="find_next")
         yield test, cx(meth="panelFindPrevious_", real="find_previous")
-        yield test, cx(meth="panelReplace_", real="replace")
+        yield test, cx(meth="panelReplace_", real="replace_one")
         yield test, cx(meth="panelReplaceAll_", real="replace_all")
         yield test, cx(meth="panelReplaceAllInSelection_", real="replace_all_in_selection")
         #yield test, cx(meth="panelMarkAll_", real="mark_all")
 
     def do(m, c, fc, sender):
         if m.method(fc.validate_expression)() >> c.valid:
-            text = m.property(fc, c.val).value >> "<value>"
+            text = m.property(fc.finder, c.val).value >> "<value>"
             m.method(fc.count_occurrences)(text, c.regex)
     for v in (True, False):
         cx = c(valid=v, do=do)
@@ -246,28 +246,28 @@ def test_FindController_value_of_field():
         if c.has_field:
             field.stringValue() >> "<value>"
         else:
-            opts = m.property(fc, "opts").value >> m.mock(FindOptions)
+            opts = m.property(fc.finder, "opts").value >> m.mock(FindOptions)
 #           (m.property(fc, "opts").value << opts).count(2)
 #           opts.load()
             getattr(opts, c.name) >> "<value>"
         with m:
-            result = fc.value_of_field(c.name)
+            result = fc.finder.value_of_field(c.name)
             eq_(result, "<value>")
     c = TestConfig()
     for hf in (True, False):
         yield test, c(name="find_text", has_field=hf)
         yield test, c(name="replace_text", has_field=hf)
 
-def test_FindController_find():
+def test_FindController_finder_find():
     def test(c):
         m = Mocker()
         fc = FindController.shared_controller()
         beep = m.replace(mod, 'NSBeep')
         dobeep = True
         direction = "<direction>"
-        _find = m.method(fc._find)
-        tv = m.method(fc.find_target)() >> (m.mock(TextView) if c.has_tv else None)
-        m.property(fc, "find_value").value >> c.ftext
+        _find = m.method(fc.finder._find)
+        tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
+        m.property(fc.finder, "find_value").value >> c.ftext
         if c.has_tv and c.ftext:
             text = tv.string() >> "<text>"
             sel = tv.selectedRange() >> (1, 2)
@@ -279,7 +279,7 @@ def test_FindController_find():
         if dobeep:
             beep()
         with m:
-            fc.find(direction)
+            fc.finder.find(direction)
     c = TestConfig(ftext="find", has_tv=True)
     yield test, c(has_tv=False)
     yield test, c(has_tv=True, ftext="")
@@ -292,12 +292,12 @@ def test_FindController__find():
     def test(c):
         m = Mocker()
         fc = FindController.shared_controller()
-        regexfind = m.method(fc.regexfinditer)
-        simplefind = m.method(fc.simplefinditer)
-        rfr = m.property(fc, "recently_found_range")
+        regexfind = m.method(fc.finder.regexfinditer)
+        simplefind = m.method(fc.finder.simplefinditer)
+        rfr = m.property(fc.finder, "recently_found_range")
         sel = NSMakeRange(1, 2)
         direction = "<direction>"
-        opts = m.property(fc, "opts").value >> m.mock(FindOptions)
+        opts = m.property(fc.finder, "opts").value >> m.mock(FindOptions)
         ftext = u"<find>"
         if opts.regular_expression >> c.regex:
             finditer = regexfind
@@ -321,7 +321,7 @@ def test_FindController__find():
             rng = found.range
         finditer(u"<text>", ftext, range, direction, True) >> items
         with m:
-            result = fc._find(u"<text>", u"<find>", sel, direction)
+            result = fc.finder._find(u"<text>", u"<find>", sel, direction)
             eq_(result, rng)
     c = TestConfig(regex=False, mword=False, matches=[])
     yield test, c
@@ -342,25 +342,25 @@ def test_FindController__replace_all():
         fc = FindController.shared_controller()
         beep = m.replace(mod, 'NSBeep')
         dobeep = True
-        tv = m.method(fc.find_target)() >> (m.mock(TextView) if c.has_tv else None)
-        ftext = m.property(fc, "find_value").value >> c.ftext
+        tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
+        ftext = m.property(fc.finder, "find_value").value >> c.ftext
         range = (tv.selectedRange() >> NSRange(*c.sel)) if c.has_tv else None
         if c.has_tv and c.ftext and ((c.sel_only and c.sel[1] > 0) or not c.sel_only):
             text = tv.string() >> c.text
-            opts = m.property(fc, "opts").value >> m.mock()
+            opts = m.property(fc.finder, "opts").value >> m.mock()
             if not c.sel_only:
                 if (opts.wrap_around >> c.wrap):
                     range = NSMakeRange(0, 0)
                 else:
                     range = NSMakeRange(range[0], len(text) - range[0])
             if opts.regular_expression >> c.regex:
-                finditer = m.method(fc.regexfinditer)
+                finditer = m.method(fc.finder.regexfinditer)
             elif opts.match_entire_word >> c.mword:
                 ftext = u"\\b" + re.escape(ftext) + u"\\b"
-                finditer = m.method(fc.regexfinditer)
+                finditer = m.method(fc.finder.regexfinditer)
             else:
-                finditer = m.method(fc.simplefinditer)
-            rtext = m.property(fc, "replace_value").value >> c.rtext
+                finditer = m.method(fc.finder.simplefinditer)
+            rtext = m.property(fc.finder, "replace_value").value >> c.rtext
             found = None
             ranges = []
             rtexts = []
@@ -387,7 +387,7 @@ def test_FindController__replace_all():
         if dobeep:
             beep()
         with m:
-            fc._replace_all(c.sel_only)
+            fc.finder._replace_all(c.sel_only)
     c = TestConfig(has_tv=True, text="<TEXT>", ftext="T", rtext="X",
         sel_only=False, sel=(1, 0), wrap=False, regex=False, mword=False,
         ranges=[], replace=True, beep=True)
@@ -409,8 +409,8 @@ def test_FindController_count_occurrences():
         beep = m.replace(mod, 'NSBeep')
         fc = FindController.shared_controller()
         flash = m.method(fc.flash_status_text)
-        regexfind = m.method(fc.regexfinditer)
-        simplefind = m.method(fc.simplefinditer)
+        regexfind = m.method(fc.finder.regexfinditer)
+        simplefind = m.method(fc.finder.simplefinditer)
         tv = m.method(fc.find_target)() >> (m.mock(TextView) if c.has_tv else None)
         if c.has_tv:
             ftext = u"<find>"

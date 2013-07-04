@@ -89,74 +89,13 @@ class FindOptions(Options):
     def match_entire_word(): pass
 
 
-class FindController(PanelController):
-    """Window controller for find panel"""
+class Finder(object):
 
-    NIB_NAME = u"FindPanel"
-    OPTIONS_KEY = const.FIND_PANEL_OPTIONS_KEY
-    OPTIONS_CLASS = FindOptions
-    OPTIONS_DEFAULTS = dict(
-        #find_text = u"",
-        replace_text = u"",
-        recent_finds = (),
-        recent_replaces = (),
-        regular_expression = False,
-        match_entire_word = False,
-        ignore_case = True,
-        wrap_around = True,
-        #search_selection_only = False,
-    )
-
-    find_text = objc.IBOutlet()
-    replace_text = objc.IBOutlet()
-    status_label = objc.IBOutlet()
-
-    def initWithWindowNibName_(self, name):
-        self = super(FindController, self).initWithWindowNibName_(name)
-        self.action_registry = {
-            NSFindPanelActionShowFindPanel: self.show_find_panel,
-            NSFindPanelActionNext: self.find_next,
-            NSFindPanelActionPrevious: self.find_previous,
-            NSFindPanelActionReplace: self.replace,
-            NSFindPanelActionReplaceAll: self.replace_all,
-            NSFindPanelActionReplaceAndFind: self.replace_and_find_next,
-            NSFindPanelActionReplaceAllInSelection: self.replace_all_in_selection,
-            NSFindPanelActionSetFindString: self.set_find_text_with_selection,
-            ACTION_FIND_SELECTED_TEXT: self.find_selected_text,
-            ACTION_FIND_SELECTED_TEXT_REVERSE: self.find_selected_text_reverse,
-        }
-        #self.opts = opts = KVOProxy(FindOptions())
+    def __init__(self, find_target, options, panel=None):
+        self.find_target = find_target
+        self.opts = options
+        self.panel = panel
         self.recently_found_range = None
-        return self
-
-    def windowDidLoad(self):
-        self.window().setLevel_(NSFloatingWindowLevel)
-        target = self.find_target()
-        if target is not None:
-            font = target.doc_view.document.default_text_attributes()[NSFontAttributeName]
-            for field in (self.find_text, self.replace_text):
-                field.setFont_(font)
-
-    # Menu actions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    def validate_action(self, tag):
-        if tag in self.action_registry:
-            target = self.find_target()
-            if target is not None:
-                if tag in SELECTION_REQUIRED_ACTIONS:
-                    return target.selectedRange().length > 0
-                return True
-        return False
-
-    def perform_action(self, sender):
-        default = lambda s: log.info("unknown action: %s", s.tag())
-        self.action_registry.get(sender.tag(), default)(sender)
-
-    def show_find_panel(self, sender):
-        #self.load_options() # restore state
-        self.showWindow_(self)
-        #self.find_text.setStringValue_(self.opts.find_text) # HACK should not have to do this
-        self.find_text.selectText_(sender)
 
     def find_next(self, sender):
         self.find(FORWARD)
@@ -164,17 +103,7 @@ class FindController(PanelController):
     def find_previous(self, sender):
         self.find(BACKWARD)
 
-    def find_selected_text(self, sender):
-        self.set_find_text_with_selection(sender)
-        if self.save_options():
-            self.find_next(sender)
-
-    def find_selected_text_reverse(self, sender):
-        self.set_find_text_with_selection(sender)
-        if self.save_options():
-            self.find_previous(sender)
-
-    def replace(self, sender):
+    def replace_one(self, sender):
         target = self.find_target()
         if target is not None:
             options = self.opts
@@ -195,77 +124,6 @@ class FindController(PanelController):
     def replace_all_in_selection(self, sender):
         self._replace_all(True)
 
-    def replace_and_find_next(self, sender):
-        self.replace(sender)
-        self.find_next(sender)
-
-    def set_find_text_with_selection(self, sender):
-        target = self.find_target()
-        if target is not None:
-            range = target.selectedRange()
-            if range.length > 0:
-                text = target.string().substringWithRange_(range)
-                if self.opts.regular_expression:
-                    text = re.escape(text)
-                self.opts.find_text = text
-
-
-    # Panel actions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    def panelFindNext_(self, sender):
-        if self.save_options():
-            self.window().orderOut_(sender)
-            self.find_next(sender)
-
-    def panelFindPrevious_(self, sender):
-        if self.save_options():
-            self.window().orderOut_(sender)
-            self.find_previous(sender)
-
-    def panelReplace_(self, sender):
-        if self.save_options():
-            self.window().orderOut_(sender)
-            self.replace(sender)
-
-    def panelReplaceAll_(self, sender):
-        if self.save_options():
-            self.window().orderOut_(sender)
-            self.replace_all(sender)
-
-    def panelReplaceAllInSelection_(self, sender):
-        if self.save_options():
-            self.window().orderOut_(sender)
-            self.replace_all_in_selection(sender)
-
-    def panelCountFindText_(self, sender):
-        if self.validate_expression():
-            self.count_occurrences(self.find_value, True)
-
-    def panelCountReplaceText_(self, sender):
-        if self.validate_expression():
-            self.count_occurrences(self.replace_value, False)
-
-    def panelMarkAll_(self, sender):
-        if self.save_options():
-            raise NotImplementedError()
-
-    def recentFindSelected_(self, sender):
-        # TODO make this support undo so the change can be easily reverted
-        self.opts.find_text = sender.selectedItem().title()
-
-    def recentReplaceSelected_(self, sender):
-        # TODO make this support undo so the change can be easily reverted
-        self.opts.replace_text = sender.selectedItem().title()
-
-    def regexHelp_(self, sender):
-        # TODO possibly open a sheet with a short description of how regular
-        # expressions are used here, including notes about the default flags
-        # that are set (MULTILINE | UNICODE) and the syntax that should be used.
-        url = NSURL.URLWithString_(const.REGEX_HELP_URL)
-        NSWorkspace.sharedWorkspace().openURL_(url)
-
-    # Utility methods ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
     @property
     def find_value(self):
         return self.value_of_field("find_text")
@@ -275,10 +133,10 @@ class FindController(PanelController):
         return self.value_of_field("replace_text")
 
     def value_of_field(self, name):
-        field = getattr(self, name)
-        if field is not None:
-            return field.stringValue()
-        #self.load_options()
+        if self.panel is not None:
+            field = getattr(self.panel, name)
+            if field is not None:
+                return field.stringValue()
         return getattr(self.opts, name)
 
     def find(self, direction):
@@ -362,27 +220,6 @@ class FindController(PanelController):
                 target.setNeedsDisplay_(True)
                 return
         NSBeep()
-
-    def count_occurrences(self, ftext, regex):
-        target = self.find_target()
-        if target is not None and ftext:
-            text = target.string()
-            range = NSMakeRange(0, text.length())
-            options = self.opts
-            if regex and options.regular_expression:
-                finditer = self.regexfinditer
-            elif regex and options.match_entire_word:
-                ftext = u"\\b" + re.escape(ftext) + u"\\b"
-                finditer = self.regexfinditer
-            else:
-                finditer = self.simplefinditer
-            count = sum(1 for x in finditer(text, ftext, range, FORWARD, False))
-            if count:
-                self.flash_status_text(u"%i occurrences" % count)
-            else:
-                self.flash_status_text(u"Not found")
-        else:
-            NSBeep()
 
     def simplefinditer(self, text, ftext, range, direction, yield_on_wrap):
         """Yields FoundRanges of text that match ftext
@@ -480,6 +317,171 @@ class FindController(PanelController):
                 else:
                     break
 
+
+class FindController(PanelController):
+    """Window controller for find panel"""
+
+    NIB_NAME = u"FindPanel"
+    OPTIONS_KEY = const.FIND_PANEL_OPTIONS_KEY
+    OPTIONS_CLASS = FindOptions
+    OPTIONS_DEFAULTS = dict(
+        #find_text = u"",
+        replace_text = u"",
+        recent_finds = (),
+        recent_replaces = (),
+        regular_expression = False,
+        match_entire_word = False,
+        ignore_case = True,
+        wrap_around = True,
+        #search_selection_only = False,
+    )
+
+    find_text = objc.IBOutlet()
+    replace_text = objc.IBOutlet()
+    status_label = objc.IBOutlet()
+
+    def initWithWindowNibName_(self, name):
+        self = super(FindController, self).initWithWindowNibName_(name)
+        self.finder = Finder(self.find_target, self.opts, self)
+        self.action_registry = {
+            NSFindPanelActionShowFindPanel: self.show_find_panel,
+            NSFindPanelActionNext: self.find_next,
+            NSFindPanelActionPrevious: self.find_previous,
+            NSFindPanelActionReplace: self.replace_one,
+            NSFindPanelActionReplaceAll: self.replace_all,
+            NSFindPanelActionReplaceAndFind: self.replace_and_find_next,
+            NSFindPanelActionReplaceAllInSelection: self.replace_all_in_selection,
+            NSFindPanelActionSetFindString: self.set_find_text_with_selection,
+            ACTION_FIND_SELECTED_TEXT: self.find_selected_text,
+            ACTION_FIND_SELECTED_TEXT_REVERSE: self.find_selected_text_reverse,
+        }
+        #self.opts = opts = KVOProxy(FindOptions())
+        return self
+
+    def windowDidLoad(self):
+        self.window().setLevel_(NSFloatingWindowLevel)
+        target = self.find_target()
+        if target is not None:
+            font = target.doc_view.document.default_text_attributes()[NSFontAttributeName]
+            for field in (self.find_text, self.replace_text):
+                field.setFont_(font)
+
+    # Menu actions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    def validate_action(self, tag):
+        if tag in self.action_registry:
+            target = self.find_target()
+            if target is not None:
+                if tag in SELECTION_REQUIRED_ACTIONS:
+                    return target.selectedRange().length > 0
+                return True
+        return False
+
+    def perform_action(self, sender):
+        default = lambda s: log.info("unknown action: %s", s.tag())
+        self.action_registry.get(sender.tag(), default)(sender)
+
+    def show_find_panel(self, sender):
+        #self.load_options() # restore state
+        self.showWindow_(self)
+        #self.find_text.setStringValue_(self.opts.find_text) # HACK should not have to do this
+        self.find_text.selectText_(sender)
+
+    def find_next(self, sender):
+        return self.finder.find_next(sender)
+
+    def find_previous(self, sender):
+        return self.finder.find_previous(sender)
+
+    def replace_one(self, sender):
+        return self.finder.replace_one(sender)
+
+    def replace_all(self, sender):
+        return self.finder.replace_all(sender)
+
+    def replace_all_in_selection(self, sender):
+        return self.finder.replace_all_in_selection(sender)
+
+    def find_selected_text(self, sender):
+        self.set_find_text_with_selection(sender)
+        if self.save_options():
+            self.finder.find_next(sender)
+
+    def find_selected_text_reverse(self, sender):
+        self.set_find_text_with_selection(sender)
+        if self.save_options():
+            self.finder.find_previous(sender)
+
+    def replace_and_find_next(self, sender):
+        self.finder.replace_one(sender)
+        self.finder.find_next(sender)
+
+    def set_find_text_with_selection(self, sender):
+        target = self.find_target()
+        if target is not None:
+            range = target.selectedRange()
+            if range.length > 0:
+                text = target.string().substringWithRange_(range)
+                if self.opts.regular_expression:
+                    text = re.escape(text)
+                self.opts.find_text = text
+
+    # Panel actions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    def panelFindNext_(self, sender):
+        if self.save_options():
+            self.window().orderOut_(sender)
+            self.finder.find_next(sender)
+
+    def panelFindPrevious_(self, sender):
+        if self.save_options():
+            self.window().orderOut_(sender)
+            self.finder.find_previous(sender)
+
+    def panelReplace_(self, sender):
+        if self.save_options():
+            self.window().orderOut_(sender)
+            self.finder.replace_one(sender)
+
+    def panelReplaceAll_(self, sender):
+        if self.save_options():
+            self.window().orderOut_(sender)
+            self.finder.replace_all(sender)
+
+    def panelReplaceAllInSelection_(self, sender):
+        if self.save_options():
+            self.window().orderOut_(sender)
+            self.finder.replace_all_in_selection(sender)
+
+    def panelCountFindText_(self, sender):
+        if self.validate_expression():
+            self.count_occurrences(self.finder.find_value, True)
+
+    def panelCountReplaceText_(self, sender):
+        if self.validate_expression():
+            self.count_occurrences(self.finder.replace_value, False)
+
+    def panelMarkAll_(self, sender):
+        if self.save_options():
+            raise NotImplementedError()
+
+    def recentFindSelected_(self, sender):
+        # TODO make this support undo so the change can be easily reverted
+        self.opts.find_text = sender.selectedItem().title()
+
+    def recentReplaceSelected_(self, sender):
+        # TODO make this support undo so the change can be easily reverted
+        self.opts.replace_text = sender.selectedItem().title()
+
+    def regexHelp_(self, sender):
+        # TODO possibly open a sheet with a short description of how regular
+        # expressions are used here, including notes about the default flags
+        # that are set (MULTILINE | UNICODE) and the syntax that should be used.
+        url = NSURL.URLWithString_(const.REGEX_HELP_URL)
+        NSWorkspace.sharedWorkspace().openURL_(url)
+
+    # Utility methods ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     def find_target(self):
         try:
             editor = app.iter_editors().next()
@@ -490,6 +492,27 @@ class FindController(PanelController):
             if docview is not None:
                 return docview.text_view
         return None
+
+    def count_occurrences(self, ftext, regex):
+        target = self.find_target()
+        if target is not None and ftext:
+            text = target.string()
+            range = NSMakeRange(0, text.length())
+            options = self.opts
+            if regex and options.regular_expression:
+                finditer = self.finder.regexfinditer
+            elif regex and options.match_entire_word:
+                ftext = u"\\b" + re.escape(ftext) + u"\\b"
+                finditer = self.finder.regexfinditer
+            else:
+                finditer = self.finder.simplefinditer
+            count = sum(1 for x in finditer(text, ftext, range, FORWARD, False))
+            if count:
+                self.flash_status_text(u"%i occurrences" % count)
+            else:
+                self.flash_status_text(u"Not found")
+        else:
+            NSBeep()
 
     def flash_status_text(self, text):
         self.stop_flashing_status()

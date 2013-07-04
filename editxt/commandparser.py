@@ -482,7 +482,8 @@ class Options(object):
     """
 
     def __init__(self, **opts):
-        self.__dict__.update(opts)
+        for name, value in opts.items():
+            setattr(self, name, value)
 
     def __eq__(self, other):
         if not issubclass(type(other), type(self)):
@@ -517,6 +518,12 @@ class Error(Exception):
 
 
 class ArgumentError(Error):
+
+    def __str__(self):
+        ext = ""
+        if self.errors:
+            ext = "\n" + "\n".join(str(err) for err in self.errors)
+        return self.args[0] + ext
 
     @property
     def options(self):

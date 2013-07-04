@@ -157,9 +157,9 @@ def test_CommandBar_get_placeholder():
     yield test, c(text='cmd   ', expect="sort_regex")
     yield test, c(text='cmd  /', expect="")
     yield test, c(text='cmd    ', expect="")
-    yield test, c(text='/', expect="", match="parse")
-    yield test, c(text='/x', expect="", match="parse")
-    yield test, c(text='/x ', expect="", match="parse")
+    yield test, c(text='/', expect=" ...", match="parse")
+    yield test, c(text='/x', expect=" ...", match="parse")
+    yield test, c(text='/x ', expect="...", match="parse") # FIXME should expect=" ..."
     yield test, c(text='/x/ ', expect="...", match="parse")
     yield test, c(text='/x/  ', expect="", match="parse")
     yield test, c(text='/x/ a', expect="", match="parse")
@@ -178,7 +178,7 @@ def test_CommandBar_get_completions():
         args = c.text.split()
         @command(arg_parser=CommandParser(
             Choice(('selection', True), ('all', False)),
-            Choice(('forward', False), ('reverse', True), name='reverse'),
+            Choice(('forward', False), ('reverse xyz', True), name='reverse'),
             Regex('sort_regex', True),
         ))
         def cmd(textview, sender, args):
@@ -214,6 +214,7 @@ def test_CommandBar_get_completions():
     yield test, c(text='cmd sec', expect=([], -1))
     yield test, c(text='cmd s ', expect=(["forward", "reverse"], 0))
     yield test, c(text='cmd s r', expect=(["reverse"], 0))
+    yield test, c(text='cmd s x', expect=(["xyz"], 0))
     yield test, c(text='/', expect=([], -1))
     yield test, c(text='/a', expect=([], -1))
     yield test, c(text='/abc/ ', expect=(["yes", "no"], 0))
