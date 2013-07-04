@@ -169,7 +169,7 @@ def test_Regex():
     eq_(str(arg), 'regex')
     eq_(repr(arg), "Regex('regex')")
 
-    def test(text, start, expect, flags=re.UNICODE | re.MULTILINE):
+    def test(text, start, expect, flags=0):
         if isinstance(expect, Exception):
             def check(err):
                 eq_(err, expect)
@@ -187,30 +187,39 @@ def test_Regex():
         else:
             got = (expr.pattern, index)
         eq_(got, expect)
-        eq_(expr.flags, flags)
+        eq_(expr.flags, flags | re.UNICODE | re.MULTILINE)
     yield test, '', 0, (None, 0)
-    yield test, 'abc', 0, ('abc', 3)
-    yield test, '^abc$', 0, ('^abc$', 5)
-    yield test, '^abc$ def', 0, ('^abc$', 6)
     yield test, '/abc/', 0, ('abc', 5)
-    yield test, '/abc/ def', 0, ('abc', 6), re.U | re.M
-    yield test, '/abc/  def', 0, ('abc', 6), re.U | re.M
-    yield test, '/abc/is def', 0, ('abc', 8), re.U | re.M | re.I | re.S
-    yield test, '/abc/is  def', 0, ('abc', 8), re.U | re.M | re.I | re.S
-    yield test, '/abc/umi def', 0, ('abc', 9), re.U | re.M | re.I
-    yield test, '/abc/umX def', 0, \
-        ParseError('unknown flag: X', arg, 7, 7)
+    yield test, '/abc/ def', 0, ('abc', 6)
+    yield test, '/abc/  def', 0, ('abc', 6)
+    yield test, '/abc/i def', 0, ('abc', 7), re.I
+    yield test, '/abc/is def', 0, ('abc', 8), re.I | re.S
+    yield test, '/abc/is  def', 0, ('abc', 8), re.I | re.S
+    yield test, 'abc', 0, \
+        ParseError("invalid search pattern: 'abc'", arg, 0, 3)
+        #('abc', 3)
+    yield test, '^abc$', 0, \
+        ParseError("invalid search pattern: '^abc$'", arg, 0, 5)
+        #('^abc$', 5)
+    yield test, '^abc$ def', 0, \
+        ParseError("invalid search pattern: '^abc$ def'", arg, 0, 9)
+        #('^abc$', 6)
+    yield test, '/abc/X def', 0, \
+        ParseError('unknown flag: X', arg, 5, 5)
 
     arg = Regex('regex', True)
     eq_(repr(arg), "Regex('regex', replace=True)")
     yield test, '', 0, ((None, None), 0)
-    yield test, 'abc', 0, (('abc', None), 3)
-    yield test, 'abc def', 0, (('abc', 'def'), 7)
+    yield test, '/abc def', 0, (('abc def', None), 8)
     yield test, '/abc/def/', 0, (('abc', 'def'), 9)
     yield test, '/abc/def/ def', 0, (('abc', 'def'), 10)
     yield test, '/abc/def/  def', 0, (('abc', 'def'), 10)
-    yield test, '/abc/def/i  def', 0, (('abc', 'def'), 11), re.U | re.M | re.I
-    yield test, '/abc/def/um  def', 0, (('abc', 'def'), 12), re.U | re.M
+    yield test, '/abc/def/i  def', 0, (('abc', 'def'), 11), re.I
+    yield test, '/abc/def/is  def', 0, (('abc', 'def'), 12), re.I | re.S
+    yield test, 'abc', 0, \
+        ParseError("invalid search pattern: 'abc'", arg, 0, 3)
+    yield test, 'abc def', 0, \
+        ParseError("invalid search pattern: 'abc def'", arg, 0, 7)
     yield test, '/abc/def/y  def', 0, \
         ParseError('unknown flag: y', arg, 9, 9)
 

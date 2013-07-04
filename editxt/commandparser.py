@@ -399,7 +399,7 @@ class VarArgs(Type):
 class Regex(Type):
 
     NON_DELIMITERS = r'.^$*+?[]{}\()'
-    WORDCHAR = re.compile(r'\w')
+    WORDCHAR = re.compile(r'\w', re.UNICODE)
 
     def __init__(self, name, replace=False, default=None, flags=re.U | re.M):
         self.args = [name, replace, default, flags]
@@ -413,15 +413,12 @@ class Regex(Type):
             return self.default, index
         no_delim = self.NON_DELIMITERS
         if text[index] in no_delim or self.WORDCHAR.match(text[index]):
-            expr, index = self.consume_token(text, index)
-            if self.replace:
-                repl, index = self.consume_token(text, index)
-                if repl == self.default and self.default == (None, None):
-                    repl = None
-                return (re.compile(expr, self.flags), repl), index
-            return re.compile(expr, self.flags), index
+            msg = "invalid search pattern: {!r}".format(text[index:])
+            raise ParseError(msg, self, index, len(text) - index)
         expr, index = self.consume_expression(text, index)
         if self.replace:
+            if index >= len(text):
+                return (re.compile(expr, self.flags), None), index
             repl, index = self.consume_expression(text, index - 1)
             flags, index = self.consume_flags(text, index)
             return (re.compile(expr, flags), repl), index
@@ -431,6 +428,7 @@ class Regex(Type):
     def consume_expression(self, text, index):
         delim = text[index]
         chars, esc = [], 0
+        i = -1
         for i, c in enumerate(text[index + 1:]):
             if esc:
                 esc = 0
@@ -444,12 +442,14 @@ class Regex(Type):
                 esc = 1
             else:
                 chars.append(c)
+        if not esc:
+            return ''.join(chars), index + i + 2
         token = ''.join(chars)
         msg = 'unterminated regex: {}{}'.format(delim, token)
         raise ParseError(msg, self, index, len(text))
 
     def consume_flags(self, text, index):
-        flags = {'i': re.I, 'm': re.M, 's': re.S, 'u': re.U}
+        flags = {'i': re.IGNORECASE, 's': re.DOTALL, 'l': re.LOCALE}
         value = self.flags
         while index < len(text):
             char = text[index].lower()
