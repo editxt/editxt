@@ -248,10 +248,10 @@ class Choice(Type):
 
     :param *choices: Two or more choice names or name/value pairs. Choices
     may be specified as a single space-delimited string, or one or more
-    positional arguments consisting of either strings that do not
-    contain spaces, or tuples in the form ("name-string", <value>). The
-    value is the name in the case where name/value pairs are not given.
-    The first choice is the default.
+    positional arguments consisting of either strings, or tuples in the
+    form ("name-string", <value>). The value is the name in the case
+    where name/value pairs are not given. The first choice is the
+    default.
     :param name: Optional name, defaults to the first choice name. Must
     be specified as a keyword argument.
     """
@@ -265,28 +265,37 @@ class Choice(Type):
             raise ValueError('at least two choices are required')
         self.mapping = map = {}
         self.names = names = []
+        self.alternates = alts = []
         for choice in choices:
-            if not isinstance(choice, basestring):
+            if isinstance(choice, basestring):
+                if " " in choice:
+                    name = choice
+                    value = choice.split()[0]
+                else:
+                    name = value = choice
+            else:
                 try:
                     name, value = choice
                 except (TypeError, ValueError):
                     raise ValueError("invalid choice: %r" % (choice,))
-            else:
-                name = value = choice
-            if not isinstance(name, basestring) or not name or ' ' in name:
-                raise ValueError("invalid choice name: %r" % (name,))
-            names.append(name)
-            if name in map:
-                raise ValueError("ambiguous name: %r" % (name,))
-            map[name] = value
-            for i in range(1, len(name)):
-                key = name[:i]
-                if key in names:
-                    raise ValueError("ambiguous name: %r" % (key,))
-                if key in map:
-                    map.pop(key)
+                if not isinstance(name, basestring):
+                    raise ValueError("invalid choice name: %r" % (name,))
+            for i, name in enumerate(name.split()):
+                if i == 0:
+                    names.append(name)
                 else:
-                    map[key] = value
+                    alts.append(name)
+                if name in map:
+                    raise ValueError("ambiguous name: %r" % (name,))
+                map[name] = value
+                for i in range(1, len(name)):
+                    key = name[:i]
+                    if key in names or key in alts:
+                        raise ValueError("ambiguous name: %r" % (key,))
+                    if key in map:
+                        map.pop(key)
+                    else:
+                        map[key] = value
         self.placeholder = names[0]
         super(Choice, self).__init__(kw.pop('name', names[0]), map[names[0]])
         if kw:
@@ -325,7 +334,8 @@ class Choice(Type):
 
     def get_completions(self, text):
         """List choice names that complete the given command text"""
-        return [n for n in self.names if n.startswith(text)]
+        names = [n for n in self.names if n.startswith(text)]
+        return names or [n for n in self.alternates if n.startswith(text)]
 
 
 class Int(Type):

@@ -91,6 +91,36 @@ def test_Choice():
     yield test, 'args arg', 0, \
         ParseError("'args' does not match any of: arg-ument, nope, nah", arg, 0, 5)
 
+    arg = Choice("argument parameter", "find search")
+    test = make_type_checker(arg)
+    yield test, 'a', 0, ("argument", 1)
+    yield test, 'arg', 0, ("argument", 3)
+    yield test, 'argument', 0, ("argument", 8)
+    yield test, 'p', 0, ("argument", 1)
+    yield test, 'param', 0, ("argument", 5)
+    yield test, 'parameter', 0, ("argument", 9)
+    yield test, 'f', 0, ("find", 1)
+    yield test, 'find', 0, ("find", 4)
+    yield test, 's', 0, ("find", 1)
+    yield test, 'search', 0, ("find", 6)
+    yield test, 'arg-ument', 0, \
+        ParseError("'arg-ument' does not match any of: argument, find", arg, 0, 9)
+
+    arg = Choice(("argument parameter", True), ("find search", False))
+    test = make_type_checker(arg)
+    yield test, 'a', 0, (True, 1)
+    yield test, 'arg', 0, (True, 3)
+    yield test, 'argument', 0, (True, 8)
+    yield test, 'p', 0, (True, 1)
+    yield test, 'param', 0, (True, 5)
+    yield test, 'parameter', 0, (True, 9)
+    yield test, 'f', 0, (False, 1)
+    yield test, 'find', 0, (False, 4)
+    yield test, 's', 0, (False, 1)
+    yield test, 'search', 0, (False, 6)
+    yield test, 'arg-ument', 0, \
+        ParseError("'arg-ument' does not match any of: argument, find", arg, 0, 9)
+
 def test_Choice_default_first():
     arg = Choice(('true', True), ('false', False))
     eq_(str(arg), 'true')
