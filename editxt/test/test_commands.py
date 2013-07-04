@@ -494,6 +494,7 @@ def test_find_command():
 
     c = TestConfig(find="", replace="", regex=True, ignore_case=False,
                    match_word=False, wrap=True, action="find_next")
+    yield test, c(input=u"")
     yield test, c(input=u"/abc", find="abc")
     yield test, c(input=u";abc", find="abc")
     yield test, c(input=u";abc\;", find=r"abc\;")

@@ -295,7 +295,7 @@ def dedent_lines(textview, sender, args):
 
 
 @command(arg_parser=CommandParser(
-    Regex('pattern', replace=True),
+    Regex('pattern', replace=True, default=(re.compile(""), "")),
     Choice(('find-next next', 'find_next'),
         ('find-previous previous', 'find_previous'),
         ('replace-one one', 'replace_one'),
