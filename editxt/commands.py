@@ -296,13 +296,13 @@ def dedent_lines(textview, sender, args):
 
 @command(arg_parser=CommandParser(
     Regex('pattern', replace=True),
-    Choice('regex literal-text word', name='search_type'),
     Choice(('find-next next', 'find_next'),
         ('find-previous previous', 'find_previous'),
         ('replace-one one', 'replace_one'),
         ('replace-all all', 'replace_all'),
         ('replace-in-selection in-selection selection', 'replace_all_in_selection'),
         name='action'),
+    Choice('regex literal-text word', name='search_type'),
     Choice(('wrap', True), ('no-wrap', False), name='wrap_around'),
 ), lookup_with_arg_parser=True)
 def find(textview, sender, args):
