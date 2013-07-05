@@ -119,10 +119,10 @@ class Finder(object):
         NSBeep()
 
     def replace_all(self, sender):
-        self._replace_all(False)
+        self._replace_all()
 
     def replace_all_in_selection(self, sender):
-        self._replace_all(True)
+        self._replace_all(in_selection=True)
 
     @property
     def find_value(self):
@@ -175,16 +175,16 @@ class Finder(object):
             return range
         return None
 
-    def _replace_all(self, selection_only):
+    def _replace_all(self, in_selection=False):
         target = self.find_target()
         ftext = self.find_value
         range = None if target is None else target.selectedRange()
-        if target is None or not ftext or (selection_only and range.length == 0):
+        if target is None or not ftext or (in_selection and range.length == 0):
             NSBeep()
             return
         text = target.string()
         options = self.opts
-        if not selection_only:
+        if not in_selection:
             if options.wrap_around:
                 range = NSMakeRange(0, 0)
             else:
@@ -333,7 +333,6 @@ class FindController(PanelController):
         match_entire_word = False,
         ignore_case = True,
         wrap_around = True,
-        #search_selection_only = False,
     )
 
     find_text = objc.IBOutlet()

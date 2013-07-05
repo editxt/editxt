@@ -194,7 +194,8 @@ def test_FindController_actions():
     yield test, cx(act=False)
 
     def do(m, c, fc, sender):
-        m.method(fc.finder._replace_all)(c.sel_only)
+        kw = {"in_selection": True} if c.sel_only else {}
+        m.method(fc.finder._replace_all)(**kw)
     yield test, c(meth="replace_all", do=do, sel_only=False)
     yield test, c(meth="replace_all_in_selection", do=do, sel_only=True)
 
