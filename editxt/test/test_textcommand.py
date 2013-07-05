@@ -127,15 +127,15 @@ def test_CommandBar_get_placeholder():
             def cmd(textview, sender, args):
                 raise NotImplementedError("should not get here")
             commander.lookup(args[0]) >> (cmd if c.match == "simple" else None)
-            if c.match == "parse":
+            if c.match.startswith("parse"):
                 @command(arg_parser=CommandParser(
-                    Regex('search_pattern'),
+                    Regex('search_pattern', replace=(c.match == "parser")),
                     VarArgs("args", placeholder="..."),
                 ))
                 def search(textview, sender, args):
                     raise NotImplementedError("should not get here")
                 commander.lookup_full_command(c.text) >> (search, "<args>")
-            elif not c.match:
+            elif c.match == "none":
                 commander.lookup_full_command(c.text) >> (None, None)
         with m:
             eq_(bar.get_placeholder(c.text), c.expect)
@@ -157,13 +157,23 @@ def test_CommandBar_get_placeholder():
     yield test, c(text='cmd   ', expect="sort_regex")
     yield test, c(text='cmd  /', expect="")
     yield test, c(text='cmd    ', expect="")
-    yield test, c(text='/', expect=" ...", match="parse")
-    yield test, c(text='/x', expect=" ...", match="parse")
-    yield test, c(text='/x ', expect="...", match="parse") # FIXME should expect=" ..."
-    yield test, c(text='/x/ ', expect="...", match="parse")
-    yield test, c(text='/x/  ', expect="", match="parse")
-    yield test, c(text='/x/ a', expect="", match="parse")
-    yield test, c(text='cmd', expect="", match=None)
+    yield test, c(match="parse", text='/', expect=" ...")
+    yield test, c(match="parse", text='/x', expect=" ...")
+    yield test, c(match="parse", text='/x ', expect=" ...")
+    yield test, c(match="parse", text='/x/ ', expect="...")
+    yield test, c(match="parse", text='/x/  ', expect="")
+    yield test, c(match="parse", text='/x/ a', expect="")
+    yield test, c(match="parser", text='/', expect=" ...")
+    yield test, c(match="parser", text='/     ', expect=" ...")
+    yield test, c(match="parser", text='/x', expect=" ...")
+    yield test, c(match="parser", text='/x ', expect=" ...")
+    yield test, c(match="parser", text='/x/ ', expect=" ...")
+    yield test, c(match="parser", text='/x/  ', expect=" ...")
+    yield test, c(match="parser", text='/x//', expect=" ...")
+    yield test, c(match="parser", text='/x//i', expect=" ...")
+    yield test, c(match="parser", text='/x// ', expect="...")
+    yield test, c(match="parser", text='/x// a', expect="")
+    yield test, c(match="none", text='cmd', expect="")
 
 def test_CommandBar_get_completions():
     from editxt.commandparser import CommandParser, Choice, Regex, VarArgs

@@ -116,7 +116,11 @@ class CommandParser(object):
                 value, index = arg.consume(text, index)
             except ParseError as err:
                 return ""
-        return " ".join(str(arg) for arg in args)
+        placeholder = " ".join(str(arg) for arg in args)
+        if placeholder:
+            if index > len(text) or (text and not text.endswith(" ")):
+                placeholder = " " + placeholder
+        return placeholder
 
     def get_completions(self, text):
         """Get completions for the argument being entered at index
@@ -193,30 +197,35 @@ class Type(object):
     def consume(self, text, index):
         """Consume argument value from text starting at index
 
-        This consumes the argument value and discards a trailing
-        space (if present).
+        This consumes the argument value plus a trailing space
+        (if present).
 
         :param text: Text from which to consume argument value.
         :param index: Index into text from which to start consuming.
         :raises: ParseError if argument could not be consumed.
-        :returns: A tuple (<argument value>, <index>) where the index is
-            the index following the last consumed character.
+        :returns: A tuple `(<argument value>, <index>)` where `index` is
+            that following the last consumed character in `text`.
+            `index` is one more than the length of the given `text` if
+            all remaining characters were consumed forming a valid token
+            but the presence of any other character would extend the
+            consumed token.
         """
         raise NotImplementedError("abstract method")
 
     def consume_token(self, text, index):
-        """Consume one token from text starting at index
+        """Helper method that consumes one token from text starting at index
 
         This consumes all text up to (including) the next space in the
         string. The returned token will not contain spaces. If the
         character at index is a space, then the argument should use its
         default value and the first element of the returned tuple will
-        be `None`.
+        be `None`. This is meant to be called by subclasses; it is not
+        part of the public interface.
 
         :param text: Argument string.
         :param index: Index from which to consume argument.
-        :returns: A tuple (<token string or `None`>, <index>) where index
-            is the index following the last consumed character in text.
+        :returns: A tuple `(<token string or None>, <index>)` where `index`
+            is that following the last consumed character in `text`.
         """
         if index >= len(text):
             return None, index
@@ -428,7 +437,8 @@ class Regex(Type):
         expr, index = self.consume_expression(text, index)
         if self.replace:
             if index >= len(text):
-                return (re.compile(expr, self.flags), None), index
+                index = len(text) + 1 # to show we would consume more
+                return (re.compile(expr, self.flags), self.default[1]), index
             repl, index = self.consume_expression(text, index - 1)
             flags, index = self.consume_flags(text, index)
             return (re.compile(expr, flags), repl), index
@@ -453,7 +463,7 @@ class Regex(Type):
             else:
                 chars.append(c)
         if not esc:
-            return ''.join(chars), index + i + 2
+            return ''.join(chars), index + i + 3
         token = ''.join(chars)
         msg = 'unterminated regex: {}{}'.format(delim, token)
         raise ParseError(msg, self, index, len(text))

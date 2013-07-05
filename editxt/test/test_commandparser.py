@@ -237,10 +237,16 @@ def test_Regex():
     yield test, '/abc/X def', 0, \
         ParseError('unknown flag: X', arg, 5, 5)
 
-    arg = Regex('regex', True)
+    arg = Regex('regex', replace=True)
     eq_(repr(arg), "Regex('regex', replace=True)")
     yield test, '', 0, ((None, None), 0)
-    yield test, '/abc def', 0, (('abc def', None), 8)
+    yield test, '/abc', 0, (('abc', None), 5)
+    yield test, '/abc ', 0, (('abc ', None), 6)
+    yield test, ' abc', 0, (('abc', None), 5)
+    yield test, ' abc ', 0, (('abc', None), 6)
+    yield test, ' abc  ', 0, (('abc', ''), 6)
+    yield test, '/abc def', 0, (('abc def', None), 9)
+    yield test, '/abc/def', 0, (('abc', 'def'), 9)
     yield test, '/abc/def/', 0, (('abc', 'def'), 9)
     yield test, '/abc/def/ def', 0, (('abc', 'def'), 10)
     yield test, '/abc/def/  def', 0, (('abc', 'def'), 10)

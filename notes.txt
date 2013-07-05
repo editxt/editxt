@@ -84,11 +84,17 @@ x   history
     convert commands with gui to work with command bar
 x       wrap command
 x       sort command
-        find/replace
+x       find/replace
+x           placeholder text prefix space
+x           command prefix space (should not be stripped)
         change indentation
+    integrate GUI commands with command history
     contextual command help
     list history
+        tab key should show list of auto complete options and filtered history
     filter history
+        up arrow after typing should step through history with same prefix
+        all text after manually typed prefix should be selected
     delete history item
 x   command/arg auto-complete
 

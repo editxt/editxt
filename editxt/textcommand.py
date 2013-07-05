@@ -53,16 +53,15 @@ class CommandBar(object):
 
     def execute(self, text):
         self.reset()
-        args = text.split()
-        if not args:
+        if not text:
             return
+        cmdstr, space, argstr = text.partition(" ")
         doc_view = self.editor.current_view
         if doc_view is None:
             NSBeep()
             return
-        command = self.text_commander.lookup(args[0])
+        command = self.text_commander.lookup(cmdstr)
         if command is not None:
-            argstr = text[len(args[0]) + 1:]
             try:
                 args = command.arg_parser.parse(argstr)
             except Exception:
@@ -91,13 +90,11 @@ class CommandBar(object):
         :returns: A tuple ``(command, argument_string)``. ``command`` will be
         ``None`` if no matching command is found.
         """
-        args = text.split()
-        if not args:
+        if not text:
             return None, text
-        command = self.text_commander.lookup(args[0])
-        if command is not None:
-            argstr = text[len(args[0]) + 1:]
-        else:
+        cmdstr, space, argstr = text.partition(" ")
+        command = self.text_commander.lookup(cmdstr)
+        if command is None:
             argstr = text
             command, args = self.text_commander.lookup_full_command(argstr)
         return command, argstr
@@ -107,8 +104,11 @@ class CommandBar(object):
         command, argstr = self._find_command(text)
         if command is not None:
             placeholder = command.arg_parser.get_placeholder(argstr)
-            prefix = " " if placeholder and not text.endswith(" ") else ""
-            return prefix + placeholder
+            if placeholder:
+                space = text.partition(" ")[1]
+                if space or argstr:
+                    return placeholder
+                return " " + placeholder
         return ""
 
     def get_completions(self, text):
@@ -120,7 +120,7 @@ class CommandBar(object):
         and the index of the item that should be selected (-1 for no
         selection).
         """
-        if len(text.split()) < 2 and not text.endswith(" "):
+        if " " not in text:
             words = sorted(name
                 for name in self.text_commander.commands
                 if isinstance(name, basestring) and name.startswith(text))
