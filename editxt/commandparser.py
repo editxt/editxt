@@ -435,15 +435,19 @@ class Regex(Type):
             msg = "invalid search pattern: {!r}".format(text[index:])
             raise ParseError(msg, self, index, len(text) - index)
         expr, index = self.consume_expression(text, index)
-        if self.replace:
-            if index >= len(text):
-                index = len(text) + 1 # to show we would consume more
-                return (re.compile(expr, self.flags), self.default[1]), index
-            repl, index = self.consume_expression(text, index - 1)
+        try:
+            if self.replace:
+                if index >= len(text):
+                    index = len(text) + 1 # to show we would consume more
+                    return (re.compile(expr, self.flags), self.default[1]), index
+                repl, index = self.consume_expression(text, index - 1)
+                flags, index = self.consume_flags(text, index)
+                return (re.compile(expr, flags), repl), index
             flags, index = self.consume_flags(text, index)
-            return (re.compile(expr, flags), repl), index
-        flags, index = self.consume_flags(text, index)
-        return re.compile(expr, flags), index
+            return re.compile(expr, flags), index
+        except re.error as err:
+            msg = "invalid regular expression: {}".format(err)
+            raise ParseError(msg, self, index, index)
 
     def consume_expression(self, text, index):
         delim = text[index]

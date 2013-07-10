@@ -258,6 +258,10 @@ def test_Regex():
         ParseError("invalid search pattern: 'abc def'", arg, 0, 7)
     yield test, '/abc/def/y  def', 0, \
         ParseError('unknown flag: y', arg, 9, 9)
+    msg = 'invalid regular expression: unbalanced parenthesis'
+    yield test, '/(', 0, ParseError(msg, arg, 3, 3)
+    yield test, '/(/  ', 0, ParseError(msg, arg, 6, 6)
+    yield test, '/(// arg', 0, ParseError(msg, arg, 5, 5)
 
 arg_parser = CommandParser(Choice(('yes', True), ('no', False)))
 

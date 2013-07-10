@@ -84,11 +84,13 @@ x   history
     convert commands with gui to work with command bar
 x       wrap command
 x       sort command
+x           unbalanced parens bug in sort-regex (bug traceback below in Bugs)
 x       find/replace
 x           placeholder text prefix space
 x           command prefix space (should not be stripped)
         change indentation
     integrate GUI commands with command history
+    hotkeys should execute commands
     contextual command help
     list history
         tab key should show list of auto complete options and filtered history
@@ -157,6 +159,78 @@ find/replace text processors
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Bugs
+
+Unbalanced parens while entering sort-regex of sort command (in command bar)
+    ERROR editxt.main - *** Python exception discarded!
+    Traceback (most recent call last):
+      File "/Users/dmiller/code/EditXT/editxt/controls/commandview.py", line 77, in controlTextDidChange_
+        self.placeholder = self.command.get_placeholder(text)
+      File "/Users/dmiller/code/EditXT/editxt/textcommand.py", line 106, in get_placeholder
+        placeholder = command.arg_parser.get_placeholder(argstr)
+      File "/Users/dmiller/code/EditXT/editxt/commandparser.py", line 116, in get_placeholder
+        value, index = arg.consume(text, index)
+      File "/Users/dmiller/code/EditXT/editxt/commandparser.py", line 441, in consume
+        return (re.compile(expr, self.flags), self.default[1]), index
+      File "/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/re.py", line 190, in compile
+        return _compile(pattern, flags)
+      File "/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/re.py", line 242, in _compile
+        raise error, v # invalid expression
+    error: unbalanced parenthesis
+
+    2013-07-08 21:54:54.009 EditXTDev[27581:903] HIToolbox: ignoring exception '<class 'sre_constants.error'>: unbalanced parenthesis' that raised inside Carbon event dispatch
+    (
+    	0   CoreFoundation                      0x00007fff872ed784 __exceptionPreprocess + 180
+    	1   libobjc.A.dylib                     0x00007fff82a30f03 objc_exception_throw + 45
+    	2   CoreFoundation                      0x00007fff87345969 -[NSException raise] + 9
+    	3   _objc.so                            0x0000000102563a85 method_stub + 885
+    	4   _objc.so                            0x0000000102556172 ffi_closure_unix64_inner + 370
+    	5   _objc.so                            0x0000000102555b66 ffi_closure_unix64 + 70
+    	6   CoreFoundation                      0x00007fff87294fd0 __CFXNotificationPost + 1008
+    	7   CoreFoundation                      0x00007fff87281548 _CFXNotificationPostNotification + 200
+    	8   Foundation                          0x00007fff83fbca36 -[NSNotificationCenter postNotificationName:object:userInfo:] + 101
+    	9   Foundation                          0x00007fff83fc5ad5 _nsnote_callback + 167
+    	10  CoreFoundation                      0x00007fff87294fd0 __CFXNotificationPost + 1008
+    	11  CoreFoundation                      0x00007fff87281548 _CFXNotificationPostNotification + 200
+    	12  Foundation                          0x00007fff83fbca36 -[NSNotificationCenter postNotificationName:object:userInfo:] + 101
+    	13  AppKit                              0x00007fff804661f5 -[NSTextView(NSSharing) didChangeText] + 492
+    	14  AppKit                              0x00007fff8048bbb4 -[NSTextView insertText:replacementRange:] + 2763
+    	15  AppKit                              0x00007fff804894bd -[NSTextInputContext handleTSMEvent:] + 2204
+    	16  AppKit                              0x00007fff80488c12 _NSTSMEventHandler + 156
+    	17  HIToolbox                           0x00007fff878f37f7 _ZL23DispatchEventToHandlersP14EventTargetRecP14OpaqueEventRefP14HandlerCallRec + 1002
+    	18  HIToolbox                           0x00007fff878f2d46 _ZL30SendEventToEventTargetInternalP14OpaqueEventRefP20OpaqueEventTargetRefP14HandlerCallRec + 395
+    	19  HIToolbox                           0x00007fff87910a81 SendEventToEventTarget + 45
+    	20  HIToolbox                           0x00007fff87942213 SendTSMEvent + 48
+    	21  HIToolbox                           0x00007fff87941db9 SendUnicodeTextAEToUnicodeDoc + 468
+    	22  HIToolbox                           0x00007fff87941b34 TSMKeyEvent + 604
+    	23  HIToolbox                           0x00007fff8792c5d8 TSMProcessRawKeyEvent + 1909
+    	24  AppKit                              0x00007fff80487907 -[NSTextInputContext handleEvent:] + 620
+    	25  AppKit                              0x00007fff80487631 -[NSView interpretKeyEvents:] + 186
+    	26  AppKit                              0x00007fff8048740a -[NSTextView keyDown:] + 819
+    	27  AppKit                              0x00007fff803f90c7 -[NSWindow sendEvent:] + 8769
+    	28  AppKit                              0x00007fff8032dafa -[NSApplication sendEvent:] + 4719
+    	29  AppKit                              0x00007fff802c46de -[NSApplication run] + 474
+    	30  AppKit                              0x00007fff802bd3b0 NSApplicationMain + 364
+    	31  _AppKit.so                          0x00000001033f1ee8 objc_NSApplicationMain + 424
+    	32  Python                              0x00000001020bee7d PyEval_EvalFrameEx + 25213
+    	33  Python                              0x00000001020c1149 PyEval_EvalCodeEx + 2137
+    	34  Python                              0x00000001020bea3d PyEval_EvalFrameEx + 24125
+    	35  Python                              0x00000001020bf86d PyEval_EvalFrameEx + 27757
+    	36  Python                              0x00000001020c1149 PyEval_EvalCodeEx + 2137
+    	37  Python                              0x00000001020bea3d PyEval_EvalFrameEx + 24125
+    	38  Python                              0x00000001020c1149 PyEval_EvalCodeEx + 2137
+    	39  Python                              0x00000001020c1266 PyEval_EvalCode + 54
+    	40  Python                              0x00000001020e5ede PyRun_FileExFlags + 174
+    	41  Python                              0x00000001020b5d6c builtin_execfile + 364
+    	42  Python                              0x00000001020bee7d PyEval_EvalFrameEx + 25213
+    	43  Python                              0x00000001020c1149 PyEval_EvalCodeEx + 2137
+    	44  Python                              0x00000001020bea3d PyEval_EvalFrameEx + 24125
+    	45  Python                              0x00000001020c1149 PyEval_EvalCodeEx + 2137
+    	46  Python                              0x00000001020c1266 PyEval_EvalCode + 54
+    	47  Python                              0x00000001020e5ede PyRun_FileExFlags + 174
+    	48  Python                              0x00000001020e6199 PyRun_SimpleFileExFlags + 489
+    	49  EditXTDev                           0x0000000100005856 py2app_main + 1309
+    	50  EditXTDev                           0x00000001000059c8 main + 229
+    	51  EditXTDev                           0x0000000100000e08 start + 52
 
 Bug: memory leak
     TODO track it down and fix it
