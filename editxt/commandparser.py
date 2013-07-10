@@ -327,6 +327,8 @@ class Choice(Type):
         The token at index may be a complete choice name or a prefix
         that uniquely identifies any choice. Return the default (first)
         choice value if there is no token to consume.
+
+        :returns: (<chosen or default value>, <index>)
         """
         token, end = self.consume_token(text, index)
         if token is None:
@@ -350,6 +352,10 @@ class Choice(Type):
 class Int(Type):
 
     def consume(self, text, index):
+        """Consume an integer value
+
+        :returns: (<int or default value>, <index>)
+        """
         token, end = self.consume_token(text, index)
         if token is None:
             return self.default, end
@@ -375,6 +381,10 @@ class String(Type):
     }
 
     def consume(self, text, index):
+        """Consume a string value
+
+        :returns: (<string or default value>, <index>)
+        """
         if index >= len(text):
             return self.default, index
         if text[index] not in ['"', "'"]:
@@ -412,6 +422,10 @@ class VarArgs(Type):
         super(VarArgs, self).__init__(name)
 
     def consume(self, text, index):
+        """Consume remaining arguments
+
+        :returns: (<list of strings>, <index>)
+        """
         return text[index:].split(), len(text)
 
 
@@ -428,6 +442,15 @@ class Regex(Type):
         super(Regex, self).__init__(name, default)
 
     def consume(self, text, index):
+        """Consume regular expression and optional replacement string and flags
+
+        :returns: (<value>, <index>) where value is one of the following:
+            replace     value
+            False       <compiled re object>
+            True        (<compiled re object>, <replacement string>)
+        Either <compiled re object> or <replacement string> may be the
+        respective portion of the default value if not present.
+        """
         if index >= len(text):
             return self.default, index
         no_delim = self.NON_DELIMITERS
