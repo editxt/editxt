@@ -291,7 +291,8 @@ def test_set_wrap_mode():
         tc.setContainerSize_(NSMakeSize(width, const.LARGE_NUMBER_FOR_TEXT))
         tc.setWidthTracksTextView_(wrap)
         tv.setHorizontallyResizable_(not wrap)
-        tv.setAutoresizingMask_(NSViewWidthSizable if wrap else NSViewNotSizable)
+        tv.setAutoresizingMask_(NSViewWidthSizable
+            if wrap else NSViewWidthSizable | NSViewHeightSizable)
         with m:
             dv.wrap_mode = c.mode
     c = TestConfig(mode=const.LINE_WRAP_NONE)

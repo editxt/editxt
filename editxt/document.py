@@ -206,7 +206,7 @@ class TextDocumentView(NSObject):
             size = self.scroll_view.contentSize()
             width = size.width
         else:
-            mask = NSViewNotSizable
+            mask = NSViewWidthSizable | NSViewHeightSizable
             width = LARGE_NUMBER_FOR_TEXT
         # TODO
         # if selection is visible:
