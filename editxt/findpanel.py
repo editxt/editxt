@@ -221,7 +221,8 @@ class Finder(object):
                 return
         NSBeep()
 
-    def simplefinditer(self, text, ftext, range, direction, yield_on_wrap):
+    def simplefinditer(self, text, ftext, range,
+                       direction=FORWARD, yield_on_wrap=True):
         """Yields FoundRanges of text that match ftext
 
         if yield_on_wrap evaluates to True and wrap_around search option is set

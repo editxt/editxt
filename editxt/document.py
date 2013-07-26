@@ -383,6 +383,8 @@ class TextDocumentView(NSObject):
         sel = range.length
         self.scroll_view.statusView.updateLine_column_selection_(line, col, sel)
 
+        tv.mark_ranges_matching_range(range)
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class UndoManager(NSUndoManager):
