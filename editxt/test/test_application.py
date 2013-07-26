@@ -878,6 +878,33 @@ def test_closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_():
         dc.closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_(
             delegate, selector, context)
 
+def test_closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_bug():
+    import AppKit
+    path = os.path.join(os.path.dirname(AppKit.__file__), "PyObjC.bridgesupport")
+    with open(path) as f:
+        assert '_documentController:shouldTerminate:context:' in f.read(), (""
+            """
+            PyObjC patch not found. This test may be removed if the app does
+            not crash when the save panel is cancelled after quitting with
+            unsaved documents.
+
+            The following method directive was manually added to the
+            AppKit PyObjC.bridgesupport to fix the error.
+
+              <class name='NSDocumentController'>
+                <!-- begin patch -->
+                <method selector='_documentController:shouldTerminate:context:'>
+                  <arg index='2' type='^v' type64='^v' />
+                </method>
+                <!-- end patch -->
+
+            See also:
+            [PyObjC-svn] r2350 - in trunk/pyobjc/pyobjc-framework-Cocoa: . Lib/AppKit PyObjCTest
+                http://permalink.gmane.org/gmane.comp.python.pyobjc.cvs/2763
+            Re: Crash when closing all documents
+                http://permalink.gmane.org/gmane.comp.python.pyobjc.devel/5563
+            """)
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # DocumentSavingDelegate tests
 
