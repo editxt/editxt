@@ -22,6 +22,18 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
+????-??-?? - 1.x.x
+  - Fix bugs related to app termination with unsaved documents.
+  - Allow close document from menu and with COMMAND+W hotkey
+  - Many improvements on command bar
+    - More commands: wrap, sort, find/replace
+    - Argument placeholders/hints
+    - Tab completion
+    - Command history
+  - Improve exception logging.
+  - Fix startup errors due to strange arguments passed by OS X.
+  - Fix long pause on quit with many documents open.
+
 2013-01-05 - 1.2.0
   - Add command bar (needs more work, but it's minimally usable).
   - Add "Goto Line" command.
