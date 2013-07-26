@@ -297,6 +297,24 @@ def test_set_current_document_view():
     with m:
         ac.set_current_document_view(dv)
 
+def test_Application_close_current_document():
+    def test(c):
+        app = Application()
+        m = Mocker()
+        ed = m.mock(Editor) if c.has_editor else None
+        m.method(app.current_editor)() >> ed
+        if c.has_editor:
+            view = m.mock(TextDocumentView) if c.has_view else None
+            ed.current_view >> view
+            if c.has_view:
+                view.perform_close(ed)
+        with m:
+            app.close_current_document()
+    c = TestConfig(has_editor=True, has_view=True)
+    yield test, c(has_editor=False)
+    yield test, c(has_view=False)
+    yield test, c
+
 def test_Application_iter_views_of_document():
     def test(config):
         ac = Application()
@@ -786,7 +804,11 @@ def test_openPath_():
 
 def test_closeCurrentDocument_():
     dc = DocumentController.sharedDocumentController()
-    dc.closeCurrentDocument_ #(None) # TODO implement this method
+    m = Mocker()
+    app = m.replace(editxt, 'app')
+    app.close_current_document()
+    with m:
+        dc.closeCurrentDocument_(None)
 
 def test_closeCurrentProject_():
     dc = DocumentController.sharedDocumentController()

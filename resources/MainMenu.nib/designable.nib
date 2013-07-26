@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="29"/>
+			<integer value="81"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -302,7 +302,7 @@
 								</object>
 								<object class="NSMenuItem" id="722248068">
 									<reference key="NSMenu" ref="790856822"/>
-									<string key="NSTitle">Close</string>
+									<string key="NSTitle">Close Document</string>
 									<string key="NSKeyEquiv">w</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -1365,7 +1365,6 @@
 						<object class="NSMutableArray" key="children">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<reference ref="134923686"/>
-							<reference ref="722248068"/>
 							<reference ref="348852345"/>
 							<reference ref="162712602"/>
 							<reference ref="677498260"/>
@@ -1380,6 +1379,7 @@
 							<reference ref="63417465"/>
 							<reference ref="600107948"/>
 							<reference ref="119342635"/>
+							<reference ref="722248068"/>
 						</object>
 						<reference key="parent" ref="776633119"/>
 					</object>
@@ -2265,6 +2265,7 @@
 				</object>
 				<object class="IBPartialClassDescription">
 					<string key="className">FirstResponder</string>
+					<string key="superclassName">NSObject</string>
 					<object class="NSMutableDictionary" key="actions">
 						<string key="NS.key.0">doCustomTextAction:</string>
 						<string key="NS.object.0">id</string>

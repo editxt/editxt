@@ -169,6 +169,13 @@ class Application(object):
         ed = self.find_editor_with_document_view(doc_view)
         ed.current_view = doc_view
 
+    def close_current_document(self):
+        editor = self.current_editor()
+        if editor is not None:
+            view = editor.current_view
+            if view is not None:
+                view.perform_close(editor)
+
     def iter_views_of_document(self, doc):
         for editor in self.iter_editors():
             for view in editor.iter_views_of_document(doc):
@@ -386,7 +393,7 @@ class DocumentController(NSDocumentController):
         self.controller.open_path_dialog()
 
     def closeCurrentDocument_(self, sender):
-        raise NotImplementedError()
+        self.controller.close_current_document()
 
     def closeCurrentProject_(self, sender):
         raise NotImplementedError()
