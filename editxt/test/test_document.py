@@ -262,15 +262,19 @@ def test_get_wrap_mode():
             dv.text_view = None
         else:
             tv = dv.text_view = m.mock(NSTextView)
-            tc = tv.textContainer() >> m.mock(NSTextContainer)
-            tc.widthTracksTextView() >> (True if c.mode == const.LINE_WRAP_WORD else False)
+            tc = None if c.tc_is_none else m.mock(NSTextContainer)
+            (tv.textContainer() << tc).count(1, 2)
+            if tc is not None:
+                tc.widthTracksTextView() >> \
+                    (True if c.mode == const.LINE_WRAP_WORD else False)
         with m:
             result = dv.wrap_mode
             eq_(result, c.mode)
-    c = TestConfig(tv_is_none=False)
+    c = TestConfig(tv_is_none=False, tc_is_none=False)
     yield test, c(mode=const.LINE_WRAP_NONE)
     yield test, c(mode=const.LINE_WRAP_WORD)
     yield test, c(tv_is_none=True, mode=None)
+    yield test, c(tc_is_none=True, mode=None)
 
 def test_set_wrap_mode():
     def test(c):

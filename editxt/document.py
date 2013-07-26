@@ -193,7 +193,7 @@ class TextDocumentView(NSObject):
         self.document.check_for_external_changes(window)
 
     def _get_wrap_mode(self):
-        if self.text_view is None:
+        if self.text_view is None or self.text_view.textContainer() is None:
             return None
         wrap = self.text_view.textContainer().widthTracksTextView()
         return const.LINE_WRAP_WORD if wrap else const.LINE_WRAP_NONE
