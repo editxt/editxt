@@ -74,6 +74,17 @@ def mutable_array_property(name):
 
 class FindOptions(Options):
 
+    DEFAULTS = dict(
+        #find_text = u"",
+        replace_text = u"",
+        recent_finds = (),
+        recent_replaces = (),
+        regular_expression = False,
+        match_entire_word = False,
+        ignore_case = True,
+        wrap_around = True,
+    )
+
     dependent_key_paths = {
         "match_entire_word": ["regular_expression"],
         "regular_expression": ["match_entire_word"],
@@ -324,17 +335,7 @@ class FindController(PanelController):
 
     NIB_NAME = u"FindPanel"
     OPTIONS_KEY = const.FIND_PANEL_OPTIONS_KEY
-    OPTIONS_CLASS = FindOptions
-    OPTIONS_DEFAULTS = dict(
-        #find_text = u"",
-        replace_text = u"",
-        recent_finds = (),
-        recent_replaces = (),
-        regular_expression = False,
-        match_entire_word = False,
-        ignore_case = True,
-        wrap_around = True,
-    )
+    OPTIONS_FACTORY = FindOptions
 
     find_text = objc.IBOutlet()
     replace_text = objc.IBOutlet()

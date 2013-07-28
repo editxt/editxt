@@ -402,6 +402,9 @@ class _KVOProxy(NSObject):
             finally:
                 self.didChangeValueForKey_(key)
 
+    def __iter__(self):
+        return iter(self._target)
+
 
 class KVOLink(object):
     """Link and propagate KVO notifications

@@ -515,10 +515,16 @@ class Regex(Type):
 class Options(object):
     """Parsed argument container
 
-    Argument values are attributes.
+    Options are stored as attributes.
     """
 
+    # DEFAULTS = <dict of defaults> # optional attribute for subclasses
+
     def __init__(self, **opts):
+        if hasattr(self, "DEFAULTS"):
+            for name, value in self.DEFAULTS.items():
+                if name not in opts:
+                    setattr(self, name, value)
         for name, value in opts.items():
             setattr(self, name, value)
 
@@ -533,10 +539,16 @@ class Options(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def __repr__(self):
+    def __iter__(self):
         obj = Options().__dict__
-        vars = ['{}={!r}'.format(*kv)
-            for kv in self.__dict__.items() if kv[0] not in obj]
+        return (kv for kv in self.__dict__.iteritems() if kv[0] not in obj)
+
+    def __repr__(self):
+        def line_repr(obj):
+            rep = repr(obj)
+            if '\n' in rep:
+                rep.replace('\n', ' ')
+        vars = ['{}={}'.format(k, line_repr(v)) for k, v in self]
         return '{}({})'.format(type(self).__name__, ', '.join(vars))
 
 

@@ -28,7 +28,7 @@ from AppKit import *
 from Foundation import *
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
-from editxt.test.util import TestConfig, untested, check_app_state
+from editxt.test.util import TestConfig, untested, check_app_state, replattr
 
 import editxt.constants as const
 import editxt.findpanel as mod
@@ -510,7 +510,7 @@ def test_FindController_load_options():
             fc = FindController.create() # calls load_options()
             opts = fc.opts
             if c.state is not None:
-                for k, v in FindController.OPTIONS_DEFAULTS.iteritems():
+                for k, v in FindOptions():
                     eq_(getattr(opts, k), c.state.get(k, v), k)
             assert isinstance(opts.recent_finds, NSMutableArray)
             assert isinstance(opts.recent_replaces, NSMutableArray)
@@ -533,7 +533,7 @@ def test_FindController_save_options():
     def test(c):
         m = Mocker()
         fc = FindController.create()
-        fc.opts = opts = FindOptions()
+        opts = FindOptions()
         opts.find_text = c.astate.get("find_text", u"")
         nsud = m.replace('editxt.commandbase.NSUserDefaults')
         nspb = m.replace(mod, 'NSPasteboard')
@@ -542,7 +542,7 @@ def test_FindController_save_options():
             pboard.declareTypes_owner_([NSStringPboardType], None)
             pboard.setString_forType_(c.astate["find_text"], NSStringPboardType)
         zstate = {}
-        for k, v in FindController.OPTIONS_DEFAULTS.iteritems():
+        for k, v in FindOptions():
             setattr(opts, k, c.astate.get(k, v))
             zstate[k] = c.zstate.get(k, v)
         defaults = nsud.standardUserDefaults() >> m.mock(NSUserDefaults)
@@ -550,7 +550,7 @@ def test_FindController_save_options():
             eq_(state, zstate)
             return True
         expect(defaults.setObject_forKey_(ANY, const.FIND_PANEL_OPTIONS_KEY)).call(do)
-        with m:
+        with m, replattr(fc, "opts", opts):
             fc.save_options()
     c = TestConfig(astate={}, zstate={}, has_ftext=False)
     d = dict

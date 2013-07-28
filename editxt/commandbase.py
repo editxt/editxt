@@ -32,10 +32,11 @@ log = logging.getLogger(__name__)
 class BaseCommandController(NSWindowController):
     """abstract window controller for text commands"""
 
-    OPTIONS_CLASS = Options
-    #NIB_NAME = "NibFilename"       # abstract attribute
-    #OPTIONS_DEFAULTS = {}          # abstract attribute
-    #OPTIONS_key = "named_options"  # optional abstract attribute
+    OPTIONS_FACTORY = Options       # A callable that creates default options.
+                                    # If this is a function, it should accept
+                                    # one arguemnt (`self`).
+    #NIB_NAME = "NibFilename"       # Abstract attribute.
+    #OPTIONS_key = "named_options"  # Optional abstract attribute.
 
     @classmethod
     def create(cls):
@@ -56,7 +57,8 @@ class BaseCommandController(NSWindowController):
         self.setWindowFrameAutosaveName_(name)
         if not hasattr(self, "OPTIONS_KEY"):
             self.OPTIONS_KEY = self.NIB_NAME + "_options"
-        self.opts = KVOProxy(self.OPTIONS_CLASS())
+        self.opts = KVOProxy(self.OPTIONS_FACTORY())
+        self.default_option_keys = [k for k, v in self.opts]
         return self
 
     def load_options(self):
@@ -65,13 +67,11 @@ class BaseCommandController(NSWindowController):
         if data is None:
             data = {}
         opts = self.opts
-        for key, value in self.OPTIONS_DEFAULTS.iteritems():
+        for key, value in opts:
             setattr(opts, key, data.get(key, value))
 
     def save_options(self):
-        opts = self.opts
-        data = dict((key, getattr(opts, key))
-            for key, value in self.OPTIONS_DEFAULTS.iteritems())
+        data = {k: getattr(self.opts, k) for k in self.default_option_keys}
         defaults = NSUserDefaults.standardUserDefaults()
         defaults.setObject_forKey_(data, self.OPTIONS_KEY)
 

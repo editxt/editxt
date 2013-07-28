@@ -35,6 +35,16 @@ log = logging.getLogger(__name__)
 
 class SortOptions(Options):
 
+    DEFAULTS = dict(
+        selection=False,
+        reverse=False,
+        ignore_leading_whitespace=False,
+        numeric_match=False,
+        regex_sort=False,
+        search_pattern="",
+        match_pattern="",
+    )
+
     @property
     def sort_regex(self):
         if self.regex_sort:
@@ -46,16 +56,7 @@ class SortLinesController(SheetController):
     """Window controller for sort lines text command"""
 
     NIB_NAME = u"SortLines"
-    OPTIONS_CLASS = SortOptions
-    OPTIONS_DEFAULTS = dict(
-        selection=False,
-        reverse=False,
-        ignore_leading_whitespace=False,
-        numeric_match=False,
-        regex_sort=False,
-        search_pattern="",
-        match_pattern="",
-    )
+    OPTIONS_Factory = SortOptions
 
     def sort_(self, sender):
         sortlines(self.textview, self.opts)

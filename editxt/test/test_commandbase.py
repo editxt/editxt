@@ -20,6 +20,7 @@
 from __future__ import with_statement
 
 import logging
+import functools
 
 from AppKit import *
 from Foundation import *
@@ -37,15 +38,13 @@ log = logging.getLogger(__name__)
 
 def setup(controller_class, nib_name="TestController"):
     def setup_controller(func):
+        @functools.wraps(func)
         def wrapper():
             controller_class.NIB_NAME = nib_name
-            controller_class.OPTIONS_DEFAULTS = {}
             try:
                 func()
             finally:
-                del controller_class.OPTIONS_DEFAULTS
                 del controller_class.NIB_NAME
-        wrapper.__name__ = func.__name__
         return wrapper
     return setup_controller
         
@@ -71,15 +70,10 @@ def test_BaseCommandController_shared_controller():
     c2 = OtherController.shared_controller()
     assert c1 is c2, (c1, c2)
 
-class FakeOptions(object):
-    def __init__(self):
-        self.load_count = 0
-    def load(self):
-        self.load_count += 1
-
 @setup(BaseCommandController)
 def test_BaseCommandController_options():
-    with replattr(BaseCommandController, "OPTIONS_CLASS", FakeOptions):
+    class FakeOptions(Options): pass
+    with replattr(BaseCommandController, "OPTIONS_FACTORY", FakeOptions):
         ctl = BaseCommandController.create()
         #assert isinstance(ctl.opts, FakeOptions), ctl.opts
         eq_(type(ctl.opts).__name__, "FakeOptions_KVOProxy")
@@ -91,11 +85,7 @@ def test_BaseCommandController_options():
 class FakeController(BaseCommandController):
     NIB_NAME = "FakeController"
     OPTIONS_KEY = "FakeController_options"
-    OPTIONS_CLASS = Options
-    OPTIONS_DEFAULTS = dict(
-        key1="<value1>",
-        key2="<value2>",
-    )
+    OPTIONS_FACTORY = lambda s:Options(key1="<default x>", key2="<default y>")
 
 def test_BaseCommandController_load_options():
     def test(c):
@@ -103,12 +93,16 @@ def test_BaseCommandController_load_options():
         ud = m.replace(mod, 'NSUserDefaults')
         sd = ud.standardUserDefaults() >> m.mock(NSUserDefaults)
         ctl = FakeController.create()
-        state = sd.dictionaryForKey_(ctl.OPTIONS_KEY) >> (
-            ctl.OPTIONS_DEFAULTS if c.present else None)
+        if c.present:
+            values = {"key1": "<val x>", "key2": "<val y>"}
+            state = sd.dictionaryForKey_(ctl.OPTIONS_KEY) >> values
+        else:
+            values = {"key1": "<default x>", "key2": "<default y>"}
+            state = sd.dictionaryForKey_(ctl.OPTIONS_KEY) >> None
         with m:
             ctl.load_options()
             opts = ctl.opts
-            for key, value in ctl.OPTIONS_DEFAULTS.iteritems():
+            for key, value in values.iteritems():
                 eq_(getattr(opts, key), value)
     c = TestConfig()
     yield test, c(present=False)
@@ -120,10 +114,10 @@ def test_BaseCommandController_save_options():
     sd = ud.standardUserDefaults() >> m.mock(NSUserDefaults)
     ctl = FakeController.create()
     opts = ctl.opts
+    opts.other_option = "should not be saved"
     data = {}
-    for key, value in ctl.OPTIONS_DEFAULTS.iteritems():
+    for key, value in {"key1": "<default x>", "key2": "<default y>"}.items():
         data[key] = value
-        setattr(opts, key, value)
     sd.setObject_forKey_(data, ctl.OPTIONS_KEY)
     with m:
         ctl.save_options()
