@@ -33,7 +33,7 @@ from editxt.test.util import TestConfig, untested, check_app_state, replattr
 import editxt.constants as const
 import editxt.findpanel as mod
 from editxt.controls.textview import TextView
-from editxt.findpanel import FindController, FindOptions, FoundRange
+from editxt.findpanel import Finder, FindController, FindOptions, FoundRange
 from editxt.findpanel import FORWARD, BACKWARD
 
 log = logging.getLogger(__name__)
@@ -41,6 +41,37 @@ log = logging.getLogger(__name__)
 # log.debug("""TODO
 #     implement TextDocumentView.pasteboard_data()
 # """)
+
+def test_Finder_mark_occurrences():
+    import re
+    def test(c):
+        text = "the text is made of many texts"
+        m = Mocker()
+        tv = m.mock(TextView)
+        ts = tv.textStorage() >> m.mock(NSTextStorage)
+        full_range = NSMakeRange(0, ts.length() >> len(text))
+        ts.removeAttribute_range_(NSBackgroundColorAttributeName, full_range)
+        find_target = lambda: tv
+        finder = Finder(find_target, c.opts)
+        if c.opts.find_text:
+            text = NSString.alloc().initWithString_(text)
+            (tv.string() << text).count(1, None)
+            mark_range = ts.addAttribute_value_range_ >> m.mock()
+            mark = mark_range(NSBackgroundColorAttributeName, ANY, ANY)
+            expect(mark).count(c.count)
+        with m:
+            count = finder.mark_occurrences(c.opts.find_text, c.allow_regex)
+            eq_(count, c.count)
+
+    o = FindOptions
+    c = TestConfig(allow_regex=False)
+    yield test, c(opts=o(find_text=""), count=0)
+    yield test, c(opts=o(find_text="text"), count=2)
+    yield test, c(opts=o(find_text="[t]"), count=0)
+    yield test, c(opts=o(find_text="[t]", regular_expression=True), count=0)
+    yield test, c(opts=o(find_text="text", match_entire_word=True), count=1)
+    c = c(allow_regex=True)
+    yield test, c(opts=o(find_text="[t]", regular_expression=True), count=5)
 
 def test_FindController_shared_controller():
     fc = FindController.shared_controller()
@@ -60,7 +91,7 @@ def test_FindController_validate_action():
             if c.has_target:
                 if c.tag in SELECTION_REQUIRED_ACTIONS:
                     tv.selectedRange().length >> c.sel
-        with m:
+        with m, replattr(fc, 'opts', FindOptions()):
             result = fc.validate_action(c.tag)
             eq_(result, c.result)
     c = TestConfig(has_target=True, result=True, tag=0)
@@ -219,6 +250,7 @@ def test_FindController_actions():
 
     def do(m, c, fc, sender):
         if m.method(fc.validate_expression)() >> c.valid:
+            fc.opts.regular_expression = True
             text = m.property(fc.finder, c.val).value >> "<value>"
             m.method(fc.count_occurrences)(text, c.regex)
     for v in (True, False):
@@ -410,22 +442,11 @@ def test_FindController_count_occurrences():
         beep = m.replace(mod, 'NSBeep')
         fc = FindController.shared_controller()
         flash = m.method(fc.flash_status_text)
-        regexfind = m.method(fc.finder.regexfinditer)
-        simplefind = m.method(fc.finder.simplefinditer)
+        mark = m.method(fc.finder.mark_occurrences)
         tv = m.method(fc.find_target)() >> (m.mock(TextView) if c.has_tv else None)
         if c.has_tv:
             ftext = u"<find>"
-            text = tv.string() >> NSString.stringWithString_("<text>")
-            opts = m.property(fc, "opts").value >> m.mock(FindOptions)
-            range = NSMakeRange(0, text.length())
-            if c.allow_regex and (opts.regular_expression >> c.regex):
-                finditer = regexfind
-            elif c.allow_regex and (opts.match_entire_word >> c.mword):
-                finditer = regexfind
-                ftext = u"\\b" + re.escape(ftext) + u"\\b"
-            else:
-                finditer = simplefind
-            finditer(text, ftext, range, FORWARD, False) >> xrange(c.cnt)
+            mark(ftext, c.regex) >> c.cnt
             if c.cnt:
                 flash("%i occurrences" % c.cnt)
             else:
@@ -433,14 +454,12 @@ def test_FindController_count_occurrences():
         else:
             beep()
         with m:
-            fc.count_occurrences(u"<find>", c.allow_regex)
-    c = TestConfig(has_tv=True, allow_regex=True, regex=False, mword=False, cnt=0)
-    yield test, c(has_tv=False)
-    yield test, c(allow_regex=False)
+            fc.count_occurrences(u"<find>", c.regex)
+    c = TestConfig(has_tv=True, regex=False, cnt=0)
     yield test, c
     yield test, c(regex=True)
-    yield test, c(mword=True)
     yield test, c(cnt=42)
+    yield test, c(has_tv=False)
 
 def test_FindController_find_target():
     from editxt.editor import Editor

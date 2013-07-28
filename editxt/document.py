@@ -36,6 +36,7 @@ from editxt.controls.alert import Alert
 from editxt.controls.linenumberview import LineNumberView
 from editxt.controls.statscrollview import StatusbarScrollView
 from editxt.controls.textview import TextView
+from editxt.findpanel import Finder, FindOptions
 from editxt.syntax import SyntaxCache
 from editxt.util import KVOList, KVOProxy, KVOLink, untested, refactor
 from editxt.util import fetch_icon, filestat, register_undo_callback
@@ -369,11 +370,13 @@ class TextDocumentView(NSObject):
 
     # TextView delegate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    _mark_options = FindOptions(ignore_case=False, wrap_around=False)
+
     @untested
     def textViewDidChangeSelection_(self, notification):
-        tv = notification.object()
-        text = tv.string()
-        range = tv.selectedRange()
+        textview = notification.object()
+        text = textview.string()
+        range = textview.selectedRange()
         index = range.location if range.location < text.length() else (text.length() - 1)
         line = self.scroll_view.verticalRulerView().line_number_at_char_index(index)
         i = index
@@ -383,7 +386,8 @@ class TextDocumentView(NSObject):
         sel = range.length
         self.scroll_view.statusView.updateLine_column_selection_(line, col, sel)
 
-        tv.mark_ranges_matching_range(range)
+        ftext = text.substringWithRange_(range)
+        Finder((lambda:textview), self._mark_options).mark_occurrences(ftext)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

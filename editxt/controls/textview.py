@@ -127,24 +127,6 @@ class TextView(NSTextView):
                 height = text_height + extra_space
         super(TextView, self).setFrameSize_(NSMakeSize(size.width, height))
 
-    def mark_ranges_matching_range(self, range):
-        ts = self.textStorage()
-        full_range = NSMakeRange(0, ts.length())
-        ts.removeAttribute_range_(NSBackgroundColorAttributeName, full_range)
-        if range.length < 3:
-            return
-
-        from editxt.syntax import SyntaxDefinition
-        color = SyntaxDefinition.getColor("FEFF6B")
-        string = ts.string()
-        selection = string.substringWithRange_(range)
-        options = FindOptions(ignore_case=False, wrap_around=False)
-        finder = Finder(None, options)
-        for found in finder.simplefinditer(string, selection, full_range):
-            if found.range != range:
-                ts.addAttribute_value_range_(
-                    NSBackgroundColorAttributeName, color, found.range)
-
     # Scrolling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #     def adjustScroll_(self, rect):

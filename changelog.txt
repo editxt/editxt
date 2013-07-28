@@ -23,6 +23,8 @@ This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
 ????-??-?? - 1.x.x
+  - Mark occurrences when counting with the find panel.
+  - Mark (highlight) all occurrences of selected text.
   - Fix bugs related to app termination with unsaved documents.
   - Allow close document from menu and with COMMAND+W hotkey
   - Many improvements on command bar
