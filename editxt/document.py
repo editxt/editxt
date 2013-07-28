@@ -370,8 +370,6 @@ class TextDocumentView(NSObject):
 
     # TextView delegate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    _mark_options = FindOptions(ignore_case=False, wrap_around=False)
-
     @untested
     def textViewDidChangeSelection_(self, notification):
         textview = notification.object()
@@ -387,7 +385,16 @@ class TextDocumentView(NSObject):
         self.scroll_view.statusView.updateLine_column_selection_(line, col, sel)
 
         ftext = text.substringWithRange_(range)
-        Finder((lambda:textview), self._mark_options).mark_occurrences(ftext)
+        if len(ftext.strip()) < 3 or " " in ftext:
+            ftext = ""
+        try:
+            finder = self._finder
+        except Exception:
+            finder = self._finder = Finder(
+                (lambda:self.text_view),
+                FindOptions(ignore_case=False, wrap_around=False),
+            )
+        finder.mark_occurrences(ftext)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

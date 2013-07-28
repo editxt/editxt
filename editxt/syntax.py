@@ -149,10 +149,13 @@ class SyntaxCache(object):
             if range.location + range.length > minend and (range, info) == prevcache:
                 raise StopHighlight()
 
+        ts.beginEditing()
         try:
             sdef.scan(text, setcolor, minstart)
         except StopHighlight:
             pass
+        finally:
+            ts.endEditing()
 
     def adjust(self, index, changelen):
         if changelen < 0:

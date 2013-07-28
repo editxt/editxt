@@ -152,31 +152,53 @@ class Finder(object):
         :color: Color used to mark ranges. Yellow (#FEFF6B) by default.
         :returns: Number of marked occurrences.
         """
+        target = self.find_target()
+        last_mark = getattr(target, '_Finder__last_mark', (None, 0))
+        if last_mark[0] == ftext:
+            return last_mark[1]
         if color is None:
             # TODO move getColor helper function to a utility module
             from editxt.syntax import SyntaxDefinition
             color = SyntaxDefinition.getColor("FEFF6B")
-        target = self.find_target()
         ts = target.textStorage()
-        full_range = NSMakeRange(0, ts.length())
-        ts.removeAttribute_range_(NSBackgroundColorAttributeName, full_range)
-        if not ftext:
-            return 0
-        text = target.string()
-        options = self.opts
-        if regex and options.regular_expression:
-            finditer = self.regexfinditer
-        elif options.match_entire_word:
-            ftext = u"\\b" + re.escape(ftext) + u"\\b"
-            finditer = self.regexfinditer
-        else:
-            finditer = self.simplefinditer
-        count = 0
-        mark_range = ts.addAttribute_value_range_
-        for found in finditer(text, ftext, full_range, FORWARD, False):
-            mark_range(NSBackgroundColorAttributeName, color, found.range)
-            count += 1
-        return count
+        ts.beginEditing()
+        try:
+            full_range = NSMakeRange(0, ts.length())
+            ts.removeAttribute_range_(NSBackgroundColorAttributeName, full_range)
+
+            # HACK for some reason marks are not always completely removed:
+            # - Select text with many occurrences in syntax-highlighted
+            #   document. There should be at least one occurrence of text
+            #   above the selection, outside of its syntax highlight region.
+            # - Type a character, effectively causing a syntax update as well
+            #   as a selection change.
+            # - Notice that some of the previously marked words are not cleared,
+            #   but they will be cleared on scroll/redraw.
+            target.setNeedsDisplay_(True)
+
+            if not ftext:
+                target._Finder__last_mark = (ftext, 0)
+                return 0
+            text = target.string()
+            options = self.opts
+            original_ftext = ftext
+            if regex and options.regular_expression:
+                finditer = self.regexfinditer
+            elif options.match_entire_word:
+                ftext = u"\\b" + re.escape(ftext) + u"\\b"
+                finditer = self.regexfinditer
+            else:
+                finditer = self.simplefinditer
+            count = 0
+            attr = NSBackgroundColorAttributeName
+            mark_range = ts.addAttribute_value_range_
+            for found in finditer(text, ftext, full_range, FORWARD, False):
+                mark_range(attr, color, found.range)
+                count += 1
+            target._Finder__last_mark = (original_ftext, count)
+            return count
+        finally:
+            ts.endEditing()
 
     @property
     def find_value(self):

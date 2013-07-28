@@ -48,8 +48,12 @@ def test_Finder_mark_occurrences():
         text = "the text is made of many texts"
         m = Mocker()
         tv = m.mock(TextView)
+        tv._Finder__last_mark >> (None, 0)
+        tv._Finder__last_mark = (c.opts.find_text, c.count)
+        tv.setNeedsDisplay_(True) # HACK
         ts = tv.textStorage() >> m.mock(NSTextStorage)
         full_range = NSMakeRange(0, ts.length() >> len(text))
+        ts.beginEditing()
         ts.removeAttribute_range_(NSBackgroundColorAttributeName, full_range)
         find_target = lambda: tv
         finder = Finder(find_target, c.opts)
@@ -59,6 +63,7 @@ def test_Finder_mark_occurrences():
             mark_range = ts.addAttribute_value_range_ >> m.mock()
             mark = mark_range(NSBackgroundColorAttributeName, ANY, ANY)
             expect(mark).count(c.count)
+        ts.endEditing()
         with m:
             count = finder.mark_occurrences(c.opts.find_text, c.allow_regex)
             eq_(count, c.count)
