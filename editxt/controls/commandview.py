@@ -56,8 +56,8 @@ class CommandView(NSTextField):
         #self.performSelector_withObject_afterDelay_("selectText:", self, 0)
         # possibly use setSelectedRange
         # http://jeenaparadies.net/weblog/2009/apr/focus-a-nstextfield
-        self.window().makeFirstResponder_(self)
         self._redraw()
+        self.window().makeFirstResponder_(self)
 
     def deactivate(self):
         view = self.command.editor.current_view
