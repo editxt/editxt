@@ -431,7 +431,7 @@ class VarArgs(Type):
 
 class Regex(Type):
 
-    NON_DELIMITERS = r'.^$*+?[]{}\()'
+    NON_DELIMITERS = r'.^$*+?{}\[]|()'
     WORDCHAR = re.compile(r'\w', re.UNICODE)
 
     def __init__(self, name, replace=False, default=None, flags=re.U | re.M):
