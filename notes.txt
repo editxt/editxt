@@ -79,8 +79,12 @@ Text mark enhancements
     add "set mark on|off" to override markings for current document
     add unmark command to immediately clear marks (for when "mark" is off)
     global switch (preference) for mark selection
-    global preference for marking color
+x    global preference for marking color
     mark text with find command (command bar)
+
+Add more settings
+  right_margin: 80 # set to 0 to disable
+  wrap_mode: [word|none]
 
 Add command bar:
 x   command text entry widget

@@ -22,12 +22,17 @@ from nose.tools import eq_
 
 import editxt.config as mod
 import editxt.constants as const
+from editxt.util import get_color
 from editxt.test.util import assert_raises, FakeLog, Regex, tempdir
 
+SCHEMA = {
+    "key": mod.String(),
+    "answer": mod.Integer(),
+}
 
 def test_Config_init_with_no_file():
     with tempdir() as tmp:
-        conf = mod.Config(tmp)
+        conf = mod.Config(tmp, SCHEMA)
         with assert_raises(KeyError):
             conf["key"]
 
@@ -35,7 +40,7 @@ def test_Config_init():
     with tempdir() as tmp:
         with open(join(tmp, const.CONFIG_FILENAME), "w") as f:
             f.write("key: value\n")
-        conf = mod.Config(tmp)
+        conf = mod.Config(tmp, SCHEMA)
         eq_(conf["key"], "value")
 
 def test_Config_init_invalid_config():
@@ -43,7 +48,7 @@ def test_Config_init_invalid_config():
         with tempdir() as tmp, FakeLog(mod) as log:
             with open(join(tmp, const.CONFIG_FILENAME), "w") as f:
                 f.write(config_data)
-            conf = mod.Config(tmp)
+            conf = mod.Config(tmp, SCHEMA)
             with assert_raises(KeyError):
                 conf["key"]
             regex = Regex("cannot load [^:]+/config\.yaml: {}".format(error))
@@ -56,7 +61,7 @@ def test_Config_reload():
     with tempdir() as tmp:
         with open(join(tmp, const.CONFIG_FILENAME), "w") as f:
             f.write("key: value\n")
-        conf = mod.Config(tmp)
+        conf = mod.Config(tmp, SCHEMA)
         eq_(conf["key"], "value")
 
         with open(join(tmp, const.CONFIG_FILENAME), "w") as f:
@@ -64,3 +69,75 @@ def test_Config_reload():
         conf.reload()
         eq_(conf["answer"], 42)
         assert "key" not in conf, conf
+
+def test_Config_schema():
+    def test(data, key, value):
+        config = mod.Config("/tmp/missing.3216546841325465132546514321654")
+        config.data = data
+
+        if isinstance(value, Exception):
+            with assert_raises(type(value), msg=str(value)):
+                config[key]
+        else:
+            eq_(config[key], value)
+
+    yield test, {}, "unknown", KeyError("unknown")
+    yield test, {}, "unknown.sub", KeyError("unknown.sub")
+    yield test, {"selection_matching": True}, "selection_matching.enabled", \
+        ValueError("selection_matching: expected dict, got True")
+
+    yield test, {"selection_matching": []}, "selection_matching", \
+        ValueError("selection_matching: expected dict, got []")
+    yield test, {}, "selection_matching.enabled", True
+    yield test, {"selection_matching": {}}, "selection_matching.enabled", True
+    yield test, {"selection_matching": {"enabled": True}}, \
+        "selection_matching.enabled", True
+    yield test, {"selection_matching": {"enabled": "treu"}}, \
+        "selection_matching.enabled", \
+        ValueError("selection_matching.enabled: expected boolean, got 'treu'")
+    yield test, {}, "selection_matching.enabled.x", \
+        ValueError("selection_matching.enabled.x: "
+                   "selection_matching.enabled is not a dict")
+
+def test_Type_validate():
+    NOT_SET = mod.NOT_SET
+    def test(Type, input, value, default=NOT_SET):
+        if default is NOT_SET:
+            type_ = Type()
+        else:
+            type_ = Type(default=default)
+        if isinstance(value, Exception):
+            with assert_raises(type(value), msg=str(value)):
+                type_.validate(input, "key")
+        else:
+            eq_(type_.validate(input, "key"), value)
+
+    yield test, mod.Boolean, True, True
+    yield test, mod.Boolean, True, True
+    yield test, mod.Boolean, False, False
+    yield test, mod.Boolean, "true", True
+    yield test, mod.Boolean, "false", False
+    yield test, mod.Boolean, "yes", True
+    yield test, mod.Boolean, "no", False
+    yield test, mod.Boolean, NOT_SET, NOT_SET
+    yield test, mod.Boolean, NOT_SET, True, True
+    yield test, mod.Boolean, NOT_SET, None, None
+    yield test, mod.Boolean, 42, ValueError("key: expected boolean, got 42")
+    yield test, mod.Boolean, "null", \
+        ValueError("key: expected boolean, got 'null'")
+
+    yield test, mod.String, "true", "true"
+    yield test, mod.String, NOT_SET, NOT_SET
+    yield test, mod.String, NOT_SET, "abc", "abc"
+    yield test, mod.String, NOT_SET, None, None
+    yield test, mod.String, 42, ValueError("key: expected string, got 42")
+
+    yield test, mod.Integer, 42, 42
+    yield test, mod.Integer, NOT_SET, NOT_SET
+    yield test, mod.Integer, NOT_SET, "abc", "abc"
+    yield test, mod.Integer, NOT_SET, None, None
+    yield test, mod.Integer, 'x', ValueError("key: expected integer, got 'x'")
+
+    yield test, mod.Color, "FEFF6B", get_color("FEFF6B")
+    yield test, mod.Color, "x", \
+        ValueError("key: expected RRGGBB hex color string, got 'x'")

@@ -157,9 +157,7 @@ class Finder(object):
         if last_mark[0] == ftext:
             return last_mark[1]
         if color is None:
-            # TODO move getColor helper function to a utility module
-            from editxt.syntax import SyntaxDefinition
-            color = SyntaxDefinition.getColor("FEFF6B")
+            color = app.config["selection_matching.color"]
         ts = target.textStorage()
         ts.beginEditing()
         try:

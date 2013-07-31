@@ -345,6 +345,19 @@ def representedObject(node):
     except AttributeError:
         return node.observedObject()
 
+def get_color(value, cache={}):
+    if isinstance(value, NSColor):
+        return value
+    try:
+        return cache[value]
+    except KeyError:
+        assert len(value) == 6, "invalid color value: %r" % value
+        r = int(value[:2], 16) / 255.0
+        g = int(value[2:4], 16) / 255.0
+        b = int(value[4:], 16) / 255.0
+        color = cache[value] = NSColor.colorWithCalibratedRed_green_blue_alpha_(r, g, b, 1.0)
+        return color
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 from collections import defaultdict
 

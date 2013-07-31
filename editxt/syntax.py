@@ -33,6 +33,7 @@ from Foundation import NSRange, NSUnionRange
 # from pygments.styles import get_style_by_name
 
 import editxt.constants as const
+from editxt.util import get_color
 
 log = logging.getLogger(__name__)
 
@@ -279,7 +280,7 @@ class SyntaxDefinition(NoHighlight):
         word_char = re.compile(r"\w")
         for tokens, color in word_groups:
             name = namegen.next()
-            color = self.getColor(color)
+            color = get_color(color)
             wordgroup = []
             for token in tokens:
                 if hasattr(token, "pattern"):
@@ -296,7 +297,7 @@ class SyntaxDefinition(NoHighlight):
 
         for start, ends, color, sdef in delimited_ranges:
             name = namegen.next()
-            color = self.getColor(color)
+            color = get_color(color)
             phrase = "(?P<%s>(%s).*?(%s))" % (
                 name,
                 escape(start),
@@ -322,22 +323,6 @@ class SyntaxDefinition(NoHighlight):
             setcolor(data[0], range, prevend, data[1])
             prevend = range.location + range.length
         setcolor(None,  NSRange(len(text) - 1, 0), prevend, None)
-
-    _colorCache = {}
-
-    @staticmethod
-    def getColor(value, cache=_colorCache):
-        if isinstance(value, NSColor):
-            return value
-        try:
-            return cache[value]
-        except KeyError:
-            assert len(value) == 6, "invalid color value: %r" % value
-            r = int(value[:2], 16) / 255.0
-            g = int(value[2:4], 16) / 255.0
-            b = int(value[4:], 16) / 255.0
-            color = cache[value] = NSColor.colorWithCalibratedRed_green_blue_alpha_(r, g, b, 1.0)
-            return color
 
 
 PLAIN_TEXT = NoHighlight("Plain Text", "x")

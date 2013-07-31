@@ -23,6 +23,11 @@ This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
 ????-??-?? - 1.x.x
+  - Add config file with selection matching settings:
+    document:
+      selection_matching:
+        enabled: [yes|no] # default is yes
+        color: FEFF6B
   - Mark occurrences when counting with the find dialog.
   - Mark (highlight) all occurrences of selected text (length > 3, containing
     no spaces), yellow for now.
