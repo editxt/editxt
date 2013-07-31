@@ -98,6 +98,7 @@ def load_commands():
             sort_lines,
             reindent,
             find,
+            reload_config,
         ],
 
         # A dict of of NSResponder selectors mapped to callbacks
@@ -373,6 +374,12 @@ def reindent(textview, sender, args):
     from editxt.changeindent import ChangeIndentationController
     ctl = ChangeIndentationController.create_with_textview(textview)
     ctl.begin_sheet(sender)
+
+
+@command(title=u"Reload config")
+def reload_config(textview, sender, args):
+    from editxt import app
+    app.config.reload()
 
 
 _ws = re.compile(ur"([\t ]+)", re.UNICODE | re.MULTILINE)

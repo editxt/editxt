@@ -24,7 +24,7 @@ from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_, assert_raises
 from AppKit import *
 from Foundation import *
-from editxt.test.util import TestConfig
+from editxt.test.util import TestConfig, replattr
 
 import editxt.constants as const
 import editxt.commands as mod
@@ -92,6 +92,7 @@ def test_load_commands():
         mod.sort_lines,
         mod.reindent,
         mod.find,
+        mod.reload_config,
     ])
     eq_(set(cmds["input_handlers"]), set([
         "insertTab:",
@@ -519,6 +520,16 @@ def test_find_command():
     yield test, c(input=u"/abc//  l", find="abc", regex=False, match_word=False)
     yield test, c(input=u"/abc//  w", find="abc", regex=False, match_word=True)
     yield test, c(input=u"/abc//   n", find="abc", wrap=False)
+
+def test_reload_config():
+    from editxt import app
+    from editxt.config import Config
+    m = Mocker()
+    config = m.mock(Config)
+    config.reload()
+    tv = m.mock(NSTextView)
+    with m, replattr(app, "config", config):
+        mod.reload_config(tv, "<sender>", None)
 
 def test_panel_actions():
     import sys
