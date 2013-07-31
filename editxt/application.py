@@ -31,6 +31,7 @@ from PyObjCTools import AppHelper
 import editxt
 import editxt.constants as const
 from editxt.commands import iterlines
+from editxt.config import Config
 from editxt.errorlog import errlog
 from editxt.textcommand import CommandHistory, TextCommandController
 from editxt.util import ContextMap, perform_selector, dump_yaml, load_yaml
@@ -56,6 +57,7 @@ class Application(object):
         self._setup_profile = set()
         self.editors = []
         self.path_opener = None
+        self.config = Config(self.profile_path)
         self.context = ContextMap()
         self.syntax_factory = None
         command_history = CommandHistory(self.profile_path)

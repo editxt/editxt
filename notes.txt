@@ -76,10 +76,11 @@ Top priority
 BUG: CPU pegged on shutdown when many documents open
 
 Text mark enhancements
-    add "set mark on|off" to override markings for current textview
-    add unmark command to immediately clear marks
+    add "set mark on|off" to override markings for current document
+    add unmark command to immediately clear marks (for when "mark" is off)
     global switch (preference) for mark selection
     global preference for marking color
+    mark text with find command (command bar)
 
 Add command bar:
 x   command text entry widget

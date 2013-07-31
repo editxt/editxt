@@ -25,6 +25,7 @@ import os
 import re
 import shutil
 import tempfile
+from collections import defaultdict
 from contextlib import contextmanager
 from nose import with_setup
 import nose.tools
@@ -178,6 +179,52 @@ def assert_raises(*args, **kw):
         return raises()
     else:
         nose.tools.assert_raises(*args, **kw)
+
+
+class FakeLog(object):
+
+    def __init__(self, module):
+        self.module = module
+        self.data = defaultdict(list)
+
+    def __getattr__(self, name):
+        def log(message, *args, **kw):
+            exc_info = kw.pop("exc_info", None)
+            assert not kw, "unrecognized keyword args: {}".format(kw)
+            if args:
+                message = message % args
+            if exc_info is not None:
+                message += "\nexc_info = {!r}".format(exc_info)
+            self.data[name].append(message)
+        log.__name__ = name
+        return log
+
+    def __enter__(self):
+        self.context = replattr(self.module, "log", self)
+        self.context.__enter__()
+        return self
+
+    def __exit__(self, *args):
+        self.context.__exit__(*args)
+
+
+class Regex(object):
+
+    def __init__(self, expression, *args, **kw):
+        self.expr = re.compile(expression, *args, **kw)
+        self.expression = expression
+
+    def __repr__(self):
+        return "Regex({!r})".format(self.expression)
+
+    def __str__(self):
+        return self.expression
+
+    def __eq__(self, other):
+        return self.expr.search(other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 
 def check_app_state(test):

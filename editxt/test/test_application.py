@@ -79,6 +79,10 @@ def test_profile_path():
     yield test, '~/.editxt', os.path.expanduser('~/.editxt')
     yield test, '/xt-profile', '/xt-profile'
 
+def test_Application_config():
+    app = Application("~/.editxt")
+    eq_(app.config.path, os.path.expanduser("~/.editxt/config.yaml"))
+
 def test_init_syntax_definitions():
     import editxt.syntax as syntax
     m = Mocker()
