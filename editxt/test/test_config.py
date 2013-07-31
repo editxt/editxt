@@ -23,7 +23,7 @@ from nose.tools import eq_
 import editxt.config as mod
 import editxt.constants as const
 from editxt.util import get_color
-from editxt.test.util import assert_raises, FakeLog, Regex, tempdir
+from editxt.test.util import assert_raises, CaptureLog, Regex, tempdir
 
 SCHEMA = {
     "key": mod.String(),
@@ -45,7 +45,7 @@ def test_Config_init():
 
 def test_Config_init_invalid_config():
     def test(config_data, error):
-        with tempdir() as tmp, FakeLog(mod) as log:
+        with tempdir() as tmp, CaptureLog(mod) as log:
             with open(join(tmp, const.CONFIG_FILENAME), "w") as f:
                 f.write(config_data)
             conf = mod.Config(tmp, SCHEMA)
@@ -71,33 +71,37 @@ def test_Config_reload():
         assert "key" not in conf, conf
 
 def test_Config_schema():
-    def test(data, key, value):
+    def test(data, key, value, errors={}):
         config = mod.Config("/tmp/missing.3216546841325465132546514321654")
         config.data = data
 
-        if isinstance(value, Exception):
-            with assert_raises(type(value), msg=str(value)):
-                config[key]
-        else:
-            eq_(config[key], value)
+        with CaptureLog(mod) as log:
+            if isinstance(value, Exception):
+                with assert_raises(type(value), msg=str(value)):
+                    config[key]
+            else:
+                eq_(config[key], value)
+            eq_(log.data, errors)
 
     yield test, {}, "unknown", KeyError("unknown")
     yield test, {}, "unknown.sub", KeyError("unknown.sub")
-    yield test, {"selection_matching": True}, "selection_matching.enabled", \
-        ValueError("selection_matching: expected dict, got True")
 
-    yield test, {"selection_matching": []}, "selection_matching", \
-        ValueError("selection_matching: expected dict, got []")
     yield test, {}, "selection_matching.enabled", True
     yield test, {"selection_matching": {}}, "selection_matching.enabled", True
     yield test, {"selection_matching": {"enabled": True}}, \
         "selection_matching.enabled", True
+    yield test, {"selection_matching": []}, \
+        "selection_matching.enabled", True, \
+        {"error": ["selection_matching: expected dict, got []"]}
     yield test, {"selection_matching": {"enabled": "treu"}}, \
-        "selection_matching.enabled", \
-        ValueError("selection_matching.enabled: expected boolean, got 'treu'")
+        "selection_matching.enabled", True, \
+        {"error": ["selection_matching.enabled: expected boolean, got 'treu'"]}
+    yield test, {"selection_matching": True}, \
+        "selection_matching.enabled", True, \
+        {"error": ["selection_matching: expected dict, got True"]}
     yield test, {}, "selection_matching.enabled.x", \
         ValueError("selection_matching.enabled.x: "
-                   "selection_matching.enabled is not a dict")
+                   "selection_matching.enabled is boolean, not a dict")
 
 def test_Type_validate():
     NOT_SET = mod.NOT_SET

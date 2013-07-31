@@ -181,14 +181,16 @@ def assert_raises(*args, **kw):
         nose.tools.assert_raises(*args, **kw)
 
 
-class FakeLog(object):
+class CaptureLog(object):
 
     def __init__(self, module):
+        self.log = module.log
         self.module = module
         self.data = defaultdict(list)
 
     def __getattr__(self, name):
         def log(message, *args, **kw):
+            getattr(self.log, name)(message, *args, **kw)
             exc_info = kw.pop("exc_info", None)
             assert not kw, "unrecognized keyword args: {}".format(kw)
             if args:

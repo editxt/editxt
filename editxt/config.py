@@ -27,11 +27,13 @@ log = logging.getLogger(__name__)
 
 NOT_SET = object()
 
-
+# The following schema defines the confuration values accepted by the program.
+# Use function to allow config schema to be defined at top of file before
+# schema types.
 def config_schema(): return {
     "selection_matching": {
         "enabled": Boolean(default=True),
-        "color": Color(default="FEFF6B"),
+        "color": Color(default=get_color("FEFF6B")),
     }
 }
 
@@ -98,7 +100,7 @@ class Color(Type):
         try:
             return get_color(value)
         except Exception:
-            log.warn("cannot parse color: %r", value, exc_info=True)
+            log.error("cannot parse color: %r", value, exc_info=True)
             raise ValueError("{}: expected RRGGBB hex color string, got {!r}"
                              .format(key, value))
 
@@ -143,10 +145,8 @@ class Config(object):
         try:
             return self.valid[name]
         except KeyError:
-            try:
+            if name in self.errors:
                 raise self.errors[name]
-            except KeyError:
-                pass
         try:
             value = self.lookup(name)
         except (KeyError, ValueError) as err:
@@ -162,14 +162,14 @@ class Config(object):
         so_far = []
         for part in name.split("."):
             if not isinstance(schema, dict):
-                raise ValueError(
-                    "{}: {} is not a dict".format(name, ".".join(so_far)))
+                raise ValueError("{}: {} is {}, not a dict".format(
+                    name, ".".join(so_far), type(schema).__name__.lower()))
             schema = schema.get(part)
             if schema is None:
                 raise KeyError(name)
             if not isinstance(value, dict):
-                raise ValueError("{}: expected dict, got {!r}"
-                                 .format(".".join(so_far), value))
+                log.error("%s: expected dict, got %r", ".".join(so_far), value)
+                value = {}
             try:
                 value = value[part]
             except KeyError:
@@ -184,7 +184,14 @@ class Config(object):
                 raise ValueError(
                     "{}: expected dict, got {!r}".format(name, value))
             raise NotImplementedError
-        value = schema.validate(value, name)
+        try:
+            value = schema.validate(value, name)
+        except Exception as err:
+            if not str(err).startswith(name + ": "):
+                log.error("%s: %s", name, error, exc_info=True)
+            else:
+                log.error(str(err))
+            value = schema.default
         if value is NOT_SET:
             raise KeyError(name)
         return value
