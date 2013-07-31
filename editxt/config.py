@@ -109,6 +109,7 @@ class Config(object):
         self.path = join(profile_path, const.CONFIG_FILENAME)
         self.data = {}
         self.valid = {}
+        self.errors = {}
         self.schema = schema
         self.reload()
 
@@ -129,6 +130,7 @@ class Config(object):
         else:
             self.data = {}
         self.valid = {}
+        self.errors = {}
 
     def __contains__(self, name):
         try:
@@ -139,17 +141,16 @@ class Config(object):
 
     def __getitem__(self, name):
         try:
-            value = self.valid[name]
+            return self.valid[name]
         except KeyError:
-            pass
-        else:
-            if isinstance(value, Exception):
-                raise value
-            return value
+            try:
+                raise self.errors[name]
+            except KeyError:
+                pass
         try:
             value = self.lookup(name)
         except (KeyError, ValueError) as err:
-            self.valid[name] = err
+            self.errors[name] = err
             raise
         self.valid[name] = value
         return value
