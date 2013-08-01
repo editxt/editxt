@@ -86,22 +86,23 @@ def test_Config_schema():
     yield test, {}, "unknown", KeyError("unknown")
     yield test, {}, "unknown.sub", KeyError("unknown.sub")
 
-    yield test, {}, "match_selection.enabled", True
-    yield test, {"match_selection": {}}, "match_selection.enabled", True
-    yield test, {"match_selection": {"enabled": True}}, \
-        "match_selection.enabled", True
-    yield test, {"match_selection": []}, \
-        "match_selection.enabled", True, \
-        {"error": ["match_selection: expected dict, got []"]}
-    yield test, {"match_selection": {"enabled": "treu"}}, \
-        "match_selection.enabled", True, \
-        {"error": ["match_selection.enabled: expected boolean, got 'treu'"]}
-    yield test, {"match_selection": True}, \
-        "match_selection.enabled", True, \
-        {"error": ["match_selection: expected dict, got True"]}
-    yield test, {}, "match_selection.enabled.x", \
-        ValueError("match_selection.enabled.x: "
-                   "match_selection.enabled is boolean, not a dict")
+    yield test, {}, "highlight_selected_text.enabled", True
+    yield test, {"highlight_selected_text": {}}, \
+        "highlight_selected_text.enabled", True
+    yield test, {"highlight_selected_text": {"enabled": True}}, \
+        "highlight_selected_text.enabled", True
+    yield test, {"highlight_selected_text": []}, \
+        "highlight_selected_text.enabled", True, \
+        {"error": ["highlight_selected_text: expected dict, got []"]}
+    yield test, {"highlight_selected_text": {"enabled": "treu"}}, \
+        "highlight_selected_text.enabled", True, \
+        {"error": ["highlight_selected_text.enabled: expected boolean, got 'treu'"]}
+    yield test, {"highlight_selected_text": True}, \
+        "highlight_selected_text.enabled", True, \
+        {"error": ["highlight_selected_text: expected dict, got True"]}
+    yield test, {}, "highlight_selected_text.enabled.x", \
+        ValueError("highlight_selected_text.enabled.x: "
+                   "highlight_selected_text.enabled is boolean, not a dict")
 
     yield test, {}, "indent.mode", const.INDENT_MODE_SPACE
     yield test, {"indent": {"mode": "xyz"}}, \

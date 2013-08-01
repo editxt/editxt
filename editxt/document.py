@@ -455,7 +455,7 @@ class TextDocument(NSDocument):
         self.indent_mode = app.config["indent.mode"]
         self.indent_size = app.config["indent.size"] # should come from syntax definition
         self.newline_mode = app.config["newline_mode"]
-        self.match_selection = app.config["match_selection.enabled"]
+        self.highlight_selected_text = app.config["highlight_selected_text.enabled"]
         self.reset_text_attributes(self.indent_size)
         #self.save_hooks = []
         return self
