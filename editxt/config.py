@@ -34,7 +34,24 @@ def config_schema(): return {
     "match_selection": {
         "enabled": Boolean(default=True),
         "color": Color(default=get_color("FEFF6B")),
-    }
+    },
+    "indent": {
+        "mode": Enum(
+            const.INDENT_MODE_SPACE,
+            const.INDENT_MODE_TAB,
+            default=const.INDENT_MODE_SPACE),
+        "size": Integer(default=4, minimum=1),
+    },
+    "newline_mode": Enum(
+        const.NEWLINE_MODE_UNIX,
+        const.NEWLINE_MODE_MAC,
+        const.NEWLINE_MODE_WINDOWS,
+        const.NEWLINE_MODE_UNICODE,
+        default=const.NEWLINE_MODE_UNIX),
+    "wrap_mode": Enum(
+        const.LINE_WRAP_NONE,
+        const.LINE_WRAP_WORD,
+        default=const.LINE_WRAP_NONE),
 }
 
 
@@ -59,12 +76,45 @@ class String(Type):
         raise ValueError("{}: expected string, got {!r}".format(key, value))
 
 
+class Enum(Type):
+
+    def __init__(self, *args, **kw):
+        super(Enum, self).__init__(**kw)
+        self.choices = choices = {}
+        self.names = names = []
+        for arg in args:
+            if isinstance(arg, tuple):
+                name, value = arg
+            else:
+                name = value = arg
+            assert isinstance(name, basestring), \
+                "choice name must be a string, got {!r}".foramt(name)
+            choices[name] = value
+            names.append(name)
+
+    def validate(self, value, key):
+        if value is NOT_SET:
+            return self.default
+        try:
+            return self.choices[value]
+        except KeyError:
+            raise ValueError("{}: expected one of ({}), got {!r}"
+                .format(key, "|".join(self.names), value))
+
+
 class Integer(Type):
+
+    def __init__(self, *args, **kw):
+        self.minimum = kw.pop("minimum", None)
+        super(Integer, self).__init__(*args, **kw)
 
     def validate(self, value, key):
         if value is NOT_SET:
             return self.default
         if isinstance(value, (int, long)):
+            if self.minimum is not None and value < self.minimum:
+                raise ValueError("{}: {} is less than the minimum value ({})"
+                    .format(key, value, self.minimum))
             return value
         raise ValueError("{}: expected integer, got {!r}".format(key, value))
 

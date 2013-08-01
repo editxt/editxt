@@ -182,7 +182,7 @@ class TextDocumentView(NSObject):
             #sv.verticalRulerView().invalidateRuleThickness()
             sv.setRulersVisible_(True)
 
-            self.wrap_mode = const.LINE_WRAP_NONE
+            self.wrap_mode = app.config["wrap_mode"]
             self.reset_edit_state()
         else:
             # reset frame in case the window was resized
@@ -452,9 +452,10 @@ class TextDocument(NSDocument):
         self.syntaxer = SyntaxCache()
         self._filestat = None
         self.props = KVOProxy(self)
-        self.indent_mode = const.INDENT_MODE_SPACE
-        self.indent_size = 4 # should come from syntax definition
-        self.newline_mode = const.NEWLINE_MODE_UNIX
+        self.indent_mode = app.config["indent.mode"]
+        self.indent_size = app.config["indent.size"] # should come from syntax definition
+        self.newline_mode = app.config["newline_mode"]
+        self.match_selection = app.config["match_selection.enabled"]
         self.reset_text_attributes(self.indent_size)
         #self.save_hooks = []
         return self

@@ -103,6 +103,28 @@ def test_Config_schema():
         ValueError("match_selection.enabled.x: "
                    "match_selection.enabled is boolean, not a dict")
 
+    yield test, {}, "indent.mode", const.INDENT_MODE_SPACE
+    yield test, {"indent": {"mode": "xyz"}}, \
+        "indent.mode", const.INDENT_MODE_SPACE, \
+        {"error": ["indent.mode: expected one of (space|tab), got 'xyz'"]}
+
+    yield test, {}, "indent.size", 4
+    yield test, {"indent": {"size": "two"}}, "indent.size", 4, \
+        {"error": ["indent.size: expected integer, got 'two'"]}
+    yield test, {"indent": {"size": 0}}, "indent.size", 4, \
+        {"error": ["indent.size: 0 is less than the minimum value (1)"]}
+
+    yield test, {}, "newline_mode", const.NEWLINE_MODE_UNIX
+    yield test, {"newline_mode": "xyz"}, \
+        "newline_mode", const.NEWLINE_MODE_UNIX, \
+        {"error": ["newline_mode: expected one of (LF|CR|CRLF|UNICODE), got 'xyz'"]}
+
+    yield test, {}, "wrap_mode", const.LINE_WRAP_NONE
+    yield test, {"wrap_mode": "xyz"}, \
+        "wrap_mode", const.LINE_WRAP_NONE, \
+        {"error": ["wrap_mode: expected one of (none|word), got 'xyz'"]}
+
+
 def test_Type_validate():
     NOT_SET = mod.NOT_SET
     def test(Type, input, value, default=NOT_SET):
@@ -145,3 +167,5 @@ def test_Type_validate():
     yield test, mod.Color, "FEFF6B", get_color("FEFF6B")
     yield test, mod.Color, "x", \
         ValueError("key: expected RRGGBB hex color string, got 'x'")
+
+    yield test, mod.Enum, NOT_SET, NOT_SET
