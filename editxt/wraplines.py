@@ -28,6 +28,7 @@ from Foundation import *
 
 import editxt.constants as const
 from editxt.commandbase import SheetController
+from editxt.commandparser import Options
 from editxt.commands import iterlines
 
 log = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ class WrapLinesController(SheetController):
     """Window controller for sort lines text command"""
 
     NIB_NAME = u"WrapLines"
-    OPTIONS_DEFAULTS = dict(
+    OPTIONS_FACTORY = lambda self:Options(
         wrap_column=const.DEFAULT_RIGHT_MARGIN,
         indent=True,
     )

@@ -56,7 +56,7 @@ class SortLinesController(SheetController):
     """Window controller for sort lines text command"""
 
     NIB_NAME = u"SortLines"
-    OPTIONS_Factory = SortOptions
+    OPTIONS_FACTORY = SortOptions
 
     def sort_(self, sender):
         sortlines(self.textview, self.opts)
