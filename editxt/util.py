@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+import re
 import sys
 import types
 
@@ -351,12 +352,16 @@ def get_color(value, cache={}):
     try:
         return cache[value]
     except KeyError:
-        assert len(value) == 6, "invalid color value: %r" % value
+        assert COLOR_RE.match(value), "invalid color value: %r" % value
+        if len(value) == 7:
+            value = value[1:]
         r = int(value[:2], 16) / 255.0
         g = int(value[2:4], 16) / 255.0
         b = int(value[4:], 16) / 255.0
         color = cache[value] = NSColor.colorWithCalibratedRed_green_blue_alpha_(r, g, b, 1.0)
         return color
+
+COLOR_RE = re.compile("^#?[0-9a-f]{6}$", re.IGNORECASE)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 from collections import defaultdict
