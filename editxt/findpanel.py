@@ -157,7 +157,7 @@ class Finder(object):
         if last_mark[0] == ftext:
             return last_mark[1]
         if color is None:
-            color = app.config["selection_matching.color"]
+            color = app.config["match_selection.color"]
         ts = target.textStorage()
         ts.beginEditing()
         try:

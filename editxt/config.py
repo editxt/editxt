@@ -31,7 +31,7 @@ NOT_SET = object()
 # Use function to allow config schema to be defined at top of file before
 # schema types.
 def config_schema(): return {
-    "selection_matching": {
+    "match_selection": {
         "enabled": Boolean(default=True),
         "color": Color(default=get_color("FEFF6B")),
     }
