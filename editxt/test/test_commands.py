@@ -93,6 +93,7 @@ def test_load_commands():
         mod.reindent,
         mod.find,
         mod.reload_config,
+        mod.set_variable,
     ])
     eq_(set(cmds["input_handlers"]), set([
         "insertTab:",
@@ -531,6 +532,22 @@ def test_reload_config():
     with m, replattr(app, "config", config):
         mod.reload_config(tv, "<sender>", None)
 
+def test_set_variable():
+    from editxt.document import TextDocumentView
+    from editxt.controls.textview import TextView
+    def test(command, attribute, value):
+        m = Mocker()
+        tv = m.mock(TextView)
+        view = tv.doc_view >> m.mock(TextDocumentView)
+        setattr(view, attribute, value)
+        do = CommandTester(tv, mod.set_variable)
+        with m:
+            do(command)
+    c = TestConfig()
+    yield test, "set soft_wrap on", "soft_wrap", const.WRAP_WORD
+    yield test, "set soft_wrap off", "soft_wrap", const.WRAP_NONE
+
+
 def test_panel_actions():
     import sys
     def test(c):
@@ -675,3 +692,27 @@ def test_change_indentation():
         yield test, c(input=u"\t\tx\t\t\n", output=u"      x\t\t\n")
         yield test, c(input=u"\tx\n\t\ty\n", output=u"   x\n      y\n")
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Test helpers
+import editxt.textcommand as textcommand
+
+class CommandTester(object):
+
+    def __init__(self, textview, *commands):
+        class menu:
+            @staticmethod
+            def insertItem_atIndex_(item, tag):
+                pass
+        class editor:
+            class current_view:
+                text_view = textview
+        commander = textcommand.TextCommandController([])
+        for command in commands:
+            commander.add_command(command, None, menu)
+        self.bar = textcommand.CommandBar(editor, commander)
+        # keep references (CommandBar uses weakref)
+        self.refs = (editor, commander)
+
+    def __call__(self, command):
+        with replattr(textcommand, "NSBeep", lambda:None): # HACK
+            self.bar.execute(command)

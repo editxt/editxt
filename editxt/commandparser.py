@@ -189,7 +189,7 @@ class Type(object):
         argnames = self.__init__.im_func.func_code.co_varnames
         defaults = self.__init__.im_func.func_defaults or []
         assert argnames[0] == 'self', argnames
-        assert len(self.args) == len(argnames) - 1, self.args
+        #assert len(self.args) == len(argnames) - 1, self.args
         args = []
         for name, default, value in zip(
                 reversed(argnames), reversed(defaults), reversed(self.args)):
@@ -555,6 +555,16 @@ class SubParser(Type):
                 return (sub, err.options), err.parse_index
             raise
         return (sub, opts), len(text)
+
+    def get_completions(self, text):
+        name, end = self.consume_token(text, 0)
+        sub = self.subparsers.get(name)
+        if sub is None:
+            names = sorted(self.subparsers)
+            if name is None:
+                return names
+            return [n for n in names if n.startswith(name)]
+        return sub.parser.get_completions(text[end:])
 
 
 class SubArgs(object):

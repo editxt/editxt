@@ -42,6 +42,16 @@ def make_type_checker(arg):
             eq_(arg.consume(text, start), expect)
     return test
 
+def make_placeholder_checker(arg):
+    def test_get_placeholder(text, index, result):
+        eq_(arg.get_placeholder(text, index), result)
+    return test_get_placeholder
+
+def make_completions_checker(arg):
+    def test_get_completions(input, output):
+        eq_(arg.get_completions(input), output)
+    return test_get_completions
+
 def test_identifier():
     def test(name, ident):
         eq_(identifier(name), ident)
@@ -264,17 +274,39 @@ def test_Regex():
     yield test, '/(// arg', 0, ParseError(msg, arg, 5, 5)
 
 def test_SubParser():
-    sub = SubArgs("num", Int("num"), abc="xyz")
-    arg = SubParser("var", sub)
+    sub = SubArgs("val", Int("num"), abc="xyz")
+    su2 = SubArgs("str", Choice(('yes', True), ('no', False)), abc="mno")
+    arg = SubParser("var", sub, su2)
     eq_(str(arg), 'var')
-    eq_(repr(arg), "SubParser('var', SubArgs('num', Int('num'), abc='xyz'))")
+    eq_(repr(arg),
+        "SubParser('var', SubArgs('val', Int('num'), abc='xyz'), "
+        "SubArgs('str', Choice(('yes', True), ('no', False)), abc='mno'))")
+
+    test = make_completions_checker(arg)
+    yield test, "", ["str", "val"]
+    yield test, "v", ["val"]
+    yield test, "val", []
+    yield test, "val ", []
+    yield test, "st", ["str"]
+    #yield test, "str", [] ??
+    yield test, "str ", ["yes", "no"]
+    yield test, "str y", ["yes"]
+
+    test = make_placeholder_checker(arg)
+    yield test, "", 0, "variable ..."
+    yield test, "v", 1, ""
+    yield test, "val", 3, " num"
+    yield test, "val ", 4, "num"
+    yield test, "s", 1, ""
+    yield test, "str", 3, " yes"
+    yield test, "str ", 4, "yes"
 
     test = make_type_checker(arg)
     yield test, '', 0, ParseError("not enough arguments", arg, 0, 0)
-    yield test, 'x', 0, ParseError("'x' does not match any of: num", arg, 0, 1)
-    yield test, 'num 1', 0, ((sub, Options(num=1)), 5)
-    yield test, 'num 1 2', 0, ((sub, Options(num=1)), 6)
-    yield test, 'num x 2', 0, ArgumentError("invalid arguments: num x 2",
+    yield test, 'x', 0, ParseError("'x' does not match any of: str, val", arg, 0, 1)
+    yield test, 'val 1', 0, ((sub, Options(num=1)), 5)
+    yield test, 'val 1 2', 0, ((sub, Options(num=1)), 6)
+    yield test, 'val x 2', 0, ArgumentError("invalid arguments: val x 2",
         Options(), [ParseError("invalid literal for int() with base 10: 'x'",
                                Int("num"), 4, 6)], 6)
 

@@ -25,7 +25,7 @@ from Foundation import *
 
 import editxt.constants as const
 from editxt.commandparser import (Choice, Int, String, Regex, VarArgs,
-    CommandParser, Options)
+    CommandParser, Options, SubArgs, SubParser)
 
 log = logging.getLogger(__name__)
 
@@ -99,6 +99,7 @@ def load_commands():
             reindent,
             find,
             reload_config,
+            set_variable,
         ],
 
         # A dict of of NSResponder selectors mapped to callbacks
@@ -380,6 +381,48 @@ def reindent(textview, sender, args):
 def reload_config(textview, sender, args):
     from editxt import app
     app.config.reload()
+
+
+
+def set_docview_variable(textview, name, args):
+    setattr(textview.doc_view, name, args.value)
+
+@command(name="set", arg_parser=CommandParser(SubParser("variable",
+#    Variable("indent", [
+#        Int("size", default=lambda textview: app.config["indent_size"])
+#        Choice(
+#            ("space", const.INDENT_MODE_SPACE),
+#            ("tab", const.INDENT_MODE_TAB),
+#            name="mode",
+#            default=lambda textview: textview.doc_view.document.indent_mode)
+#    ], lambda config:(config["indent.size"], config["indent.mode"])),
+#    Variable("highlight_selected_text", [
+#        Choice(
+#            ("yes", True),
+#            ("no", False),
+#            name="value",
+#            default=lambda textview:
+#                           textview.doc_view.highlight_selected_text)
+#    ], "highlight_selected_text.enabled"),
+#    Variable("newline_mode", [
+#        Choice(
+#            ("space", const.INDENT_MODE_SPACE),
+#            ("tab", const.INDENT_MODE_TAB),
+#            name="value",
+#            default=lambda textview: textview.doc_view.newline_mode)
+#    ]),
+    SubArgs("soft_wrap",
+        Choice(
+            ("on", const.WRAP_WORD),
+            ("off", const.WRAP_NONE),
+            name="value",
+            ),#default=lambda textview: textview.doc_view.wrap_mode)
+        setter=set_docview_variable
+    ),
+)))
+def set_variable(textview, sender, args):
+    sub, opts = args.variable
+    sub.data["setter"](textview, sub.name, opts)
 
 
 _ws = re.compile(ur"([\t ]+)", re.UNICODE | re.MULTILINE)
