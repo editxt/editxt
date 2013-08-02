@@ -73,30 +73,34 @@ class CommandParser(object):
         self.argspec = argspec
         # TODO assert no duplicate arg names
 
-    def parse(self, text):
+    def parse(self, text, index=0):
         """Parse arguments from the given text
 
         :param text: Argument string.
+        :param index: Start parsing at this index in text.
         :raises: `ArgumentError` if the text string is invalid.
         :returns: `Options` object with argument values as attributes.
         """
         opts = Options()
         errors = []
-        index = 0
         for arg in self.argspec:
             try:
                 value, index = arg.consume(text, index)
             except ParseError as err:
                 errors.append(err)
                 index = err.parse_index
+            except ArgumentError as err:
+                assert err.errors, "unexpected {!r}".format(err)
+                errors.extend(err.errors)
+                index = err.parse_index
             else:
                 setattr(opts, arg.name, value)
         if errors:
             msg = u'invalid arguments: {}'.format(text)
-            raise ArgumentError(msg, opts, errors)
+            raise ArgumentError(msg, opts, errors, index)
         if index < len(text):
             msg = u'unexpected argument(s): ' + text[index:]
-            raise ArgumentError(msg, opts, errors)
+            raise ArgumentError(msg, opts, errors, index)
         return opts
 
     def get_placeholder(self, text):
@@ -183,7 +187,7 @@ class Type(object):
 
     def __repr__(self):
         argnames = self.__init__.im_func.func_code.co_varnames
-        defaults = self.__init__.im_func.func_defaults
+        defaults = self.__init__.im_func.func_defaults or []
         assert argnames[0] == 'self', argnames
         assert len(self.args) == len(argnames) - 1, self.args
         args = []
@@ -191,7 +195,8 @@ class Type(object):
                 reversed(argnames), reversed(defaults), reversed(self.args)):
             if default != value:
                 args.append('{}={!r}'.format(name, value))
-        args.extend(repr(a) for a in reversed(self.args[:-len(defaults)]))
+        slice = -len(defaults) or None
+        args.extend(repr(a) for a in reversed(self.args[:slice]))
         return '{}({})'.format(type(self).__name__, ', '.join(reversed(args)))
 
     def consume(self, text, index):
@@ -512,6 +517,61 @@ class Regex(Type):
         return value, index
 
 
+class SubParser(Type):
+    """Argument type that consumes a variable number of arguments
+
+    The first argument consumed by this SubParser is used to lookup a
+    SubArgs instance by name, and remaining arguments are parsed using
+    the SubArgs.
+
+    :param name: Name of sub-parser result.
+    :param *subparsers: One or more SubArgs objects containing more
+    arguments to be parsed.
+    """
+
+    def __init__(self, name, *subparsers):
+        self.args = (name,) + subparsers
+        super(SubParser, self).__init__(name)
+        self.subparsers = {p.name: p for p in subparsers}
+
+    def consume(self, text, index):
+        """Consume arguments based on the name of the first argument
+
+        :returns: ((subparser, <consumed argument options>), <index>)
+        """
+        name, end = self.consume_token(text, index)
+        sub = self.subparsers.get(name)
+        if sub is None:
+            if not name:
+                raise ParseError("not enough arguments", self, index, end)
+            msg = "{!r} does not match any of: {}".format(
+                    name, ", ".join(sorted(self.subparsers)))
+            raise ParseError(msg, self, index, end)
+        try:
+            opts = sub.parser.parse(text, end)
+        except ArgumentError as err:
+            if not err.errors:
+                # we're finished, but there are unparsed arguments
+                return (sub, err.options), err.parse_index
+            raise
+        return (sub, opts), len(text)
+
+
+class SubArgs(object):
+    """Arguments and data for SubParser"""
+
+    def __init__(self, name, *argspec, **data):
+        self.name = name
+        self.data = data
+        self.parser = CommandParser(*argspec)
+
+    def __repr__(self):
+        args = [repr(self.name)]
+        args.extend(repr(a) for a in self.parser.argspec)
+        args.extend("{}={!r}".format(*kv) for kv in sorted(self.data.items()))
+        return "{}({})".format(type(self).__name__, ", ".join(args))
+
+
 class Options(object):
     """Parsed argument container
 
@@ -547,7 +607,8 @@ class Options(object):
         def line_repr(obj):
             rep = repr(obj)
             if '\n' in rep:
-                rep.replace('\n', ' ')
+                rep = rep.replace('\n', ' ')
+            return rep
         vars = ['{}={}'.format(k, line_repr(v)) for k, v in self]
         return '{}({})'.format(type(self).__name__, ', '.join(vars))
 
@@ -581,6 +642,10 @@ class ArgumentError(Error):
     @property
     def errors(self):
         return self.args[2]
+
+    @property
+    def parse_index(self):
+        return self.args[3]
 
 
 class ParseError(Error):

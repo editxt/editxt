@@ -25,7 +25,7 @@ from nose.tools import eq_
 from editxt.test.util import assert_raises, TestConfig
 
 from editxt.commandparser import (Choice, Int, String, Regex, CommandParser,
-    identifier, Options, Error, ArgumentError, ParseError)
+    SubArgs, SubParser, identifier, Options, Error, ArgumentError, ParseError)
 
 log = logging.getLogger(__name__)
 
@@ -263,6 +263,22 @@ def test_Regex():
     yield test, '/(/  ', 0, ParseError(msg, arg, 6, 6)
     yield test, '/(// arg', 0, ParseError(msg, arg, 5, 5)
 
+def test_SubParser():
+    sub = SubArgs("num", Int("num"), abc="xyz")
+    arg = SubParser("var", sub)
+    eq_(str(arg), 'var')
+    eq_(repr(arg), "SubParser('var', SubArgs('num', Int('num'), abc='xyz'))")
+
+    test = make_type_checker(arg)
+    yield test, '', 0, ParseError("not enough arguments", arg, 0, 0)
+    yield test, 'x', 0, ParseError("'x' does not match any of: num", arg, 0, 1)
+    yield test, 'num 1', 0, ((sub, Options(num=1)), 5)
+    yield test, 'num 1 2', 0, ((sub, Options(num=1)), 6)
+    yield test, 'num x 2', 0, ArgumentError("invalid arguments: num x 2",
+        Options(), [ParseError("invalid literal for int() with base 10: 'x'",
+                               Int("num"), 4, 6)], 6)
+
+
 arg_parser = CommandParser(Choice(('yes', True), ('no', False)))
 
 def test_CommandParser_empty():
@@ -280,9 +296,22 @@ def test_CommandParser_incomplete():
     def check(err):
         eq_(err.options, Options())
         eq_(err.errors, [ParseError("'a' is ambiguous: arg, all", Choice('arg', 'all'), 0, 1)])
-    print assert_raises
     with assert_raises(ArgumentError, msg=check):
         parser.parse('a')
+
+def test_CommandParser_with_SubParser_errors():
+    sub = SubArgs("num", Int("num"), abc="xyz")
+    arg = SubParser("var", sub)
+    parser = CommandParser(arg)
+    def check(err):
+        eq_(str(err), "invalid arguments: num x\n"
+                      "invalid literal for int() with base 10: 'x'")
+        eq_(err.options, Options())
+        eq_(err.errors,
+            [ParseError("invalid literal for int() with base 10: 'x'",
+                        Int("num"), 4, 5)])
+    with assert_raises(ArgumentError, msg=check):
+        parser.parse('num x')
 
 def test_CommandParser_order():
     def test(text, result):
