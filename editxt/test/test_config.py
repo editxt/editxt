@@ -120,10 +120,10 @@ def test_Config_schema():
         "newline_mode", const.NEWLINE_MODE_UNIX, \
         {"error": ["newline_mode: expected one of (LF|CR|CRLF|UNICODE), got 'xyz'"]}
 
-    yield test, {}, "wrap_mode", const.LINE_WRAP_NONE
-    yield test, {"wrap_mode": "xyz"}, \
-        "wrap_mode", const.LINE_WRAP_NONE, \
-        {"error": ["wrap_mode: expected one of (none|word), got 'xyz'"]}
+    yield test, {}, "soft_wrap", const.WRAP_NONE
+    yield test, {"soft_wrap": "xyz"}, \
+        "soft_wrap", const.WRAP_NONE, \
+        {"error": ["soft_wrap: expected one of (none|word), got 'xyz'"]}
 
 
 def test_Type_validate():

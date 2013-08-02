@@ -2,13 +2,13 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="7.10">
 	<data>
 		<int key="IBDocument.SystemTarget">1060</int>
-		<string key="IBDocument.SystemVersion">10F569</string>
-		<string key="IBDocument.InterfaceBuilderVersion">804</string>
-		<string key="IBDocument.AppKitVersion">1038.29</string>
+		<string key="IBDocument.SystemVersion">10K549</string>
+		<string key="IBDocument.InterfaceBuilderVersion">851</string>
+		<string key="IBDocument.AppKitVersion">1038.36</string>
 		<string key="IBDocument.HIToolboxVersion">461.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
-			<string key="NS.object.0">804</string>
+			<string key="NS.object.0">851</string>
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -260,7 +260,7 @@
 													<object class="NSButtonCell" key="NSCell" id="101883246">
 														<int key="NSCellFlags">67239424</int>
 														<int key="NSCellFlags2">262144</int>
-														<string key="NSContents">Wrap lines</string>
+														<string key="NSContents">Soft wrap</string>
 														<object class="NSFont" key="NSSupport" id="22">
 															<string key="NSName">LucidaGrande</string>
 															<double key="NSSize">9</double>
@@ -785,7 +785,7 @@
 					<string>properties.wrapMode</string>
 					<string>properties.tabSize</string>
 					<string>properties.tab_size</string>
-					<string>properties.wrap_mode</string>
+					<string>properties.soft_wrap</string>
 					<string>document.tab_size</string>
 					<string>properties.document.properties.tab_size</string>
 					<string>properties.document.properties.indent_size</string>
@@ -796,6 +796,7 @@
 					<string>properties.indent_size</string>
 					<string>properties.character_encoding</string>
 					<string>properties.syntaxdef</string>
+					<string>properties.soft_wrap</string>
 				</object>
 				<object class="_NSManagedProxy" key="_NSManagedProxy"/>
 				<bool key="NSAvoidsEmptySelection">YES</bool>
@@ -1288,35 +1289,6 @@
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBBindingConnection" key="connection">
-						<string key="label">value: selection.properties.wrap_mode</string>
-						<reference key="source" ref="683480809"/>
-						<reference key="destination" ref="530419800"/>
-						<object class="NSNibBindingConnector" key="connector">
-							<reference key="NSSource" ref="683480809"/>
-							<reference key="NSDestination" ref="530419800"/>
-							<string key="NSLabel">value: selection.properties.wrap_mode</string>
-							<string key="NSBinding">value</string>
-							<string key="NSKeyPath">selection.properties.wrap_mode</string>
-							<object class="NSDictionary" key="NSOptions">
-								<bool key="EncodedWithXMLCoder">YES</bool>
-								<object class="NSArray" key="dict.sortedKeys">
-									<bool key="EncodedWithXMLCoder">YES</bool>
-									<string>NSConditionallySetsEnabled</string>
-									<string>NSValueTransformerName</string>
-								</object>
-								<object class="NSMutableArray" key="dict.values">
-									<bool key="EncodedWithXMLCoder">YES</bool>
-									<boolean value="NO"/>
-									<string>WrapModeTransformer</string>
-								</object>
-							</object>
-							<int key="NSNibBindingConnectorVersion">2</int>
-						</object>
-					</object>
-					<int key="connectionID">423</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBBindingConnection" key="connection">
 						<string key="label">selectedIndex: selection.properties.newline_mode</string>
 						<reference key="source" ref="801655393"/>
 						<reference key="destination" ref="530419800"/>
@@ -1545,6 +1517,35 @@
 						<reference key="destination" ref="920945086"/>
 					</object>
 					<int key="connectionID">490</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBBindingConnection" key="connection">
+						<string key="label">value: selection.properties.soft_wrap</string>
+						<reference key="source" ref="683480809"/>
+						<reference key="destination" ref="530419800"/>
+						<object class="NSNibBindingConnector" key="connector">
+							<reference key="NSSource" ref="683480809"/>
+							<reference key="NSDestination" ref="530419800"/>
+							<string key="NSLabel">value: selection.properties.soft_wrap</string>
+							<string key="NSBinding">value</string>
+							<string key="NSKeyPath">selection.properties.soft_wrap</string>
+							<object class="NSDictionary" key="NSOptions">
+								<bool key="EncodedWithXMLCoder">YES</bool>
+								<object class="NSArray" key="dict.sortedKeys">
+									<bool key="EncodedWithXMLCoder">YES</bool>
+									<string>NSConditionallySetsEnabled</string>
+									<string>NSValueTransformerName</string>
+								</object>
+								<object class="NSMutableArray" key="dict.values">
+									<bool key="EncodedWithXMLCoder">YES</bool>
+									<boolean value="NO"/>
+									<string>WrapModeTransformer</string>
+								</object>
+							</object>
+							<int key="NSNibBindingConnectorVersion">2</int>
+						</object>
+					</object>
+					<int key="connectionID">491</int>
 				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -2181,7 +2182,7 @@
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">490</int>
+			<int key="maxID">491</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">

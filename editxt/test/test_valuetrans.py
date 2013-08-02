@@ -33,7 +33,7 @@ from editxt.test.util import TestConfig
 log = logging.getLogger(__name__)
 
 
-def test_wrap_mode_transformer():
+def test_soft_wrap_transformer():
     from editxt.valuetrans import WrapModeTransformer
     assert WrapModeTransformer.allowsReverseTransformation()
     eq_(WrapModeTransformer.transformedValueClass(), int)
@@ -42,12 +42,12 @@ def test_wrap_mode_transformer():
     trans = WrapModeTransformer.create()
     # forward transformations
     yield test, trans.transformedValue_, None, None
-    yield test, trans.transformedValue_, const.LINE_WRAP_WORD, 1
-    yield test, trans.transformedValue_, const.LINE_WRAP_NONE, 0
+    yield test, trans.transformedValue_, const.WRAP_WORD, 1
+    yield test, trans.transformedValue_, const.WRAP_NONE, 0
     # reverse transformations
     yield test, trans.reverseTransformedValue_, None, None
-    yield test, trans.reverseTransformedValue_, 1, const.LINE_WRAP_WORD
-    yield test, trans.reverseTransformedValue_, 0, const.LINE_WRAP_NONE
+    yield test, trans.reverseTransformedValue_, 1, const.WRAP_WORD
+    yield test, trans.reverseTransformedValue_, 0, const.WRAP_NONE
 
 def test_key_value_transformer():
     from editxt.valuetrans import KeyValueTransformer

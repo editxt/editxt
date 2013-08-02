@@ -182,7 +182,7 @@ class TextDocumentView(NSObject):
             #sv.verticalRulerView().invalidateRuleThickness()
             sv.setRulersVisible_(True)
 
-            self.wrap_mode = app.config["wrap_mode"]
+            self.soft_wrap = app.config["soft_wrap"]
             self.reset_edit_state()
         else:
             # reset frame in case the window was resized
@@ -193,13 +193,13 @@ class TextDocumentView(NSObject):
         self.scroll_view.verticalRulerView().invalidateRuleThickness()
         self.document.check_for_external_changes(window)
 
-    def _get_wrap_mode(self):
+    def _get_soft_wrap(self):
         if self.text_view is None or self.text_view.textContainer() is None:
             return None
         wrap = self.text_view.textContainer().widthTracksTextView()
-        return const.LINE_WRAP_WORD if wrap else const.LINE_WRAP_NONE
-    def _set_wrap_mode(self, value):
-        wrap = value != const.LINE_WRAP_NONE
+        return const.WRAP_WORD if wrap else const.WRAP_NONE
+    def _set_soft_wrap(self, value):
+        wrap = value != const.WRAP_NONE
         tv = self.text_view
         tc = tv.textContainer()
         if wrap:
@@ -227,7 +227,7 @@ class TextDocumentView(NSObject):
         #     put selection as near to where it was as possible
         # else:
         #     put top visible line at the top of the scroll view
-    wrap_mode = property(_get_wrap_mode, _set_wrap_mode)
+    soft_wrap = property(_get_soft_wrap, _set_soft_wrap)
 
     @document_property
     def indent_size(self, new, old):
@@ -297,7 +297,7 @@ class TextDocumentView(NSObject):
             state = dict(
                 selection=[sel.location, sel.length],
                 scrollpoint=[sp.x, sp.y],
-                wrap_mode=self.wrap_mode,
+                soft_wrap=self.soft_wrap,
             )
         else:
             state = dict(getattr(self, "_state", {}))
@@ -308,7 +308,7 @@ class TextDocumentView(NSObject):
         if self.text_view is not None:
             point = state.get("scrollpoint", [0, 0])
             sel = state.get("selection", [0, 0])
-            self.props.wrap_mode = state.get("wrap_mode", const.LINE_WRAP_NONE)
+            self.props.soft_wrap = state.get("soft_wrap", const.WRAP_NONE)
             length = self.document.text_storage.length() - 1
             if length > 0:
                 # HACK next line does not seem to work without this

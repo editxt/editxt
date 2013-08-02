@@ -43,9 +43,9 @@ LARGE_NUMBER_FOR_TEXT = 1e7
 
 DEFAULT_RIGHT_MARGIN = 80
 
-LINE_WRAP_NONE = "none"
-LINE_WRAP_WORD = "word"
-LINE_WRAP_CHAR = "char"
+WRAP_NONE = "none"
+WRAP_WORD = "word"
+WRAP_CHAR = "char"
 
 INDENT_MODE_TAB = "tab"
 INDENT_MODE_SPACE = "space"

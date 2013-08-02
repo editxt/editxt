@@ -59,8 +59,8 @@ class WrapModeTransformer(KeyValueTransformer):
     def create(cls):
         return cls.alloc().init({
             None: None,
-            const.LINE_WRAP_NONE: 0,
-            const.LINE_WRAP_WORD: 1,
+            const.WRAP_NONE: 0,
+            const.WRAP_WORD: 1,
         })
 
 

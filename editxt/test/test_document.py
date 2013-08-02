@@ -169,7 +169,7 @@ def test_document_set_main_view_of_window():
         doc = m.mock(TextDocument)
         ts = m.mock(NSTextStorage)
         dv = TextDocumentView.alloc().init_with_document(doc)
-        m.property(dv, "wrap_mode")
+        m.property(dv, "soft_wrap")
         ewc = m.mock(EditorWindowController)
         dv.props = props = m.mock(dict)
         view = m.mock(NSView)
@@ -231,7 +231,7 @@ def test_document_set_main_view_of_window():
             sv.setHasVerticalRuler_(True)
             sv.setRulersVisible_(True)
 
-            dv.wrap_mode = const.LINE_WRAP_NONE
+            dv.soft_wrap = const.WRAP_NONE
             m.method(dv.reset_edit_state)()
             assert dv.scroll_view is None
             assert dv.text_view is None
@@ -250,10 +250,10 @@ def test_document_set_main_view_of_window():
         assert dv.scroll_view is sv
         assert dv.text_view is tv
     c = TestConfig()
-    yield test, c(sv_is_none=True, wrap_mode=const.LINE_WRAP_NONE)
-    yield test, c(sv_is_none=False, wrap_mode=const.LINE_WRAP_WORD)
+    yield test, c(sv_is_none=True, soft_wrap=const.WRAP_NONE)
+    yield test, c(sv_is_none=False, soft_wrap=const.WRAP_WORD)
 
-def test_get_wrap_mode():
+def test_get_soft_wrap():
     def test(c):
         m = Mocker()
         doc = m.mock(TextDocument)
@@ -266,21 +266,21 @@ def test_get_wrap_mode():
             (tv.textContainer() << tc).count(1, 2)
             if tc is not None:
                 tc.widthTracksTextView() >> \
-                    (True if c.mode == const.LINE_WRAP_WORD else False)
+                    (True if c.mode == const.WRAP_WORD else False)
         with m:
-            result = dv.wrap_mode
+            result = dv.soft_wrap
             eq_(result, c.mode)
     c = TestConfig(tv_is_none=False, tc_is_none=False)
-    yield test, c(mode=const.LINE_WRAP_NONE)
-    yield test, c(mode=const.LINE_WRAP_WORD)
+    yield test, c(mode=const.WRAP_NONE)
+    yield test, c(mode=const.WRAP_WORD)
     yield test, c(tv_is_none=True, mode=None)
     yield test, c(tc_is_none=True, mode=None)
 
-def test_set_wrap_mode():
+def test_set_soft_wrap():
     def test(c):
         m = Mocker()
         doc = m.mock(TextDocument)
-        wrap = (c.mode != const.LINE_WRAP_NONE)
+        wrap = (c.mode != const.WRAP_NONE)
         dv = TextDocumentView.alloc().init_with_document(doc)
         sv = dv.scroll_view = m.mock(NSScrollView)
         tv = dv.text_view = m.mock(NSTextView)
@@ -298,10 +298,10 @@ def test_set_wrap_mode():
         tv.setAutoresizingMask_(NSViewWidthSizable
             if wrap else NSViewWidthSizable | NSViewHeightSizable)
         with m:
-            dv.wrap_mode = c.mode
-    c = TestConfig(mode=const.LINE_WRAP_NONE)
+            dv.soft_wrap = c.mode
+    c = TestConfig(mode=const.WRAP_NONE)
     yield test, c
-    yield test, c(mode=const.LINE_WRAP_WORD)
+    yield test, c(mode=const.WRAP_WORD)
 
 def test_TextDocumentView_document_properties():
     def test(c):
@@ -450,7 +450,7 @@ def test_get_edit_state():
         m = Mocker()
         doc = m.mock(TextDocument)
         dv = TextDocumentView.alloc().init_with_document(doc)
-        m.property(dv, "wrap_mode")
+        m.property(dv, "soft_wrap")
         m.property(dv, "file_path")
         if c.tv_is_none:
             if c.set_state:
@@ -468,11 +468,11 @@ def test_get_edit_state():
             sel.length >> "<sel.length>"
             sp.x >> "<sp.x>"
             sp.y >> "<sp.y>"
-            dv.wrap_mode >> c.wrap_mode
+            dv.soft_wrap >> c.soft_wrap
             state = dict(
                 selection=["<sel.location>", "<sel.length>"],
                 scrollpoint=["<sp.x>", "<sp.y>"],
-                wrap_mode=c.wrap_mode,
+                soft_wrap=c.soft_wrap,
             )
         (dv.file_path << ("<path>" if c.path_is_valid else None)).count(1, 2)
         if c.path_is_valid:
@@ -482,10 +482,10 @@ def test_get_edit_state():
             eq_(result, state)
             if c.tv_is_none and c.set_state:
                 assert result is not state, "identity check should fail: must be a new (mutable) dict"
-    c = TestConfig(tv_is_none=False, path_is_valid=True, wrap_mode=const.LINE_WRAP_WORD)
+    c = TestConfig(tv_is_none=False, path_is_valid=True, soft_wrap=const.WRAP_WORD)
     yield test, c
     yield test, c(path_is_valid=False)
-    yield test, c(wrap_mode=const.LINE_WRAP_NONE)
+    yield test, c(soft_wrap=const.WRAP_NONE)
     yield test, c(tv_is_none=True, set_state=False)
     yield test, c(tv_is_none=True, set_state=True)
 
@@ -495,7 +495,7 @@ def test_set_edit_state():
         m = Mocker()
         doc = m.mock(TextDocument)
         dv = TextDocumentView.alloc().init_with_document(doc)
-        #m.property(dv, "wrap_mode")
+        #m.property(dv, "soft_wrap")
         props = dv.props = m.mock(KVOProxy)
         if state is None:
             eq_state = state = m.mock()
@@ -503,12 +503,12 @@ def test_set_edit_state():
             eq_state = dict(state)
             eq_state.setdefault("selection", (0, 0))
             eq_state.setdefault("scrollpoint", (0, 0))
-            eq_state.setdefault("wrap_mode", const.LINE_WRAP_NONE)
+            eq_state.setdefault("soft_wrap", const.WRAP_NONE)
             point = eq_state["scrollpoint"]
             sel = eq_state["selection"]
             dv.text_view = m.mock(NSTextView)
             dv.scroll_view = m.mock(NSScrollView)
-            props.wrap_mode = eq_state["wrap_mode"]
+            props.soft_wrap = eq_state["soft_wrap"]
             doc.text_storage.length() >> ts_len
             if ts_len - 1 > 0:
                 dv.text_view.setSelectedRange_(NSRange(ts_len - 1, 0))
@@ -525,9 +525,9 @@ def test_set_edit_state():
     yield test, {}
     yield test, {"selection": (1, 1)}
     yield test, {"scrollpoint": (1, 1)}
-    yield test, {"wrap_mode": const.LINE_WRAP_NONE}
-    yield test, {"scrollpoint": (0, 0), "selection": (0, 0), "wrap_mode": const.LINE_WRAP_NONE}
-    yield test, {"scrollpoint": (5, 5), "selection": (5, 5), "wrap_mode": const.LINE_WRAP_WORD}
+    yield test, {"soft_wrap": const.WRAP_NONE}
+    yield test, {"scrollpoint": (0, 0), "selection": (0, 0), "soft_wrap": const.WRAP_NONE}
+    yield test, {"scrollpoint": (5, 5), "selection": (5, 5), "soft_wrap": const.WRAP_WORD}
     yield test, {"scrollpoint": (0, 0), "selection": (0, 0)}, 2
     yield test, {"scrollpoint": (0, 0), "selection": (0, 1)}, 2
     yield test, {"scrollpoint": (0, 0), "selection": (0, 2)}, 2

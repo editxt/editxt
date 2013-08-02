@@ -48,10 +48,10 @@ def config_schema(): return {
         const.NEWLINE_MODE_WINDOWS,
         const.NEWLINE_MODE_UNICODE,
         default=const.NEWLINE_MODE_UNIX),
-    "wrap_mode": Enum(
-        const.LINE_WRAP_NONE,
-        const.LINE_WRAP_WORD,
-        default=const.LINE_WRAP_NONE),
+    "soft_wrap": Enum(
+        const.WRAP_NONE,
+        const.WRAP_WORD,
+        default=const.WRAP_NONE),
 }
 
 
