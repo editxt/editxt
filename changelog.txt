@@ -23,10 +23,16 @@ This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
 ????-??-?? - 1.x.x
+  - Move document defaults to config file:
+    indent:
+      mode: (space|tab) # default is space
+      size: 4
+    newline_mode: (LF|CR|CRLF|UNICODE) # default is LF
+    soft_wrap: (none|word)
   - Add command to reload config file (relaod_config).
   - Add config file with selection matching settings:
-    selection_matching:
-      enabled: [yes|no] # default is yes
+    match_selection:
+      enabled: (yes|no) # default is yes
       color: FEFF6B
   - Mark occurrences when counting with the find dialog.
   - Mark (highlight) all occurrences of selected text (length > 3, containing
