@@ -25,7 +25,8 @@ from nose.tools import eq_
 from editxt.test.util import assert_raises, TestConfig
 
 from editxt.commandparser import (Choice, Int, String, Regex, CommandParser,
-    SubArgs, SubParser, identifier, Options, Error, ArgumentError, ParseError)
+    SubArgs, SubParser, VarArgs,
+    identifier, Options, Error, ArgumentError, ParseError)
 
 log = logging.getLogger(__name__)
 
@@ -276,34 +277,43 @@ def test_Regex():
 def test_SubParser():
     sub = SubArgs("val", Int("num"), abc="xyz")
     su2 = SubArgs("str", Choice(('yes', True), ('no', False)), abc="mno")
-    arg = SubParser("var", sub, su2)
+    su3 = SubArgs("stx", VarArgs("args", placeholder="..."), abc="pqr")
+    arg = SubParser("var", sub, su2, su3)
     eq_(str(arg), 'var')
     eq_(repr(arg),
         "SubParser('var', SubArgs('val', Int('num'), abc='xyz'), "
-        "SubArgs('str', Choice(('yes', True), ('no', False)), abc='mno'))")
+        "SubArgs('str', Choice(('yes', True), ('no', False)), abc='mno'), "
+        "SubArgs('stx', VarArgs('args', placeholder='...'), abc='pqr'))")
 
     test = make_completions_checker(arg)
-    yield test, "", ["str", "val"]
+    yield test, "", ["str", "stx", "val"]
     yield test, "v", ["val"]
     yield test, "val", []
     yield test, "val ", []
-    yield test, "st", ["str"]
+    yield test, "st", ["str", "stx"]
     #yield test, "str", [] ??
     yield test, "str ", ["yes", "no"]
     yield test, "str y", ["yes"]
 
     test = make_placeholder_checker(arg)
-    yield test, "", 0, "variable ..."
-    yield test, "v", 1, ""
-    yield test, "val", 3, " num"
-    yield test, "val ", 4, "num"
-    yield test, "s", 1, ""
-    yield test, "str", 3, " yes"
-    yield test, "str ", 4, "yes"
+    yield test, "", 0, ("var ...", 0)
+    yield test, "v", 0, ("al", 1)
+    yield test, "val", 0, (" num", 3)
+    yield test, "val ", 0, ("num", 4)
+    yield test, "val 1", 0, (None, 5)
+    yield test, "val x", 0, (None, None)
+    yield test, "s", 0, (None, None)
+    yield test, "str", 0, (" yes", 3)
+    yield test, "str ", 0, ("yes", 4)
+    yield test, "str y", 0, (None, 5)
+    yield test, "str yes", 0, (None, 7)
+    yield test, "str n", 0, (None, 5)
+    yield test, "str x", 0, (None, None)
+    yield test, "str x ", 0, (None, None)
 
     test = make_type_checker(arg)
     yield test, '', 0, ParseError("not enough arguments", arg, 0, 0)
-    yield test, 'x', 0, ParseError("'x' does not match any of: str, val", arg, 0, 1)
+    yield test, 'x', 0, ParseError("'x' does not match any of: str, stx, val", arg, 0, 1)
     yield test, 'val 1', 0, ((sub, Options(num=1)), 5)
     yield test, 'val 1 2', 0, ((sub, Options(num=1)), 6)
     yield test, 'val x 2', 0, ArgumentError("invalid arguments: val x 2",

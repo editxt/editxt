@@ -105,10 +105,9 @@ class CommandBar(object):
         if command is not None:
             placeholder = command.arg_parser.get_placeholder(argstr)
             if placeholder:
-                space = text.partition(" ")[1]
-                if space or argstr:
-                    return placeholder
-                return " " + placeholder
+                if text and not argstr and not text.endswith(" "):
+                    return " " + placeholder
+                return placeholder
         return ""
 
     def get_completions(self, text):

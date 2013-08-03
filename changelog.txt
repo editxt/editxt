@@ -30,7 +30,7 @@ the source repository for the gory details of what actually happened.
     newline_mode: (LF|CR|CRLF|UNICODE) # default is LF
     soft_wrap: (none|word)
   - Add command to reload config file (relaod_config).
-  - Add config file with selection matching settings:
+  - Add config file (~/.editxt/config.yaml) with selection matching settings:
     match_selection:
       enabled: (yes|no) # default is yes
       color: FEFF6B

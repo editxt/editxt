@@ -111,46 +111,32 @@ class CommandParser(object):
             hint about remaining arguments to be entered.
         """
         index = 0
-        args = iter(self.argspec)
-        while index < len(text):
-            arg = next(args, None)
-            if arg is None:
+        values = []
+        for arg in self.argspec:
+            value, index = arg.get_placeholder(text, index)
+            if index is None:
                 return ""
-            try:
-                value, index = arg.consume(text, index)
-            except ParseError as err:
-                return ""
-        placeholder = " ".join(str(arg) for arg in args)
-        if placeholder:
-            if index > len(text) or (text and not text.endswith(" ")):
-                placeholder = " " + placeholder
-        return placeholder
+            if text and index == len(text) and not text.endswith(" "):
+                assert not values, (text, value, index, values, arg)
+                values.append("")
+                index += 1
+            if value is not None:
+                values.append(value)
+        return " ".join(values)
 
     def get_completions(self, text):
-        """Get completions for the argument being entered at index
+        """Get completions for the given command text
 
         :param text: Argument string.
-        :returns: A list of possible values for the argument at index.
+        :returns: A list of possible values to complete the command.
         """
+        end = len(text)
         index = 0
-        args = iter(self.argspec)
-        while index < len(text):
-            arg = next(args, None)
-            if arg is None:
-                return []
-            pre = index
-            try:
-                value, index = arg.consume(text, index)
-            except ParseError as err:
-                index = err.parse_index
-            if index == len(text) and text[-1] != " ":
-                args = iter([arg])
-                index = pre
-                break
-        arg = next(args, None)
-        if arg is None:
-            return []
-        return arg.get_completions(text[index:])
+        for arg in self.argspec:
+            token, index, terminated = arg.parse_token(text, index)
+            if index >= end and not terminated:
+                return arg.get_completions(token)
+        return []
 
 
 def tokenize(text):
@@ -222,10 +208,10 @@ class Type(object):
 
         This consumes all text up to (including) the next space in the
         string. The returned token will not contain spaces. If the
-        character at index is a space, then the argument should use its
-        default value and the first element of the returned tuple will
-        be `None`. This is meant to be called by subclasses; it is not
-        part of the public interface.
+        character at index is a space, then first element of the
+        returned tuple will be `None` indicating that the argument
+        should use its default value. This is meant to be called by
+        subclasses; it is not part of the public interface.
 
         :param text: Argument string.
         :param index: Index from which to consume argument.
@@ -244,6 +230,56 @@ class Type(object):
             token = text[index:end]
             end += 1
         return token, end
+
+    def parse_token(self, text, index):
+        """Parse argument token from text starting at index
+
+        :returns: ``(token, index, terminated)`` where ``token`` is
+        text that would be consumed (possibly only after being completed
+        with one of the items returned by ``get_completions``),
+        ``index`` is the place in ``text`` to begin parsing the next
+        token, and ``terminated`` is a boolean value indicating
+        whether the token has been terminated, meaning that additional
+        text beyond ``index`` would be a separate argument.
+        """
+        try:
+            value, end = self.consume(text, index)
+        except ParseError as err:
+            end = err.parse_index
+            terminated = end < len(text)
+        except ArgumentError as err:
+            raise NotImplementedError # TODO
+        else:
+            terminated = (
+                index < end and         # token exists
+                end == len(text) and    # would not consume more
+                text[end - 1] == " "    # space between tokens
+            )
+        return text[index:end], end, terminated
+
+    def get_placeholder(self, text, index):
+        """Get placeholder string for this argument
+
+        If this argument matches the last argument in the given ``text``
+        and it would consume any other character appended to ``text``,
+        return an empty string ("") as the placeholder, which will cause
+        following placeholders to be spaced away from the last character
+        of ``text``.
+
+        :param text: Argument string.
+        :param index: Index in text to begin parsing.
+        :returns: A two-tuple with the first item being a placeholder
+        string (``None`` if an argument would have been consumed), and
+        the second item being the index to resume parsing in text
+        (``None`` if the argument was present but could be parsed).
+        """
+        if index >= len(text):
+            return str(self), index
+        try:
+            value, index = self.consume(text, index)
+        except ParseError as err:
+            index = None
+        return ("" if index > len(text) else None), index
 
     def get_completions(self, text):
         """Get argument value completions
@@ -555,6 +591,28 @@ class SubParser(Type):
                 return (sub, err.options), err.parse_index
             raise
         return (sub, opts), len(text)
+
+    def get_placeholder(self, text, index):
+        if index >= len(text):
+            return "{} ...".format(self), index
+        #if index == len(text):
+        #    return "{} ...".format(self), index + 1
+        name, index = self.consume_token(text, index)
+        sub = self.subparsers.get(name)
+        if sub is None:
+            if index == len(text):
+                starts = [n for n in self.subparsers if n.startswith(name)]
+                if len(starts) == 1:
+                    return starts[0][len(name):], index
+            return None, None
+        values = [""] if index == len(text) and not text.endswith(" ") else []
+        for arg in sub.parser.argspec:
+            value, index = arg.get_placeholder(text, index)
+            if index is None:
+                return None, None
+            if value is not None:
+                values.append(value)
+        return (" ".join(values) if values else None), index
 
     def get_completions(self, text):
         name, end = self.consume_token(text, 0)

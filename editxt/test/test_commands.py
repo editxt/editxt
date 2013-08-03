@@ -540,7 +540,7 @@ def test_set_variable():
         tv = m.mock(TextView)
         view = tv.doc_view >> m.mock(TextDocumentView)
         setattr(view, attribute, value)
-        do = CommandTester(tv, mod.set_variable)
+        do = CommandTester(mod.set_variable, textview=tv)
         with m:
             do(command)
     c = TestConfig()
@@ -698,21 +698,24 @@ import editxt.textcommand as textcommand
 
 class CommandTester(object):
 
-    def __init__(self, textview, *commands):
+    def __init__(self, *commands, **kw):
         class menu:
             @staticmethod
             def insertItem_atIndex_(item, tag):
                 pass
         class editor:
             class current_view:
-                text_view = textview
-        commander = textcommand.TextCommandController([])
+                text_view = kw.pop("textview", None)
+        commander = textcommand.TextCommandController(kw.pop("history", []))
         for command in commands:
             commander.add_command(command, None, menu)
-        self.bar = textcommand.CommandBar(editor, commander)
+        self.bar = textcommand.CommandBar(kw.pop("editor", editor), commander)
         # keep references (CommandBar uses weakref)
         self.refs = (editor, commander)
 
     def __call__(self, command):
         with replattr(textcommand, "NSBeep", lambda:None): # HACK
             self.bar.execute(command)
+
+    def __getattr__(self, name):
+        return getattr(self.bar, name)
