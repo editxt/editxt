@@ -75,13 +75,6 @@ Top priority
 
 BUG: CPU pegged on shutdown when many documents open
 
-Text mark enhancements
-    add "set mark on|off" to override markings for current document
-    add unmark command to immediately clear marks (for when "mark" is off)
-    global switch (preference) for mark selection
-x    global preference for marking color
-    mark text with find command (command bar)
-
 Add more settings
   right_margin: 80 # set to 0 to disable
   wrap_mode: [word|none]
@@ -599,6 +592,13 @@ Log filtering
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Completed tasks
+
+x Text mark enhancements
+x    add "set mark on|off" to override markings for current document
+x    add unmark command to immediately clear marks (for when "mark" is off)
+x    global switch (preference) for mark selection
+x    global preference for marking color
+x    mark text with find command (command bar)
 
 x Prevent modal popup:
 x   (xt)::EditXT$ ./xt --help

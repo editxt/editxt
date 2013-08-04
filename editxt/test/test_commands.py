@@ -92,6 +92,7 @@ def test_load_commands():
         mod.sort_lines,
         mod.reindent,
         mod.find,
+        mod.clear_highlighted_text,
         mod.reload_config,
         mod.set_variable,
     ])
@@ -531,6 +532,15 @@ def test_reload_config():
     tv = m.mock(NSTextView)
     with m, replattr(app, "config", config):
         mod.reload_config(tv, "<sender>", None)
+
+def test_clear_highlighted_text():
+    from editxt.controls.textview import TextView
+    m = Mocker()
+    tv = m.mock(TextView)
+    view = tv.doc_view.finder.mark_occurrences("")
+    do = CommandTester(mod.clear_highlighted_text, textview=tv)
+    with m:
+        do("clear_highlighted_text")
 
 def test_set_variable():
     from editxt.document import TextDocumentView

@@ -98,6 +98,7 @@ def load_commands():
             sort_lines,
             reindent,
             find,
+            clear_highlighted_text,
             reload_config,
             set_variable,
         ],
@@ -382,6 +383,10 @@ def reload_config(textview, sender, args):
     from editxt import app
     app.config.reload()
 
+
+@command(title="Clear highlighted text")
+def clear_highlighted_text(textview, sender, args):
+    textview.doc_view.finder.mark_occurrences("")
 
 
 def set_docview_variable(textview, name, args):
