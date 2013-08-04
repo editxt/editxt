@@ -167,6 +167,7 @@ class Config(object):
 
     def reload(self):
         if exists(self.path):
+            log.info("loaded config: %s", self.path)
             try:
                 with open(self.path) as f:
                     data = load_yaml(f)
