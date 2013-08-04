@@ -49,9 +49,9 @@ def make_placeholder_checker(arg):
     return test_get_placeholder
 
 def make_completions_checker(arg):
-    def test_get_completions(input, output):
-        eq_(arg.get_completions(input), output)
-    return test_get_completions
+    def test_parse_completions(input, output):
+        eq_(arg.parse_completions(input, 0), output)
+    return test_parse_completions
 
 def test_identifier():
     def test(name, ident):
@@ -286,42 +286,47 @@ def test_SubParser():
         "SubArgs('stx', VarArgs('args', placeholder='...'), abc='pqr'))")
 
     test = make_completions_checker(arg)
-    yield test, "", ["str", "stx", "val"]
-    yield test, "v", ["val"]
-    yield test, "val", []
-    yield test, "val ", []
-    yield test, "st", ["str", "stx"]
-    #yield test, "str", [] ??
-    yield test, "str ", ["yes", "no"]
-    yield test, "str y", ["yes"]
+    yield test, "", (["str", "stx", "val"], 0)
+    yield test, "v", (["val"], 1)
+    yield test, "v ", ([], 2)
+    yield test, "val", (["val"], 3)
+    yield test, "val ", ([], 4)
+    yield test, "val v", ([], 5)
+    yield test, "st", (["str", "stx"], 2)
+    yield test, "str ", (["yes", "no"], 4)
+    yield test, "str y", (["yes"], 5)
 
     test = make_placeholder_checker(arg)
     yield test, "", 0, ("var ...", 0)
-    yield test, "v", 0, ("al", 1)
+    yield test, "v", 0, ("al num", 1)
+    yield test, "v ", 0, ("num", 2)
     yield test, "val", 0, (" num", 3)
     yield test, "val ", 0, ("num", 4)
-    yield test, "val 1", 0, (None, 5)
+    yield test, "val 1", 0, ("", 5)
     yield test, "val x", 0, (None, None)
-    yield test, "s", 0, (None, None)
+    yield test, "s", 0, ("...", 1)
+    yield test, "s ", 0, (None, None)
+    yield test, "st", 0, ("...", 2)
     yield test, "str", 0, (" yes", 3)
     yield test, "str ", 0, ("yes", 4)
-    yield test, "str y", 0, (None, 5)
-    yield test, "str yes", 0, (None, 7)
-    yield test, "str n", 0, (None, 5)
+    yield test, "str y", 0, ("", 5)
+    yield test, "str yes", 0, ("", 7)
+    yield test, "str n", 0, ("", 5)
     yield test, "str x", 0, (None, None)
     yield test, "str x ", 0, (None, None)
 
     test = make_type_checker(arg)
-    yield test, '', 0, ParseError("not enough arguments", arg, 0, 0)
+    yield test, '', 0, ParseError("var is required", arg, 0, 0)
     yield test, 'x', 0, ParseError("'x' does not match any of: str, stx, val", arg, 0, 1)
+    yield test, 'v 1', 0, ((sub, Options(num=1)), 3)
     yield test, 'val 1', 0, ((sub, Options(num=1)), 5)
     yield test, 'val 1 2', 0, ((sub, Options(num=1)), 6)
     yield test, 'val x 2', 0, ArgumentError("invalid arguments: val x 2",
         Options(), [ParseError("invalid literal for int() with base 10: 'x'",
                                Int("num"), 4, 6)], 6)
 
-
-arg_parser = CommandParser(Choice(('yes', True), ('no', False)))
+yesno = Choice(('yes', True), ('no', False))
+arg_parser = CommandParser(yesno)
 
 def test_CommandParser_empty():
     eq_(arg_parser.parse(''), Options(yes=True))
@@ -340,6 +345,31 @@ def test_CommandParser_incomplete():
         eq_(err.errors, [ParseError("'a' is ambiguous: arg, all", Choice('arg', 'all'), 0, 1)])
     with assert_raises(ArgumentError, msg=check):
         parser.parse('a')
+
+def test_CommandParser_with_SubParser():
+    sub = SubArgs("num", Int("n"), abc="xyz")
+    arg = SubParser("var", sub)
+    parser = CommandParser(arg, yesno)
+
+    def test(text, result):
+        eq_(parser.get_placeholder(text), result)
+    yield test, "", "var ... yes"
+    yield test, " ", ""
+    yield test, "  ", ""
+    yield test, "n", "um n yes"
+    yield test, "n ", "n yes"
+    yield test, "num ", "n yes"
+    yield test, "num  ", "yes"
+
+    def test(text, result):
+        eq_(parser.get_completions(text), result)
+    yield test, "", ["num"]
+    yield test, " ", []
+    yield test, "  ", []
+    yield test, "n", ["num"]
+    yield test, "n ", []
+    yield test, "num ", []
+    yield test, "num  ", ["yes", "no"]
 
 def test_CommandParser_with_SubParser_errors():
     sub = SubArgs("num", Int("num"), abc="xyz")

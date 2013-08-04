@@ -535,6 +535,17 @@ def test_reload_config():
 def test_set_variable():
     from editxt.document import TextDocumentView
     from editxt.controls.textview import TextView
+
+    def test(command, completions):
+        bar = CommandTester(mod.set_variable)
+        eq_(bar.get_completions(command), completions)
+    yield test, "set ", (["soft_wrap"], 0)
+    yield test, "set s", (["soft_wrap"], 0)
+    yield test, "set soft_wrap", (["soft_wrap"], 0)
+    yield test, "set soft_wrap ", (["on", "off"], 0)
+    yield test, "set soft_wrap o", (["on", "off"], 0)
+    yield test, "set soft_wrap x", ([], -1)
+
     def test(command, attribute, value):
         m = Mocker()
         tv = m.mock(TextView)
@@ -546,7 +557,6 @@ def test_set_variable():
     c = TestConfig()
     yield test, "set soft_wrap on", "soft_wrap", const.WRAP_WORD
     yield test, "set soft_wrap off", "soft_wrap", const.WRAP_NONE
-
 
 def test_panel_actions():
     import sys

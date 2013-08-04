@@ -116,10 +116,6 @@ class CommandParser(object):
             value, index = arg.get_placeholder(text, index)
             if index is None:
                 return ""
-            if text and index == len(text) and not text.endswith(" "):
-                assert not values, (text, value, index, values, arg)
-                values.append("")
-                index += 1
             if value is not None:
                 values.append(value)
         return " ".join(values)
@@ -130,13 +126,23 @@ class CommandParser(object):
         :param text: Argument string.
         :returns: A list of possible values to complete the command.
         """
-        end = len(text)
-        index = 0
+        return self.parse_completions(text, 0)[0] # or [] TODO always return list
+
+    def parse_completions(self, text, index):
+        """Parse command text and return completions for the final argument
+
+        :param text: Command text string.
+        :param index: Position in text to begin parsing.
+        :returns: ``(list_of_completions, end)`` where ``end`` is
+        the index in ``text`` where parsing of this argument stopped.
+        ``list_of_completions`` will be ``None`` if another argument
+        (outside of this parser) could be parsed.
+        """
         for arg in self.argspec:
-            token, index, terminated = arg.parse_token(text, index)
-            if index >= end and not terminated:
-                return arg.get_completions(token)
-        return []
+            values, index = arg.parse_completions(text, index)
+            if values is not None:
+                return values, index
+        return None, index
 
 
 def tokenize(text):
@@ -241,20 +247,14 @@ class Type(object):
         token, and ``terminated`` is a boolean value indicating
         whether the token has been terminated, meaning that additional
         text beyond ``index`` would be a separate argument.
+        :raises: See ``consume``.
         """
-        try:
-            value, end = self.consume(text, index)
-        except ParseError as err:
-            end = err.parse_index
-            terminated = end < len(text)
-        except ArgumentError as err:
-            raise NotImplementedError # TODO
-        else:
-            terminated = (
-                index < end and         # token exists
-                end == len(text) and    # would not consume more
-                text[end - 1] == " "    # space between tokens
-            )
+        value, end = self.consume(text, index)
+        terminated = (
+            index < end and         # token exists
+            end <= len(text) and    # would not consume more
+            text[end - 1] == " "    # space between tokens
+        )
         return text[index:end], end, terminated
 
     def get_placeholder(self, text, index):
@@ -276,13 +276,36 @@ class Type(object):
         if index >= len(text):
             return str(self), index
         try:
-            value, index = self.consume(text, index)
+            token, index, terminated = self.parse_token(text, index)
         except ParseError as err:
-            index = None
-        return ("" if index > len(text) else None), index
+            return None, None
+        except ArgumentError as err:
+            raise NotImplementedError # TODO
+        return (None if terminated else ""), index
 
-    def get_completions(self, text):
-        """Get argument value completions
+    def parse_completions(self, text, index):
+        """See ``CommandParser.parse_completions`` for interface documentation
+        """
+        try:
+            token, end, terminated = self.parse_token(text, index)
+        except ParseError as err:
+            token = text[index:err.parse_index]
+            end = err.parse_index
+            # HACK cannot really determine if terminated here:
+            # case: "x " -> Int -> ParseError ... terminted=True
+            # case: "' " -> String -> ParseError ... terminted=False
+            terminated = False
+        except ArgumentError as err:
+            raise NotImplementedError # TODO
+        if terminated or end < len(text):
+            # TODO what about Int(...).consume("x y", 0) ?
+            values = None
+        else:
+            values = self.get_completions(token)
+        return values, end
+
+    def get_completions(self, token):
+        """Get a list of possible completions for token
 
         :param text: Argument value prefix.
         :returns: A list of possible completions for given prefix.
@@ -366,7 +389,7 @@ class Choice(Type):
         """Consume a single choice name starting at index
 
         The token at index may be a complete choice name or a prefix
-        that uniquely identifies any choice. Return the default (first)
+        that uniquely identifies a choice. Return the default (first)
         choice value if there is no token to consume.
 
         :returns: (<chosen or default value>, <index>)
@@ -384,10 +407,10 @@ class Choice(Type):
             msg = '{!r} does not match any of: {}'.format(token, names)
         raise ParseError(msg, self, index, end)
 
-    def get_completions(self, text):
-        """List choice names that complete the given command text"""
-        names = [n for n in self.names if n.startswith(text)]
-        return names or [n for n in self.alternates if n.startswith(text)]
+    def get_completions(self, token):
+        """List choice names that complete token"""
+        names = [n for n in self.names if n.startswith(token)]
+        return names or [n for n in self.alternates if n.startswith(token)]
 
 
 class Int(Type):
@@ -574,15 +597,21 @@ class SubParser(Type):
         """Consume arguments based on the name of the first argument
 
         :returns: ((subparser, <consumed argument options>), <index>)
+        :raises: ParserError, ArgumentError with sub-errors
         """
         name, end = self.consume_token(text, index)
         sub = self.subparsers.get(name)
         if sub is None:
+            #if name is None:
+            #    raise NotImplementedError # TODO name is required, no default
             if not name:
-                raise ParseError("not enough arguments", self, index, end)
-            msg = "{!r} does not match any of: {}".format(
-                    name, ", ".join(sorted(self.subparsers)))
-            raise ParseError(msg, self, index, end)
+                raise ParseError("{} is required".format(self), self, index, end)
+            names = [n for n in self.subparsers if n.startswith(name)]
+            if len(names) != 1:
+                msg = "{!r} does not match any of: {}".format(
+                        name, ", ".join(sorted(self.subparsers)))
+                raise ParseError(msg, self, index, end)
+            sub = self.subparsers[names[0]]
         try:
             opts = sub.parser.parse(text, end)
         except ArgumentError as err:
@@ -595,17 +624,27 @@ class SubParser(Type):
     def get_placeholder(self, text, index):
         if index >= len(text):
             return "{} ...".format(self), index
-        #if index == len(text):
-        #    return "{} ...".format(self), index + 1
-        name, index = self.consume_token(text, index)
+        name, end = self.consume_token(text, index)
+        space_after_name = end < len(text) or text[index:end].endswith(" ")
+        if name is None:
+            if space_after_name:
+                return None, None
+            return "{} ...".format(self), end
         sub = self.subparsers.get(name)
         if sub is None:
-            if index == len(text):
-                starts = [n for n in self.subparsers if n.startswith(name)]
-                if len(starts) == 1:
-                    return starts[0][len(name):], index
-            return None, None
-        values = [""] if index == len(text) and not text.endswith(" ") else []
+            names = [n for n in self.subparsers if n.startswith(name)]
+            if not names:
+                return None, None
+            if len(names) > 1:
+                if space_after_name:
+                    return None, None
+                return "...", end
+            sub = self.subparsers[names[0]]
+            placeholder = names[0][len(name):]
+        else:
+            placeholder = ""
+        values = [] if space_after_name else [placeholder]
+        index = end
         for arg in sub.parser.argspec:
             value, index = arg.get_placeholder(text, index)
             if index is None:
@@ -614,15 +653,28 @@ class SubParser(Type):
                 values.append(value)
         return (" ".join(values) if values else None), index
 
-    def get_completions(self, text):
-        name, end = self.consume_token(text, 0)
+    def parse_completions(self, text, index):
+        """See ``CommandParser.parse_completions`` for interface documentation
+        """
+        name, end = self.consume_token(text, index)
+        if name is None:
+            if end < len(text) or text[index:end].endswith(" "):
+                # TODO default when name not provided?
+                return [], len(text)
+            return sorted(self.subparsers), end
+        if len(name) == end - index:
+            # there is no space after name
+            return self.get_completions(name), end
         sub = self.subparsers.get(name)
         if sub is None:
-            names = sorted(self.subparsers)
-            if name is None:
-                return names
-            return [n for n in names if n.startswith(name)]
-        return sub.parser.get_completions(text[end:])
+            names = [n for n in self.subparsers if n.startswith(name)]
+            if len(names) != 1:
+                return [], len(text)
+            sub = self.subparsers[names[0]]
+        return sub.parser.parse_completions(text, end)
+
+    def get_completions(self, token):
+        return [n for n in sorted(self.subparsers) if n.startswith(token)]
 
 
 class SubArgs(object):
