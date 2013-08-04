@@ -167,7 +167,6 @@ class Config(object):
 
     def reload(self):
         if exists(self.path):
-            log.info("loaded config: %s", self.path)
             try:
                 with open(self.path) as f:
                     data = load_yaml(f)
@@ -175,10 +174,13 @@ class Config(object):
                 log.error("cannot load %s: %s", self.path, err)
                 return
             else:
-                if not isinstance(data, dict):
+                if data is None:
+                    data = {}
+                elif not isinstance(data, dict):
                     log.error("cannot load %s: root object is a %s, "
                         "expected a dict", self.path, type(data).__name__)
                     return
+            log.info("loaded config: %s", self.path)
             self.data = data
         else:
             self.data = {}

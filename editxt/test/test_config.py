@@ -17,7 +17,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-import re
 from os.path import join
 from nose.tools import eq_
 
@@ -54,7 +53,7 @@ def test_Config_init_invalid_config():
             with assert_raises(KeyError):
                 conf["key"]
             regex = Regex("cannot load [^:]+/config\.yaml: {}".format(error))
-            eq_(log.data, {"error": [regex], "info": [Regex(re.escape(path))]})
+            eq_(log.data, {"error": [regex]})
 
     yield test, "[key]", "root object is a list, expected a dict"
     yield test, "key:\n[value:", "while scanning a simple key"
