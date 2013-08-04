@@ -23,15 +23,24 @@ This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
 ????-??-?? - 1.x.x
+  - Fix log file syntax highlighting.
+  - Log config file path on load.
   - Move document defaults to config file:
     indent:
       mode: (space|tab) # default is space
       size: 4
     newline_mode: (LF|CR|CRLF|UNICODE) # default is LF
     soft_wrap: (none|word)
-  - Add command to reload config file (relaod_config).
+  - Added commands:
+    - Clear highlighted text (clear_highlighted_text).
+    - Reload config (reload_config)
+    - "set <variable> ..." to set document variables:
+      - highlight_selected_text
+      - indent
+      - newline_mode
+      - soft_wrap
   - Add config file (~/.editxt/config.yaml) with selection matching settings:
-    match_selection:
+    highlight_selected_text:
       enabled: (yes|no) # default is yes
       color: FEFF6B
   - Mark occurrences when counting with the find dialog.
