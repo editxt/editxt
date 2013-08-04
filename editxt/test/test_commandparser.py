@@ -133,10 +133,10 @@ def test_Choice():
         ParseError("'arg-ument' does not match any of: argument, find", arg, 0, 9)
 
 def test_Choice_default_first():
-    arg = Choice(('true', True), ('false', False))
+    arg = Choice(('true on', True), ('false off', False))
     eq_(str(arg), 'true')
     eq_(arg.name, 'true')
-    eq_(repr(arg), "Choice(('true', True), ('false', False))")
+    eq_(repr(arg), "Choice(('true on', True), ('false off', False))")
 
     test = make_type_checker(arg)
     yield test, '', 0, (True, 0)
@@ -148,6 +148,16 @@ def test_Choice_default_first():
         ParseError("'True' does not match any of: true, false", arg, 0, 4)
     yield test, 'False', 0, \
         ParseError("'False' does not match any of: true, false", arg, 0, 5)
+
+    test = make_placeholder_checker(arg)
+    yield test, '', 0, ("true", 0)
+    yield test, 't', 0, ("rue", 1)
+    yield test, 'true', 0, ("", 4)
+    yield test, 'false', 0, ("", 5)
+    yield test, 'f', 0, ("alse", 1)
+    yield test, 'o', 0, ("...", 1)
+    yield test, 'on', 0, ("", 2)
+    yield test, 'of', 0, ("f", 2)
 
 def test_Choice_strings():
     arg = Choice('maybe yes no', name='yes')
@@ -309,9 +319,9 @@ def test_SubParser():
     yield test, "st", 0, ("...", 2)
     yield test, "str", 0, (" yes", 3)
     yield test, "str ", 0, ("yes", 4)
-    yield test, "str y", 0, ("", 5)
+    yield test, "str y", 0, ("es", 5)
     yield test, "str yes", 0, ("", 7)
-    yield test, "str n", 0, ("", 5)
+    yield test, "str n", 0, ("o", 5)
     yield test, "str x", 0, (None, None)
     yield test, "str x ", 0, (None, None)
 

@@ -536,27 +536,55 @@ def test_set_variable():
     from editxt.document import TextDocumentView
     from editxt.controls.textview import TextView
 
-    def test(command, completions):
+    def test(command, completions, placeholder):
         bar = CommandTester(mod.set_variable)
-        eq_(bar.get_completions(command), completions)
-    yield test, "set ", (["soft_wrap"], 0)
-    yield test, "set s", (["soft_wrap"], 0)
-    yield test, "set soft_wrap", (["soft_wrap"], 0)
-    yield test, "set soft_wrap ", (["on", "off"], 0)
-    yield test, "set soft_wrap o", (["on", "off"], 0)
-    yield test, "set soft_wrap x", ([], -1)
+        comps = (completions, (0 if completions else -1))
+        eq_(bar.get_completions(command), comps)
+        eq_(bar.get_placeholder(command), placeholder)
+    yield test, "set ", [
+            "highlight_selected_text",
+            "indent",
+            "newline_mode",
+            "soft_wrap",
+        ], "variable ..."
+    yield test, "set in", ["indent"], "dent 4 space"
+    yield test, "set indent 4 ", ["space", "tab"], "space"
+    yield test, "set s", ["soft_wrap"], "oft_wrap yes"
+    yield test, "set soft_wrap", ["soft_wrap"], " yes"
+    yield test, "set soft_wrap ", ["yes", "no"], "yes"
+    yield test, "set soft_wrap o", ["on", "off"], "..."
+    yield test, "set soft_wrap x", [], ""
 
     def test(command, attribute, value):
         m = Mocker()
         tv = m.mock(TextView)
         view = tv.doc_view >> m.mock(TextDocumentView)
-        setattr(view, attribute, value)
+        setattr(view.props >> m.mock(), attribute, value)
         do = CommandTester(mod.set_variable, textview=tv)
         with m:
             do(command)
     c = TestConfig()
+    yield test, "set newline_mode Unix", "newline_mode", const.NEWLINE_MODE_UNIX
+    yield test, "set newline_mode unix", "newline_mode", const.NEWLINE_MODE_UNIX
+    yield test, "set newline_mode cr", "newline_mode", const.NEWLINE_MODE_MAC
+    yield test, "set newline_mode \\n", "newline_mode", const.NEWLINE_MODE_UNIX
+    yield test, "set newline_mode win", "newline_mode", const.NEWLINE_MODE_WINDOWS
     yield test, "set soft_wrap on", "soft_wrap", const.WRAP_WORD
     yield test, "set soft_wrap off", "soft_wrap", const.WRAP_NONE
+
+    def test(command, size, mode):
+        m = Mocker()
+        tv = m.mock(TextView)
+        view = tv.doc_view >> m.mock(TextDocumentView)
+        props = view.props >> m.mock()
+        setattr(props, "indent_size", size)
+        setattr(props, "indent_mode", mode)
+        do = CommandTester(mod.set_variable, textview=tv)
+        with m:
+            do(command)
+    yield test, "set indent", 4, const.INDENT_MODE_SPACE
+    yield test, "set indent 3", 3, const.INDENT_MODE_SPACE
+    yield test, "set indent 8 t", 8, const.INDENT_MODE_TAB
 
 def test_panel_actions():
     import sys

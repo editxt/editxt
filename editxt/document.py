@@ -97,6 +97,7 @@ class TextDocumentView(NSObject):
                 (document, "properties.newline_mode", self.props, "newline_mode"),
                 (document, "properties.syntaxdef", self.props, "syntaxdef"),
                 (document, "properties.character_encoding", self.props, "character_encoding"),
+                (document, "properties.highlight_selected_text", self.props, "highlight_selected_text"),
             ])
         return self
 
@@ -260,6 +261,12 @@ class TextDocumentView(NSObject):
     def character_encoding(self, new, old):
         self.document.character_encoding = new
 
+    @document_property
+    def highlight_selected_text(self, new, old):
+        if not new:
+            self.finder.mark_occurrences("")
+        self.document.highlight_selected_text = new
+
     def prompt(self, message, infotext, buttons, callback):
         window = self.window()
         if window is None:
@@ -370,6 +377,17 @@ class TextDocumentView(NSObject):
 
     # TextView delegate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    @property
+    def finder(self):
+        try:
+            finder = self._finder
+        except Exception:
+            finder = self._finder = Finder(
+                (lambda:self.text_view),
+                FindOptions(ignore_case=False, wrap_around=False),
+            )
+        return finder
+
     @untested
     def textViewDidChangeSelection_(self, notification):
         textview = notification.object()
@@ -384,17 +402,11 @@ class TextDocumentView(NSObject):
         sel = range.length
         self.scroll_view.statusView.updateLine_column_selection_(line, col, sel)
 
-        ftext = text.substringWithRange_(range)
-        if len(ftext.strip()) < 3 or " " in ftext:
-            ftext = ""
-        try:
-            finder = self._finder
-        except Exception:
-            finder = self._finder = Finder(
-                (lambda:self.text_view),
-                FindOptions(ignore_case=False, wrap_around=False),
-            )
-        finder.mark_occurrences(ftext)
+        if self.document.highlight_selected_text:
+            ftext = text.substringWithRange_(range)
+            if len(ftext.strip()) < 3 or " " in ftext:
+                ftext = ""
+            self.finder.mark_occurrences(ftext)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

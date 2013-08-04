@@ -407,6 +407,23 @@ class Choice(Type):
             msg = '{!r} does not match any of: {}'.format(token, names)
         raise ParseError(msg, self, index, end)
 
+    def get_placeholder(self, text, index):
+        if index >= len(text):
+            return str(self), index
+        token, end = self.consume_token(text, index)
+        if not token:
+            return None, end
+        names = self.get_completions(token)
+        if not names:
+            placeholder = end = None
+        elif text[index:end].endswith(" "):
+            placeholder = None
+        elif len(names) == 1:
+            placeholder = names[0][len(token):]
+        else:
+            placeholder = "..."
+        return placeholder, end
+
     def get_completions(self, token):
         """List choice names that complete token"""
         names = [n for n in self.names if n.startswith(token)]
@@ -427,6 +444,13 @@ class Int(Type):
             return int(token), end
         except (ValueError, TypeError) as err:
             raise ParseError(str(err), self, index, end)
+
+    def get_placeholder(self, text, index):
+        if index >= len(text):
+            if isinstance(self.default, (int, long)):
+                return str(self.default), index
+            return str(self), index
+        return super(Int, self).get_placeholder(text, index)
 
 
 class String(Type):

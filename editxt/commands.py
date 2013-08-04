@@ -385,40 +385,49 @@ def reload_config(textview, sender, args):
 
 
 def set_docview_variable(textview, name, args):
-    setattr(textview.doc_view, name, args.value)
+    setattr(textview.doc_view.props, name, args.value)
+
+def set_docview_indent_vars(textview, name, args):
+    props = textview.doc_view.props
+    setattr(props, "indent_size", args.size)
+    setattr(props, "indent_mode", args.mode)
 
 @command(name="set", arg_parser=CommandParser(SubParser("variable",
-#    Variable("indent", [
-#        Int("size", default=lambda textview: app.config["indent_size"])
-#        Choice(
-#            ("space", const.INDENT_MODE_SPACE),
-#            ("tab", const.INDENT_MODE_TAB),
-#            name="mode",
-#            default=lambda textview: textview.doc_view.document.indent_mode)
-#    ], lambda config:(config["indent.size"], config["indent.mode"])),
-#    Variable("highlight_selected_text", [
-#        Choice(
-#            ("yes", True),
-#            ("no", False),
-#            name="value",
-#            default=lambda textview:
-#                           textview.doc_view.highlight_selected_text)
-#    ], "highlight_selected_text.enabled"),
-#    Variable("newline_mode", [
-#        Choice(
-#            ("space", const.INDENT_MODE_SPACE),
-#            ("tab", const.INDENT_MODE_TAB),
-#            name="value",
-#            default=lambda textview: textview.doc_view.newline_mode)
-#    ]),
+    SubArgs("highlight_selected_text",
+        Choice(
+            ("yes", True),
+            ("no", False),
+            name="value",
+        ),
+        setter=set_docview_variable),
+    SubArgs("indent",
+        Int("size", default=4), #lambda textview: app.config["indent_size"]),
+        Choice(
+            ("space", const.INDENT_MODE_SPACE),
+            ("tab", const.INDENT_MODE_TAB),
+            name="mode",
+            #default=lambda textview: textview.doc_view.document.indent_mode)
+        ),
+        setter=set_docview_indent_vars),
+    SubArgs("newline_mode",
+        Choice(
+            ("Unix unix LF lf \\n", const.NEWLINE_MODE_UNIX),
+            ("Mac mac CR cr \\r", const.NEWLINE_MODE_MAC),
+            ("Windows windows", const.NEWLINE_MODE_WINDOWS),
+            ("Unicode unicode", const.NEWLINE_MODE_UNICODE),
+            name="value",
+            #default=lambda textview: textview.doc_view.newline_mode)
+        ),
+        setter=set_docview_variable,
+    ),
     SubArgs("soft_wrap",
         Choice(
-            ("on", const.WRAP_WORD),
-            ("off", const.WRAP_NONE),
+            ("yes on", const.WRAP_WORD),
+            ("no off", const.WRAP_NONE),
             name="value",
-            ),#default=lambda textview: textview.doc_view.wrap_mode)
-        setter=set_docview_variable
-    ),
+            #default=lambda textview: textview.doc_view.wrap_mode
+        ),
+        setter=set_docview_variable),
 )))
 def set_variable(textview, sender, args):
     sub, opts = args.variable
