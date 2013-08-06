@@ -137,6 +137,9 @@ class Application(object):
         if focus is not None:
             editor.current_view = focus
 
+    def open_config_file(self):
+        self.open_documents_with_paths([self.config.path])
+
     def open_error_log(self, set_current=True):
         from editxt.document import TextDocumentView
         doc = errlog.document
@@ -423,6 +426,9 @@ class DocumentController(NSDocumentController):
 
     def newWindow_(self, sender):
         self.controller.create_editor()
+
+    def openConfigFile_(self, sender):
+        self.controller.open_config_file()
 
     def openErrorLog_(self, sender):
         self.controller.open_error_log()

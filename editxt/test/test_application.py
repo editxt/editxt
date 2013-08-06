@@ -220,6 +220,12 @@ def test_open_documents_with_paths():
     yield test, c(paths=[p("abc", True), p("def", False)])
     yield test, c(paths=[p("abc", True), p("def", False), p("ghi", True)])
 
+def test_open_config_file():
+    m = Mocker()
+    app = Application()
+    m.method(app.open_documents_with_paths)([app.config.path])
+    with m:
+        app.open_config_file()
 
 def test_open_error_log():
     import editxt.application as mod
@@ -777,6 +783,26 @@ def test_app_will_terminate():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # DocumentController tests
 
+def test_DocumentController_actions():
+    def test(action, app_method):
+        dc = DocumentController.sharedDocumentController()
+        m = Mocker()
+        app = m.replace(editxt, 'app')
+        getattr(app, app_method)()
+        with m:
+            getattr(dc, action)(None)
+    
+    yield test, "newWindow_", "create_editor"
+    yield test, "newProject_", "new_project"
+    yield test, "openConfigFile_", "open_config_file"
+    yield test, "openErrorLog_", "open_error_log"
+    yield test, "openPath_", "open_path_dialog"
+    yield test, "closeCurrentDocument_", "close_current_document"
+
+    #yield test, "closeCurrentProject_", "close_current_project"
+    #yield test, "saveProjectAs_", "save_project_as"
+    #yield test, "togglePropertiesPane_", "close_current_document"
+
 def test_get_document_controller():
     dc = DocumentController.sharedDocumentController()
     assert isinstance(dc, DocumentController)
@@ -797,54 +823,6 @@ def test_applicationWillFinishLaunching_():
     app.application_will_finish_launching(nsapp, dc)
     with m:
         dc.applicationWillFinishLaunching_(nsapp)
-
-def test_openPath_():
-    dc = DocumentController.sharedDocumentController()
-    m = Mocker()
-    app = m.replace(editxt, 'app')
-    app.open_path_dialog()
-    with m:
-        dc.openPath_(None)
-
-def test_closeCurrentDocument_():
-    dc = DocumentController.sharedDocumentController()
-    m = Mocker()
-    app = m.replace(editxt, 'app')
-    app.close_current_document()
-    with m:
-        dc.closeCurrentDocument_(None)
-
-def test_closeCurrentProject_():
-    dc = DocumentController.sharedDocumentController()
-    dc.closeCurrentProject_ #(None) # TODO implement this method
-
-def test_saveProjectAs_():
-    dc = DocumentController.sharedDocumentController()
-    dc.saveProjectAs_ #(None) # TODO implement this method
-
-def test_newProject_():
-    dc = DocumentController.sharedDocumentController()
-    dc.newProject_ #(None) # TODO implement this method
-
-# def test_togglePropertiesPane_():
-#     dc = DocumentController.sharedDocumentController()
-#     dc.togglePropertiesPane_ #(None) # TODO implement this method
-
-def test_newWindow_():
-    dc = DocumentController.sharedDocumentController()
-    m = Mocker()
-    app = m.replace(editxt, 'app')
-    app.create_editor()
-    with m:
-        dc.newWindow_(None)
-
-def test_openErrorLog_():
-    dc = DocumentController.sharedDocumentController()
-    m = Mocker()
-    app = m.replace(editxt, 'app')
-    app.open_error_log()
-    with m:
-        dc.openErrorLog_(None)
 
 def test_applicationWillTerminate():
     dc = NSDocumentController.sharedDocumentController()

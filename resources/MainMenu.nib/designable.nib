@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="81"/>
+			<integer value="57"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -1177,6 +1177,14 @@
 					</object>
 					<int key="connectionID">299</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">openConfigFile:</string>
+						<reference key="source" ref="179264010"/>
+						<reference key="destination" ref="575382265"/>
+					</object>
+					<int key="connectionID">301</int>
+				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<object class="NSArray" key="orderedObjects">
@@ -2151,7 +2159,7 @@
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">300</int>
+			<int key="maxID">301</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -2167,12 +2175,14 @@
 							<string>closeCurrentProject:</string>
 							<string>newProject:</string>
 							<string>newWindow:</string>
+							<string>openConfigFile:</string>
 							<string>openErrorLog:</string>
 							<string>openPath:</string>
 							<string>saveProjectAs:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -2190,6 +2200,7 @@
 							<string>closeCurrentProject:</string>
 							<string>newProject:</string>
 							<string>newWindow:</string>
+							<string>openConfigFile:</string>
 							<string>openErrorLog:</string>
 							<string>openPath:</string>
 							<string>saveProjectAs:</string>
@@ -2210,6 +2221,10 @@
 							</object>
 							<object class="IBActionInfo">
 								<string key="name">newWindow:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
+								<string key="name">openConfigFile:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">

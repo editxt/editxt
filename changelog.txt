@@ -23,7 +23,6 @@ This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
 ????-??-?? - 1.x.x
-  - Fix log file syntax highlighting.
   - Log config file path on load.
   - Move document defaults to config file:
     indent:
@@ -39,6 +38,7 @@ the source repository for the gory details of what actually happened.
       - indent
       - newline_mode
       - soft_wrap
+  - Make Preferences... menu item open config file.
   - Add config file (~/.editxt/config.yaml) with selection matching settings:
     highlight_selected_text:
       enabled: (yes|no) # default is yes
@@ -46,7 +46,6 @@ the source repository for the gory details of what actually happened.
   - Mark occurrences when counting with the find dialog.
   - Mark (highlight) all occurrences of selected text (length > 3, containing
     no spaces), yellow for now.
-  - Fix bugs related to app termination with unsaved documents.
   - Allow close document from menu and with COMMAND+W hotkey
   - Many improvements on command bar
     - More commands: wrap, sort, find/replace
@@ -54,6 +53,8 @@ the source repository for the gory details of what actually happened.
     - Tab completion
     - Command history
   - Improve exception logging.
+  - Fix bugs related to app termination with unsaved documents.
+  - Fix log file syntax highlighting.
   - Fix startup errors due to strange arguments passed by OS X.
   - Fix long pause on quit with many documents open.
 
