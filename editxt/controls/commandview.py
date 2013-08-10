@@ -75,17 +75,17 @@ class CommandView(ak.NSView):
         #self.performSelector_withObject_afterDelay_("selectText:", self, 0)
         # possibly use setSelectedRange
         # http://jeenaparadies.net/weblog/2009/apr/focus-a-nstextfield
-        self.tile_and_redraw()
         self.input.setString_(initial_text)
+        self.tile_and_redraw()
         self.window().makeFirstResponder_(self.input)
 
     def deactivate(self):
-        view = self.command.editor.current_view
-        if view is not None:
-            self.window().makeFirstResponder_(view.text_view)
         if self.command is not None:
-            self.command.reset()
-            self.command = None
+            self.command, command = None, self.command
+            view = command.editor.current_view
+            if view is not None:
+                self.window().makeFirstResponder_(view.text_view)
+            command.reset()
         self.tile_and_redraw()
 
     def textDidEndEditing_(self, notification):
@@ -116,6 +116,7 @@ class CommandView(ak.NSView):
             if not self.command.should_insert_newline(text, len(text)):
                 self.command.execute(text)
                 self.deactivate()
+                return True
         return False
 
     def get_completions(self, textview, range=None):
