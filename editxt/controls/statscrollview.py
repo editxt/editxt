@@ -32,7 +32,7 @@ class StatusbarScrollView(NSScrollView):
     def initWithFrame_(self, frame):
         super(StatusbarScrollView, self).initWithFrame_(frame)
         rect = NSMakeRect(0, 0, 0, NSScroller.scrollerWidth())
-        self.commandView = CommandView.alloc().initWithFrame(rect)
+        self.commandView = CommandView.alloc().initWithFrame_(rect)
         self.addSubview_(self.commandView)
         self.statusView = StatusView.alloc().initWithFrame_(rect)
         self.addSubview_(self.statusView)
@@ -44,34 +44,46 @@ class StatusbarScrollView(NSScrollView):
         status = self.statusView
         vscroll = self.verticalScroller()
         hscroll = self.horizontalScroller()
-        if content and status and vscroll and hscroll:
-            scrollw = NSScroller.scrollerWidth()
-            rect = self.bounds()
-            arect, brect = NSDivideRect(rect, None, None, scrollw, NSMaxYEdge) # (status+hscroller) | (ruler+content+vscroller)
-            crect, drect = NSDivideRect(brect, None, None, scrollw, NSMaxXEdge) # vscroller | (ruler+content)
-            vscroll.setFrame_(crect)
-            ruler = self.verticalRulerView()
-            if self.commandView:
-                # TODO height sould be relative to font size
-                commandh = 18.0 #NSScroller.scrollerWidth()
-                erect, frect = NSDivideRect(drect, None, None, commandh, NSMaxYEdge) # command | (ruler+content)
-                self.commandView.setFrame_(erect)
-                drect = frect
-            else:
-                self.commandView.setFrame_(NSZeroRect)
-            if ruler:
-                rulew = ruler.calculate_thickness()
-                erect, frect = NSDivideRect(drect, None, None, rulew, NSMinXEdge) # ruler | content
-                ruler.setFrame_(erect)
-                content.setFrame_(frect)
-            else:
-                content.setFrame_(drect)
-                rulew = 0
-            svwidth = status.tileWithRuleWidth_(rulew)
-            grect, hrect = NSDivideRect(arect, None, None, svwidth, NSMinXEdge) # status | scrollers
-            status.setFrame_(grect)
-            arect, brect = NSDivideRect(hrect, None, None, scrollw, NSMaxXEdge) # vscroller | hscroller
-            hscroll.setFrame_(hrect)
+        if not (content and status and vscroll and hscroll):
+            return
+
+        scrollw = NSScroller.scrollerWidth()
+        rect = self.bounds()
+        # (status+hscroll) | content+vscroll)
+        arect, brect = NSDivideRect(rect, None, None, scrollw, NSMaxYEdge)
+
+        # vscroll | content
+        crect, drect = NSDivideRect(brect, None, None, scrollw, NSMaxXEdge)
+        vscroll.setFrame_(crect)
+
+        if self.commandView:
+            commandh = self.commandView.preferred_height
+            # command | content
+            crect, drect = NSDivideRect(drect, None, None, commandh, NSMaxYEdge)
+            self.commandView.setHidden_(False)
+            self.commandView.setFrame_(crect)
+        else:
+            self.commandView.setHidden_(True)
+
+        ruler = self.verticalRulerView()
+        if ruler:
+            rulew = ruler.calculate_thickness()
+            # ruler | content
+            crect, drect = NSDivideRect(drect, None, None, rulew, NSMinXEdge)
+            ruler.setFrame_(crect)
+        else:
+            rulew = 0
+        svwidth = status.tileWithRuleWidth_(rulew)
+        content.setFrame_(drect)
+
+        # status | scrollers
+        grect, hrect = NSDivideRect(arect, None, None, svwidth, NSMinXEdge)
+        status.setFrame_(grect)
+        hscroll.setFrame_(hrect)
+
+    def tile_and_redraw(self):
+        self.tile()
+        self.setNeedsDisplay_(True)
 
 
 class StatusView(NSView):

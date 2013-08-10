@@ -133,6 +133,10 @@ class CommandBar(object):
                 words, index = [], -1
         return words, index
 
+    def should_insert_newline(self, text, index):
+        """Return true if a newline can be inserted in text at index"""
+        return False # TODO implement this
+
     def get_history(self, current_text, forward=False):
         if self.history_view is None:
             self.history_view = self.text_commander.history.view()

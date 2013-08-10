@@ -27,6 +27,7 @@ Python environment setup. RECOMMENDED: use a virtualenv
     # pyobjc installation is tricky (this sequence worked on Python 2.7.3)
     easy_install "pyobjc-core==2.3"
     easy_install "pyobjc-framework-Cocoa==2.3"
+    #easy_install "pyobjc-framework-Quartz==2.3" ??
     easy_install "pyobjc-framework-ExceptionHandling==2.3"
 
     # PyYAML with LibYAML installation
@@ -80,11 +81,24 @@ Add more settings
   wrap_mode: [word|none]
 
 Add command bar:
-x   command text entry widget
-x   menu entry/hotkey to activate command bar
-x   jump to line command
-x   command argument placeholder text
-x   history
+    command message area
+        types of messages: error (red text), notification (black text)
+        show message for limited time
+        button to dismiss message
+        button in status area to show last message
+        max number of lines to display before scrolling (configurable)
+        selectable text
+    do not dismiss command bar or update history on command parse error
+        show error message(s)
+    contextual command help
+    list history
+        tab key should show list of auto complete options and filtered history
+    filter history
+        up arrow after typing should step through history with same prefix
+        all text after manually typed prefix should be selected
+    delete history item
+    hotkeys should execute commands
+    integrate GUI commands with command history
     convert commands with gui to work with command bar
 x       wrap command
 x       sort command
@@ -93,16 +107,12 @@ x       find/replace
 x           placeholder text prefix space
 x           command prefix space (should not be stripped)
         change indentation
-    integrate GUI commands with command history
-    hotkeys should execute commands
-    contextual command help
-    list history
-        tab key should show list of auto complete options and filtered history
-    filter history
-        up arrow after typing should step through history with same prefix
-        all text after manually typed prefix should be selected
-    delete history item
+x   command text entry widget
+x   menu entry/hotkey to activate command bar
+x   jump to line command
+x   command argument placeholder text
 x   command/arg auto-complete
+x   history
 
 refactor object hierarchy to make it more modular and easier to add features
     app.documents - {id: Document}
