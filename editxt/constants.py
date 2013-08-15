@@ -35,6 +35,9 @@ DOC_ID_LIST_PBOARD_TYPE = "EditXT document id list"
 MOVE = "move"
 COPY = "copy"
 
+HTML = "html"
+ERROR = "error"
+
 FIND_PANEL_OPTIONS_KEY = "find_panel_options"
 WINDOW_SETTINGS_DEFAULTS_KEY = "window_settings"
 WINDOW_CONTROLLERS_DEFAULTS_KEY = "window_controllers"

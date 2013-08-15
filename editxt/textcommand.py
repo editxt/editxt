@@ -19,6 +19,8 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import json
 import logging
+import sys
+import traceback
 from collections import defaultdict
 from itertools import count
 from os.path import exists, join
@@ -26,6 +28,7 @@ from os.path import exists, join
 from AppKit import *
 from Foundation import *
 
+import editxt.constants as const
 from editxt.commandparser import ArgumentError
 from editxt.commands import load_commands
 from editxt.util import WeakProperty
@@ -142,9 +145,20 @@ class CommandBar(object):
             self.history_view = self.text_commander.history.view()
         return self.history_view.get(current_text, forward)
 
-    def message(self, text, exc_info=None):
-        log.info(text, exc_info=exc_info)
-        NSBeep()
+    def message(self, text, exc_info=None, **kw):
+        if exc_info:
+            if isinstance(exc_info, (int, bool)):
+                exc_info = sys.exc_info()
+            exc = "\n\n" + "".join(traceback.format_exception(*exc_info))
+        else:
+            exc = ""
+        msg = "{}{}".format(text, exc)
+        view = self.editor.current_view
+        if view is None:
+            log.info(text, exc_info=exc_info)
+            NSBeep()
+        else:
+            view.scroll_view.commandView.message(self, msg, **kw)
 
     def reset(self):
         view, self.history_view = self.history_view, None

@@ -63,6 +63,7 @@ def test_CommandBar_execute():
         beep = m.replace(mod, 'NSBeep')
         commander = m.mock(TextCommandController)
         bar = mod.CommandBar(editor, commander)
+        message = m.replace(bar, "message")
         args = c.text.split()
         if args and not c.current:
             editor.current_view >> None
@@ -85,27 +86,35 @@ def test_CommandBar_execute():
             else:
                 assert c.lookup == None, c.lookup
             if c.args is None or isinstance(c.args, Exception):
-                beep()
+                if isinstance(c.args, Exception):
+                    kw = {"exc_info": True}
+                else:
+                    kw = {}
+                message(c.msg, **kw)
             else:
                 view.text_view >> '<view>'
                 res = expect(command('<view>', bar, '<args>'))
                 if c.error:
                     res.throw(Exception('bang!'))
-                    beep()
+                    message(ANY, exc_info=True)
                 else:
                     history = commander.history >> m.mock(mod.CommandHistory)
                     history.append(c.text)
         with m:
             bar.execute(c.text)
-    c = TestConfig(args='<args>', error=False, current=True)
+    c = TestConfig(args='<args>', error=False, current=True,
+                   msg=None, exc_info=None)
     yield test, c(text='')
     yield test, c(text='cmd x y z', argstr='x y z', lookup='first')
     yield test, c(text='cmd  x y  z', argstr=' x y  z', lookup='first')
-    yield test, c(text='cmd x ', argstr='x ', lookup='first', args=Exception())
+    yield test, c(text='cmd x ', argstr='x ', lookup='first', args=Exception(),
+                  msg='argument parse error: x ', exc_info=True)
     yield test, c(text='123 456', lookup='full')
     yield test, c(text='123 456', lookup='full', current=False)
-    yield test, c(text='cmd', argstr='', lookup='first', args=None)
-    yield test, c(text='123 456', lookup='full', args=None)
+    yield test, c(text='cmd', argstr='', lookup='first', args=None,
+                  msg='invalid command arguments: ')
+    yield test, c(text='123 456', lookup='full', args=None,
+                  msg='unknown command: 123 456')
     yield test, c(text='123 456', lookup='full', error=True)
 
 def test_CommandBar_get_placeholder():
@@ -353,6 +362,33 @@ def test_CommandBar_history_reset_on_execute():
             bar.execute("cmd")
             eq_(bar.history_view, None)
             eq_(list(history), ["cmd"])
+
+def test_CommandBar_message():
+    from editxt.controls.commandview import CommandView
+    from editxt.document import TextDocumentView
+    def test(c):
+        m = Mocker()
+        editor = m.mock()
+        commander = m.mock(TextCommandController)
+        sys_exc_info = m.replace(mod.sys, "exc_info")
+        format_exc = m.replace(mod.traceback, "format_exception")
+        bar = mod.CommandBar(editor, commander)
+        view = editor.current_view >> m.mock(TextDocumentView)
+        cmd = view.scroll_view.commandView >> m.mock(CommandView)
+        kw = {}
+        if c.exc_info is not None:
+            kw["exc_info"] = c.exc_info
+            sys_exc_info() >> ("<exc info>",)
+            format_exc("<exc info>") >> ["Traceback", "...", "Error!"]
+        def check(cmd, text, **kw):
+            eq_(text, c.msg)
+            return True
+        expect(cmd.message(ANY, ANY)).call(check)
+        with m:
+            bar.message(c.text, **kw)
+    c = TestConfig(text="command error", exc_info=None)
+    yield test, c(msg="command error")
+    yield test, c(msg="command error\n\nTraceback...Error!", exc_info=True)
 
 def test_CommandBar_reset():
     with tempdir() as tmp:

@@ -23,12 +23,15 @@ import math
 import AppKit as ak
 from Quartz.CoreGraphics import CGRectIntersectsRect
 
-from editxt.constants import LARGE_NUMBER_FOR_TEXT
+from editxt.constants import ERROR, HTML, LARGE_NUMBER_FOR_TEXT
 
 log = logging.getLogger(__name__)
 ACTIVATE = "activate"
 SHOULD_RESIZE = "should_resize"
+MESSAGE_COLORS = {ERROR: ak.NSColor.redColor()}
 
+def default_font():
+    return ak.NSFont.fontWithName_size_("Monaco", 10.0)
 
 class CommandView(ak.NSView):
 
@@ -57,7 +60,7 @@ class CommandView(ak.NSView):
         return self
 
     def __nonzero__(self):
-        return self.command is not None
+        return self.command is not None or bool(self.output.string())
 
     @property
     def preferred_height(self):
@@ -77,7 +80,8 @@ class CommandView(ak.NSView):
             if view is not None:
                 font = view.text_view.font()
             else:
-                font = ak.NSFont.fontWithName_size_("Monaco", 9.0)
+                font = default_font()
+            self.output.setString_("")
             self.input.setFont_(font)
         if new_activation or initial_text:
             self.input.setString_(initial_text)
@@ -91,6 +95,27 @@ class CommandView(ak.NSView):
             if view is not None:
                 self.window().makeFirstResponder_(view.text_view)
             command.reset()
+        self.tile_and_redraw()
+
+    def message(self, command, message, msg_type=ERROR):
+        if msg_type == HTML:
+            raise NotImplementedError("convert message to NSAttributedString")
+        else:
+            color = MESSAGE_COLORS[msg_type]
+            view = command.editor.current_view
+            if view is not None:
+                font = view.text_view.font()
+            else:
+                font = default_font()
+            text = ak.NSAttributedString.alloc().initWithString_attributes_(
+                message, {
+                    ak.NSForegroundColorAttributeName: color,
+                    ak.NSFontAttributeName: font,
+                })
+        self.output.textStorage().setAttributedString_(text)
+        self.output.textDidChange_(None)
+        if msg_type == ERROR:
+            ak.NSBeep()
         self.tile_and_redraw()
 
     #def textDidEndEditing_(self, notification):
@@ -179,20 +204,22 @@ class CommandView(ak.NSView):
     def tile_and_redraw(self):
         self.superview().tile_and_redraw()
 
+    def setHidden_(self, value):
+        if not value:
+            self.input.scroller.setHidden_(self.command is None)
+            self.output.scroller.setHidden_(not self.output.string())
+        return super(CommandView, self).setHidden_(value)
+
     def resizeSubviewsWithOldSize_(self, old_size):
         rect = self.bounds()
         input = self.input
         output = self.output
         if not output.string():
-            output.scroller.setHidden_(True)
             input.scroller.setFrame_(rect)
             return
         if self.command is None:
-            input.scroller.setHidden_(True)
             output.scroller.setFrame_(rect)
             return
-        input.scroller.setHidden_(False)
-        output.scroller.setHidden_(False)
         line = output.layoutManager().defaultLineHeightForFont_(output.font())
         if input.preferred_height < rect.size.height - line:
             input_height = input.preferred_height
