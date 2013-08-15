@@ -388,6 +388,12 @@ class TextDocumentView(NSObject):
             )
         return finder
 
+    def textView_doCommandBySelector_(self, textview, selector):
+        if selector == "cancelOperation:": # escape key
+            self.scroll_view.commandView.dismiss()
+            return True
+        return False
+
     @untested
     def textViewDidChangeSelection_(self, notification):
         textview = notification.object()

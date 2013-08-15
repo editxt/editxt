@@ -674,6 +674,27 @@ def test_TextDocumentView_close():
         yield test, c(wcs=[wc(0) for i in xrange(2)])
     yield test, c(app_views=1)
 
+def test_TextDocumentView_textView_doCommandBySelector_():
+    from editxt.controls.commandview import CommandView
+    def test(selector, setup_mocks):
+        m = Mocker()
+        doc = m.mock(TextDocument)
+        docview = TextDocumentView.alloc().init_with_document(doc)
+        textview = m.mock(mod.TextView)
+        expected = setup_mocks(m, docview, textview)
+        with m:
+            result = docview.textView_doCommandBySelector_(textview, selector)
+            eq_(result, expected)
+
+    yield test, "bogusOperation:", lambda m, dv, tv: False
+
+    def setup_mocks(m, docview, textview):
+        docview.scroll_view = m.mock(NSScrollView)
+        cmd = docview.scroll_view.commandView >> m.mock(CommandView)
+        cmd.dismiss()
+        return True
+    yield test, "cancelOperation:", setup_mocks
+
 @check_app_state
 def test_KVOProxy_create():
     from editxt.util import KVOProxy

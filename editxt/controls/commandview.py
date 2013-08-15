@@ -97,6 +97,11 @@ class CommandView(ak.NSView):
             command.reset()
         self.tile_and_redraw()
 
+    def dismiss(self):
+        if self:
+            self.output.setString_("")
+            self.deactivate()
+
     def message(self, command, message, msg_type=ERROR):
         if msg_type == HTML:
             raise NotImplementedError("convert message to NSAttributedString")
