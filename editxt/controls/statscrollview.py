@@ -49,21 +49,42 @@ class StatusbarScrollView(NSScrollView):
 
         scrollw = NSScroller.scrollerWidth()
         rect = self.bounds()
-        # (status+hscroll) | content+vscroll)
+        # (status+hscroll) | (content+vscroll)
         arect, brect = NSDivideRect(rect, None, None, scrollw, NSMaxYEdge)
 
-        # vscroll | content
-        crect, drect = NSDivideRect(brect, None, None, scrollw, NSMaxXEdge)
-        vscroll.setFrame_(crect)
+        max_command_height = int(brect.size.height * 0.8)
+        command = self.commandView
+        if command and command.preferred_height > max_command_height:
+            # uncommon case: command view is very tall
+            # put command view under main vertical scroller
+            # command | (content+vscroll)
+            crect, drect = NSDivideRect(brect, None, None, max_command_height, NSMaxYEdge)
 
-        if self.commandView:
-            commandh = self.commandView.preferred_height
-            # command | content
-            crect, drect = NSDivideRect(drect, None, None, commandh, NSMaxYEdge)
-            self.commandView.setHidden_(False)
-            self.commandView.setFrame_(crect)
+            # HACK adjust size for this scroller's border
+            crect.origin.x -= 1
+            crect.size.width += 2
+
+            command.setHidden_(False)
+            command.setFrame_(crect)
+
+            crect, drect = NSDivideRect(drect, None, None, scrollw, NSMaxXEdge)
+            vscroll.setFrame_(crect)
         else:
-            self.commandView.setHidden_(True)
+            # common case: command view is short
+            # put command view inside (to right of) main vertical scroller
+
+            # vscroll | content
+            crect, drect = NSDivideRect(brect, None, None, scrollw, NSMaxXEdge)
+            vscroll.setFrame_(crect)
+
+            if command:
+                commandh = command.preferred_height
+                # command | content
+                crect, drect = NSDivideRect(drect, None, None, commandh, NSMaxYEdge)
+                command.setHidden_(False)
+                command.setFrame_(crect)
+            else:
+                command.setHidden_(True)
 
         ruler = self.verticalRulerView()
         if ruler:

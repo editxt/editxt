@@ -32,16 +32,17 @@ SHOULD_RESIZE = "should_resize"
 
 class CommandView(ak.NSView):
 
-    #@classmethod
-    #def cellClass(cls):
-    #    return CommandViewCell
-
     def initWithFrame_(self, rect):
         super(CommandView, self).initWithFrame_(rect)
         self.input = ContentSizedTextView.alloc().initWithFrame_(rect)
-        #self.output = ContentSizedTextView.alloc().initWithFrame_(rect)
+        self.input.scroller.setBorderType_(ak.NSBezelBorder)
+        self.output = ContentSizedTextView.alloc().initWithFrame_(rect)
+        self.output.scroller.setBorderType_(ak.NSBezelBorder)
+        self.output.setEditable_(False)
+        self.output.setSelectable_(True)
+        self.setAutoresizesSubviews_(True)
         self.addSubview_(self.input.scroller)
-        #self.addSubview_(self.output.scroller)
+        self.addSubview_(self.output.scroller)
         self.input.setDelegate_(self)
         def text_did_change_handler(textview):
             if self.command is not None:
@@ -52,7 +53,7 @@ class CommandView(ak.NSView):
         self.command = None
         self._last_completions = [None]
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
-            self, "shouldResize:", SHOULD_RESIZE, self.input)
+            self, "resize:", SHOULD_RESIZE, self.input)
         return self
 
     def __nonzero__(self):
@@ -60,23 +61,27 @@ class CommandView(ak.NSView):
 
     @property
     def preferred_height(self):
-        if self.command is not None:
-            input_height = self.input.preferred_height
-        else:
-            input_height = 0
-#        if self.output.string():
-#            output_height = self.output.preferred_height
-#        else:
-#            output_height = 0
-        return input_height #+ output_height
+        return (
+            (self.input.preferred_height if self.command is not None else 0) +
+            (self.output.preferred_height if self.output.string() else 0)
+        )
 
     def activate(self, command, initial_text=""):
-        self.command = command
-        #self.performSelector_withObject_afterDelay_("selectText:", self, 0)
-        # possibly use setSelectedRange
-        # http://jeenaparadies.net/weblog/2009/apr/focus-a-nstextfield
-        self.input.setString_(initial_text)
-        self.tile_and_redraw()
+        new_activation = self.command is None
+        if new_activation:
+            self.command = command
+            #self.performSelector_withObject_afterDelay_("selectText:", self, 0)
+            # possibly use setSelectedRange
+            # http://jeenaparadies.net/weblog/2009/apr/focus-a-nstextfield
+            view = command.editor.current_view
+            if view is not None:
+                font = view.text_view.font()
+            else:
+                font = ak.NSFont.fontWithName_size_("Monaco", 9.0)
+            self.input.setFont_(font)
+        if new_activation or initial_text:
+            self.input.setString_(initial_text)
+            self.tile_and_redraw()
         self.window().makeFirstResponder_(self.input)
 
     def deactivate(self):
@@ -88,9 +93,8 @@ class CommandView(ak.NSView):
             command.reset()
         self.tile_and_redraw()
 
-    def textDidEndEditing_(self, notification):
-        #super(CommandView, self).textDidEndEditing_(notification)
-        self.deactivate()
+    #def textDidEndEditing_(self, notification):
+    #    self.deactivate()
 
     def textView_doCommandBySelector_(self, textview, selector):
         if selector == "cancelOperation:": # escape key
@@ -169,11 +173,36 @@ class CommandView(ak.NSView):
             return
         self.input.setString_(text)
 
-    def shouldResize_(self, notification):
+    def resize_(self, notification):
         self.tile_and_redraw()
 
     def tile_and_redraw(self):
         self.superview().tile_and_redraw()
+
+    def resizeSubviewsWithOldSize_(self, old_size):
+        rect = self.bounds()
+        input = self.input
+        output = self.output
+        if not output.string():
+            output.scroller.setHidden_(True)
+            input.scroller.setFrame_(rect)
+            return
+        if self.command is None:
+            input.scroller.setHidden_(True)
+            output.scroller.setFrame_(rect)
+            return
+        input.scroller.setHidden_(False)
+        output.scroller.setHidden_(False)
+        line = output.layoutManager().defaultLineHeightForFont_(output.font())
+        if input.preferred_height < rect.size.height - line:
+            input_height = input.preferred_height
+        else:
+            input_height = rect.size.height - line
+        assert input_height > 0, (input_height, output_height)
+        input_rect, output_rect = ak.NSDivideRect(
+            rect, None, None, input_height, ak.NSMinYEdge)
+        input.scroller.setFrame_(input_rect)
+        output.scroller.setFrame_(output_rect)
 
 
 class ContentSizedTextView(ak.NSTextView):
@@ -190,12 +219,10 @@ class ContentSizedTextView(ak.NSTextView):
         self.setUsesFontPanel_(False)
         self.setUsesFindPanel_(False)
         self._setup_scrollview(rect)
-        font = ak.NSFont.fontWithName_size_("Monaco", 9.0) # TODO get font from config
 
         # text attributes and machinery for placeholder drawing
         self.placeholder_attrs = ak.NSMutableDictionary.alloc() \
             .initWithDictionary_({
-                ak.NSFontAttributeName: font,
                 ak.NSForegroundColorAttributeName: ak.NSColor.lightGrayColor(),
             })
 
@@ -210,8 +237,7 @@ class ContentSizedTextView(ak.NSTextView):
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
             self, "textDidChange:", ak.NSTextDidChangeNotification, self)
         self.placeholder = u""
-        self.setFont_(font)
-        self.setString_(u"")
+        #self.setString_(u"")
         return self
 
     def dealloc(self):
@@ -220,9 +246,9 @@ class ContentSizedTextView(ak.NSTextView):
 
     def _setup_scrollview(self, rect):
         self.scroller = scroller = ak.NSScrollView.alloc().initWithFrame_(rect)
-        scroller.setBorderType_(ak.NSBezelBorder)
         scroller.setHasHorizontalScroller_(False)
-        scroller.setHasVerticalScroller_(False)
+        scroller.setHasVerticalScroller_(True)
+        scroller.setAutohidesScrollers_(True)
         scroller.setAutoresizingMask_(
             ak.NSViewWidthSizable | ak.NSViewHeightSizable)
         container = self.textContainer()
@@ -257,8 +283,6 @@ class ContentSizedTextView(ak.NSTextView):
         """Get preferred height for enclosing scroll view
         """
         scroller_size = self.scroller.frame().size
-        wdiff = (scroller_size.width
-            - self.textContainer().containerSize().width)
         container = self._h4w_container
         container.setContainerSize_(self.textContainer().containerSize())
         layout = container.layoutManager()
@@ -270,9 +294,12 @@ class ContentSizedTextView(ak.NSTextView):
             # TODO minimal layout for changed text range
             layout.glyphRangeForTextContainer_(container)
             height = layout.usedRectForTextContainer_(container).size.height
-            # HACK is height diff always the same as width diff (wdiff)?
+        content_size = ak.NSScrollView \
+            .contentSizeForFrameSize_hasHorizontalScroller_hasVerticalScroller_borderType_(
+                scroller_size, False, False, self.scroller.borderType())
+        border_width = scroller_size.height - content_size.height
         self.preferred_height \
-            = height + wdiff + self.textContainerInset().height * 2
+            = height + self.textContainerInset().height * 2 + border_width
 
     def setFont_(self, value):
         super(ContentSizedTextView, self).setFont_(value)
@@ -298,7 +325,7 @@ class ContentSizedTextView(ak.NSTextView):
         if not self._placeholder:
             return
         # draw placeholder text after main content text
-        # BUG 3 or more word placeholder does not draw properly when wrapped
+        # BUG 3-or-more-word placeholder does not draw properly when wrapped
         layout = self._h4w_container.layoutManager()
         glyph_range = layout \
             .glyphRangeForBoundingRectWithoutAdditionalLayout_inTextContainer_(
