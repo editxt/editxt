@@ -81,15 +81,6 @@ Add more settings
   wrap_mode: [word|none]
 
 Add command bar:
-    command message area
-        types of messages: error (red text), notification (black text)
-        show message for limited time
-        button to dismiss message
-        button in status area to show last message
-        max number of lines to display before scrolling (configurable)
-        selectable text
-    do not dismiss command bar or update history on command parse error
-        show error message(s)
     contextual command help
     list history
         tab key should show list of auto complete options and filtered history
@@ -107,6 +98,12 @@ x       find/replace
 x           placeholder text prefix space
 x           command prefix space (should not be stripped)
         change indentation
+x    command message area
+x        types of messages: error (red text), notification (black text)
+x        max number of lines to display before scrolling (configurable)
+x        selectable text
+xx    do not dismiss command bar or update history on command parse error
+x        show error message(s)
 x   command text entry widget
 x   menu entry/hotkey to activate command bar
 x   jump to line command

@@ -23,6 +23,7 @@ This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
 ????-??-?? - 1.x.x
+  - Added status message output to command bar.
   - Log config file path on load.
   - Move document defaults to config file:
     indent:
