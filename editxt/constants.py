@@ -36,6 +36,7 @@ MOVE = "move"
 COPY = "copy"
 
 HTML = "html"
+INFO = "info"
 ERROR = "error"
 
 FIND_PANEL_OPTIONS_KEY = "find_panel_options"

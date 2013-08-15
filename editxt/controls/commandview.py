@@ -23,15 +23,12 @@ import math
 import AppKit as ak
 from Quartz.CoreGraphics import CGRectIntersectsRect
 
-from editxt.constants import ERROR, HTML, LARGE_NUMBER_FOR_TEXT
+from editxt.constants import ERROR, HTML, INFO, LARGE_NUMBER_FOR_TEXT
 
 log = logging.getLogger(__name__)
 ACTIVATE = "activate"
 SHOULD_RESIZE = "should_resize"
-MESSAGE_COLORS = {ERROR: ak.NSColor.redColor()}
-
-def default_font():
-    return ak.NSFont.fontWithName_size_("Monaco", 10.0)
+MESSAGE_COLORS = {INFO: None, ERROR: ak.NSColor.redColor()}
 
 class CommandView(ak.NSView):
 
@@ -78,11 +75,8 @@ class CommandView(ak.NSView):
             # http://jeenaparadies.net/weblog/2009/apr/focus-a-nstextfield
             view = command.editor.current_view
             if view is not None:
-                font = view.text_view.font()
-            else:
-                font = default_font()
+                self.input.setFont_(view.text_view.font())
             self.output.setString_("")
-            self.input.setFont_(font)
         if new_activation or initial_text:
             self.input.setString_(initial_text)
             self.tile_and_redraw()
@@ -106,17 +100,15 @@ class CommandView(ak.NSView):
         if msg_type == HTML:
             raise NotImplementedError("convert message to NSAttributedString")
         else:
+            attrs = {}
             color = MESSAGE_COLORS[msg_type]
+            if color is not None:
+                attrs[ak.NSForegroundColorAttributeName] = color
             view = command.editor.current_view
             if view is not None:
-                font = view.text_view.font()
-            else:
-                font = default_font()
+                attrs[ak.NSFontAttributeName] = view.text_view.font()
             text = ak.NSAttributedString.alloc().initWithString_attributes_(
-                message, {
-                    ak.NSForegroundColorAttributeName: color,
-                    ak.NSFontAttributeName: font,
-                })
+                message, attrs)
         self.output.textStorage().setAttributedString_(text)
         self.output.textDidChange_(None)
         if msg_type == ERROR:
