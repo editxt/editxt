@@ -158,7 +158,7 @@ def identifier(name):
     return ident
 
 
-class Type(object):
+class Field(object):
     """Base command argument type used to parse argument values"""
 
     def __init__(self, name, default=None):
@@ -313,7 +313,7 @@ class Type(object):
         return []
 
 
-class Choice(Type):
+class Choice(Field):
     """A multiple-choice argument type
 
     Choices are names without spaces. At least one choice name is
@@ -430,7 +430,7 @@ class Choice(Type):
         return names or [n for n in self.alternates if n.startswith(token)]
 
 
-class Int(Type):
+class Int(Field):
 
     def consume(self, text, index):
         """Consume an integer value
@@ -453,7 +453,7 @@ class Int(Type):
         return super(Int, self).get_placeholder(text, index)
 
 
-class String(Type):
+class String(Field):
 
     ESCAPES = {
         '\\': '\\',
@@ -501,7 +501,7 @@ class String(Type):
         raise ParseError(msg, self, index, len(text))
 
 
-class VarArgs(Type):
+class VarArgs(Field):
     """Consume all remaining arguments by splitting the string"""
 
     def __init__(self, name, placeholder=""):
@@ -517,7 +517,7 @@ class VarArgs(Type):
         return text[index:].split(), len(text)
 
 
-class Regex(Type):
+class Regex(Field):
 
     NON_DELIMITERS = r'.^$*+?{}\[]|()'
     WORDCHAR = re.compile(r'\w', re.UNICODE)
@@ -600,7 +600,7 @@ class Regex(Type):
         return value, index
 
 
-class SubParser(Type):
+class SubParser(Field):
     """Argument type that consumes a variable number of arguments
 
     The first argument consumed by this SubParser is used to lookup a
