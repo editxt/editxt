@@ -220,7 +220,7 @@ def test_Regex():
     eq_(str(arg), 'regex')
     eq_(repr(arg), "Regex('regex')")
 
-    def test(text, start, expect, flags=0):
+    def regex_test(text, start, expect, flags=0):
         if isinstance(expect, Exception):
             def check(err):
                 eq_(err, expect)
@@ -239,6 +239,8 @@ def test_Regex():
             got = (expr.pattern, index)
         eq_(got, expect)
         eq_(expr.flags, flags | re.UNICODE | re.MULTILINE)
+
+    test = regex_test
     yield test, '', 0, (None, 0)
     yield test, '/abc/', 0, ('abc', 5)
     yield test, '/abc/ def', 0, ('abc', 6)
@@ -258,13 +260,20 @@ def test_Regex():
     yield test, '/abc/X def', 0, \
         ParseError('unknown flag: X', arg, 5, 5)
 
+    test = make_placeholder_checker(arg)
+    yield test, "", 0, ("regex", 0)
+    yield test, "/", 0, ("/", 2)
+    yield test, "//", 0, ("", 2)
+    yield test, "// ", 0, (None, 3)
+
     arg = Regex('regex', replace=True)
     eq_(repr(arg), "Regex('regex', replace=True)")
+    test = regex_test
     yield test, '', 0, ((None, None), 0)
     yield test, '/abc', 0, (('abc', None), 5)
     yield test, '/abc ', 0, (('abc ', None), 6)
     yield test, ' abc', 0, (('abc', None), 5)
-    yield test, ' abc ', 0, (('abc', None), 6)
+    yield test, ' abc ', 0, (('abc', ''), 6)
     yield test, ' abc  ', 0, (('abc', ''), 6)
     yield test, '/abc def', 0, (('abc def', None), 9)
     yield test, '/abc/def', 0, (('abc', 'def'), 9)
@@ -283,6 +292,21 @@ def test_Regex():
     yield test, '/(', 0, ParseError(msg, arg, 3, 3)
     yield test, '/(/  ', 0, ParseError(msg, arg, 6, 6)
     yield test, '/(// arg', 0, ParseError(msg, arg, 5, 5)
+
+    test = make_placeholder_checker(arg)
+    yield test, "", 0, ("regex", 0)
+    yield test, "/", 0, ("//", 2)
+    yield test, "/x/", 0, ("/", 4)
+    yield test, "/\\//", 0, ("/", 5)
+    yield test, "/x//", 0, ("", 4)
+
+    arg = Regex('regex', replace=True, default=("", ""))
+    test = make_placeholder_checker(arg)
+    yield test, "", 0, ("regex", 0)
+    yield test, "/", 0, ("//", 2)
+    yield test, "/x/", 0, ("/", 4)
+    yield test, "/\\//", 0, ("/", 5)
+    yield test, "/x//", 0, ("", 4)
 
 def test_SubParser():
     sub = SubArgs("val", Int("num"), abc="xyz")

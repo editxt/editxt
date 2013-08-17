@@ -145,10 +145,6 @@ class CommandParser(object):
         return None, index
 
 
-def tokenize(text):
-    return text.split()
-
-
 IDENTIFIER_PATTERN = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*$')
 
 def identifier(name):
@@ -529,7 +525,7 @@ class Regex(Field):
         default = (None, None) if replace and default is None else default
         super(Regex, self).__init__(name, default)
 
-    def consume(self, text, index):
+    def consume(self, text, index, _default=None):
         """Consume regular expression and optional replacement string and flags
 
         :returns: (<value>, <index>) where value is one of the following:
@@ -548,9 +544,11 @@ class Regex(Field):
         expr, index = self.consume_expression(text, index)
         try:
             if self.replace:
-                if index >= len(text):
+                if _default is None:
+                    _default = self.default
+                if index > len(text):
                     index = len(text) + 1 # to show we would consume more
-                    return (re.compile(expr, self.flags), self.default[1]), index
+                    return (re.compile(expr, self.flags), _default[1]), index
                 repl, index = self.consume_expression(text, index - 1)
                 flags, index = self.consume_flags(text, index)
                 return (re.compile(expr, flags), repl), index
@@ -598,6 +596,20 @@ class Regex(Field):
                 raise ParseError(msg, self, index, index)
             index += 1
         return value, index
+
+    def get_placeholder(self, text, index):
+        if index >= len(text):
+            return str(self), index
+        delim = text[index]
+        try:
+            value, end = self.consume(text, index, (None, None))
+        except ParseError:
+            return None, None
+        if self.replace and value[1] is None:
+            return delim * 2, end
+        if end > len(text):
+            return delim, end
+        return (None if text[end - 1] == " " else ""), end
 
 
 class SubParser(Field):
