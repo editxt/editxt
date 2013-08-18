@@ -413,7 +413,10 @@ class Choice(Field):
         if not names:
             placeholder = end = None
         elif text[index:end].endswith(" "):
-            placeholder = None
+            if len(names) == 1:
+                placeholder = None
+            else:
+                placeholder = end = None
         elif len(names) == 1:
             placeholder = names[0][len(token):]
         else:
@@ -758,6 +761,9 @@ class Options(object):
     def __iter__(self):
         obj = Options().__dict__
         return (kv for kv in self.__dict__.iteritems() if kv[0] not in obj)
+
+    def __len__(self):
+        return len(list(self.__iter__()))
 
     def __repr__(self):
         def line_repr(obj):

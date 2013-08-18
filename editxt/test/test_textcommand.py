@@ -131,6 +131,7 @@ def test_CommandBar_get_placeholder():
             raise NotImplementedError("should not get here")
         @command(arg_parser=CommandParser(
             Regex('search_pattern', replace=c.replace),
+            Choice(('yep', False), ('yes', True)),
             VarArgs("args", placeholder="..."),
         ), lookup_with_arg_parser=True)
         def search(textview, sender, args):
@@ -156,22 +157,26 @@ def test_CommandBar_get_placeholder():
     yield test, c(text='cmd   ', expect="sort_regex")
     yield test, c(text='cmd  /', expect="")
     yield test, c(text='cmd    ', expect="  ")
-    yield test, c(text='/', expect="/ ...")
-    yield test, c(text='/x', expect="/ ...")
-    yield test, c(text='/x ', expect="/ ...")
-    yield test, c(text='/x/ ', expect="...")
-    yield test, c(text='/x/  ', expect="")
+    yield test, c(text='/', expect="/ yep ...")
+    yield test, c(text='/x', expect="/ yep ...")
+    yield test, c(text='/x ', expect="/ yep ...")
+    yield test, c(text='/x/ ', expect="yep ...")
+    yield test, c(text='/x/  ', expect="...")
+    yield test, c(text='/x/ y', expect="... ...")
+    yield test, c(text='/x/ y ', expect="")
     yield test, c(text='/x/ a', expect="")
     c = c(replace=True)
-    yield test, c(text='/', expect="// ...")
-    yield test, c(text='/     ', expect="// ...")
-    yield test, c(text='/x', expect="// ...")
-    yield test, c(text='/x ', expect="// ...")
-    yield test, c(text='/x/ ', expect="/ ...")
-    yield test, c(text='/x/  ', expect="/ ...")
-    yield test, c(text='/x//', expect=" ...")
-    yield test, c(text='/x//i', expect=" ...")
-    yield test, c(text='/x// ', expect="...")
+    yield test, c(text='/', expect="// yep ...")
+    yield test, c(text='/     ', expect="// yep ...")
+    yield test, c(text='/x', expect="// yep ...")
+    yield test, c(text='/x ', expect="// yep ...")
+    yield test, c(text='/x/ ', expect="/ yep ...")
+    yield test, c(text='/x/  ', expect="/ yep ...")
+    yield test, c(text='/x//', expect=" yep ...")
+    yield test, c(text='/x//i', expect=" yep ...")
+    yield test, c(text='/x// ', expect="yep ...")
+    yield test, c(text='/x// y', expect="... ...")
+    yield test, c(text='/x// y ', expect="")
     yield test, c(text='/x// a', expect="")
 
 def test_CommandBar_get_completions():

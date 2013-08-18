@@ -99,7 +99,7 @@ class CommandBar(object):
         command = self.text_commander.lookup(cmdstr)
         if command is None:
             argstr = text
-            command, args = self.text_commander.lookup_full_command(argstr)
+            command, a = self.text_commander.lookup_full_command(argstr, False)
         return command, argstr
 
     def get_placeholder(self, text):
@@ -185,12 +185,14 @@ class TextCommandController(object):
     def lookup(self, alias):
         return self.commands.get(alias)
 
-    def lookup_full_command(self, command_text):
+    def lookup_full_command(self, command_text, full_parse=True):
         for command in self.lookup_full_commands:
             try:
                 args = command.arg_parser.parse(command_text)
-            except ArgumentError:
-                continue
+            except ArgumentError as err:
+                if full_parse or not err.options:
+                    continue
+                args = err.options
             except Exception:
                 log.warn('cannot parse command: %s', command_text, exc_info=True)
                 continue

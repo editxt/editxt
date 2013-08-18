@@ -102,6 +102,11 @@ def test_Choice():
     yield test, 'args arg', 0, \
         ParseError("'args' does not match any of: arg-ument, nope, nah", arg, 0, 5)
 
+    test = make_placeholder_checker(arg)
+    yield test, '', 0, ("arg-ument", 0)
+    yield test, 'a', 0, ("rg-ument", 1)
+    yield test, 'n', 0, ("...", 1)
+
     arg = Choice("argument parameter", "find search")
     test = make_type_checker(arg)
     yield test, 'a', 0, ("argument", 1)
