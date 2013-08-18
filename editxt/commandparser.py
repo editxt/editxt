@@ -568,16 +568,13 @@ class Regex(Field):
         for i, c in enumerate(text[index + 1:]):
             if esc:
                 esc = 0
-                if c == '\\':
-                    chars.append(c)
-                else:
-                    chars.append('\\')
+                chars.append(c)
+                continue
             elif c == delim:
                 return ''.join(chars), index + i + 2
+            chars.append(c)
             if c == '\\':
                 esc = 1
-            else:
-                chars.append(c)
         if not esc:
             return ''.join(chars), index + i + 3
         token = ''.join(chars)

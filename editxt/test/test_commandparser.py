@@ -277,6 +277,8 @@ def test_Regex():
     yield test, '', 0, ((None, None), 0)
     yield test, '/abc', 0, (('abc', None), 5)
     yield test, '/abc ', 0, (('abc ', None), 6)
+    yield test, '/\\\\', 0, (('\\\\', None), 4)
+    yield test, '/\\/', 0, (('\\/', None), 4)
     yield test, ' abc', 0, (('abc', None), 5)
     yield test, ' abc ', 0, (('abc', ''), 6)
     yield test, ' abc  ', 0, (('abc', ''), 6)
