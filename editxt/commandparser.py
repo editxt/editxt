@@ -518,8 +518,7 @@ class VarArgs(Field):
 
 class Regex(Field):
 
-    NON_DELIMITERS = r'.^$*+?{}\[]|()'
-    WORDCHAR = re.compile(r'\w', re.UNICODE)
+    DELIMITERS = "/:\"'"
 
     def __init__(self, name, replace=False, default=None, flags=re.U | re.M):
         self.args = [name, replace, default, flags]
@@ -540,8 +539,7 @@ class Regex(Field):
         """
         if index >= len(text):
             return self.default, index
-        no_delim = self.NON_DELIMITERS
-        if text[index] in no_delim or self.WORDCHAR.match(text[index]):
+        if text[index] not in self.DELIMITERS:
             msg = "invalid search pattern: {!r}".format(text[index:])
             raise ParseError(msg, self, index, len(text) - index)
         expr, index = self.consume_expression(text, index)

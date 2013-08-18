@@ -156,7 +156,7 @@ def test_CommandBar_get_placeholder():
     yield test, c(text='cmd x ', expect="")
     yield test, c(text='cmd   ', expect="sort_regex")
     yield test, c(text='cmd  /', expect="")
-    yield test, c(text='cmd    ', expect="  ")
+    yield test, c(text='cmd   :', expect="::")
     yield test, c(text='/', expect="/ yep ...")
     yield test, c(text='/x', expect="/ yep ...")
     yield test, c(text='/x ', expect="/ yep ...")
