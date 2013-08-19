@@ -56,8 +56,8 @@ Command parser specification:
     )
     matches:
         'y'         : bool = True, regex = None, num = 42
-        ' /abc/ 1'  : bool = None, regex = re.compile('abc'), num = 1
-        ' /abc/'    : bool = None, regex = re.compile('abc'), num = None
+        ' /abc/ 1'  : bool = None, regex = 'abc', num = 1
+        ' /abc/'    : bool = None, regex = 'abc', num = None
         '  1'  : bool = False, regex = None, num = 1
 """
 import re
@@ -516,6 +516,16 @@ class VarArgs(Field):
         return text[index:].split(), len(text)
 
 
+class RegexPattern(unicode):
+
+    __slots__ = ["flags"]
+
+    def __new__(cls, value=u"", flags=0):
+        obj = super(RegexPattern, cls).__new__(cls, value)
+        obj.flags = flags
+        return obj
+
+
 class Regex(Field):
 
     DELIMITERS = "/:\"'"
@@ -532,9 +542,9 @@ class Regex(Field):
 
         :returns: (<value>, <index>) where value is one of the following:
             replace     value
-            False       <compiled re object>
-            True        (<compiled re object>, <replacement string>)
-        Either <compiled re object> or <replacement string> may be the
+            False       <RegexPattern>
+            True        (<RegexPattern>, <replacement string>)
+        Either <RegexPattern> or <replacement string> may be the
         respective portion of the default value if not present.
         """
         if index >= len(text):
@@ -543,21 +553,17 @@ class Regex(Field):
             msg = "invalid search pattern: {!r}".format(text[index:])
             raise ParseError(msg, self, index, len(text) - index)
         expr, index = self.consume_expression(text, index)
-        try:
-            if self.replace:
-                if _default is None:
-                    _default = self.default
-                if index > len(text):
-                    index = len(text) + 1 # to show we would consume more
-                    return (re.compile(expr, self.flags), _default[1]), index
-                repl, index = self.consume_expression(text, index - 1)
-                flags, index = self.consume_flags(text, index)
-                return (re.compile(expr, flags), repl), index
+        if self.replace:
+            if _default is None:
+                _default = self.default
+            if index > len(text):
+                index = len(text) + 1 # to show we would consume more
+                return (RegexPattern(expr, self.flags), _default[1]), index
+            repl, index = self.consume_expression(text, index - 1)
             flags, index = self.consume_flags(text, index)
-            return re.compile(expr, flags), index
-        except re.error as err:
-            msg = "invalid regular expression: {}".format(err)
-            raise ParseError(msg, self, index, index)
+            return (RegexPattern(expr, flags), repl), index
+        flags, index = self.consume_flags(text, index)
+        return RegexPattern(expr, flags), index
 
     def consume_expression(self, text, index):
         delim = text[index]

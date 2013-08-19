@@ -24,8 +24,8 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt.commandparser import (Choice, Int, String, Regex, VarArgs,
-    CommandParser, Options, SubArgs, SubParser)
+from editxt.commandparser import (Choice, Int, String, Regex, RegexPattern,
+    VarArgs, CommandParser, Options, SubArgs, SubParser)
 
 log = logging.getLogger(__name__)
 
@@ -298,7 +298,7 @@ def dedent_lines(textview, sender, args):
 
 
 @command(arg_parser=CommandParser(
-    Regex('pattern', replace=True, default=(re.compile(""), "")),
+    Regex('pattern', replace=True, default=(RegexPattern(u""), u"")),
     Choice(('find-next next', 'find_next'),
         ('find-previous previous', 'find_previous'),
         ('replace-one one', 'replace_one'),
@@ -315,7 +315,7 @@ def find(textview, sender, args):
     search_type = args.__dict__.pop('search_type')
     find, replace = args.__dict__.pop('pattern')
     opts = FindOptions(**args.__dict__)
-    opts.find_text = find.pattern
+    opts.find_text = find
     opts.replace_text = replace or ""
     opts.ignore_case = bool(find.flags & re.IGNORECASE)
     opts.match_entire_word = (search_type == 'word')

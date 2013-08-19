@@ -239,9 +239,9 @@ def test_Regex():
         expr, index = value
         if arg.replace:
             (expr, replace) = expr
-            got = ((expr.pattern, replace), index)
+            got = ((expr, replace), index)
         else:
-            got = (expr.pattern, index)
+            got = (expr, index)
         eq_(got, expect)
         eq_(expr.flags, flags | re.UNICODE | re.MULTILINE)
 
@@ -289,6 +289,7 @@ def test_Regex():
     yield test, '/abc/def/  def', 0, (('abc', 'def'), 10)
     yield test, '/abc/def/i  def', 0, (('abc', 'def'), 11), re.I
     yield test, '/abc/def/is  def', 0, (('abc', 'def'), 12), re.I | re.S
+    yield test, '/(', 0, (("(", None), 3)
     yield test, 'abc', 0, \
         ParseError("invalid search pattern: 'abc'", arg, 0, 3)
     yield test, 'abc def', 0, \
@@ -296,9 +297,6 @@ def test_Regex():
     yield test, '/abc/def/y  def', 0, \
         ParseError('unknown flag: y', arg, 9, 9)
     msg = 'invalid regular expression: unbalanced parenthesis'
-    yield test, '/(', 0, ParseError(msg, arg, 3, 3)
-    yield test, '/(/  ', 0, ParseError(msg, arg, 6, 6)
-    yield test, '/(// arg', 0, ParseError(msg, arg, 5, 5)
 
     test = make_placeholder_checker(arg)
     yield test, "", 0, ("regex", 0)
