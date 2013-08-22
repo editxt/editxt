@@ -28,7 +28,7 @@ from editxt.test.util import TestConfig, replattr
 
 import editxt.constants as const
 import editxt.commands as mod
-from editxt.commandparser import ArgumentError, CommandParser, Int, Options
+from editxt.command.parser import ArgumentError, CommandParser, Int, Options
 
 log = logging.getLogger(__name__)
 

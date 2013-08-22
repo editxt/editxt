@@ -29,7 +29,7 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt.commandparser import ArgumentError
+from editxt.command.parser import ArgumentError
 from editxt.commands import load_commands
 from editxt.util import WeakProperty
 

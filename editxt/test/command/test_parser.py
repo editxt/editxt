@@ -24,7 +24,7 @@ from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_
 from editxt.test.util import assert_raises, TestConfig
 
-from editxt.commandparser import (Choice, Int, String, Regex, CommandParser,
+from editxt.command.parser import (Choice, Int, String, Regex, CommandParser,
     SubArgs, SubParser, VarArgs,
     identifier, Options, Error, ArgumentError, ParseError)
 

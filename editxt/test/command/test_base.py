@@ -32,7 +32,7 @@ import editxt.command.base as mod
 from editxt.controls.textview import TextView
 from editxt.command.base import BaseCommandController
 from editxt.command.base import SheetController, PanelController
-from editxt.commandparser import ArgumentError, CommandParser, Int, Options
+from editxt.command.parser import ArgumentError, CommandParser, Int, Options
 from editxt.util import KVOProxy
 
 log = logging.getLogger(__name__)

@@ -22,7 +22,7 @@ import logging
 from AppKit import *
 from Foundation import *
 
-from editxt.commandparser import CommandParser, Options, VarArgs
+from editxt.command.parser import CommandParser, Options, VarArgs
 from editxt.controls.alert import Caller
 from editxt.util import KVOProxy
 

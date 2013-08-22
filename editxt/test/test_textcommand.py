@@ -29,7 +29,7 @@ from editxt.test.util import TestConfig, tempdir
 
 import editxt.constants as const
 import editxt.textcommand as mod
-from editxt.commandparser import ArgumentError, CommandParser, Int, Options
+from editxt.command.parser import ArgumentError, CommandParser, Int, Options
 from editxt.commands import command
 from editxt.test.test_commands import CommandTester
 from editxt.textcommand import TextCommandController
@@ -118,7 +118,7 @@ def test_CommandBar_execute():
     yield test, c(text='123 456', lookup='full', error=True)
 
 def test_CommandBar_get_placeholder():
-    from editxt.commandparser import CommandParser, Choice, Regex, VarArgs
+    from editxt.command.parser import CommandParser, Choice, Regex, VarArgs
     def test(c):
         m = Mocker()
         beep = m.replace(mod, 'NSBeep')
@@ -180,7 +180,7 @@ def test_CommandBar_get_placeholder():
     yield test, c(text='/x// a', expect="")
 
 def test_CommandBar_get_completions():
-    from editxt.commandparser import CommandParser, Choice, Regex, VarArgs
+    from editxt.command.parser import CommandParser, Choice, Regex, VarArgs
     def test(c):
         m = Mocker()
         beep = m.replace(mod, 'NSBeep')

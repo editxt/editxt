@@ -25,7 +25,7 @@ from Foundation import *
 
 import editxt.constants as const
 from editxt.command.base import command
-from editxt.commandparser import (Choice, Int, String, Regex, RegexPattern,
+from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
     VarArgs, CommandParser, Options, SubArgs, SubParser)
 
 log = logging.getLogger(__name__)
