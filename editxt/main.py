@@ -92,7 +92,6 @@ def run(app, argv, use_pdb):
     import editxt.editor
     import editxt.project
     import editxt.document
-    import editxt.findpanel
 
     AppHelper.runEventLoop(argv, errlog.unexpected_error, pdb=use_pdb)
 

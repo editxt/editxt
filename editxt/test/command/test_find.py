@@ -21,6 +21,7 @@ from __future__ import with_statement
 
 import logging
 import os
+import re
 from contextlib import closing
 from tempfile import gettempdir
 
@@ -31,10 +32,10 @@ from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state, replattr
 
 import editxt.constants as const
-import editxt.findpanel as mod
+import editxt.command.find as mod
+from editxt.command.find import Finder, FindController, FindOptions, FoundRange
+from editxt.command.find import FORWARD, BACKWARD
 from editxt.controls.textview import TextView
-from editxt.findpanel import Finder, FindController, FindOptions, FoundRange
-from editxt.findpanel import FORWARD, BACKWARD
 
 log = logging.getLogger(__name__)
 
@@ -42,8 +43,56 @@ log = logging.getLogger(__name__)
 #     implement TextDocumentView.pasteboard_data()
 # """)
 
+def test_find_command():
+    def test(c):
+        assert int(c.regex) + int(c.match_word) < 2, c
+        opts = FindOptions(**{opt: c[key] for key, opt in {
+            "find": "find_text",
+            "replace": "replace_text",
+            "regex": "regular_expression",
+            "ignore_case": "ignore_case",
+            "match_word": "match_entire_word",
+            "wrap": "wrap_around",
+        }.items()})
+        m = Mocker()
+        tv = m.mock(NSTextView)
+        finder_cls = m.replace("editxt.command.find.Finder")
+        def check_opts(get_tv, args):
+            eq_(get_tv(), tv)
+            eq_(args, opts)
+        finder = m.mock(Finder)
+        (finder_cls(ANY, ANY) << finder).call(check_opts)
+        getattr(finder, c.action)("<sender>")
+        with m:
+            args = mod.find.arg_parser.parse(c.input)
+            mod.find(tv, "<sender>", args)
+
+    c = TestConfig(find="", replace="", regex=True, ignore_case=False,
+                   match_word=False, wrap=True, action="find_next")
+    yield test, c(input=u"")
+    yield test, c(input=u"/abc", find="abc")
+    yield test, c(input=u":abc", find="abc")
+    yield test, c(input=u":abc\:", find=r"abc\:")
+    yield test, c(input=u"/\/abc\//", find=r"\/abc\/")
+    yield test, c(input=u"/abc/def", find="abc", replace="def")
+    yield test, c(input=u"/abc/def/", find="abc", replace="def")
+    yield test, c(input=u"/abc/def/i", find="abc", replace="def", ignore_case=True)
+    yield test, c(input=u":abc:def:i", find="abc", replace="def", ignore_case=True)
+    yield test, c(input=u"'abc'def'i", find="abc", replace="def", ignore_case=True)
+    yield test, c(input=u'"abc"def"i', find="abc", replace="def", ignore_case=True)
+    yield test, c(input=u":ab\:c:def:i", find=r"ab\:c", replace="def", ignore_case=True)
+    yield test, c(input=u"/abc// n", find="abc", action="find_next")
+    yield test, c(input=u"/abc// p", find="abc", action="find_previous")
+    yield test, c(input=u"/abc// previous", find="abc", action="find_previous")
+    yield test, c(input=u"/abc// o", find="abc", action="replace_one")
+    yield test, c(input=u"/abc// a", find="abc", action="replace_all")
+    yield test, c(input=u"/abc// s", find="abc", action="replace_all_in_selection")
+    yield test, c(input=u"/abc//  r", find="abc", regex=True)
+    yield test, c(input=u"/abc//  l", find="abc", regex=False, match_word=False)
+    yield test, c(input=u"/abc//  w", find="abc", regex=False, match_word=True)
+    yield test, c(input=u"/abc//   n", find="abc", wrap=False)
+
 def test_Finder_mark_occurrences():
-    import re
     def test(c):
         text = "the text is made of many texts"
         m = Mocker()
@@ -52,6 +101,8 @@ def test_Finder_mark_occurrences():
         tv._Finder__last_mark = (c.opts.find_text, c.count)
         tv.setNeedsDisplay_(True) # HACK
         ts = tv.textStorage() >> m.mock(NSTextStorage)
+        app = m.replace(mod, "app")
+        app.config["highlight_selected_text.color"] >> "<color>"
         full_range = NSMakeRange(0, ts.length() >> len(text))
         ts.beginEditing()
         ts.removeAttribute_range_(NSBackgroundColorAttributeName, full_range)
@@ -85,8 +136,6 @@ def test_FindController_shared_controller():
     assert fc is f2
 
 def test_FindController_validate_action():
-    from editxt.findpanel import SELECTION_REQUIRED_ACTIONS, ACTION_FIND_SELECTED_TEXT
-    from editxt.findpanel import ACTION_FIND_SELECTED_TEXT_REVERSE
     def test(c):
         m = Mocker()
         fc = FindController.shared_controller()
@@ -94,14 +143,14 @@ def test_FindController_validate_action():
             tv = (m.mock(TextView) if c.has_target else None)
             m.method(fc.find_target)() >> tv
             if c.has_target:
-                if c.tag in SELECTION_REQUIRED_ACTIONS:
+                if c.tag in mod.SELECTION_REQUIRED_ACTIONS:
                     tv.selectedRange().length >> c.sel
         with m, replattr(fc, 'opts', FindOptions()):
             result = fc.validate_action(c.tag)
             eq_(result, c.result)
     c = TestConfig(has_target=True, result=True, tag=0)
     yield test, c(has_target=False, result=False)
-    yield test, c(tag=ACTION_FIND_SELECTED_TEXT_REVERSE+1, result=False)
+    yield test, c(tag=mod.ACTION_FIND_SELECTED_TEXT_REVERSE+1, result=False)
 
     for tag in [
         NSFindPanelActionShowFindPanel,
@@ -116,19 +165,17 @@ def test_FindController_validate_action():
         yield test, c(tag=tag)
 
     for tag in [
-        ACTION_FIND_SELECTED_TEXT,
-        ACTION_FIND_SELECTED_TEXT_REVERSE,
+        mod.ACTION_FIND_SELECTED_TEXT,
+        mod.ACTION_FIND_SELECTED_TEXT_REVERSE,
     ]:
         yield test, c(tag=tag, sel=0, result=False)
         yield test, c(tag=tag, sel=2)
     
 def test_FindController_perform_action():
-    from editxt.findpanel import ACTION_FIND_SELECTED_TEXT
-    from editxt.findpanel import ACTION_FIND_SELECTED_TEXT_REVERSE
     def test(c):
         m = Mocker()
         fc = FindController.create()
-        flog = m.replace("editxt.findpanel.log")
+        flog = m.replace("editxt.command.find.log")
         sender = m.mock()
         (sender.tag() << c.tag).count(1, 2)
         func = None
@@ -143,7 +190,7 @@ def test_FindController_perform_action():
         with m:
             fc.perform_action(sender)
     c = TestConfig(fail=False)
-    yield test, c(tag=ACTION_FIND_SELECTED_TEXT_REVERSE + 1, fail=True)
+    yield test, c(tag=mod.ACTION_FIND_SELECTED_TEXT_REVERSE + 1, fail=True)
     for tag in [
         NSFindPanelActionShowFindPanel,
         NSFindPanelActionNext,
@@ -153,8 +200,8 @@ def test_FindController_perform_action():
         NSFindPanelActionReplaceAndFind,
         NSFindPanelActionReplaceAllInSelection,
         NSFindPanelActionSetFindString,
-        ACTION_FIND_SELECTED_TEXT,
-        ACTION_FIND_SELECTED_TEXT_REVERSE,
+        mod.ACTION_FIND_SELECTED_TEXT,
+        mod.ACTION_FIND_SELECTED_TEXT_REVERSE,
     ]:
         yield test, c(tag=tag)
 
@@ -325,8 +372,6 @@ def test_FindController_finder_find():
     yield test, c(found=True)
 
 def test_FindController__find():
-    import re
-    from editxt.findpanel import WRAPTOKEN
     def test(c):
         m = Mocker()
         fc = FindController.shared_controller()
@@ -348,7 +393,7 @@ def test_FindController__find():
         items = []
         rng = None
         for i, r in enumerate(c.matches):
-            if r is WRAPTOKEN:
+            if r is mod.WRAPTOKEN:
                 items.append(r)
                 continue
             found = FoundRange(NSMakeRange(*r))
@@ -367,14 +412,13 @@ def test_FindController__find():
     yield test, c(mword=True)
     yield test, c(matches=[(2, 2)])
     # test with WRAPTOKEN
-    yield test, c(matches=[WRAPTOKEN])
-    yield test, c(matches=[WRAPTOKEN, (1, 2)])
+    yield test, c(matches=[mod.WRAPTOKEN])
+    yield test, c(matches=[mod.WRAPTOKEN, (1, 2)])
     # test with first match being same as selection
     yield test, c(matches=[(1, 2)])
     yield test, c(matches=[(1, 2), (2, 2)])
 
 def test_FindController__replace_all():
-    import re
     def test(c):
         m = Mocker()
         fc = FindController.shared_controller()
@@ -441,7 +485,6 @@ def test_FindController__replace_all():
     yield test, c(ranges=[(1, 1), (4, 1)], beep=False)
 
 def test_FindController_count_occurrences():
-    import re
     def test(c):
         m = Mocker()
         beep = m.replace(mod, 'NSBeep')

@@ -30,13 +30,13 @@ import editxt.constants as const
 
 from editxt import app
 from editxt.application import doc_id_gen
+from editxt.command.find import Finder, FindOptions
 from editxt.command.util import change_indentation, iterlines, replace_newlines
 from editxt.constants import TEXT_DOCUMENT, LARGE_NUMBER_FOR_TEXT
 from editxt.controls.alert import Alert
 from editxt.controls.linenumberview import LineNumberView
 from editxt.controls.statscrollview import StatusbarScrollView
 from editxt.controls.textview import TextView
-from editxt.findpanel import Finder, FindOptions
 from editxt.syntax import SyntaxCache
 from editxt.util import KVOList, KVOProxy, KVOLink, untested, refactor
 from editxt.util import fetch_icon, filestat, register_undo_callback

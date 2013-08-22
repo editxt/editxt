@@ -26,7 +26,7 @@ from Foundation import *
 
 import editxt.constants as const
 from editxt import app
-from editxt.findpanel import FindController, Finder, FindOptions
+from editxt.command.find import FindController
 
 log = logging.getLogger(__name__)
 

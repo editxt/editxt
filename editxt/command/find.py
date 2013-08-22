@@ -28,7 +28,8 @@ from Foundation import *
 
 import editxt.constants as const
 from editxt import app
-from editxt.command.base import PanelController, Options
+from editxt.command.base import command, PanelController
+from editxt.command.parser import Choice, Regex, RegexPattern, CommandParser, Options
 from editxt.util import KVOProxy, KVOLink
 
 log = logging.getLogger(__name__)
@@ -45,6 +46,33 @@ SELECTION_REQUIRED_ACTIONS = set([
 FORWARD = "FORWARD"
 BACKWARD = "BACKWARD"
 WRAPTOKEN = "WRAPTOKEN"
+
+
+@command(arg_parser=CommandParser(
+    Regex('pattern', replace=True, default=(RegexPattern(u""), u"")),
+    Choice(('find-next next', 'find_next'),
+        ('find-previous previous', 'find_previous'),
+        ('replace-one one', 'replace_one'),
+        ('replace-all all', 'replace_all'),
+        ('replace-in-selection in-selection selection', 'replace_all_in_selection'),
+        name='action'),
+    Choice('regex literal-text word', name='search_type'),
+    Choice(('wrap', True), ('no-wrap', False), name='wrap_around'),
+), lookup_with_arg_parser=True)
+def find(textview, sender, args):
+    assert args is not None, sender
+    action = args.__dict__.pop('action')
+    search_type = args.__dict__.pop('search_type')
+    find, replace = args.__dict__.pop('pattern')
+    opts = FindOptions(**args.__dict__)
+    opts.find_text = find
+    opts.replace_text = replace or ""
+    opts.ignore_case = bool(find.flags & re.IGNORECASE)
+    opts.match_entire_word = (search_type == 'word')
+    opts.regular_expression = (search_type == "regex")
+    finder = Finder(lambda:textview, opts)
+    getattr(finder, action)(sender)
+
 
 def toggle_boolean(depname):
     def make_property(func):

@@ -41,7 +41,7 @@ log = logging.getLogger(__name__)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def test_TextView_performFindPanelAction_():
-    from editxt.findpanel import FindController
+    from editxt.command.find import FindController
     m = Mocker()
     tv = TextView.alloc().init()
     fc = m.replace(mod, "FindController")
@@ -71,7 +71,7 @@ def test_TextView_doCommandBySelector_():
         tv.doCommandBySelector_(selector)
 
 def test_TextView_validateUserInterfaceItem_():
-    from editxt.findpanel import FindController
+    from editxt.command.find import FindController
     from editxt.textcommand import TextCommandController
     def test(c):
         m = Mocker()

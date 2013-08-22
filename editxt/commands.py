@@ -30,6 +30,7 @@ from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
 from editxt.command.util import has_selection, iterlines
 
 from editxt.command.changeindent import reindent
+from editxt.command.find import find
 from editxt.command.sortlines import sort_lines
 from editxt.command.wraplines import wrap_at_margin, wrap_lines
 
@@ -248,33 +249,6 @@ def dedent_lines(textview, sender, args):
             textview.textStorage().replaceCharactersInRange_withString_(sel, seltext)
             textview.setSelectedRange_((sel[0], len(seltext)))
             textview.didChangeText()
-
-
-@command(arg_parser=CommandParser(
-    Regex('pattern', replace=True, default=(RegexPattern(u""), u"")),
-    Choice(('find-next next', 'find_next'),
-        ('find-previous previous', 'find_previous'),
-        ('replace-one one', 'replace_one'),
-        ('replace-all all', 'replace_all'),
-        ('replace-in-selection in-selection selection', 'replace_all_in_selection'),
-        name='action'),
-    Choice('regex literal-text word', name='search_type'),
-    Choice(('wrap', True), ('no-wrap', False), name='wrap_around'),
-), lookup_with_arg_parser=True)
-def find(textview, sender, args):
-    from editxt.findpanel import Finder, FindOptions
-    assert args is not None, sender
-    action = args.__dict__.pop('action')
-    search_type = args.__dict__.pop('search_type')
-    find, replace = args.__dict__.pop('pattern')
-    opts = FindOptions(**args.__dict__)
-    opts.find_text = find
-    opts.replace_text = replace or ""
-    opts.ignore_case = bool(find.flags & re.IGNORECASE)
-    opts.match_entire_word = (search_type == 'word')
-    opts.regular_expression = (search_type == "regex")
-    finder = Finder(lambda:textview, opts)
-    getattr(finder, action)(sender)
 
 
 @command(title=u"Reload config")
