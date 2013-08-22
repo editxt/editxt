@@ -27,13 +27,40 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt.command.base import SheetController
-from editxt.command.parser import Options
-from editxt.commands import iterlines
+from editxt.command.base import command, SheetController
+from editxt.command.parser import Choice, Int, CommandParser, Options
+from editxt.command.util import has_selection, iterlines
 
 log = logging.getLogger(__name__)
 
 WHITESPACE = re.compile(r"[ \t]*")
+
+
+@command(name='wrap', title=u"Hard Wrap...",
+    hotkey=("\\", NSCommandKeyMask | NSShiftKeyMask),
+    is_enabled=has_selection,
+    arg_parser=CommandParser( # TODO test
+        Int('wrap_column'),
+        Choice(('indent', True), ('no-indent', False)),
+    ))
+def wrap_lines(textview, sender, args):
+    if args is None:
+        wrapper = WrapLinesController.create_with_textview(textview)
+        wrapper.begin_sheet(sender)
+    else:
+        wrap_selected_lines(textview, args)
+
+
+@command(title=u"Hard Wrap At Margin",
+    hotkey=("\\", NSCommandKeyMask),
+    is_enabled=has_selection)
+def wrap_at_margin(textview, sender, args):
+    opts = Options()
+    ctl = WrapLinesController.shared_controller()
+    opts.wrap_column = const.DEFAULT_RIGHT_MARGIN
+    opts.indent = ctl.opts.indent
+    wrap_selected_lines(textview, opts)
+
 
 class WrapLinesController(SheetController):
     """Window controller for sort lines text command"""

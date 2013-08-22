@@ -27,6 +27,9 @@ import editxt.constants as const
 from editxt.command.base import command
 from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
     VarArgs, CommandParser, Options, SubArgs, SubParser)
+from editxt.command.util import has_selection, iterlines
+
+from editxt.command.wraplines import wrap_at_margin, wrap_lines
 
 log = logging.getLogger(__name__)
 
@@ -94,10 +97,6 @@ def goto_line(textview, sender, opts):
         show_command_bar(textview, sender, None)
         return
     textview.goto_line(opts.line)
-
-
-def has_selection(textview, sender):
-    return textview.selectedRange().length > 0
 
 
 @command(title=u"(Un)comment Selected Lines",
@@ -295,34 +294,6 @@ def sort_lines(textview, sender, args):
         sortlines(textview, args)
 
 
-@command(name='wrap', title=u"Hard Wrap...",
-    hotkey=("\\", NSCommandKeyMask | NSShiftKeyMask),
-    is_enabled=has_selection,
-    arg_parser=CommandParser( # TODO test
-        Int('wrap_column'),
-        Choice(('indent', True), ('no-indent', False)),
-    ))
-def wrap_lines(textview, sender, args):
-    from editxt.wraplines import WrapLinesController, wrap_selected_lines
-    if args is None:
-        wrapper = WrapLinesController.create_with_textview(textview)
-        wrapper.begin_sheet(sender)
-    else:
-        wrap_selected_lines(textview, args)
-
-
-@command(title=u"Hard Wrap At Margin",
-    hotkey=("\\", NSCommandKeyMask),
-    is_enabled=has_selection)
-def wrap_at_margin(textview, sender, args):
-    from editxt.wraplines import WrapLinesController, wrap_selected_lines
-    opts = Options()
-    ctl = WrapLinesController.shared_controller()
-    opts.wrap_column = const.DEFAULT_RIGHT_MARGIN
-    opts.indent = ctl.opts.indent
-    wrap_selected_lines(textview, opts)
-
-
 @command(title=u"Change Indentation")
 def reindent(textview, sender, args):
     from editxt.changeindent import ChangeIndentationController
@@ -474,26 +445,6 @@ def delete_backward(textview, sender, args):
 #     elif text[-1] in u"\n\r\u2028":
 #         r.length -= 1
 #     return r
-
-
-_line_splitter = re.compile(u"([^\n\r\u2028]*(?:%s)?)" % "|".join(
-    eol for eol in sorted(const.EOLS.values(), key=len, reverse=True)))
-
-def iterlines(text, range=(0,)):
-    """iterate over lines of text
-
-    By default this function iterates over all lines in the give text. If the
-    'range' parameter (NSRange or tuple) is given, lines within that range will
-    be yielded.
-    """
-    if not text:
-        yield text
-    else:
-        if range != (0,):
-            range = (range[0], sum(range))
-        for line in _line_splitter.finditer(text, *range):
-            if line.group():
-                yield line.group()
 
 
 _newlines = re.compile("|".join(

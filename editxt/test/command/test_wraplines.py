@@ -31,13 +31,28 @@ from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state
 
 import editxt.command.base as base
+import editxt.command.wraplines as mod
 import editxt.constants as const
-import editxt.wraplines as mod
 from editxt.controls.textview import TextView
-from editxt.wraplines import WrapLinesController, wrap_selected_lines, wraplines
+from editxt.command.wraplines import (WrapLinesController,
+    wrap_selected_lines, wraplines)
 
 log = logging.getLogger(__name__)
 
+
+def test_wrap_to_margin_guide():
+    m = Mocker()
+    tv = m.mock(NSTextView)
+    wrap = m.replace(mod, 'wrap_selected_lines')
+    ctl_class = m.replace(mod, 'WrapLinesController')
+    ctl = ctl_class.shared_controller() >> m.mock(WrapLinesController)
+    opts = m.replace(mod, "Options")() >> m.mock()
+    wrap_opts = ctl.opts >> m.mock()
+    opts.wrap_column = const.DEFAULT_RIGHT_MARGIN
+    opts.indent = wrap_opts.indent >> "<indent>"
+    wrap(tv, opts)
+    with m:
+        mod.wrap_at_margin(tv, None, None)
 
 def test_WrapLinesController_default_options():
     m = Mocker()
@@ -71,7 +86,7 @@ def test_wrap_selected_lines():
         tv = m.mock(TextView)
         ts = tv.textStorage() >> m.mock(NSTextStorage)
         wrap = m.replace(mod, 'wraplines')
-        iterlines = m.replace("editxt.wraplines.iterlines")
+        iterlines = m.replace("editxt.command.wraplines.iterlines")
         text = tv.string() >> NSString.stringWithString_(c.text)
         sel = (0, len(text)) if c.sel is None else c.sel
         sel = text.lineRangeForRange_(tv.selectedRange() >> sel)
@@ -93,7 +108,7 @@ def test_wrap_selected_lines():
     yield test, c(text=u"Hello\nworld", result=u"Hello", sel=(0, 5))
 
 def test_wraplines():
-    from editxt.wraplines import iterlines
+    from editxt.command.util import iterlines
     def test(c):
         m = Mocker()
         tv = m.mock(TextView)
