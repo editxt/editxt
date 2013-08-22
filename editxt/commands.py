@@ -29,6 +29,7 @@ from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
     VarArgs, CommandParser, Options, SubArgs, SubParser)
 from editxt.command.util import has_selection, iterlines
 
+from editxt.command.changeindent import reindent
 from editxt.command.sortlines import sort_lines
 from editxt.command.wraplines import wrap_at_margin, wrap_lines
 
@@ -274,13 +275,6 @@ def find(textview, sender, args):
     opts.regular_expression = (search_type == "regex")
     finder = Finder(lambda:textview, opts)
     getattr(finder, action)(sender)
-
-
-@command(title=u"Change Indentation")
-def reindent(textview, sender, args):
-    from editxt.changeindent import ChangeIndentationController
-    ctl = ChangeIndentationController.create_with_textview(textview)
-    ctl.begin_sheet(sender)
 
 
 @command(title=u"Reload config")

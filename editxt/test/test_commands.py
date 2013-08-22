@@ -569,7 +569,7 @@ def test_panel_actions():
 
     from editxt.command.sortlines import SortLinesController, sortlines
     from editxt.command.wraplines import WrapLinesController, wrap_selected_lines
-    from editxt.changeindent import ChangeIndentationController
+    from editxt.command.changeindent import ChangeIndentationController
 
     for args in [False, True]:
         c = c(args=args)
@@ -578,8 +578,8 @@ def test_panel_actions():
         yield test, c(action=mod.wrap_lines, mod="wraplines",
             ctl=WrapLinesController, func=wrap_selected_lines)
 
-    #yield test, c(action=mod.reindent, mod="changeindent",
-    #    ctl=ChangeIndentationController, func=None, args=False)
+    yield test, c(action=mod.reindent, mod="changeindent",
+        ctl=ChangeIndentationController, func=None, args=False)
 
 # def test():
 #   assert False, "stop"

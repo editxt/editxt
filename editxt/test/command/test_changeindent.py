@@ -31,7 +31,7 @@ from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state
 
 import editxt.constants as const
-from editxt.changeindent import ChangeIndentationController
+from editxt.command.changeindent import ChangeIndentationController
 from editxt.controls.textview import TextView
 from editxt.document import TextDocumentView
 

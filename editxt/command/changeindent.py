@@ -27,9 +27,16 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt.command.base import SheetController
+from editxt.command.base import command, SheetController
+#from editxt.command.parser import Choice, Regex, CommandParser, Options
 
 log = logging.getLogger(__name__)
+
+
+@command(title=u"Change Indentation")
+def reindent(textview, sender, args):
+    ctl = ChangeIndentationController.create_with_textview(textview)
+    ctl.begin_sheet(sender)
 
 
 class ChangeIndentationController(SheetController):
