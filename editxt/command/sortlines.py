@@ -27,10 +27,29 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt.command.base import SheetController, Options
+from editxt.command.base import command, SheetController
+from editxt.command.parser import Choice, Regex, CommandParser, Options
 from editxt.commands import iterlines
 
 log = logging.getLogger(__name__)
+
+
+@command(name='sort', title=u"Sort Lines...",
+    arg_parser=CommandParser(
+        Choice(('selection', True), ('all', False)),
+        Choice(('forward', False), ('reverse', True), name='reverse'),
+        Choice(
+            ('sort-leading-whitespace', False),
+            ('ignore-leading-whitespace', True),
+            name='ignore-leading-whitespace'),
+        Regex('sort-regex', True),
+    ))
+def sort_lines(textview, sender, args):
+    if args is None:
+        sorter = SortLinesController.create_with_textview(textview)
+        sorter.begin_sheet(sender)
+    else:
+        sortlines(textview, args)
 
 
 class SortOptions(Options):

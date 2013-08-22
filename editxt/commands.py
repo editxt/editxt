@@ -29,6 +29,7 @@ from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
     VarArgs, CommandParser, Options, SubArgs, SubParser)
 from editxt.command.util import has_selection, iterlines
 
+from editxt.command.sortlines import sort_lines
 from editxt.command.wraplines import wrap_at_margin, wrap_lines
 
 log = logging.getLogger(__name__)
@@ -273,25 +274,6 @@ def find(textview, sender, args):
     opts.regular_expression = (search_type == "regex")
     finder = Finder(lambda:textview, opts)
     getattr(finder, action)(sender)
-
-
-@command(name='sort', title=u"Sort Lines...",
-    arg_parser=CommandParser(
-        Choice(('selection', True), ('all', False)),
-        Choice(('forward', False), ('reverse', True), name='reverse'),
-        Choice(
-            ('sort-leading-whitespace', False),
-            ('ignore-leading-whitespace', True),
-            name='ignore-leading-whitespace'),
-        Regex('sort-regex', True),
-    ))
-def sort_lines(textview, sender, args):
-    from editxt.sortlines import SortLinesController, sortlines
-    if args is None:
-        sorter = SortLinesController.create_with_textview(textview)
-        sorter.begin_sheet(sender)
-    else:
-        sortlines(textview, args)
 
 
 @command(title=u"Change Indentation")

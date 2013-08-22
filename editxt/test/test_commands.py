@@ -553,10 +553,9 @@ def test_panel_actions():
     def test(c):
         m = Mocker()
         tv = m.mock(NSTextView)
-        mod = m.replace(sys.modules, "editxt." + c.mod, dict=True)
-        ctl_class = getattr(mod, c.ctl.__name__)
+        ctl_class = m.replace("editxt.command.{}.{}".format(c.mod, c.ctl.__name__))
         if c.func is not None:
-            func = getattr(mod, c.func.__name__) >> m.mock(c.func)
+            func = m.replace("editxt.command.{}.{}".format(c.mod, c.func.__name__))
         if c.args:
             args = '<args>'
             func(tv, args)
@@ -568,19 +567,19 @@ def test_panel_actions():
             c.action(tv, '<sender>', args)
     c = TestConfig()
 
-    from editxt.sortlines import SortLinesController, sortlines
-    #from editxt.command.wraplines import WrapLinesController, wrap_selected_lines
+    from editxt.command.sortlines import SortLinesController, sortlines
+    from editxt.command.wraplines import WrapLinesController, wrap_selected_lines
     from editxt.changeindent import ChangeIndentationController
 
     for args in [False, True]:
         c = c(args=args)
         yield test, c(action=mod.sort_lines, mod="sortlines",
             ctl=SortLinesController, func=sortlines)
-        #yield test, c(action=mod.wrap_lines, mod="command.wraplines",
-        #    ctl=WrapLinesController, func=wrap_selected_lines)
+        yield test, c(action=mod.wrap_lines, mod="wraplines",
+            ctl=WrapLinesController, func=wrap_selected_lines)
 
-    yield test, c(action=mod.reindent, mod="changeindent",
-        ctl=ChangeIndentationController, func=None, args=False)
+    #yield test, c(action=mod.reindent, mod="changeindent",
+    #    ctl=ChangeIndentationController, func=None, args=False)
 
 # def test():
 #   assert False, "stop"

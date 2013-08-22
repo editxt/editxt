@@ -31,9 +31,10 @@ from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state
 
 import editxt.command.base as base
+import editxt.command.sortlines as mod
 import editxt.constants as const
+from editxt.command.sortlines import SortLinesController, SortOptions, sortlines
 from editxt.controls.textview import TextView
-from editxt.sortlines import SortLinesController, SortOptions, sortlines
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ def test_SortLinesController_default_options():
 
 def test_SortLinesController_sort_():
     m = Mocker()
-    sort = m.replace('editxt.sortlines.sortlines')
+    sort = m.replace(mod, 'sortlines')
     tv = m.mock(TextView)
     slc = SortLinesController.create_with_textview(tv)
     sort(tv, slc.opts)
