@@ -33,51 +33,6 @@ from editxt.commandparser import ArgumentError, CommandParser, Int, Options
 log = logging.getLogger(__name__)
 
 
-def test_command_decorator_defaults():
-    @mod.command
-    def cmd(textview, sender, args):
-        pass
-
-    assert cmd.is_text_command
-    eq_(cmd.title, None)
-    eq_(cmd.hotkey, None)
-    eq_(cmd.name, 'cmd')
-    eq_(cmd.is_enabled(None, None), True)
-    eq_(cmd.arg_parser.parse('abc def'), Options(args=['abc', 'def']))
-    eq_(cmd.lookup_with_arg_parser, False)
-
-
-def test_command_decorator_with_args():
-    @mod.command(name='abc', title='Title', hotkey=(',', 0),
-        is_enabled=lambda *a:False,
-        arg_parser=CommandParser(Int("value")), lookup_with_arg_parser=True)
-    def cmd(textview, sender, args):
-        pass
-
-    assert cmd.is_text_command
-    eq_(cmd.title, 'Title')
-    eq_(cmd.hotkey, (',', 0))
-    eq_(cmd.name, 'abc')
-    eq_(cmd.is_enabled(None, None), False)
-    with assert_raises(ArgumentError):
-        cmd.arg_parser.parse('abc def')
-    eq_(cmd.arg_parser.parse('42'), Options(value=42))
-    eq_(cmd.lookup_with_arg_parser, True)
-
-
-def test_command_decorator_names():
-    def test(input, output):
-        @mod.command(name=input)
-        def cmd(textview, sender, args):
-            pass
-        eq_(cmd.name, output[0])
-        eq_(cmd.names, output)
-    yield test, None, ['cmd']
-    yield test, '', ['cmd']
-    yield test, 'abc def', ['abc', 'def']
-    yield test, ['abc', 'def'], ['abc', 'def']
-
-
 def test_load_commands():
     cmds = mod.load_commands()
     eq_(cmds["text_menu_commands"], [

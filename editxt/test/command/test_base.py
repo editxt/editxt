@@ -28,10 +28,11 @@ from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state, replattr
 
-import editxt.commandbase as mod
+import editxt.command.base as mod
 from editxt.controls.textview import TextView
-from editxt.commandbase import BaseCommandController, Options
-from editxt.commandbase import SheetController, PanelController
+from editxt.command.base import BaseCommandController
+from editxt.command.base import SheetController, PanelController
+from editxt.commandparser import ArgumentError, CommandParser, Int, Options
 from editxt.util import KVOProxy
 
 log = logging.getLogger(__name__)
@@ -47,7 +48,54 @@ def setup(controller_class, nib_name="TestController"):
                 del controller_class.NIB_NAME
         return wrapper
     return setup_controller
-        
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# command decorator tests
+
+def test_command_decorator_defaults():
+    @mod.command
+    def cmd(textview, sender, args):
+        pass
+
+    assert cmd.is_text_command
+    eq_(cmd.title, None)
+    eq_(cmd.hotkey, None)
+    eq_(cmd.name, 'cmd')
+    eq_(cmd.is_enabled(None, None), True)
+    eq_(cmd.arg_parser.parse('abc def'), Options(args=['abc', 'def']))
+    eq_(cmd.lookup_with_arg_parser, False)
+
+
+def test_command_decorator_with_args():
+    @mod.command(name='abc', title='Title', hotkey=(',', 0),
+        is_enabled=lambda *a:False,
+        arg_parser=CommandParser(Int("value")), lookup_with_arg_parser=True)
+    def cmd(textview, sender, args):
+        pass
+
+    assert cmd.is_text_command
+    eq_(cmd.title, 'Title')
+    eq_(cmd.hotkey, (',', 0))
+    eq_(cmd.name, 'abc')
+    eq_(cmd.is_enabled(None, None), False)
+    with assert_raises(ArgumentError):
+        cmd.arg_parser.parse('abc def')
+    eq_(cmd.arg_parser.parse('42'), Options(value=42))
+    eq_(cmd.lookup_with_arg_parser, True)
+
+
+def test_command_decorator_names():
+    def test(input, output):
+        @mod.command(name=input)
+        def cmd(textview, sender, args):
+            pass
+        eq_(cmd.name, output[0])
+        eq_(cmd.names, output)
+    yield test, None, ['cmd']
+    yield test, '', ['cmd']
+    yield test, 'abc def', ['abc', 'def']
+    yield test, ['abc', 'def'], ['abc', 'def']
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # BaseCommandController tests
 

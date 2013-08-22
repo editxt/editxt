@@ -28,7 +28,7 @@ from Foundation import *
 
 import editxt.constants as const
 from editxt import app
-from editxt.commandbase import PanelController, Options
+from editxt.command.base import PanelController, Options
 from editxt.util import KVOProxy, KVOLink
 
 log = logging.getLogger(__name__)

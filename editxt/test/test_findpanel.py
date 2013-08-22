@@ -522,7 +522,7 @@ def test_FindOptions_dependent_options():
 def test_FindController_load_options():
     def test(c):
         m = Mocker()
-        nsud = m.replace('editxt.commandbase.NSUserDefaults')
+        nsud = m.replace('editxt.command.base.NSUserDefaults')
         nspb = m.replace(mod, 'NSPasteboard')
         defaults = nsud.standardUserDefaults() >> m.mock(NSUserDefaults)
         defaults.dictionaryForKey_(const.FIND_PANEL_OPTIONS_KEY) >> c.state
@@ -559,7 +559,7 @@ def test_FindController_save_options():
         fc = FindController.create()
         opts = FindOptions()
         opts.find_text = c.astate.get("find_text", u"")
-        nsud = m.replace('editxt.commandbase.NSUserDefaults')
+        nsud = m.replace('editxt.command.base.NSUserDefaults')
         nspb = m.replace(mod, 'NSPasteboard')
         if "find_text" in c.astate:
             pboard = nspb.pasteboardWithName_(NSFindPboard)

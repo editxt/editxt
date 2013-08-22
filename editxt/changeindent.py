@@ -27,7 +27,7 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt.commandbase import SheetController
+from editxt.command.base import SheetController
 
 log = logging.getLogger(__name__)
 

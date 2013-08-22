@@ -27,7 +27,7 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt.commandbase import SheetController
+from editxt.command.base import SheetController
 from editxt.commandparser import Options
 from editxt.commands import iterlines
 

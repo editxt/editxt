@@ -30,7 +30,7 @@ from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state
 
-import editxt.commandbase as commandbase
+import editxt.command.base as base
 import editxt.constants as const
 import editxt.wraplines as mod
 from editxt.controls.textview import TextView
@@ -42,7 +42,7 @@ log = logging.getLogger(__name__)
 def test_WrapLinesController_default_options():
     m = Mocker()
     tv = m.mock(TextView)
-    ud = m.replace(commandbase, 'NSUserDefaults')
+    ud = m.replace(base, 'NSUserDefaults')
     sd = ud.standardUserDefaults() >> m.mock(NSUserDefaults)
     sd.dictionaryForKey_(ANY) >> None
     with m:

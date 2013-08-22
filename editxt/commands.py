@@ -24,59 +24,11 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
+from editxt.command.base import command
 from editxt.commandparser import (Choice, Int, String, Regex, RegexPattern,
     VarArgs, CommandParser, Options, SubArgs, SubParser)
 
 log = logging.getLogger(__name__)
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Text command system interface
-
-"""
-The primary interface for loading text commands into EditXT is a module-level
-function that returns a list of command functions provided by the module:
-
-def load_commands():
-    return [decorated_text_command, ...]
-"""
-
-
-def command(func=None, name=None, title=None, hotkey=None,
-            is_enabled=None, arg_parser=None, lookup_with_arg_parser=False):
-    """Text command decorator
-
-    Text command signature: `text_command(textview, sender, args)`
-    Both `sender` and `args` will be `None` in some contexts.
-
-    :param name: A name that can be typed in the command bar to invoke the
-        command. Defaults to the decorated callable's `__name__`.
-    :param title: The command title displayed in Text menu. Not in menu if None.
-    :param hotkey: Preferred command hotkey tuple: `(<key char>, <key mask>)`.
-        Ignored if title is None.
-    :param is_enabled: A callable that returns a boolean value indicating if
-        the command is enabled in the Text menu. Always enabled if None.
-        Signature: `is_enabled(textview, sender)`.
-    :param arg_parser: An object inplementing the `CommandParser` interface.
-        Defaults to `CommandParser(VarArgs("args"))`.
-    :param lookup_with_arg_parser: If True, use the `arg_parser.parse` to
-        lookup the command. The parser should return None if it receives
-        a text string that cannot be parsed.
-    """
-    if isinstance(name, basestring):
-        name = name.split()
-    def command_decorator(func):
-        func.is_text_command = True
-        func.name = name[0] if name else func.__name__
-        func.names = name or [func.__name__]
-        func.title = title
-        func.hotkey = hotkey
-        func.is_enabled = is_enabled or (lambda textview, sender: True)
-        func.arg_parser = arg_parser or CommandParser(VarArgs("args"))
-        func.lookup_with_arg_parser = lookup_with_arg_parser
-        return func
-    if func is None:
-        return command_decorator
-    return command_decorator(func)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Built-in text commands
