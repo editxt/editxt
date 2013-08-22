@@ -30,7 +30,7 @@ import editxt.constants as const
 
 from editxt import app
 from editxt.application import doc_id_gen
-from editxt.commands import change_indentation, iterlines, replace_newlines
+from editxt.command.util import change_indentation, iterlines, replace_newlines
 from editxt.constants import TEXT_DOCUMENT, LARGE_NUMBER_FOR_TEXT
 from editxt.controls.alert import Alert
 from editxt.controls.linenumberview import LineNumberView
