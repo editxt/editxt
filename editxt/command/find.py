@@ -27,7 +27,6 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt import app
 from editxt.command.base import command, PanelController
 from editxt.command.parser import Choice, Regex, RegexPattern, CommandParser, Options
 from editxt.util import KVOProxy, KVOLink
@@ -136,10 +135,9 @@ class FindOptions(Options):
 
 class Finder(object):
 
-    def __init__(self, find_target, options, panel=None):
+    def __init__(self, find_target, options):
         self.find_target = find_target
         self.opts = options
-        self.panel = panel
         self.recently_found_range = None
 
     def find_next(self, sender):
@@ -152,7 +150,7 @@ class Finder(object):
         target = self.find_target()
         if target is not None:
             options = self.opts
-            rtext = self.replace_value
+            rtext = options.replace_text
             if options.regular_expression and self.recently_found_range is not None:
                 rtext = self.recently_found_range.expand(rtext)
             range = target.selectedRange()
@@ -185,6 +183,7 @@ class Finder(object):
         if last_mark[0] == ftext:
             return last_mark[1]
         if color is None:
+            from editxt import app # HACK global resource
             color = app.config["highlight_selected_text.color"]
         ts = target.textStorage()
         ts.beginEditing()
@@ -226,24 +225,9 @@ class Finder(object):
         finally:
             ts.endEditing()
 
-    @property
-    def find_value(self):
-        return self.value_of_field("find_text")
-
-    @property
-    def replace_value(self):
-        return self.value_of_field("replace_text")
-
-    def value_of_field(self, name):
-        if self.panel is not None:
-            field = getattr(self.panel, name)
-            if field is not None:
-                return field.stringValue()
-        return getattr(self.opts, name)
-
     def find(self, direction):
         target = self.find_target()
-        ftext = self.find_value
+        ftext = self.opts.find_text
         if target is not None and ftext:
             text = target.string()
             selection = target.selectedRange()
@@ -279,7 +263,7 @@ class Finder(object):
 
     def _replace_all(self, in_selection=False):
         target = self.find_target()
-        ftext = self.find_value
+        ftext = self.opts.find_text
         range = None if target is None else target.selectedRange()
         if target is None or not ftext or (in_selection and range.length == 0):
             NSBeep()
@@ -301,7 +285,7 @@ class Finder(object):
             finditer = self.regexfinditer
         else:
             finditer = self.simplefinditer
-        rtext = self.replace_value
+        rtext = options.replace_text
         range0 = None
         rtexts = []
         for found in finditer(text, ftext, range, FORWARD, False):
@@ -434,7 +418,7 @@ class FindController(PanelController):
 
     def initWithWindowNibName_(self, name):
         self = super(FindController, self).initWithWindowNibName_(name)
-        self.finder = Finder(self.find_target, self.opts, self)
+        self.finder = Finder(self.find_target, self.opts)
         self.action_registry = {
             NSFindPanelActionShowFindPanel: self.show_find_panel,
             NSFindPanelActionNext: self.find_next,
@@ -548,11 +532,11 @@ class FindController(PanelController):
     def panelCountFindText_(self, sender):
         if self.validate_expression():
             self.count_occurrences(
-                self.finder.find_value, self.opts.regular_expression)
+                self.opts.find_text, self.opts.regular_expression)
 
     def panelCountReplaceText_(self, sender):
         if self.validate_expression():
-            self.count_occurrences(self.finder.replace_value, False)
+            self.count_occurrences(self.opts.replace_text, False)
 
     def panelMarkAll_(self, sender):
         if self.save_options():
@@ -576,6 +560,7 @@ class FindController(PanelController):
     # Utility methods ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def find_target(self):
+        from editxt import app
         try:
             editor = app.iter_editors().next()
         except StopIteration:
