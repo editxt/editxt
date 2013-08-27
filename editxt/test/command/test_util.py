@@ -20,7 +20,7 @@
 from mocker import Mocker, ANY
 from AppKit import NSMakeRange, NSRange, NSTextStorage, NSTextView
 #from Foundation import *
-from editxt.test.util import TestConfig
+from editxt.test.util import eq_, TestConfig
 
 import editxt.constants as const
 import editxt.command.util as mod
@@ -114,3 +114,50 @@ def test_change_indentation():
         yield test, c(input=u"\t\tx\n", output=u"      x\n")
         yield test, c(input=u"\t\tx\t\t\n", output=u"      x\t\t\n")
         yield test, c(input=u"\tx\n\t\ty\n", output=u"   x\n      y\n")
+
+def test_calculate_indent_mode_and_size():
+    TAB = const.INDENT_MODE_TAB
+    SPACE = const.INDENT_MODE_SPACE
+    program = """
+'''
+ x
+ y
+ z
+'''
+
+def foo(x=1, y=2):
+    x = x or 1
+    y = x or 2
+    for i in range(x + y):
+        n = i + x + y
+        if i % 2 = 1:
+            return y
+    return x
+
+if __name__ == "__main__":
+    foo()
+"""
+
+    def test(mode, size, text):
+        result = mod.calculate_indent_mode_and_size(text)
+        eq_(result, (mode, size))
+
+    yield test, None, None, "x\nx\nx\n"
+    yield test, TAB, None, "x\n\tx\nx\n"
+    yield test, SPACE, None, " x\nx\n"
+    yield test, SPACE, 2, " x\n    \n  x\n"
+    yield test, SPACE, 4, program
+    yield test, SPACE, 4, program.replace(" foo()", "foo()")
+
+    yield test, SPACE, 3, """
+a
+   b
+   b
+       c
+       c
+           d
+           d
+   b
+       c
+           d
+"""

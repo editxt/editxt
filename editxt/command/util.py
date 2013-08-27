@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import re
+from collections import Counter
 
 import editxt.constants as const
 
@@ -106,3 +107,58 @@ def change_indentation(textview, old_indent, new_indent, size):
                         sel = (sel[0], len(next) - sel[0])
                 textview.setSelectedRange_(sel)
             textview.didChangeText()
+
+
+def calculate_indent_mode_and_size(text, sample_lines=256):
+    """Calculate indent mode (tab or space) and size
+
+    This uses a statistical calculation to determine the most likely
+    indent size based on the first `N` lines in the given text where
+    `N = sample_lines`. Lines containing only whitespace are ignored.
+
+    :returns: A two-tuple: `(<indent_mode>, <indent_size>)`.
+    `indent_mode` will be one of `editxt.constants.INDENT_MODE_SPACE`,
+    `editxt.constants.INDENT_MODE_TAB` or `None`. `indent_size` will
+    be the number of spaces per indent, or `None` if `indent_mode` is
+    `editxt.constants.INDENT_MODE_TAB` or there are no lines indented
+    more than one space.
+    """
+    last_size = None
+    sizes = Counter()
+    space = False
+    mode = size = None
+    for n, line in enumerate(iterlines(text)):
+        if n >= sample_lines:
+            break
+        if not line.strip():
+            continue
+        if line.startswith(u" "):
+            space = True
+            indent = len(line) - len(line.lstrip(u" "))
+            if indent != last_size:
+                last_size = indent
+                sizes[indent] += 1
+        elif not space and line.startswith(u"\t"):
+            return const.INDENT_MODE_TAB, None
+    sizes.pop(1, None)
+    bases = [] # list of minimum indent sizes
+    for indent in sorted(sizes):
+        if any(indent % b == 0 for b in bases):
+            # stop when we find an indent width that is evenly
+            # divisible by at least one base (minimum indent size)
+            break
+        bases.append(indent)
+    if len(bases) == 1:
+        size = bases[0]
+    else:
+        def rank(base):
+            return sum(count
+                for indent, count in sizes.iteritems() if indent % base == 0)
+        max_rank = 0
+        for base in bases:
+            if rank(base) > max_rank:
+                max_rank = rank(base)
+                size = base
+    if space:
+        mode = const.INDENT_MODE_SPACE
+    return mode, size

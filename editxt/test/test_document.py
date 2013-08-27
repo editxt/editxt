@@ -1234,8 +1234,10 @@ def test_analyze_content():
         yield test, c(text=u"\n\u2028", eol=eol, eol_char=eol_char)
         yield test, c(text=u"abc\ndef\r", eol=eol, eol_char=eol_char)
         #yield test, c(text=u"\u2029", eol=eol, eol_char=eol_char) # TODO make ths test pass
-    yield test, c(text=u"\t", imode=TAB)
-    yield test, c(text=u"  ", imode=SPC)
+    yield test, c(text=u"\t")
+    yield test, c(text=u"  ")
+    yield test, c(text=u"\tx", imode=TAB)
+    yield test, c(text=u" x", imode=SPC)
     yield test, c(text=u"  x", imode=SPC, isize=2)
     yield test, c(text=u"  \n   x", imode=SPC, isize=3, eol=const.NEWLINE_MODE_UNIX)
     yield test, c(text=u"  x\n     x", imode=SPC, isize=2, eol=const.NEWLINE_MODE_UNIX)

@@ -31,7 +31,8 @@ import editxt.constants as const
 from editxt import app
 from editxt.application import doc_id_gen
 from editxt.command.find import Finder, FindOptions
-from editxt.command.util import change_indentation, iterlines, replace_newlines
+from editxt.command.util import (calculate_indent_mode_and_size,
+    change_indentation, iterlines, replace_newlines)
 from editxt.constants import TEXT_DOCUMENT, LARGE_NUMBER_FOR_TEXT
 from editxt.controls.alert import Alert
 from editxt.controls.linenumberview import LineNumberView
@@ -583,17 +584,9 @@ class TextDocument(NSDocument):
         if end != cend:
             eol = EOLREF.get(text[cend:end], const.NEWLINE_MODE_UNIX)
             self.newline_mode = eol
-        mode = None
-        for line in iterlines(text):
-            if line.startswith(u"\t"):
-                mode = const.INDENT_MODE_TAB
-                if line.strip():
-                    break
-            elif line.startswith(u" "):
-                mode = const.INDENT_MODE_SPACE
-                if line.strip():
-                    self.indent_size = len(line) - len(line.lstrip(u" "))
-                    break
+        mode, size = calculate_indent_mode_and_size(text)
+        if size is not None:
+            self.indent_size = size
         if mode is not None:
             self.indent_mode = mode
 
