@@ -81,15 +81,20 @@ Add more settings
   wrap_mode: [word|none]
 
 Add command bar:
+    integrate GUI commands with command history
+        wrap
+        sort
+        find
+    hotkeys should execute commands
     contextual command help
+        http://pythonhosted.org/Markdown/reference.html#output_format
+        NSTextStorage.initWithHTML_documentAttributes_(text, None)
     list history
         tab key should show list of auto complete options and filtered history
     filter history
         up arrow after typing should step through history with same prefix
         all text after manually typed prefix should be selected
     delete history item
-    hotkeys should execute commands
-    integrate GUI commands with command history
     convert commands with gui to work with command bar
 x       wrap command
 x       sort command

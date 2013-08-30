@@ -49,18 +49,19 @@ def unittest_print_first_failures_last():
         return old_printErrorList(self, flavor, reversed(errors))
     unittest._TextTestResult.printErrorList = printErrorList
 
+def eq_(a, b, text=None):
+    if a != b:
+        if isinstance(a, basestring):
+            if text is None:
+                text = "not equal"
+            err = "%s\n%r\n%r" % (text, a, b)
+        else:
+            text = (str(text) + " : ") if text is not None else ""
+            err = "%s%r != %r" % (text, a, b)
+        raise AssertionError(err)
+
 def install_nose_tools_better_eq():
-    def better_eq(a, b, text=None):
-        if a != b:
-            if isinstance(a, basestring):
-                if text is None:
-                    text = "not equal"
-                err = "%s\n%r\n%r" % (text, a, b)
-            else:
-                text = (str(text) + " : ") if text is not None else ""
-                err = "%s%r != %r" % (text, a, b)
-            raise AssertionError(err)
-    nose.tools.eq_ = better_eq
+    nose.tools.eq_ = eq_
 
 def install_pdb_trace_for_nose():
     import pdb
