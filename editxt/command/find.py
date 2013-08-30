@@ -59,6 +59,7 @@ WORD = "word"
         ('replace-one one', 'replace_one'),
         ('replace-all all', 'replace_all'),
         ('replace-in-selection in-selection selection', 'replace_all_in_selection'),
+        ('count-occurrences highlight', 'count_occurrences'),
         name='action'),
     Choice('regex literal word', name='search_type'),
     Choice(('wrap', True), ('no-wrap', False), name='wrap_around'),
@@ -68,7 +69,7 @@ def find(textview, sender, args):
     opts = FindOptions(**args.__dict__)
     save_to_find_pasteboard(opts.find_text)
     finder = Finder(lambda:textview, opts)
-    getattr(finder, args.action)(sender)
+    return getattr(finder, args.action)(sender)
 
 
 def toggle_boolean(depname):
@@ -206,6 +207,11 @@ class Finder(object):
 
     def replace_all_in_selection(self, sender):
         self._replace_all(in_selection=True)
+
+    def count_occurrences(self, sender):
+        num = self.mark_occurrences(
+            self.options.find_text, self.options.regular_expression)
+        return "Found {} occurrence{}".format(num, ("" if num == 1 else "s"))
 
     def mark_occurrences(self, ftext, regex=False, color=None):
         """Mark occurrences of ftext in target

@@ -555,7 +555,7 @@ class CommandTester(object):
                 class scroll_view:
                     class commandView:
                         @staticmethod
-                        def message(bar, msg, **kw):
+                        def message(msg, textview=None, **kw):
                             if isinstance(msg, Exception):
                                 raise msg
                             raise AssertionError(msg)

@@ -80,7 +80,7 @@ class CommandBar(object):
             self.message('invalid command arguments: {}'.format(argstr))
             return
         try:
-            command(doc_view.text_view, self, args)
+            message = command(doc_view.text_view, self, args)
         except CommandError as err:
             self.message(err)
         except Exception:
@@ -88,6 +88,8 @@ class CommandBar(object):
         else:
             if not text.startswith(" "):
                 self.text_commander.history.append(text)
+            if message is not None:
+                self.message(message, msg_type=const.INFO)
 
     def _find_command(self, text):
         """Get a tuple (command, argument_string)
@@ -160,7 +162,8 @@ class CommandBar(object):
             log.info(text, exc_info=exc_info)
             NSBeep()
         else:
-            view.scroll_view.commandView.message(self, msg, **kw)
+            view.scroll_view.commandView.message(
+                msg, textview=view.text_view, **kw)
 
     def reset(self):
         view, self.history_view = self.history_view, None

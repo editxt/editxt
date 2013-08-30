@@ -92,24 +92,29 @@ def test_CommandBar_execute():
                 message(c.msg, **kw)
             else:
                 view.text_view >> '<view>'
-                res = expect(command('<view>', bar, '<args>'))
+                res = command('<view>', bar, '<args>')
                 if c.error:
-                    res.throw(Exception('bang!'))
+                    expect(res).throw(Exception('bang!'))
                     message(ANY, exc_info=True)
                 elif not c.text.startswith(" "):
+                    res >> c.msg
                     history = commander.history >> m.mock(mod.CommandHistory)
                     history.append(c.text)
+                    if c.msg:
+                        message(c.msg, msg_type=const.INFO)
         with m:
             bar.execute(c.text)
     c = TestConfig(args='<args>', error=False, current=True,
                    msg=None, exc_info=None)
     yield test, c(text='')
     yield test, c(text='cmd x y z', argstr='x y z', lookup='first')
+    yield test, c(text='cmd x y z', argstr='x y z', lookup='first', msg="msg")
     yield test, c(text=' cmd x y z', argstr='x y z', lookup='first')
     yield test, c(text='cmd  x y  z', argstr=' x y  z', lookup='first')
     yield test, c(text='cmd x ', argstr='x ', lookup='first', args=Exception(),
                   msg='argument parse error: x ', exc_info=True)
     yield test, c(text='123 456', lookup='full')
+    yield test, c(text='123 456', lookup='full', msg="message for you, sir!")
     yield test, c(text='123 456', lookup='full', current=False)
     yield test, c(text='cmd', argstr='', lookup='first', args=None,
                   msg='invalid command arguments: ')
@@ -379,16 +384,17 @@ def test_CommandBar_message():
         format_exc = m.replace(mod.traceback, "format_exception")
         bar = mod.CommandBar(editor, commander)
         view = editor.current_view >> m.mock(TextDocumentView)
+        tv = view.text_view >> m.mock(NSTextView)
         cmd = view.scroll_view.commandView >> m.mock(CommandView)
         kw = {}
         if c.exc_info is not None:
             kw["exc_info"] = c.exc_info
             sys_exc_info() >> ("<exc info>",)
             format_exc("<exc info>") >> ["Traceback", "...", "Error!"]
-        def check(cmd, text, **kw):
+        def check(text, textview=None, **kw):
             eq_(text, c.msg)
             return True
-        expect(cmd.message(ANY, ANY)).call(check)
+        expect(cmd.message(ANY, textview=tv)).call(check)
         with m:
             bar.message(c.text, **kw)
     c = TestConfig(text="command error", exc_info=None)

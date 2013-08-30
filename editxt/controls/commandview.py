@@ -97,7 +97,7 @@ class CommandView(ak.NSView):
             self.output.setString_("")
             self.deactivate()
 
-    def message(self, command, message, msg_type=ERROR):
+    def message(self, message, textview=None, msg_type=ERROR):
         if msg_type == HTML:
             raise NotImplementedError("convert message to NSAttributedString")
         else:
@@ -105,9 +105,8 @@ class CommandView(ak.NSView):
             color = MESSAGE_COLORS[msg_type]
             if color is not None:
                 attrs[ak.NSForegroundColorAttributeName] = color
-            view = command.editor.current_view
-            if view is not None:
-                attrs[ak.NSFontAttributeName] = view.text_view.font()
+            if textview is not None:
+                attrs[ak.NSFontAttributeName] = textview.font()
             text = ak.NSAttributedString.alloc().initWithString_attributes_(
                 message, attrs)
         self.output.setAttributedString_(text)

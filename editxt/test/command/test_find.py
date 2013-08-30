@@ -66,13 +66,14 @@ def test_find_command():
         finder = m.mock(Finder)
         save_paste(c.find)
         (finder_cls(ANY, ANY) << finder).call(check_options)
-        getattr(finder, c.action)("<sender>")
+        getattr(finder, c.action)("<sender>") >> c.message
         with m:
             args = mod.find.arg_parser.parse(c.input)
-            mod.find(tv, "<sender>", args)
+            result = mod.find(tv, "<sender>", args)
+            eq_(result, c.message)
 
     c = TestConfig(find="", replace="", search=mod.REGEX, ignore_case=False,
-                   wrap=True, action="find_next")
+                   wrap=True, action="find_next", message=None)
     yield test, c(input=u"")
     yield test, c(input=u"/abc", find="abc")
     yield test, c(input=u":abc", find="abc")
@@ -91,6 +92,8 @@ def test_find_command():
     yield test, c(input=u"/abc// o", find="abc", action="replace_one")
     yield test, c(input=u"/abc// a", find="abc", action="replace_all")
     yield test, c(input=u"/abc// s", find="abc", action="replace_all_in_selection")
+    yield test, c(input=u"/abc// c", find="abc", action="count_occurrences",
+                  message="Found 3 occurrences")
     yield test, c(input=u"/abc//  r", find="abc", search=mod.REGEX)
     yield test, c(input=u"/abc//  l", find="abc", search=mod.LITERAL)
     yield test, c(input=u"/abc//  w", find="abc", search=mod.WORD)
