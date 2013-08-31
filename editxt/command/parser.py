@@ -624,14 +624,14 @@ class SubParser(Field):
     the SubArgs.
 
     :param name: Name of sub-parser result.
-    :param *subparsers: One or more SubArgs objects containing more
+    :param *subargs: One or more SubArgs objects containing more
     arguments to be parsed.
     """
 
-    def __init__(self, name, *subparsers):
-        self.args = (name,) + subparsers
+    def __init__(self, name, *subargs):
+        self.args = (name,) + subargs
         super(SubParser, self).__init__(name)
-        self.subparsers = {p.name: p for p in subparsers}
+        self.subargs = {p.name: p for p in subargs}
 
     def consume(self, text, index):
         """Consume arguments based on the name of the first argument
@@ -640,18 +640,18 @@ class SubParser(Field):
         :raises: ParserError, ArgumentError with sub-errors
         """
         name, end = self.consume_token(text, index)
-        sub = self.subparsers.get(name)
+        sub = self.subargs.get(name)
         if sub is None:
             #if name is None:
             #    raise NotImplementedError # TODO name is required, no default
             if not name:
                 raise ParseError("{} is required".format(self), self, index, end)
-            names = [n for n in self.subparsers if n.startswith(name)]
+            names = [n for n in self.subargs if n.startswith(name)]
             if len(names) != 1:
                 msg = "{!r} does not match any of: {}".format(
-                        name, ", ".join(sorted(self.subparsers)))
+                        name, ", ".join(sorted(self.subargs)))
                 raise ParseError(msg, self, index, end)
-            sub = self.subparsers[names[0]]
+            sub = self.subargs[names[0]]
         try:
             opts = sub.parser.parse(text, end)
         except ArgumentError as err:
@@ -670,16 +670,16 @@ class SubParser(Field):
             if space_after_name:
                 return None, None
             return "{} ...".format(self), end
-        sub = self.subparsers.get(name)
+        sub = self.subargs.get(name)
         if sub is None:
-            names = [n for n in self.subparsers if n.startswith(name)]
+            names = [n for n in self.subargs if n.startswith(name)]
             if not names:
                 return None, None
             if len(names) > 1:
                 if space_after_name:
                     return None, None
                 return "...", end
-            sub = self.subparsers[names[0]]
+            sub = self.subargs[names[0]]
             placeholder = names[0][len(name):]
         else:
             placeholder = ""
@@ -701,20 +701,20 @@ class SubParser(Field):
             if end < len(text) or text[index:end].endswith(" "):
                 # TODO default when name not provided?
                 return [], len(text)
-            return sorted(self.subparsers), end
+            return sorted(self.subargs), end
         if len(name) == end - index:
             # there is no space after name
             return self.get_completions(name), end
-        sub = self.subparsers.get(name)
+        sub = self.subargs.get(name)
         if sub is None:
-            names = [n for n in self.subparsers if n.startswith(name)]
+            names = [n for n in self.subargs if n.startswith(name)]
             if len(names) != 1:
                 return [], len(text)
-            sub = self.subparsers[names[0]]
+            sub = self.subargs[names[0]]
         return sub.parser.parse_completions(text, end)
 
     def get_completions(self, token):
-        return [n for n in sorted(self.subparsers) if n.startswith(token)]
+        return [n for n in sorted(self.subargs) if n.startswith(token)]
 
 
 class SubArgs(object):
