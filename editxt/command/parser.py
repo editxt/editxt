@@ -144,6 +144,22 @@ class CommandParser(object):
                 return values, index
         return None, index
 
+    def arg_string(self, options, strip=True):
+        """Compile command string from options
+
+        :param options: Options object.
+        :returns: Command argument string.
+        :raises: Error
+        """
+        args = []
+        for arg in self.argspec:
+            try:
+                value = getattr(options, arg.name)
+            except AttributeError:
+                raise Error("missing option: {}".format(arg.name))
+            args.append(arg.arg_string(value))
+        return " ".join(args).rstrip(" ") if strip else " ".join(args)
+
 
 IDENTIFIER_PATTERN = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*$')
 
@@ -308,6 +324,10 @@ class Field(object):
         """
         return []
 
+    def arg_string(self, value):
+        """Convert parsed value to argument string"""
+        raise NotImplementedError("abstract method")
+
 
 class Choice(Field):
     """A multiple-choice argument type
@@ -333,6 +353,7 @@ class Choice(Field):
         if len(choices) < 2:
             raise ValueError('at least two choices are required')
         self.mapping = map = {}
+        self.reverse_map = {}
         self.names = names = []
         self.alternates = alts = []
         for choice in choices:
@@ -352,6 +373,7 @@ class Choice(Field):
             for i, name in enumerate(name.split()):
                 if i == 0:
                     names.append(name)
+                    self.reverse_map[value] = name
                 else:
                     alts.append(name)
                 if name in map:
@@ -428,6 +450,14 @@ class Choice(Field):
         names = [n for n in self.names if n.startswith(token)]
         return names or [n for n in self.alternates if n.startswith(token)]
 
+    def arg_string(self, value):
+        if value == self.default:
+            return ""
+        try:
+            return self.reverse_map[value]
+        except KeyError:
+            raise Error("invalid value: {}={!r}".format(self.name, value))
+
 
 class Int(Field):
 
@@ -450,6 +480,13 @@ class Int(Field):
                 return str(self.default), index
             return str(self), index
         return super(Int, self).get_placeholder(text, index)
+
+    def arg_string(self, value):
+        if value == self.default:
+            return ""
+        if isinstance(value, (int, long)):
+            return str(value)
+        raise Error("invalid value: {}={!r}".format(self.name, value))
 
 
 class String(Field):
@@ -475,11 +512,14 @@ class String(Field):
         if index >= len(text):
             return self.default, index
         if text[index] not in ['"', "'"]:
-            return self.consume_token(text, index)
-        delim = text[index]
+            delim = ' '
+            start = index
+        else:
+            delim = text[index]
+            start = index + 1
         chars, esc = [], 0
         escapes = self.ESCAPES
-        for i, c in enumerate(text[index + 1:]):
+        for i, c in enumerate(text[start:]):
             if esc:
                 esc = 0
                 try:
@@ -488,17 +528,32 @@ class String(Field):
                 except KeyError:
                     chars.append('\\')
             elif c == delim:
-                if text[index + i + 2:index + i + 3] == ' ':
-                    index += 1
-                return ''.join(chars), index + i + 2
+                if delim != ' ' and text[start + i + 1:start + i + 2] == ' ':
+                    start += 1 # consume trailing space
+                return ''.join(chars), start + i + 1
             if c == '\\':
                 esc = 1
             else:
                 chars.append(c)
-        token = ''.join(chars)
-        msg = 'unterminated string: {}{}'.format(delim, token)
+        if delim == ' ':
+            if not esc:
+                return ''.join(chars), len(text) # FIXME? should add one to index?
+            delim = ''
+        msg = 'unterminated string: {}{}'.format(delim, text[start:])
         raise ParseError(msg, self, index, len(text))
 
+    def arg_string(self, value):
+        if value == self.default:
+            return ""
+        if not isinstance(value, basestring):
+            raise Error("invalid value: {}={!r}".format(self.name, value))
+        value = value.replace("\\", "\\\\")
+        for char, esc in self.ESCAPES.items():
+            if esc in value and esc not in """\\"'""":
+                value = value.replace(esc, "\\" + char)
+        if " " in value or value.startswith(("'", '"')):
+            return Regex.delimit(value, delimiters=""""'""")[0]
+        return value
 
 class VarArgs(Field):
     """Consume all remaining arguments by splitting the string"""
@@ -515,6 +570,10 @@ class VarArgs(Field):
         """
         return text[index:].split(), len(text)
 
+    def arg_string(self, value):
+        if value == self.default:
+            return ""
+        return " ".join(value)
 
 class RegexPattern(unicode):
 
@@ -614,6 +673,78 @@ class Regex(Field):
         if end > len(text):
             return delim, end
         return (None if text[end - 1] == " " else ""), end
+
+    @classmethod
+    def delimit(cls, value, allchars=None, delimiters=DELIMITERS):
+        """Add delimiters before and after (escaped) value
+
+        :param value: String to delimit.
+        :param allchars: Characters to consider when choosing delimiter.
+        Defaults to `value`.
+        :param delimiters: A sequence of possible delimiters.
+        :returns: (<delimited value>, delimiter)
+        """
+        if allchars is None:
+            allchars = value
+        delims = []
+        for delim in delimiters:
+            count = allchars.count(delim)
+            if not count:
+                break
+            delims.append((count, delim))
+        else:
+            delim = min(delims)[1]
+            value = cls.escape(value, delim)
+        return u"".join([delim, value, delim]), delim
+
+    @classmethod
+    def escape(cls, value, delimiter):
+        """Escape delimiters in value"""
+        return re.subn(ur"""
+            (
+                (?:
+                    \A          # beginning of string
+                    |           # or
+                    [^\\]       # not a backslash
+                    |           # or
+                    (?<={0})    # boundary after previous delimiter
+                )
+                (?:\\\\)*       # exactly 0, 2, 4, ... backslashes
+            )
+            {0}                 # delimiter
+            """.format(delimiter),
+            ur"\1\\" + delimiter,
+            value,
+            flags=re.UNICODE | re.VERBOSE
+        )[0]
+
+    def arg_string(self, value):
+        if value == self.default:
+            return ""
+        if self.replace:
+            if not (isinstance(value, (tuple, list)) and len(value) == 2):
+                raise Error("invalid value: {}={!r}".format(self.name, value))
+            find, replace = value
+            if not isinstance(replace, basestring):
+                raise Error("invalid value: {}={!r}".format(self.name, value))
+            allchars = find + replace
+        else:
+            allchars = find = value
+        if not isinstance(find, RegexPattern):
+            raise Error("invalid value: {}={!r}".format(self.name, value))
+        pattern, delim = self.delimit(find, allchars)
+        if self.replace:
+            if delim in replace:
+                replace = self.escape(replace, delim)
+            pattern += replace + delim
+        flags = 0
+        if find.flags & re.IGNORECASE:
+            pattern += "i"
+        if find.flags & re.DOTALL:
+            pattern += "s"
+        if find.flags & re.LOCALE:
+            pattern += "l"
+        return pattern
 
 
 class SubParser(Field):
@@ -715,6 +846,10 @@ class SubParser(Field):
 
     def get_completions(self, token):
         return [n for n in sorted(self.subargs) if n.startswith(token)]
+
+    def arg_string(self, value):
+        sub, opts = value
+        return sub.name + u" " + sub.parser.arg_string(opts, strip=False)
 
 
 class SubArgs(object):

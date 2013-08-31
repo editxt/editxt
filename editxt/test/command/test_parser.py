@@ -24,8 +24,8 @@ from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_
 from editxt.test.util import assert_raises, TestConfig
 
-from editxt.command.parser import (Choice, Int, String, Regex, CommandParser,
-    SubArgs, SubParser, VarArgs,
+from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
+    CommandParser, SubArgs, SubParser, VarArgs,
     identifier, Options, Error, ArgumentError, ParseError)
 
 log = logging.getLogger(__name__)
@@ -53,6 +53,21 @@ def make_completions_checker(arg):
         eq_(arg.parse_completions(input, 0), output)
     return test_parse_completions
 
+def make_arg_string_checker(arg):
+    def test_get_argstring(value, argstr, round_trip_equal=True):
+        if isinstance(argstr, Exception):
+            def check(err):
+                eq_(err, argstr)
+            with assert_raises(type(argstr), msg=check):
+                arg.arg_string(value)
+        else:
+            eq_(arg.arg_string(value), argstr)
+            if round_trip_equal:
+                eq_(arg.consume(argstr, 0), (value, len(argstr)))
+            else:
+                assert arg.consume(argstr, 0) != (value, len(argstr))
+    return test_get_argstring
+
 def test_identifier():
     def test(name, ident):
         eq_(identifier(name), ident)
@@ -78,6 +93,12 @@ def test_Choice():
     yield test, 'no', 0, ("nope", 2)
     yield test, 'nah', 0, ("nah", 3)
     yield test, 'na', 0, ("nah", 2)
+
+    test = make_arg_string_checker(arg)
+    yield test, "arg-ument", ""
+    yield test, "nope", "nope"
+    yield test, "nah", "nah"
+    yield test, "arg", Error("invalid value: arg_ument='arg'")
 
     arg = Choice(('arg-ument', True), ('nope', False), ('nah', ""))
     test = make_type_checker(arg)
@@ -191,6 +212,12 @@ def test_Int():
     yield test, 'a 99', 0, \
         ParseError("invalid literal for int() with base 10: 'a'", arg, 0, 2)
 
+    test = make_arg_string_checker(arg)
+    yield test, 42, "42"
+    yield test, -42, "-42"
+    yield test, None, ""
+    yield test, "arg", Error("invalid value: num='arg'")
+
 def test_String():
     arg = String('str')
     eq_(str(arg), 'str')
@@ -219,6 +246,41 @@ def test_String():
     yield test, r"'a c\t\' '", 0, ("a c\t' ", 10)
     yield test, r"'a c\v\' '", 0, ("a c\v' ", 10)
     yield test, r"'a c\v\' ' ", 0, ("a c\v' ", 11)
+    yield test, '\\', 0, ParseError("unterminated string: \\", arg, 0, 1)
+    yield test, '\\\\', 0, ("\\", 2)
+    yield test, '\\\\\\', 0, ParseError("unterminated string: \\\\\\", arg, 0, 3)
+    yield test, '\\\\\\\\', 0, ("\\\\", 4)
+    yield test, '""', 0, ("", 2)
+    yield test, '"\\"', 0, ParseError('unterminated string: "\\"', arg, 0, 3)
+    yield test, '"\\\\"', 0, ("\\", 4)
+    yield test, '"\\\\\\"', 0, ParseError('unterminated string: "\\\\\\"', arg, 0, 5)
+    yield test, '"\\\\\\\\"', 0, ("\\\\", 6)
+
+    test = make_arg_string_checker(arg)
+    yield test, "str", "str"
+    yield test, "a b", '"a b"'
+    yield test, "a 'b", '''"a 'b"'''
+    yield test, 'a "b', """'a "b'"""
+    yield test, """a"'b""", """a"'b"""
+    yield test, """a "'b""", '''"a \\"'b"'''
+    yield test, "'ab", '''"'ab"'''
+    yield test, '"ab', """'"ab'"""
+    yield test, "ab'", "ab'"
+    yield test, 'ab"', 'ab"'
+    yield test, u"\u0168", u"\u0168"
+    yield test, u'\u0168" \u0168', u"""'\u0168" \u0168'"""
+    yield test, u"\u0168' \u0168", u'''"\u0168' \u0168"'''
+    for char, esc in String.ESCAPES.items():
+        if char not in "\"\\'":
+            yield test, esc, "\\" + char
+    yield test, "\\x", "\\\\x"
+    yield test, "\\", '\\\\'
+    yield test, "\\\\", '\\\\\\\\'
+    yield test, "\\\\\\", '\\\\\\\\\\\\'
+    yield test, None, ""
+    yield test, 5, Error("invalid value: str=5")
+
+# TODO test VarArgs
 
 def test_Regex():
     arg = Regex('regex')
@@ -271,6 +333,20 @@ def test_Regex():
     yield test, "//", 0, ("", 2)
     yield test, "// ", 0, (None, 3)
 
+    test = make_arg_string_checker(arg)
+    yield test, RegexPattern("str"), "/str/"
+    yield test, RegexPattern("str", re.I), "/str/i"
+    yield test, RegexPattern("/usr/bin"), ":/usr/bin:"
+    yield test, RegexPattern("/usr/bin:"), '"/usr/bin:"'
+    yield test, RegexPattern(ur'''//''\:""'''), ur'''://''\:"":'''
+    yield test, RegexPattern(ur'''//''\\:""'''), ur'''://''\\\:"":''', False
+    yield test, RegexPattern(ur'''\://''""'''), ur''':\://''"":'''
+    yield test, RegexPattern(ur'''\\://''""'''), ur''':\\\://''"":''', False
+    # pedantic cases with three or more of all except ':'
+    yield test, RegexPattern(ur'''///'"'::"'"'''), ur''':///'"'\:\:"'":''', False
+    yield test, RegexPattern(ur'''///'"':\\:"'"'''), ur''':///'"'\:\\\:"'":''', False
+    yield test, "str", Error("invalid value: regex='str'")
+
     arg = Regex('regex', replace=True)
     eq_(repr(arg), "Regex('regex', replace=True)")
     test = regex_test
@@ -312,6 +388,16 @@ def test_Regex():
     yield test, "/x/", 0, ("/", 4)
     yield test, "/\\//", 0, ("/", 5)
     yield test, "/x//", 0, ("", 4)
+
+    test = make_arg_string_checker(arg)
+    yield test, (RegexPattern("str"), 'abc'), "/str/abc/"
+    yield test, (RegexPattern("str", re.I), 'abc'), "/str/abc/i"
+    yield test, (RegexPattern("/usr/bin"), "abc"), ":/usr/bin:abc:"
+    yield test, (RegexPattern("/usr/bin:"), ":"), '"/usr/bin:":"'
+    yield test, (RegexPattern(ur'''//''\:""'''), ur'''/"'\:'''), ur'''://''\:"":/"'\::'''
+    yield test, (RegexPattern(ur'''//''\:""'''), ur'''/"'\\:'''), ur'''://''\:"":/"'\\\::''', False
+    yield test, ("str", "abc"), Error("invalid value: regex=('str', 'abc')")
+    yield test, ("str", 42), Error("invalid value: regex=('str', 42)")
 
 def test_SubParser():
     sub = SubArgs("val", Int("num"), abc="xyz")
@@ -364,6 +450,11 @@ def test_SubParser():
         Options(), [ParseError("invalid literal for int() with base 10: 'x'",
                                Int("num"), 4, 6)], 6)
 
+    test = make_arg_string_checker(arg)
+    yield test, (sub, Options(num=1)), "val 1"
+    yield test, (su2, Options(yes=True)), "str "
+    yield test, (su2, Options(yes=False)), "str no"
+
 yesno = Choice(('yes', True), ('no', False))
 arg_parser = CommandParser(yesno)
 
@@ -384,6 +475,25 @@ def test_CommandParser_incomplete():
         eq_(err.errors, [ParseError("'a' is ambiguous: arg, all", Choice('arg', 'all'), 0, 1)])
     with assert_raises(ArgumentError, msg=check):
         parser.parse('a')
+
+def test_CommandParser_arg_string():
+    parser = CommandParser(yesno, Choice('arg', 'all'))
+    def test(options, argstr):
+        if isinstance(argstr, Exception):
+            def check(err):
+                eq_(err, argstr)
+            with assert_raises(type(argstr), msg=check):
+                parser.arg_string(options)
+        else:
+            result = parser.arg_string(options)
+            eq_(result, argstr)
+    yield test, Options(yes=True, arg="arg"), ""
+    yield test, Options(yes=False, arg="arg"), "no"
+    yield test, Options(yes=True, arg="all"), " all"
+    yield test, Options(yes=False, arg="all"), "no all"
+    yield test, Options(), Error("missing option: yes")
+    yield test, Options(yes=True), Error("missing option: arg")
+    yield test, Options(yes=None), Error("invalid value: yes=None")
 
 def test_CommandParser_with_SubParser():
     sub = SubArgs("num", Int("n"), abc="xyz")
