@@ -82,10 +82,32 @@ Add more settings
 
 Add command bar:
     integrate GUI commands with command history
-        wrap
-        sort
-        find
+        - hisotry storage:
+            - history file for each command
+                pros:
+                    - easy/fast to get last n commands
+                    - command history does not age away
+                cons:
+                    - history written to multiple files on command execution
+                      (could be avoided with timestamp+history/command?)
+            - scan main command history
+                pros:
+                    - simple to implement
+                    - once a command has been executed the last command
+                      lookup will be very fast
+                cons:
+                    - inefficient: could take a long time to lookup command.
+                    - command history ages
+        commands:
+            wrap
+            sort
+            find
     hotkeys should execute commands
+        - does not update command history
+        - examples:
+            - CMD+G -> find_next    > lookup recent find command, find_next
+            - CMD+= -> replace_one  > lookup recent find command, replace-one
+    commands with a leading space are not added to history
     contextual command help
         http://pythonhosted.org/Markdown/reference.html#output_format
         NSTextStorage.initWithHTML_documentAttributes_(text, None)
