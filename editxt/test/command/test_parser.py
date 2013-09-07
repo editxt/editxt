@@ -30,43 +30,117 @@ from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
 
 log = logging.getLogger(__name__)
 
-Args = lambda *a, **k: (a, k)
 
-def make_type_checker(arg):
-    def test(text, start, expect):
-        if isinstance(expect, Exception):
-            def check(err):
-                eq_(err, expect)
-            with assert_raises(type(expect), msg=check):
-                arg.consume(text, start)
-        else:
-            eq_(arg.consume(text, start), expect)
-    return test
+yesno = Choice(('yes', True), ('no', False))
+arg_parser = CommandParser(yesno)
 
-def make_placeholder_checker(arg):
-    def test_get_placeholder(text, index, result):
-        eq_(arg.get_placeholder(text, index), result)
-    return test_get_placeholder
+def test_CommandParser():
+    eq_(arg_parser.parse('yes'), Options(yes=True))
 
-def make_completions_checker(arg):
-    def test_parse_completions(input, output):
-        eq_(arg.parse_completions(input, 0), output)
-    return test_parse_completions
+def test_CommandParser_empty():
+    eq_(arg_parser.parse(''), Options(yes=True))
 
-def make_arg_string_checker(arg):
-    def test_get_argstring(value, argstr, round_trip_equal=True):
+def test_CommandParser_too_many_args():
+    with assert_raises(ArgumentError, msg="unexpected argument(s): unexpected"):
+        arg_parser.parse('yes unexpected')
+
+def test_CommandParser_incomplete():
+    parser = CommandParser(Choice('arg', 'all'))
+    def check(err):
+        eq_(err.options, Options())
+        eq_(err.errors, [ParseError("'a' is ambiguous: arg, all", Choice('arg', 'all'), 0, 1)])
+    with assert_raises(ArgumentError, msg=check):
+        parser.parse('a')
+
+def test_CommandParser_arg_string():
+    parser = CommandParser(yesno, Choice('arg', 'all'))
+    def test(options, argstr):
         if isinstance(argstr, Exception):
             def check(err):
                 eq_(err, argstr)
             with assert_raises(type(argstr), msg=check):
-                arg.arg_string(value)
+                parser.arg_string(options)
         else:
-            eq_(arg.arg_string(value), argstr)
-            if round_trip_equal:
-                eq_(arg.consume(argstr, 0), (value, len(argstr)))
-            else:
-                assert arg.consume(argstr, 0) != (value, len(argstr))
-    return test_get_argstring
+            result = parser.arg_string(options)
+            eq_(result, argstr)
+    yield test, Options(yes=True, arg="arg"), ""
+    yield test, Options(yes=False, arg="arg"), "no"
+    yield test, Options(yes=True, arg="all"), " all"
+    yield test, Options(yes=False, arg="all"), "no all"
+    yield test, Options(), Error("missing option: yes")
+    yield test, Options(yes=True), Error("missing option: arg")
+    yield test, Options(yes=None), Error("invalid value: yes=None")
+
+def test_CommandParser_with_SubParser():
+    sub = SubArgs("num", Int("n"), abc="xyz")
+    arg = SubParser("var", sub)
+    parser = CommandParser(arg, yesno)
+
+    def test(text, result):
+        eq_(parser.get_placeholder(text), result)
+    yield test, "", "var ... yes"
+    yield test, " ", ""
+    yield test, "  ", ""
+    yield test, "n", "um n yes"
+    yield test, "n ", "n yes"
+    yield test, "num ", "n yes"
+    yield test, "num  ", "yes"
+
+    def test(text, result):
+        eq_(parser.get_completions(text), result)
+    yield test, "", ["num"]
+    yield test, " ", []
+    yield test, "  ", []
+    yield test, "n", ["num"]
+    yield test, "n ", []
+    yield test, "num ", []
+    yield test, "num  ", ["yes", "no"]
+
+def test_CommandParser_with_SubParser_errors():
+    sub = SubArgs("num", Int("num"), abc="xyz")
+    arg = SubParser("var", sub)
+    parser = CommandParser(arg)
+    def check(err):
+        eq_(str(err), "invalid arguments: num x\n"
+                      "invalid literal for int() with base 10: 'x'")
+        eq_(err.options, Options())
+        eq_(err.errors,
+            [ParseError("invalid literal for int() with base 10: 'x'",
+                        Int("num"), 4, 5)])
+    with assert_raises(ArgumentError, msg=check):
+        parser.parse('num x')
+
+def test_CommandParser_order():
+    def test(text, result):
+        if isinstance(result, Options):
+            eq_(parser.parse(text), result)
+        else:
+            assert_raises(result, parser.parse, text)
+    parser = CommandParser(
+        Choice(('selection', True), ('all', False)),
+        Choice(('forward', False), ('reverse', True), name='reverse'),
+    )
+    tt = Options(selection=True, reverse=True)
+    yield test, 'selection reverse', tt
+    yield test, 'sel rev', tt
+    yield test, 'rev sel', ArgumentError
+    yield test, 'r s', ArgumentError
+    yield test, 's r', tt
+    yield test, 'rev', ArgumentError
+    yield test, 'sel', Options(selection=True, reverse=False)
+    yield test, 'r', ArgumentError
+    yield test, 's', Options(selection=True, reverse=False)
+
+#def test_
+#    CommandParser(
+#        Regex('regex'),
+#        Choice('bool b'),
+#        Int('num'),
+#    )
+#    matches:
+#        '/^abc$/ bool 123'
+#        '/^abc$/ b 123'
+#        '/^abc$/b 123'
 
 def test_identifier():
     def test(name, ident):
@@ -455,113 +529,40 @@ def test_SubParser():
     yield test, (su2, Options(yes=True)), "str "
     yield test, (su2, Options(yes=False)), "str no"
 
-yesno = Choice(('yes', True), ('no', False))
-arg_parser = CommandParser(yesno)
+Args = lambda *a, **k: (a, k)
 
-def test_CommandParser_empty():
-    eq_(arg_parser.parse(''), Options(yes=True))
+def make_type_checker(arg):
+    def test(text, start, expect):
+        if isinstance(expect, Exception):
+            def check(err):
+                eq_(err, expect)
+            with assert_raises(type(expect), msg=check):
+                arg.consume(text, start)
+        else:
+            eq_(arg.consume(text, start), expect)
+    return test
 
-def test_CommandParser():
-    eq_(arg_parser.parse('yes'), Options(yes=True))
+def make_placeholder_checker(arg):
+    def test_get_placeholder(text, index, result):
+        eq_(arg.get_placeholder(text, index), result)
+    return test_get_placeholder
 
-def test_CommandParser_too_many_args():
-    with assert_raises(ArgumentError, msg="unexpected argument(s): unexpected"):
-        arg_parser.parse('yes unexpected')
+def make_completions_checker(arg):
+    def test_parse_completions(input, output):
+        eq_(arg.parse_completions(input, 0), output)
+    return test_parse_completions
 
-def test_CommandParser_incomplete():
-    parser = CommandParser(Choice('arg', 'all'))
-    def check(err):
-        eq_(err.options, Options())
-        eq_(err.errors, [ParseError("'a' is ambiguous: arg, all", Choice('arg', 'all'), 0, 1)])
-    with assert_raises(ArgumentError, msg=check):
-        parser.parse('a')
-
-def test_CommandParser_arg_string():
-    parser = CommandParser(yesno, Choice('arg', 'all'))
-    def test(options, argstr):
+def make_arg_string_checker(arg):
+    def test_get_argstring(value, argstr, round_trip_equal=True):
         if isinstance(argstr, Exception):
             def check(err):
                 eq_(err, argstr)
             with assert_raises(type(argstr), msg=check):
-                parser.arg_string(options)
+                arg.arg_string(value)
         else:
-            result = parser.arg_string(options)
-            eq_(result, argstr)
-    yield test, Options(yes=True, arg="arg"), ""
-    yield test, Options(yes=False, arg="arg"), "no"
-    yield test, Options(yes=True, arg="all"), " all"
-    yield test, Options(yes=False, arg="all"), "no all"
-    yield test, Options(), Error("missing option: yes")
-    yield test, Options(yes=True), Error("missing option: arg")
-    yield test, Options(yes=None), Error("invalid value: yes=None")
-
-def test_CommandParser_with_SubParser():
-    sub = SubArgs("num", Int("n"), abc="xyz")
-    arg = SubParser("var", sub)
-    parser = CommandParser(arg, yesno)
-
-    def test(text, result):
-        eq_(parser.get_placeholder(text), result)
-    yield test, "", "var ... yes"
-    yield test, " ", ""
-    yield test, "  ", ""
-    yield test, "n", "um n yes"
-    yield test, "n ", "n yes"
-    yield test, "num ", "n yes"
-    yield test, "num  ", "yes"
-
-    def test(text, result):
-        eq_(parser.get_completions(text), result)
-    yield test, "", ["num"]
-    yield test, " ", []
-    yield test, "  ", []
-    yield test, "n", ["num"]
-    yield test, "n ", []
-    yield test, "num ", []
-    yield test, "num  ", ["yes", "no"]
-
-def test_CommandParser_with_SubParser_errors():
-    sub = SubArgs("num", Int("num"), abc="xyz")
-    arg = SubParser("var", sub)
-    parser = CommandParser(arg)
-    def check(err):
-        eq_(str(err), "invalid arguments: num x\n"
-                      "invalid literal for int() with base 10: 'x'")
-        eq_(err.options, Options())
-        eq_(err.errors,
-            [ParseError("invalid literal for int() with base 10: 'x'",
-                        Int("num"), 4, 5)])
-    with assert_raises(ArgumentError, msg=check):
-        parser.parse('num x')
-
-def test_CommandParser_order():
-    def test(text, result):
-        if isinstance(result, Options):
-            eq_(parser.parse(text), result)
-        else:
-            assert_raises(result, parser.parse, text)
-    parser = CommandParser(
-        Choice(('selection', True), ('all', False)),
-        Choice(('forward', False), ('reverse', True), name='reverse'),
-    )
-    tt = Options(selection=True, reverse=True)
-    yield test, 'selection reverse', tt
-    yield test, 'sel rev', tt
-    yield test, 'rev sel', ArgumentError
-    yield test, 'r s', ArgumentError
-    yield test, 's r', tt
-    yield test, 'rev', ArgumentError
-    yield test, 'sel', Options(selection=True, reverse=False)
-    yield test, 'r', ArgumentError
-    yield test, 's', Options(selection=True, reverse=False)
-
-#def test_
-#    CommandParser(
-#        Regex('regex'),
-#        Choice('bool b'),
-#        Int('num'),
-#    )
-#    matches:
-#        '/^abc$/ bool 123'
-#        '/^abc$/ b 123'
-#        '/^abc$/b 123'
+            eq_(arg.arg_string(value), argstr)
+            if round_trip_equal:
+                eq_(arg.consume(argstr, 0), (value, len(argstr)))
+            else:
+                assert arg.consume(argstr, 0) != (value, len(argstr))
+    return test_get_argstring
