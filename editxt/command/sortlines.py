@@ -42,6 +42,9 @@ log = logging.getLogger(__name__)
             ('sort-leading-whitespace', False),
             ('ignore-leading-whitespace', True),
             name='ignore-leading-whitespace'),
+        Choice(
+            ('ignore-case', True),
+            ('match-case', False)),
         Regex('sort-regex', True),
     ))
 def sort_lines(textview, sender, args):
@@ -58,6 +61,7 @@ class SortOptions(Options):
         selection=False,
         reverse=False,
         ignore_leading_whitespace=False,
+        ignore_case=True,
         numeric_match=False,
         regex_sort=False,
         search_pattern="",
@@ -95,6 +99,8 @@ def sortlines(textview, opts):
     def key(line):
         if opts.ignore_leading_whitespace:
             line = line.lstrip()
+        if opts.ignore_case:
+            line = line.lower()
         if regex is not None:
             match = regex.search(line)
             if match is None:

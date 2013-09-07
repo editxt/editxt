@@ -548,6 +548,11 @@ class CommandTester(object):
         class editor:
             class current_view:
                 text_view = kw.pop("textview", None)
+                class scroll_view:
+                    class commandView:
+                        @staticmethod
+                        def message(bar, msg, **kw):
+                            raise AssertionError(msg)
         commander = textcommand.TextCommandController(kw.pop("history", []))
         for command in commands:
             commander.add_command(command, None, menu)

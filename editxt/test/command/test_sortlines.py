@@ -35,9 +35,30 @@ import editxt.command.sortlines as mod
 import editxt.constants as const
 from editxt.command.sortlines import SortLinesController, SortOptions, sortlines
 from editxt.controls.textview import TextView
+from editxt.test.test_commands import CommandTester
 
 log = logging.getLogger(__name__)
 
+TEXT = u"""
+ghi 1 2 012
+abc 3 1 543
+ de 2 1 945
+Jkl 4 1 246
+    
+"""
+
+def test_sort_command():
+    def test(command, expected):
+        m = Mocker()
+        tv = FakeTextView(TEXT)
+        do = CommandTester(mod.sort_lines, textview=tv)
+        with m:
+            do(command)
+            eq_(sort_result(tv.text), unicode(expected), TEXT)
+
+    yield test, "sort", "|0gadJ|4|0"
+    yield test, "sort all", "|0|4dagJ|0"
+    yield test, "sort all   match-case", "|0|4dJag|0"
 
 def test_SortLinesController_default_options():
     m = Mocker()
@@ -62,23 +83,19 @@ def test_SortLinesController_sort_():
         slc.sort_(None)
 
 def test_sortlines():
-    text = u"""
-ghi 1 2 012
-abc 3 1 543
- de 2 1 945
-jkl 4 1 246
-    
-"""
+    optmap = [
+        ("sel", "selection"),
+        ("rev", "reverse"),
+        ("ign", "ignore_leading_whitespace"),
+        ("icase", "ignore_case"),
+        ("num", "numeric_match"),
+        ("reg", "regex_sort"),
+        ("sch", "search_pattern"),
+        ("mch", "match_pattern"),
+    ]
     def test(c):
-        opts = SortOptions(
-            selection=c.opts._get("sel", False),
-            reverse=c.opts._get("rev", False),
-            ignore_leading_whitespace=c.opts._get("ign", False),
-            numeric_match=c.opts._get("num", False),
-            regex_sort=c.opts._get("reg", False),
-            search_pattern=c.opts._get("sch", ""),
-            match_pattern=c.opts._get("mch", ""),
-        )
+        opts = SortOptions(**{opt: c.opts[abbr]
+            for abbr, opt in optmap if abbr in c.opts})
         m = Mocker()
         tv = m.mock(TextView)
         ts = tv.textStorage() >> m.mock(NSTextStorage)
@@ -98,21 +115,57 @@ jkl 4 1 246
             tv.setSelectedRange_(sel)
         with m:
             sortlines(tv, opts)
-            def ch(line):
-                value = line.lstrip(" ")
-                return value[0] if value else "|%i" % len(line)
-            eq_(c.result, "".join(ch(line) for line in output[0].split("\n")), output[0])
+            eq_(sort_result(output[0]), unicode(c.result), output[0])
     op = TestConfig()
-    tlen = len(text)
-    c = TestConfig(text=text, sel=(0, tlen), opts=op)
-    yield test, c(result="|0|4dagj|0")
-    yield test, c(result="|0|4adgj|0", opts=op(ign=True))
+    tlen = len(TEXT)
+    c = TestConfig(text=TEXT, sel=(0, tlen), opts=op)
+    yield test, c(result="|0|4dagJ|0")
+    yield test, c(result="|0|4adgJ|0", opts=op(ign=True))
+    yield test, c(result="|0|4dJag|0", opts=op(icase=False))
+    yield test, c(result="|0|4Jadg|0", opts=op(icase=False, ign=True))
     yield test, c(result="dag|0", opts=op(sel=True), sel=(5, 32))
     yield test, c(result="adg|0", opts=op(sel=True, ign=True), sel=(5, 32))
-    yield test, c(result="jgad|4|0|0", opts=op(rev=True))
+    yield test, c(result="Jgad|4|0|0", opts=op(rev=True))
     
     op = op(reg=True, sch=r"\d")
-    yield test, c(result="|0|4dagj|0", opts=op(reg=False))
-    yield test, c(result="gdaj|0|4|0", opts=op)
-    yield test, c(result="dajg|0|4|0", opts=op(sch="(\d) (\d)", mch=r"\2\1"))
+    yield test, c(result="|0|4dagJ|0", opts=op(reg=False))
+    yield test, c(result="gdaJ|0|4|0", opts=op)
+    yield test, c(result="daJg|0|4|0", opts=op(sch="(\d) (\d)", mch=r"\2\1"))
     # TODO test and implement numeric match (checkbox is currently hidden)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# test helpers
+
+def sort_result(value):
+    def ch(line):
+        value = line.lstrip(" ")
+        return value[0] if value else "|%i" % len(line)
+    return "".join(ch(line) for line in value.split("\n"))
+
+class FakeTextView(object):
+
+    def __init__(self, text, sel=NSMakeRange(0, 0)):
+        self.text = text
+        self.sel = sel
+
+    def selectedRange(self):
+        return self.sel
+
+    def setSelectedRange_(self, sel):
+        self.sel = sel
+
+    def string(self):
+        return NSString.alloc().initWithString_(self.text)
+
+    def shouldChangeTextInRange_replacementString_(self, rng, str):
+        return True
+
+    def textStorage(self):
+        return self
+
+    def replaceCharactersInRange_withString_(self, rng, string):
+        end = rng[0] + rng[1]
+        self.text = self.text[:rng[0]] + string + self.text[end:]
+
+    def didChangeText(self):
+        pass
