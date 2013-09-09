@@ -30,7 +30,7 @@ from Foundation import *
 
 import editxt.constants as const
 from editxt.command.parser import ArgumentError
-from editxt.commands import load_commands
+from editxt.commands import load_commands, CommandError
 from editxt.util import WeakProperty
 
 log = logging.getLogger(__name__)
@@ -82,6 +82,8 @@ class CommandBar(object):
             return
         try:
             command(doc_view.text_view, self, args)
+        except CommandError as err:
+            self.message(err)
         except Exception:
             self.message('error in command: {}'.format(command), exc_info=True)
         else:

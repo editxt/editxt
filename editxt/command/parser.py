@@ -85,16 +85,18 @@ class CommandParser(object):
         errors = []
         for arg in self.argspec:
             try:
-                value, index = arg.consume(text, index)
+                value, index = arg.consume(text, index) #, previous_errors=errors)
+                errors = []
             except ParseError as err:
                 errors.append(err)
-                index = err.parse_index
+                value = arg.default
+                #index = err.parse_index
             except ArgumentError as err:
                 assert err.errors, "unexpected {!r}".format(err)
                 errors.extend(err.errors)
-                index = err.parse_index
-            else:
-                setattr(opts, arg.name, value)
+                value = arg.default
+                #index = err.parse_index
+            setattr(opts, arg.name, value)
         if errors:
             msg = u'invalid arguments: {}'.format(text)
             raise ArgumentError(msg, opts, errors, index)
@@ -759,9 +761,9 @@ class SubParser(Field):
     arguments to be parsed.
     """
 
-    def __init__(self, name, *subargs):
+    def __init__(self, name, *subargs, **kw):
         self.args = (name,) + subargs
-        super(SubParser, self).__init__(name)
+        super(SubParser, self).__init__(name, **kw)
         self.subargs = {p.name: p for p in subargs}
 
     def consume(self, text, index):
@@ -771,12 +773,10 @@ class SubParser(Field):
         :raises: ParserError, ArgumentError with sub-errors
         """
         name, end = self.consume_token(text, index)
+        if not name:
+            return self.default, end
         sub = self.subargs.get(name)
         if sub is None:
-            #if name is None:
-            #    raise NotImplementedError # TODO name is required, no default
-            if not name:
-                raise ParseError("{} is required".format(self), self, index, end)
             names = [n for n in self.subargs if n.startswith(name)]
             if len(names) != 1:
                 msg = "{!r} does not match any of: {}".format(

@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import re
+from functools import partial
 
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_
@@ -35,7 +36,54 @@ yesno = Choice(('yes', True), ('no', False))
 arg_parser = CommandParser(yesno)
 
 def test_CommandParser():
-    eq_(arg_parser.parse('yes'), Options(yes=True))
+    def test_parser(argstr, options, parser, defaults={}):
+        if isinstance(options, Exception):
+            def check(err):
+                eq_(err, options)
+            with assert_raises(type(options), msg=check):
+                parser.parse(argstr)
+        else:
+            opts = Options(**defaults)
+            opts.__dict__.update(options)
+            eq_(parser.parse(argstr), opts)
+
+    test = partial(test_parser, parser=CommandParser(yesno))
+    yield test, "", Options(yes=True)
+    yield test, "no", Options(yes=False)
+
+    manual = SubArgs("manual",
+                Int("bass", default=50),
+                Int("treble", default=50))
+    preset = SubArgs("preset",
+                Choice("flat", "rock", "cinema", name="value"))
+    test = partial(test_parser,
+        parser=CommandParser(
+            SubParser("equalizer",
+                manual,
+                preset,
+            ),
+            Choice(
+                ("off", 0),
+                ('high', 4),
+                ("medium", 2),
+                ('low', 1),
+                name="level"
+            ),
+            Int("volume", default=50), #, min=0, max=100),
+            String("name"), #, quoted=True),
+        ),
+        defaults={"equalizer": None, "level": 0, "volume": 50, "name": None},
+    )
+    yield test, "manual", Options(equalizer=(manual, Options(bass=50, treble=50)))
+    yield test, "", Options()
+    yield test, "preset rock low", Options(
+        level=1, equalizer=(preset, Options(value="rock")))
+    yield test, "  high", Options(level=0, name="high")
+    yield test, " high", Options(level=4)
+    yield test, "high", Options(level=4)
+    yield test, "hi", Options(level=4)
+    yield test, "high '' yes", ArgumentError(u'unexpected argument(s): yes',
+        Options(volume=50, equalizer=None, name='', level=4), [], 8)
 
 def test_CommandParser_empty():
     eq_(arg_parser.parse(''), Options(yes=True))
@@ -47,7 +95,7 @@ def test_CommandParser_too_many_args():
 def test_CommandParser_incomplete():
     parser = CommandParser(Choice('arg', 'all'))
     def check(err):
-        eq_(err.options, Options())
+        eq_(err.options, Options(arg="arg"))
         eq_(err.errors, [ParseError("'a' is ambiguous: arg, all", Choice('arg', 'all'), 0, 1)])
     with assert_raises(ArgumentError, msg=check):
         parser.parse('a')
@@ -103,7 +151,7 @@ def test_CommandParser_with_SubParser_errors():
     def check(err):
         eq_(str(err), "invalid arguments: num x\n"
                       "invalid literal for int() with base 10: 'x'")
-        eq_(err.options, Options())
+        eq_(err.options, Options(var=None))
         eq_(err.errors,
             [ParseError("invalid literal for int() with base 10: 'x'",
                         Int("num"), 4, 5)])
@@ -126,9 +174,9 @@ def test_CommandParser_order():
     yield test, 'rev sel', ArgumentError
     yield test, 'r s', ArgumentError
     yield test, 's r', tt
-    yield test, 'rev', ArgumentError
+    yield test, 'rev', tt
     yield test, 'sel', Options(selection=True, reverse=False)
-    yield test, 'r', ArgumentError
+    yield test, 'r', tt
     yield test, 's', Options(selection=True, reverse=False)
 
 #def test_
@@ -515,14 +563,15 @@ def test_SubParser():
     yield test, "str x ", 0, (None, None)
 
     test = make_type_checker(arg)
-    yield test, '', 0, ParseError("var is required", arg, 0, 0)
+    yield test, '', 0, (None, 0)
     yield test, 'x', 0, ParseError("'x' does not match any of: str, stx, val", arg, 0, 1)
     yield test, 'v 1', 0, ((sub, Options(num=1)), 3)
     yield test, 'val 1', 0, ((sub, Options(num=1)), 5)
     yield test, 'val 1 2', 0, ((sub, Options(num=1)), 6)
     yield test, 'val x 2', 0, ArgumentError("invalid arguments: val x 2",
-        Options(), [ParseError("invalid literal for int() with base 10: 'x'",
-                               Int("num"), 4, 6)], 6)
+        Options(num=None), [
+            ParseError("invalid literal for int() with base 10: 'x'",
+                       Int("num"), 4, 6)], 4)
 
     test = make_arg_string_checker(arg)
     yield test, (sub, Options(num=1)), "val 1"

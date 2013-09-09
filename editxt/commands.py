@@ -308,8 +308,11 @@ def set_docview_indent_vars(textview, name, args):
         setter=set_docview_variable),
 )))
 def set_variable(textview, sender, args):
-    sub, opts = args.variable
-    sub.data["setter"](textview, sub.name, opts)
+    if args.variable is None:
+        raise CommandError("nothing set")
+    else:
+        sub, opts = args.variable
+        sub.data["setter"](textview, sub.name, opts)
 
 
 _ws = re.compile(ur"([\t ]+)", re.UNICODE | re.MULTILINE)
@@ -383,3 +386,6 @@ def delete_backward(textview, sender, args):
         textview.textStorage().replaceCharactersInRange_withString_(sel, u"")
         textview.didChangeText()
         textview.scrollRangeToVisible_((sel[0], 0))
+
+
+class CommandError(Exception): pass

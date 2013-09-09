@@ -21,10 +21,9 @@ from __future__ import with_statement
 import logging
 
 from mocker import Mocker, expect, ANY, MATCH
-from nose.tools import eq_, assert_raises
 from AppKit import *
 from Foundation import *
-from editxt.test.util import TestConfig, replattr
+from editxt.test.util import assert_raises, eq_, TestConfig, replattr
 
 import editxt.constants as const
 import editxt.commands as mod
@@ -467,15 +466,20 @@ def test_set_variable():
     yield test, "set soft_wrap o", ["on", "off"], "..."
     yield test, "set soft_wrap x", [], ""
 
-    def test(command, attribute, value):
+    def test(command, attribute, value=None):
         m = Mocker()
         tv = m.mock(TextView)
         view = tv.doc_view >> m.mock(TextDocumentView)
-        setattr(view.props >> m.mock(), attribute, value)
         do = CommandTester(mod.set_variable, textview=tv)
-        with m:
-            do(command)
+        if isinstance(attribute, Exception):
+            with assert_raises(type(attribute), msg=str(attribute)), m:
+                do(command)
+        else:
+            setattr(view.props >> m.mock(), attribute, value)
+            with m:
+                do(command)
     c = TestConfig()
+    yield test, "set", AssertionError("nothing set")
     yield test, "set newline_mode Unix", "newline_mode", const.NEWLINE_MODE_UNIX
     yield test, "set newline_mode unix", "newline_mode", const.NEWLINE_MODE_UNIX
     yield test, "set newline_mode cr", "newline_mode", const.NEWLINE_MODE_MAC
@@ -552,6 +556,8 @@ class CommandTester(object):
                     class commandView:
                         @staticmethod
                         def message(bar, msg, **kw):
+                            if isinstance(msg, Exception):
+                                raise msg
                             raise AssertionError(msg)
         commander = textcommand.TextCommandController(kw.pop("history", []))
         for command in commands:
