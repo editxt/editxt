@@ -105,6 +105,9 @@ class CommandParser(object):
             raise ArgumentError(msg, opts, errors, index)
         return opts
 
+    def default_options(self):
+        return Options(**{arg.name: arg.default for arg in self.argspec})
+
     def get_placeholder(self, text):
         """Get placeholder string to follow the given command text
 

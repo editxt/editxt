@@ -598,4 +598,17 @@ def test_TextCommandController_do_textview_command_by_selector():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # CommandHistory tests
 
-# TODO ...
+def test_CommandHistory_iter_by_name():
+    def test(name, expect, appends='abcdefghiabca'):
+        with tempdir() as tmp:
+            history = mod.CommandHistory(tmp, 3, 5)
+            for i, item in enumerate(appends):
+                history.append(item, item + " " + str(i))
+
+            history = mod.CommandHistory(tmp, 3, 5)
+            result = next(history.iter_by_name(name), None)
+            eq_(result, expect)
+
+    yield test, "a", "a 12"
+    yield test, "b", "b 10"
+    yield test, "x", None

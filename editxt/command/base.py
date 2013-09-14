@@ -78,6 +78,28 @@ def command(func=None, name=None, title=None, hotkey=None,
     return command_decorator(func)
 
 
+def load_options(command, history):
+    argstr = next(history.iter_by_name(command.name), None)
+    if argstr is not None:
+        if argstr.startswith(command.name + " "):
+            argstr = argstr[len(command.name) + 1:]
+        try:
+            return command.arg_parser.parse(argstr)
+        except Exception:
+            log.warn("cannot load options: %s", argstr, exc_info=True)
+    return command.arg_parser.default_options()
+
+
+def save_options(options, command, history):
+    argstr = command.arg_parser.arg_string(options)
+    if argstr:
+        if not command.lookup_with_arg_parser:
+            argstr = "{} {}".format(command.name, argstr)
+    else:
+        argstr = command.name
+    history.append(command.name, argstr)
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Base classes for GUI command controllers
 

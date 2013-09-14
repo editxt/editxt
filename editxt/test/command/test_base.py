@@ -26,7 +26,8 @@ from AppKit import *
 from Foundation import *
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
-from editxt.test.util import TestConfig, untested, check_app_state, replattr
+from editxt.test.util import (TestConfig, untested, check_app_state, replattr,
+    tempdir)
 
 import editxt.command.base as mod
 from editxt.controls.textview import TextView
@@ -67,12 +68,7 @@ def test_command_decorator_defaults():
 
 
 def test_command_decorator_with_args():
-    @mod.command(name='abc', title='Title', hotkey=(',', 0),
-        is_enabled=lambda *a:False,
-        arg_parser=CommandParser(Int("value")), lookup_with_arg_parser=True)
-    def cmd(textview, sender, args):
-        pass
-
+    cmd = dummy_command
     assert cmd.is_text_command
     eq_(cmd.title, 'Title')
     eq_(cmd.hotkey, (',', 0))
@@ -95,6 +91,46 @@ def test_command_decorator_names():
     yield test, '', ['cmd']
     yield test, 'abc def', ['abc', 'def']
     yield test, ['abc', 'def'], ['abc', 'def']
+
+
+def test_load_options():
+    from editxt.textcommand import CommandHistory
+    def test(argstr=None, value=None):
+        with tempdir() as tmp:
+            history = CommandHistory(tmp)
+            if argstr:
+                history.append(dummy_command.name, argstr)
+            options = mod.load_options(dummy_command, history)
+            eq_(options, Options(value=value))
+    yield test, "abc 123", 123
+    yield test, "345", 345
+    yield test, "xyz"
+    yield test,
+
+
+def test_save_options():
+    from editxt.textcommand import CommandHistory
+    def test(options, hist, command=dummy_command):
+        with tempdir() as tmp:
+            history = CommandHistory(tmp)
+            mod.save_options(options, command, history)
+            eq_(next(iter(history), None), hist)
+
+    yield test, Options(value=123), "123"
+    yield test, Options(value=None), "abc"
+
+    @mod.command(arg_parser=CommandParser(Int("value", default=42)))
+    def xyz(textview, sender, options): pass
+
+    yield test, Options(value=345), "xyz 345", xyz
+    yield test, Options(value=42), "xyz", xyz
+
+
+@mod.command(name='abc', title='Title', hotkey=(',', 0),
+    is_enabled=lambda *a:False,
+    arg_parser=CommandParser(Int("value")), lookup_with_arg_parser=True)
+def dummy_command(textview, sender, args):
+    assert False, "this command is not meant to be executed"
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # BaseCommandController tests

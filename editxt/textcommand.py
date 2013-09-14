@@ -288,3 +288,8 @@ class CommandHistory(History):
         if item is not None:
             return item[1]
         return item
+
+    def iter_by_name(self, name):
+        for name_, command in super(CommandHistory, self).__iter__():
+            if name_ == name:
+                yield command
