@@ -43,7 +43,6 @@ log = logging.getLogger(__name__)
 def test_CommandBar_editor():
     editor = type('Editor', (object,), {})()
     text_commander = type('TextCommandController', (object,), {})()
-    #history = type('CommandHistory', (object,), {})()
     cmd = mod.CommandBar(editor, text_commander)
     eq_(cmd.editor, editor)
     eq_(cmd.text_commander, text_commander)
@@ -99,7 +98,7 @@ def test_CommandBar_execute():
                     message(ANY, exc_info=True)
                 else:
                     history = commander.history >> m.mock(mod.CommandHistory)
-                    history.append(c.text)
+                    history.append(command.name >> "cmd", c.text)
         with m:
             bar.execute(c.text)
     c = TestConfig(args='<args>', error=False, current=True,
@@ -225,7 +224,7 @@ def test_CommandBar_get_history():
         with tempdir() as tmp:
             history = mod.CommandHistory(tmp)
             for item in reversed("abc"):
-                history.append(item)
+                history.append("cmd", item)
             editor = type("FakeEditor", (object,), {})()
             commander = TextCommandController(history)
             bar = mod.CommandBar(editor, commander)
@@ -291,7 +290,7 @@ def test_CommandBar_get_history_concurrently():
     with tempdir() as tmp:
         history = mod.CommandHistory(tmp)
         for item in reversed("abc"):
-            history.append(item)
+            history.append("cmd", item)
         editor = type("FakeEditor", (object,), {})()
         commander = TextCommandController(history)
         bar1 = mod.CommandBar(editor, commander)
@@ -308,7 +307,7 @@ def test_CommandBar_get_history_concurrently():
         eq_(bar3.get_history("a"), "b")
         eq_(bar3.get_history("z"), "c") # <-- "z" will move to 0 (with "b")
 
-        history.append("b")
+        history.append("cmd", "b")
 
         # current index "a", "x" in new command buffer
         eq_(bar1.get_history("a"), "c")

@@ -86,7 +86,7 @@ class CommandBar(object):
         except Exception:
             self.message('error in command: {}'.format(command), exc_info=True)
         else:
-            self.text_commander.history.append(text)
+            self.text_commander.history.append(command.name, text)
 
     def _find_command(self, text):
         """Get a tuple (command, argument_string)
@@ -276,4 +276,15 @@ class TextCommandController(object):
 
 class CommandHistory(History):
 
-    pass
+    def append(self, command_name, command_text):
+        super(CommandHistory, self).append([command_name, command_text])
+
+    def __iter__(self):
+        for item in super(CommandHistory, self).__iter__():
+            yield item[1]
+
+    def __getitem__(self, index):
+        item = super(CommandHistory, self).__getitem__(index)
+        if item is not None:
+            return item[1]
+        return item

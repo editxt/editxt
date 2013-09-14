@@ -559,7 +559,8 @@ class CommandTester(object):
                             if isinstance(msg, Exception):
                                 raise msg
                             raise AssertionError(msg)
-        commander = textcommand.TextCommandController(kw.pop("history", []))
+        commander = textcommand.TextCommandController(
+            kw.pop("history", FakeHistory()))
         for command in commands:
             commander.add_command(command, None, menu)
         self.bar = textcommand.CommandBar(kw.pop("editor", editor), commander)
@@ -572,3 +573,9 @@ class CommandTester(object):
 
     def __getattr__(self, name):
         return getattr(self.bar, name)
+
+
+class FakeHistory(list):
+
+    def append(self, name, text):
+        super(FakeHistory, self).append(text)
