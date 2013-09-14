@@ -327,10 +327,11 @@ class MethodReplacer(mocker.Task):
         else:
             if method is not None:
                 obj = getattr(method, "im_self", None)
+                if obj is None:
+                    obj = getattr(method, "im_class", None)
             else:
                 assert obj is not None
                 method = getattr(obj, name)
-            # TODO unbound method on pure python type
             # TODO static method on pure python type
             if isinstance(obj, type):
                 # class method on pure python object
@@ -425,7 +426,7 @@ class PropertyReplacer(mocker.Task):
             raise AssertionError("unknown property: %s" % name)
         try:
             prop = getattr(type_, name)
-        except AttributeError:
+        except (TypeError, AttributeError):
             # HACK fix for objc IBOutlet
             prop = type_.__dict__.get(name, cls.NA)
         if not isinstance(prop, PropertyMock):

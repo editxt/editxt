@@ -44,13 +44,7 @@ def test_wrap_to_margin_guide():
     m = Mocker()
     tv = m.mock(NSTextView)
     wrap = m.replace(mod, 'wrap_selected_lines')
-    ctl_class = m.replace(mod, 'WrapLinesController')
-    ctl = ctl_class.shared_controller() >> m.mock(WrapLinesController)
-    opts = m.replace(mod, "Options")() >> m.mock()
-    wrap_opts = ctl.opts >> m.mock()
-    opts.wrap_column = const.DEFAULT_RIGHT_MARGIN
-    opts.indent = wrap_opts.indent >> "<indent>"
-    wrap(tv, opts)
+    wrap(tv, mod.Options(wrap_column=const.DEFAULT_RIGHT_MARGIN, indent=True))
     with m:
         mod.wrap_at_margin(tv, None, None)
 
@@ -61,19 +55,19 @@ def test_WrapLinesController_default_options():
     sd = ud.standardUserDefaults() >> m.mock(NSUserDefaults)
     sd.dictionaryForKey_(ANY) >> None
     with m:
-        ctl = WrapLinesController.create_with_textview(tv)
+        ctl = WrapLinesController(tv)
         for name, value in [
                 ("wrap_column", const.DEFAULT_RIGHT_MARGIN),
                 ("indent", True),
             ]:
-            eq_(getattr(ctl.opts, name), value, name)
+            eq_(getattr(ctl.options, name), value, name)
 
 def test_WrapLinesController_wrap_():
     m = Mocker()
     cmd = m.replace(mod, 'wrap_selected_lines')
     tv = m.mock(TextView)
-    ctl = WrapLinesController.create_with_textview(tv)
-    cmd(tv, ctl.opts)
+    ctl = WrapLinesController(tv)
+    cmd(tv, ctl.options)
     m.method(ctl.save_options)()
     m.method(ctl.cancel_)(None)
     with m:

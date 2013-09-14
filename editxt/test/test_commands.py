@@ -515,7 +515,7 @@ def test_panel_actions():
             func(tv, args)
         else:
             args = None
-            ctl = ctl_class.create_with_textview(tv) >> m.mock(c.ctl)
+            ctl = ctl_class(tv) >> m.mock(c.ctl)
             ctl.begin_sheet('<sender>')
         with m:
             c.action(tv, '<sender>', args)

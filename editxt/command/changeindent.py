@@ -27,7 +27,7 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt.command.base import command, SheetController
+from editxt.command.base import command, objc_delegate, SheetController
 #from editxt.command.parser import Choice, Regex, CommandParser, Options
 
 log = logging.getLogger(__name__)
@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 
 @command(title=u"Change Indentation")
 def reindent(textview, sender, args):
-    ctl = ChangeIndentationController.create_with_textview(textview)
+    ctl = ChangeIndentationController(textview)
     ctl.begin_sheet(sender)
 
 
@@ -46,20 +46,21 @@ class ChangeIndentationController(SheetController):
 
     def load_options(self):
         """load current indent mode from textview"""
-        opts = self.opts
+        opts = self.options
         view = self.textview.doc_view
         opts.from_mode = opts.to_mode = view.indent_mode
         opts.from_size = opts.to_size = view.indent_size
 
     def save_options(self):
         """no-op override"""
-#       opts = self.opts
+#       opts = self.options
 #       view = self.textview.doc_view
 #       view.indent_mode = opts.to_mode
 #       view.indent_size = opts.to_size
 
+    @objc_delegate
     def execute_(self, sender):
-        opts = self.opts
+        opts = self.options
         self.textview.doc_view.change_indentation(
             opts.from_mode,
             opts.from_size,

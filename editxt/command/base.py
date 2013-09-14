@@ -18,13 +18,15 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+from functools import wraps
 
 from AppKit import *
 from Foundation import *
 
+import editxt
 from editxt.command.parser import CommandParser, Options, VarArgs
 from editxt.controls.alert import Caller
-from editxt.util import KVOProxy
+from editxt.util import KVOProxy, WeakProperty
 
 log = logging.getLogger(__name__)
 
@@ -104,81 +106,124 @@ def save_options(options, command, history):
 # Base classes for GUI command controllers
 
 
-class BaseCommandController(NSWindowController):
-    """abstract window controller for text commands"""
+def objc_delegate(func):
+    """A decorator for marking delegate methods"""
+    func.objc_delegate = True
+    return func
+
+
+class CommandController(object):
+    """Base window controller for text commands"""
 
     OPTIONS_FACTORY = Options       # A callable that creates default options.
                                     # If this is a function, it should accept
                                     # one arguemnt (`self`).
     #NIB_NAME = "NibFilename"       # Abstract attribute.
-    #OPTIONS_key = "named_options"  # Optional abstract attribute.
+    #COMMAND = <command>            # Command callable
+    #OPTIONS_KEY = "named_options"  # Optional abstract attribute.
 
     @classmethod
-    def create(cls):
-        obj = cls.alloc().initWithWindowNibName_(cls.NIB_NAME)
-        obj.load_options()
-        return obj
-
-    @classmethod
-    def shared_controller(cls):
+    def controller_class(cls, **members):
         try:
-            return cls.__dict__["_shared_controller"]
-        except KeyError:
-            cls._shared_controller = ctl = cls.create()
-        return ctl
+            return cls._controller_class
+        except AttributeError:
+            pass
+        def make_delegate(method):
+            if not method.__name__.endswith("_"):
+                # HACK assume no arguments
+                @wraps(method)
+                def delegate(self):
+                    return method(self.controller)
+            else:
+                # HACK assume delegate takes one argument
+                @wraps(method)
+                def delegate(self, arg):
+                    return method(self.controller, arg)
+            return delegate
+        members.update({name: make_delegate(value)
+            for base in reversed(cls.__mro__)
+            for name, value in vars(base).items()
+            if callable(value) and getattr(value, "objc_delegate", False)})
+        Class = type(cls.__name__ + "GUI", (_BaseCommandController,), members)
+        cls._controller_class = Class
+        return Class
 
-    def initWithWindowNibName_(self, name):
-        self = super(BaseCommandController, self).initWithWindowNibName_(name)
-        self.setWindowFrameAutosaveName_(name)
+    def __init__(self):
+        self.gui = self.controller_class().create(self, self.NIB_NAME)
+        self.history = editxt.app.text_commander.history # HACK deep reach into global
         if not hasattr(self, "OPTIONS_KEY"):
             self.OPTIONS_KEY = self.NIB_NAME + "_options"
-        self.opts = KVOProxy(self.OPTIONS_FACTORY())
-        self.default_option_keys = [k for k, v in self.opts]
-        return self
+        self.options = KVOProxy(self.OPTIONS_FACTORY())
+        self.default_option_keys = [k for k, v in self.options]
+        self.load_options()
 
     def load_options(self):
         defaults = NSUserDefaults.standardUserDefaults()
         data = defaults.dictionaryForKey_(self.OPTIONS_KEY)
         if data is None:
             data = {}
-        opts = self.opts
-        for key, value in opts:
-            setattr(opts, key, data.get(key, value))
+        options = self.options
+        for key, value in list(options):
+            setattr(options, key, data.get(key, value))
 
     def save_options(self):
-        data = {k: getattr(self.opts, k) for k in self.default_option_keys}
+        data = {k: getattr(self.options, k) for k in self.default_option_keys}
         defaults = NSUserDefaults.standardUserDefaults()
         defaults.setObject_forKey_(data, self.OPTIONS_KEY)
 
-    def options(self):
-        return self.opts
 
-    def setOptions_(self, value):
-        self.opts = value
-
-
-class SheetController(BaseCommandController):
+class SheetController(CommandController):
     """abstract window controller for sheet-based text command"""
 
-    @classmethod
-    def create_with_textview(cls, textview):
-        obj = cls.alloc().initWithWindowNibName_(cls.NIB_NAME)
-        obj.textview = textview
-        obj.load_options()
-        return obj
+    DELEGATE_METHODS = {"cancel_": "cancel"}
+
+    def __init__(self, textview):
+        self.textview = textview
+        super(SheetController, self).__init__()
 
     def begin_sheet(self, sender):
         self.caller = Caller.alloc().init(self.sheet_did_end)
         NSApp.beginSheet_modalForWindow_modalDelegate_didEndSelector_contextInfo_(
-            self.window(), self.textview.window(), self.caller,
+            self.gui.window(), self.textview.window(), self.caller,
             "alertDidEnd:returnCode:contextInfo:", 0)
 
     def sheet_did_end(self, code):
-        self.window().orderOut_(None)
+        self.gui.window().orderOut_(None)
 
+    @objc_delegate
     def cancel_(self, sender):
-        NSApp.endSheet_returnCode_(self.window(), 0)
+        NSApp.endSheet_returnCode_(self.gui.window(), 0)
 
 
-class PanelController(BaseCommandController):
+class PanelController(CommandController):
     """abstract window controller for panel-based text command"""
+
+    @classmethod
+    def shared_controller(cls):
+        try:
+            return cls.__dict__["_shared_controller"]
+        except KeyError:
+            cls._shared_controller = ctl = cls()
+        return ctl
+
+
+class _BaseCommandController(NSWindowController):
+
+    controller = WeakProperty()
+
+    @classmethod
+    def create(cls, controller, nib_name):
+        obj = cls.alloc().initWithWindowNibName_(nib_name)
+        obj.controller = controller
+        return obj
+
+    def initWithWindowNibName_(self, name):
+        self = super(_BaseCommandController, self).initWithWindowNibName_(name)
+        self.setWindowFrameAutosaveName_(name)
+        return self
+
+    def options(self):
+        return self.controller.options
+
+    def setOptions_(self, value):
+        self.controller.options = value

@@ -31,7 +31,7 @@ from editxt.test.util import (TestConfig, untested, check_app_state, replattr,
 
 import editxt.command.base as mod
 from editxt.controls.textview import TextView
-from editxt.command.base import BaseCommandController
+from editxt.command.base import CommandController
 from editxt.command.base import SheetController, PanelController
 from editxt.command.parser import ArgumentError, CommandParser, Int, Options
 from editxt.util import KVOProxy
@@ -133,50 +133,50 @@ def dummy_command(textview, sender, args):
     assert False, "this command is not meant to be executed"
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# BaseCommandController tests
+# CommandController tests
 
-@setup(BaseCommandController)
-def test_BaseCommandController_create():
+@setup(CommandController)
+def test_CommandController_create():
     tv = None
-    c1 = BaseCommandController.create()
-    assert isinstance(c1, BaseCommandController)
-    c2 = BaseCommandController.create()
-    assert isinstance(c2, BaseCommandController)
+    c1 = CommandController()
+    assert isinstance(c1, CommandController)
+    c2 = CommandController()
+    assert isinstance(c2, CommandController)
     assert c1 is not c2
 
-class OtherController(BaseCommandController): pass
+class OtherController(PanelController): pass
 
-@setup(BaseCommandController)
-def test_BaseCommandController_shared_controller():
-    cx = BaseCommandController.shared_controller()
+@setup(PanelController)
+def test_PanelController_shared_controller():
+    cx = PanelController.shared_controller()
     c1 = OtherController.shared_controller()
     assert isinstance(c1, OtherController), c1
     c2 = OtherController.shared_controller()
     assert c1 is c2, (c1, c2)
 
-@setup(BaseCommandController)
-def test_BaseCommandController_options():
+@setup(CommandController)
+def test_CommandController_options():
     class FakeOptions(Options): pass
-    with replattr(BaseCommandController, "OPTIONS_FACTORY", FakeOptions):
-        ctl = BaseCommandController.create()
-        #assert isinstance(ctl.opts, FakeOptions), ctl.opts
-        eq_(type(ctl.opts).__name__, "FakeOptions_KVOProxy")
-        assert ctl.opts is ctl.options()
+    with replattr(CommandController, "OPTIONS_FACTORY", FakeOptions):
+        ctl = CommandController()
+        #assert isinstance(ctl.options, FakeOptions), ctl.options
+        eq_(type(ctl.options).__name__, "FakeOptions_KVOProxy")
+        assert ctl.options is ctl.gui.options()
         obj = object()
-        ctl.setOptions_(obj)
-        eq_(ctl.options(), obj)
+        ctl.gui.setOptions_(obj)
+        eq_(ctl.options, obj)
 
-class FakeController(BaseCommandController):
+class FakeController(CommandController):
     NIB_NAME = "FakeController"
     OPTIONS_KEY = "FakeController_options"
     OPTIONS_FACTORY = lambda s:Options(key1="<default x>", key2="<default y>")
 
-def test_BaseCommandController_load_options():
+def test_CommandController_load_options():
     def test(c):
         m = Mocker()
         ud = m.replace(mod, 'NSUserDefaults')
         sd = ud.standardUserDefaults() >> m.mock(NSUserDefaults)
-        ctl = FakeController.create()
+        ctl = FakeController()
         if c.present:
             values = {"key1": "<val x>", "key2": "<val y>"}
             state = sd.dictionaryForKey_(ctl.OPTIONS_KEY) >> values
@@ -185,20 +185,20 @@ def test_BaseCommandController_load_options():
             state = sd.dictionaryForKey_(ctl.OPTIONS_KEY) >> None
         with m:
             ctl.load_options()
-            opts = ctl.opts
+            options = ctl.options
             for key, value in values.iteritems():
-                eq_(getattr(opts, key), value)
+                eq_(getattr(options, key), value)
     c = TestConfig()
     yield test, c(present=False)
     yield test, c(present=True)
 
-def test_BaseCommandController_save_options():
+def test_CommandController_save_options():
     m = Mocker()
     ud = m.replace(mod, 'NSUserDefaults')
     sd = ud.standardUserDefaults() >> m.mock(NSUserDefaults)
-    ctl = FakeController.create()
-    opts = ctl.opts
-    opts.other_option = "should not be saved"
+    ctl = FakeController()
+    options = ctl.options
+    options.other_option = "should not be saved"
     data = {}
     for key, value in {"key1": "<default x>", "key2": "<default y>"}.items():
         data[key] = value
@@ -210,26 +210,17 @@ def test_BaseCommandController_save_options():
 # SheetController tests
 
 @setup(SheetController)
-def test_SheetController_create_with_textview():
-    tv = None
-    c1 = SheetController.create_with_textview(tv)
-    assert isinstance(c1, SheetController)
-    c2 = SheetController.create_with_textview(tv)
-    assert isinstance(c2, SheetController)
-    assert c1 is not c2
-
-@setup(SheetController)
 def test_SheetController_begin_sheet():
     from editxt.controls.alert import Caller
     m = Mocker()
     tv = m.mock(TextView)
-    slc = SheetController.create_with_textview(tv)
+    slc = SheetController(tv)
     def cb(callback):
-        return callback.__name__ == "sheet_did_end" and callback.self is slc
+        return callback.__name__ == "sheet_did_end" and callback.im_self is slc
     clr_class = m.replace(mod, "Caller")
     clr = clr_class.alloc().init(MATCH(cb)) >> m.mock(Caller)
     win = tv.window() >> m.mock(NSWindow)
-    pnl = m.method(slc.window)() >> m.mock(NSPanel)
+    pnl = m.method(slc.gui.window)() >> m.mock(NSPanel)
     nsapp = m.replace(mod, 'NSApp', spec=False)
     nsapp.beginSheet_modalForWindow_modalDelegate_didEndSelector_contextInfo_(
         pnl, win, clr, "alertDidEnd:returnCode:contextInfo:", 0)

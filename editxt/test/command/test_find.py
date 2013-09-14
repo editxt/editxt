@@ -47,7 +47,7 @@ log = logging.getLogger(__name__)
 def test_find_command():
     def test(c):
         assert int(c.regex) + int(c.match_word) < 2, c
-        opts = FindOptions(**{opt: c[key] for key, opt in {
+        options = FindOptions(**{opt: c[key] for key, opt in {
             "find": "find_text",
             "replace": "replace_text",
             "regex": "regular_expression",
@@ -58,11 +58,11 @@ def test_find_command():
         m = Mocker()
         tv = m.mock(NSTextView)
         finder_cls = m.replace("editxt.command.find.Finder")
-        def check_opts(get_tv, args):
+        def check_options(get_tv, args):
             eq_(get_tv(), tv)
-            eq_(args, opts)
+            eq_(args, options)
         finder = m.mock(Finder)
-        (finder_cls(ANY, ANY) << finder).call(check_opts)
+        (finder_cls(ANY, ANY) << finder).call(check_options)
         getattr(finder, c.action)("<sender>")
         with m:
             args = mod.find.arg_parser.parse(c.input)
@@ -99,7 +99,7 @@ def test_Finder_mark_occurrences():
         m = Mocker()
         tv = m.mock(TextView)
         tv._Finder__last_mark >> (None, 0)
-        tv._Finder__last_mark = (c.opts.find_text, c.count)
+        tv._Finder__last_mark = (c.options.find_text, c.count)
         tv.setNeedsDisplay_(True) # HACK
         ts = tv.textStorage() >> m.mock(NSTextStorage)
         app = m.replace(editxt, "app")
@@ -108,8 +108,8 @@ def test_Finder_mark_occurrences():
         ts.beginEditing()
         ts.removeAttribute_range_(NSBackgroundColorAttributeName, full_range)
         find_target = lambda: tv
-        finder = Finder(find_target, c.opts)
-        if c.opts.find_text:
+        finder = Finder(find_target, c.options)
+        if c.options.find_text:
             text = NSString.alloc().initWithString_(text)
             (tv.string() << text).count(1, None)
             mark_range = ts.addAttribute_value_range_ >> m.mock()
@@ -117,18 +117,18 @@ def test_Finder_mark_occurrences():
             expect(mark).count(c.count)
         ts.endEditing()
         with m:
-            count = finder.mark_occurrences(c.opts.find_text, c.allow_regex)
+            count = finder.mark_occurrences(c.options.find_text, c.allow_regex)
             eq_(count, c.count)
 
     o = FindOptions
     c = TestConfig(allow_regex=False)
-    yield test, c(opts=o(find_text=""), count=0)
-    yield test, c(opts=o(find_text="text"), count=2)
-    yield test, c(opts=o(find_text="[t]"), count=0)
-    yield test, c(opts=o(find_text="[t]", regular_expression=True), count=0)
-    yield test, c(opts=o(find_text="text", match_entire_word=True), count=1)
+    yield test, c(options=o(find_text=""), count=0)
+    yield test, c(options=o(find_text="text"), count=2)
+    yield test, c(options=o(find_text="[t]"), count=0)
+    yield test, c(options=o(find_text="[t]", regular_expression=True), count=0)
+    yield test, c(options=o(find_text="text", match_entire_word=True), count=1)
     c = c(allow_regex=True)
-    yield test, c(opts=o(find_text="[t]", regular_expression=True), count=5)
+    yield test, c(options=o(find_text="[t]", regular_expression=True), count=5)
 
 def test_FindController_shared_controller():
     fc = FindController.shared_controller()
@@ -146,7 +146,7 @@ def test_FindController_validate_action():
             if c.has_target:
                 if c.tag in mod.SELECTION_REQUIRED_ACTIONS:
                     tv.selectedRange().length >> c.sel
-        with m, replattr(fc, 'opts', FindOptions()):
+        with m, replattr(fc, 'options', FindOptions()):
             result = fc.validate_action(c.tag)
             eq_(result, c.result)
     c = TestConfig(has_target=True, result=True, tag=0)
@@ -175,7 +175,7 @@ def test_FindController_validate_action():
 def test_FindController_perform_action():
     def test(c):
         m = Mocker()
-        fc = FindController.create()
+        fc = FindController()
         flog = m.replace("editxt.command.find.log")
         sender = m.mock()
         (sender.tag() << c.tag).count(1, 2)
@@ -210,11 +210,11 @@ def test_FindController_show_find_panel():
     m = Mocker()
     fc = FindController.shared_controller()
     sender = m.mock()
-    m.property(fc, "opts")
+    m.property(fc, "options")
     m.property(fc, "find_text")
-    #fc.opts.load()
-    m.method(fc.showWindow_)(fc)
-    #fc.find_text.setStringValue_(fc.opts.find_text >> "abc")
+    #fc.options.load()
+    m.method(fc.gui.showWindow_)(fc)
+    #fc.find_text.setStringValue_(fc.options.find_text >> "abc")
     fc.find_text.selectText_(sender)
     with m:
         fc.show_find_panel(sender)
@@ -255,9 +255,9 @@ def test_FindController_actions():
         dobeep = True
         tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
         if c.has_tv:
-            opts = m.replace(fc.finder, "opts")
-            rtext = opts.replace_text >> "abc"
-            opts.regular_expression >> c.regex
+            options = m.replace(fc.finder, "options")
+            rtext = options.replace_text >> "abc"
+            options.regular_expression >> c.regex
             rfr = FoundRange(None) if c.rfr else None
             if c.regex:
                 (m.property(fc.finder, "recently_found_range").value << rfr).count(1,2)
@@ -290,7 +290,7 @@ def test_FindController_actions():
 
     def do(m, c, fc, sender):
         if m.method(fc.save_options)() >> c.saved:
-            (m.method(fc.window)() >> m.mock(NSWindow)).orderOut_(sender)
+            (m.method(fc.gui.window)() >> m.mock(NSWindow)).orderOut_(sender)
             m.method(fc.finder, c.real)(sender)
     for saved in (True, False):
         cx = c(saved=saved, do=do)
@@ -302,10 +302,10 @@ def test_FindController_actions():
         #yield test, cx(meth="panelMarkAll_", real="mark_all")
 
     def do(m, c, fc, sender):
-        opts = m.replace(fc, "opts")
-        (opts.regular_expression << True).count(0, None)
+        options = m.replace(fc, "options")
+        (options.regular_expression << True).count(0, None)
         if m.method(fc.validate_expression)() >> c.valid:
-            text = getattr(opts, c.val) >> "<value>"
+            text = getattr(options, c.val) >> "<value>"
             m.method(fc.count_occurrences)(text, c.regex)
     for v in (True, False):
         cx = c(valid=v, do=do)
@@ -314,7 +314,7 @@ def test_FindController_actions():
 
     def do(m, c, fc, sender):
         text = sender.selectedItem().title() >> "<value>"
-        prop = m.property(fc, "opts").value >> m.mock()
+        prop = m.property(fc, "options").value >> m.mock()
         setattr(prop, c.prop, text)
     yield test, c(meth="recentFindSelected_", do=do, prop="find_text")
     yield test, c(meth="recentReplaceSelected_", do=do, prop="replace_text")
@@ -334,7 +334,7 @@ def test_FindController_finder_find():
         direction = "<direction>"
         _find = m.method(fc.finder._find)
         tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
-        m.replace(fc.finder, "opts").find_text >> c.ftext
+        m.replace(fc.finder, "options").find_text >> c.ftext
         if c.has_tv and c.ftext:
             text = tv.string() >> "<text>"
             sel = tv.selectedRange() >> (1, 2)
@@ -362,11 +362,11 @@ def test_FindController__find():
         rfr = m.property(fc.finder, "recently_found_range")
         sel = NSMakeRange(1, 2)
         direction = "<direction>"
-        opts = m.property(fc.finder, "opts").value >> m.mock(FindOptions)
+        options = m.property(fc.finder, "options").value >> m.mock(FindOptions)
         ftext = u"<find>"
-        if opts.regular_expression >> c.regex:
+        if options.regular_expression >> c.regex:
             finditer = regexfind
-        elif opts.match_entire_word >> c.mword:
+        elif options.match_entire_word >> c.mword:
             finditer = regexfind
             ftext = u"\\b" + re.escape(ftext) + u"\\b"
         else:
@@ -407,24 +407,24 @@ def test_FindController__replace_all():
         beep = m.replace(mod, 'NSBeep')
         dobeep = True
         tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
-        opts = m.replace(fc.finder, "opts")
-        ftext = opts.find_text >> c.ftext
+        options = m.replace(fc.finder, "options")
+        ftext = options.find_text >> c.ftext
         range = (tv.selectedRange() >> NSRange(*c.sel)) if c.has_tv else None
         if c.has_tv and c.ftext and ((c.sel_only and c.sel[1] > 0) or not c.sel_only):
             text = tv.string() >> c.text
             if not c.sel_only:
-                if (opts.wrap_around >> c.wrap):
+                if (options.wrap_around >> c.wrap):
                     range = NSMakeRange(0, 0)
                 else:
                     range = NSMakeRange(range[0], len(text) - range[0])
-            if opts.regular_expression >> c.regex:
+            if options.regular_expression >> c.regex:
                 finditer = m.method(fc.finder.regexfinditer)
-            elif opts.match_entire_word >> c.mword:
+            elif options.match_entire_word >> c.mword:
                 ftext = u"\\b" + re.escape(ftext) + u"\\b"
                 finditer = m.method(fc.finder.regexfinditer)
             else:
                 finditer = m.method(fc.finder.simplefinditer)
-            rtext = opts.replace_text >> c.rtext
+            rtext = options.replace_text >> c.rtext
             found = None
             ranges = []
             rtexts = []
@@ -523,20 +523,20 @@ def test_FindController_find_target():
 # Test FindOptions
 
 # def test_FindOptions_defaults():
-#   opts = FindOptions(FindController)
-#   for name, value in opts.defaults.iteritems():
-#       eq_(getattr(opts, name), value, name)
+#   options = FindOptions(FindController)
+#   for name, value in options.defaults.iteritems():
+#       eq_(getattr(options, name), value, name)
 
 def test_FindOptions_dependent_options():
     def test(c):
-        opts = FindOptions()
-        setattr(opts, c.att.name, c.att.before)
-        setattr(opts, c.dep.name, c.dep.before)
-        eq_(getattr(opts, c.att.name), c.att.before)
-        eq_(getattr(opts, c.dep.name), c.dep.before)
+        options = FindOptions()
+        setattr(options, c.att.name, c.att.before)
+        setattr(options, c.dep.name, c.dep.before)
+        eq_(getattr(options, c.att.name), c.att.before)
+        eq_(getattr(options, c.dep.name), c.dep.before)
         # make the change, which fires the dependent change
-        setattr(opts, c.att.name, c.att.after)
-        eq_(getattr(opts, c.dep.name), c.dep.after)
+        setattr(options, c.att.name, c.att.after)
+        eq_(getattr(options, c.dep.name), c.dep.after)
     p = lambda n,b,a: TestConfig(name=n, before=b, after=a)
     c = TestConfig()
     yield test, c(att=p("regular_expression", False, True), dep=p("match_entire_word", True, False))
@@ -556,17 +556,17 @@ def test_FindController_load_options():
         if c.has_ftext:
             pboard.stringForType_(NSStringPboardType) >> c.ftext
         with m:
-            fc = FindController.create() # calls load_options()
-            opts = fc.opts
+            fc = FindController() # calls load_options()
+            options = fc.options
             if c.state is not None:
                 for k, v in FindOptions():
-                    eq_(getattr(opts, k), c.state.get(k, v), k)
-            assert isinstance(opts.recent_finds, NSMutableArray)
-            assert isinstance(opts.recent_replaces, NSMutableArray)
+                    eq_(getattr(options, k), c.state.get(k, v), k)
+            assert isinstance(options.recent_finds, NSMutableArray)
+            assert isinstance(options.recent_replaces, NSMutableArray)
             if c.has_ftext:
-                eq_(opts.find_text, c.ftext)
+                eq_(options.find_text, c.ftext)
             else:
-                eq_(opts.find_text, u"")
+                eq_(options.find_text, u"")
     c = TestConfig(state=None, has_ftext=False)
     d = dict
     yield test, c
@@ -581,9 +581,9 @@ def test_FindController_load_options():
 def test_FindController_save_options():
     def test(c):
         m = Mocker()
-        fc = FindController.create()
-        opts = FindOptions()
-        opts.find_text = c.astate.get("find_text", u"")
+        fc = FindController()
+        options = FindOptions()
+        options.find_text = c.astate.get("find_text", u"")
         nsud = m.replace('editxt.command.base.NSUserDefaults')
         nspb = m.replace(mod, 'NSPasteboard')
         if "find_text" in c.astate:
@@ -592,14 +592,14 @@ def test_FindController_save_options():
             pboard.setString_forType_(c.astate["find_text"], NSStringPboardType)
         zstate = {}
         for k, v in FindOptions():
-            setattr(opts, k, c.astate.get(k, v))
+            setattr(options, k, c.astate.get(k, v))
             zstate[k] = c.zstate.get(k, v)
         defaults = nsud.standardUserDefaults() >> m.mock(NSUserDefaults)
         def do(state, key):
             eq_(state, zstate)
             return True
         expect(defaults.setObject_forKey_(ANY, const.FIND_PANEL_OPTIONS_KEY)).call(do)
-        with m, replattr(fc, "opts", opts):
+        with m, replattr(fc, "options", options):
             fc.save_options()
     c = TestConfig(astate={}, zstate={}, has_ftext=False)
     d = dict

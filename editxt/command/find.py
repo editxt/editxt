@@ -27,7 +27,7 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt.command.base import command, PanelController
+from editxt.command.base import command, objc_delegate, PanelController
 from editxt.command.parser import Choice, Regex, RegexPattern, CommandParser, Options
 from editxt.util import KVOProxy, KVOLink
 
@@ -137,7 +137,7 @@ class Finder(object):
 
     def __init__(self, find_target, options):
         self.find_target = find_target
-        self.opts = options
+        self.options = options
         self.recently_found_range = None
 
     def find_next(self, sender):
@@ -149,7 +149,7 @@ class Finder(object):
     def replace_one(self, sender):
         target = self.find_target()
         if target is not None:
-            options = self.opts
+            options = self.options
             rtext = options.replace_text
             if options.regular_expression and self.recently_found_range is not None:
                 rtext = self.recently_found_range.expand(rtext)
@@ -205,7 +205,7 @@ class Finder(object):
                 target._Finder__last_mark = (ftext, 0)
                 return 0
             text = target.string()
-            options = self.opts
+            options = self.options
             original_ftext = ftext
             if regex and options.regular_expression:
                 finditer = self.regexfinditer
@@ -227,7 +227,7 @@ class Finder(object):
 
     def find(self, direction):
         target = self.find_target()
-        ftext = self.opts.find_text
+        ftext = self.options.find_text
         if target is not None and ftext:
             text = target.string()
             selection = target.selectedRange()
@@ -240,7 +240,7 @@ class Finder(object):
 
     def _find(self, text, ftext, selection, direction):
         """Return the range of the found text or None if not found"""
-        options = self.opts
+        options = self.options
         if options.regular_expression:
             finditer = self.regexfinditer
         elif options.match_entire_word:
@@ -263,13 +263,13 @@ class Finder(object):
 
     def _replace_all(self, in_selection=False):
         target = self.find_target()
-        ftext = self.opts.find_text
+        ftext = self.options.find_text
         range = None if target is None else target.selectedRange()
         if target is None or not ftext or (in_selection and range.length == 0):
             NSBeep()
             return
         text = target.string()
-        options = self.opts
+        options = self.options
         if not in_selection:
             if options.wrap_around:
                 range = NSMakeRange(0, 0)
@@ -316,7 +316,7 @@ class Finder(object):
         of the file
         """
         opts = 0
-        options = self.opts
+        options = self.options
         if options.ignore_case:
             opts |= NSCaseInsensitiveSearch
         forwardSearch = (direction == FORWARD)
@@ -371,7 +371,7 @@ class Finder(object):
         of the file.
         """
         flags = re.UNICODE | re.MULTILINE
-        options = self.opts
+        options = self.options
         if options.ignore_case:
             flags |= re.IGNORECASE
         try:
@@ -412,13 +412,17 @@ class FindController(PanelController):
     OPTIONS_KEY = const.FIND_PANEL_OPTIONS_KEY
     OPTIONS_FACTORY = FindOptions
 
-    find_text = objc.IBOutlet()
-    replace_text = objc.IBOutlet()
-    status_label = objc.IBOutlet()
+    @classmethod
+    def controller_class(cls):
+        return super(FindController, cls).controller_class(
+            find_text=objc.IBOutlet(),
+            replace_text=objc.IBOutlet(),
+            status_label=objc.IBOutlet(),
+        )
 
-    def initWithWindowNibName_(self, name):
-        self = super(FindController, self).initWithWindowNibName_(name)
-        self.finder = Finder(self.find_target, self.opts)
+    def __init__(self):
+        super(FindController, self).__init__()
+        self.finder = Finder(self.find_target, self.options)
         self.action_registry = {
             NSFindPanelActionShowFindPanel: self.show_find_panel,
             NSFindPanelActionNext: self.find_next,
@@ -431,16 +435,19 @@ class FindController(PanelController):
             ACTION_FIND_SELECTED_TEXT: self.find_selected_text,
             ACTION_FIND_SELECTED_TEXT_REVERSE: self.find_selected_text_reverse,
         }
-        #self.opts = opts = KVOProxy(FindOptions())
-        return self
 
+    @objc_delegate
     def windowDidLoad(self):
-        self.window().setLevel_(NSFloatingWindowLevel)
+        self.gui.window().setLevel_(NSFloatingWindowLevel)
         target = self.find_target()
         if target is not None:
             font = target.doc_view.document.default_text_attributes()[NSFontAttributeName]
-            for field in (self.find_text, self.replace_text):
-                field.setFont_(font)
+            self.gui.find_text.setFont_(font)
+            self.gui.replace_text.setFont_(font)
+
+    @property
+    def find_text(self):
+        return self.gui.find_text
 
     # Menu actions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -459,8 +466,8 @@ class FindController(PanelController):
 
     def show_find_panel(self, sender):
         #self.load_options() # restore state
-        self.showWindow_(self)
-        #self.find_text.setStringValue_(self.opts.find_text) # HACK should not have to do this
+        self.gui.showWindow_(self)
+        #self.find_text.setStringValue_(self.options.find_text) # HACK should not have to do this
         self.find_text.selectText_(sender)
 
     def find_next(self, sender):
@@ -498,58 +505,69 @@ class FindController(PanelController):
             range = target.selectedRange()
             if range.length > 0:
                 text = target.string().substringWithRange_(range)
-                if self.opts.regular_expression:
+                if self.options.regular_expression:
                     text = re.escape(text)
-                self.opts.find_text = text
+                self.options.find_text = text
 
     # Panel actions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    @objc_delegate
     def panelFindNext_(self, sender):
         if self.save_options():
-            self.window().orderOut_(sender)
+            self.gui.window().orderOut_(sender)
             self.finder.find_next(sender)
 
+    @objc_delegate
     def panelFindPrevious_(self, sender):
         if self.save_options():
-            self.window().orderOut_(sender)
+            self.gui.window().orderOut_(sender)
             self.finder.find_previous(sender)
 
+    @objc_delegate
     def panelReplace_(self, sender):
         if self.save_options():
-            self.window().orderOut_(sender)
+            self.gui.window().orderOut_(sender)
             self.finder.replace_one(sender)
 
+    @objc_delegate
     def panelReplaceAll_(self, sender):
         if self.save_options():
-            self.window().orderOut_(sender)
+            self.gui.window().orderOut_(sender)
             self.finder.replace_all(sender)
 
+    @objc_delegate
     def panelReplaceAllInSelection_(self, sender):
         if self.save_options():
-            self.window().orderOut_(sender)
+            self.gui.window().orderOut_(sender)
             self.finder.replace_all_in_selection(sender)
 
+    @objc_delegate
     def panelCountFindText_(self, sender):
         if self.validate_expression():
             self.count_occurrences(
-                self.opts.find_text, self.opts.regular_expression)
+                self.options.find_text, self.options.regular_expression)
 
+    @objc_delegate
     def panelCountReplaceText_(self, sender):
         if self.validate_expression():
-            self.count_occurrences(self.opts.replace_text, False)
+            self.count_occurrences(self.options.replace_text, False)
 
+    @objc_delegate
     def panelMarkAll_(self, sender):
         if self.save_options():
             raise NotImplementedError()
 
+    @objc_delegate
     def recentFindSelected_(self, sender):
         # TODO make this support undo so the change can be easily reverted
-        self.opts.find_text = sender.selectedItem().title()
+        self.options.find_text = sender.selectedItem().title()
 
+    @objc_delegate
     def recentReplaceSelected_(self, sender):
         # TODO make this support undo so the change can be easily reverted
-        self.opts.replace_text = sender.selectedItem().title()
+        self.options.replace_text = sender.selectedItem().title()
 
+    @objc_delegate
     def regexHelp_(self, sender):
         # TODO possibly open a sheet with a short description of how regular
         # expressions are used here, including notes about the default flags
@@ -584,7 +602,7 @@ class FindController(PanelController):
 
     def flash_status_text(self, text):
         self.stop_flashing_status()
-        self.status_flasher = StatusFlasher.alloc().init(self.status_label, text)
+        self.status_flasher = StatusFlasher.alloc().init(self.gui.status_label, text)
 
     def stop_flashing_status(self):
         flasher = getattr(self, "status_flasher", None)
@@ -593,16 +611,17 @@ class FindController(PanelController):
 
     # Window delegate implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    @objc_delegate
     def windowWillClose_(self, window):
         self.stop_flashing_status()
 
     # Find Options implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def validate_expression(self):
-        if self.opts.regular_expression and self.find_text is not None:
+        if self.options.regular_expression and self.find_text is not None:
             ftext = self.find_text.stringValue()
             flags = re.UNICODE | re.MULTILINE
-            if self.opts.ignore_case:
+            if self.options.ignore_case:
                 flags |= re.IGNORECASE
             try:
                 regex = re.compile(ftext, flags)
@@ -615,7 +634,7 @@ class FindController(PanelController):
                 NSBeginAlertSheet(
                     u"Cannot Compile Regular Expression",
                     u"OK", None, None,
-                    self.window(), None, None, None, 0,
+                    self.gui.window(), None, None, None, 0,
                     u"Error: %s" % (err,),
                 );
                 return False
@@ -624,29 +643,29 @@ class FindController(PanelController):
     def load_options(self):
         pboard = NSPasteboard.pasteboardWithName_(NSFindPboard)
         if pboard.availableTypeFromArray_([NSStringPboardType]):
-            self.opts.find_text = pboard.stringForType_(NSStringPboardType)
+            self.options.find_text = pboard.stringForType_(NSStringPboardType)
         else:
-            self.opts.find_text = u""
+            self.options.find_text = u""
         super(FindController, self).load_options()
 
     def save_options(self):
         if not self.validate_expression():
             return False
-        def rebuild(opts, listname, newitem):
+        def rebuild(options, listname, newitem):
             if len(newitem) < 1000:
                 newitems = [newitem]
-                for item in getattr(opts, listname):
+                for item in getattr(options, listname):
                     if item != newitem:
                         newitems.append(item)
-                setattr(opts, listname, newitems[:10])
-        opts = self.opts
-        if opts.find_text:
+                setattr(options, listname, newitems[:10])
+        options = self.options
+        if options.find_text:
             pboard = NSPasteboard.pasteboardWithName_(NSFindPboard)
             pboard.declareTypes_owner_([NSStringPboardType], None)
-            pboard.setString_forType_(opts.find_text, NSStringPboardType)
-            rebuild(opts, "recent_finds", opts.find_text)
-        if opts.replace_text:
-            rebuild(opts, "recent_replaces", opts.replace_text)
+            pboard.setString_forType_(options.find_text, NSStringPboardType)
+            rebuild(options, "recent_finds", options.find_text)
+        if options.replace_text:
+            rebuild(options, "recent_replaces", options.replace_text)
         super(FindController, self).save_options()
         return True
 

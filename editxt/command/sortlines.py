@@ -27,7 +27,7 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt.command.base import command, SheetController
+from editxt.command.base import command, objc_delegate, SheetController
 from editxt.command.parser import Choice, Regex, CommandParser, Options
 from editxt.commands import iterlines
 
@@ -49,7 +49,7 @@ log = logging.getLogger(__name__)
     ))
 def sort_lines(textview, sender, args):
     if args is None:
-        sorter = SortLinesController.create_with_textview(textview)
+        sorter = SortLinesController(textview)
         sorter.begin_sheet(sender)
     else:
         sortlines(textview, args)
@@ -81,8 +81,9 @@ class SortLinesController(SheetController):
     NIB_NAME = u"SortLines"
     OPTIONS_FACTORY = SortOptions
 
+    @objc_delegate
     def sort_(self, sender):
-        sortlines(self.textview, self.opts)
+        sortlines(self.textview, self.options)
         self.save_options()
         self.cancel_(sender)
 

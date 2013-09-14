@@ -45,8 +45,8 @@ def test_ChangeIndentationController_load_options():
     mode = dv.indent_mode >> "<indent mode>"
     size = dv.indent_size >> "<indent size>"
     with m:
-        ctl = ChangeIndentationController.create_with_textview(tv) # calls load_options()
-        opts = ctl.opts
+        ctl = ChangeIndentationController(tv) # calls load_options()
+        opts = ctl.options
         eq_(opts.from_mode, mode)
         eq_(opts.from_size, size)
         eq_(opts.to_mode, mode)
@@ -60,7 +60,7 @@ def test_ChangeIndentationController_save_options():
         mode = dv.indent_mode >> "<indent mode>"
         size = dv.indent_size >> "<indent size>"
     with m:
-        ctl = ChangeIndentationController.create_with_textview(tv)
+        ctl = ChangeIndentationController(tv)
         ctl.save_options()
 
 def test_ChangeIndentationController_execute_():
@@ -74,5 +74,5 @@ def test_ChangeIndentationController_execute_():
     m.method(ChangeIndentationController.save_options)()
     m.method(ChangeIndentationController.cancel_)(None)
     with m:
-        ctl = ChangeIndentationController.create_with_textview(tv)
+        ctl = ChangeIndentationController(tv)
         ctl.execute_(None)

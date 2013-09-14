@@ -67,16 +67,16 @@ def test_SortLinesController_default_options():
     sd = ud.standardUserDefaults() >> m.mock(NSUserDefaults)
     sd.dictionaryForKey_(ANY) >> None
     with m:
-        ctl = SortLinesController.create_with_textview(tv)
+        ctl = SortLinesController(tv)
         for name, value in SortOptions.DEFAULTS.iteritems():
-            eq_(getattr(ctl.opts, name), value, name)
+            eq_(getattr(ctl.options, name), value, name)
 
 def test_SortLinesController_sort_():
     m = Mocker()
     sort = m.replace(mod, 'sortlines')
     tv = m.mock(TextView)
-    slc = SortLinesController.create_with_textview(tv)
-    sort(tv, slc.opts)
+    slc = SortLinesController(tv)
+    sort(tv, slc.options)
     m.method(slc.save_options)()
     m.method(slc.cancel_)(None)
     with m:

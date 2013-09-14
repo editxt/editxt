@@ -27,7 +27,7 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt.command.base import command, SheetController
+from editxt.command.base import command, objc_delegate, SheetController
 from editxt.command.parser import Choice, Int, CommandParser, Options
 from editxt.command.util import has_selection, iterlines
 
@@ -45,7 +45,7 @@ WHITESPACE = re.compile(r"[ \t]*")
     ))
 def wrap_lines(textview, sender, args):
     if args is None:
-        wrapper = WrapLinesController.create_with_textview(textview)
+        wrapper = WrapLinesController(textview)
         wrapper.begin_sheet(sender)
     else:
         wrap_selected_lines(textview, args)
@@ -53,12 +53,14 @@ def wrap_lines(textview, sender, args):
 
 @command(title=u"Hard Wrap At Margin",
     hotkey=("\\", NSCommandKeyMask),
+    arg_parser=CommandParser( # TODO test
+        Choice(('indent', True), ('no-indent', False)), # TODO default to last used value
+    ),
     is_enabled=has_selection)
 def wrap_at_margin(textview, sender, args):
     opts = Options()
-    ctl = WrapLinesController.shared_controller()
     opts.wrap_column = const.DEFAULT_RIGHT_MARGIN
-    opts.indent = ctl.opts.indent
+    opts.indent = args.indent if args is not None else True
     wrap_selected_lines(textview, opts)
 
 
@@ -71,8 +73,9 @@ class WrapLinesController(SheetController):
         indent=True,
     )
 
+    @objc_delegate
     def wrap_(self, sender):
-        wrap_selected_lines(self.textview, self.opts)
+        wrap_selected_lines(self.textview, self.options)
         self.save_options()
         self.cancel_(sender)
 
