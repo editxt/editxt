@@ -29,6 +29,7 @@ from Foundation import *
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state
+from editxt.test.command.test_base import replace_history
 
 import editxt.command.base as base
 import editxt.command.wraplines as mod
@@ -49,18 +50,12 @@ def test_wrap_to_margin_guide():
         mod.wrap_at_margin(tv, None, None)
 
 def test_WrapLinesController_default_options():
-    m = Mocker()
-    tv = m.mock(TextView)
-    ud = m.replace(base, 'NSUserDefaults')
-    sd = ud.standardUserDefaults() >> m.mock(NSUserDefaults)
-    sd.dictionaryForKey_(ANY) >> None
-    with m:
-        ctl = WrapLinesController(tv)
-        for name, value in [
-                ("wrap_column", const.DEFAULT_RIGHT_MARGIN),
-                ("indent", True),
-            ]:
-            eq_(getattr(ctl.options, name), value, name)
+    with replace_history() as history:
+        ctl = WrapLinesController(None)
+        eq_(ctl.options._target, mod.Options(
+            wrap_column=const.DEFAULT_RIGHT_MARGIN,
+            indent=True,
+        ))
 
 def test_WrapLinesController_wrap_():
     m = Mocker()

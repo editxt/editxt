@@ -120,7 +120,6 @@ class CommandController(object):
                                     # one arguemnt (`self`).
     #NIB_NAME = "NibFilename"       # Abstract attribute.
     #COMMAND = <command>            # Command callable
-    #OPTIONS_KEY = "named_options"  # Optional abstract attribute.
 
     @classmethod
     def controller_class(cls, **members):
@@ -151,22 +150,26 @@ class CommandController(object):
     def __init__(self):
         self.gui = self.controller_class().create(self, self.NIB_NAME)
         self.history = editxt.app.text_commander.history # HACK deep reach into global
-        if not hasattr(self, "OPTIONS_KEY"):
-            self.OPTIONS_KEY = self.NIB_NAME + "_options"
+        self.command = self.COMMAND.im_func # HACK will not work in Python 3?
         self.options = KVOProxy(self.OPTIONS_FACTORY())
-        self.default_option_keys = [k for k, v in self.options]
+#        if not hasattr(self, "OPTIONS_KEY"):
+#            self.OPTIONS_KEY = self.NIB_NAME + "_options"
+#        self.default_option_keys = [k for k, v in self.options]
         self.load_options()
 
     def load_options(self):
-        defaults = NSUserDefaults.standardUserDefaults()
-        data = defaults.dictionaryForKey_(self.OPTIONS_KEY)
-        if data is None:
-            data = {}
-        options = self.options
-        for key, value in list(options):
-            setattr(options, key, data.get(key, value))
+        for key, value in load_options(self.command, self.history):
+            setattr(self.options, key, value)
+#        defaults = NSUserDefaults.standardUserDefaults()
+#        data = defaults.dictionaryForKey_(self.OPTIONS_KEY)
+#        if data is None:
+#            data = {}
+#        options = self.options
+#        for key, value in list(options):
+#            setattr(options, key, data.get(key, value))
 
     def save_options(self):
+#        save_options(self.options, self.command, self.history)
         data = {k: getattr(self.options, k) for k in self.default_option_keys}
         defaults = NSUserDefaults.standardUserDefaults()
         defaults.setObject_forKey_(data, self.OPTIONS_KEY)

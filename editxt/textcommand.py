@@ -290,6 +290,9 @@ class CommandHistory(History):
         return item
 
     def iter_by_name(self, name):
-        for name_, command in super(CommandHistory, self).__iter__():
-            if name_ == name:
-                yield command
+        """Iterate command history for the named command"""
+        for hist in super(CommandHistory, self).__iter__():
+            if not isinstance(hist, basestring): # HACK handle legacy history format
+                name_, command = hist
+                if name_ == name:
+                    yield command

@@ -58,7 +58,7 @@ def sort_lines(textview, sender, args):
 class SortOptions(Options):
 
     DEFAULTS = dict(
-        selection=False,
+        selection=True,
         reverse=False,
         ignore_leading_whitespace=False,
         ignore_case=True,
@@ -78,6 +78,7 @@ class SortOptions(Options):
 class SortLinesController(SheetController):
     """Window controller for sort lines text command"""
 
+    COMMAND = sort_lines
     NIB_NAME = u"SortLines"
     OPTIONS_FACTORY = SortOptions
 

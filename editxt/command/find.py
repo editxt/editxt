@@ -408,6 +408,7 @@ class Finder(object):
 class FindController(PanelController):
     """Window controller for find panel"""
 
+    COMMAND = find
     NIB_NAME = u"FindPanel"
     OPTIONS_KEY = const.FIND_PANEL_OPTIONS_KEY
     OPTIONS_FACTORY = FindOptions
@@ -435,6 +436,7 @@ class FindController(PanelController):
             ACTION_FIND_SELECTED_TEXT: self.find_selected_text,
             ACTION_FIND_SELECTED_TEXT_REVERSE: self.find_selected_text_reverse,
         }
+        self.default_option_keys = [k for k, v in FindOptions()] # TODO remove on history integration
 
     @objc_delegate
     def windowDidLoad(self):
@@ -646,7 +648,15 @@ class FindController(PanelController):
             self.options.find_text = pboard.stringForType_(NSStringPboardType)
         else:
             self.options.find_text = u""
-        super(FindController, self).load_options()
+        #super(FindController, self).load_options()
+        # TODO remove during history integration
+        defaults = NSUserDefaults.standardUserDefaults()
+        data = defaults.dictionaryForKey_(self.OPTIONS_KEY)
+        if data is None:
+            data = {}
+        options = self.options
+        for key, value in list(options):
+            setattr(options, key, data.get(key, value))
 
     def save_options(self):
         if not self.validate_expression():
@@ -666,7 +676,10 @@ class FindController(PanelController):
             rebuild(options, "recent_finds", options.find_text)
         if options.replace_text:
             rebuild(options, "recent_replaces", options.replace_text)
-        super(FindController, self).save_options()
+        #super(FindController, self).save_options()
+        data = {k: getattr(self.options, k) for k in self.default_option_keys}
+        defaults = NSUserDefaults.standardUserDefaults()
+        defaults.setObject_forKey_(data, self.OPTIONS_KEY)
         return True
 
 

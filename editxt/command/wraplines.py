@@ -40,7 +40,7 @@ WHITESPACE = re.compile(r"[ \t]*")
     hotkey=("\\", NSCommandKeyMask | NSShiftKeyMask),
     is_enabled=has_selection,
     arg_parser=CommandParser( # TODO test
-        Int('wrap_column'),
+        Int('wrap_column', default=const.DEFAULT_RIGHT_MARGIN),
         Choice(('indent', True), ('no-indent', False)),
     ))
 def wrap_lines(textview, sender, args):
@@ -67,6 +67,7 @@ def wrap_at_margin(textview, sender, args):
 class WrapLinesController(SheetController):
     """Window controller for sort lines text command"""
 
+    COMMAND = wrap_lines
     NIB_NAME = u"WrapLines"
     OPTIONS_FACTORY = lambda self:Options(
         wrap_column=const.DEFAULT_RIGHT_MARGIN,

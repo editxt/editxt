@@ -42,6 +42,7 @@ def reindent(textview, sender, args):
 class ChangeIndentationController(SheetController):
     """Window controller for sort lines text command"""
 
+    COMMAND = reindent
     NIB_NAME = u"ChangeIndentation"
 
     def load_options(self):

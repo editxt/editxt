@@ -37,6 +37,7 @@ import editxt.command.find as mod
 from editxt.command.find import Finder, FindController, FindOptions, FoundRange
 from editxt.command.find import FORWARD, BACKWARD
 from editxt.controls.textview import TextView
+from editxt.test.command.test_base import replace_history
 
 log = logging.getLogger(__name__)
 
@@ -545,9 +546,34 @@ def test_FindOptions_dependent_options():
     yield test, c(att=p("match_entire_word", True, False), dep=p("regular_expression", False, False))
 
 def test_FindController_load_options():
+#    def test(c):
+#        m = Mocker()
+#        nspb = m.replace(mod, 'NSPasteboard')
+#        pboard = nspb.pasteboardWithName_(NSFindPboard)
+#        pboard.availableTypeFromArray_([NSStringPboardType]) >> c.has_ftext
+#        if c.has_ftext:
+#            pboard.stringForType_(NSStringPboardType) >> c.ftext
+#        with replace_history() as history:
+#            if c.state:
+#                options = FindOptions(**c.state)
+#                history.append(
+#                    FindController.COMMAND.name,
+#                    FindController.COMMAND.arg_parser.arg_string(options))
+#            with m:
+#                fc = FindController() # calls load_options()
+#                options = fc.options
+#                if c.state is not None:
+#                    for k, v in FindOptions():
+#                        eq_(getattr(options, k), c.state.get(k, v), k)
+#                assert isinstance(options.recent_finds, NSMutableArray)
+#                assert isinstance(options.recent_replaces, NSMutableArray)
+#                if c.has_ftext:
+#                    eq_(options.find_text, c.ftext)
+#                else:
+#                    eq_(options.find_text, u"")
     def test(c):
         m = Mocker()
-        nsud = m.replace('editxt.command.base.NSUserDefaults')
+        nsud = m.replace('editxt.command.find.NSUserDefaults')
         nspb = m.replace(mod, 'NSPasteboard')
         defaults = nsud.standardUserDefaults() >> m.mock(NSUserDefaults)
         defaults.dictionaryForKey_(const.FIND_PANEL_OPTIONS_KEY) >> c.state
@@ -555,7 +581,7 @@ def test_FindController_load_options():
         pboard.availableTypeFromArray_([NSStringPboardType]) >> c.has_ftext
         if c.has_ftext:
             pboard.stringForType_(NSStringPboardType) >> c.ftext
-        with m:
+        with m, replace_history() as history:
             fc = FindController() # calls load_options()
             options = fc.options
             if c.state is not None:

@@ -21,6 +21,7 @@ from __future__ import with_statement
 
 import logging
 import functools
+from contextlib import contextmanager
 
 from AppKit import *
 from Foundation import *
@@ -29,26 +30,46 @@ from nose.tools import *
 from editxt.test.util import (TestConfig, untested, check_app_state, replattr,
     tempdir)
 
+import editxt
 import editxt.command.base as mod
 from editxt.controls.textview import TextView
 from editxt.command.base import CommandController
 from editxt.command.base import SheetController, PanelController
 from editxt.command.parser import ArgumentError, CommandParser, Int, Options
+from editxt.textcommand import CommandHistory
 from editxt.util import KVOProxy
 
 log = logging.getLogger(__name__)
+
+
+@mod.command(name='abc', title='Title', hotkey=(',', 0),
+    is_enabled=lambda *a:False,
+    arg_parser=CommandParser(Int("value")), lookup_with_arg_parser=True)
+def dummy_command(textview, sender, args):
+    assert False, "this command is not meant to be executed"
 
 def setup(controller_class, nib_name="TestController"):
     def setup_controller(func):
         @functools.wraps(func)
         def wrapper():
+            assert not hasattr(controller_class, 'COMMAND')
+            assert not hasattr(controller_class, 'NIB_NAME')
+            controller_class.COMMAND = dummy_command
             controller_class.NIB_NAME = nib_name
             try:
                 func()
             finally:
+                del controller_class.COMMAND
                 del controller_class.NIB_NAME
         return wrapper
     return setup_controller
+
+@contextmanager
+def replace_history():
+    with tempdir() as tmp:
+        history = CommandHistory(tmp)
+        with replattr(editxt.app.text_commander, "history", history):
+            yield history
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # command decorator tests
@@ -94,10 +115,8 @@ def test_command_decorator_names():
 
 
 def test_load_options():
-    from editxt.textcommand import CommandHistory
     def test(argstr=None, value=None):
-        with tempdir() as tmp:
-            history = CommandHistory(tmp)
+        with replace_history() as history:
             if argstr:
                 history.append(dummy_command.name, argstr)
             options = mod.load_options(dummy_command, history)
@@ -109,9 +128,8 @@ def test_load_options():
 
 
 def test_save_options():
-    from editxt.textcommand import CommandHistory
     def test(options, hist, command=dummy_command):
-        with tempdir() as tmp:
+        with replace_history() as history:
             history = CommandHistory(tmp)
             mod.save_options(options, command, history)
             eq_(next(iter(history), None), hist)
@@ -125,24 +143,8 @@ def test_save_options():
     yield test, Options(value=345), "xyz 345", xyz
     yield test, Options(value=42), "xyz", xyz
 
-
-@mod.command(name='abc', title='Title', hotkey=(',', 0),
-    is_enabled=lambda *a:False,
-    arg_parser=CommandParser(Int("value")), lookup_with_arg_parser=True)
-def dummy_command(textview, sender, args):
-    assert False, "this command is not meant to be executed"
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # CommandController tests
-
-@setup(CommandController)
-def test_CommandController_create():
-    tv = None
-    c1 = CommandController()
-    assert isinstance(c1, CommandController)
-    c2 = CommandController()
-    assert isinstance(c2, CommandController)
-    assert c1 is not c2
 
 class OtherController(PanelController): pass
 
@@ -156,41 +158,31 @@ def test_PanelController_shared_controller():
 
 @setup(CommandController)
 def test_CommandController_options():
-    class FakeOptions(Options): pass
-    with replattr(CommandController, "OPTIONS_FACTORY", FakeOptions):
-        ctl = CommandController()
-        #assert isinstance(ctl.options, FakeOptions), ctl.options
-        eq_(type(ctl.options).__name__, "FakeOptions_KVOProxy")
+    with replace_history() as history:
+        ctl = FakeController()
+        eq_(ctl.history, history)
         assert ctl.options is ctl.gui.options()
         obj = object()
         ctl.gui.setOptions_(obj)
         eq_(ctl.options, obj)
 
 class FakeController(CommandController):
+    COMMAND = dummy_command
     NIB_NAME = "FakeController"
-    OPTIONS_KEY = "FakeController_options"
-    OPTIONS_FACTORY = lambda s:Options(key1="<default x>", key2="<default y>")
+    #OPTIONS_KEY = "FakeController_options"
+    #OPTIONS_FACTORY = lambda s:Options(key1="<default x>", key2="<default y>")
 
 def test_CommandController_load_options():
-    def test(c):
-        m = Mocker()
-        ud = m.replace(mod, 'NSUserDefaults')
-        sd = ud.standardUserDefaults() >> m.mock(NSUserDefaults)
-        ctl = FakeController()
-        if c.present:
-            values = {"key1": "<val x>", "key2": "<val y>"}
-            state = sd.dictionaryForKey_(ctl.OPTIONS_KEY) >> values
-        else:
-            values = {"key1": "<default x>", "key2": "<default y>"}
-            state = sd.dictionaryForKey_(ctl.OPTIONS_KEY) >> None
-        with m:
+    def test(hist, expect):
+        with replace_history() as history:
+            ctl = FakeController()
+            eq_(ctl.history, history)
+            if hist:
+                history.append(ctl.command.name, hist)
             ctl.load_options()
-            options = ctl.options
-            for key, value in values.iteritems():
-                eq_(getattr(options, key), value)
-    c = TestConfig()
-    yield test, c(present=False)
-    yield test, c(present=True)
+            eq_(ctl.options.__dict__["_target"], expect)
+    yield test, None, Options(value=None)
+    yield test, "123", Options(value=123)
 
 def test_CommandController_save_options():
     m = Mocker()

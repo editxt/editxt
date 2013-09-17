@@ -35,6 +35,7 @@ import editxt.command.sortlines as mod
 import editxt.constants as const
 from editxt.command.sortlines import SortLinesController, SortOptions, sortlines
 from editxt.controls.textview import TextView
+from editxt.test.command.test_base import replace_history
 from editxt.test.test_commands import CommandTester
 
 log = logging.getLogger(__name__)
@@ -61,13 +62,8 @@ def test_sort_command():
     yield test, "sort all   match-case", "|0|4dJag|0"
 
 def test_SortLinesController_default_options():
-    m = Mocker()
-    tv = m.mock(TextView)
-    ud = m.replace(base, 'NSUserDefaults')
-    sd = ud.standardUserDefaults() >> m.mock(NSUserDefaults)
-    sd.dictionaryForKey_(ANY) >> None
-    with m:
-        ctl = SortLinesController(tv)
+    with replace_history() as history:
+        ctl = SortLinesController(None)
         for name, value in SortOptions.DEFAULTS.iteritems():
             eq_(getattr(ctl.options, name), value, name)
 
@@ -75,12 +71,13 @@ def test_SortLinesController_sort_():
     m = Mocker()
     sort = m.replace(mod, 'sortlines')
     tv = m.mock(TextView)
-    slc = SortLinesController(tv)
-    sort(tv, slc.options)
-    m.method(slc.save_options)()
-    m.method(slc.cancel_)(None)
-    with m:
-        slc.sort_(None)
+    with replace_history() as history:
+        slc = SortLinesController(tv)
+        sort(tv, slc.options)
+        m.method(slc.save_options)()
+        m.method(slc.cancel_)(None)
+        with m:
+            slc.sort_(None)
 
 def test_sortlines():
     optmap = [
