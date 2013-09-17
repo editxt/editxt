@@ -130,7 +130,6 @@ def test_load_options():
 def test_save_options():
     def test(options, hist, command=dummy_command):
         with replace_history() as history:
-            history = CommandHistory(tmp)
             mod.save_options(options, command, history)
             eq_(next(iter(history), None), hist)
 
@@ -169,8 +168,6 @@ def test_CommandController_options():
 class FakeController(CommandController):
     COMMAND = dummy_command
     NIB_NAME = "FakeController"
-    #OPTIONS_KEY = "FakeController_options"
-    #OPTIONS_FACTORY = lambda s:Options(key1="<default x>", key2="<default y>")
 
 def test_CommandController_load_options():
     def test(hist, expect):
@@ -185,18 +182,12 @@ def test_CommandController_load_options():
     yield test, "123", Options(value=123)
 
 def test_CommandController_save_options():
-    m = Mocker()
-    ud = m.replace(mod, 'NSUserDefaults')
-    sd = ud.standardUserDefaults() >> m.mock(NSUserDefaults)
-    ctl = FakeController()
-    options = ctl.options
-    options.other_option = "should not be saved"
-    data = {}
-    for key, value in {"key1": "<default x>", "key2": "<default y>"}.items():
-        data[key] = value
-    sd.setObject_forKey_(data, ctl.OPTIONS_KEY)
-    with m:
-        ctl.save_options()
+    with replace_history() as history:
+        eq_(next(iter(history), None), None)
+        slc = FakeController()
+        slc.options = Options(value=42)
+        slc.save_options()
+        eq_(next(iter(history)), "42")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # SheetController tests

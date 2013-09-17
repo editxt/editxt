@@ -610,7 +610,7 @@ def test_FindController_save_options():
         fc = FindController()
         options = FindOptions()
         options.find_text = c.astate.get("find_text", u"")
-        nsud = m.replace('editxt.command.base.NSUserDefaults')
+        nsud = m.replace('editxt.command.find.NSUserDefaults')
         nspb = m.replace(mod, 'NSPasteboard')
         if "find_text" in c.astate:
             pboard = nspb.pasteboardWithName_(NSFindPboard)
@@ -627,7 +627,7 @@ def test_FindController_save_options():
         expect(defaults.setObject_forKey_(ANY, const.FIND_PANEL_OPTIONS_KEY)).call(do)
         with m, replattr(fc, "options", options):
             fc.save_options()
-    c = TestConfig(astate={}, zstate={}, has_ftext=False)
+    c = TestConfig(astate={}, zstate={})
     d = dict
     yield test, c
     yield test, c(astate=d(find_text="abc"), zstate=d(find_text="abc", recent_finds=["abc"]))
