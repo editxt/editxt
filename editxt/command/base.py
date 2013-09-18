@@ -119,13 +119,13 @@ class CommandController(object):
                                     # If this is a function, it should accept
                                     # one arguemnt (`self`).
     #NIB_NAME = "NibFilename"       # Abstract attribute.
-    #COMMAND = <command>            # Command callable
+    #COMMAND = <command>            # Abstract attribute: command callable
 
     @classmethod
     def controller_class(cls, **members):
         try:
-            return cls._controller_class
-        except AttributeError:
+            return cls.__dict__['_controller_class']
+        except KeyError:
             pass
         def make_delegate(method):
             if not method.__name__.endswith("_"):

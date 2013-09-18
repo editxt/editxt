@@ -46,6 +46,9 @@ FORWARD = "FORWARD"
 BACKWARD = "BACKWARD"
 WRAPTOKEN = "WRAPTOKEN"
 
+REGEX = "regex"
+LITERAL = "literal"
+WORD = "word"
 
 @command(arg_parser=CommandParser(
     Regex('pattern', replace=True, default=(RegexPattern(u""), u"")),
@@ -55,20 +58,13 @@ WRAPTOKEN = "WRAPTOKEN"
         ('replace-all all', 'replace_all'),
         ('replace-in-selection in-selection selection', 'replace_all_in_selection'),
         name='action'),
-    Choice('regex literal-text word', name='search_type'),
+    Choice('regex literal word', name='search_type'),
     Choice(('wrap', True), ('no-wrap', False), name='wrap_around'),
 ), lookup_with_arg_parser=True)
 def find(textview, sender, args):
     assert args is not None, sender
     action = args.__dict__.pop('action')
-    search_type = args.__dict__.pop('search_type')
-    find, replace = args.__dict__.pop('pattern')
     opts = FindOptions(**args.__dict__)
-    opts.find_text = find
-    opts.replace_text = replace or ""
-    opts.ignore_case = bool(find.flags & re.IGNORECASE)
-    opts.match_entire_word = (search_type == 'word')
-    opts.regular_expression = (search_type == "regex")
     finder = Finder(lambda:textview, opts)
     getattr(finder, action)(sender)
 
@@ -88,49 +84,78 @@ def toggle_boolean(depname):
         return property(fget, fset)
     return make_property
 
-def mutable_array_property(name):
-    def fget(self):
-        try:
-            return self.__dict__[name]
-        except KeyError:
-            raise AttributeError(name)
-    def fset(self, value):
-        try:
-            array = self.__dict__[name]
-        except KeyError:
-            self.__dict__[name] = NSMutableArray.arrayWithArray_(value)
-        else:
-            # FIX problem here: KVO notifications not sent
-            array.setArray_(value)
-    return property(fget, fset)
-
 
 class FindOptions(Options):
 
     DEFAULTS = dict(
-        #find_text = u"",
-        replace_text = u"",
-        recent_finds = (),
-        recent_replaces = (),
-        regular_expression = False,
-        match_entire_word = False,
-        ignore_case = True,
+        pattern = (RegexPattern(), u""),
+        action = 'find_next',
+        search_type = REGEX,
         wrap_around = True,
     )
 
     dependent_key_paths = {
-        "match_entire_word": ["regular_expression"],
-        "regular_expression": ["match_entire_word"],
+        "match_entire_word": ["regular_expression", "search_type"],
+        "regular_expression": ["match_entire_word", "search_type"],
+        "search_type": ["match_entire_word", "regular_expression"],
     }
 
-    recent_finds = mutable_array_property("recent_finds")
-    recent_replaces = mutable_array_property("recent_replaces")
+    @property
+    def find_text(self):
+        return self.pattern[0]
+    @find_text.setter
+    def find_text(self, value):
+        if not isinstance(value, RegexPattern):
+            value = RegexPattern(value)
+        value.flags = self.pattern[0].flags
+        self.pattern = (value, self.pattern[1])
 
-    @toggle_boolean("match_entire_word")
-    def regular_expression(): pass
+    @property
+    def replace_text(self):
+        return self.pattern[1]
+    @replace_text.setter
+    def replace_text(self, value):
+        self.pattern = (self.pattern[0], value)
 
-    @toggle_boolean("regular_expression")
-    def match_entire_word(): pass
+    @property
+    def ignore_case(self):
+        return self.pattern[0].flags & re.IGNORECASE
+    @ignore_case.setter
+    def ignore_case(self, value):
+        if value and not self.pattern[0].flags & re.IGNORECASE:
+            self.pattern[0].flags |= re.IGNORECASE
+        elif not value and self.pattern[0].flags & re.IGNORECASE:
+            self.pattern[0].flags ^= re.IGNORECASE
+
+    @property
+    def regular_expression(self):
+        return self.search_type == REGEX
+    @regular_expression.setter
+    def regular_expression(self, value):
+        assert isinstance(value, (int, bool)), value
+        if value or self.search_type != WORD:
+            self.search_type = REGEX if value else LITERAL
+
+    @property
+    def match_entire_word(self):
+        return self.search_type == WORD
+    @match_entire_word.setter
+    def match_entire_word(self, value):
+        assert isinstance(value, (int, bool)), value
+        if value or self.search_type != REGEX:
+            self.search_type = WORD if value else LITERAL
+
+    @property
+    def recent_finds(self):
+        # HACK global resource
+        items = editxt.app.text_commander.history.iter_by_name(find.name)
+        result = []
+        for i, item in enumerate(items):
+            if i < 10:
+                result.append(item)
+            else:
+                break
+        return result
 
 
 class Finder(object):

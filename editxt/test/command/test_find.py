@@ -30,6 +30,7 @@ from Foundation import *
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state, replattr
+from editxt.test.command.test_base import replace_history
 
 import editxt
 import editxt.constants as const
@@ -37,7 +38,6 @@ import editxt.command.find as mod
 from editxt.command.find import Finder, FindController, FindOptions, FoundRange
 from editxt.command.find import FORWARD, BACKWARD
 from editxt.controls.textview import TextView
-from editxt.test.command.test_base import replace_history
 
 log = logging.getLogger(__name__)
 
@@ -47,13 +47,11 @@ log = logging.getLogger(__name__)
 
 def test_find_command():
     def test(c):
-        assert int(c.regex) + int(c.match_word) < 2, c
         options = FindOptions(**{opt: c[key] for key, opt in {
             "find": "find_text",
             "replace": "replace_text",
-            "regex": "regular_expression",
+            "search": "search_type",
             "ignore_case": "ignore_case",
-            "match_word": "match_entire_word",
             "wrap": "wrap_around",
         }.items()})
         m = Mocker()
@@ -69,8 +67,8 @@ def test_find_command():
             args = mod.find.arg_parser.parse(c.input)
             mod.find(tv, "<sender>", args)
 
-    c = TestConfig(find="", replace="", regex=True, ignore_case=False,
-                   match_word=False, wrap=True, action="find_next")
+    c = TestConfig(find="", replace="", search=mod.REGEX, ignore_case=False,
+                   wrap=True, action="find_next")
     yield test, c(input=u"")
     yield test, c(input=u"/abc", find="abc")
     yield test, c(input=u":abc", find="abc")
@@ -89,9 +87,9 @@ def test_find_command():
     yield test, c(input=u"/abc// o", find="abc", action="replace_one")
     yield test, c(input=u"/abc// a", find="abc", action="replace_all")
     yield test, c(input=u"/abc// s", find="abc", action="replace_all_in_selection")
-    yield test, c(input=u"/abc//  r", find="abc", regex=True)
-    yield test, c(input=u"/abc//  l", find="abc", regex=False, match_word=False)
-    yield test, c(input=u"/abc//  w", find="abc", regex=False, match_word=True)
+    yield test, c(input=u"/abc//  r", find="abc", search=mod.REGEX)
+    yield test, c(input=u"/abc//  l", find="abc", search=mod.LITERAL)
+    yield test, c(input=u"/abc//  w", find="abc", search=mod.WORD)
     yield test, c(input=u"/abc//   n", find="abc", wrap=False)
 
 def test_Finder_mark_occurrences():
