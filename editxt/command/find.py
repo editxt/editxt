@@ -26,6 +26,7 @@ import time
 from AppKit import *
 from Foundation import *
 
+import editxt
 import editxt.constants as const
 from editxt.command.base import command, objc_delegate, PanelController
 from editxt.command.parser import Choice, Regex, RegexPattern, CommandParser, Options
@@ -208,8 +209,7 @@ class Finder(object):
         if last_mark[0] == ftext:
             return last_mark[1]
         if color is None:
-            from editxt import app # HACK global resource
-            color = app.config["highlight_selected_text.color"]
+            color = editxt.app.config["highlight_selected_text.color"] # HACK global resource
         ts = target.textStorage()
         ts.beginEditing()
         try:
@@ -605,9 +605,8 @@ class FindController(PanelController):
     # Utility methods ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def find_target(self):
-        from editxt import app
         try:
-            editor = app.iter_editors().next()
+            editor = editxt.app.iter_editors().next()
         except StopIteration:
             pass
         else:
@@ -668,43 +667,19 @@ class FindController(PanelController):
         return True
 
     def load_options(self):
+        super(FindController, self).load_options()
         pboard = NSPasteboard.pasteboardWithName_(NSFindPboard)
         if pboard.availableTypeFromArray_([NSStringPboardType]):
             self.options.find_text = pboard.stringForType_(NSStringPboardType)
-        else:
-            self.options.find_text = u""
-        #super(FindController, self).load_options()
-        # TODO remove during history integration
-        defaults = NSUserDefaults.standardUserDefaults()
-        data = defaults.dictionaryForKey_(self.OPTIONS_KEY)
-        if data is None:
-            data = {}
-        options = self.options
-        for key, value in list(options):
-            setattr(options, key, data.get(key, value))
 
     def save_options(self):
-        if not self.validate_expression():
-            return False
-        def rebuild(options, listname, newitem):
-            if len(newitem) < 1000:
-                newitems = [newitem]
-                for item in getattr(options, listname):
-                    if item != newitem:
-                        newitems.append(item)
-                setattr(options, listname, newitems[:10])
         options = self.options
-        if options.find_text:
-            pboard = NSPasteboard.pasteboardWithName_(NSFindPboard)
-            pboard.declareTypes_owner_([NSStringPboardType], None)
-            pboard.setString_forType_(options.find_text, NSStringPboardType)
-            rebuild(options, "recent_finds", options.find_text)
-        if options.replace_text:
-            rebuild(options, "recent_replaces", options.replace_text)
-        #super(FindController, self).save_options()
-        data = {k: getattr(self.options, k) for k in self.default_option_keys}
-        defaults = NSUserDefaults.standardUserDefaults()
-        defaults.setObject_forKey_(data, self.OPTIONS_KEY)
+        if not (options.find_text and self.validate_expression()):
+            return False
+        pboard = NSPasteboard.pasteboardWithName_(NSFindPboard)
+        pboard.declareTypes_owner_([NSStringPboardType], None)
+        pboard.setString_forType_(options.find_text, NSStringPboardType)
+        super(FindController, self).save_options()
         return True
 
 

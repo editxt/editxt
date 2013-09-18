@@ -37,6 +37,7 @@ import editxt.constants as const
 import editxt.command.find as mod
 from editxt.command.find import Finder, FindController, FindOptions, FoundRange
 from editxt.command.find import FORWARD, BACKWARD
+from editxt.command.parser import RegexPattern
 from editxt.controls.textview import TextView
 
 log = logging.getLogger(__name__)
@@ -544,96 +545,68 @@ def test_FindOptions_dependent_options():
     yield test, c(att=p("match_entire_word", True, False), dep=p("regular_expression", False, False))
 
 def test_FindController_load_options():
-#    def test(c):
-#        m = Mocker()
-#        nspb = m.replace(mod, 'NSPasteboard')
-#        pboard = nspb.pasteboardWithName_(NSFindPboard)
-#        pboard.availableTypeFromArray_([NSStringPboardType]) >> c.has_ftext
-#        if c.has_ftext:
-#            pboard.stringForType_(NSStringPboardType) >> c.ftext
-#        with replace_history() as history:
-#            if c.state:
-#                options = FindOptions(**c.state)
-#                history.append(
-#                    FindController.COMMAND.name,
-#                    FindController.COMMAND.arg_parser.arg_string(options))
-#            with m:
-#                fc = FindController() # calls load_options()
-#                options = fc.options
-#                if c.state is not None:
-#                    for k, v in FindOptions():
-#                        eq_(getattr(options, k), c.state.get(k, v), k)
-#                assert isinstance(options.recent_finds, NSMutableArray)
-#                assert isinstance(options.recent_replaces, NSMutableArray)
-#                if c.has_ftext:
-#                    eq_(options.find_text, c.ftext)
-#                else:
-#                    eq_(options.find_text, u"")
     def test(c):
         m = Mocker()
-        nsud = m.replace('editxt.command.find.NSUserDefaults')
         nspb = m.replace(mod, 'NSPasteboard')
-        defaults = nsud.standardUserDefaults() >> m.mock(NSUserDefaults)
-        defaults.dictionaryForKey_(const.FIND_PANEL_OPTIONS_KEY) >> c.state
         pboard = nspb.pasteboardWithName_(NSFindPboard)
-        pboard.availableTypeFromArray_([NSStringPboardType]) >> c.has_ftext
-        if c.has_ftext:
+        pboard.availableTypeFromArray_([NSStringPboardType]) >> (c.ftext is not None)
+        if c.ftext is not None:
             pboard.stringForType_(NSStringPboardType) >> c.ftext
-        with m, replace_history() as history:
-            fc = FindController() # calls load_options()
-            options = fc.options
-            if c.state is not None:
-                for k, v in FindOptions():
-                    eq_(getattr(options, k), c.state.get(k, v), k)
-            assert isinstance(options.recent_finds, NSMutableArray)
-            assert isinstance(options.recent_replaces, NSMutableArray)
-            if c.has_ftext:
-                eq_(options.find_text, c.ftext)
-            else:
-                eq_(options.find_text, u"")
-    c = TestConfig(state=None, has_ftext=False)
-    d = dict
+        with replace_history() as history:
+            if c.hist is not None:
+                history.append(FindController.COMMAND.name, c.hist)
+            with m:
+                fc = FindController() # calls load_options()
+                eq_(fc.options._target, FindOptions(**c.opts))
+                eq_(fc.options.recent_finds, [] if c.hist is None else [c.hist])
+    o = dict
+    c = TestConfig(ftext=None, hist=None, opts={})
     yield test, c
-    yield test, c(has_ftext=True, ftext=u"")
-    yield test, c(has_ftext=True, ftext=u"abc")
-    yield test, c(state={})
-    yield test, c(state=d(replace_text=u"repl"))
-    yield test, c(state=d(replace_text=u"repl", wrap_around=False))
-    yield test, c(state=d(recent_finds=[u"find"]))
-    yield test, c(state=d(recent_replaces=[u"repl"]))
+    yield test, c(ftext=u"", hist="/abc", opts=o(find_text=u""))
+    yield test, c(ftext=u"def", hist="/abc", opts=o(find_text=u"def"))
+    yield test, c(hist="/")
+    yield test, c(hist="/abc", opts=o(find_text=u"abc"))
+    yield test, c(hist="//repl", opts=o(replace_text=u"repl"))
+    yield test, c(hist="/abc//i find-previous literal no-wrap",
+                    opts=o(
+                        find_text=u"abc",
+                        action="find_previous",
+                        ignore_case=True,
+                        search_type=mod.LITERAL,
+                        wrap_around=False,
+                    ))
 
 def test_FindController_save_options():
     def test(c):
         m = Mocker()
-        fc = FindController()
-        options = FindOptions()
-        options.find_text = c.astate.get("find_text", u"")
-        nsud = m.replace('editxt.command.find.NSUserDefaults')
-        nspb = m.replace(mod, 'NSPasteboard')
-        if "find_text" in c.astate:
-            pboard = nspb.pasteboardWithName_(NSFindPboard)
-            pboard.declareTypes_owner_([NSStringPboardType], None)
-            pboard.setString_forType_(c.astate["find_text"], NSStringPboardType)
-        zstate = {}
-        for k, v in FindOptions():
-            setattr(options, k, c.astate.get(k, v))
-            zstate[k] = c.zstate.get(k, v)
-        defaults = nsud.standardUserDefaults() >> m.mock(NSUserDefaults)
-        def do(state, key):
-            eq_(state, zstate)
-            return True
-        expect(defaults.setObject_forKey_(ANY, const.FIND_PANEL_OPTIONS_KEY)).call(do)
-        with m, replattr(fc, "options", options):
-            fc.save_options()
-    c = TestConfig(astate={}, zstate={})
-    d = dict
-    yield test, c
-    yield test, c(astate=d(find_text="abc"), zstate=d(find_text="abc", recent_finds=["abc"]))
-    yield test, c(astate=d(replace_text="abc"), zstate=d(replace_text="abc", recent_replaces=["abc"]))
-    yield test, c(astate=d(find_text="abc", recent_finds=list("abcdefghij")), zstate=d(
-        find_text="abc",
-        recent_finds=["abc"] + list("abcdefghi"),
-    ))
+        with replace_history() as history:
+            fc = FindController() # calls load_options()
+            fc.options.find_text = u"" # clear value from real pasteboard
+            fc.options.ignore_case = False
+            nspb = m.replace(mod, 'NSPasteboard')
+            if "find_text" in c.opts:
+                pboard = nspb.pasteboardWithName_(NSFindPboard)
+                pboard.declareTypes_owner_([NSStringPboardType], None)
+                pboard.setString_forType_(c.opts["find_text"], NSStringPboardType)
+            with m:
+                for k, v in c.opts.items():
+                    setattr(fc.options, k, v)
+                print fc.options._target
+                eq_(fc.save_options(), c.res, fc.options._target)
+                eq_(list(history), [] if c.hist is None else [c.hist])
+    o = dict
+    c = TestConfig(opts={}, hist=None, res=True)
+    yield test, c(res=False)
+    yield test, c(opts=o(find_text="abc"), hist="/abc//")
+    yield test, c(opts=o(replace_text="abc"), res=False)
+    yield test, c(opts=o(
+            find_text="abc",
+            replace_text="def",
+            ignore_case=True,
+            action="replace_all",
+            search_type=mod.WORD,
+            wrap_around=False,
+        ), hist="/abc/def/i replace-all word no-wrap")
 
 
 # def test():
