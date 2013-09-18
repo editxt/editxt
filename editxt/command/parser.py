@@ -589,6 +589,9 @@ class RegexPattern(unicode):
         obj.flags = flags
         return obj
 
+    def __repr__(self):
+        return super(RegexPattern, self).__repr__() + Regex.repr_flags(self)
+
 
 class Regex(Field):
 
@@ -723,6 +726,19 @@ class Regex(Field):
             flags=re.UNICODE | re.VERBOSE
         )[0]
 
+    @classmethod
+    def repr_flags(cls, value):
+        if not value.flags:
+            return u""
+        chars = []
+        if value.flags & re.IGNORECASE:
+            chars.append(u"i")
+        if value.flags & re.DOTALL:
+            chars.append(u"s")
+        if value.flags & re.LOCALE:
+            chars.append(u"l")
+        return u"".join(chars)
+
     def arg_string(self, value):
         if value == self.default:
             return ""
@@ -742,14 +758,7 @@ class Regex(Field):
             if delim in replace:
                 replace = self.escape(replace, delim)
             pattern += replace + delim
-        flags = 0
-        if find.flags & re.IGNORECASE:
-            pattern += "i"
-        if find.flags & re.DOTALL:
-            pattern += "s"
-        if find.flags & re.LOCALE:
-            pattern += "l"
-        return pattern
+        return pattern + self.repr_flags(find)
 
 
 class SubParser(Field):
