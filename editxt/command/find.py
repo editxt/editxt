@@ -158,6 +158,11 @@ class FindOptions(Options):
                 break
         return result
 
+    @property
+    def recent_replaces(self):
+        # DEPRECATED here so nib file can still bind
+        return []
+
 
 class Finder(object):
 
@@ -679,7 +684,8 @@ class FindController(PanelController):
         pboard = NSPasteboard.pasteboardWithName_(NSFindPboard)
         pboard.declareTypes_owner_([NSStringPboardType], None)
         pboard.setString_forType_(options.find_text, NSStringPboardType)
-        super(FindController, self).save_options()
+        if len(options.find_text) < 1000 and len(options.replace_text) < 1000:
+            super(FindController, self).save_options()
         return True
 
 
