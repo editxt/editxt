@@ -66,6 +66,10 @@ def command(func=None, name=None, title=None, hotkey=None,
     if isinstance(name, basestring):
         name = name.split()
     def command_decorator(func):
+        def parse(argstr):
+            if argstr.startswith(func.name + " "):
+                argstr = argstr[len(func.name) + 1:]
+            return func.arg_parser.parse(argstr)
         func.is_text_command = True
         func.name = name[0] if name else func.__name__
         func.names = name or [func.__name__]
@@ -74,6 +78,7 @@ def command(func=None, name=None, title=None, hotkey=None,
         func.is_enabled = is_enabled or (lambda textview, sender: True)
         func.arg_parser = arg_parser or CommandParser(VarArgs("args"))
         func.lookup_with_arg_parser = lookup_with_arg_parser
+        func.parse = parse
         return func
     if func is None:
         return command_decorator

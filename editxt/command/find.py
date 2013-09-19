@@ -99,6 +99,10 @@ class FindOptions(Options):
         "match_entire_word": ["regular_expression", "search_type"],
         "regular_expression": ["match_entire_word", "search_type"],
         "search_type": ["match_entire_word", "regular_expression"],
+        "pattern": ["find_text", "replace_text", "ignore_case"],
+        "find_text": ["pattern"],
+        "replace_text": ["pattern"],
+        "ignore_case": ["pattern"],
     }
 
     @property
@@ -592,7 +596,14 @@ class FindController(PanelController):
     @objc_delegate
     def recentFindSelected_(self, sender):
         # TODO make this support undo so the change can be easily reverted
-        self.options.find_text = sender.selectedItem().title()
+        argstr = sender.selectedItem().title()
+        try:
+            options = self.command.parse(argstr)
+            for key, value in options:
+                if key != "action":
+                    setattr(self.options, key, value)
+        except Exception:
+            log.warn("cannot parse find command: %s", argstr, exc_info=True)
 
     @objc_delegate
     def recentReplaceSelected_(self, sender):

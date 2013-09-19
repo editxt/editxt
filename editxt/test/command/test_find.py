@@ -313,17 +313,34 @@ def test_FindController_actions():
         yield test, cx(meth="panelCountReplaceText_", val="replace_text", regex=False)
 
     def do(m, c, fc, sender):
-        text = sender.selectedItem().title() >> "<value>"
-        prop = m.property(fc, "options").value >> m.mock()
-        setattr(prop, c.prop, text)
-    yield test, c(meth="recentFindSelected_", do=do, prop="find_text")
-    yield test, c(meth="recentReplaceSelected_", do=do, prop="replace_text")
-
-    def do(m, c, fc, sender):
         ws = m.replace(mod, 'NSWorkspace')
         url = NSURL.URLWithString_(const.REGEX_HELP_URL)
         (ws.sharedWorkspace() >> m.mock(NSWorkspace)).openURL_(url)
     yield test, c(meth="regexHelp_", do=do)
+
+def test_FindController_recentFindSelected_():
+    Config = TestConfig
+    def test(command, options):
+        m = Mocker()
+        nspb = m.replace(mod, 'NSPasteboard')
+        pboard = nspb.pasteboardWithName_(NSFindPboard)
+        pboard.availableTypeFromArray_([NSStringPboardType]) >> None
+        with m, replace_history() as history:
+            fc = FindController()
+            sender = Config(selectedItem=lambda:Config(title=lambda:command))
+            fc.recentFindSelected_(sender)
+            eq_(fc.options._target, options)
+
+    yield test, "/abc", FindOptions(find_text="abc")
+    yield test, "/abc// unknown-action", FindOptions()
+    yield test, "/abc/def/i all word no-wrap", FindOptions(
+        find_text=u"abc",
+        replace_text=u"def",
+        action="find_next",
+        ignore_case=True,
+        search_type=mod.WORD,
+        wrap_around=False,
+    )
 
 def test_FindController_finder_find():
     def test(c):
