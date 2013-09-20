@@ -506,9 +506,10 @@ class FindController(PanelController):
         self.action_registry.get(sender.tag(), default)(sender)
 
     def show_find_panel(self, sender):
-        #self.load_options() # restore state
+        self.options.willChangeValueForKey_("recent_finds") # HACK
+        self.load_options() # restore state
+        self.options.didChangeValueForKey_("recent_finds") # HACK force reload
         self.gui.showWindow_(self)
-        #self.find_text.setStringValue_(self.options.find_text) # HACK should not have to do this
         self.find_text.selectText_(sender)
 
     def find_next(self, sender):

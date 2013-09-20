@@ -213,11 +213,12 @@ def test_FindController_show_find_panel():
     m = Mocker()
     fc = FindController.shared_controller()
     sender = m.mock()
-    m.property(fc, "options")
+    opts = m.property(fc, "options").value
+    opts.willChangeValueForKey_("recent_finds")
+    m.method(fc.load_options)()
+    opts.didChangeValueForKey_("recent_finds")
     m.property(fc, "find_text")
-    #fc.options.load()
     m.method(fc.gui.showWindow_)(fc)
-    #fc.find_text.setStringValue_(fc.options.find_text >> "abc")
     fc.find_text.selectText_(sender)
     with m:
         fc.show_find_panel(sender)
