@@ -96,7 +96,7 @@ def test_CommandBar_execute():
                 if c.error:
                     res.throw(Exception('bang!'))
                     message(ANY, exc_info=True)
-                else:
+                elif not c.text.startswith(" "):
                     history = commander.history >> m.mock(mod.CommandHistory)
                     history.append(command.name >> "cmd", c.text)
         with m:
@@ -105,6 +105,7 @@ def test_CommandBar_execute():
                    msg=None, exc_info=None)
     yield test, c(text='')
     yield test, c(text='cmd x y z', argstr='x y z', lookup='first')
+    yield test, c(text=' cmd x y z', argstr='x y z', lookup='first')
     yield test, c(text='cmd  x y  z', argstr=' x y  z', lookup='first')
     yield test, c(text='cmd x ', argstr='x ', lookup='first', args=Exception(),
                   msg='argument parse error: x ', exc_info=True)

@@ -55,9 +55,9 @@ class CommandBar(object):
 
     def execute(self, text):
         self.reset()
-        if not text:
+        if not text.strip():
             return
-        cmdstr, space, argstr = text.partition(" ")
+        cmdstr, space, argstr = text.lstrip(" ").partition(" ")
         doc_view = self.editor.current_view
         if doc_view is None:
             NSBeep()
@@ -86,7 +86,8 @@ class CommandBar(object):
         except Exception:
             self.message('error in command: {}'.format(command), exc_info=True)
         else:
-            self.text_commander.history.append(command.name, text)
+            if not text.startswith(" "):
+                self.text_commander.history.append(command.name, text)
 
     def _find_command(self, text):
         """Get a tuple (command, argument_string)
