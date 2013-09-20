@@ -21,6 +21,7 @@ import logging
 import math
 
 import AppKit as ak
+from objc import pyobjc_unicode
 from Quartz.CoreGraphics import CGRectIntersectsRect
 
 from editxt.constants import ERROR, HTML, INFO, LARGE_NUMBER_FOR_TEXT
@@ -109,8 +110,7 @@ class CommandView(ak.NSView):
                 attrs[ak.NSFontAttributeName] = view.text_view.font()
             text = ak.NSAttributedString.alloc().initWithString_attributes_(
                 message, attrs)
-        self.output.textStorage().setAttributedString_(text)
-        self.output.textDidChange_(None)
+        self.output.setAttributedString_(text)
         if msg_type == ERROR:
             ak.NSBeep()
         self.tile_and_redraw()
@@ -186,9 +186,7 @@ class CommandView(ak.NSView):
         return [w + " " for w in words], default_index
 
     def navigate_history(self, forward=False):
-        # Convert old_text to unicode to make control.setStringValue_ work.
-        # Have no idea why it does not work without this.
-        old_text = unicode(self.input.string())
+        old_text = self.input.string()
         text = self.command.get_history(old_text, forward)
         if text is None:
             ak.NSBeep()
@@ -334,7 +332,15 @@ class ContentSizedTextView(ak.NSTextView):
         self.textDidChange_(None)
 
     def setString_(self, value):
+        if isinstance(value, pyobjc_unicode):
+            # Convert value to unicode to make setString_ work.
+            # Have no idea why it does not work without this.
+            value = unicode(value)
         super(ContentSizedTextView, self).setString_(value)
+        self.textDidChange_(None)
+
+    def setAttributedString_(self, value):
+        self.textStorage().setAttributedString_(value)
         self.textDidChange_(None)
 
     def textDidChange_(self, notification):
