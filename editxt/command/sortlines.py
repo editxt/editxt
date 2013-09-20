@@ -28,7 +28,8 @@ from Foundation import *
 
 import editxt.constants as const
 from editxt.command.base import command, objc_delegate, SheetController
-from editxt.command.parser import Choice, Regex, CommandParser, Options
+from editxt.command.parser import (Choice, Regex, RegexPattern, CommandParser,
+    Options)
 from editxt.commands import iterlines
 
 log = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ log = logging.getLogger(__name__)
         Choice(
             ('sort-leading-whitespace', False),
             ('ignore-leading-whitespace', True),
-            name='ignore-leading-whitespace'),
+            name='ignore_leading_whitespace'),
         Choice(
             ('ignore-case', True),
             ('match-case', False)),
@@ -71,8 +72,14 @@ class SortOptions(Options):
     @property
     def sort_regex(self):
         if self.regex_sort:
-            return (self.search_pattern, self.match_pattern)
+            return (RegexPattern(self.search_pattern), self.match_pattern)
         return (None, None)
+    @sort_regex.setter
+    def sort_regex(self, value):
+        assert len(value) == 2, value
+        # strip flags since GUI does not support them
+        self.search_pattern = unicode(value[0])
+        self.match_pattern = value[1]
 
 
 class SortLinesController(SheetController):
@@ -91,7 +98,7 @@ class SortLinesController(SheetController):
 def sortlines(textview, opts):
     text = textview.string()
     if opts.sort_regex[0]:
-        regex = re.compile(opts.sort_regex[0])
+        regex = re.compile(opts.sort_regex[0], flags=opts.sort_regex[0].flags)
         if opts.sort_regex[1]:
             groups = [int(g.strip()) for g in opts.sort_regex[1].split("\\") if g.strip()]
         else:

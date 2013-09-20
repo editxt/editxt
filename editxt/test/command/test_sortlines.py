@@ -21,6 +21,7 @@ from __future__ import with_statement
 
 import logging
 import os
+import re
 from contextlib import closing
 from tempfile import gettempdir
 
@@ -34,6 +35,7 @@ import editxt.command.base as base
 import editxt.command.sortlines as mod
 import editxt.constants as const
 from editxt.command.sortlines import SortLinesController, SortOptions, sortlines
+from editxt.command.parser import RegexPattern
 from editxt.controls.textview import TextView
 from editxt.test.command.test_base import replace_history
 from editxt.test.test_commands import CommandTester
@@ -66,6 +68,27 @@ def test_SortLinesController_default_options():
         ctl = SortLinesController(None)
         for name, value in SortOptions.DEFAULTS.iteritems():
             eq_(getattr(ctl.options, name), value, name)
+
+def test_SortLinesController_load_options():
+    def test(hist, opts):
+        with replace_history() as history:
+            history.append("sort", hist)
+            ctl = SortLinesController(None)
+            eq_(ctl.options._target, SortOptions(**opts))
+
+    yield test, "sort", {}
+    yield test, "sort all", {"selection": False}
+    yield test, "sort  rev ignore-leading ignore-case /(\d+)([a-z]+)/\2\1/i", {
+        "reverse": True,
+        "ignore_leading_whitespace": True,
+        "ignore_case": True,
+        "search_pattern": RegexPattern("(\d+)([a-z]+)"),
+        "match_pattern": "\2\1",
+    }
+    yield test, "sort /(\d+)([a-z]+)/\2\1/i", {
+        "search_pattern": RegexPattern("(\d+)([a-z]+)"),
+        "match_pattern": "\2\1",
+    }
 
 def test_SortLinesController_sort_():
     m = Mocker()
