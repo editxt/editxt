@@ -51,6 +51,7 @@ def test_find_command():
         options = FindOptions(**{opt: c[key] for key, opt in {
             "find": "find_text",
             "replace": "replace_text",
+            "action": "action",
             "search": "search_type",
             "ignore_case": "ignore_case",
             "wrap": "wrap_around",
@@ -58,10 +59,12 @@ def test_find_command():
         m = Mocker()
         tv = m.mock(NSTextView)
         finder_cls = m.replace("editxt.command.find.Finder")
+        save_paste = m.replace(mod, "save_to_find_pasteboard")
         def check_options(get_tv, args):
             eq_(get_tv(), tv)
             eq_(args, options)
         finder = m.mock(Finder)
+        save_paste(c.find)
         (finder_cls(ANY, ANY) << finder).call(check_options)
         getattr(finder, c.action)("<sender>")
         with m:

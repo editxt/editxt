@@ -64,10 +64,10 @@ WORD = "word"
 ), lookup_with_arg_parser=True)
 def find(textview, sender, args):
     assert args is not None, sender
-    action = args.__dict__.pop('action')
     opts = FindOptions(**args.__dict__)
+    save_to_find_pasteboard(opts.find_text)
     finder = Finder(lambda:textview, opts)
-    getattr(finder, action)(sender)
+    getattr(finder, args.action)(sender)
 
 
 def toggle_boolean(depname):
@@ -684,17 +684,15 @@ class FindController(PanelController):
 
     def load_options(self):
         super(FindController, self).load_options()
-        pboard = NSPasteboard.pasteboardWithName_(NSFindPboard)
-        if pboard.availableTypeFromArray_([NSStringPboardType]):
-            self.options.find_text = pboard.stringForType_(NSStringPboardType)
+        text = load_find_pasteboard_string()
+        if text is not None:
+            self.options.find_text = text
 
     def save_options(self):
         options = self.options
         if not (options.find_text and self.validate_expression()):
             return False
-        pboard = NSPasteboard.pasteboardWithName_(NSFindPboard)
-        pboard.declareTypes_owner_([NSStringPboardType], None)
-        pboard.setString_forType_(options.find_text, NSStringPboardType)
+        save_to_find_pasteboard(options.find_text)
         if len(options.find_text) < 1000 and len(options.replace_text) < 1000:
             super(FindController, self).save_options()
         return True
@@ -747,3 +745,21 @@ class FoundRange(object):
             except Exception:
                 log.error("error expanding replace expression", exc_info=True)
         return text
+
+
+def load_find_pasteboard_string():
+    """Get value of system NSFindPboard if it is a string
+
+    :returns: String if pasteboard contains a string, otherwise ``None``.
+    """
+    pboard = NSPasteboard.pasteboardWithName_(NSFindPboard)
+    if pboard.availableTypeFromArray_([NSStringPboardType]):
+        return pboard.stringForType_(NSStringPboardType)
+    return None
+
+
+def save_to_find_pasteboard(text):
+    """Save the given text to the system NSFindPboard"""
+    pboard = NSPasteboard.pasteboardWithName_(NSFindPboard)
+    pboard.declareTypes_owner_([NSStringPboardType], None)
+    pboard.setString_forType_(text, NSStringPboardType)
