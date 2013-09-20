@@ -521,6 +521,24 @@ def test_Regex():
     yield test, ("str", "abc"), Error("invalid value: regex=('str', 'abc')")
     yield test, ("str", 42), Error("invalid value: regex=('str', 42)")
 
+def test_RegexPattern():
+    yield eq_, RegexPattern("a"), RegexPattern("a")
+    yield eq_, RegexPattern("a", re.I), RegexPattern("a", re.I)
+    yield eq_, RegexPattern("a", re.I), "a"
+    yield eq_, "a", RegexPattern("a", re.I)
+
+    def ne(a, b):
+        assert a != b, "{!r} == {!r}".format(a, b)
+    yield ne, RegexPattern("a", re.I), RegexPattern("b", re.I)
+    yield ne, RegexPattern("a", re.I), RegexPattern("a")
+    yield ne, RegexPattern("a", re.I), RegexPattern("b")
+    yield ne, RegexPattern("a", re.I), "b"
+    yield ne, "b", RegexPattern("a", re.I)
+
+    def lt(a, b):
+        assert a < b, "{!r} >= {!r}".format(a, b)
+    yield lt, RegexPattern("a"), RegexPattern("a", re.I)
+
 def test_SubParser():
     sub = SubArgs("val", Int("num"), abc="xyz")
     su2 = SubArgs("str", Choice(('yes', True), ('no', False)), abc="mno")

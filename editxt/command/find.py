@@ -52,7 +52,7 @@ LITERAL = "literal"
 WORD = "word"
 
 @command(arg_parser=CommandParser(
-    Regex('pattern', replace=True, default=(RegexPattern(u""), u"")),
+    Regex('pattern', replace=True, default=(RegexPattern(), u"")),
     Choice(('find-next next', 'find_next'),
         ('find-previous previous', 'find_previous'),
         ('replace-one one', 'replace_one'),
@@ -110,8 +110,7 @@ class FindOptions(Options):
         return self.pattern[0]
     @find_text.setter
     def find_text(self, value):
-        if not isinstance(value, RegexPattern):
-            value = RegexPattern(value)
+        value = RegexPattern(value)
         value.flags = self.pattern[0].flags
         self.pattern = (value, self.pattern[1])
 
@@ -128,9 +127,13 @@ class FindOptions(Options):
     @ignore_case.setter
     def ignore_case(self, value):
         if value and not self.pattern[0].flags & re.IGNORECASE:
-            self.pattern[0].flags |= re.IGNORECASE
+            find = self.pattern[0]
+            find = RegexPattern(find, find.flags | re.IGNORECASE)
+            self.pattern = (find, self.pattern[1])
         elif not value and self.pattern[0].flags & re.IGNORECASE:
-            self.pattern[0].flags ^= re.IGNORECASE
+            find = self.pattern[0]
+            find = RegexPattern(find, find.flags ^ re.IGNORECASE)
+            self.pattern = (find, self.pattern[1])
 
     @property
     def regular_expression(self):

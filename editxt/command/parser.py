@@ -582,22 +582,55 @@ class VarArgs(Field):
 
 class RegexPattern(unicode):
 
-    __slots__ = ["flags"]
+    __slots__ = ["_flags"]
+    DEFAULT_FLAGS = re.UNICODE | re.MULTILINE
 
     def __new__(cls, value=u"", flags=0):
         obj = super(RegexPattern, cls).__new__(cls, value)
         obj.flags = flags
         return obj
 
+    @property
+    def flags(self):
+        return self._flags
+    @flags.setter
+    def flags(self, value):
+        self._flags = value | self.DEFAULT_FLAGS
+
     def __repr__(self):
         return super(RegexPattern, self).__repr__() + Regex.repr_flags(self)
+
+    def __eq__(self, other):
+        streq = super(RegexPattern, self).__eq__(other)
+        if streq and isinstance(other, RegexPattern):
+            return self.flags == other.flags
+        return streq
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __lt__(self, other):
+        strlt = super(RegexPattern, self).__lt__(other)
+        if not strlt and isinstance(other, RegexPattern) \
+                and super(RegexPattern, self).__eq__(other):
+            return self.flags < other.flags
+        return strlt
+
+    def __le__(self, other):
+        return self < other or self == other
+
+    def __gt__(self, other):
+        return not self <= other
+
+    def __ge__(self, other):
+        return not self < other
 
 
 class Regex(Field):
 
     DELIMITERS = "/:\"'"
 
-    def __init__(self, name, replace=False, default=None, flags=re.U | re.M):
+    def __init__(self, name, replace=False, default=None, flags=0):
         self.args = [name, replace, default, flags]
         self.replace = replace
         self.flags = flags
