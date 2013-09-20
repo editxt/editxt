@@ -77,31 +77,11 @@ Top priority
 BUG: CPU pegged on shutdown when many documents open
 
 Add more settings
-  right_margin: 80 # set to 0 to disable
-  wrap_mode: [word|none]
+    right_margin: 80 # set to 0 to disable
+    wrap_mode: [word|none]
 
 Add command bar:
-    integrate GUI commands with command history
-        - hisotry storage:
-            - history file for each command
-                pros:
-                    - easy/fast to get last n commands
-                    - command history does not age away
-                cons:
-                    - history written to multiple files on command execution
-                      (could be avoided with timestamp+history/command?)
-            - scan main command history
-                pros:
-                    - simple to implement
-                    - once a command has been executed the last command
-                      lookup will be very fast
-                cons:
-                    - inefficient: could take a long time to lookup command.
-                    - command history ages
-        commands:
-            wrap
-            sort
-            find
+    fix placeholders and completion to work with skipped arguments
     hotkeys should execute commands
         - does not update command history
         - examples:
@@ -626,6 +606,29 @@ Log filtering
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Completed tasks
+
+x Add command bar:
+x    integrate GUI commands with command history
+x        - hisotry storage:
+x            - history file for each command
+x                pros:
+x                    - easy/fast to get last n commands
+x                    - command history does not age away
+x                cons:
+x                    - history written to multiple files on command execution
+x                      (could be avoided with timestamp+history/command?)
+x            - scan main command history
+x                pros:
+x                    - simple to implement
+x                    - once a command has been executed the last command
+x                      lookup will be very fast
+x                cons:
+x                    - inefficient: could take a long time to lookup command.
+x                    - command history ages
+x        commands:
+x            wrap
+x            sort
+x            find
 
 x Text mark enhancements
 x    add "set mark on|off" to override markings for current document
