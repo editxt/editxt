@@ -73,6 +73,17 @@ class CommandParser(object):
         self.argspec = argspec
         # TODO assert no duplicate arg names
 
+    def match(self, text, index=0):
+        """Check if first argument can consume text at index
+
+        :rtype: boolean
+        """
+        try:
+            self.argspec[0].consume(text, index)
+        except (ParseError, ArgumentError):
+            return False
+        return True
+
     def parse(self, text, index=0):
         """Parse arguments from the given text
 

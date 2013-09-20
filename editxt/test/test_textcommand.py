@@ -98,7 +98,7 @@ def test_CommandBar_execute():
                     message(ANY, exc_info=True)
                 elif not c.text.startswith(" "):
                     history = commander.history >> m.mock(mod.CommandHistory)
-                    history.append(command.name >> "cmd", c.text)
+                    history.append(c.text)
         with m:
             bar.execute(c.text)
     c = TestConfig(args='<args>', error=False, current=True,
@@ -225,7 +225,7 @@ def test_CommandBar_get_history():
         with tempdir() as tmp:
             history = mod.CommandHistory(tmp)
             for item in reversed("abc"):
-                history.append("cmd", item)
+                history.append(item)
             editor = type("FakeEditor", (object,), {})()
             commander = TextCommandController(history)
             bar = mod.CommandBar(editor, commander)
@@ -291,7 +291,7 @@ def test_CommandBar_get_history_concurrently():
     with tempdir() as tmp:
         history = mod.CommandHistory(tmp)
         for item in reversed("abc"):
-            history.append("cmd", item)
+            history.append(item)
         editor = type("FakeEditor", (object,), {})()
         commander = TextCommandController(history)
         bar1 = mod.CommandBar(editor, commander)
@@ -308,7 +308,7 @@ def test_CommandBar_get_history_concurrently():
         eq_(bar3.get_history("a"), "b")
         eq_(bar3.get_history("z"), "c") # <-- "z" will move to 0 (with "b")
 
-        history.append("cmd", "b")
+        history.append("b")
 
         # current index "a", "x" in new command buffer
         eq_(bar1.get_history("a"), "c")
@@ -595,21 +595,3 @@ def test_TextCommandController_do_textview_command_by_selector():
     yield test, c(has_selector=False)
     yield test, c(error=True)
     yield test, c(error=False, result=True)
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# CommandHistory tests
-
-def test_CommandHistory_iter_by_name():
-    def test(name, expect, appends='abcdefghiabca'):
-        with tempdir() as tmp:
-            history = mod.CommandHistory(tmp, 3, 5)
-            for i, item in enumerate(appends):
-                history.append(item, item + " " + str(i))
-
-            history = mod.CommandHistory(tmp, 3, 5)
-            result = next(history.iter_by_name(name), None)
-            eq_(result, expect)
-
-    yield test, "a", "a 12"
-    yield test, "b", "b 10"
-    yield test, "x", None

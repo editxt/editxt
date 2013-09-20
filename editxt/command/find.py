@@ -30,6 +30,7 @@ import editxt
 import editxt.constants as const
 from editxt.command.base import command, objc_delegate, PanelController
 from editxt.command.parser import Choice, Regex, RegexPattern, CommandParser, Options
+from editxt.command.util import make_command_predicate
 from editxt.util import KVOProxy, KVOLink
 
 log = logging.getLogger(__name__)
@@ -156,7 +157,8 @@ class FindOptions(Options):
     @property
     def recent_finds(self):
         # HACK global resource
-        items = editxt.app.text_commander.history.iter_by_name(find.name)
+        predicate = make_command_predicate(find)
+        items = editxt.app.text_commander.history.iter_matching(predicate)
         result = []
         for i, item in enumerate(items):
             if i < 10:

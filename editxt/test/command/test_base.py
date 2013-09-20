@@ -118,7 +118,7 @@ def test_load_options():
     def test(argstr=None, value=None):
         with replace_history() as history:
             if argstr:
-                history.append(dummy_command.name, argstr)
+                history.append(argstr)
             options = mod.load_options(dummy_command, history)
             eq_(options, Options(value=value))
     yield test, "abc 123", 123
@@ -175,7 +175,7 @@ def test_CommandController_load_options():
             ctl = FakeController()
             eq_(ctl.history, history)
             if hist:
-                history.append(ctl.command.name, hist)
+                history.append(hist)
             ctl.load_options()
             eq_(ctl.options.__dict__["_target"], expect)
     yield test, None, Options(value=None)

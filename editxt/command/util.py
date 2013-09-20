@@ -162,3 +162,16 @@ def calculate_indent_mode_and_size(text, sample_lines=256):
     if space:
         mode = const.INDENT_MODE_SPACE
     return mode, size
+
+
+def make_command_predicate(command):
+    if len(command.names) == 1:
+        prefix = command.name + " "
+    else:
+        prefix = tuple(n + " " for n in command.names)
+    if command.lookup_with_arg_parser:
+        def predicate(item, parser=command.arg_parser):
+            return item.startswith(prefix) or parser.match(item.lstrip(" "))
+    else:
+        def predicate(item): return item.startswith(prefix)
+    return predicate

@@ -87,7 +87,7 @@ class CommandBar(object):
             self.message('error in command: {}'.format(command), exc_info=True)
         else:
             if not text.startswith(" "):
-                self.text_commander.history.append(command.name, text)
+                self.text_commander.history.append(text)
 
     def _find_command(self, text):
         """Get a tuple (command, argument_string)
@@ -189,17 +189,18 @@ class TextCommandController(object):
 
     def lookup_full_command(self, command_text, full_parse=True):
         for command in self.lookup_full_commands:
+            if not full_parse:
+                if command.arg_parser.match(command_text):
+                    return command, None
+                continue
             try:
                 args = command.arg_parser.parse(command_text)
             except ArgumentError as err:
-                if full_parse or not err.options:
-                    continue
-                args = err.options
+                continue
             except Exception:
                 log.warn('cannot parse command: %s', command_text, exc_info=True)
                 continue
-            if args is not None:
-                return command, args
+            return command, args
         return None, None
 
     def get_completions(self, text, index):
@@ -275,25 +276,4 @@ class TextCommandController(object):
         return False
 
 
-class CommandHistory(History):
-
-    def append(self, command_name, command_text):
-        super(CommandHistory, self).append([command_name, command_text])
-
-    def __iter__(self):
-        for item in super(CommandHistory, self).__iter__():
-            yield item[1]
-
-    def __getitem__(self, index):
-        item = super(CommandHistory, self).__getitem__(index)
-        if item is not None:
-            return item[1]
-        return item
-
-    def iter_by_name(self, name):
-        """Iterate command history for the named command"""
-        for hist in super(CommandHistory, self).__iter__():
-            if not isinstance(hist, basestring): # HACK handle legacy history format
-                name_, command = hist
-                if name_ == name:
-                    yield command
+CommandHistory = History

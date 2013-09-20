@@ -64,6 +64,21 @@ def test_History__iter__():
             for i in xrange(3)] for p in xrange(5)], \
         [(i, "command {}".format(i)) for i in xrange(15)]
 
+def test_History_iter_matching():
+    def test(name, expect, appends='abcdefghiabca'):
+        with tempdir() as tmp:
+            history = mod.History(tmp, 3, 5)
+            for i, item in enumerate(appends):
+                history.append(item + " " + str(i))
+
+            history = mod.History(tmp, 3, 5)
+            result = next(history.iter_matching(name), None)
+            eq_(result, expect)
+
+    yield test, lambda h: h.startswith("a "), "a 12"
+    yield test, lambda h: h.startswith("b "), "b 10"
+    yield test, lambda h: h.startswith("x "), None
+
 def test_History_append():
     def test(appends, lookups):
         with tempdir() as tmp:

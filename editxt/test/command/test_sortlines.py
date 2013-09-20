@@ -72,7 +72,7 @@ def test_SortLinesController_default_options():
 def test_SortLinesController_load_options():
     def test(hist, opts):
         with replace_history() as history:
-            history.append("sort", hist)
+            history.append(hist)
             ctl = SortLinesController(None)
             eq_(ctl.options._target, SortOptions(**opts))
 

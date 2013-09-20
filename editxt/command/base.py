@@ -25,6 +25,7 @@ from Foundation import *
 
 import editxt
 from editxt.command.parser import CommandParser, Options, VarArgs
+from editxt.command.util import make_command_predicate
 from editxt.controls.alert import Caller
 from editxt.util import KVOProxy, WeakProperty
 
@@ -70,6 +71,13 @@ def command(func=None, name=None, title=None, hotkey=None,
             if argstr.startswith(func.name + " "):
                 argstr = argstr[len(func.name) + 1:]
             return func.arg_parser.parse(argstr)
+        def arg_string(options):
+            argstr = func.arg_parser.arg_string(options)
+            if argstr:
+                if not func.lookup_with_arg_parser:
+                    argstr = u"{} {}".format(func.name, argstr)
+                return argstr
+            return func.name
         func.is_text_command = True
         func.name = name[0] if name else func.__name__
         func.names = name or [func.__name__]
@@ -79,6 +87,7 @@ def command(func=None, name=None, title=None, hotkey=None,
         func.arg_parser = arg_parser or CommandParser(VarArgs("args"))
         func.lookup_with_arg_parser = lookup_with_arg_parser
         func.parse = parse
+        func.arg_string = arg_string
         return func
     if func is None:
         return command_decorator
@@ -86,25 +95,18 @@ def command(func=None, name=None, title=None, hotkey=None,
 
 
 def load_options(command, history):
-    argstr = next(history.iter_by_name(command.name), None)
+    predicate = make_command_predicate(command)
+    argstr = next(history.iter_matching(predicate), None)
     if argstr is not None:
-        if argstr.startswith(command.name + " "):
-            argstr = argstr[len(command.name) + 1:]
         try:
-            return command.arg_parser.parse(argstr)
+            return command.parse(argstr)
         except Exception:
             log.warn("cannot load options: %s", argstr, exc_info=True)
     return command.arg_parser.default_options()
 
 
 def save_options(options, command, history):
-    argstr = command.arg_parser.arg_string(options)
-    if argstr:
-        if not command.lookup_with_arg_parser:
-            argstr = "{} {}".format(command.name, argstr)
-    else:
-        argstr = command.name
-    history.append(command.name, argstr)
+    history.append(command.arg_string(options))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -60,7 +60,8 @@ class Application(object):
         self.config = Config(self.profile_path)
         self.context = ContextMap()
         self.syntax_factory = None
-        command_history = CommandHistory(self.profile_path)
+        state_dir = os.path.join(self.profile_path, const.STATE_DIR)
+        command_history = CommandHistory(state_dir)
         self.text_commander = TextCommandController(command_history)
         register_value_transformers()
 

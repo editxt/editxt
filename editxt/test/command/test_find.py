@@ -574,7 +574,7 @@ def test_FindController_load_options():
             pboard.stringForType_(NSStringPboardType) >> c.ftext
         with replace_history() as history:
             if c.hist is not None:
-                history.append(FindController.COMMAND.name, c.hist)
+                history.append(c.hist)
             with m:
                 fc = FindController() # calls load_options()
                 eq_(fc.options._target, FindOptions(**c.opts))

@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import json
 import logging
+from itertools import ifilter
 from os.path import exists, join
 
 from editxt.util import WeakProperty
@@ -96,6 +97,10 @@ class History(object):
         for page in self.iter_pages():
             for item in reversed(page):
                 yield item
+
+    def iter_matching(self, predicate):
+        """Iterate items matching predicate"""
+        return ifilter(predicate, iter(self))
 
     def append(self, item):
         """Append an item to history
