@@ -36,14 +36,14 @@ yesno = Choice(('yes', True), ('no', False))
 arg_parser = CommandParser(yesno)
 
 def test_CommandParser():
-    def test_parser(argstr, options, parser, defaults={}):
+    def test_parser(argstr, options, parser):
         if isinstance(options, Exception):
             def check(err):
                 eq_(err, options)
             with assert_raises(type(options), msg=check):
                 parser.parse(argstr)
         else:
-            opts = Options(**defaults)
+            opts = parser.default_options()
             opts.__dict__.update(options)
             eq_(parser.parse(argstr), opts)
 
@@ -56,24 +56,23 @@ def test_CommandParser():
                 Int("treble", default=50))
     preset = SubArgs("preset",
                 Choice("flat", "rock", "cinema", name="value"))
-    test = partial(test_parser,
-        parser=CommandParser(
-            SubParser("equalizer",
-                manual,
-                preset,
-            ),
-            Choice(
-                ("off", 0),
-                ('high', 4),
-                ("medium", 2),
-                ('low', 1),
-                name="level"
-            ),
-            Int("volume", default=50), #, min=0, max=100),
-            String("name"), #, quoted=True),
-        ),
-        defaults={"equalizer": None, "level": 0, "volume": 50, "name": None},
+    level = Choice(
+        ("off", 0),
+        ('high', 4),
+        ("medium", 2),
+        ('low', 1),
+        name="level"
     )
+    radio_parser = CommandParser(
+        SubParser("equalizer",
+            manual,
+            preset,
+        ),
+        level,
+        Int("volume", default=50), #, min=0, max=100),
+        String("name"), #, quoted=True),
+    )
+    test = partial(test_parser, parser=radio_parser)
     yield test, "manual", Options(equalizer=(manual, Options(bass=50, treble=50)))
     yield test, "", Options()
     yield test, "preset rock low", Options(
@@ -84,6 +83,41 @@ def test_CommandParser():
     yield test, "hi", Options(level=4)
     yield test, "high '' yes", ArgumentError(u'unexpected argument(s): yes',
         Options(volume=50, equalizer=None, name='', level=4), [], 8)
+
+    def test_placeholder(argstr, expected, parser=radio_parser):
+        eq_(parser.get_placeholder(argstr), expected)
+    test = test_placeholder
+    yield test, "", "equalizer ... off 50 name"
+    yield test, "  ", "50 name"
+    yield test, "  5", " name"
+    yield test, "  5 ", "name"
+    yield test, "  high", ""
+    yield test, " hi", "gh 50 name"
+    yield test, " high", " 50 name"
+    yield test, "hi", "gh 50 name"
+    yield test, "high ", "50 name"
+
+    def make_completions_checker(argstr, expected, parser=radio_parser):
+        eq_(parser.get_completions(argstr), expected)
+    test = make_completions_checker
+    yield test, "", ['manual', 'preset']
+    yield test, "  ", []
+    yield test, "  5", []
+    yield test, "  5 ", []
+    yield test, "  high", []
+    yield test, " ", ["off", "high", "medium", "low"]
+    yield test, " hi", ["high"]
+
+    parser = CommandParser(
+        level, Int("value"), Choice("highlander", "tundra", "4runner"))
+    test = partial(make_completions_checker, parser=parser)
+    yield test, "h", ["high"]
+    yield test, "t", ["tundra"]
+    yield test, "high", ["high"]
+    yield test, "high ", []
+    yield test, "high 4", []
+    yield test, "high x", None # ??? None indicates an error (the last token could not be consumed) ???
+    yield test, "high  4", ["4runner"]
 
 def test_CommandParser_empty():
     eq_(arg_parser.parse(''), Options(yes=True))
@@ -127,7 +161,7 @@ def test_CommandParser_with_SubParser():
     def test(text, result):
         eq_(parser.get_placeholder(text), result)
     yield test, "", "var ... yes"
-    yield test, " ", ""
+    yield test, " ", "yes"
     yield test, "  ", ""
     yield test, "n", "um n yes"
     yield test, "n ", "n yes"
@@ -137,8 +171,8 @@ def test_CommandParser_with_SubParser():
     def test(text, result):
         eq_(parser.get_completions(text), result)
     yield test, "", ["num"]
-    yield test, " ", []
-    yield test, "  ", []
+    yield test, " ", ["yes", "no"]
+    yield test, "  ", None
     yield test, "n", ["num"]
     yield test, "n ", []
     yield test, "num ", []
@@ -556,7 +590,7 @@ def test_SubParser():
     yield test, "v ", ([], 2)
     yield test, "val", (["val"], 3)
     yield test, "val ", ([], 4)
-    yield test, "val v", ([], 5)
+    yield test, "val v", (None, 4)
     yield test, "st", (["str", "stx"], 2)
     yield test, "str ", (["yes", "no"], 4)
     yield test, "str y", (["yes"], 5)

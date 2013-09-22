@@ -81,13 +81,6 @@ Add more settings
     wrap_mode: [word|none]
 
 Add command bar:
-    fix placeholders and completion to work with skipped arguments
-    hotkeys should execute commands
-        - does not update command history
-        - examples:
-            - CMD+G -> find_next    > lookup recent find command, find_next
-            - CMD+= -> replace_one  > lookup recent find command, replace-one
-    commands with a leading space are not added to history
     contextual command help
         http://pythonhosted.org/Markdown/reference.html#output_format
         NSTextStorage.initWithHTML_documentAttributes_(text, None)
@@ -105,6 +98,13 @@ x       find/replace
 x           placeholder text prefix space
 x           command prefix space (should not be stripped)
         change indentation
+x    fix placeholders and completion to work with skipped arguments
+xx    hotkeys should execute commands
+x        - does not update command history
+x        - examples:
+x            - CMD+G -> find_next    > lookup recent find command, find_next
+x            - CMD+= -> replace_one  > lookup recent find command, replace-one
+x    commands with a leading space are not added to history
 x    command message area
 x        types of messages: error (red text), notification (black text)
 x        max number of lines to display before scrolling (configurable)

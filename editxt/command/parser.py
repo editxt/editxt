@@ -101,12 +101,10 @@ class CommandParser(object):
             except ParseError as err:
                 errors.append(err)
                 value = arg.default
-                #index = err.parse_index
             except ArgumentError as err:
                 assert err.errors, "unexpected {!r}".format(err)
                 errors.extend(err.errors)
                 value = arg.default
-                #index = err.parse_index
             setattr(opts, arg.name, value)
         if errors:
             msg = u'invalid arguments: {}'.format(text)
@@ -129,9 +127,11 @@ class CommandParser(object):
         index = 0
         values = []
         for arg in self.argspec:
-            value, index = arg.get_placeholder(text, index)
-            if index is None:
-                return ""
+            value, next_index = arg.get_placeholder(text, index)
+            if next_index is None:
+                assert value is None, value
+                continue
+            index = next_index
             if value is not None:
                 values.append(value)
         return " ".join(values)
@@ -322,7 +322,11 @@ class Field(object):
             # HACK cannot really determine if terminated here:
             # case: "x " -> Int -> ParseError ... terminted=True
             # case: "' " -> String -> ParseError ... terminted=False
-            terminated = False
+            if end >= len(text):
+                values = self.get_completions(token)
+                if values:
+                    return values, err.parse_index
+            return None, index
         except ArgumentError as err:
             raise NotImplementedError # TODO
         if terminated or end < len(text):
@@ -855,7 +859,7 @@ class SubParser(Field):
         space_after_name = end < len(text) or text[index:end].endswith(" ")
         if name is None:
             if space_after_name:
-                return None, None
+                return self.default, end
             return "{} ...".format(self), end
         sub = self.subargs.get(name)
         if sub is None:
@@ -886,8 +890,7 @@ class SubParser(Field):
         name, end = self.consume_token(text, index)
         if name is None:
             if end < len(text) or text[index:end].endswith(" "):
-                # TODO default when name not provided?
-                return [], len(text)
+                return None, end
             return sorted(self.subargs), end
         if len(name) == end - index:
             # there is no space after name

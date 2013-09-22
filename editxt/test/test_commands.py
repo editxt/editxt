@@ -464,7 +464,7 @@ def test_set_variable():
     yield test, "set soft_wrap", ["soft_wrap"], " yes"
     yield test, "set soft_wrap ", ["yes", "no"], "yes"
     yield test, "set soft_wrap o", ["on", "off"], "..."
-    yield test, "set soft_wrap x", [], ""
+    yield test, "set soft_wrap x", None, ""
 
     def test(command, attribute, value=None):
         m = Mocker()
