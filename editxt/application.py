@@ -129,17 +129,23 @@ class Application(object):
         if editor is None:
             editor = self.create_editor()
         focus = None
+        views = []
         for path in paths:
             if os.path.isfile(path) or not os.path.exists(path):
                 view = TextDocumentView.create_with_path(path)
                 focus = editor.add_document_view(view)
+                views.append(view)
             else:
                 log.info("cannot open path: %s", path)
         if focus is not None:
             editor.current_view = focus
+        return views
 
     def open_config_file(self):
-        self.open_documents_with_paths([self.config.path])
+        views = self.open_documents_with_paths([self.config.path])
+        if not os.path.exists(self.config.path):
+            assert len(views) == 1, views
+            views[0].document.text = self.config.default_config
 
     def open_error_log(self, set_current=True):
         from editxt.document import TextDocumentView

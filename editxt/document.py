@@ -486,6 +486,14 @@ class TextDocument(NSDocument):
         pass
 
     @property
+    def text(self):
+        return self.text_storage.mutableString()
+    @text.setter
+    def text(self, value):
+        self.text_storage.mutableString().setString_(value)
+        self.reset_text_attributes(self.indent_size)
+
+    @property
     def newline_mode(self):
         return self._newline_mode
     @newline_mode.setter

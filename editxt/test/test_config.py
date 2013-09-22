@@ -126,6 +126,27 @@ def test_Config_schema():
         "soft_wrap", const.WRAP_NONE, \
         {"error": ["soft_wrap: expected one of (none|word), got 'xyz'"]}
 
+def test_Config_default_config():
+    schema = {
+        "group": {
+            "bool": mod.Boolean(default=False),
+            "enum": mod.Enum(("abc", 1), ("def", 2), ("ghi", 1), default=1),
+            "color": mod.Color(default=get_color("0EFF6B")),
+        },
+        "hidden": mod.NOT_SET,
+        "int": mod.Integer(default=42),
+        "str": mod.String(default="the answer"),
+    }
+    config = mod.Config("/tmp/missing.3216546841325465132546514321654", schema)
+    eq_(config.default_config,
+        "#group:\n"
+        "#  bool: false\n"
+        "#  color: 0EFF6B\n"
+        "#  enum: abc\n"
+        "\n"
+        "#int: 42\n"
+        "#str: the answer\n"
+    )
 
 def test_Type_validate():
     NOT_SET = mod.NOT_SET

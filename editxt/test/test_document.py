@@ -775,6 +775,9 @@ def test_TextDocument_properties():
     yield property_value_util, c(value=const.NEWLINE_MODE_WINDOWS)
     yield property_value_util, c(value=const.NEWLINE_MODE_UNICODE)
 
+    c = TestConfig(attr="text", default="")
+    yield property_value_util, c(value="abc")
+
     c = TestConfig(attr="character_encoding", default=NSUTF8StringEncoding)
     for encoding in const.CHARACTER_ENCODINGS:
         yield property_value_util, c(value=encoding)

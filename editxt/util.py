@@ -361,6 +361,14 @@ def get_color(value, cache={}):
         color = cache[value] = NSColor.colorWithCalibratedRed_green_blue_alpha_(r, g, b, 1.0)
         return color
 
+def hex_value(color):
+    """Get hex value of NSColor object"""
+    return "{:02X}{:02X}{:02X}".format(
+        int(color.redComponent() * 0xFF),
+        int(color.greenComponent() * 0xFF),
+        int(color.blueComponent() * 0xFF),
+    )
+
 COLOR_RE = re.compile("^#?[0-9a-f]{6}$", re.IGNORECASE)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

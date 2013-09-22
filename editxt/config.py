@@ -21,7 +21,7 @@ import logging
 from os.path import exists, join
 
 import editxt.constants as const
-from editxt.util import get_color, load_yaml
+from editxt.util import get_color, hex_value, load_yaml
 
 log = logging.getLogger(__name__)
 
@@ -63,6 +63,10 @@ class Type(object):
     def validate(self, value, key):
         raise NotImplementedError("abstract method")
 
+    @property
+    def default_string(self):
+        return str(self.default)
+
 
 class String(Type):
 
@@ -100,6 +104,13 @@ class Enum(Type):
         except KeyError:
             raise ValueError("{}: expected one of ({}), got {!r}"
                 .format(key, "|".join(self.names), value))
+
+    @property
+    def default_string(self):
+        for name in self.names:
+            if self.choices[name] == self.default:
+                return name
+        return self.default
 
 
 class Integer(Type):
@@ -139,6 +150,10 @@ class Boolean(Type):
             raise ValueError(
                 "{}: expected boolean, got {!r}".format(key, value))
 
+    @property
+    def default_string(self):
+        return "true" if self.default else "false"
+
 
 class Color(Type):
 
@@ -153,6 +168,10 @@ class Color(Type):
             log.error("cannot parse color: %r", value, exc_info=True)
             raise ValueError("{}: expected RRGGBB hex color string, got {!r}"
                              .format(key, value))
+
+    @property
+    def default_string(self):
+        return hex_value(self.default)
 
 
 class Config(object):
@@ -248,3 +267,22 @@ class Config(object):
         if value is NOT_SET:
             raise KeyError(name)
         return value
+
+    @property
+    def default_config(self):
+        def get_lines(schema, level=0):
+            for key, value in sorted(schema.items()):
+                if isinstance(value, Type):
+                    yield "#{indent}{key}: {val}".format(
+                        indent="  " * level,
+                        key=key,
+                        val=value.default_string
+                    )
+                elif value is NOT_SET:
+                    pass
+                else:
+                    yield "#{}:".format(key)
+                    for line in get_lines(value, level + 1):
+                        yield line
+            yield ""
+        return "\n".join(get_lines(self.schema))

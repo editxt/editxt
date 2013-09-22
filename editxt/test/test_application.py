@@ -221,11 +221,20 @@ def test_open_documents_with_paths():
     yield test, c(paths=[p("abc", True), p("def", False), p("ghi", True)])
 
 def test_open_config_file():
-    m = Mocker()
-    app = Application()
-    m.method(app.open_documents_with_paths)([app.config.path])
-    with m:
-        app.open_config_file()
+    def test(file_exists=True):
+        m = Mocker()
+        app = Application()
+        view = m.mock(TextDocumentView)
+        m.method(app.open_documents_with_paths)([app.config.path]) >> [view]
+        default_config = m.property(app.config, "default_config")
+        m.replace("os.path.exists")(app.config.path) >> file_exists
+        if not file_exists:
+            default_config.value >> "# config"
+            view.document.text = "# config"
+        with m:
+            app.open_config_file()
+    yield test, True
+    yield test, False
 
 def test_open_error_log():
     import editxt.application as mod
