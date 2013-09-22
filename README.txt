@@ -1,5 +1,5 @@
 EditXT - a programmer's text editor for Mac OS X
-Copyright 2007-2012 Daniel Miller <millerdev@gmail.com>
+Copyright 2007-2013 Daniel Miller <millerdev@gmail.com>
 Website: http://editxt.org/
 
 EditXT is free software: you can redistribute it and/or modify
@@ -20,6 +20,7 @@ Features:
 
 - Syntax highlighting for Python and JavaScript (more definitions can be added).
 - Find/Replace with regular expression support and other conveniences.
+- Command bar to execute commands without using the mouse.
 - Smart indent/dedent with tabs or spaces.
 - Comment/uncomment selection.
 - Word wrap.

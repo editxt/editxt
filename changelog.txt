@@ -22,7 +22,7 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
-????-??-?? - 1.x.x
+2013-09-22 - 1.3.0
   - Omit command from history if it has a leading space.
   - Integrate GUI and hotkey commands with command bar history.
   - Improve indent size calculation.
@@ -62,7 +62,7 @@ the source repository for the gory details of what actually happened.
   - Fix startup errors due to strange arguments passed by OS X.
   - Fix long pause on quit with many documents open.
 
-2013-01-05 - 1.2.0
+2013-01-05 - 1.2.0 (unreleased)
   - Add command bar (needs more work, but it's minimally usable).
   - Add "Goto Line" command.
   - Store app config and state in ~/.editxt.

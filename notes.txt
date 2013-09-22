@@ -80,7 +80,9 @@ Add more settings
     right_margin: 80 # set to 0 to disable
     wrap_mode: [word|none]
 
-Add command bar:
+repy command
+
+Command bar enhancements:
     contextual command help
         http://pythonhosted.org/Markdown/reference.html#output_format
         NSTextStorage.initWithHTML_documentAttributes_(text, None)
@@ -90,33 +92,10 @@ Add command bar:
         up arrow after typing should step through history with same prefix
         all text after manually typed prefix should be selected
     delete history item
-    convert commands with gui to work with command bar
-x       wrap command
-x       sort command
-x           unbalanced parens bug in sort-regex (bug traceback below in Bugs)
-x       find/replace
-x           placeholder text prefix space
-x           command prefix space (should not be stripped)
-        change indentation
-x    fix placeholders and completion to work with skipped arguments
-xx    hotkeys should execute commands
-x        - does not update command history
-x        - examples:
-x            - CMD+G -> find_next    > lookup recent find command, find_next
-x            - CMD+= -> replace_one  > lookup recent find command, replace-one
-x    commands with a leading space are not added to history
-x    command message area
-x        types of messages: error (red text), notification (black text)
-x        max number of lines to display before scrolling (configurable)
-x        selectable text
-xx    do not dismiss command bar or update history on command parse error
-x        show error message(s)
-x   command text entry widget
-x   menu entry/hotkey to activate command bar
-x   jump to line command
-x   command argument placeholder text
-x   command/arg auto-complete
-x   history
+
+Convert commands with gui to work with command bar
+    open file(s)
+    change indentation
 
 refactor object hierarchy to make it more modular and easier to add features
     app.documents - {id: Document}
@@ -608,6 +587,32 @@ Log filtering
 Completed tasks
 
 x Add command bar:
+x    convert commands with gui to work with command bar
+x       wrap command
+x       sort command
+x           unbalanced parens bug in sort-regex (bug traceback below in Bugs)
+x       find/replace
+x           placeholder text prefix space
+x           command prefix space (should not be stripped)
+x    fix placeholders and completion to work with skipped arguments
+xx    hotkeys should execute commands
+x        - does not update command history
+x        - examples:
+x            - CMD+G -> find_next    > lookup recent find command, find_next
+x            - CMD+= -> replace_one  > lookup recent find command, replace-one
+x    commands with a leading space are not added to history
+x    command message area
+x        types of messages: error (red text), notification (black text)
+x        max number of lines to display before scrolling (configurable)
+x        selectable text
+xx    do not dismiss command bar or update history on command parse error
+x        show error message(s)
+x    command text entry widget
+x    menu entry/hotkey to activate command bar
+x    jump to line command
+x    command argument placeholder text
+x    command/arg auto-complete
+x    history
 x    integrate GUI commands with command history
 x        - hisotry storage:
 x            - history file for each command
