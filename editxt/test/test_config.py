@@ -121,6 +121,15 @@ def test_Config_schema():
         "newline_mode", const.NEWLINE_MODE_UNIX, \
         {"error": ["newline_mode: expected one of (LF|CR|CRLF|UNICODE), got 'xyz'"]}
 
+    yield test, {}, "right_margin.position", const.DEFAULT_RIGHT_MARGIN
+    yield test, {"right_margin": {"position": 42}}, "right_margin.position", 42
+    yield test, {"right_margin": {"position": "xyz"}}, \
+        "right_margin.position", const.DEFAULT_RIGHT_MARGIN, \
+        {"error": ["right_margin.position: expected integer, got 'xyz'"]}
+
+    yield test, {}, "right_margin.line_color", get_color("E6E6E6")
+    yield test, {}, "right_margin.margin_color", get_color("F7F7F7")
+
     yield test, {}, "soft_wrap", const.WRAP_NONE
     yield test, {"soft_wrap": "xyz"}, \
         "soft_wrap", const.WRAP_NONE, \

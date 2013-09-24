@@ -24,7 +24,6 @@ import objc
 from AppKit import *
 from Foundation import *
 
-import editxt.constants as const
 from editxt import app
 from editxt.command.find import FindController
 
@@ -95,23 +94,28 @@ class TextView(NSTextView):
         try:
             return self._marginParams
         except AttributeError:
-            drm = const.DEFAULT_RIGHT_MARGIN
-            font = self.doc_view.document.default_text_attributes()[NSFontAttributeName]
-            charw = font.advancementForGlyph_(ord(u" ")).width
-            padding = self.textContainer().lineFragmentPadding()
-            color1 = NSColor.colorWithCalibratedRed_green_blue_alpha_(0.9, 0.9, 0.9, 1.0)
-            color2 = NSColor.colorWithCalibratedRed_green_blue_alpha_(0.97, 0.97, 0.97, 1.0)
-            self._marginParams = mp = (charw * drm + padding, color1, color2)
-            return mp
+            pass
+        nchars = app.config["right_margin.position"]
+        if not nchars:
+            self._marginParams = None
+            return
+        font = self.doc_view.document.default_text_attributes()[NSFontAttributeName]
+        charw = font.advancementForGlyph_(ord(u" ")).width
+        padding = self.textContainer().lineFragmentPadding()
+        color1 = app.config["right_margin.line_color"]
+        color2 = app.config["right_margin.margin_color"]
+        self._marginParams = mp = (charw * nchars + padding, color1, color2)
+        return mp
 
     def drawViewBackgroundInRect_(self, rect):
-        guideX, color1, color2 = self.marginParams
-        NSGraphicsContext.currentContext().saveGraphicsState()
-        color1.set()
-        NSRectFill(NSMakeRect(guideX, rect.origin.y, 1, rect.size.height))
-        color2.set()
-        NSRectFill(NSMakeRect(guideX + 1, rect.origin.y, 10**7, rect.size.height))
-        NSGraphicsContext.currentContext().restoreGraphicsState()
+        if self.marginParams is not None:
+            guideX, color1, color2 = self.marginParams
+            NSGraphicsContext.currentContext().saveGraphicsState()
+            color1.set()
+            NSRectFill(NSMakeRect(guideX, rect.origin.y, 1, rect.size.height))
+            color2.set()
+            NSRectFill(NSMakeRect(guideX + 1, rect.origin.y, 10**7, rect.size.height))
+            NSGraphicsContext.currentContext().restoreGraphicsState()
         super(TextView, self).drawViewBackgroundInRect_(rect)
 
     def setFrameSize_(self, size):

@@ -48,6 +48,11 @@ def config_schema(): return {
         const.NEWLINE_MODE_WINDOWS,
         const.NEWLINE_MODE_UNICODE,
         default=const.NEWLINE_MODE_UNIX),
+    "right_margin": {
+        "position": Integer(default=const.DEFAULT_RIGHT_MARGIN, minimum=0),
+        "line_color": Color(default=get_color("E6E6E6")),
+        "margin_color": Color(default=get_color("F7F7F7")),
+    },
     "soft_wrap": Enum(
         const.WRAP_NONE,
         const.WRAP_WORD,

@@ -74,12 +74,6 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-BUG: CPU pegged on shutdown when many documents open
-
-Add more settings
-    right_margin: 80 # set to 0 to disable
-    wrap_mode: [word|none]
-
 repy command
 
 Command bar enhancements:
@@ -585,6 +579,12 @@ Log filtering
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Completed tasks
+
+x Add more settings
+x   right_margin: 80 # set to 0 to disable
+x   wrap_mode: [word|none]
+
+? BUG: CPU pegged on shutdown when many documents open
 
 x Add command bar:
 x    convert commands with gui to work with command bar
