@@ -49,6 +49,7 @@ BACKWARD = "BACKWARD"
 WRAPTOKEN = "WRAPTOKEN"
 
 REGEX = "regex"
+REPY = "python-replace"
 LITERAL = "literal"
 WORD = "word"
 
@@ -139,7 +140,7 @@ class FindOptions(Options):
 
     @property
     def regular_expression(self):
-        return self.search_type == REGEX
+        return self.search_type == REGEX or self.search_type == REPY
     @regular_expression.setter
     def regular_expression(self, value):
         assert isinstance(value, (int, bool)), value
@@ -152,7 +153,7 @@ class FindOptions(Options):
     @match_entire_word.setter
     def match_entire_word(self, value):
         assert isinstance(value, (int, bool)), value
-        if value or self.search_type != REGEX:
+        if value or not self.regular_expression:
             self.search_type = WORD if value else LITERAL
 
     @property
@@ -364,6 +365,7 @@ class Finder(object):
             else:
                 range = NSMakeRange(0, startindex)
         endindex = range.location + range.length
+        FoundRange = make_found_range_factory(options)
         wrapped = False
         while True:
             if forwardSearch:
@@ -411,6 +413,7 @@ class Finder(object):
             NSBeep()
             log.error("cannot compile regex %r : %s", ftext, err)
         else:
+            FoundRange = make_found_range_factory(options)
             backward = (direction == BACKWARD)
             wrapped = False
             endindex = range.location + range.length
@@ -730,19 +733,39 @@ class StatusFlasher(NSObject):
         self.runner = None
 
 
-class FoundRange(object):
+class BaseFoundRange(object):
 
-    def __init__(self, range, rematch=None):
+    def __init__(self, range, match=None):
         self.range = range
-        self.rematch = rematch
+        self.match = match
 
-    def expand(self, text):
-        if self.rematch is not None:
+
+def make_found_range_factory(options):
+    if options.search_type == REPY:
+        func = (
+            "def repy(self, python_expression):\n"
+            "    match = self.match\n"
+            "    return " + options.replace_text
+        )
+        namespace = {}
+        try:
+            exec func in globals(), namespace
+        except Exception as err:
+            raise NotImplementedError
+            raise InvalidPythonExpression(func, err)
+        expand = namespace["repy"]
+    elif options.search_type == REGEX or options.search_type == WORD:
+        def expand(self, text):
             try:
-                text = self.rematch.expand(text)
+                text = self.match.expand(text)
             except Exception:
                 log.error("error expanding replace expression", exc_info=True)
-        return text
+            return text
+    else:
+        assert options.search_type == LITERAL, options
+        def expand(self, text):
+            return text
+    return type("FoundRange", (BaseFoundRange,), {"expand": expand})
 
 
 def load_find_pasteboard_string():

@@ -35,7 +35,8 @@ from editxt.test.command.test_base import replace_history
 import editxt
 import editxt.constants as const
 import editxt.command.find as mod
-from editxt.command.find import Finder, FindController, FindOptions, FoundRange
+from editxt.command.find import (Finder, FindController, FindOptions,
+    make_found_range_factory)
 from editxt.command.find import FORWARD, BACKWARD
 from editxt.command.parser import RegexPattern
 from editxt.controls.textview import TextView
@@ -46,16 +47,19 @@ log = logging.getLogger(__name__)
 #     implement TextDocumentView.pasteboard_data()
 # """)
 
+def make_options(config):
+    return FindOptions(**{opt: config[key] for key, opt in {
+        "find": "find_text",
+        "replace": "replace_text",
+        "action": "action",
+        "search": "search_type",
+        "ignore_case": "ignore_case",
+        "wrap": "wrap_around",
+    }.items() if key in config})
+
 def test_find_command():
     def test(c):
-        options = FindOptions(**{opt: c[key] for key, opt in {
-            "find": "find_text",
-            "replace": "replace_text",
-            "action": "action",
-            "search": "search_type",
-            "ignore_case": "ignore_case",
-            "wrap": "wrap_around",
-        }.items()})
+        options = make_options(c)
         m = Mocker()
         tv = m.mock(NSTextView)
         finder_cls = m.replace("editxt.command.find.Finder")
@@ -134,6 +138,37 @@ def test_Finder_mark_occurrences():
     yield test, c(options=o(find_text="text", match_entire_word=True), count=1)
     c = c(allow_regex=True)
     yield test, c(options=o(find_text="[t]", regular_expression=True), count=5)
+
+def test_Finder_python_replace():
+    def test(c):
+        m = Mocker()
+        options = make_options(c)
+        tv = m.mock(TextView)
+        tv.selectedRange() >> NSMakeRange(0, 16)
+        tv.string() >> NSString.alloc().initWithString_(c.text)
+        result = [c.text]
+        def replace(range, value):
+            start, end = range
+            text = result[0]
+            result[0] = text[:start] + value + text[start + end:]
+        tv.shouldChangeTextInRange_replacementString_(ANY, ANY) >> True
+        expect(tv.textStorage().replaceCharactersInRange_withString_(
+            ANY, ANY)).call(replace)
+        tv.didChangeText()
+        tv.setNeedsDisplay_(True)
+        finder = Finder((lambda: tv), options)
+        with m:
+            getattr(finder, c.action)(None)
+            eq_(result[0], c.expect)
+    c = TestConfig(search="python-replace", text="The quick Fox is a brown fox")
+    yield test, c(
+        find="[Ff]ox", replace="match.group(0).lower()",
+        action="replace_all",
+        expect="The quick fox is a brown fox")
+    yield test, c(
+        find="[Ff]ox", replace="match.group(0).upper()",
+        action="replace_all_in_selection",
+        expect="The quick FOX is a brown fox")
 
 def test_FindController_shared_controller():
     fc = FindController.shared_controller()
@@ -264,6 +299,7 @@ def test_FindController_actions():
             options = m.replace(fc.finder, "options")
             rtext = options.replace_text >> "abc"
             options.regular_expression >> c.regex
+            FoundRange = make_found_range_factory(FindOptions(regular_expression=c.regex))
             rfr = FoundRange(None) if c.rfr else None
             if c.regex:
                 (m.property(fc.finder, "recently_found_range").value << rfr).count(1,2)
@@ -397,6 +433,8 @@ def test_FindController__find():
         range = NSMakeRange(sel.location, 0)
         items = []
         rng = None
+        FoundRange = make_found_range_factory(
+            FindOptions(regular_expression=c.regex, match_entire_word=c.mword))
         for i, r in enumerate(c.matches):
             if r is mod.WRAPTOKEN:
                 items.append(r)
@@ -452,6 +490,8 @@ def test_FindController__replace_all():
             ranges = []
             rtexts = []
             items = []
+            FoundRange = make_found_range_factory(
+                FindOptions(regular_expression=c.regex, match_entire_word=c.mword))
             for r in c.ranges:
                 found = FoundRange(NSMakeRange(*r))
                 if ranges:
