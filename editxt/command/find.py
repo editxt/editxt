@@ -230,45 +230,31 @@ class Finder(object):
             return last_mark[1]
         if color is None:
             color = editxt.app.config["highlight_selected_text.color"] # HACK global resource
-        ts = target.textStorage()
-        ts.beginEditing()
-        try:
-            full_range = NSMakeRange(0, ts.length())
-            ts.removeAttribute_range_(NSBackgroundColorAttributeName, full_range)
-
-            # HACK for some reason marks are not always completely removed:
-            # - Select text with many occurrences in syntax-highlighted
-            #   document. There should be at least one occurrence of text
-            #   above the selection, outside of its syntax highlight region.
-            # - Type a character, effectively causing a syntax update as well
-            #   as a selection change.
-            # - Notice that some of the previously marked words are not cleared,
-            #   but they will be cleared on scroll/redraw.
-            target.setNeedsDisplay_(True)
-
-            if not ftext:
-                target._Finder__last_mark = (ftext, 0)
-                return 0
-            text = target.string()
-            options = self.options
-            original_ftext = ftext
-            if regex and options.regular_expression:
-                finditer = self.regexfinditer
-            elif options.match_entire_word:
-                ftext = u"\\b" + re.escape(ftext) + u"\\b"
-                finditer = self.regexfinditer
-            else:
-                finditer = self.simplefinditer
-            count = 0
-            attr = NSBackgroundColorAttributeName
-            mark_range = ts.addAttribute_value_range_
-            for found in finditer(text, ftext, full_range, FORWARD, False):
-                mark_range(attr, color, found.range)
-                count += 1
-            target._Finder__last_mark = (original_ftext, count)
-            return count
-        finally:
-            ts.endEditing()
+        layout = target.layoutManager()
+        full_range = NSMakeRange(0, target.textStorage().length())
+        layout.removeTemporaryAttribute_forCharacterRange_(
+            NSBackgroundColorAttributeName, full_range)
+        if not ftext:
+            target._Finder__last_mark = (ftext, 0)
+            return 0
+        text = target.string()
+        options = self.options
+        original_ftext = ftext
+        if regex and options.regular_expression:
+            finditer = self.regexfinditer
+        elif options.match_entire_word:
+            ftext = u"\\b" + re.escape(ftext) + u"\\b"
+            finditer = self.regexfinditer
+        else:
+            finditer = self.simplefinditer
+        count = 0
+        attr = NSBackgroundColorAttributeName
+        mark_range = layout.addTemporaryAttribute_value_forCharacterRange_
+        for found in finditer(text, ftext, full_range, FORWARD, False):
+            mark_range(attr, color, found.range)
+            count += 1
+        target._Finder__last_mark = (original_ftext, count)
+        return count
 
     def find(self, direction):
         target = self.find_target()

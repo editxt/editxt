@@ -23,6 +23,15 @@ This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
 ????-??-?? - 1.4.0
+  - Dramatic performance boost when highlighting selected text.
+  - Add count-occurrences action to find command.
+  - Add right_margin config settings:
+
+      right_margin:
+        position: 80
+        line_color: BBDDBB
+        margin_color: DDBBDD
+
   - Add syntax definitions for shell scripts and Objective C
 
 2013-09-22 - 1.3.0

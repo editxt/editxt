@@ -106,22 +106,21 @@ def test_Finder_mark_occurrences():
         tv = m.mock(TextView)
         tv._Finder__last_mark >> (None, 0)
         tv._Finder__last_mark = (c.options.find_text, c.count)
-        tv.setNeedsDisplay_(True) # HACK
         ts = tv.textStorage() >> m.mock(NSTextStorage)
         app = m.replace(editxt, "app")
         app.config["highlight_selected_text.color"] >> "<color>"
         full_range = NSMakeRange(0, ts.length() >> len(text))
-        ts.beginEditing()
-        ts.removeAttribute_range_(NSBackgroundColorAttributeName, full_range)
+        layout = tv.layoutManager()
+        layout.removeTemporaryAttribute_forCharacterRange_(
+            NSBackgroundColorAttributeName, full_range)
         find_target = lambda: tv
         finder = Finder(find_target, c.options)
         if c.options.find_text:
             text = NSString.alloc().initWithString_(text)
             (tv.string() << text).count(1, None)
-            mark_range = ts.addAttribute_value_range_ >> m.mock()
+            mark_range = layout.addTemporaryAttribute_value_forCharacterRange_ >> m.mock()
             mark = mark_range(NSBackgroundColorAttributeName, ANY, ANY)
             expect(mark).count(c.count)
-        ts.endEditing()
         with m:
             count = finder.mark_occurrences(c.options.find_text, c.allow_regex)
             eq_(count, c.count)
