@@ -123,7 +123,7 @@ class FindOptions(Options):
         return self.pattern[1]
     @replace_text.setter
     def replace_text(self, value):
-        self.pattern = (self.pattern[0], value)
+        self.pattern = (self.pattern[0], value or u"")
 
     @property
     def ignore_case(self):
@@ -624,7 +624,7 @@ class FindController(PanelController):
     @objc_delegate
     def recentReplaceSelected_(self, sender):
         # TODO make this support undo so the change can be easily reverted
-        self.options.replace_text = sender.selectedItem().title()
+        pass #self.options.replace_text = sender.selectedItem().title()
 
     @objc_delegate
     def regexHelp_(self, sender):
@@ -710,7 +710,7 @@ class FindController(PanelController):
     def load_options(self):
         super(FindController, self).load_options()
         text = load_find_pasteboard_string()
-        if text is not None:
+        if text is not None and self.options.find_text != text:
             self.options.find_text = text
 
     def save_options(self):

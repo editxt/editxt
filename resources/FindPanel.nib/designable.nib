@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="39"/>
+			<integer value="40"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -1037,36 +1037,32 @@
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBBindingConnection" key="connection">
-						<string key="label">value: options.find_text</string>
-						<reference key="source" ref="679017484"/>
+						<string key="label">value: options.python_replace</string>
+						<reference key="source" ref="678631260"/>
 						<reference key="destination" ref="503249519"/>
 						<object class="NSNibBindingConnector" key="connector">
-							<reference key="NSSource" ref="679017484"/>
+							<reference key="NSSource" ref="678631260"/>
 							<reference key="NSDestination" ref="503249519"/>
-							<string key="NSLabel">value: options.find_text</string>
+							<string key="NSLabel">value: options.python_replace</string>
 							<string key="NSBinding">value</string>
-							<string key="NSKeyPath">options.find_text</string>
+							<string key="NSKeyPath">options.python_replace</string>
 							<object class="NSDictionary" key="NSOptions">
 								<bool key="EncodedWithXMLCoder">YES</bool>
 								<object class="NSArray" key="dict.sortedKeys">
 									<bool key="EncodedWithXMLCoder">YES</bool>
 									<string>NSAllowsEditingMultipleValuesSelection</string>
-									<string>NSConditionallySetsEditable</string>
-									<string>NSContinuouslyUpdatesValue</string>
-									<string>NSNullPlaceholder</string>
+									<string>NSConditionallySetsEnabled</string>
 								</object>
 								<object class="NSMutableArray" key="dict.values">
 									<bool key="EncodedWithXMLCoder">YES</bool>
 									<boolean value="NO"/>
 									<boolean value="NO"/>
-									<boolean value="YES"/>
-									<string>Find</string>
 								</object>
 							</object>
 							<int key="NSNibBindingConnectorVersion">2</int>
 						</object>
 					</object>
-					<int key="connectionID">231</int>
+					<int key="connectionID">258</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBBindingConnection" key="connection">
@@ -1099,36 +1095,38 @@
 							<int key="NSNibBindingConnectorVersion">2</int>
 						</object>
 					</object>
-					<int key="connectionID">232</int>
+					<int key="connectionID">266</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBBindingConnection" key="connection">
-						<string key="label">value: options.python_replace</string>
-						<reference key="source" ref="678631260"/>
+						<string key="label">value: options.find_text</string>
+						<reference key="source" ref="679017484"/>
 						<reference key="destination" ref="503249519"/>
 						<object class="NSNibBindingConnector" key="connector">
-							<reference key="NSSource" ref="678631260"/>
+							<reference key="NSSource" ref="679017484"/>
 							<reference key="NSDestination" ref="503249519"/>
-							<string key="NSLabel">value: options.python_replace</string>
+							<string key="NSLabel">value: options.find_text</string>
 							<string key="NSBinding">value</string>
-							<string key="NSKeyPath">options.python_replace</string>
+							<string key="NSKeyPath">options.find_text</string>
 							<object class="NSDictionary" key="NSOptions">
 								<bool key="EncodedWithXMLCoder">YES</bool>
 								<object class="NSArray" key="dict.sortedKeys">
 									<bool key="EncodedWithXMLCoder">YES</bool>
 									<string>NSAllowsEditingMultipleValuesSelection</string>
-									<string>NSConditionallySetsEnabled</string>
+									<string>NSConditionallySetsEditable</string>
+									<string>NSNullPlaceholder</string>
 								</object>
 								<object class="NSMutableArray" key="dict.values">
 									<bool key="EncodedWithXMLCoder">YES</bool>
 									<boolean value="NO"/>
 									<boolean value="NO"/>
+									<string>Find</string>
 								</object>
 							</object>
 							<int key="NSNibBindingConnectorVersion">2</int>
 						</object>
 					</object>
-					<int key="connectionID">258</int>
+					<int key="connectionID">267</int>
 				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -1705,7 +1703,7 @@
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">258</int>
+			<int key="maxID">267</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">

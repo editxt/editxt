@@ -23,6 +23,14 @@ This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
 ????-??-?? - 1.4.0
+  - Added Python Replace feature to find command. This feature evaluates a
+    Python expression during the replace phase of a find/replace operation
+    allowing text transformations such as case changes or conditional
+    replacements, far beyond what is possible with a regular expression find/
+    replace operation. Example replace expression:
+
+      match.group(1).lower() + match.group(2)
+
   - Dramatic performance boost when highlighting selected text.
   - Add count-occurrences action to find command.
   - Add right_margin config settings:
