@@ -109,6 +109,12 @@ def save_options(options, command, history):
     history.append(command.arg_string(options))
 
 
+class CommandError(Exception):
+    """Command error
+
+    For command errors that should be presented without a traceback.
+    """
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Base classes for GUI command controllers
 

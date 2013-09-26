@@ -49,6 +49,7 @@ def unittest_print_first_failures_last():
         return old_printErrorList(self, flavor, reversed(errors))
     unittest._TextTestResult.printErrorList = printErrorList
 
+
 def eq_(a, b, text=None):
     if a != b:
         if isinstance(a, basestring):
@@ -59,20 +60,6 @@ def eq_(a, b, text=None):
             text = (str(text) + " : ") if text is not None else ""
             err = "%s%r != %r" % (text, a, b)
         raise AssertionError(err)
-
-def install_nose_tools_better_eq():
-    nose.tools.eq_ = eq_
-
-def install_pdb_trace_for_nose():
-    import pdb
-    import sys
-    def set_trace():
-        """nose-compatible trace function
-        
-        uses default stdout, which is not consumed by nose
-        """
-        pdb.Pdb(stdout=sys.__stdout__).set_trace(sys._getframe().f_back)
-    pdb.set_trace = set_trace
 
 
 def do_method_pass_through(attr, inner_obj_class, outer_obj, token, method,
@@ -93,7 +80,7 @@ def do_method_pass_through(attr, inner_obj_class, outer_obj, token, method,
     getattr(inner_obj, inner_method)(*int_args) >> returns
     with m:
         rval = getattr(outer_obj, outer_method)(*ext_args)
-        nose.tools.eq_(rval, returns)
+        eq_(rval, returns)
 
 class TestConfig(object):
     def __init__(self, *args, **kw):
@@ -166,20 +153,29 @@ def assert_raises(*args, **kw):
             raise AssertionError('invalid kwargs: {!r}'.format(kwargs))
         @contextmanager
         def raises():
+            if args[0] is None:
+                yield
+                return
             try:
                 yield
                 raise AssertionError('{} not raised'.format(args[0]))
             except args[0] as err:
                 if isinstance(msg, basestring):
-                    nose.tools.eq_(str(err), msg)
+                    eq_(str(err), msg)
                 elif hasattr(msg, 'search'):
                     assert msg.search(str(err)), \
                         '{!r} does not match {!r}'.foramt(msg.pattern, str(err))
                 elif msg is not None:
                     msg(err)
+            except Exception as err:
+                log.error("unexpected error", exc_info=True)
+                raise AssertionError("{} != {}".format(
+                    type(err).__name__, args[0].__name__))
         return raises()
     else:
-        nose.tools.assert_raises(*args, **kw)
+        nose_assert_raises(*args, **kw)
+
+nose_assert_raises = nose.tools.assert_raises
 
 
 class CaptureLog(object):
@@ -263,3 +259,18 @@ def tempdir(*args, **kw):
     finally:
         if delete and os.path.exists(path):
             shutil.rmtree(path)
+
+
+def patch_nose_tools():
+    nose.tools.eq_ = eq_
+    nose.tools.assert_raises = assert_raises
+
+    import pdb
+    import sys
+    def set_trace():
+        """nose-compatible trace function
+
+        uses default stdout, which is not consumed by nose
+        """
+        pdb.Pdb(stdout=sys.__stdout__).set_trace(sys._getframe().f_back)
+    pdb.set_trace = set_trace

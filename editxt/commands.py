@@ -24,7 +24,7 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
-from editxt.command.base import command
+from editxt.command.base import command, CommandError
 from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
     VarArgs, CommandParser, Options, SubArgs, SubParser)
 from editxt.command.util import has_selection, iterlines
@@ -386,6 +386,3 @@ def delete_backward(textview, sender, args):
         textview.textStorage().replaceCharactersInRange_withString_(sel, u"")
         textview.didChangeText()
         textview.scrollRangeToVisible_((sel[0], 0))
-
-
-class CommandError(Exception): pass

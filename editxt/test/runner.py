@@ -30,7 +30,7 @@ import editxt.test
 import editxt.test.mockerext as mockerext
 from editxt.application import Application
 from editxt.test.util import unittest_print_first_failures_last, \
-    install_nose_tools_better_eq, install_pdb_trace_for_nose
+    patch_nose_tools
 
 log = logging.getLogger(__name__)
 
@@ -50,8 +50,7 @@ def run(argv=None):
 
     editxt.testing = True # for editxt.utils.untested
     unittest_print_first_failures_last()
-    install_nose_tools_better_eq()
-    install_pdb_trace_for_nose()
+    patch_nose_tools()
     mockerext.install()
     os.chdir(srcpath)
 

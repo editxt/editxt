@@ -28,7 +28,7 @@ from Foundation import *
 
 import editxt
 import editxt.constants as const
-from editxt.command.base import command, objc_delegate, PanelController
+from editxt.command.base import command, CommandError, objc_delegate, PanelController
 from editxt.command.parser import Choice, Regex, RegexPattern, CommandParser, Options
 from editxt.command.util import make_command_predicate
 from editxt.util import KVOProxy, KVOLink
@@ -62,7 +62,7 @@ WORD = "word"
         ('replace-in-selection in-selection selection', 'replace_all_in_selection'),
         ('count-occurrences highlight', 'count_occurrences'),
         name='action'),
-    Choice('regex literal word', name='search_type'),
+    Choice('regex literal word python-replace', name='search_type'),
     Choice(('wrap', True), ('no-wrap', False), name='wrap_around'),
 ), lookup_with_arg_parser=True)
 def find(textview, sender, args):
@@ -99,9 +99,10 @@ class FindOptions(Options):
     )
 
     dependent_key_paths = {
-        "match_entire_word": ["regular_expression", "search_type"],
-        "regular_expression": ["match_entire_word", "search_type"],
-        "search_type": ["match_entire_word", "regular_expression"],
+        "match_entire_word": ["regular_expression", "search_type", "python_replace"],
+        "regular_expression": ["match_entire_word", "search_type", "python_replace"],
+        "python_replace": ["match_entire_word", "search_type", "regular_expression"],
+        "search_type": ["match_entire_word", "regular_expression", "python_replace"],
         "pattern": ["find_text", "replace_text", "ignore_case"],
         "find_text": ["pattern"],
         "replace_text": ["pattern"],
@@ -144,8 +145,11 @@ class FindOptions(Options):
     @regular_expression.setter
     def regular_expression(self, value):
         assert isinstance(value, (int, bool)), value
-        if value or self.search_type != WORD:
-            self.search_type = REGEX if value else LITERAL
+        if value:
+            if self.search_type != REPY:
+                self.search_type = REGEX
+        elif self.search_type != WORD:
+            self.search_type = LITERAL
 
     @property
     def match_entire_word(self):
@@ -155,6 +159,17 @@ class FindOptions(Options):
         assert isinstance(value, (int, bool)), value
         if value or not self.regular_expression:
             self.search_type = WORD if value else LITERAL
+
+    @property
+    def python_replace(self):
+        return self.search_type == REPY
+    @python_replace.setter
+    def python_replace(self, value):
+        assert isinstance(value, (int, bool)), value
+        if value:
+            self.search_type = REPY
+        elif self.search_type == REPY:
+            self.search_type = REGEX
 
     @property
     def recent_finds(self):
@@ -666,19 +681,28 @@ class FindController(PanelController):
             flags = re.UNICODE | re.MULTILINE
             if self.options.ignore_case:
                 flags |= re.IGNORECASE
+            error = None
             try:
                 regex = re.compile(ftext, flags)
-            except re.error, err:
+                if self.options.python_replace:
+                    make_found_range_factory(self.options)
+            except re.error as err:
+                title = u"Cannot Compile Regular Expression"
+                error = err
+            except InvalidPythonExpression as err:
+                title = u"Cannot Compile Python Expression"
+                error = err
+            if error:
                 NSBeep()
                 # Note: if the find dialog type is NSPanel (instead of NSWindow)
                 # the focus will switch back to the main document window rather
                 # than to the find dialog, which is not what we want. Therefore
                 # we set the Custom Class of the find dialog to NSWindow.
                 NSBeginAlertSheet(
-                    u"Cannot Compile Regular Expression",
+                    title,
                     u"OK", None, None,
                     self.gui.window(), None, None, None, 0,
-                    u"Error: %s" % (err,),
+                    unicode(err),
                 );
                 return False
         return True
@@ -745,13 +769,13 @@ def make_found_range_factory(options):
         func = (
             "def repy(self, python_expression):\n"
             "    match = self.match\n"
-            "    return " + options.replace_text
+            "    result = {}\n"
+            "    return unicode(result)".format(options.replace_text)
         )
         namespace = {}
         try:
             exec func in globals(), namespace
         except Exception as err:
-            raise NotImplementedError
             raise InvalidPythonExpression(func, err)
         expand = namespace["repy"]
     elif options.search_type == REGEX or options.search_type == WORD:
@@ -766,6 +790,15 @@ def make_found_range_factory(options):
         def expand(self, text):
             return text
     return type("FoundRange", (BaseFoundRange,), {"expand": expand})
+
+
+class InvalidPythonExpression(CommandError):
+
+    def __init__(self, func, err):
+        super(Exception, self).__init__(func, err)
+
+    def __str__(self):
+        return "could not compile:\n\n{}\n\n{}".format(*self.args[:2])
 
 
 def load_find_pasteboard_string():

@@ -27,8 +27,9 @@ from AppKit import *
 from Foundation import *
 
 import editxt.constants as const
+from editxt.command.base import CommandError
 from editxt.command.parser import ArgumentError
-from editxt.commands import load_commands, CommandError
+from editxt.commands import load_commands
 from editxt.history import History
 from editxt.util import WeakProperty
 

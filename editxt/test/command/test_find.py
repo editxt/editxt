@@ -29,7 +29,8 @@ from AppKit import *
 from Foundation import *
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
-from editxt.test.util import TestConfig, untested, check_app_state, replattr
+from editxt.test.util import (assert_raises, TestConfig, untested,
+    check_app_state, replattr)
 from editxt.test.command.test_base import replace_history
 
 import editxt
@@ -98,10 +99,11 @@ def test_find_command():
     yield test, c(input=u"/abc// s", find="abc", action="replace_all_in_selection")
     yield test, c(input=u"/abc// c", find="abc", action="count_occurrences",
                   message="Found 3 occurrences")
-    yield test, c(input=u"/abc//  r", find="abc", search=mod.REGEX)
-    yield test, c(input=u"/abc//  l", find="abc", search=mod.LITERAL)
-    yield test, c(input=u"/abc//  w", find="abc", search=mod.WORD)
-    yield test, c(input=u"/abc//   n", find="abc", wrap=False)
+    yield test, c(input=u"/abc//  regex", find="abc", search=mod.REGEX)
+    yield test, c(input=u"/abc//  literal", find="abc", search=mod.LITERAL)
+    yield test, c(input=u"/abc//  word", find="abc", search=mod.WORD)
+    yield test, c(input=u"/abc//  python-replace", find="abc", search=mod.REPY)
+    yield test, c(input=u"/abc//   no-wrap", find="abc", wrap=False)
 
 def test_Finder_mark_occurrences():
     def test(c):
@@ -146,20 +148,28 @@ def test_Finder_python_replace():
         tv = m.mock(TextView)
         tv.selectedRange() >> NSMakeRange(0, 16)
         tv.string() >> NSString.alloc().initWithString_(c.text)
-        result = [c.text]
-        def replace(range, value):
-            start, end = range
-            text = result[0]
-            result[0] = text[:start] + value + text[start + end:]
-        tv.shouldChangeTextInRange_replacementString_(ANY, ANY) >> True
-        expect(tv.textStorage().replaceCharactersInRange_withString_(
-            ANY, ANY)).call(replace)
-        tv.didChangeText()
-        tv.setNeedsDisplay_(True)
+        if not isinstance(c.expect, Exception):
+            result = [c.text]
+            def replace(range, value):
+                start, end = range
+                text = result[0]
+                result[0] = text[:start] + value + text[start + end:]
+            tv.shouldChangeTextInRange_replacementString_(ANY, ANY) >> True
+            expect(tv.textStorage().replaceCharactersInRange_withString_(
+                ANY, ANY)).call(replace)
+            tv.didChangeText()
+            tv.setNeedsDisplay_(True)
         finder = Finder((lambda: tv), options)
         with m:
-            getattr(finder, c.action)(None)
-            eq_(result[0], c.expect)
+            if isinstance(c.expect, Exception):
+                def check(err):
+                    print err
+                    eq_(str(err), str(c.expect))
+                with assert_raises(type(c.expect), msg=check):
+                    getattr(finder, c.action)(None)
+            else:
+                getattr(finder, c.action)(None)
+                eq_(result[0], c.expect)
     c = TestConfig(search="python-replace", text="The quick Fox is a brown fox")
     yield test, c(
         find="[Ff]ox", replace="match.group(0).lower()",
@@ -169,6 +179,13 @@ def test_Finder_python_replace():
         find="[Ff]ox", replace="match.group(0).upper()",
         action="replace_all_in_selection",
         expect="The quick FOX is a brown fox")
+    yield test, c(
+        find="x", replace="match(", action="replace_all",
+        expect=mod.InvalidPythonExpression(
+            "def repy(self, python_expression):\n"
+            "    match = self.match\n"
+            "    result = match(\n"
+            "    return unicode(result)", "invalid syntax (<string>, line 4)"))
 
 def test_FindController_shared_controller():
     fc = FindController.shared_controller()
@@ -591,21 +608,67 @@ def test_FindController_find_target():
 #       eq_(getattr(options, name), value, name)
 
 def test_FindOptions_dependent_options():
+    from collections import namedtuple
     def test(c):
         options = FindOptions()
         setattr(options, c.att.name, c.att.before)
-        setattr(options, c.dep.name, c.dep.before)
-        eq_(getattr(options, c.att.name), c.att.before)
-        eq_(getattr(options, c.dep.name), c.dep.before)
+        for dep in c.deps:
+            setattr(options, dep.name, dep.before)
+        eq_(getattr(options, c.att.name), c.att.before, c.att.name)
+        for dep in c.deps:
+            eq_(getattr(options, dep.name), dep.before, dep.name)
         # make the change, which fires the dependent change
         setattr(options, c.att.name, c.att.after)
-        eq_(getattr(options, c.dep.name), c.dep.after)
-    p = lambda n,b,a: TestConfig(name=n, before=b, after=a)
+        eq_(getattr(options, c.att.name), c.att.after, c.att.name)
+        for dep in c.deps:
+            eq_(getattr(options, dep.name), dep.after, dep.name)
+    p = namedtuple("F", ["name", "before", "after"])
     c = TestConfig()
-    yield test, c(att=p("regular_expression", False, True), dep=p("match_entire_word", True, False))
-    yield test, c(att=p("regular_expression", True, False), dep=p("match_entire_word", False, False))
-    yield test, c(att=p("match_entire_word", False, True), dep=p("regular_expression", True, False))
-    yield test, c(att=p("match_entire_word", True, False), dep=p("regular_expression", False, False))
+    yield test, c(att=p("regular_expression", True, True), deps=[
+        p("match_entire_word", False, False),
+        p("python_replace", True, True),
+        p("search_type", mod.REPY, mod.REPY),
+    ])
+    yield test, c(att=p("regular_expression", False, True), deps=[
+        p("match_entire_word", True, False),
+        p("python_replace", False, False),
+        p("search_type", mod.WORD, mod.REGEX),
+    ])
+    yield test, c(att=p("regular_expression", True, False), deps=[
+        p("match_entire_word", False, False),
+        p("python_replace", False, False),
+        p("search_type", mod.REGEX, mod.LITERAL),
+    ])
+    yield test, c(att=p("match_entire_word", False, True), deps=[
+        p("regular_expression", True, False),
+        p("python_replace", False, False),
+        p("search_type", mod.REGEX, mod.WORD),
+    ])
+    yield test, c(att=p("match_entire_word", True, False), deps=[
+        p("regular_expression", False, False),
+        p("python_replace", False, False),
+        p("search_type", mod.WORD, mod.LITERAL),
+    ])
+    yield test, c(att=p("python_replace", False, True), deps=[
+        p("regular_expression", False, True),
+        p("match_entire_word", True, False),
+        p("search_type", mod.WORD, mod.REPY),
+    ])
+    yield test, c(att=p("python_replace", True, False), deps=[
+        p("regular_expression", True, True),
+        p("match_entire_word", False, False),
+        p("search_type", mod.REPY, mod.REGEX),
+    ])
+    yield test, c(att=p("python_replace", False, False), deps=[
+        p("regular_expression", False, False),
+        p("match_entire_word", False, False),
+        p("search_type", mod.LITERAL, mod.LITERAL),
+    ])
+    yield test, c(att=p("python_replace", False, False), deps=[
+        p("regular_expression", False, False),
+        p("match_entire_word", True, True),
+        p("search_type", mod.WORD, mod.WORD),
+    ])
 
 def test_FindController_load_options():
     def test(c):
