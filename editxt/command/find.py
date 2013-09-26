@@ -120,7 +120,7 @@ class FindOptions(Options):
         return self.pattern[1]
     @replace_text.setter
     def replace_text(self, value):
-        self.pattern = (self.pattern[0], value)
+        self.pattern = (self.pattern[0], value or u"")
 
     @property
     def ignore_case(self):
