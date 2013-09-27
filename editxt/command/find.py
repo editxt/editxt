@@ -776,11 +776,12 @@ def make_found_range_factory(options):
             raise InvalidPythonExpression(func, err)
         repy = namespace["repy"]
         def expand(self, text):
+            match = Match(self.match)
             try:
-                return repy(self.match, self.range)
+                return repy(match, self.range)
             except Exception as err:
                 return "!! {} >> {} >> {}: {} !!" \
-                    .format(self.match.group(0), text, type(err).__name__, err)
+                    .format(match, text, type(err).__name__, err)
     elif options.search_type == REGEX or options.search_type == WORD:
         def expand(self, text):
             try:
@@ -793,6 +794,57 @@ def make_found_range_factory(options):
         def expand(self, text):
             return text
     return type("FoundRange", (BaseFoundRange,), {"expand": expand})
+
+
+class Match(object):
+    """re match object wrapper with support for getitem/slice
+
+    >>> match = Match(re.search("(\d)(\d)(\d)(\d)(\d)", "12345"))
+    >>> match
+    <Match '12345'>
+    >>> str(match)
+    '12345'
+    >>> match[0]
+    '12345'
+    >>> match[1]
+    '1'
+    >>> match[5]
+    '5'
+    >>> match[0:3]
+    '123'
+    >>> match[1:3]
+    '23'
+    >>> match[1::2]
+    '24'
+    >>> match[6]
+    Traceback (most recent call last):
+      ...
+    IndexError: no such group
+    """
+
+    def __init__(self, match):
+        self.match = match
+
+    def __getattr__(self, name):
+        return getattr(self.match, name)
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return "".join(self.match.groups()[key])
+        return self.match.group(key)
+
+    def __str__(self):
+        try:
+            return self.match.group(0)
+        except Exception:
+            return str(self.match)
+
+    def __repr__(self):
+        try:
+            value = self.match.group(0)
+        except Exception:
+            value = self.match
+        return "<{} {!r}>".format(type(self).__name__, value)
 
 
 class InvalidPythonExpression(CommandError):

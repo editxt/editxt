@@ -172,7 +172,7 @@ def test_Finder_python_replace():
                 eq_(result[0], c.expect)
     c = TestConfig(search="python-replace", text="The quick Fox is a brown fox")
     yield test, c(
-        find="[Ff]ox", replace="match.group(0).lower()",
+        find="[Ff]ox", replace="match[0].lower()",
         action="replace_all",
         expect="The quick fox is a brown fox")
     yield test, c(
@@ -180,12 +180,12 @@ def test_Finder_python_replace():
         action="replace_all_in_selection",
         expect="The quick FOX is a brown fox")
     yield test, c(
-        find="[Ff]ox", replace="match.group(1)",
+        find="[Ff]ox", replace="match[1]",
         action="replace_all",
         expect="The quick "
-            "!! Fox >> match.group(1) >> IndexError: no such group !!"
+            "!! Fox >> match[1] >> IndexError: no such group !!"
             " is a brown "
-            "!! fox >> match.group(1) >> IndexError: no such group !!")
+            "!! fox >> match[1] >> IndexError: no such group !!")
     yield test, c(
         find="x", replace="match(", action="replace_all",
         expect=mod.InvalidPythonExpression(
@@ -745,6 +745,37 @@ def test_FindController_save_options():
             wrap_around=False,
         ), hist="/abc/def/i replace-all word no-wrap")
 
+def test_Match():
+    match = mod.Match(re.search("(\d)(\d)(\d)(\d)(\d)", "12345"))
+
+    yield eq_, match.groups(), ("1", "2", "3", "4", "5")
+
+    def test(key, result, *slice):
+        if slice:
+            if len(slice) == 1:
+                end = slice[0]
+                eq_(match[key:end], result)
+            else:
+                end, step = slice
+                eq_(match[key:end:step], result)
+        else:
+            eq_(match[key], result)
+    yield test, 0, "12345"
+    yield test, 1, "1"
+    yield test, 5, "5"
+    yield test, None, "123", 3
+    yield test, 0, "123", 3
+    yield test, 1, "23", 3
+    yield test, 1, "24", None, 2
+    yield test, 0, "135", 8, 2
+
+    def test(func, result):
+        eq_(func(match), result)
+    yield test, str, "12345"
+    yield test, repr, "<Match '12345'>"
+
+    yield eq_, repr(mod.Match(None)), "<Match None>"
+    yield eq_, str(mod.Match(None)), "None"
 
 # def test():
 #     assert False, "stop"
