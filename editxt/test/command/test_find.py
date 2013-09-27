@@ -317,9 +317,13 @@ def test_FindController_actions():
             rtext = options.replace_text >> "abc"
             options.regular_expression >> c.regex
             FoundRange = make_found_range_factory(FindOptions(regular_expression=c.regex))
-            rfr = FoundRange(None) if c.rfr else None
             if c.regex:
-                (m.property(fc.finder, "recently_found_range").value << rfr).count(1,2)
+                if c.rfr:
+                    tv._Finder__recently_found_range >> FoundRange(None)
+                elif c.rfr is None:
+                    expect(tv._Finder__recently_found_range).throw(AttributeError)
+                else:
+                    tv._Finder__recently_found_range >> None
             range = tv.selectedRange() >> m.mock()
             tv.shouldChangeTextInRange_replacementString_(range, rtext) >> c.act
             if c.act:
@@ -334,6 +338,7 @@ def test_FindController_actions():
     yield test, cx(has_tv=False)
     yield test, cx(regex=False)
     yield test, cx(rfr=False)
+    yield test, cx(rfr=None)
     yield test, cx(act=False)
 
     def do(m, c, fc, sender):
@@ -412,9 +417,8 @@ def test_FindController_finder_find():
         tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
         m.replace(fc.finder, "options").find_text >> c.ftext
         if c.has_tv and c.ftext:
-            text = tv.string() >> "<text>"
             sel = tv.selectedRange() >> (1, 2)
-            range = _find(text, c.ftext, sel, direction) >> ("<range>" if c.found else None)
+            range = _find(tv, c.ftext, sel, direction) >> ("<range>" if c.found else None)
             if c.found:
                 tv.setSelectedRange_(range)
                 tv.scrollRangeToVisible_(range)
@@ -433,9 +437,9 @@ def test_FindController__find():
     def test(c):
         m = Mocker()
         fc = FindController.shared_controller()
+        tv = m.mock(TextView)
         regexfind = m.method(fc.finder.regexfinditer)
         simplefind = m.method(fc.finder.simplefinditer)
-        rfr = m.property(fc.finder, "recently_found_range")
         sel = NSMakeRange(1, 2)
         direction = "<direction>"
         options = m.property(fc.finder, "options").value >> m.mock(FindOptions)
@@ -450,6 +454,7 @@ def test_FindController__find():
         range = NSMakeRange(sel.location, 0)
         items = []
         rng = None
+        tv.string() >> u"<text>"
         FoundRange = make_found_range_factory(
             FindOptions(regular_expression=c.regex, match_entire_word=c.mword))
         for i, r in enumerate(c.matches):
@@ -460,11 +465,11 @@ def test_FindController__find():
             items.append(found)
             if i == 0 and found.range == sel:
                 continue
-            rfr.value = found
+            tv._Finder__recently_found_range = found
             rng = found.range
         finditer(u"<text>", ftext, range, direction, True) >> items
         with m:
-            result = fc.finder._find(u"<text>", u"<find>", sel, direction)
+            result = fc.finder._find(tv, u"<find>", sel, direction)
             eq_(result, rng)
     c = TestConfig(regex=False, mword=False, matches=[])
     yield test, c

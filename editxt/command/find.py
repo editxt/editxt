@@ -195,7 +195,6 @@ class Finder(object):
     def __init__(self, find_target, options):
         self.find_target = find_target
         self.options = options
-        self.recently_found_range = None
 
     def find_next(self, sender):
         self.find(FORWARD)
@@ -208,8 +207,10 @@ class Finder(object):
         if target is not None:
             options = self.options
             rtext = options.replace_text
-            if options.regular_expression and self.recently_found_range is not None:
-                rtext = self.recently_found_range.expand(rtext)
+            if options.regular_expression:
+                found = getattr(target, "_Finder__recently_found_range", None)
+                if found is not None:
+                    rtext = found.expand(rtext)
             range = target.selectedRange()
             if target.shouldChangeTextInRange_replacementString_(range, rtext):
                 target.textStorage().replaceCharactersInRange_withString_(range, rtext)
@@ -276,16 +277,15 @@ class Finder(object):
         target = self.find_target()
         ftext = self.options.find_text
         if target is not None and ftext:
-            text = target.string()
             selection = target.selectedRange()
-            range = self._find(text, ftext, selection, direction)
+            range = self._find(target, ftext, selection, direction)
             if range is not None:
                 target.setSelectedRange_(range)
                 target.scrollRangeToVisible_(range)
                 return
         NSBeep()
 
-    def _find(self, text, ftext, selection, direction):
+    def _find(self, target, ftext, selection, direction):
         """Return the range of the found text or None if not found"""
         options = self.options
         if options.regular_expression:
@@ -295,6 +295,7 @@ class Finder(object):
             finditer = self.regexfinditer
         else:
             finditer = self.simplefinditer
+        text = target.string()
         range = NSMakeRange(selection.location, 0)
         for i, found in enumerate(finditer(text, ftext, range, direction, True)):
             if found is WRAPTOKEN:
@@ -304,7 +305,7 @@ class Finder(object):
             if i == 0 and range == selection:
                 # this is the first match and we found the selected text
                 continue # find next
-            self.recently_found_range = found
+            target.__recently_found_range = found
             return range
         return None
 

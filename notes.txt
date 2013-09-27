@@ -74,7 +74,9 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-repy command
+Find/replace
+x   store FoundRange on textview, not Finder
+    write tests and fix errors in replace with wrong FoundRange
 
 Command bar enhancements:
     contextual command help
