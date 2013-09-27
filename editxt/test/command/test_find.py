@@ -180,12 +180,18 @@ def test_Finder_python_replace():
         action="replace_all_in_selection",
         expect="The quick FOX is a brown fox")
     yield test, c(
+        find="[Ff]ox", replace="match.group(1)",
+        action="replace_all",
+        expect="The quick "
+            "!! Fox >> match.group(1) >> IndexError: no such group !!"
+            " is a brown "
+            "!! fox >> match.group(1) >> IndexError: no such group !!")
+    yield test, c(
         find="x", replace="match(", action="replace_all",
         expect=mod.InvalidPythonExpression(
-            "def repy(self, python_expression):\n"
-            "    match = self.match\n"
-            "    result = match(\n"
-            "    return unicode(result)", "invalid syntax (<string>, line 4)"))
+            "def repy(match, range_):\n"
+            "    return match(",
+            "invalid syntax (<string>, line 2)"))
 
 def test_FindController_shared_controller():
     fc = FindController.shared_controller()

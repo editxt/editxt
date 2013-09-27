@@ -767,18 +767,20 @@ class BaseFoundRange(object):
 
 def make_found_range_factory(options):
     if options.search_type == REPY:
-        func = (
-            "def repy(self, python_expression):\n"
-            "    match = self.match\n"
-            "    result = {}\n"
-            "    return unicode(result)".format(options.replace_text)
-        )
+        func = "def repy(match, range_):\n    return {}" \
+            .format(options.replace_text)
         namespace = {}
         try:
             exec func in globals(), namespace
         except Exception as err:
             raise InvalidPythonExpression(func, err)
-        expand = namespace["repy"]
+        repy = namespace["repy"]
+        def expand(self, text):
+            try:
+                return repy(self.match, self.range)
+            except Exception as err:
+                return "!! {} >> {} >> {}: {} !!" \
+                    .format(self.match.group(0), text, type(err).__name__, err)
     elif options.search_type == REGEX or options.search_type == WORD:
         def expand(self, text):
             try:
