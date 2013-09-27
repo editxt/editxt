@@ -785,10 +785,10 @@ def make_found_range_factory(options):
     elif options.search_type == REGEX or options.search_type == WORD:
         def expand(self, text):
             try:
-                text = self.match.expand(text)
-            except Exception:
-                log.error("error expanding replace expression", exc_info=True)
-            return text
+                return self.match.expand(text)
+            except Exception as err:
+                return "!! {} >> {} >> {}: {} !!" \
+                    .format(Match(self.match), text, type(err).__name__, err)
     else:
         assert options.search_type == LITERAL, options
         def expand(self, text):

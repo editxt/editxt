@@ -322,7 +322,7 @@ def test_FindController_actions():
             options = m.replace(fc.finder, "options")
             rtext = options.replace_text >> "abc"
             options.regular_expression >> c.regex
-            FoundRange = make_found_range_factory(FindOptions(regular_expression=c.regex))
+            FoundRange = make_found_range_factory(FindOptions(regular_expression=False))
             if c.regex:
                 if c.rfr:
                     tv._Finder__recently_found_range >> FoundRange(None)
