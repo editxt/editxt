@@ -21,7 +21,6 @@ import logging
 import objc
 import os
 from collections import defaultdict
-from itertools import chain, repeat
 
 import objc
 from AppKit import *

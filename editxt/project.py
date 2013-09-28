@@ -17,24 +17,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-import codecs
 import logging
 import os
-import sys
-from itertools import count
 
-from configparser import SafeConfigParser
-from io import StringIO
-
-import objc
 from AppKit import *
 from Foundation import *
-#from NDAlias import NDAlias
 
 import editxt.constants as const
 from editxt import app
 from editxt.document import TextDocumentView, TextDocument, doc_id_gen
-from editxt.util import KVOList, untested
+from editxt.util import KVOList
 
 
 log = logging.getLogger(__name__)
