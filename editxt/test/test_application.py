@@ -365,9 +365,9 @@ def test_Application_iter_views_of_document():
 #       doc = m.mock(TextDocument)
 #       vws = m.method(ac.iter_views_of_document)(doc) >> m.mock()
 #       if c.has_view:
-#           vws.next() >> vw
+#           next(vws) >> vw
 #       else:
-#           expect(vws.next()).throw(StopIteration)
+#           expect(next(vws)).throw(StopIteration)
 #       with m:
 #           result = ac.find_view_with_document(doc)
 #           eq_(result, vw)
@@ -974,7 +974,7 @@ def test_document_shouldClose_contextInfo_():
             assert not saver.should_close
             try:
                 next(saver.documents)
-                raise AssertionError("saver.documents.next() should raise StopIteration")
+                raise AssertionError("next(saver.documents) should raise StopIteration")
             except StopIteration:
                 pass
         else:

@@ -200,7 +200,7 @@ class Application(object):
 #       if there are no views of this document.
 #       """
 #       try:
-#           return self.iter_views_of_document(doc).next()
+#           return next(self.iter_views_of_document(doc))
 #       except StopIteration:
 #           return None
 
