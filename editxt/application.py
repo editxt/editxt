@@ -366,7 +366,7 @@ class Application(object):
             self.profile_path, const.STATE_DIR, state_name)
         state = editor.state
         try:
-            with open(state_file, 'wb') as fh:
+            with open(state_file, 'w', encoding="utf-8") as fh:
                 dump_yaml(state, fh)
         except Exception:
             log.error('cannot write %s\n%s\n',

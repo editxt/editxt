@@ -68,10 +68,10 @@ def message(text, info=""):
 
 def yaml_dumper_loader():
     try:
-        from yaml import CDumper as Dumper, CLoader as Loader
+        from yaml import CSafeDumper as Dumper, CSafeLoader as Loader
     except ImportError:
         log.warn('falling back to non-optimized YAML dumper/loader')
-        from yaml import Dumper, Loader
+        from yaml import SafeDumper as Dumper, SafeLoader as Loader
     while True:
         yield Dumper, Loader
 yaml_dumper_loader = yaml_dumper_loader()

@@ -386,7 +386,7 @@ class Editor(object):
 
     def _get_window_settings(self):
         return dict(
-            frame_string=self.wc.window().stringWithSavedFrame(),
+            frame_string=str(self.wc.window().stringWithSavedFrame()),
             splitter_pos=self.wc.splitView.fixedSideThickness(),
             properties_hidden=(self.wc.propsViewButton.state() == NSOnState),
         )

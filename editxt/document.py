@@ -310,7 +310,7 @@ class TextDocumentView(NSObject):
         else:
             state = dict(getattr(self, "_state", {}))
         if self.file_path is not None:
-            state["path"] = self.file_path
+            state["path"] = str(self.file_path)
         return state
     def _set_edit_state(self, state):
         if self.text_view is not None:
