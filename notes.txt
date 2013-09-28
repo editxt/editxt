@@ -22,16 +22,13 @@ Building and packaging
 Python environment setup. RECOMMENDED: use a virtualenv
 (http://pypi.python.org/pypi/virtualenv). Install dependencies::
 
-    pip install --requirement=libs.txt
+    mkvirtualenv --python=python3 ...
 
-    # pyobjc installation is tricky (this sequence worked on Python 2.7.3)
-    easy_install "pyobjc-core==2.3"
-    easy_install "pyobjc-framework-Cocoa==2.3"
-    #easy_install "pyobjc-framework-Quartz==2.3" ??
-    easy_install "pyobjc-framework-ExceptionHandling==2.3"
+    pip install --upgrade pip           # v1.4.1 at time of writing
+    pip install --upgrade setuptools    # setuptools-1.1.6, distribute-0.7.3
 
-    # PyYAML with LibYAML installation
-    mkdir ztemp; cd ztemp
+    # optional: PyYAML with LibYAML inside virtualenv
+    mkdir temp && cd temp
     curl http://pyyaml.org/download/libyaml/yaml-0.1.4.tar.gz > yaml-0.1.4.tar.gz
     tar xf yaml-0.1.4.tar.gz
     cd yaml-0.1.4
