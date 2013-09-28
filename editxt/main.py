@@ -39,7 +39,6 @@ import objc
 from PyObjCTools import AppHelper, Debugging
 
 import editxt
-import editxt.hacks
 from editxt.errorlog import errlog
 
 docopt.exit = sys.exit # Fix for Python 2

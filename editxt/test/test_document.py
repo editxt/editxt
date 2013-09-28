@@ -827,7 +827,7 @@ def test_TextDocument_eol():
 #         doc = TextDocument.alloc().init()
 #         try:
 #             doc.indent_size = c.size
-#         except Exception, ex:
+#         except Exception as ex:
 #             if not isinstance(ex, exc):
 #                 raise
 #         else:

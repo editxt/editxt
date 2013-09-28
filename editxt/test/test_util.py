@@ -431,7 +431,7 @@ def test_KVOLink():
     yield test, c(lks=[("path.to.key1", "other_key"), ("path.to.key2", "other_key")])
 
 class KVOLinkItem(NSObject):
-    @objc.namedSelector("init:subject:")
+    @objc.namedSelector(b"init:subject:")
     def init(self, key, subj):
         super(KVOLinkItem, self).init()
         setattr(self, key, None)

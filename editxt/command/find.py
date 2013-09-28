@@ -728,7 +728,7 @@ class StatusFlasher(NSObject):
 
     timing = (0.2, 0.2, 0.2, 5)
 
-    @objc.namedSelector("init:text:")
+    @objc.namedSelector(b"init:text:")
     def init(self, label, text):
         def runner():
             label.setHidden_(True)

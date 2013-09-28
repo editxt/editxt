@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 # Put this file somewhere on your path if you wish to interact with EditXT from
 # the command line.
 import os

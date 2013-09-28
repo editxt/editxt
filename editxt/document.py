@@ -131,7 +131,7 @@ class TextDocumentView(NSObject):
     @property
     def file_path(self):
         url = self.document.fileURL()
-        return (str(url.path()) if url else None)
+        return (url.path() if url else None)
 
     @property
     def is_dirty(self):
@@ -345,7 +345,7 @@ class TextDocumentView(NSObject):
         else:
             editor.discard_and_focus_recent(self)
 
-    @objc.typedSelector('v@:@ii')
+    @objc.typedSelector(b'v@:@ii')
     def document_shouldClose_contextInfo_(self, doc, should_close, info):
         editor = app.context.pop(info)
         if should_close:

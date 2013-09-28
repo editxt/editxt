@@ -38,7 +38,7 @@ class KeyValueTransformer(NSValueTransformer):
     def allowsReverseTransformation(cls):
         return True
 
-    @objc.namedSelector("init:")
+    @objc.namedSelector(b"init:")
     def init(self, map):
         self = super(KeyValueTransformer, self).init()
         self.forward = dict(map)

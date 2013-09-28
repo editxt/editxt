@@ -74,9 +74,13 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Find/replace
-x   store FoundRange on textview, not Finder
-    write tests and fix errors in replace with wrong FoundRange
+Python3
+File tree as main project view
+open command
+grep command (for finding/printing lines in file)
+Persistent unsaved docs
+Embed file type icons in app (also provide support for user icon sets)
+Diff doc with file on disk (or other file)
 
 Command bar enhancements:
     contextual command help
@@ -581,6 +585,10 @@ Log filtering
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Completed tasks
+
+x Find/replace
+x   store FoundRange on textview, not Finder
+x   write tests and fix errors in replace with wrong FoundRange
 
 x Add more settings
 x   right_margin: 80 # set to 0 to disable

@@ -334,7 +334,7 @@ class ContentSizedTextView(ak.NSTextView):
         if isinstance(value, pyobjc_unicode):
             # Convert value to unicode to make setString_ work.
             # Have no idea why it does not work without this.
-            value = str(value)
+            value = str(value) # TODO revisit since upgrading to Python3
         super(ContentSizedTextView, self).setString_(value)
         self.textDidChange_(None)
 

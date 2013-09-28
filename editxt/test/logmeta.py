@@ -56,10 +56,7 @@ def logmeta(log, ignore=None, override=None, verbose=None, local_override=False,
             not any(e.search(attr) for e in ignore) and
             any(e.search(attr) for e in override))
     def short_repr(value):
-        try:
-            v = repr(value)
-        except UnicodeEncodeError:
-            v = repr(str(value))
+        v = repr(value)
         if len(v) > 100:
             v = "%s...%s" % (v[:10], v[-10:])
         return v

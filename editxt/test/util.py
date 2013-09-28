@@ -32,12 +32,12 @@ import nose.tools
 
 from editxt.util import untested
 
-log = logging.getLogger(__name__)
-
 try:
     basestring
 except NameError:
     basestring = str
+
+log = logging.getLogger(__name__)
 
 
 def todo_remove(obj):

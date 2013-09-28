@@ -79,8 +79,6 @@ class String(Type):
         if value is NOT_SET:
             return self.default
         if isinstance(value, str):
-            if not isinstance(value, str):
-                value = value.decode("utf-8")
             return value
         raise ValueError("{}: expected string, got {!r}".format(key, value))
 
@@ -265,7 +263,7 @@ class Config(object):
             value = schema.validate(value, name)
         except Exception as err:
             if not str(err).startswith(name + ": "):
-                log.error("%s: %s", name, error, exc_info=True)
+                log.error("%s: %s", name, err, exc_info=True)
             else:
                 log.error(str(err))
             value = schema.default

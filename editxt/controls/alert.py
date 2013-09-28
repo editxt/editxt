@@ -29,13 +29,13 @@ log = logging.getLogger(__name__)
 
 class Caller(NSObject):
 
-    @objc.namedSelector("init:")
+    @objc.namedSelector(b"init:")
     def init(self, callback):
         self = super(Caller, self).init()
         self.callback = callback
         return self
 
-    @objc.typedSelector('v@:@ii')
+    @objc.typedSelector(b'v@:@ii')
     def alertDidEnd_returnCode_contextInfo_(self, alert, code, context):
         self.callback(code)
 

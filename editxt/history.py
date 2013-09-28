@@ -50,8 +50,7 @@ class History(object):
             try:
                 with open(index_file) as fh:
                     self.pages = pages = json.load(fh)
-                assert all(isinstance(p, str) for p in pages), \
-                    repr(pages)
+                assert all(isinstance(p, str) for p in pages), repr(pages)
             except Exception:
                 log.warn("cannot load %s", index_file, exc_info=True)
         if len(self.pages) < self.max_pages:

@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#! /usr/bin/env python
 # encoding: utf-8
 # 
 # Quicksilver action to open files with EditXT

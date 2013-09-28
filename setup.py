@@ -56,8 +56,9 @@ if package:
 # get git revision information
 def proc_out(cmd):
     proc = Popen(cmd, stdout=PIPE, close_fds=True)
-    return proc.stdout
-gitrev = proc_out(["git", "rev-parse", "HEAD"]).read()[:7]
+    for line in proc.stdout:
+        yield line.decode("utf8") # HACK
+gitrev = next(proc_out(["git", "rev-parse", "HEAD"]))[:7]
 changes = 0
 for line in proc_out(["git", "status"]):
     if line.startswith("# Changed but not updated"):
