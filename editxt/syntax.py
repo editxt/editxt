@@ -138,17 +138,17 @@ class SyntaxCache(object):
             minstart = 0
             minend = tlen
 
-        def setcolor(color, range, prevend, info, ts=ts, cache=self, minend=minend):
-            prevcache = cache.get(range.location)
-            prevend = max(min(prevend, range.location), 0)
-            rangelen = max((range.location - prevend) + range.length, 0)
+        def setcolor(color, range_, prevend, info, ts=ts, cache=self, minend=minend):
+            prevcache = cache.get(range_.location)
+            prevend = max(min(prevend, range_.location), 0)
+            rangelen = max((range_.location - prevend) + range_.length, 0)
             prevrange = NSRange(prevend, rangelen)
             cache.clear(prevrange)
             ts.removeAttribute_range_(NSForegroundColorAttributeName, prevrange)
             if color is not None:
-                ts.addAttribute_value_range_(NSForegroundColorAttributeName, color, range)
-                cache.set(range, info)
-            if range.location + range.length > minend and (range, info) == prevcache:
+                ts.addAttribute_value_range_(NSForegroundColorAttributeName, color, range_)
+                cache.set(range_, info)
+            if range_.location + range_.length > minend and (range_, info) == prevcache:
                 raise StopHighlight()
 
         ts.beginEditing()
@@ -199,24 +199,24 @@ class SyntaxCache(object):
             return (None, None)
         return NSRange(index - value[0], value[0] + value[1]), value[2]
 
-    def set(self, range, info):
+    def set(self, range_, info):
         cache = self.cache
-        while range.location > len(cache):
+        while range_.location > len(cache):
             cache.append(None)
-        for i in range(range.length):
+        for i in range(range_.length):
             try:
-                cache[range.location + i] = (i, range.length - i, info)
+                cache[range_.location + i] = (i, range_.length - i, info)
             except IndexError:
-                cache.append((i, range.length - i, info))
+                cache.append((i, range_.length - i, info))
 
-    def clear(self, range):
+    def clear(self, range_):
         cache = self.cache
-        if range.location + range.length >= len(cache):
-            del cache[range.location:]
+        if range_.location + range_.length >= len(cache):
+            del cache[range_.location:]
         try:
-            for i in range(range.length):
-                cache[range.location + i] = None
-            next_index = range.location + range.length + 1
+            for i in range(range_.length):
+                cache[range_.location + i] = None
+            next_index = range_.location + range_.length + 1
             next = cache[next_index]
             if next and next[0] > 0:
                 for i in range(next[1]):
@@ -320,9 +320,9 @@ class SyntaxDefinition(NoHighlight):
                 continue
             thestart = match.start()
             thisend = match.end()
-            range = NSRange(thestart, thisend - thestart)
-            setcolor(data[0], range, prevend, data[1])
-            prevend = range.location + range.length
+            range_ = NSRange(thestart, thisend - thestart)
+            setcolor(data[0], range_, prevend, data[1])
+            prevend = range_.location + range_.length
         setcolor(None,  NSRange(len(text) - 1, 0), prevend, None)
 
 
