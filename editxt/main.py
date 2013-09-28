@@ -40,6 +40,7 @@ from PyObjCTools import AppHelper, Debugging
 
 import editxt
 from editxt.errorlog import errlog
+from editxt.errors import install_exception_handler
 
 docopt.exit = sys.exit # Fix for Python 2
 log = logging.getLogger(__name__)
@@ -78,7 +79,7 @@ def run(app, argv, use_pdb):
     # HACK monkey-patch pyobc exception handler to use our logger
     Debugging.NSLog = lambda x, y=None: log.error(x if y is None else y)
     if not use_pdb:
-        Debugging.installExceptionHandler()
+        install_exception_handler()
 
     # initialize class definitions
     import editxt.controls.cells
@@ -104,6 +105,9 @@ def main(argv=list(sys.argv)):
         if use_pdb:
             argv.remove("--pdb")
             objc.setVerbose(1)
+
+            # make PyObjC use our exception handler
+            Debugging.installExceptionHandler = install_exception_handler
 
         if "--test" in argv:
             from editxt.test.runner import TestApplication
