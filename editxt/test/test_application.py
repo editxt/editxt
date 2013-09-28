@@ -499,7 +499,7 @@ def test_iter_editors():
             z_windows.append(win)
         for x in range(unordered):
             unordered_eds.append(m.mock(Editor))
-        ac.editors = unordered_eds # + [v for k, v in sorted(eds.iteritems())]
+        ac.editors = unordered_eds # + [v for k, v in sorted(eds.items())]
         app.orderedWindows() >> z_windows
         sorted_eds = [eds[i] for i in config if i not in (None, 7)]
         sorted_eds.extend(ed for ed in unordered_eds if ed not in sorted_eds)

@@ -613,7 +613,7 @@ def test_FindController_find_target():
 
 # def test_FindOptions_defaults():
 #   options = FindOptions(FindController)
-#   for name, value in options.defaults.iteritems():
+#   for name, value in options.defaults.items():
 #       eq_(getattr(options, name), value, name)
 
 def test_FindOptions_dependent_options():
