@@ -113,7 +113,7 @@ def logmeta(log, ignore=None, override=None, verbose=None, local_override=False,
                     except Exception as exc:
                         log.info("%s.%s(%s) raised %s", _o, name, argstr, exc)
                         raise
-                log.info("%s.%s(%s)", _o, name, str(argstr).decode("UTF-8"))
+                log.info("%s.%s(%s)", _o, name, argstr)
                 return f(*args, **kw)
             return decorator(wrapper, method)
 

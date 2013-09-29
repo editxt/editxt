@@ -132,7 +132,7 @@ class History(object):
             zero.append(item)
             zeropath = join(self.store_dir, self.zerofile)
             try:
-                with open(zeropath, "wb") as fh:
+                with open(zeropath, "w", encoding='utf-8') as fh:
                     for item in zero:
                         json.dump(item, fh)
                         fh.write("\n")
@@ -142,7 +142,7 @@ class History(object):
             return
         if len(zero) < self.page_size:
             zero.append(item)
-            mode = "ab"
+            mode = "a"
         else:
             self.zeropage = zero = [item]
             self.zerofile = self.pages.pop()
@@ -150,16 +150,16 @@ class History(object):
             index_name = self.INDEX_FILENAME.format(self.name)
             index_file = join(self.store_dir, index_name)
             try:
-                with open(index_file, "wb") as fh:
+                with open(index_file, "w", encoding='utf-8') as fh:
                     json.dump(self.pages, fh)
             except Exception:
                 log.warn("cannot write %s", index_file, exc_info=True)
-            mode = "wb"
+            mode = "w"
         for view in self.views:
             view.update()
         zeropath = join(self.store_dir, self.zerofile)
         try:
-            with open(zeropath, mode) as fh:
+            with open(zeropath, mode, encoding='utf-8') as fh:
                 json.dump(item, fh)
                 fh.write("\n")
         except Exception:
