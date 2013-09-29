@@ -107,10 +107,10 @@ class CommandParser(object):
                 value = arg.default
             setattr(opts, arg.name, value)
         if errors:
-            msg = u'invalid arguments: {}'.format(text)
+            msg = 'invalid arguments: {}'.format(text)
             raise ArgumentError(msg, opts, errors, index)
         if index < len(text):
-            msg = u'unexpected argument(s): ' + text[index:]
+            msg = 'unexpected argument(s): ' + text[index:]
             raise ArgumentError(msg, opts, errors, index)
         return opts
 
@@ -206,8 +206,8 @@ class Field(object):
         return self.placeholder
 
     def __repr__(self):
-        argnames = self.__init__.im_func.func_code.co_varnames
-        defaults = self.__init__.im_func.func_defaults or []
+        argnames = self.__init__.__func__.__code__.co_varnames
+        defaults = self.__init__.__func__.__defaults__ or []
         assert argnames[0] == 'self', argnames
         #assert len(self.args) == len(argnames) - 1, self.args
         args = []
@@ -368,7 +368,7 @@ class Choice(Field):
     def __init__(self, *choices, **kw):
         self.args = choices
         self.kwargs = kw.copy()
-        if len(choices) == 1 and isinstance(choices[0], basestring):
+        if len(choices) == 1 and isinstance(choices[0], str):
             choices = choices[0].split()
         if len(choices) < 2:
             raise ValueError('at least two choices are required')
@@ -377,7 +377,7 @@ class Choice(Field):
         self.names = names = []
         self.alternates = alts = []
         for choice in choices:
-            if isinstance(choice, basestring):
+            if isinstance(choice, str):
                 if " " in choice:
                     name = choice
                     value = choice.split()[0]
@@ -388,7 +388,7 @@ class Choice(Field):
                     name, value = choice
                 except (TypeError, ValueError):
                     raise ValueError("invalid choice: %r" % (choice,))
-                if not isinstance(name, basestring):
+                if not isinstance(name, str):
                     raise ValueError("invalid choice name: %r" % (name,))
             for i, name in enumerate(name.split()):
                 if i == 0:
@@ -420,7 +420,7 @@ class Choice(Field):
     def __repr__(self):
         args = [repr(a) for a in self.args]
         args.extend('{}={!r}'.format(name, value)
-                    for name, value in sorted(self.kwargs.iteritems()))
+                    for name, value in sorted(self.kwargs.items()))
         return '{}({})'.format(type(self).__name__, ', '.join(args))
 
     def consume(self, text, index):
@@ -496,7 +496,7 @@ class Int(Field):
 
     def get_placeholder(self, text, index):
         if index >= len(text):
-            if isinstance(self.default, (int, long)):
+            if isinstance(self.default, int):
                 return str(self.default), index
             return str(self), index
         return super(Int, self).get_placeholder(text, index)
@@ -504,7 +504,7 @@ class Int(Field):
     def arg_string(self, value):
         if value == self.default:
             return ""
-        if isinstance(value, (int, long)):
+        if isinstance(value, int):
             return str(value)
         raise Error("invalid value: {}={!r}".format(self.name, value))
 
@@ -565,10 +565,10 @@ class String(Field):
     def arg_string(self, value):
         if value == self.default:
             return ""
-        if not isinstance(value, basestring):
+        if not isinstance(value, str):
             raise Error("invalid value: {}={!r}".format(self.name, value))
         value = value.replace("\\", "\\\\")
-        for char, esc in self.ESCAPES.items():
+        for char, esc in list(self.ESCAPES.items()):
             if esc in value and esc not in """\\"'""":
                 value = value.replace(esc, "\\" + char)
         if " " in value or value.startswith(("'", '"')):
@@ -595,12 +595,12 @@ class VarArgs(Field):
             return ""
         return " ".join(value)
 
-class RegexPattern(unicode):
+class RegexPattern(str):
 
     __slots__ = ["_flags"]
     DEFAULT_FLAGS = re.UNICODE | re.MULTILINE
 
-    def __new__(cls, value=u"", flags=0):
+    def __new__(cls, value="", flags=0):
         obj = super(RegexPattern, cls).__new__(cls, value)
         obj.flags = flags
         return obj
@@ -751,12 +751,12 @@ class Regex(Field):
         else:
             delim = min(delims)[1]
             value = cls.escape(value, delim)
-        return u"".join([delim, value, delim]), delim
+        return "".join([delim, value, delim]), delim
 
     @classmethod
     def escape(cls, value, delimiter):
         """Escape delimiters in value"""
-        return re.subn(ur"""
+        return re.subn(r"""
             (
                 (?:
                     \A          # beginning of string
@@ -769,7 +769,7 @@ class Regex(Field):
             )
             {0}                 # delimiter
             """.format(delimiter),
-            ur"\1\\" + delimiter,
+            r"\1\\" + delimiter,
             value,
             flags=re.UNICODE | re.VERBOSE
         )[0]
@@ -777,15 +777,15 @@ class Regex(Field):
     @classmethod
     def repr_flags(cls, value):
         if not value.flags:
-            return u""
+            return ""
         chars = []
         if value.flags & re.IGNORECASE:
-            chars.append(u"i")
+            chars.append("i")
         if value.flags & re.DOTALL:
-            chars.append(u"s")
+            chars.append("s")
         if value.flags & re.LOCALE:
-            chars.append(u"l")
-        return u"".join(chars)
+            chars.append("l")
+        return "".join(chars)
 
     def arg_string(self, value):
         if value == self.default:
@@ -794,7 +794,7 @@ class Regex(Field):
             if not (isinstance(value, (tuple, list)) and len(value) == 2):
                 raise Error("invalid value: {}={!r}".format(self.name, value))
             find, replace = value
-            if not isinstance(replace, basestring):
+            if not isinstance(replace, str):
                 raise Error("invalid value: {}={!r}".format(self.name, value))
             allchars = find + replace
         else:
@@ -908,7 +908,7 @@ class SubParser(Field):
 
     def arg_string(self, value):
         sub, opts = value
-        return sub.name + u" " + sub.parser.arg_string(opts, strip=False)
+        return sub.name + " " + sub.parser.arg_string(opts, strip=False)
 
 
 class SubArgs(object):
@@ -936,18 +936,18 @@ class Options(object):
 
     def __init__(self, **opts):
         if hasattr(self, "DEFAULTS"):
-            for name, value in self.DEFAULTS.items():
+            for name, value in list(self.DEFAULTS.items()):
                 if name not in opts:
                     setattr(self, name, value)
-        for name, value in opts.items():
+        for name, value in list(opts.items()):
             setattr(self, name, value)
 
     def __eq__(self, other):
         if not issubclass(type(other), type(self)):
             return False
         obj = Options().__dict__
-        data = {k: v for k, v in self.__dict__.items() if k not in obj}
-        othr = {k: v for k, v in other.__dict__.items() if k not in obj}
+        data = {k: v for k, v in list(self.__dict__.items()) if k not in obj}
+        othr = {k: v for k, v in list(other.__dict__.items()) if k not in obj}
         return data == othr
 
     def __ne__(self, other):
@@ -955,7 +955,7 @@ class Options(object):
 
     def __iter__(self):
         obj = Options().__dict__
-        return (kv for kv in self.__dict__.iteritems() if kv[0] not in obj)
+        return (kv for kv in self.__dict__.items() if kv[0] not in obj)
 
     def __len__(self):
         return len(list(self.__iter__()))

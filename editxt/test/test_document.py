@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import with_statement
+
 
 import logging
 import os
@@ -116,7 +116,7 @@ def test_create_with_state():
         eq_(result, dv)
 
 def test_create_with_path():
-    print type(TextDocumentView.create_with_document)
+    print(type(TextDocumentView.create_with_document))
     path = "<path>"
     doc = "<document>"
     dv = "<doc view>"
@@ -135,8 +135,8 @@ def test_create_with_document():
     m = Mocker()
     cls = m.mock(TextDocumentView)
     cls.alloc().init_with_document(doc) >> dv
-    print type(TextDocumentView.create_with_document)
-    print dir(TextDocumentView.create_with_document)
+    print(type(TextDocumentView.create_with_document))
+    print(dir(TextDocumentView.create_with_document))
     with m:
         result = TextDocumentView.create_with_document.callable(cls, doc)
         eq_(result, dv)
@@ -384,7 +384,7 @@ def test_TextDocumentView_prompt():
             if c.info:
                 alert.setInformativeText_(c.info)
             buttons = []
-            for i in xrange(c.buttons):
+            for i in range(c.buttons):
                 text = "Button_%i" % i
                 buttons.append(text)
                 alert.addButtonWithTitle_(text)
@@ -393,7 +393,7 @@ def test_TextDocumentView_prompt():
                 return True
             expect(alert.beginSheetModalForWindow_withCallback_(win, ANY)).call(do)
         else:
-            buttons = ["" for i in xrange(c.buttons)]
+            buttons = ["" for i in range(c.buttons)]
         callback(c.response)
         with m:
             dv.prompt(c.message, c.info, buttons, callback)
@@ -418,8 +418,8 @@ def test_TextDocumentView_change_indentation():
         dv = TextDocumentView.create_with_document(doc)
         tv = dv.text_view = m.mock(NSTextView)
         if c.convert:
-            old_indent = u"\t" if c.oldm is TAB else (u" " * c.olds)
-            new_indent = u"\t" if c.newm is TAB else (u" " * c.news)
+            old_indent = "\t" if c.oldm is TAB else (" " * c.olds)
+            new_indent = "\t" if c.newm is TAB else (" " * c.news)
             convert(tv, old_indent, new_indent, c.news)
         if c.oldm != c.newm:
             doc.props.indent_mode = c.newm
@@ -588,7 +588,7 @@ def test_perform_close():
         dv = TextDocumentView.alloc().init_with_document(doc)
         app = m.replace(mod, 'app')
         ed = m.mock(Editor)
-        app.iter_editors_with_view_of_document(doc) >> (ed for x in xrange(num_views))
+        app.iter_editors_with_view_of_document(doc) >> (ed for x in range(num_views))
         if num_views == 1:
             key = app.context.put(ed) >> 42
             ed.current_view = dv
@@ -601,7 +601,7 @@ def test_perform_close():
             ed.discard_and_focus_recent(dv)
         with m:
             dv.perform_close(ed)
-    for num_views in xrange(3):
+    for num_views in range(3):
         yield test, num_views
 
 def test_document_shouldClose_contextInfo_():
@@ -670,8 +670,8 @@ def test_TextDocumentView_close():
     yield test, c(tv_is_none=True)
     for num_views in (1, 2):
         for num_wcs in (0, 1, 3):
-            yield test, c(wcs=[wc(i) for i in xrange(num_wcs)])
-        yield test, c(wcs=[wc(0) for i in xrange(2)])
+            yield test, c(wcs=[wc(i) for i in range(num_wcs)])
+        yield test, c(wcs=[wc(0) for i in range(2)])
     yield test, c(app_views=1)
 
 def test_TextDocumentView_textView_doCommandBySelector_():
@@ -736,7 +736,7 @@ def test_KVOProxy_create():
 
 def test_TextDocument_init():
     from editxt.document import doc_id_gen
-    ident = doc_id_gen.next() + 1
+    ident = next(doc_id_gen) + 1
     doc = TextDocument.alloc().init()
     eq_(doc.id, ident)
     eq_(doc.icon_cache, (None, None))
@@ -858,7 +858,7 @@ def test_TextDocument_reset_text_attributes():
     undoer = m.method(doc.undoManager)
     font = NSFont.fontWithName_size_("Monaco", 10.0)
     spcw = font.screenFontWithRenderingMode_(NSFontDefaultRenderingMode) \
-        .advancementForGlyph_(ord(u" ")).width
+        .advancementForGlyph_(ord(" ")).width
     ps = ps_class.defaultParagraphStyle().mutableCopy() >> m.mock()
     ps.setTabStops_([])
     ps.setDefaultTabInterval_(spcw * INDENT_SIZE)
@@ -960,10 +960,10 @@ def test_check_for_external_changes():
                 return end()
             (nsa_class.alloc() >> alert).init() >> alert
             displayName() >> "test.txt"
-            alert.setMessageText_(u"“test.txt” source document changed")
-            alert.setInformativeText_(u"Discard changes and reload?")
-            alert.addButtonWithTitle_(u"Reload")
-            alert.addButtonWithTitle_(u"Cancel")
+            alert.setMessageText_("“test.txt” source document changed")
+            alert.setInformativeText_("Discard changes and reload?")
+            alert.addButtonWithTitle_("Reload")
+            alert.addButtonWithTitle_("Cancel")
             def callback(win, method):
                 method(NSAlertFirstButtonReturn if c.reload else None)
                 return True
@@ -1232,18 +1232,18 @@ def test_analyze_content():
     c = TestConfig(text="", eol_char="\n")
     yield test, c
     for eol, eol_char in eols:
-        yield test, c(text=u"\n", eol=eol, eol_char=eol_char)
-        yield test, c(text=u"\n\r", eol=eol, eol_char=eol_char)
-        yield test, c(text=u"\n\u2028", eol=eol, eol_char=eol_char)
-        yield test, c(text=u"abc\ndef\r", eol=eol, eol_char=eol_char)
+        yield test, c(text="\n", eol=eol, eol_char=eol_char)
+        yield test, c(text="\n\r", eol=eol, eol_char=eol_char)
+        yield test, c(text="\n\u2028", eol=eol, eol_char=eol_char)
+        yield test, c(text="abc\ndef\r", eol=eol, eol_char=eol_char)
         #yield test, c(text=u"\u2029", eol=eol, eol_char=eol_char) # TODO make ths test pass
-    yield test, c(text=u"\t")
-    yield test, c(text=u"  ")
-    yield test, c(text=u"\tx", imode=TAB)
-    yield test, c(text=u" x", imode=SPC)
-    yield test, c(text=u"  x", imode=SPC, isize=2)
-    yield test, c(text=u"  \n   x", imode=SPC, isize=3, eol=const.NEWLINE_MODE_UNIX)
-    yield test, c(text=u"  x\n     x", imode=SPC, isize=2, eol=const.NEWLINE_MODE_UNIX)
+    yield test, c(text="\t")
+    yield test, c(text="  ")
+    yield test, c(text="\tx", imode=TAB)
+    yield test, c(text=" x", imode=SPC)
+    yield test, c(text="  x", imode=SPC, isize=2)
+    yield test, c(text="  \n   x", imode=SPC, isize=3, eol=const.NEWLINE_MODE_UNIX)
+    yield test, c(text="  x\n     x", imode=SPC, isize=2, eol=const.NEWLINE_MODE_UNIX)
 
 def test_makeWindowControllers():
     def test(ed_is_none):

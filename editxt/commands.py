@@ -80,7 +80,7 @@ def load_commands():
     )
 
 
-@command(title=u"Command Bar", hotkey=(";", NSCommandKeyMask))
+@command(title="Command Bar", hotkey=(";", NSCommandKeyMask))
 def show_command_bar(textview, sender, args):
     """Show the command bar"""
     from editxt import app
@@ -91,7 +91,7 @@ def show_command_bar(textview, sender, args):
         editor.command.activate()
 
 
-@command(name='goto', title=u"Goto Line",
+@command(name='goto', title="Goto Line",
     arg_parser=CommandParser(Int("line")),
     lookup_with_arg_parser=True)
 def goto_line(textview, sender, opts):
@@ -102,7 +102,7 @@ def goto_line(textview, sender, opts):
     textview.goto_line(opts.line)
 
 
-@command(title=u"(Un)comment Selected Lines",
+@command(title="(Un)comment Selected Lines",
     hotkey=(",", NSCommandKeyMask),
     is_enabled=has_selection)
 def comment_text(textview, sender, args):
@@ -113,7 +113,7 @@ def comment_text(textview, sender, args):
     """
     _comment_text(textview, sender, args, False)
 
-@command(title=u"(Un)comment + Space Selected Lines",
+@command(title="(Un)comment + Space Selected Lines",
     hotkey=(",", NSCommandKeyMask | NSShiftKeyMask),
     is_enabled=has_selection)
 def pad_comment_text(textview, sender, args):
@@ -140,7 +140,7 @@ def _comment_text(textview, sender, args, pad):
         textview.doc_view.document.indent_size,
         pad,
     )
-    seltext = u"".join(func(line, *args) for line in iterlines(text, sel))
+    seltext = "".join(func(line, *args) for line in iterlines(text, sel))
     if textview.shouldChangeTextInRange_replacementString_(sel, seltext):
         textview.textStorage().replaceCharactersInRange_withString_(sel, seltext)
         textview.setSelectedRange_((sel[0], len(seltext)))
@@ -160,15 +160,15 @@ def comment_line(text, token, indent_mode, indent_size, pad=False):
         prefix = token
     elif indent_mode == const.INDENT_MODE_SPACE:
         lentoken = len(token)
-        prespace = len(text) - len(text.lstrip(u" "))
+        prespace = len(text) - len(text.lstrip(" "))
         if lentoken + 1 < indent_size and prespace:
             return token + text[lentoken:]
         elif lentoken < indent_size and prespace:
             prefix = token
         else:
-            prefix = token + u" "
+            prefix = token + " "
     else:
-        prefix = token + u" "
+        prefix = token + " "
     return prefix + text
 
 def uncomment_line(text, token, indent_mode, indent_size, pad=False):
@@ -176,29 +176,29 @@ def uncomment_line(text, token, indent_mode, indent_size, pad=False):
     nolead = text.lstrip()
     if nolead.startswith(token):
         lentoken = len(token)
-        if nolead[lentoken] == u" " and pad:
+        if nolead[lentoken] == " " and pad:
             lentoken += 1
         line = nolead[lentoken:]
         lentoken = len(text) - len(nolead)
         if lentoken > 0:
             line = text[:lentoken] + line
         if indent_mode == const.INDENT_MODE_SPACE and pad:
-            prespace = len(line) - len(line.lstrip(u" "))
+            prespace = len(line) - len(line.lstrip(" "))
             fillchars = indent_size - (prespace % indent_size)
             if fillchars != indent_size:
-                line = u" " * fillchars + line
+                line = " " * fillchars + line
     return line
 
 
-@command(title=u"Indent Selected Lines",
+@command(title="Indent Selected Lines",
     hotkey=("]", NSCommandKeyMask),
     is_enabled=has_selection)
 def indent_lines(textview, sender, args):
     indent_mode = textview.doc_view.document.indent_mode
     if indent_mode == const.INDENT_MODE_TAB:
-        istr = u"\t"
+        istr = "\t"
     else:
-        istr = u" " * textview.doc_view.document.indent_size
+        istr = " " * textview.doc_view.document.indent_size
     sel = textview.selectedRange()
     text = textview.string()
     if sel.length == 0:
@@ -213,9 +213,9 @@ def indent_lines(textview, sender, args):
         def indent(line):
             if line.strip():
                 return istr + line
-            return line.lstrip(u" \t")
+            return line.lstrip(" \t")
         sel = text.lineRangeForRange_(sel)
-        seltext = u"".join(indent(line) for line in iterlines(text, sel))
+        seltext = "".join(indent(line) for line in iterlines(text, sel))
         select = True
     if textview.shouldChangeTextInRange_replacementString_(sel, seltext):
         textview.textStorage().replaceCharactersInRange_withString_(sel, seltext)
@@ -226,24 +226,24 @@ def indent_lines(textview, sender, args):
             textview.scrollRangeToVisible_((sel[0] + len(seltext), 0))
 
 
-@command(title=u"Un-indent Selected Lines", hotkey=("[", NSCommandKeyMask))
+@command(title="Un-indent Selected Lines", hotkey=("[", NSCommandKeyMask))
 def dedent_lines(textview, sender, args):
     def dedent(line, spt=textview.doc_view.document.indent_size):
         if not line.strip():
-            return line.lstrip(u" \t")
-        if line.startswith(u"\t"):
+            return line.lstrip(" \t")
+        if line.startswith("\t"):
             return line[1:]
         remove = 0
         linelen = len(line)
-        for i in xrange(spt):
-            if i < linelen and line[i] == u" ":
+        for i in range(spt):
+            if i < linelen and line[i] == " ":
                 remove += 1
             else:
                 break
         return line[remove:]
     text = textview.string()
     sel = text.lineRangeForRange_(textview.selectedRange())
-    seltext = u"".join(dedent(line) for line in iterlines(text, sel))
+    seltext = "".join(dedent(line) for line in iterlines(text, sel))
     if len(seltext) != sel.length:
         if textview.shouldChangeTextInRange_replacementString_(sel, seltext):
             textview.textStorage().replaceCharactersInRange_withString_(sel, seltext)
@@ -251,7 +251,7 @@ def dedent_lines(textview, sender, args):
             textview.didChangeText()
 
 
-@command(title=u"Reload config")
+@command(title="Reload config")
 def reload_config(textview, sender, args):
     from editxt import app
     app.config.reload()
@@ -315,7 +315,7 @@ def set_variable(textview, sender, args):
         sub.data["setter"](textview, sub.name, opts)
 
 
-_ws = re.compile(ur"([\t ]+)", re.UNICODE | re.MULTILINE)
+_ws = re.compile(r"([\t ]+)", re.UNICODE | re.MULTILINE)
 
 def insert_newline(textview, sender, args):
     eol = textview.doc_view.document.eol
@@ -366,7 +366,7 @@ def delete_backward(textview, sender, args):
             return
         text = textview.string()
         i = sel[0]
-        while i > 0 and text[i - 1] == u" ":
+        while i > 0 and text[i - 1] == " ":
             i -= 1
         delete = sel[0] - i
         if delete < 1:
@@ -382,7 +382,7 @@ def delete_backward(textview, sender, args):
             elif delete < sel[0] - i:
                 delete = 1
         sel = (sel[0] - delete, delete)
-    if textview.shouldChangeTextInRange_replacementString_(sel, u""):
-        textview.textStorage().replaceCharactersInRange_withString_(sel, u"")
+    if textview.shouldChangeTextInRange_replacementString_(sel, ""):
+        textview.textStorage().replaceCharactersInRange_withString_(sel, "")
         textview.didChangeText()
         textview.scrollRangeToVisible_((sel[0], 0))

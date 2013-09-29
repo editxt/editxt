@@ -100,7 +100,7 @@ class TextView(NSTextView):
             self._marginParams = None
             return
         font = self.doc_view.document.default_text_attributes()[NSFontAttributeName]
-        charw = font.advancementForGlyph_(ord(u" ")).width
+        charw = font.advancementForGlyph_(ord(" ")).width
         padding = self.textContainer().lineFragmentPadding()
         color1 = app.config["right_margin.line_color"]
         color2 = app.config["right_margin.margin_color"]

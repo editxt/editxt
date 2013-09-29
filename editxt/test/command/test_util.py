@@ -43,23 +43,23 @@ def test_replace_newlines():
         with m:
             mod.replace_newlines(tv, c.eol)
     c = TestConfig(eol=const.EOLS[const.NEWLINE_MODE_UNIX])
-    yield test, c(input=u"", output=u"")
-    yield test, c(input=u"\r\n", output=u"\n")
-    yield test, c(input=u"\n\r\n", output=u"\n\n")
-    yield test, c(input=u"\r \n", output=u"\n \n")
-    yield test, c(input=u"\r \n \u2028", output=u"\n \n \n")
-    yield test, c(input=u"\r \r\n\n \u2028", output=u"\n \n\n \n")
+    yield test, c(input="", output="")
+    yield test, c(input="\r\n", output="\n")
+    yield test, c(input="\n\r\n", output="\n\n")
+    yield test, c(input="\r \n", output="\n \n")
+    yield test, c(input="\r \n \u2028", output="\n \n \n")
+    yield test, c(input="\r \r\n\n \u2028", output="\n \n\n \n")
 
 def test_change_indentation():
     from editxt.document import TextDocument
     def test(c):
-        if c.eol != u"\n":
-            c.input = c.input.replace(u"\n", c.eol)
-            c.output = c.output.replace(u"\n", c.eol)
+        if c.eol != "\n":
+            c.input = c.input.replace("\n", c.eol)
+            c.output = c.output.replace("\n", c.eol)
         result = []
         m = Mocker()
         tv = m.mock(NSTextView)
-        reset = (c.new == u"\t")
+        reset = (c.new == "\t")
         if c.old != c.new or reset:
             tv.string() >> c.input
             rng = NSMakeRange(0, len(c.input))
@@ -79,7 +79,7 @@ def test_change_indentation():
             tv.didChangeText()
         with m:
             mod.change_indentation(tv, c.old, c.new, c.size)
-    c = TestConfig(old=u"  ", new=u"   ", size=4, sel=(0, 0))
+    c = TestConfig(old="  ", new="   ", size=4, sel=(0, 0))
     for mode in [
         const.NEWLINE_MODE_UNIX,
         const.NEWLINE_MODE_MAC,
@@ -87,33 +87,33 @@ def test_change_indentation():
         const.NEWLINE_MODE_UNICODE,
     ]:
         c = c(eol=const.EOLS[mode])
-        yield test, c(old=u"  ", new=u"  ", input=u"", output=u"")
-        yield test, c(old=u"\t", new=u"\t", input=u"", output=u"")
-        c = c(old=u"  ", new=u"   ", size=3)
-        yield test, c(input=u"", output=u"")
-        yield test, c(input=u"  \n", output=u"   \n")
-        yield test, c(input=u"  x\n", output=u"   x\n")
-        yield test, c(input=u"   x\n", output=u"    x\n")
-        yield test, c(input=u"    x\n", output=u"      x\n")
-        yield test, c(input=u"    x    \n", output=u"      x    \n")
-        yield test, c(input=u"  x\n    y\n", output=u"   x\n      y\n")
-        c = c(old=u"  ", new=u"\t", size=3)
-        yield test, c(input=u"", output=u"")
-        yield test, c(input=u"  \n", output=u"\t\n")
-        yield test, c(input=u"  x\n", output=u"\tx\n")
-        yield test, c(input=u"   x\n", output=u"\t x\n")
-        yield test, c(input=u"    x\n", output=u"\t\tx\n")
-        yield test, c(input=u"    x    \n", output=u"\t\tx    \n")
-        yield test, c(input=u"  x\n    y\n", output=u"\tx\n\t\ty\n", sel=(8, 2))
-        yield test, c(input=u"  x\n    y\n", output=u"\tx\n\t\ty\n", sel=(6, 4))
-        c = c(old=u"\t", new=u"   ", size=3)
-        yield test, c(input=u"", output=u"")
-        yield test, c(input=u"\t\n", output=u"   \n")
-        yield test, c(input=u"\tx\n", output=u"   x\n")
-        yield test, c(input=u"\t x\n", output=u"    x\n")
-        yield test, c(input=u"\t\tx\n", output=u"      x\n")
-        yield test, c(input=u"\t\tx\t\t\n", output=u"      x\t\t\n")
-        yield test, c(input=u"\tx\n\t\ty\n", output=u"   x\n      y\n")
+        yield test, c(old="  ", new="  ", input="", output="")
+        yield test, c(old="\t", new="\t", input="", output="")
+        c = c(old="  ", new="   ", size=3)
+        yield test, c(input="", output="")
+        yield test, c(input="  \n", output="   \n")
+        yield test, c(input="  x\n", output="   x\n")
+        yield test, c(input="   x\n", output="    x\n")
+        yield test, c(input="    x\n", output="      x\n")
+        yield test, c(input="    x    \n", output="      x    \n")
+        yield test, c(input="  x\n    y\n", output="   x\n      y\n")
+        c = c(old="  ", new="\t", size=3)
+        yield test, c(input="", output="")
+        yield test, c(input="  \n", output="\t\n")
+        yield test, c(input="  x\n", output="\tx\n")
+        yield test, c(input="   x\n", output="\t x\n")
+        yield test, c(input="    x\n", output="\t\tx\n")
+        yield test, c(input="    x    \n", output="\t\tx    \n")
+        yield test, c(input="  x\n    y\n", output="\tx\n\t\ty\n", sel=(8, 2))
+        yield test, c(input="  x\n    y\n", output="\tx\n\t\ty\n", sel=(6, 4))
+        c = c(old="\t", new="   ", size=3)
+        yield test, c(input="", output="")
+        yield test, c(input="\t\n", output="   \n")
+        yield test, c(input="\tx\n", output="   x\n")
+        yield test, c(input="\t x\n", output="    x\n")
+        yield test, c(input="\t\tx\n", output="      x\n")
+        yield test, c(input="\t\tx\t\t\n", output="      x\t\t\n")
+        yield test, c(input="\tx\n\t\ty\n", output="   x\n      y\n")
 
 def test_calculate_indent_mode_and_size():
     TAB = const.INDENT_MODE_TAB

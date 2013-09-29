@@ -67,18 +67,18 @@ for line in proc_out(["git", "status"]):
 if changes:
     gitrev += "+"
     if not dev:
-        response = raw_input("Build with uncommitted changes? [Y/n] ").strip()
+        response = input("Build with uncommitted changes? [Y/n] ").strip()
         if response and response.lower() not in ["y", "yes"]:
-            print "aborted."
+            print("aborted.")
             sys.exit()
-print "building %s %s %s.%s" % (appname, version, revision, gitrev)
+print("building %s %s %s.%s" % (appname, version, revision, gitrev))
 
 # remove old build
 if "--noclean" in sys.argv:
     sys.argv.remove("--noclean")
 else:
     def rmtree(path):
-        print "removing", path
+        print("removing", path)
         if os.path.exists(path):
             shutil.rmtree(path)
     thisdir = os.path.dirname(os.path.abspath(__file__))
@@ -102,7 +102,7 @@ setup(
             CFBundleGetInfoString = "%s %s.%s" % (version, revision, gitrev),
             CFBundleShortVersionString = version,
             CFBundleVersion = revision + "." + gitrev,
-            NSHumanReadableCopyright = u'© 2012 Daniel Miller',
+            NSHumanReadableCopyright = '© 2012 Daniel Miller',
             CFBundleIdentifier = "org.editxt." + appname,
             CFBundleIconFile = "PythonApplet.icns",
             CFBundleDocumentTypes = [
@@ -190,7 +190,7 @@ if dev and hasattr(sys, 'real_prefix'):
     with open(bootfile, "rb") as file:
         original = file.read()
     sitepaths = [p for p in sys.path if p.startswith(sys.real_prefix)]
-    bootfunc = u"import sys; sys.path[:0] = %r\n\n" % sitepaths
+    bootfunc = "import sys; sys.path[:0] = %r\n\n" % sitepaths
     with open(bootfile, "wb") as file:
         file.write(bootfunc.encode('utf-8') + original)
 
@@ -200,7 +200,7 @@ if package:
     from zipfile import ZipFile, ZIP_DEFLATED
     distpath = join(thisdir, 'dist')
     zip_file = '%s-v%s-%s.zip' % (appname, version, gitrev)
-    print 'packaging for distribution: %s' % zip_file
+    print('packaging for distribution: %s' % zip_file)
     zip_path = join(distpath, zip_file)
     zip = ZipFile(zip_path, "w", ZIP_DEFLATED)
     with closing(zip):

@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import with_statement
+
 
 import logging
 import functools
@@ -199,7 +199,7 @@ def test_SheetController_begin_sheet():
     tv = m.mock(TextView)
     slc = SheetController(tv)
     def cb(callback):
-        return callback.__name__ == "sheet_did_end" and callback.im_self is slc
+        return callback.__name__ == "sheet_did_end" and callback.__self__ is slc
     clr_class = m.replace(mod, "Caller")
     clr = clr_class.alloc().init(MATCH(cb)) >> m.mock(Caller)
     win = tv.window() >> m.mock(NSWindow)

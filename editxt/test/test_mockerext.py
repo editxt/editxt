@@ -25,7 +25,7 @@ testing of PyObjC applications more convenient.
 import logging
 import mocker
 import objc
-from mockerext import install, MockerExt
+from .mockerext import install, MockerExt
 from nose.tools import eq_, assert_raises
 from editxt.test.util import TestConfig
 
@@ -98,10 +98,10 @@ def test_MockerExt_PyObjC_num_args_check():
         obj = c.cls.alloc().init()
         args = (obj, c.name) if c.method_as_string else (getattr(obj, c.name),)
         mocked = m.method(*args)
-        mocked(*range(c.targs))
+        mocked(*list(range(c.targs)))
         try:
             with m:
-                getattr(obj, c.name)(*range(c.targs))
+                getattr(obj, c.name)(*list(range(c.targs)))
         except AssertionError:
             if c.nargs == c.targs:
                 raise # unexpected error (had correct number of arguments)
@@ -135,7 +135,7 @@ def test_MockerExt_method_of_PyObject():
         m = mocker.Mocker()
         ob2 = object()
         # part 1: replace method
-        func = obj.isEqualTo_.im_func
+        func = obj.isEqualTo_.__func__
         if method_as_string:
             args = (obj, "isEqualTo_")
         else:
@@ -302,5 +302,5 @@ if __name__ == "__main__":
 
     m = mocker.Mocker()
     t = m.mock(object)
-    print t
-    print t.y()
+    print(t)
+    print(t.y())

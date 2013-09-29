@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import with_statement
+
 import logging
 import os
 
@@ -37,13 +37,13 @@ log = logging.getLogger(__name__)
 
 def test_create_kvolist():
     lst = KVOList.alloc().init()
-    eq_(len(lst.items()), 0)
+    eq_(len(list(lst.items())), 0)
 
 def test_kvolist_items():
     lst = KVOList.alloc().init()
     newitems = NSMutableArray.alloc().init()
     lst.setItems_(newitems)
-    eq_(lst.items(), newitems)
+    eq_(list(lst.items()), newitems)
 
 def test_kvolist_items():
     lst = KVOList.alloc().init()
@@ -95,7 +95,7 @@ def do_kvolist_countOfItems(lst, num):
 
 def do_kvolist_insertObject_inItemsAtIndex_(lst, obj, index):
     lst.insertObject_inItemsAtIndex_(obj, index)
-    assert lst.items()[index] is obj
+    assert list(lst.items())[index] is obj
 
 def do_kvolist_objectInItemsAtIndex_(lst, obj, index):
     assert lst.objectInItemsAtIndex_(index) is obj
@@ -136,7 +136,7 @@ def do_kvolist_append(lst, obj):
 def do_kvolist_extend(lst, objs):
     offset = len(lst)
     lst.extend(objs)
-    for i in xrange(len(objs)):
+    for i in range(len(objs)):
         assert lst[offset + i] is objs[i]
 
 def do_kvolist_index(lst, obj, index):
@@ -233,7 +233,7 @@ def test_recent_items_queue_remove():
     eq_(list(ris), [2])
 
 def test_recent_items_queue_reset():
-    items = range(10)
+    items = list(range(10))
     ris = RecentItemStack(4)
     ris.reset(items)
     eq_(len(ris), 4)
@@ -260,7 +260,7 @@ def test_context_map_put_and_pop():
     map = ContextMap()
     obj = object()
     key = map.put(obj)
-    assert isinstance(key, (int, long))
+    assert isinstance(key, int)
     eq_(len(map), 1)
     eq_(map.pop(key), obj)
     eq_(len(map), 0)
@@ -293,7 +293,8 @@ def test_fetch_icon_data():
     ):
         yield do_fetch_icon, args
 
-def do_fetch_icon((path, exists)):
+def do_fetch_icon(xxx_todo_changeme):
+    (path, exists) = xxx_todo_changeme
     if path is not None:
         path = os.path.abspath(path)
         if exists:

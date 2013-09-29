@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import with_statement
+
 
 import logging
 import os
@@ -360,7 +360,7 @@ def test_selected_view_changed():
         wc = m.mock(EditorWindowController)
         ed = Editor(editxt.app, wc)
         cv = m.property(ed, "current_view")
-        sel = [m.mock() for x in xrange(c.numsel)]
+        sel = [m.mock() for x in range(c.numsel)]
         wc.docsController.selectedObjects() >> sel
         if sel:
             if c.is_current_selected:
@@ -729,17 +729,17 @@ def test_window_should_close():
             if p.num_eds == 1:
                 eds.append(editor)
                 docs = proj.dirty_documents() >> []
-                for i in xrange(p.num_dirty_docs):
+                for i in range(p.num_dirty_docs):
                     dv = m.mock(TextDocumentView)
                     doc = dv.document >> m.mock(TextDocument)
                     docs.append(dv)
                     app.iter_editors_with_view_of_document(doc) >> \
-                        (editor for x in xrange(p.app_views))
+                        (editor for x in range(p.app_views))
                     if p.app_views == 1:
                         dirty_docs.append(dv)
                 dirty_docs.append(proj)
             else:
-                eds.extend(m.mock(Editor) for x in xrange(p.num_eds))
+                eds.extend(m.mock(Editor) for x in range(p.num_eds))
         def match_dd(idd):
             eq_(list(idd), dirty_docs)
             return True
@@ -837,7 +837,7 @@ def test_close():
         ed = Editor(editxt.app, wc)
         ed.projects = []
         ed.window_settings_loaded = c.ws_loaded
-        for x in xrange(3):
+        for x in range(3):
             proj = m.mock(Project)
             proj.close()
             ed.projects.append(proj)
@@ -922,7 +922,7 @@ def test_write_items_to_pasteboard():
                     data[NSFilenamesPboardType].append(item.path)
             if data:
                 pb.declareTypes_owner_(types, None)
-                for dtype, ddata in data.iteritems():
+                for dtype, ddata in data.items():
                     pb.setPropertyList_forType_(ddata, dtype)
         with replattr(os.path, 'exists', path_exists), m:
             result = ed.write_items_to_pasteboard(ov, items, pb)
@@ -1195,7 +1195,7 @@ def test_accept_dropped_items():
         if c.result and c.focus:
             current_view.value = MatchingName(c.focus, rmap)
 
-        print('drop(%s) %s at %s of %s' % (act, c.drop[0], index, parent))
+        print(('drop(%s) %s at %s of %s' % (act, c.drop[0], index, parent)))
         with m:
             result = ed.accept_dropped_items(items, parent, index, act)
 

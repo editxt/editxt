@@ -28,6 +28,7 @@ from editxt.command.parser import CommandParser, Options, VarArgs
 from editxt.command.util import make_command_predicate
 from editxt.controls.alert import Caller
 from editxt.util import KVOProxy, WeakProperty
+import collections
 
 log = logging.getLogger(__name__)
 
@@ -64,7 +65,7 @@ def command(func=None, name=None, title=None, hotkey=None,
         lookup the command. The parser should return None if it receives
         a text string that cannot be parsed.
     """
-    if isinstance(name, basestring):
+    if isinstance(name, str):
         name = name.split()
     def command_decorator(func):
         def parse(argstr):
@@ -75,7 +76,7 @@ def command(func=None, name=None, title=None, hotkey=None,
             argstr = func.arg_parser.arg_string(options)
             if argstr:
                 if not func.lookup_with_arg_parser:
-                    argstr = u"{} {}".format(func.name, argstr)
+                    argstr = "{} {}".format(func.name, argstr)
                 return argstr
             return func.name
         func.is_text_command = True
@@ -154,8 +155,8 @@ class CommandController(object):
             return delegate
         members.update({name: make_delegate(value)
             for base in reversed(cls.__mro__)
-            for name, value in vars(base).items()
-            if callable(value) and getattr(value, "objc_delegate", False)})
+            for name, value in list(vars(base).items())
+            if isinstance(value, collections.Callable) and getattr(value, "objc_delegate", False)})
         Class = type(cls.__name__ + "GUI", (_BaseCommandController,), members)
         cls._controller_class = Class
         return Class
@@ -164,7 +165,7 @@ class CommandController(object):
         self.gui = self.controller_class().create(self, self.NIB_NAME)
         self.history = editxt.app.text_commander.history # HACK deep reach into global
         if hasattr(self.COMMAND, 'im_func'):
-            self.command = self.COMMAND.im_func # HACK
+            self.command = self.COMMAND.__func__ # HACK
         else:
             self.command = self.COMMAND
         self.options = KVOProxy(self.OPTIONS_FACTORY())

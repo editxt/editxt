@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import with_statement
+
 
 import logging
 import os
@@ -116,7 +116,7 @@ def test_serialize_project():
         if path_is_none:
             assert proj.path is None
             doc_states = []
-            for x in xrange(3):
+            for x in range(3):
                 doc = MockDoc(x)
                 doc_states.append(doc.edit_state)
                 proj.append_document_view(doc)
@@ -478,12 +478,12 @@ def test_perform_close():
         dsd_class = m.replace(xtapp, 'DocumentSavingDelegate')
         app = m.replace(mod, 'app')
         ed = m.mock(Editor)
-        app.find_editors_with_project(proj) >> [ed for x in xrange(c.num_eds)]
+        app.find_editors_with_project(proj) >> [ed for x in range(c.num_eds)]
         if c.num_eds == 1:
             docs = [m.mock(TextDocumentView)]
             doc = docs[0].document >> m.mock(TextDocument)
             app.iter_editors_with_view_of_document(doc) >> \
-                (ed for x in xrange(c.num_doc_views))
+                (ed for x in range(c.num_doc_views))
             dirty_documents = m.method(proj.dirty_documents)
             dirty_documents() >> docs
             def check_docs(_docs):
@@ -507,7 +507,7 @@ def test_perform_close():
         with m:
             proj.perform_close(ed)
     c = TestConfig(num_eds=1)
-    for ndv in xrange(3):
+    for ndv in range(3):
         yield test, c(should_close=True, num_doc_views=ndv)
         yield test, c(should_close=False, num_doc_views=ndv)
     yield test, c(num_eds=0)
@@ -529,7 +529,7 @@ def test_close():
     m = Mocker()
     proj._documents = m.mock(KVOList)
     docs = []
-    for i in xrange(2):
+    for i in range(2):
         dv = m.mock(TextDocumentView)
         docs.append(dv)
         dv.close()

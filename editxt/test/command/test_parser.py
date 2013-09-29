@@ -81,7 +81,7 @@ def test_CommandParser():
     yield test, " high", Options(level=4)
     yield test, "high", Options(level=4)
     yield test, "hi", Options(level=4)
-    yield test, "high '' yes", ArgumentError(u'unexpected argument(s): yes',
+    yield test, "high '' yes", ArgumentError('unexpected argument(s): yes',
         Options(volume=50, equalizer=None, name='', level=4), [], 8)
 
     def test_placeholder(argstr, expected, parser=radio_parser):
@@ -423,10 +423,10 @@ def test_String():
     yield test, '"ab', """'"ab'"""
     yield test, "ab'", "ab'"
     yield test, 'ab"', 'ab"'
-    yield test, u"\u0168", u"\u0168"
-    yield test, u'\u0168" \u0168', u"""'\u0168" \u0168'"""
-    yield test, u"\u0168' \u0168", u'''"\u0168' \u0168"'''
-    for char, esc in String.ESCAPES.items():
+    yield test, "\u0168", "\u0168"
+    yield test, '\u0168" \u0168', """'\u0168" \u0168'"""
+    yield test, "\u0168' \u0168", '''"\u0168' \u0168"'''
+    for char, esc in list(String.ESCAPES.items()):
         if char not in "\"\\'":
             yield test, esc, "\\" + char
     yield test, "\\x", "\\\\x"
@@ -494,13 +494,13 @@ def test_Regex():
     yield test, RegexPattern("str", re.I), "/str/i"
     yield test, RegexPattern("/usr/bin"), ":/usr/bin:"
     yield test, RegexPattern("/usr/bin:"), '"/usr/bin:"'
-    yield test, RegexPattern(ur'''//''\:""'''), ur'''://''\:"":'''
-    yield test, RegexPattern(ur'''//''\\:""'''), ur'''://''\\\:"":''', False
-    yield test, RegexPattern(ur'''\://''""'''), ur''':\://''"":'''
-    yield test, RegexPattern(ur'''\\://''""'''), ur''':\\\://''"":''', False
+    yield test, RegexPattern(r'''//''\:""'''), r'''://''\:"":'''
+    yield test, RegexPattern(r'''//''\\:""'''), r'''://''\\\:"":''', False
+    yield test, RegexPattern(r'''\://''""'''), r''':\://''"":'''
+    yield test, RegexPattern(r'''\\://''""'''), r''':\\\://''"":''', False
     # pedantic cases with three or more of all except ':'
-    yield test, RegexPattern(ur'''///'"'::"'"'''), ur''':///'"'\:\:"'":''', False
-    yield test, RegexPattern(ur'''///'"':\\:"'"'''), ur''':///'"'\:\\\:"'":''', False
+    yield test, RegexPattern(r'''///'"'::"'"'''), r''':///'"'\:\:"'":''', False
+    yield test, RegexPattern(r'''///'"':\\:"'"'''), r''':///'"'\:\\\:"'":''', False
     yield test, "str", Error("invalid value: regex='str'")
 
     arg = Regex('regex', replace=True)
@@ -550,8 +550,8 @@ def test_Regex():
     yield test, (RegexPattern("str", re.I), 'abc'), "/str/abc/i"
     yield test, (RegexPattern("/usr/bin"), "abc"), ":/usr/bin:abc:"
     yield test, (RegexPattern("/usr/bin:"), ":"), '"/usr/bin:":"'
-    yield test, (RegexPattern(ur'''//''\:""'''), ur'''/"'\:'''), ur'''://''\:"":/"'\::'''
-    yield test, (RegexPattern(ur'''//''\:""'''), ur'''/"'\\:'''), ur'''://''\:"":/"'\\\::''', False
+    yield test, (RegexPattern(r'''//''\:""'''), r'''/"'\:'''), r'''://''\:"":/"'\::'''
+    yield test, (RegexPattern(r'''//''\:""'''), r'''/"'\\:'''), r'''://''\:"":/"'\\\::''', False
     yield test, ("str", "abc"), Error("invalid value: regex=('str', 'abc')")
     yield test, ("str", 42), Error("invalid value: regex=('str', 42)")
 

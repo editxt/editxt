@@ -27,7 +27,7 @@ def _patch_traceback_module():
     import traceback
     def _some_str(value):
         try:
-            return unicode(value).encode("utf-8")
+            return str(value).encode("utf-8")
         except:
             return '<unprintable %s object>' % type(value).__name__
     traceback._some_str = _some_str

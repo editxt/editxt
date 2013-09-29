@@ -33,7 +33,7 @@ def main(args):
     script = make_script(app_name, filenames)
 
     if options.debug_osascript:
-        print script
+        print(script)
 
     if filenames:
         # HACK send stdout to /dev/null to suppress "missing value" message

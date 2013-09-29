@@ -143,15 +143,15 @@ class LineNumberView(NSRulerView):
 
         while i <= botGlyph:
             lrect, range = lm.lineFragmentRectForGlyphAtIndex_effectiveRange_(i, None)
-            text = NSString.stringWithString_(unicode(line))
+            text = NSString.stringWithString_(str(line))
             drawRect.origin.y = lrect.origin.y + offset
             text.drawInRect_withAttributes_(drawRect, attr)
             line += 1
             i += range.length
         last = tv.textStorage().length() - 1
-        if i >= last and tv.string()[last] in u"\n\r":
+        if i >= last and tv.string()[last] in "\n\r":
             # draw last line number when the last character is newline
-            text = NSString.stringWithString_(unicode(line))
+            text = NSString.stringWithString_(str(line))
             drawRect.origin.y = lrect.origin.y + offset + lineHeight
             text.drawInRect_withAttributes_(drawRect, attr)
             self.update_line_count(line + 1)

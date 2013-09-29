@@ -54,7 +54,7 @@ LITERAL = "literal"
 WORD = "word"
 
 @command(arg_parser=CommandParser(
-    Regex('pattern', replace=True, default=(RegexPattern(), u"")),
+    Regex('pattern', replace=True, default=(RegexPattern(), "")),
     Choice(('find-next next', 'find_next'),
         ('find-previous previous', 'find_previous'),
         ('replace-one one', 'replace_one'),
@@ -92,7 +92,7 @@ def toggle_boolean(depname):
 class FindOptions(Options):
 
     DEFAULTS = dict(
-        pattern = (RegexPattern(), u""),
+        pattern = (RegexPattern(), ""),
         action = 'find_next',
         search_type = REGEX,
         wrap_around = True,
@@ -123,7 +123,7 @@ class FindOptions(Options):
         return self.pattern[1]
     @replace_text.setter
     def replace_text(self, value):
-        self.pattern = (self.pattern[0], value or u"")
+        self.pattern = (self.pattern[0], value or "")
 
     @property
     def ignore_case(self):
@@ -260,7 +260,7 @@ class Finder(object):
         if regex and options.regular_expression:
             finditer = self.regexfinditer
         elif options.match_entire_word:
-            ftext = u"\\b" + re.escape(ftext) + u"\\b"
+            ftext = "\\b" + re.escape(ftext) + "\\b"
             finditer = self.regexfinditer
         else:
             finditer = self.simplefinditer
@@ -291,7 +291,7 @@ class Finder(object):
         if options.regular_expression:
             finditer = self.regexfinditer
         elif options.match_entire_word:
-            ftext = u"\\b" + re.escape(ftext) + u"\\b"
+            ftext = "\\b" + re.escape(ftext) + "\\b"
             finditer = self.regexfinditer
         else:
             finditer = self.simplefinditer
@@ -329,7 +329,7 @@ class Finder(object):
         if options.regular_expression:
             finditer = self.regexfinditer
         elif options.match_entire_word:
-            ftext = u"\\b" + re.escape(ftext) + u"\\b"
+            ftext = "\\b" + re.escape(ftext) + "\\b"
             finditer = self.regexfinditer
         else:
             finditer = self.simplefinditer
@@ -425,7 +425,7 @@ class Finder(object):
             flags |= re.IGNORECASE
         try:
             regex = re.compile(ftext, flags)
-        except re.error, err:
+        except re.error as err:
             NSBeep()
             log.error("cannot compile regex %r : %s", ftext, err)
         else:
@@ -459,7 +459,7 @@ class FindController(PanelController):
     """Window controller for find panel"""
 
     COMMAND = find
-    NIB_NAME = u"FindPanel"
+    NIB_NAME = "FindPanel"
     OPTIONS_KEY = const.FIND_PANEL_OPTIONS_KEY
     OPTIONS_FACTORY = FindOptions
 
@@ -639,7 +639,7 @@ class FindController(PanelController):
 
     def find_target(self):
         try:
-            editor = editxt.app.iter_editors().next()
+            editor = next(editxt.app.iter_editors())
         except StopIteration:
             pass
         else:
@@ -653,9 +653,9 @@ class FindController(PanelController):
         if target is not None and ftext:
             count = self.finder.mark_occurrences(ftext, regex)
             if count:
-                self.flash_status_text(u"%i occurrences" % count)
+                self.flash_status_text("%i occurrences" % count)
             else:
-                self.flash_status_text(u"Not found")
+                self.flash_status_text("Not found")
         else:
             NSBeep()
 
@@ -688,10 +688,10 @@ class FindController(PanelController):
                 if self.options.python_replace:
                     make_found_range_factory(self.options)
             except re.error as err:
-                title = u"Cannot Compile Regular Expression"
+                title = "Cannot Compile Regular Expression"
                 error = err
             except InvalidPythonExpression as err:
-                title = u"Cannot Compile Python Expression"
+                title = "Cannot Compile Python Expression"
                 error = err
             if error:
                 NSBeep()
@@ -701,9 +701,9 @@ class FindController(PanelController):
                 # we set the Custom Class of the find dialog to NSWindow.
                 NSBeginAlertSheet(
                     title,
-                    u"OK", None, None,
+                    "OK", None, None,
                     self.gui.window(), None, None, None, 0,
-                    unicode(err),
+                    str(err),
                 );
                 return False
         return True
@@ -746,14 +746,14 @@ class StatusFlasher(NSObject):
     def doEvent(self):
         if self.runner is not None:
             try:
-                t = self.runner.next()
+                t = next(self.runner)
             except StopIteration:
                 return
             self.performSelector_withObject_afterDelay_("doEvent", self, t)
 
     def stop(self):
         if self.runner is not None:
-            self.label.setStringValue_(u"")
+            self.label.setStringValue_("")
             self.label.setHidden_(False)
         self.runner = None
 
@@ -771,7 +771,7 @@ def make_found_range_factory(options):
             .format(options.replace_text)
         namespace = {}
         try:
-            exec func in globals(), namespace
+            exec(func, globals(), namespace)
         except Exception as err:
             raise InvalidPythonExpression(func, err)
         repy = namespace["repy"]

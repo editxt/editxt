@@ -61,8 +61,8 @@ def test_History__iter__():
     ]
     yield test, \
         [["command {}".format(i + p * 3)
-            for i in xrange(3)] for p in xrange(5)], \
-        [(i, "command {}".format(i)) for i in xrange(15)]
+            for i in range(3)] for p in range(5)], \
+        [(i, "command {}".format(i)) for i in range(15)]
 
 def test_History_iter_matching():
     def test(name, expect, appends='abcdefghiabca'):

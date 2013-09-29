@@ -118,7 +118,7 @@ def main(argv=list(sys.argv)):
                 .format(Application.default_profile()))
             try:
                 opts = docopt.docopt(doc, argv, version=editxt.__version__)
-            except docopt.DocoptExit, err:
+            except docopt.DocoptExit as err:
                 # HACK ignore unrecognized arguments passed by Mac OS X
                 if 'is not recognized' in str(err):
                     log.debug('argument parse error: %s\nargv: %r', err, argv)

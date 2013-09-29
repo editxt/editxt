@@ -32,10 +32,10 @@ log = logging.getLogger("test")
 
 def eq(v0, v1):
     if v0 != v1:
-        print "WARNING trial cases do not yield equal results"
-        print v0
-        print v1
-        print
+        print("WARNING trial cases do not yield equal results")
+        print(v0)
+        print(v1)
+        print()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # if x vs try vs if x is y
@@ -83,23 +83,23 @@ n = 1000000
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 try:
-    exec init
+    exec(init)
     v0 = eval(trials[0])
     v1 = eval(trials[1])
     eq(v0, v1)
 except Exception:
     log.error("trial equality test failed", exc_info=True)
-    print
+    print()
 
 for i, trial in enumerate(trials):
     try:
         t = timeit.Timer(trial, init)
         v1 = t.timeit(n)
-    except Exception, ex:
-        print "# trial %i failed: %s" % (i, ex)
+    except Exception as ex:
+        print("# trial %i failed: %s" % (i, ex))
         traceback.print_exc()
     else:
-        print "# trial %i:" % i, v1
+        print("# trial %i:" % i, v1)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

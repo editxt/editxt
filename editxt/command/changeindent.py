@@ -33,7 +33,7 @@ from editxt.command.base import command, objc_delegate, SheetController
 log = logging.getLogger(__name__)
 
 
-@command(title=u"Change Indentation")
+@command(title="Change Indentation")
 def reindent(textview, sender, args):
     ctl = ChangeIndentationController(textview)
     ctl.begin_sheet(sender)
@@ -43,7 +43,7 @@ class ChangeIndentationController(SheetController):
     """Window controller for sort lines text command"""
 
     COMMAND = reindent
-    NIB_NAME = u"ChangeIndentation"
+    NIB_NAME = "ChangeIndentation"
 
     def load_options(self):
         """load current indent mode from textview"""

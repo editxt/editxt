@@ -59,7 +59,7 @@ def logmeta(log, ignore=None, override=None, verbose=None, local_override=False,
         try:
             v = repr(value)
         except UnicodeEncodeError:
-            v = repr(unicode(value))
+            v = repr(str(value))
         if len(v) > 100:
             v = "%s...%s" % (v[:10], v[-10:])
         return v
@@ -106,17 +106,17 @@ def logmeta(log, ignore=None, override=None, verbose=None, local_override=False,
                 else:
                     _o = "<%s at 0x%x>" % (classname, id(args[0]))
                 _a = (short_repr(a) for a in args[1:])
-                _k = ('%s=%s' % (k, short_repr(v)) for k, v in sorted(kw.iteritems()))
+                _k = ('%s=%s' % (k, short_repr(v)) for k, v in sorted(kw.items()))
                 argstr = ", ".join(chain(_a, _k))
                 if vlog:
                     try:
                         rval = f(*args, **kw)
-                        log.info(u"%s.%s(%s) -> %r", _o, name, argstr, rval)
+                        log.info("%s.%s(%s) -> %r", _o, name, argstr, rval)
                         return rval
-                    except Exception, exc:
-                        log.info(u"%s.%s(%s) raised %s", _o, name, argstr, exc)
+                    except Exception as exc:
+                        log.info("%s.%s(%s) raised %s", _o, name, argstr, exc)
                         raise
-                log.info("%s.%s(%s)", _o, name, unicode(argstr).decode("UTF-8"))
+                log.info("%s.%s(%s)", _o, name, str(argstr).decode("UTF-8"))
                 return f(*args, **kw)
             return decorator(wrapper, method)
 
@@ -208,7 +208,7 @@ class FunctionMaker(object):
         func.__name__ = self.name
         func.__doc__ = getattr(self, 'doc', None)
         func.__dict__ = getattr(self, 'dict', {})
-        func.func_defaults = getattr(self, 'defaults', ())
+        func.__defaults__ = getattr(self, 'defaults', ())
         callermodule = sys._getframe(3).f_globals.get('__name__', '?')
         func.__module__ = getattr(self, 'module', callermodule)
         func.__dict__.update(kw)
@@ -223,17 +223,17 @@ class FunctionMaker(object):
         name = mo.group(1) # extract the function name
         reserved_names = set([name] + [
             arg.strip(' *') for arg in self.signature.split(',')])
-        for n, v in evaldict.iteritems():
+        for n, v in evaldict.items():
             if n in reserved_names:
                 raise NameError('%s is overridden in\n%s' % (n, src))
         if not src.endswith('\n'): # add a newline just for safety
             src += '\n'
         try:
             code = compile(src, '<string>', 'single')
-            exec code in evaldict
+            exec(code, evaldict)
         except:
-            print >> sys.stderr, 'Error in generated code:'
-            print >> sys.stderr, src
+            print('Error in generated code:', file=sys.stderr)
+            print(src, file=sys.stderr)
             raise
         func = evaldict[name]
         if addsource:
@@ -285,7 +285,7 @@ def decorator(caller, func=None):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # http://code.activestate.com/recipes/204197-solving-the-metaclass-conflict/
-import inspect, types, __builtin__
+import inspect, types, builtins
 
 ############## preliminary: two utility functions #####################
 
@@ -299,7 +299,7 @@ def skip_redundant(iterable, skipset=None):
 
 
 def remove_redundant(metaclasses):
-    skipset = set([types.ClassType])
+    skipset = set([type])
     for meta in metaclasses: # determines the metaclasses to be skipped
         skipset.update(inspect.getmro(meta)[1:])
     return tuple(skip_redundant(metaclasses, skipset))

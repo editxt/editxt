@@ -130,7 +130,7 @@ class CommandBar(object):
         if " " not in text:
             words = sorted(name
                 for name in self.text_commander.commands
-                if isinstance(name, basestring) and name.startswith(text))
+                if isinstance(name, str) and name.startswith(text))
             index = 0 if words else -1
         else:
             command, argstr = self._find_command(text)
@@ -225,7 +225,7 @@ class TextCommandController(object):
 
     def add_command(self, command, path, menu):
         if command.title is not None:
-            command.__tag = tag = self.tagger.next()
+            command.__tag = tag = next(self.tagger)
             hotkey, keymask = self.validate_hotkey(command.hotkey)
             item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
                 command.title, "performTextCommand:", hotkey)
@@ -238,7 +238,7 @@ class TextCommandController(object):
             self.lookup_full_commands.insert(0, command)
         if command.names:
             for alias in command.names:
-                if not isinstance(alias, basestring) or ' ' in alias:
+                if not isinstance(alias, str) or ' ' in alias:
                     log.warn('invalid command alias (%r) for %s loaded from %s',
                         alias, command, path)
                 else:
@@ -249,7 +249,7 @@ class TextCommandController(object):
             assert len(value) == 2, "invalid hotkey tuple: %r" % (value,)
             # TODO check if a hot key is already in use; ignore if it is
             return value
-        return u"", 0
+        return "", 0
 
     def is_textview_command_enabled(self, textview, sender):
         command = self.commands.get(sender.tag())

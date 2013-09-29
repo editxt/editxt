@@ -22,9 +22,9 @@ import Foundation
 CONFIG_FILENAME = "config.yaml"
 UNTITLED_PROJECT_NAME = "untitled project"
 # DEFAULT_PROJECT_NAME = u"default.edxt"
-PROJECT_EXT = u"edxt"
+PROJECT_EXT = "edxt"
 # PROJECT_TYPE = u"EditXT Project"
-TEXT_DOCUMENT = u"public.plain-text"
+TEXT_DOCUMENT = "public.plain-text"
 SYNTAX_DEFS_DIR = "syntax"
 SYNTAX_DEF_EXTENSION = ".syntax.py"
 STATE_DIR = 'state'
@@ -60,10 +60,10 @@ NEWLINE_MODE_WINDOWS = "CRLF"
 NEWLINE_MODE_UNICODE = "UNICODE"
 
 EOLS = {
-    NEWLINE_MODE_UNIX: u"\n",
-    NEWLINE_MODE_MAC: u"\r",
-    NEWLINE_MODE_WINDOWS: u"\r\n",
-    NEWLINE_MODE_UNICODE: u"\u2028",
+    NEWLINE_MODE_UNIX: "\n",
+    NEWLINE_MODE_MAC: "\r",
+    NEWLINE_MODE_WINDOWS: "\r\n",
+    NEWLINE_MODE_UNICODE: "\u2028",
 }
 
 CHARACTER_ENCODINGS = [
@@ -91,19 +91,19 @@ CHARACTER_ENCODINGS = [
 #   Foundation.NSProprietaryStringEncoding,
 ]
 
-PLUS_BUTTON_IMAGE = u"docsbar-plus.png"
-PROPS_DOWN_BUTTON_IMAGE = u"docsbar-props-down.png"
-PROPS_UP_BUTTON_IMAGE = u"docsbar-props-up.png"
+PLUS_BUTTON_IMAGE = "docsbar-plus.png"
+PROPS_DOWN_BUTTON_IMAGE = "docsbar-props-down.png"
+PROPS_UP_BUTTON_IMAGE = "docsbar-props-up.png"
 
 # Images for HoverButtonCell
-CLOSE_CLEAN_HOVER = u"close-hover.png"
-CLOSE_CLEAN_NORMAL = u"close-normal.png"
-CLOSE_CLEAN_PRESSED = u"close-pressed.png"
-CLOSE_CLEAN_SELECTED = u"close-selected.png"
-CLOSE_DIRTY_HOVER = u"close-dirty-hover.png"
-CLOSE_DIRTY_NORMAL = u"close-dirty-normal.png"
-CLOSE_DIRTY_PRESSED = u"close-dirty-pressed.png"
-CLOSE_DIRTY_SELECTED = u"close-dirty-selected.png"
+CLOSE_CLEAN_HOVER = "close-hover.png"
+CLOSE_CLEAN_NORMAL = "close-normal.png"
+CLOSE_CLEAN_PRESSED = "close-pressed.png"
+CLOSE_CLEAN_SELECTED = "close-selected.png"
+CLOSE_DIRTY_HOVER = "close-dirty-hover.png"
+CLOSE_DIRTY_NORMAL = "close-dirty-normal.png"
+CLOSE_DIRTY_PRESSED = "close-dirty-pressed.png"
+CLOSE_DIRTY_SELECTED = "close-dirty-selected.png"
 
-REGEX_HELP_URL = u"http://docs.python.org/library/re.html#regular-expression-syntax"
+REGEX_HELP_URL = "http://docs.python.org/library/re.html#regular-expression-syntax"
 

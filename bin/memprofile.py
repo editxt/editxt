@@ -23,12 +23,12 @@ def main():
     pid = sys.argv[1]
     cmd = 'ps -o rss="" -p'.split() + [pid]
 
-    print ' '.join(cmd)
+    print(' '.join(cmd))
     original = mem(cmd)
 
     while True:
         val = mem(cmd)
-        print('%s  %+g' % (val, val - original))
+        print(('%s  %+g' % (val, val - original)))
         time.sleep(1)
 
 if __name__ == '__main__':

@@ -33,7 +33,7 @@ class ErrorLog(object):
     """
 
     def __init__(self):
-        self.text = NSTextStorage.alloc().initWithString_attributes_(u"", {})
+        self.text = NSTextStorage.alloc().initWithString_attributes_("", {})
         self._document = None
     
     @property

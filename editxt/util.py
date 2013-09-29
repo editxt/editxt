@@ -36,12 +36,12 @@ log = logging.getLogger(__name__)
 # testing annotation utilities
 
 def untested(*args, **kw):
-    if isinstance(args[0], basestring):
+    if isinstance(args[0], str):
         return message("untested", args[0])
     return message("untested")(*args, **kw)
 
 def refactor(*args, **kw):
-    if isinstance(args[0], basestring):
+    if isinstance(args[0], str):
         return message("refactor", args[0])
     return message("refactor")(*args, **kw)
 
@@ -261,7 +261,7 @@ class ContextMap(object):
         return len(self.map)
 
     def put(self, obj):
-        key = self.keygen.next()
+        key = next(self.keygen)
         self.map[key] = obj
         return key
 
@@ -449,7 +449,7 @@ class KVOLink(object):
         self.observer = observer = _KVOLink.alloc().init(subjects)
         self.observations = observations
         for obj, keypath, subject, subkey in observations:
-            context = self.keygen.next()
+            context = next(self.keygen)
 #             if isinstance(obj, KVOProxy):
 #                 obj = obj.__pyobjc_object__
             obj.addObserver_forKeyPath_options_context_(observer, keypath, 0, context)
@@ -526,7 +526,7 @@ class CallbackObserver(NSObject):
         if options is None:
             options = 0
             try:
-                numargs = callback.func_code.co_argcount
+                numargs = callback.__code__.co_argcount
             except AttributeError:
                 raise Error("cannot determine number of arguments for function: %r\n"
                     "WORKAROUND: use options arg of kvo.observes decorator" % (callback,))

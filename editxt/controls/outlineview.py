@@ -105,7 +105,7 @@ class NSOutlineView(Category(NSOutlineView)):
 
     def iterVisibleObjects(self):
         """Iterate (row, visible object) pairs"""
-        for row in xrange(self.numberOfRows()):
+        for row in range(self.numberOfRows()):
             item = self.itemAtRow_(row)
             yield row, representedObject(item)
 
@@ -128,7 +128,7 @@ class OutlineView(NSOutlineView):
     def reloadData(self):
         # based on Jonathan Dann's ESOutlineView
         super(OutlineView, self).reloadData()
-        for row in reversed(xrange(self.numberOfRows())):
+        for row in reversed(range(self.numberOfRows())):
             item = self.itemAtRow_(row)
             obj = representedObject(item)
             if getattr(obj, "expanded", False):

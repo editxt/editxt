@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import absolute_import
+
 
 import inspect
 import logging
@@ -52,7 +52,7 @@ def unittest_print_first_failures_last():
 
 def eq_(a, b, text=None):
     if a != b:
-        if isinstance(a, basestring):
+        if isinstance(a, str):
             if text is None:
                 text = "not equal"
             err = "%s\n%r\n%r" % (text, a, b)
@@ -72,7 +72,7 @@ def do_method_pass_through(attr, inner_obj_class, outer_obj, token, method,
     ext_args = inject_wc(ext_args)
     int_args = inject_wc(int_args)
     m = Mocker()
-    if isinstance(method, basestring):
+    if isinstance(method, str):
         method = (method, method)
     outer_method, inner_method = method
     inner_obj = m.replace(outer_obj, attr, spec=inner_obj_class)
@@ -86,7 +86,7 @@ class TestConfig(object):
     def __init__(self, *args, **kw):
         self.__dict__.update(*args, **kw)
     def __iter__(self):
-        return self.__dict__.iteritems()
+        return iter(self.__dict__.items())
     def __call__(self, **kw):
         return TestConfig(self.__dict__, **kw)
     def __contains__(self, name):
@@ -107,7 +107,7 @@ def replattr(*args, **kw):
     dict_replace = kw.pop('dict', False)
     if kw:
         raise ValueError('unrecognized keyword arguments: %s' % ', '.join(kw))
-    if len(args) == 3 and isinstance(args[1], basestring):
+    if len(args) == 3 and isinstance(args[1], str):
         args = [args]
     errors = []
     temps = []
@@ -127,7 +127,7 @@ def replattr(*args, **kw):
                 obj[attr] = value
             else:
                 setattr(obj, attr, value)
-        except Exception, ex:
+        except Exception as ex:
             rtype = 'key' if dict_replace else 'attribute'
             log.error("cannot replace %s: %s", rtype, attr, exc_info=True)
             errors.append(str(ex))
@@ -160,7 +160,7 @@ def assert_raises(*args, **kw):
                 yield
                 raise AssertionError('{} not raised'.format(args[0]))
             except args[0] as err:
-                if isinstance(msg, basestring):
+                if isinstance(msg, str):
                     eq_(str(err), msg)
                 elif hasattr(msg, 'search'):
                     assert msg.search(str(err)), \
@@ -243,7 +243,7 @@ def profile(test, *args):
         stdout = sys.stdout
         sys.stdout = sys.__stdout__
         try:
-            print "\n%s%r" % (test.__name__, args)
+            print("\n%s%r" % (test.__name__, args))
             cProfile.runctx("test(*args)", {}, dict(test=test, args=args))
         finally:
             sys.stdout = stdout

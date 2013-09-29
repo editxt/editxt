@@ -23,7 +23,7 @@ import os
 import re
 import string
 from fnmatch import fnmatch
-from itertools import chain, izip, count
+from itertools import chain, count
 
 from AppKit import *
 from Foundation import NSRange, NSUnionRange
@@ -38,7 +38,7 @@ from editxt.util import get_color
 log = logging.getLogger(__name__)
 
 
-SYNTAX_RANGE_ATTRIBUTE = u"SYNTAX_RANGE_ATTRIBUTE"
+SYNTAX_RANGE_ATTRIBUTE = "SYNTAX_RANGE_ATTRIBUTE"
 
 class Error(Exception): pass
 class StopHighlight(Error): pass
@@ -74,21 +74,21 @@ class SyntaxFactory():
 
     def load_definition(self, filename):
         ns = {"RE": RE}
-        execfile(filename, ns)
+        exec(compile(open(filename).read(), filename, 'exec'), ns)
         ns.pop("RE", None)
         ns.pop("__builtins__", None)
         factory = ns.pop("SyntaxDefinition", SyntaxDefinition)
         return factory(filename, **ns)
 
     def index_definitions(self):
-        unique = dict((id(sd), sd) for sd in self.registry.itervalues())
-        defs = sorted(unique.itervalues(), key=lambda d:(d.name, id(d)))
+        unique = dict((id(sd), sd) for sd in self.registry.values())
+        defs = sorted(iter(unique.values()), key=lambda d:(d.name, id(d)))
         self.definitions[:] = defs
         sd = NSValueTransformer.valueTransformerForName_("SyntaxDefTransformer")
         sd.update_definitions(defs)
 
     def get_definition(self, filename):
-        for pattern, sdef in self.registry.iteritems():
+        for pattern, sdef in self.registry.items():
             if fnmatch(filename, pattern):
                 return sdef
         return PLAIN_TEXT
@@ -125,7 +125,7 @@ class SyntaxCache(object):
             if i < 0:
                 i = 0
             else:
-                while i > 0 and text[i] != u"\n":
+                while i > 0 and text[i] != "\n":
                     i -= 1
             prerange, info = self.get(i)
             if prerange is None:
@@ -171,7 +171,7 @@ class SyntaxCache(object):
                     hit = cache[index - 1]
                     if hit and hit[1] > 1:
                         start = index - (hit[0] + 1)
-                        for i in xrange(hit[0] + 1):
+                        for i in range(hit[0] + 1):
                             if i < 0:
                                 # this should never happen
                                 start = 0
@@ -182,11 +182,11 @@ class SyntaxCache(object):
                 hit = cache[index]
                 if hit and hit[0] > 0:
                     end = index + hit[1]
-                    for i in xrange(hit[1]):
+                    for i in range(hit[1]):
                         cache[index + i] = None
 
             return NSRange(start, end - start)
-        self.cache[index:index] = [None for i in xrange(changelen)]
+        self.cache[index:index] = [None for i in range(changelen)]
         return NSRange(index, changelen)
 
     def get(self, index):
@@ -202,7 +202,7 @@ class SyntaxCache(object):
         cache = self.cache
         while range.location > len(cache):
             cache.append(None)
-        for i in xrange(range.length):
+        for i in range(range.length):
             try:
                 cache[range.location + i] = (i, range.length - i, info)
             except IndexError:
@@ -213,12 +213,12 @@ class SyntaxCache(object):
         if range.location + range.length >= len(cache):
             del cache[range.location:]
         try:
-            for i in xrange(range.length):
+            for i in range(range.length):
                 cache[range.location + i] = None
             next_index = range.location + range.length + 1
             next = cache[next_index]
             if next and next[0] > 0:
-                for i in xrange(next[1]):
+                for i in range(next[1]):
                     cache[next_index + i] = None
         except IndexError:
             pass
@@ -279,7 +279,7 @@ class SyntaxDefinition(NoHighlight):
 
         word_char = re.compile(r"\w")
         for tokens, color in word_groups:
-            name = namegen.next()
+            name = next(namegen)
             color = get_color(color)
             wordgroup = []
             for token in tokens:
@@ -296,7 +296,7 @@ class SyntaxDefinition(NoHighlight):
             wordinfo[name] = (color, name)
 
         for start, ends, color, sdef in delimited_ranges:
-            name = namegen.next()
+            name = next(namegen)
             color = get_color(color)
             phrase = "(?P<%s>(%s).*?(%s))" % (
                 name,

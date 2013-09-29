@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import with_statement
+
 
 import logging
 import os
@@ -249,10 +249,10 @@ def test_open_error_log():
         err = m.property(mod.errlog, "document").value >> m.mock(TextDocument)
         idocs = m.method(app.iter_views_of_document)(err) >> m.mock()
         if c.is_open:
-            idocs.next() >> dv
+            next(idocs) >> dv
             m.method(app.set_current_document_view)(dv)
         else:
-            expect(idocs.next()).throw(StopIteration)
+            expect(next(idocs)).throw(StopIteration)
             m.method(app.current_editor)() >> (ed if c.has_editor else None)
             if not c.has_editor:
                 m.method(app.create_editor)() >> ed
@@ -347,7 +347,7 @@ def test_Application_iter_views_of_document():
             ed = m.mock(Editor)
             eds.append(ed)
             total_views += view_count
-            vws = [m.mock(TextDocumentView) for i in xrange(view_count)]
+            vws = [m.mock(TextDocumentView) for i in range(view_count)]
             ed.iter_views_of_document(doc) >> vws
             views.extend(vws)
         m.method(ac.iter_editors)() >> eds
@@ -489,7 +489,7 @@ def test_iter_editors():
             else:
                 wc = m.mock(EditorWindowController)
                 ed = m.mock(Editor)
-                print ed, item
+                print(ed, item)
                 if item != 7:
                     (wc.editor << ed).count(3)
                     unordered_eds.append(ed)
@@ -499,7 +499,7 @@ def test_iter_editors():
             win = m.mock(NSWindow)
             win.windowController() >> wc
             z_windows.append(win)
-        for x in xrange(unordered):
+        for x in range(unordered):
             unordered_eds.append(m.mock(Editor))
         ac.editors = unordered_eds # + [v for k, v in sorted(eds.iteritems())]
         app.orderedWindows() >> z_windows
@@ -662,7 +662,7 @@ def test_item_changed():
         app = Application()
         ctype = 0
         item = m.mock(TextDocument if c.item_type == "d" else Project)
-        for e in xrange(c.eds):
+        for e in range(c.eds):
             ed = m.mock(Editor)
             ed.item_changed(item, ctype)
             app.add_editor(ed)
@@ -921,13 +921,13 @@ def test_save_next_document():
         context = 0
         saver = DocumentSavingDelegate.alloc().init_callback_(docs, callback)
         def do_stop_routine():
-            expect(docs.next()).throw(StopIteration)
+            expect(next(docs)).throw(StopIteration)
             callback(saver.should_close)
         if doctype is None:
             do_stop_routine()
         else:
             doc = m.mock(doctype)
-            docs.next() >> doc
+            next(docs) >> doc
             if doctype is Project:
                 doc.save()
                 do_stop_routine()
@@ -975,7 +975,7 @@ def test_document_shouldClose_contextInfo_():
         if not should_close:
             assert not saver.should_close
             try:
-                saver.documents.next()
+                next(saver.documents)
                 raise AssertionError("saver.documents.next() should raise StopIteration")
             except StopIteration:
                 pass

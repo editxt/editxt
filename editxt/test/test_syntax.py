@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import with_statement
+
 
 import logging
 import os
@@ -77,7 +77,7 @@ def test_SyntaxFactory_load_definitions():
                     data["filepatterns"] = set(data["filepatterns"])
                 return type("sdef", (object,), data)()
             expect(load(ANY)).count(len(info)).call(do)
-            for fname, data in sorted(info.iteritems()):
+            for fname, data in sorted(info.items()):
                 if fname.startswith("incomplete"):
                     log.error(ANY, fname, exc_info=True)
                 else:
@@ -122,7 +122,7 @@ def test_SyntaxFactory_load_definition():
         with m:
             if c.error is None:
                 res = sf.load_definition("<filename>")
-                for name, value in values.iteritems():
+                for name, value in values.items():
                     if name == "filepatterns":
                         value = set(value)
                     eq_(getattr(res, name), value, name)

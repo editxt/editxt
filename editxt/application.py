@@ -21,7 +21,7 @@ import glob
 import logging
 import objc
 import os
-from itertools import chain, repeat, izip, count
+from itertools import chain, repeat, count
 
 import objc
 from AppKit import *
@@ -67,7 +67,7 @@ class Application(object):
 
     @classmethod
     def name(cls):
-        return NSBundle.mainBundle().objectForInfoDictionaryKey_(u"CFBundleName")
+        return NSBundle.mainBundle().objectForInfoDictionaryKey_("CFBundleName")
 
     @classmethod
     def resource_path(cls):
@@ -151,7 +151,7 @@ class Application(object):
         from editxt.document import TextDocumentView
         doc = errlog.document
         try:
-            view = self.iter_views_of_document(doc).next()
+            view = next(self.iter_views_of_document(doc))
         except StopIteration:
             editor = self.current_editor()
             if editor is None:
@@ -210,7 +210,7 @@ class Application(object):
     def iter_editors_with_view_of_document(self, document):
         for editor in self.iter_editors():
             try:
-                editor.iter_views_of_document(document).next()
+                next(editor.iter_views_of_document(document))
             except StopIteration:
                 pass
             else:
@@ -270,7 +270,7 @@ class Application(object):
 
     def current_editor(self):
         try:
-            return self.iter_editors().next()
+            return next(self.iter_editors())
         except StopIteration:
             return None
 
@@ -309,10 +309,10 @@ class Application(object):
     def _legacy_editor_states(self):
         # TODO remove once all users have upraded to new state persistence
         def pythonify(value):
-            if isinstance(value, (basestring, int, long, float, bool)):
+            if isinstance(value, (str, int, float, bool)):
                 return value
             if isinstance(value, (dict, NSDictionary)):
-                return {k: pythonify(v) for k, v in value.iteritems()}
+                return {k: pythonify(v) for k, v in value.items()}
             if isinstance(value, (list, NSArray)):
                 return [pythonify(v) for v in value]
             raise ValueError('unknown value type: {} {}'
@@ -420,8 +420,8 @@ class DocumentController(NSDocumentController):
         objs = defaultdict(lambda:0)
         for obj in gc.get_objects():
             objs[type(obj)] += 1
-        ones = sum(1 for o in objs.iteritems() if o[1] == 1)
-        objs = (o for o in objs.iteritems() if o[1] > 1)
+        ones = sum(1 for o in objs.items() if o[1] == 1)
+        objs = (o for o in objs.items() if o[1] > 1)
         objs = sorted(objs, key=lambda v:(-v[1], v[0].__name__))
         names = (rep(*o) for o in objs)
         log.info('%s gc objects:\n%s\nsingletons                     %10s',
@@ -485,7 +485,7 @@ class DocumentSavingDelegate(NSObject):
 
     def save_next_document(self):
         try:
-            doc_view = self.documents.next()
+            doc_view = next(self.documents)
         except StopIteration:
             self.documents = None # release references to documents (if there are any)
             self.callback(self.should_close)

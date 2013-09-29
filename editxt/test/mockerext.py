@@ -82,7 +82,7 @@ class MockExt(mocker.Mock):
             return value
         return self.__mocker_act__("__rshift__", (value,))
 
-    def __nonzero__(self):
+    def __bool__(self):
         """improved __nonzero__ implementation
 
         This now works in Python 2.5 (just guesssing that it broke in that
@@ -91,7 +91,7 @@ class MockExt(mocker.Mock):
         """
         try:
             result = self.__mocker_act__("nonzero")
-        except mocker.MatchError, e:
+        except mocker.MatchError as e:
             result = True
         if not isinstance(result, (bool, int)):
             # force result since this method must return a bool or int
@@ -182,7 +182,7 @@ class MockerExt(mocker.Mocker):
     def replace(self, obj, attr=None, spec=True, type=True, name=None,
                 count=True, passthrough=False, **kw):
         if attr is None:
-            assert isinstance(obj, basestring), repr(obj)
+            assert isinstance(obj, str), repr(obj)
             assert '.' in obj, 'invalid replacement specifier: %s' % obj
             obj, attr = obj.rsplit('.', 1)
             obj = import_module(obj)
@@ -287,19 +287,19 @@ class MethodReplacer(mocker.Task):
         names = tuple("a%i" % i for i in range(nargs))
         f_code = types.CodeType(
             nargs,
-            f.func_code.co_nlocals,
-            f.func_code.co_stacksize,
-            f.func_code.co_flags,
-            f.func_code.co_code,
-            f.func_code.co_consts,
-            f.func_code.co_names,
+            f.__code__.co_nlocals,
+            f.__code__.co_stacksize,
+            f.__code__.co_flags,
+            f.__code__.co_code,
+            f.__code__.co_consts,
+            f.__code__.co_names,
             names,
-            f.func_code.co_filename,
+            f.__code__.co_filename,
             name,
-            f.func_code.co_firstlineno,
-            f.func_code.co_lnotab,
+            f.__code__.co_firstlineno,
+            f.__code__.co_lnotab,
         )
-        return types.FunctionType(f_code, f.func_globals, name)
+        return types.FunctionType(f_code, f.__globals__, name)
 
     def __init__(self, mock_factory, *method_spec, **kw):
         # get objtype and method_name
@@ -337,13 +337,13 @@ class MethodReplacer(mocker.Task):
                 # class method on pure python object
                 self.is_classmethod = True
                 name = method.__name__ if name is None else name
-                func = method.im_func
+                func = method.__func__
                 class_ = objtype = obj
                 obj = None
             elif obj is not None:
                 # bound method on pure python object
                 name = method.__name__ if name is None else name
-                func = method.im_func
+                func = method.__func__
                 class_ = objtype = type(obj)
                 assert objtype.__name__ != "type"
             else:
@@ -494,7 +494,7 @@ class SpecCheckerExt(mocker.SpecChecker):
                 except KeyError:
                     pass
                 nargs = method.selector.count(":")
-                names = tuple(["self"] + ["arg%i" % i for i in xrange(nargs)])
+                names = tuple(["self"] + ["arg%i" % i for i in range(nargs)])
                 return names, None, None, None
         return inspect.getargspec(method)
 

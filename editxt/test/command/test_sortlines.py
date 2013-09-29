@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import with_statement
+
 
 import logging
 import os
@@ -42,7 +42,7 @@ from editxt.test.test_commands import CommandTester
 
 log = logging.getLogger(__name__)
 
-TEXT = u"""
+TEXT = """
 ghi 1 2 012
 abc 3 1 543
  de 2 1 945
@@ -57,7 +57,7 @@ def test_sort_command():
         do = CommandTester(mod.sort_lines, textview=tv)
         with m:
             do(command)
-            eq_(sort_result(tv.text), unicode(expected), TEXT)
+            eq_(sort_result(tv.text), str(expected), TEXT)
 
     yield test, "sort", "|0gadJ|4|0"
     yield test, "sort all", "|0|4dagJ|0"
@@ -66,7 +66,7 @@ def test_sort_command():
 def test_SortLinesController_default_options():
     with replace_history() as history:
         ctl = SortLinesController(None)
-        for name, value in SortOptions.DEFAULTS.iteritems():
+        for name, value in SortOptions.DEFAULTS.items():
             eq_(getattr(ctl.options, name), value, name)
 
 def test_SortLinesController_load_options():
@@ -135,7 +135,7 @@ def test_sortlines():
             tv.setSelectedRange_(sel)
         with m:
             sortlines(tv, opts)
-            eq_(sort_result(output[0]), unicode(c.result), output[0])
+            eq_(sort_result(output[0]), str(c.result), output[0])
     op = TestConfig()
     tlen = len(TEXT)
     c = TestConfig(text=TEXT, sel=(0, tlen), opts=op)

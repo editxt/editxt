@@ -237,7 +237,7 @@ def test_CommandBar_get_history():
 
             for input, direction, history in nav:
                 dirchar = "v" if direction else "A"
-                print("{}({!r}, {!r})".format(dirchar, input, history))
+                print(("{}({!r}, {!r})".format(dirchar, input, history)))
                 eq_(bar.get_history(input, forward=direction), history)
 
     A = lambda input, history: (input, False, history) # moveUp
@@ -485,12 +485,12 @@ def test_TextCommandController_load_commands():
         mod = m.mock(dict)
         m.method(ctl.iter_command_modules)() >> [("<path>", mod)]
         cmds = []; mod.get("text_menu_commands", []) >> cmds
-        for i in xrange(c.commands):
+        for i in range(c.commands):
             cmd = "<command %s>" % i
             add(cmd, "<path>", menu)
             cmds.append(cmd)
         hnds = mod.get("input_handlers", {}) >> {}
-        for i in xrange(c.handlers):
+        for i in range(c.handlers):
             hnds["handle%s" % i] = "<handle %s>" % i
         handlers.update(hnds)
         with m:
@@ -510,7 +510,7 @@ def test_TextCommandController_add_command():
         cmd = m.mock()
         cmd.names >> []
         cmd.lookup_with_arg_parser >> False
-        tag = cmd._TextCommandController__tag = ctl.tagger.next() + 1
+        tag = cmd._TextCommandController__tag = next(ctl.tagger) + 1
         validate(cmd.hotkey >> "<hotkey>") >> ("<hotkey>", "<keymask>")
         mi = mi_class.alloc() >> m.mock(NSMenuItem)
         (cmd.title << "<title>").count(2)
@@ -528,7 +528,7 @@ def test_TextCommandController_add_command():
 
 def test_TextCommandController_validate_hotkey():
     tc = TextCommandController("<history>")
-    eq_(tc.validate_hotkey(None), (u"", 0))
+    eq_(tc.validate_hotkey(None), ("", 0))
     eq_(tc.validate_hotkey(("a", 1)), ("a", 1))
     assert_raises(AssertionError, tc.validate_hotkey, ("a", "b", "c"))
 

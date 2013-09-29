@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import with_statement
+
 
 import logging
 import os
@@ -93,8 +93,8 @@ def test_wrap_selected_lines():
             wrap_selected_lines(tv, opts)
             eq_(c.result, output[0])
     c = TestConfig(col=30, ind=False, sel=None)
-    yield test, c(text=u"Hello world", result=u"Hello world")
-    yield test, c(text=u"Hello\nworld", result=u"Hello", sel=(0, 5))
+    yield test, c(text="Hello world", result="Hello world")
+    yield test, c(text="Hello\nworld", result="Hello", sel=(0, 5))
 
 def test_wraplines():
     from editxt.command.util import iterlines
@@ -112,54 +112,54 @@ def test_wraplines():
             output = "\n".join(wraplines(iterlines(text, sel), opts, tv))
             eq_(c.result, output)
     c = TestConfig(ind=False)
-    yield test, c(text=u"", result=u"\n", wid=80)
-    yield test, c(text=u"\n", result=u"\n", wid=80)
-    yield test, c(text=u"Hello world", result=u"Hello\nworld\n", wid=1)
-    yield test, c(text=u"Hello world", result=u"Hello\nworld\n", wid=4)
-    yield test, c(text=u"Hello world", result=u"Hello\nworld\n", wid=5)
-    yield test, c(text=u"Hello world", result=u"Hello\nworld\n", wid=6)
-    yield test, c(text=u"Hello world", result=u"Hello\nworld\n", wid=10)
-    yield test, c(text=u"Hello world", result=u"Hello world\n", wid=11)
-    yield test, c(text=u"Hello\nworld", result=u"Hello\nworld\n", wid=10)
-    yield test, c(text=u"Hello\nworld", result=u"Hello world\n", wid=11)
-    yield test, c(text=u"  Hello world", result=u"  Hello\nworld\n", wid=6)
-    yield test, c(text=u"  Hello world", result=u"  Hello\nworld\n", wid=7)
-    yield test, c(text=u"  Hello world", result=u"  Hello\nworld\n", wid=8)
-    yield test, c(text=u"  Hello world\n", result=u"  Hello\nworld\n", wid=6)
-    yield test, c(text=u"\n  Hello world", result=u"\n  Hello\nworld\n", wid=6)
-    yield test, c(text=u"Hello  world", result=u"Hello\nworld\n", wid=5)
-    yield test, c(text=u"Hello  world", result=u"Hello\nworld\n", wid=6)
-    yield test, c(text=u"Hello  world", result=u"Hello\nworld\n", wid=7)
-    yield test, c(text=u"Hello  world", result=u"Hello\nworld\n", wid=8)
-    yield test, c(text=u"Hello  world", result=u"Hello  world\n", wid=12)
-    yield test, c(text=u"Hi      world", result=u"Hi\nworld\n", wid=7)
-    yield test, c(text=u"Hi      world", result=u"Hi world\n", wid=8)
-    yield test, c(text=u"Hi      world", result=u"Hi world\n", wid=9)
-    yield test, c(text=u"Hi      my friend", result=u"Hi my\nfriend\n", wid=9)
-    yield test, c(text=u"abc def ghi\nmno pqr stu\n",
-                result=u"abc def\nghi mno\npqr stu\n", wid=7)
+    yield test, c(text="", result="\n", wid=80)
+    yield test, c(text="\n", result="\n", wid=80)
+    yield test, c(text="Hello world", result="Hello\nworld\n", wid=1)
+    yield test, c(text="Hello world", result="Hello\nworld\n", wid=4)
+    yield test, c(text="Hello world", result="Hello\nworld\n", wid=5)
+    yield test, c(text="Hello world", result="Hello\nworld\n", wid=6)
+    yield test, c(text="Hello world", result="Hello\nworld\n", wid=10)
+    yield test, c(text="Hello world", result="Hello world\n", wid=11)
+    yield test, c(text="Hello\nworld", result="Hello\nworld\n", wid=10)
+    yield test, c(text="Hello\nworld", result="Hello world\n", wid=11)
+    yield test, c(text="  Hello world", result="  Hello\nworld\n", wid=6)
+    yield test, c(text="  Hello world", result="  Hello\nworld\n", wid=7)
+    yield test, c(text="  Hello world", result="  Hello\nworld\n", wid=8)
+    yield test, c(text="  Hello world\n", result="  Hello\nworld\n", wid=6)
+    yield test, c(text="\n  Hello world", result="\n  Hello\nworld\n", wid=6)
+    yield test, c(text="Hello  world", result="Hello\nworld\n", wid=5)
+    yield test, c(text="Hello  world", result="Hello\nworld\n", wid=6)
+    yield test, c(text="Hello  world", result="Hello\nworld\n", wid=7)
+    yield test, c(text="Hello  world", result="Hello\nworld\n", wid=8)
+    yield test, c(text="Hello  world", result="Hello  world\n", wid=12)
+    yield test, c(text="Hi      world", result="Hi\nworld\n", wid=7)
+    yield test, c(text="Hi      world", result="Hi world\n", wid=8)
+    yield test, c(text="Hi      world", result="Hi world\n", wid=9)
+    yield test, c(text="Hi      my friend", result="Hi my\nfriend\n", wid=9)
+    yield test, c(text="abc def ghi\nmno pqr stu\n",
+                result="abc def\nghi mno\npqr stu\n", wid=7)
 
-    yield test, c(text=u"      abc def ghi", result=u"      abc\ndef\nghi\n", wid=5)
-    yield test, c(text=u"      abc def ghi", result=u"      abc\ndef\nghi\n", wid=6)
-    yield test, c(text=u"      abc def ghi", result=u"      abc\ndef ghi\n", wid=7)
-    yield test, c(text=u"abc\n\ndef ghi", result=u"abc\n\ndef\nghi\n", wid=6)
-    yield test, c(text=u"abc\n\ndef ghi", result=u"abc\n\ndef ghi\n", wid=7)
-    yield test, c(text=u"abc\n\ndef ghi", result=u"abc\n\ndef ghi\n", wid=8)
-    yield test, c(text=u"abc\n\n def ghi", result=u"abc\n\ndef ghi\n", wid=8)
-    yield test, c(text=u"abc\n \ndef ghi", result=u"abc\n\ndef\nghi\n", wid=6)
-    yield test, c(text=u"abc\n \ndef ghi", result=u"abc\n\ndef ghi\n", wid=7)
-    yield test, c(text=u"abc\n \ndef ghi", result=u"abc\n\ndef ghi\n", wid=8)
-    yield test, c(text=u"abc\n\n\ndef ghi", result=u"abc\n\n\ndef ghi\n", wid=8)
+    yield test, c(text="      abc def ghi", result="      abc\ndef\nghi\n", wid=5)
+    yield test, c(text="      abc def ghi", result="      abc\ndef\nghi\n", wid=6)
+    yield test, c(text="      abc def ghi", result="      abc\ndef ghi\n", wid=7)
+    yield test, c(text="abc\n\ndef ghi", result="abc\n\ndef\nghi\n", wid=6)
+    yield test, c(text="abc\n\ndef ghi", result="abc\n\ndef ghi\n", wid=7)
+    yield test, c(text="abc\n\ndef ghi", result="abc\n\ndef ghi\n", wid=8)
+    yield test, c(text="abc\n\n def ghi", result="abc\n\ndef ghi\n", wid=8)
+    yield test, c(text="abc\n \ndef ghi", result="abc\n\ndef\nghi\n", wid=6)
+    yield test, c(text="abc\n \ndef ghi", result="abc\n\ndef ghi\n", wid=7)
+    yield test, c(text="abc\n \ndef ghi", result="abc\n\ndef ghi\n", wid=8)
+    yield test, c(text="abc\n\n\ndef ghi", result="abc\n\n\ndef ghi\n", wid=8)
 
     c = c(ind=True, comment="#")
-    yield test, c(text=u"  Hello world", result=u"  Hello\n  world\n", wid=1)
-    yield test, c(text=u"  Hello world", result=u"  Hello\n  world\n", wid=6)
-    yield test, c(text=u"  Hello world", result=u"  Hello\n  world\n", wid=7)
-    yield test, c(text=u"  Hello world", result=u"  Hello\n  world\n", wid=8)
-    yield test, c(text=u"  Hello world\n", result=u"  Hello\n  world\n", wid=6)
-    yield test, c(text=u"  Hello world, hi\n", result=u"  Hello\n  world,\n  hi\n", wid=9)
-    yield test, c(text=u"  Hello world, hi\n", result=u"  Hello\n  world,\n  hi\n", wid=10)
-    yield test, c(text=u"  Hello world, hi\n", result=u"  Hello\n  world, hi\n", wid=11)
+    yield test, c(text="  Hello world", result="  Hello\n  world\n", wid=1)
+    yield test, c(text="  Hello world", result="  Hello\n  world\n", wid=6)
+    yield test, c(text="  Hello world", result="  Hello\n  world\n", wid=7)
+    yield test, c(text="  Hello world", result="  Hello\n  world\n", wid=8)
+    yield test, c(text="  Hello world\n", result="  Hello\n  world\n", wid=6)
+    yield test, c(text="  Hello world, hi\n", result="  Hello\n  world,\n  hi\n", wid=9)
+    yield test, c(text="  Hello world, hi\n", result="  Hello\n  world,\n  hi\n", wid=10)
+    yield test, c(text="  Hello world, hi\n", result="  Hello\n  world, hi\n", wid=11)
 
     for comment in ("#", "//", "xxx"):
         def d(text, result, wid, **kw):
@@ -171,14 +171,14 @@ def test_wraplines():
                 comment=comment,
                 **kw
             )
-        yield test, d(text=u"  # abc def", result=u"  # abc def\n", wid=11)
-        yield test, d(text=u"  # abc def", result=u"  # abc\n  # def\n", wid=10)
-        yield test, d(text=u"  # abc\n  # def\n", result=u"  # abc def\n", wid=11)
-        yield test, d(text=u"  # abc\n  # def\n  # ghi\n",
-                    result=u"  # abc def\n  # ghi\n", wid=11)
-        yield test, d(text=u"  # abc\n  # def\n  # ghi\n",
-                    result=u"  # abc\n  # def\n  # ghi\n", wid=10)
-        yield test, d(text=u"  # abc\n\n  # def ---\n",
-                    result=u"  # abc\n  # \n  # def ---\n", wid=11)
-        yield test, d(text=u"  # abc\n\n\n  # def ---\n",
-                    result=u"  # abc\n  # \n  # \n  # def ---\n", wid=11)
+        yield test, d(text="  # abc def", result="  # abc def\n", wid=11)
+        yield test, d(text="  # abc def", result="  # abc\n  # def\n", wid=10)
+        yield test, d(text="  # abc\n  # def\n", result="  # abc def\n", wid=11)
+        yield test, d(text="  # abc\n  # def\n  # ghi\n",
+                    result="  # abc def\n  # ghi\n", wid=11)
+        yield test, d(text="  # abc\n  # def\n  # ghi\n",
+                    result="  # abc\n  # def\n  # ghi\n", wid=10)
+        yield test, d(text="  # abc\n\n  # def ---\n",
+                    result="  # abc\n  # \n  # def ---\n", wid=11)
+        yield test, d(text="  # abc\n\n\n  # def ---\n",
+                    result="  # abc\n  # \n  # \n  # def ---\n", wid=11)

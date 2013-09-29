@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import with_statement
+
 
 import logging
 import os
@@ -49,14 +49,14 @@ log = logging.getLogger(__name__)
 # """)
 
 def make_options(config):
-    return FindOptions(**{opt: config[key] for key, opt in {
+    return FindOptions(**{opt: config[key] for key, opt in list({
         "find": "find_text",
         "replace": "replace_text",
         "action": "action",
         "search": "search_type",
         "ignore_case": "ignore_case",
         "wrap": "wrap_around",
-    }.items() if key in config})
+    }.items()) if key in config})
 
 def test_find_command():
     def test(c):
@@ -79,31 +79,31 @@ def test_find_command():
 
     c = TestConfig(find="", replace="", search=mod.REGEX, ignore_case=False,
                    wrap=True, action="find_next", message=None)
-    yield test, c(input=u"")
-    yield test, c(input=u"/abc", find="abc")
-    yield test, c(input=u":abc", find="abc")
-    yield test, c(input=u":abc\:", find=r"abc\:")
-    yield test, c(input=u"/\/abc\//", find=r"\/abc\/")
-    yield test, c(input=u"/abc/def", find="abc", replace="def")
-    yield test, c(input=u"/abc/def/", find="abc", replace="def")
-    yield test, c(input=u"/abc/def/i", find="abc", replace="def", ignore_case=True)
-    yield test, c(input=u":abc:def:i", find="abc", replace="def", ignore_case=True)
-    yield test, c(input=u"'abc'def'i", find="abc", replace="def", ignore_case=True)
-    yield test, c(input=u'"abc"def"i', find="abc", replace="def", ignore_case=True)
-    yield test, c(input=u":ab\:c:def:i", find=r"ab\:c", replace="def", ignore_case=True)
-    yield test, c(input=u"/abc// n", find="abc", action="find_next")
-    yield test, c(input=u"/abc// p", find="abc", action="find_previous")
-    yield test, c(input=u"/abc// previous", find="abc", action="find_previous")
-    yield test, c(input=u"/abc// o", find="abc", action="replace_one")
-    yield test, c(input=u"/abc// a", find="abc", action="replace_all")
-    yield test, c(input=u"/abc// s", find="abc", action="replace_all_in_selection")
-    yield test, c(input=u"/abc// c", find="abc", action="count_occurrences",
+    yield test, c(input="")
+    yield test, c(input="/abc", find="abc")
+    yield test, c(input=":abc", find="abc")
+    yield test, c(input=":abc\:", find=r"abc\:")
+    yield test, c(input="/\/abc\//", find=r"\/abc\/")
+    yield test, c(input="/abc/def", find="abc", replace="def")
+    yield test, c(input="/abc/def/", find="abc", replace="def")
+    yield test, c(input="/abc/def/i", find="abc", replace="def", ignore_case=True)
+    yield test, c(input=":abc:def:i", find="abc", replace="def", ignore_case=True)
+    yield test, c(input="'abc'def'i", find="abc", replace="def", ignore_case=True)
+    yield test, c(input='"abc"def"i', find="abc", replace="def", ignore_case=True)
+    yield test, c(input=":ab\:c:def:i", find=r"ab\:c", replace="def", ignore_case=True)
+    yield test, c(input="/abc// n", find="abc", action="find_next")
+    yield test, c(input="/abc// p", find="abc", action="find_previous")
+    yield test, c(input="/abc// previous", find="abc", action="find_previous")
+    yield test, c(input="/abc// o", find="abc", action="replace_one")
+    yield test, c(input="/abc// a", find="abc", action="replace_all")
+    yield test, c(input="/abc// s", find="abc", action="replace_all_in_selection")
+    yield test, c(input="/abc// c", find="abc", action="count_occurrences",
                   message="Found 3 occurrences")
-    yield test, c(input=u"/abc//  regex", find="abc", search=mod.REGEX)
-    yield test, c(input=u"/abc//  literal", find="abc", search=mod.LITERAL)
-    yield test, c(input=u"/abc//  word", find="abc", search=mod.WORD)
-    yield test, c(input=u"/abc//  python-replace", find="abc", search=mod.REPY)
-    yield test, c(input=u"/abc//   no-wrap", find="abc", wrap=False)
+    yield test, c(input="/abc//  regex", find="abc", search=mod.REGEX)
+    yield test, c(input="/abc//  literal", find="abc", search=mod.LITERAL)
+    yield test, c(input="/abc//  word", find="abc", search=mod.WORD)
+    yield test, c(input="/abc//  python-replace", find="abc", search=mod.REPY)
+    yield test, c(input="/abc//   no-wrap", find="abc", wrap=False)
 
 def test_Finder_mark_occurrences():
     def test(c):
@@ -163,7 +163,7 @@ def test_Finder_python_replace():
         with m:
             if isinstance(c.expect, Exception):
                 def check(err):
-                    print err
+                    print(err)
                     eq_(str(err), str(c.expect))
                 with assert_raises(type(c.expect), msg=check):
                     getattr(finder, c.action)(None)
@@ -243,7 +243,7 @@ def test_FindController_perform_action():
         sender = m.mock()
         (sender.tag() << c.tag).count(1, 2)
         func = None
-        for tag, meth in fc.action_registry.items():
+        for tag, meth in list(fc.action_registry.items()):
             fc.action_registry[tag] = temp = m.mock(meth)
             if tag == c.tag:
                 func = temp
@@ -404,8 +404,8 @@ def test_FindController_recentFindSelected_():
     yield test, "/abc", FindOptions(find_text="abc")
     yield test, "/abc// unknown-action", FindOptions()
     yield test, "/abc/def/i all word no-wrap", FindOptions(
-        find_text=u"abc",
-        replace_text=u"def",
+        find_text="abc",
+        replace_text="def",
         action="find_next",
         ignore_case=True,
         search_type=mod.WORD,
@@ -449,18 +449,18 @@ def test_FindController__find():
         sel = NSMakeRange(1, 2)
         direction = "<direction>"
         options = m.property(fc.finder, "options").value >> m.mock(FindOptions)
-        ftext = u"<find>"
+        ftext = "<find>"
         if options.regular_expression >> c.regex:
             finditer = regexfind
         elif options.match_entire_word >> c.mword:
             finditer = regexfind
-            ftext = u"\\b" + re.escape(ftext) + u"\\b"
+            ftext = "\\b" + re.escape(ftext) + "\\b"
         else:
             finditer = simplefind
         range = NSMakeRange(sel.location, 0)
         items = []
         rng = None
-        tv.string() >> u"<text>"
+        tv.string() >> "<text>"
         FoundRange = make_found_range_factory(
             FindOptions(regular_expression=c.regex, match_entire_word=c.mword))
         for i, r in enumerate(c.matches):
@@ -473,9 +473,9 @@ def test_FindController__find():
                 continue
             tv._Finder__recently_found_range = found
             rng = found.range
-        finditer(u"<text>", ftext, range, direction, True) >> items
+        finditer("<text>", ftext, range, direction, True) >> items
         with m:
-            result = fc.finder._find(tv, u"<find>", sel, direction)
+            result = fc.finder._find(tv, "<find>", sel, direction)
             eq_(result, rng)
     c = TestConfig(regex=False, mword=False, matches=[])
     yield test, c
@@ -509,7 +509,7 @@ def test_FindController__replace_all():
             if options.regular_expression >> c.regex:
                 finditer = m.method(fc.finder.regexfinditer)
             elif options.match_entire_word >> c.mword:
-                ftext = u"\\b" + re.escape(ftext) + u"\\b"
+                ftext = "\\b" + re.escape(ftext) + "\\b"
                 finditer = m.method(fc.finder.regexfinditer)
             else:
                 finditer = m.method(fc.finder.simplefinditer)
@@ -566,7 +566,7 @@ def test_FindController_count_occurrences():
         mark = m.method(fc.finder.mark_occurrences)
         tv = m.method(fc.find_target)() >> (m.mock(TextView) if c.has_tv else None)
         if c.has_tv:
-            ftext = u"<find>"
+            ftext = "<find>"
             mark(ftext, c.regex) >> c.cnt
             if c.cnt:
                 flash("%i occurrences" % c.cnt)
@@ -575,7 +575,7 @@ def test_FindController_count_occurrences():
         else:
             beep()
         with m:
-            fc.count_occurrences(u"<find>", c.regex)
+            fc.count_occurrences("<find>", c.regex)
     c = TestConfig(has_tv=True, regex=False, cnt=0)
     yield test, c
     yield test, c(regex=True)
@@ -589,7 +589,7 @@ def test_FindController_find_target():
         m = Mocker()
         fc = FindController.shared_controller()
         app = m.replace(editxt, "app")
-        x = expect(app.iter_editors().next())
+        x = expect(next(app.iter_editors()))
         if c.has_ed:
             ed = m.mock(Editor)
             x.result(ed)
@@ -699,14 +699,14 @@ def test_FindController_load_options():
     o = dict
     c = TestConfig(ftext=None, hist=None, opts={})
     yield test, c
-    yield test, c(ftext=u"", hist="/abc", opts=o(find_text=u""))
-    yield test, c(ftext=u"def", hist="/abc", opts=o(find_text=u"def"))
+    yield test, c(ftext="", hist="/abc", opts=o(find_text=""))
+    yield test, c(ftext="def", hist="/abc", opts=o(find_text="def"))
     yield test, c(hist="/")
-    yield test, c(hist="/abc", opts=o(find_text=u"abc"))
-    yield test, c(hist="//repl", opts=o(replace_text=u"repl"))
+    yield test, c(hist="/abc", opts=o(find_text="abc"))
+    yield test, c(hist="//repl", opts=o(replace_text="repl"))
     yield test, c(hist="/abc//i find-previous literal no-wrap",
                     opts=o(
-                        find_text=u"abc",
+                        find_text="abc",
                         action="find_previous",
                         ignore_case=True,
                         search_type=mod.LITERAL,
@@ -718,7 +718,7 @@ def test_FindController_save_options():
         m = Mocker()
         with replace_history() as history:
             fc = FindController() # calls load_options()
-            fc.options.find_text = u"" # clear value from real pasteboard
+            fc.options.find_text = "" # clear value from real pasteboard
             fc.options.ignore_case = False
             nspb = m.replace(mod, 'NSPasteboard')
             if "find_text" in c.opts:
@@ -726,9 +726,9 @@ def test_FindController_save_options():
                 pboard.declareTypes_owner_([NSStringPboardType], None)
                 pboard.setString_forType_(c.opts["find_text"], NSStringPboardType)
             with m:
-                for k, v in c.opts.items():
+                for k, v in list(c.opts.items()):
                     setattr(fc.options, k, v)
-                print fc.options._target
+                print(fc.options._target)
                 eq_(fc.save_options(), c.res, fc.options._target)
                 eq_(list(history), [] if c.hist is None else [c.hist])
     o = dict

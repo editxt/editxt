@@ -36,7 +36,7 @@ log = logging.getLogger(__name__)
 WHITESPACE = re.compile(r"[ \t]*")
 
 
-@command(name='wrap', title=u"Hard Wrap...",
+@command(name='wrap', title="Hard Wrap...",
     hotkey=("\\", NSCommandKeyMask | NSShiftKeyMask),
     is_enabled=has_selection,
     arg_parser=CommandParser( # TODO test
@@ -51,7 +51,7 @@ def wrap_lines(textview, sender, args):
         wrap_selected_lines(textview, args)
 
 
-@command(title=u"Hard Wrap At Margin",
+@command(title="Hard Wrap At Margin",
     hotkey=("\\", NSCommandKeyMask),
     arg_parser=CommandParser( # TODO test
         Choice(('indent', True), ('no-indent', False)), # TODO default to last used value
@@ -68,7 +68,7 @@ class WrapLinesController(SheetController):
     """Window controller for sort lines text command"""
 
     COMMAND = wrap_lines
-    NIB_NAME = u"WrapLines"
+    NIB_NAME = "WrapLines"
     OPTIONS_FACTORY = lambda self:Options(
         wrap_column=const.DEFAULT_RIGHT_MARGIN,
         indent=True,
@@ -102,14 +102,14 @@ def wraplines(lines, options, textview):
         frag = frag.rstrip()
         if frag:
             break
-        yield u""
+        yield ""
     else:
-        yield u""
+        yield ""
         raise StopIteration
-    leading = u""
+    leading = ""
     indent = regexp.match(frag).group()
     comment = regexp is not WHITESPACE and bool(indent.strip())
-    frag = regexp.sub(u"", frag, 1)
+    frag = regexp.sub("", frag, 1)
     if indent:
         firstlen = width - len(indent)
         if firstlen < 1:
@@ -124,28 +124,28 @@ def wraplines(lines, options, textview):
             line, frag = get_line(frag, lines, width, regexp)
             yield leading + line if line else line
         for frag in lines:
-            frag = regexp.sub(u"", frag.rstrip(), 1)
-            yield leading if comment else u""
+            frag = regexp.sub("", frag.rstrip(), 1)
+            yield leading if comment else ""
             if frag:
                 break
         else:
             if line:
-                yield u""
+                yield ""
             break
 
-def get_line(frag, lines, width, regexp, ws=u" \t"):
+def get_line(frag, lines, width, regexp, ws=" \t"):
     while True:
         while len(frag) < width:
             try:
-                line = regexp.sub(u"", lines.next().rstrip(), 1)
+                line = regexp.sub("", lines.next().rstrip(), 1)
             except StopIteration:
                 return frag, None
             if not line:
                 return frag, None
-            frag = frag + u" " + line if frag else line
+            frag = frag + " " + line if frag else line
         if len(frag) == width:
-            return frag, u""
-        for i in xrange(width, 0, -1):
+            return frag, ""
+        for i in range(width, 0, -1):
             if frag[i] in ws:
                 break
         else:
@@ -155,6 +155,6 @@ def get_line(frag, lines, width, regexp, ws=u" \t"):
                 i += 1
         line, frag = frag[:i].rstrip(), frag[i:].lstrip()
         if len(line) + len(WHITESPACE.split(frag, 1)[0]) < width:
-            frag = line + u" " + frag
+            frag = line + " " + frag
             continue
         return line, frag

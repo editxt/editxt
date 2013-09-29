@@ -23,8 +23,8 @@ import os
 import sys
 from itertools import count
 
-from ConfigParser import SafeConfigParser
-from StringIO import StringIO
+from configparser import SafeConfigParser
+from io import StringIO
 
 import objc
 from AppKit import *
@@ -62,7 +62,7 @@ class Project(NSObject):
 
     def init(self):
         self = super(Project, self).init()
-        self.id = doc_id_gen.next()
+        self.id = next(doc_id_gen)
         self.name = const.UNTITLED_PROJECT_NAME
         self.path = None
         self.expanded = True

@@ -35,7 +35,7 @@ from editxt.commands import iterlines
 log = logging.getLogger(__name__)
 
 
-@command(name='sort', title=u"Sort Lines...",
+@command(name='sort', title="Sort Lines...",
     arg_parser=CommandParser(
         Choice(('selection', True), ('all', False)),
         Choice(('forward', False), ('reverse', True), name='reverse'),
@@ -78,7 +78,7 @@ class SortOptions(Options):
     def sort_regex(self, value):
         assert len(value) == 2, value
         # strip flags since GUI does not support them
-        self.search_pattern = unicode(value[0])
+        self.search_pattern = str(value[0])
         self.match_pattern = value[1]
 
 
@@ -86,7 +86,7 @@ class SortLinesController(SheetController):
     """Window controller for sort lines text command"""
 
     COMMAND = sort_lines
-    NIB_NAME = u"SortLines"
+    NIB_NAME = "SortLines"
     OPTIONS_FACTORY = SortOptions
 
     @objc_delegate

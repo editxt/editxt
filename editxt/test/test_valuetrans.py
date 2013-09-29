@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import with_statement
+
 import logging
 
 from mocker import Mocker, expect, ANY, MATCH
@@ -73,14 +73,14 @@ def test_int_transformer():
     def test(func, val, trans):
         eq_(func(val), trans)
     def ftest(func, val):
-        if isinstance(val, basestring):
+        if isinstance(val, str):
             tval = NSDecimalNumber.decimalNumberWithString_(val)
         else:
             tval = NSDecimalNumber.numberWithInt_(val)
         test(func, val, tval)
         eq_(type(func(val)), type(tval))
     def rtest(func, val):
-        if isinstance(val, basestring):
+        if isinstance(val, str):
             tval = val
             val = int(float(val))
         else:

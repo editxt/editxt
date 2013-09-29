@@ -143,4 +143,4 @@ class StatusView(NSView):
         if sel > 0:
             self.selectionView.setIntValue_(sel)
         else:
-            self.selectionView.setStringValue_(u"")
+            self.selectionView.setStringValue_("")

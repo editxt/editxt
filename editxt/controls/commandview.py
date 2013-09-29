@@ -57,7 +57,7 @@ class CommandView(ak.NSView):
             self, "resize:", SHOULD_RESIZE, self.input)
         return self
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.command is not None or bool(self.output.string())
 
     @property
@@ -257,7 +257,7 @@ class ContentSizedTextView(ak.NSTextView):
 
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
             self, "textDidChange:", ak.NSTextDidChangeNotification, self)
-        self.placeholder = u""
+        self.placeholder = ""
         #self.setString_(u"")
         return self
 
@@ -334,7 +334,7 @@ class ContentSizedTextView(ak.NSTextView):
         if isinstance(value, pyobjc_unicode):
             # Convert value to unicode to make setString_ work.
             # Have no idea why it does not work without this.
-            value = unicode(value)
+            value = str(value)
         super(ContentSizedTextView, self).setString_(value)
         self.textDidChange_(None)
 

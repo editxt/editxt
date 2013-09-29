@@ -19,7 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import json
 import logging
-from itertools import ifilter
+
 from os.path import exists, join
 
 from editxt.util import WeakProperty
@@ -51,12 +51,12 @@ class History(object):
             try:
                 with open(index_file) as fh:
                     self.pages = pages = json.load(fh)
-                assert all(isinstance(p, unicode) for p in pages), \
+                assert all(isinstance(p, str) for p in pages), \
                     repr(pages)
             except Exception:
                 log.warn("cannot load %s", index_file, exc_info=True)
         if len(self.pages) < self.max_pages:
-            for n in xrange(self.max_pages):
+            for n in range(self.max_pages):
                 filename = self.FILENAME_PATTERN.format(self.name, n)
                 if filename not in self.pages:
                     self.pages.append(filename)
@@ -100,7 +100,7 @@ class History(object):
 
     def iter_matching(self, predicate):
         """Iterate items matching predicate"""
-        return ifilter(predicate, iter(self))
+        return filter(predicate, iter(self))
 
     def append(self, item):
         """Append an item to history

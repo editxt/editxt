@@ -78,8 +78,8 @@ class String(Type):
     def validate(self, value, key):
         if value is NOT_SET:
             return self.default
-        if isinstance(value, basestring):
-            if not isinstance(value, unicode):
+        if isinstance(value, str):
+            if not isinstance(value, str):
                 value = value.decode("utf-8")
             return value
         raise ValueError("{}: expected string, got {!r}".format(key, value))
@@ -96,7 +96,7 @@ class Enum(Type):
                 name, value = arg
             else:
                 name = value = arg
-            assert isinstance(name, basestring), \
+            assert isinstance(name, str), \
                 "choice name must be a string, got {!r}".foramt(name)
             choices[name] = value
             names.append(name)
@@ -127,7 +127,7 @@ class Integer(Type):
     def validate(self, value, key):
         if value is NOT_SET:
             return self.default
-        if isinstance(value, (int, long)):
+        if isinstance(value, int):
             if self.minimum is not None and value < self.minimum:
                 raise ValueError("{}: {} is less than the minimum value ({})"
                     .format(key, value, self.minimum))

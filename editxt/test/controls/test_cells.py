@@ -54,7 +54,7 @@ def test_iatc_cellSize():
     m.replay()
     cell.setImage_(image)
     assert cell.image() is image
-    print size.width
+    print(size.width)
     size2 = cell.cellSize()
     assert size2.width == size.width + 10, "%s != %s" % (size2.width, size.width + 10)
     assert size2.height == size.height

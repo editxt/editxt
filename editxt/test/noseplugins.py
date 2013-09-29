@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import absolute_import
+
 
 import time
 from nose.plugins import Plugin
@@ -94,10 +94,10 @@ class ListSlowestTests(Plugin):
         if self.unknown_start:
             print('Tests with no start time (this should not happen):')
             for test in self.unknown_start:
-                print('  %s' % test)
-        print('%s slowest tests:' % self.list_num)
+                print(('  %s' % test))
+        print(('%s slowest tests:' % self.list_num))
         key = lambda v:v[1]
         slowest = sorted(self.finished, key=key, reverse=True)[:self.list_num]
         for test, elapsed in slowest:
-            print('  %s : %0.3fms' % (test, elapsed * 1000))
+            print(('  %s : %0.3fms' % (test, elapsed * 1000)))
         print('')

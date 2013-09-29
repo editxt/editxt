@@ -46,7 +46,7 @@ log = logging.getLogger(__name__)
 
 class Error(Exception): pass
 
-EOLREF = dict((ch, m) for m, ch in const.EOLS.iteritems())
+EOLREF = dict((ch, m) for m, ch in const.EOLS.items())
 
 
 def document_property(do):
@@ -84,7 +84,7 @@ class TextDocumentView(NSObject):
     def init_with_document(self, document):
         self = super(TextDocumentView, self).init()
         self._documents = KVOList.alloc().init()
-        self.id = doc_id_gen.next()
+        self.id = next(doc_id_gen)
         self.project = None
         self.document = document
         self.text_view = None
@@ -131,7 +131,7 @@ class TextDocumentView(NSObject):
     @property
     def file_path(self):
         url = self.document.fileURL()
-        return (unicode(url.path()) if url else None)
+        return (str(url.path()) if url else None)
 
     @property
     def is_dirty(self):
@@ -286,8 +286,8 @@ class TextDocumentView(NSObject):
 
     def change_indentation(self, old_mode, old_size, new_mode, new_size, convert_text):
         if convert_text:
-            old_indent = u"\t" if old_mode == const.INDENT_MODE_TAB else (u" " * old_size)
-            new_indent = u"\t" if new_mode == const.INDENT_MODE_TAB else (u" " * new_size)
+            old_indent = "\t" if old_mode == const.INDENT_MODE_TAB else (" " * old_size)
+            new_indent = "\t" if new_mode == const.INDENT_MODE_TAB else (" " * new_size)
             change_indentation(self.text_view, old_indent, new_indent, new_size)
         if old_mode != new_mode:
             self.document.props.indent_mode = new_mode
@@ -403,7 +403,7 @@ class TextDocumentView(NSObject):
         index = range.location if range.location < text.length() else (text.length() - 1)
         line = self.scroll_view.verticalRulerView().line_number_at_char_index(index)
         i = index
-        while i > 0 and text[i - 1] != u"\n":
+        while i > 0 and text[i - 1] != "\n":
             i -= 1
         col = (index - i)
         sel = range.length
@@ -461,13 +461,13 @@ class TextDocument(NSDocument):
     def init(self):
         super(TextDocument, self).init()
         self.setUndoManager_(UndoManager.alloc().init())
-        self.id = doc_id_gen.next()
+        self.id = next(doc_id_gen)
         self.icon_cache = (None, None)
         self.document_attrs = {
             NSDocumentTypeDocumentAttribute: NSPlainTextDocumentType,
             NSCharacterEncodingDocumentAttribute: NSUTF8StringEncoding,
         }
-        self.text_storage = NSTextStorage.alloc().initWithString_attributes_(u"", {})
+        self.text_storage = NSTextStorage.alloc().initWithString_attributes_("", {})
         self.syntaxer = SyntaxCache()
         self._filestat = None
         self.props = KVOProxy(self)
@@ -515,7 +515,7 @@ class TextDocument(NSDocument):
     def reset_text_attributes(self, indent_size):
         font = NSFont.fontWithName_size_("Monaco", 10.0)
         spcw = font.screenFontWithRenderingMode_(NSFontDefaultRenderingMode) \
-            .advancementForGlyph_(ord(u" ")).width
+            .advancementForGlyph_(ord(" ")).width
         ps = NSParagraphStyle.defaultParagraphStyle().mutableCopy()
         ps.setTabStops_([])
         ps.setDefaultTabInterval_(spcw * indent_size)
@@ -622,10 +622,10 @@ class TextDocument(NSDocument):
                 if code == NSAlertFirstButtonReturn:
                     self.reload_document()
             alert = Alert.alloc().init()
-            alert.setMessageText_(u"“%s” source document changed" % self.displayName())
-            alert.setInformativeText_(u"Discard changes and reload?")
-            alert.addButtonWithTitle_(u"Reload")
-            alert.addButtonWithTitle_(u"Cancel")
+            alert.setMessageText_("“%s” source document changed" % self.displayName())
+            alert.setInformativeText_("Discard changes and reload?")
+            alert.addButtonWithTitle_("Reload")
+            alert.addButtonWithTitle_("Cancel")
             alert.beginSheetModalForWindow_withCallback_(window, callback)
         else:
             self.reload_document()
@@ -653,7 +653,7 @@ class TextDocument(NSDocument):
             self.text_storage = textstore
             undo.should_remove = True
         if not ok:
-            log.error(u"could not reload document: %s", err)
+            log.error("could not reload document: %s", err)
             return # TODO report err
         textview = None
         for view in app.iter_views_of_document(self):
@@ -692,10 +692,10 @@ class TextDocument(NSDocument):
             else:
                 filename = name
                 name += ".txt"
-            if name != filename or (name.endswith(u".txt") and u"." in name[:-4]):
+            if name != filename or (name.endswith(".txt") and "." in name[:-4]):
                 panel.setNameFieldStringValue_(filename)
                 exts = ["txt"]
-                if u"." in filename:
+                if "." in filename:
                     ext = filename.rsplit(".", 1)[1]
                     if ext not in exts:
                         exts.insert(0, ext)

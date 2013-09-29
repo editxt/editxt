@@ -30,8 +30,8 @@ def has_selection(textview, sender):
     return textview.selectedRange().length > 0
 
 
-_line_splitter = re.compile(u"([^\n\r\u2028]*(?:%s)?)" % "|".join(
-    eol for eol in sorted(const.EOLS.values(), key=len, reverse=True)))
+_line_splitter = re.compile("([^\n\r\u2028]*(?:%s)?)" % "|".join(
+    eol for eol in sorted(list(const.EOLS.values()), key=len, reverse=True)))
 
 def iterlines(text, range=(0,)):
     """iterate over lines of text
@@ -60,7 +60,7 @@ def iterlines(text, range=(0,)):
 
 
 _newlines = re.compile("|".join(
-    eol for eol in sorted(const.EOLS.values(), key=len, reverse=True)))
+    eol for eol in sorted(list(const.EOLS.values()), key=len, reverse=True)))
 
 def replace_newlines(textview, eol):
     sel = textview.selectedRange()
@@ -75,10 +75,10 @@ def replace_newlines(textview, eol):
         textview.setSelectedRange_(sel)
 
 
-_indentation_regex = re.compile(u"([ \t]*)([^\r\n\u2028]*[\r\n\u2028]*)")
+_indentation_regex = re.compile("([ \t]*)([^\r\n\u2028]*[\r\n\u2028]*)")
 
 def change_indentation(textview, old_indent, new_indent, size):
-    attr_change = (new_indent == u"\t")
+    attr_change = (new_indent == "\t")
     text_change = (old_indent != new_indent)
     if attr_change or text_change:
         text = next = textview.string()
@@ -92,7 +92,7 @@ def change_indentation(textview, old_indent, new_indent, size):
                 if ws:
                     fragments.append(ws.replace(old_indent, new_indent))
                 fragments.append(other)
-            next = u"".join(fragments)
+            next = "".join(fragments)
         range = (0, len(text))
         if textview.shouldChangeTextInRange_replacementString_(range, next):
             if attr_change:
@@ -132,13 +132,13 @@ def calculate_indent_mode_and_size(text, sample_lines=256):
             break
         if not line.strip():
             continue
-        if line.startswith(u" "):
+        if line.startswith(" "):
             space = True
-            indent = len(line) - len(line.lstrip(u" "))
+            indent = len(line) - len(line.lstrip(" "))
             if indent != last_size:
                 last_size = indent
                 sizes[indent] += 1
-        elif not space and line.startswith(u"\t"):
+        elif not space and line.startswith("\t"):
             return const.INDENT_MODE_TAB, None
     sizes.pop(1, None)
     bases = [] # list of minimum indent sizes
@@ -153,7 +153,7 @@ def calculate_indent_mode_and_size(text, sample_lines=256):
     else:
         def rank(base):
             return sum(count
-                for indent, count in sizes.iteritems() if indent % base == 0)
+                for indent, count in sizes.items() if indent % base == 0)
         max_rank = 0
         for base in bases:
             if rank(base) > max_rank:

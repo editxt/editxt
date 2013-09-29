@@ -42,8 +42,8 @@ class KeyValueTransformer(NSValueTransformer):
     def init(self, map):
         self = super(KeyValueTransformer, self).init()
         self.forward = dict(map)
-        self.reverse = dict((v, k) for k, v in self.forward.iteritems())
-        assert len(self.forward.values()) == len(self.reverse.keys())
+        self.reverse = dict((v, k) for k, v in self.forward.items())
+        assert len(list(self.forward.values())) == len(list(self.reverse.keys()))
         return self
 
     def transformedValue_(self, value):
@@ -105,14 +105,14 @@ class IntTransformer(NSValueTransformer):
     def transformedValue_(self, value):
         if value is None:
             return None
-        if isinstance(value, (basestring, NSString)):
+        if isinstance(value, (str, NSString)):
             return NSDecimalNumber.decimalNumberWithString_(value)
         return NSDecimalNumber.numberWithInt_(value)
 
     def reverseTransformedValue_(self, value):
         if value is None:
             return None
-        if isinstance(value, basestring):
+        if isinstance(value, str):
             return int(float(value))
         return value.integerValue()
 
@@ -177,7 +177,7 @@ class SyntaxDefTransformer(AbstractNameTransformer):
 
     def transformedValue_(self, value):
         if value is None:
-            return u"None"
+            return "None"
         return value.name
 
 
