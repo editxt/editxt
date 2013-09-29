@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-
+from __future__ import absolute_import
 
 import inspect
 import logging
@@ -33,6 +33,11 @@ import nose.tools
 from editxt.util import untested
 
 log = logging.getLogger(__name__)
+
+try:
+    basestring
+except NameError:
+    basestring = str
 
 
 def todo_remove(obj):
@@ -52,7 +57,7 @@ def unittest_print_first_failures_last():
 
 def eq_(a, b, text=None):
     if a != b:
-        if isinstance(a, str):
+        if isinstance(a, basestring):
             if text is None:
                 text = "not equal"
             err = "%s\n%r\n%r" % (text, a, b)
@@ -72,7 +77,7 @@ def do_method_pass_through(attr, inner_obj_class, outer_obj, token, method,
     ext_args = inject_wc(ext_args)
     int_args = inject_wc(int_args)
     m = Mocker()
-    if isinstance(method, str):
+    if isinstance(method, basestring):
         method = (method, method)
     outer_method, inner_method = method
     inner_obj = m.replace(outer_obj, attr, spec=inner_obj_class)
@@ -107,7 +112,7 @@ def replattr(*args, **kw):
     dict_replace = kw.pop('dict', False)
     if kw:
         raise ValueError('unrecognized keyword arguments: %s' % ', '.join(kw))
-    if len(args) == 3 and isinstance(args[1], str):
+    if len(args) == 3 and isinstance(args[1], basestring):
         args = [args]
     errors = []
     temps = []
@@ -160,7 +165,7 @@ def assert_raises(*args, **kw):
                 yield
                 raise AssertionError('{} not raised'.format(args[0]))
             except args[0] as err:
-                if isinstance(msg, str):
+                if isinstance(msg, basestring):
                     eq_(str(err), msg)
                 elif hasattr(msg, 'search'):
                     assert msg.search(str(err)), \

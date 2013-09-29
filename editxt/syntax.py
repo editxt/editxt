@@ -74,7 +74,8 @@ class SyntaxFactory():
 
     def load_definition(self, filename):
         ns = {"RE": RE}
-        exec(compile(open(filename).read(), filename, 'exec'), ns)
+        with open(filename) as fh:
+            exec(fh.read(), ns)
         ns.pop("RE", None)
         ns.pop("__builtins__", None)
         factory = ns.pop("SyntaxDefinition", SyntaxDefinition)

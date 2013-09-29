@@ -568,7 +568,7 @@ class String(Field):
         if not isinstance(value, str):
             raise Error("invalid value: {}={!r}".format(self.name, value))
         value = value.replace("\\", "\\\\")
-        for char, esc in list(self.ESCAPES.items()):
+        for char, esc in self.ESCAPES.items():
             if esc in value and esc not in """\\"'""":
                 value = value.replace(esc, "\\" + char)
         if " " in value or value.startswith(("'", '"')):
@@ -936,7 +936,7 @@ class Options(object):
 
     def __init__(self, **opts):
         if hasattr(self, "DEFAULTS"):
-            for name, value in list(self.DEFAULTS.items()):
+            for name, value in self.DEFAULTS.items():
                 if name not in opts:
                     setattr(self, name, value)
         for name, value in list(opts.items()):
@@ -946,8 +946,8 @@ class Options(object):
         if not issubclass(type(other), type(self)):
             return False
         obj = Options().__dict__
-        data = {k: v for k, v in list(self.__dict__.items()) if k not in obj}
-        othr = {k: v for k, v in list(other.__dict__.items()) if k not in obj}
+        data = {k: v for k, v in self.__dict__.items() if k not in obj}
+        othr = {k: v for k, v in other.__dict__.items() if k not in obj}
         return data == othr
 
     def __ne__(self, other):

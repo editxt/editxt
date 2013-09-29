@@ -237,7 +237,7 @@ def test_CommandBar_get_history():
 
             for input, direction, history in nav:
                 dirchar = "v" if direction else "A"
-                print(("{}({!r}, {!r})".format(dirchar, input, history)))
+                print("{}({!r}, {!r})".format(dirchar, input, history))
                 eq_(bar.get_history(input, forward=direction), history)
 
     A = lambda input, history: (input, False, history) # moveUp

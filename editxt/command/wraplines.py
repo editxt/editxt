@@ -137,7 +137,7 @@ def get_line(frag, lines, width, regexp, ws=" \t"):
     while True:
         while len(frag) < width:
             try:
-                line = regexp.sub("", lines.next().rstrip(), 1)
+                line = regexp.sub("", next(lines).rstrip(), 1)
             except StopIteration:
                 return frag, None
             if not line:

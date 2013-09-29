@@ -43,7 +43,7 @@ class KeyValueTransformer(NSValueTransformer):
         self = super(KeyValueTransformer, self).init()
         self.forward = dict(map)
         self.reverse = dict((v, k) for k, v in self.forward.items())
-        assert len(list(self.forward.values())) == len(list(self.reverse.keys()))
+        assert len(self.forward) == len(self.reverse), (self.forward, self.reverse)
         return self
 
     def transformedValue_(self, value):

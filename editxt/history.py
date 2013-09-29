@@ -19,7 +19,6 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import json
 import logging
-
 from os.path import exists, join
 
 from editxt.util import WeakProperty

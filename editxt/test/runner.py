@@ -189,4 +189,4 @@ class TestTimerPlugin(nose.plugins.Plugin):
         print("Ten slowest tests:")
         key = lambda it: it[1]
         for test, time in sorted(self.results, key=key, reverse=True)[:10]:
-            print((test, "...", time))
+            print(test, "...", time)

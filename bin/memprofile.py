@@ -28,7 +28,7 @@ def main():
 
     while True:
         val = mem(cmd)
-        print(('%s  %+g' % (val, val - original)))
+        print('%s  %+g' % (val, val - original))
         time.sleep(1)
 
 if __name__ == '__main__':

@@ -17,8 +17,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-
-
 import logging
 import os
 import re
@@ -57,7 +55,7 @@ def test_sort_command():
         do = CommandTester(mod.sort_lines, textview=tv)
         with m:
             do(command)
-            eq_(sort_result(tv.text), str(expected), TEXT)
+            eq_(sort_result(tv.text), expected, TEXT)
 
     yield test, "sort", "|0gadJ|4|0"
     yield test, "sort all", "|0|4dagJ|0"
@@ -135,7 +133,7 @@ def test_sortlines():
             tv.setSelectedRange_(sel)
         with m:
             sortlines(tv, opts)
-            eq_(sort_result(output[0]), str(c.result), output[0])
+            eq_(sort_result(output[0]), c.result, output[0])
     op = TestConfig()
     tlen = len(TEXT)
     c = TestConfig(text=TEXT, sel=(0, tlen), opts=op)

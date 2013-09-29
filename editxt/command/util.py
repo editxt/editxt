@@ -31,7 +31,7 @@ def has_selection(textview, sender):
 
 
 _line_splitter = re.compile("([^\n\r\u2028]*(?:%s)?)" % "|".join(
-    eol for eol in sorted(list(const.EOLS.values()), key=len, reverse=True)))
+    eol for eol in sorted(const.EOLS.values(), key=len, reverse=True)))
 
 def iterlines(text, range=(0,)):
     """iterate over lines of text
@@ -60,7 +60,7 @@ def iterlines(text, range=(0,)):
 
 
 _newlines = re.compile("|".join(
-    eol for eol in sorted(list(const.EOLS.values()), key=len, reverse=True)))
+    eol for eol in sorted(const.EOLS.values(), key=len, reverse=True)))
 
 def replace_newlines(textview, eol):
     sel = textview.selectedRange()

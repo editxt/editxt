@@ -17,7 +17,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-
 import logging
 import os
 
@@ -37,13 +36,13 @@ log = logging.getLogger(__name__)
 
 def test_create_kvolist():
     lst = KVOList.alloc().init()
-    eq_(len(list(lst.items())), 0)
+    eq_(len(lst.items()), 0)
 
 def test_kvolist_items():
     lst = KVOList.alloc().init()
     newitems = NSMutableArray.alloc().init()
     lst.setItems_(newitems)
-    eq_(list(lst.items()), newitems)
+    eq_(lst.items(), newitems)
 
 def test_kvolist_items():
     lst = KVOList.alloc().init()
@@ -95,7 +94,7 @@ def do_kvolist_countOfItems(lst, num):
 
 def do_kvolist_insertObject_inItemsAtIndex_(lst, obj, index):
     lst.insertObject_inItemsAtIndex_(obj, index)
-    assert list(lst.items())[index] is obj
+    assert lst.items()[index] is obj
 
 def do_kvolist_objectInItemsAtIndex_(lst, obj, index):
     assert lst.objectInItemsAtIndex_(index) is obj
@@ -293,8 +292,8 @@ def test_fetch_icon_data():
     ):
         yield do_fetch_icon, args
 
-def do_fetch_icon(xxx_todo_changeme):
-    (path, exists) = xxx_todo_changeme
+def do_fetch_icon(path_exists):
+    (path, exists) = path_exists
     if path is not None:
         path = os.path.abspath(path)
         if exists:

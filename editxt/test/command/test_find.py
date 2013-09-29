@@ -17,8 +17,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-
-
 import logging
 import os
 import re
@@ -49,14 +47,14 @@ log = logging.getLogger(__name__)
 # """)
 
 def make_options(config):
-    return FindOptions(**{opt: config[key] for key, opt in list({
+    return FindOptions(**{opt: config[key] for key, opt in {
         "find": "find_text",
         "replace": "replace_text",
         "action": "action",
         "search": "search_type",
         "ignore_case": "ignore_case",
         "wrap": "wrap_around",
-    }.items()) if key in config})
+    }.items() if key in config})
 
 def test_find_command():
     def test(c):
@@ -726,7 +724,7 @@ def test_FindController_save_options():
                 pboard.declareTypes_owner_([NSStringPboardType], None)
                 pboard.setString_forType_(c.opts["find_text"], NSStringPboardType)
             with m:
-                for k, v in list(c.opts.items()):
+                for k, v in c.opts.items():
                     setattr(fc.options, k, v)
                 print(fc.options._target)
                 eq_(fc.save_options(), c.res, fc.options._target)

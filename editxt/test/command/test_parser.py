@@ -426,7 +426,7 @@ def test_String():
     yield test, "\u0168", "\u0168"
     yield test, '\u0168" \u0168', """'\u0168" \u0168'"""
     yield test, "\u0168' \u0168", '''"\u0168' \u0168"'''
-    for char, esc in list(String.ESCAPES.items()):
+    for char, esc in String.ESCAPES.items():
         if char not in "\"\\'":
             yield test, esc, "\\" + char
     yield test, "\\x", "\\\\x"

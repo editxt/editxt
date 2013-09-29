@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+from collections import Callable
 from functools import wraps
 
 from AppKit import *
@@ -28,7 +29,6 @@ from editxt.command.parser import CommandParser, Options, VarArgs
 from editxt.command.util import make_command_predicate
 from editxt.controls.alert import Caller
 from editxt.util import KVOProxy, WeakProperty
-import collections
 
 log = logging.getLogger(__name__)
 
@@ -155,8 +155,8 @@ class CommandController(object):
             return delegate
         members.update({name: make_delegate(value)
             for base in reversed(cls.__mro__)
-            for name, value in list(vars(base).items())
-            if isinstance(value, collections.Callable) and getattr(value, "objc_delegate", False)})
+            for name, value in vars(base).items()
+            if isinstance(value, Callable) and getattr(value, "objc_delegate", False)})
         Class = type(cls.__name__ + "GUI", (_BaseCommandController,), members)
         cls._controller_class = Class
         return Class

@@ -24,18 +24,18 @@ def main(argv=None):
                     if os.path.isfile(filename):
                         files.append(filename)
                     elif not os.path.exists(filename):
-                        print("file not found:", filename)
+                        print("file not found: " + filename)
                     else:
-                        print("refusing to edit:", filename)
+                        print("refusing to edit: " + filename)
                 except Exception:
-                    print("cannot edit:", filename)
+                    print("cannot edit: " + filename)
                     print(traceback.format_exc())
         if files:
             subprocess.call(["open", "-a", EDITXT] + files)
         else:
             print("EditXT edits files")
     except Exception:
-        print("EditXT action failed!\n", traceback.format_exc())
+        print("EditXT action failed!\n" + traceback.format_exc())
 
 if __name__ == "__main__":
     sys.exit(main())
