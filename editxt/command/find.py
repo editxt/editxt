@@ -114,8 +114,7 @@ class FindOptions(Options):
         return self.pattern[0]
     @find_text.setter
     def find_text(self, value):
-        value = RegexPattern(value)
-        value.flags = self.pattern[0].flags
+        value = RegexPattern(value, self.pattern[0].flags)
         self.pattern = (value, self.pattern[1])
 
     @property

@@ -600,17 +600,17 @@ class RegexPattern(str):
     __slots__ = ["_flags"]
     DEFAULT_FLAGS = re.UNICODE | re.MULTILINE
 
-    def __new__(cls, value="", flags=0):
+    def __new__(cls, value="", flags=0, default_flags=DEFAULT_FLAGS):
         obj = super(RegexPattern, cls).__new__(cls, value)
-        obj.flags = flags
+        obj._flags = flags | default_flags
         return obj
 
     @property
     def flags(self):
         return self._flags
-    @flags.setter
-    def flags(self, value):
-        self._flags = value | self.DEFAULT_FLAGS
+
+    def __hash__(self):
+        return super(RegexPattern, self).__hash__() ^ hash(self._flags)
 
     def __repr__(self):
         return super(RegexPattern, self).__repr__() + Regex.repr_flags(self)
