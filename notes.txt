@@ -32,7 +32,7 @@ Python environment setup. RECOMMENDED: use a virtualenv
     curl http://pyyaml.org/download/libyaml/yaml-0.1.4.tar.gz > yaml-0.1.4.tar.gz
     tar xf yaml-0.1.4.tar.gz
     cd yaml-0.1.4
-    CFLAGS=$(python-config --cflags) ./configure --prefix=$VIRTUAL_ENV --disable-dependency-tracking
+    CFLAGS=$(python3-config --cflags) ./configure --prefix=$VIRTUAL_ENV --disable-dependency-tracking
     make
     make install
     cd ..
@@ -40,7 +40,7 @@ Python environment setup. RECOMMENDED: use a virtualenv
     tar xf PyYAML-3.10.tar.gz
     cd PyYAML-3.10
     CFLAGS="-L$VIRTUAL_ENV/lib -I$VIRTUAL_ENV/include" python setup.py --with-libyaml install
-    cd .. && rm -rf temp
+    cd ../.. && rm -rf temp
 
     pip install --requirement=requires.txt
 

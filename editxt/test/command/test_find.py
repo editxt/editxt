@@ -189,7 +189,7 @@ def test_Finder_python_replace():
         expect=mod.InvalidPythonExpression(
             "def repy(match, range_):\n"
             "    return match(",
-            "invalid syntax (<string>, line 2)"))
+            "unexpected EOF while parsing (<string>, line 2)"))
 
 def test_FindController_shared_controller():
     fc = FindController.shared_controller()
