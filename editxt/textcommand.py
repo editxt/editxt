@@ -23,8 +23,8 @@ import traceback
 from collections import defaultdict
 from itertools import count
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 import editxt.constants as const
 from editxt.command.base import CommandError
@@ -50,7 +50,7 @@ class CommandBar(object):
         # abstract to a PyObjC-specific subclass when implementing other frontend
         view = self.editor.current_view
         if view is None:
-            NSBeep()
+            ak.NSBeep()
             return
         view.scroll_view.commandView.activate(self)
 
@@ -61,7 +61,7 @@ class CommandBar(object):
         cmdstr, space, argstr = text.lstrip(" ").partition(" ")
         doc_view = self.editor.current_view
         if doc_view is None:
-            NSBeep()
+            ak.NSBeep()
             return
         command = self.text_commander.lookup(cmdstr)
         if command is not None:
@@ -161,7 +161,7 @@ class CommandBar(object):
         view = self.editor.current_view
         if view is None:
             log.info(text, exc_info=exc_info)
-            NSBeep()
+            ak.NSBeep()
         else:
             view.scroll_view.commandView.message(
                 msg, textview=view.text_view, **kw)
@@ -227,7 +227,7 @@ class TextCommandController(object):
         if command.title is not None:
             command.__tag = tag = next(self.tagger)
             hotkey, keymask = self.validate_hotkey(command.hotkey)
-            item = NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+            item = ak.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
                 command.title, "performTextCommand:", hotkey)
             item.setKeyEquivalentModifierMask_(keymask)
             item.setTag_(tag)

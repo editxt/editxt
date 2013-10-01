@@ -21,8 +21,8 @@ import logging
 import functools
 from contextlib import contextmanager
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import (TestConfig, untested, check_app_state, replattr,
@@ -200,8 +200,8 @@ def test_SheetController_begin_sheet():
         return callback.__name__ == "sheet_did_end" and callback.__self__ is slc
     clr_class = m.replace(mod, "Caller")
     clr = clr_class.alloc().init(MATCH(cb)) >> m.mock(Caller)
-    win = tv.window() >> m.mock(NSWindow)
-    pnl = m.method(slc.gui.window)() >> m.mock(NSPanel)
+    win = tv.window() >> m.mock(ak.NSWindow)
+    pnl = m.method(slc.gui.window)() >> m.mock(ak.NSPanel)
     nsapp = m.replace(mod, 'NSApp', spec=False)
     nsapp.beginSheet_modalForWindow_modalDelegate_didEndSelector_contextInfo_(
         pnl, win, clr, "alertDidEnd:returnCode:contextInfo:", 0)

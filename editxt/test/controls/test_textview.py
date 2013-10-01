@@ -20,8 +20,8 @@
 import logging
 import os
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY
 from nose.tools import *
 from editxt.test.util import TestConfig, untested
@@ -75,7 +75,7 @@ def test_TextView_validateUserInterfaceItem_():
         m = Mocker()
         fc = m.replace(mod, "FindController")
         tv = TextView.alloc().init()
-        item = m.mock(NSMenuItem)
+        item = m.mock(ak.NSMenuItem)
         expectation = (item.action() << c.action)
         if c.action == "performFindPanelAction:":
             tag = item.tag() >> 42
@@ -96,19 +96,19 @@ def test_TextView_validateUserInterfaceItem_():
 def test_TextView_setFrameSize():
     def test(c):
         m = Mocker()
-        tv = TextView.alloc().initWithFrame_(NSMakeRect(0, 0, 100, 100)) # x, y, w, h
-        tc = m.method(tv.textContainer)() >> (m.mock(NSTextContainer) if c.setup else None)
-        lm = m.method(tv.layoutManager)() >> (m.mock(NSLayoutManager) if c.setup else None)
-        sv = m.method(tv.enclosingScrollView)() >> (m.mock(NSScrollView) if c.setup else None)
+        tv = TextView.alloc().initWithFrame_(fn.NSMakeRect(0, 0, 100, 100)) # x, y, w, h
+        tc = m.method(tv.textContainer)() >> (m.mock(ak.NSTextContainer) if c.setup else None)
+        lm = m.method(tv.layoutManager)() >> (m.mock(ak.NSLayoutManager) if c.setup else None)
+        sv = m.method(tv.enclosingScrollView)() >> (m.mock(ak.NSScrollView) if c.setup else None)
         height = 100
         if c.setup:
-            lm.usedRectForTextContainer_(tc) >> NSMakeRect(0, 0, 100, c.content_height)
-            sv.contentSize() >> NSMakeSize(100, 100) # w, h
+            lm.usedRectForTextContainer_(tc) >> fn.NSMakeRect(0, 0, 100, c.content_height)
+            sv.contentSize() >> fn.NSMakeSize(100, 100) # w, h
             if c.content_height + 75 > 100:
                 height = c.content_height + 75
         with m:
-            tv.setFrameSize_(NSMakeSize(100, height))
-            eq_(tv.frameSize(), NSMakeSize(100, c.final_height))
+            tv.setFrameSize_(fn.NSMakeSize(100, height))
+            eq_(tv.frameSize(), fn.NSMakeSize(100, c.final_height))
     c = TestConfig(setup=True, content_height=100, final_height=175)
     yield test, c
     yield test, c(content_height=10, final_height=100)

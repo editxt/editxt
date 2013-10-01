@@ -20,8 +20,8 @@
 import logging
 import os
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY
 from nose.tools import *
 from editxt.test.util import TestConfig, untested
@@ -41,7 +41,7 @@ def test_is_view_visibile():
     def test(c):
         m = Mocker()
         sv = mod.ThinSplitView.alloc().init()
-        view = m.method(sv.subviews)()[c.index] >> m.mock(NSView)
+        view = m.method(sv.subviews)()[c.index] >> m.mock(ak.NSView)
         if m.method(sv.isVertical)() >> c.vertical:
             view.bounds().size.width >> c.thick
         else:
@@ -63,8 +63,8 @@ def test_show_view():
     def test(c):
         m = Mocker()
         sv = mod.ThinSplitView.alloc().init()
-        view = m.method(sv.subviews)()[c.index] >> m.mock(NSView)
-        rect = view.frame() >> m.mock(NSRect)
+        view = m.method(sv.subviews)()[c.index] >> m.mock(ak.NSView)
+        rect = view.frame() >> m.mock(fn.NSRect)
         if m.method(sv.isVertical)() >> c.vertical:
             dim, org = "width", "x"
         else:
@@ -91,8 +91,8 @@ def test_hide_view():
     def test(c):
         m = Mocker()
         sv = mod.ThinSplitView.alloc().init()
-        view = m.method(sv.subviews)()[c.index] >> m.mock(NSView)
-        rect = view.frame() >> m.mock(NSRect)
+        view = m.method(sv.subviews)()[c.index] >> m.mock(ak.NSView)
+        rect = view.frame() >> m.mock(fn.NSRect)
         if m.method(sv.isVertical)() >> c.vertical:
             dim, org = "width", "x"
         else:
@@ -117,9 +117,9 @@ def test_animate_view():
         m = Mocker()
         sv = mod.ThinSplitView.alloc().init()
         nsanim = m.replace(mod, 'NSViewAnimation')
-        view = m.mock(NSView)
-        rect = NSMakeRect(0, 0, 1, 1)
-        anim = nsanim.alloc() >> m.mock(NSViewAnimation)
+        view = m.mock(ak.NSView)
+        rect = fn.NSMakeRect(0, 0, 1, 1)
+        anim = nsanim.alloc() >> m.mock(ak.NSViewAnimation)
         anim.initWithViewAnimations_(ANY) >> anim
         anim.setDuration_(0.5)
         if c.delegate:

@@ -19,15 +19,16 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 
-from AppKit import *
-from Foundation import NSRange
+import AppKit as ak
+import Foundation as fn
+import objc
 
 from editxt.util import load_image
 
 log = logging.getLogger(__name__)
 
 
-class ThinSplitView(NSSplitView):
+class ThinSplitView(ak.NSSplitView):
     """Thin resizable split view
 
     Note: this view does not support more than two subviews
@@ -56,8 +57,8 @@ class ThinSplitView(NSSplitView):
         return 1.0
 
     def drawDividerInRect_(self, rect):
-        NSColor.colorWithDeviceWhite_alpha_(0.75, 1).setFill()
-        NSBezierPath.fillRect_(rect)
+        ak.NSColor.colorWithDeviceWhite_alpha_(0.75, 1).setFill()
+        ak.NSBezierPath.fillRect_(rect)
 
     # delegate implementation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -85,7 +86,7 @@ class ThinSplitView(NSSplitView):
             rect = self.frame()
             location = self.resizeSlider.frame()
             location.origin.y = rect.size.height - location.size.height
-            self.addCursorRect_cursor_(location, NSCursor.resizeLeftRightCursor())
+            self.addCursorRect_cursor_(location, ak.NSCursor.resizeLeftRightCursor())
 
     def mouseDown_(self, event):
         clickloc = event.locationInWindow()
@@ -105,8 +106,8 @@ class ThinSplitView(NSSplitView):
             super(ThinSplitView, self).mouseDragged_(event)
             return
 
-        NSNotificationCenter.defaultCenter().postNotificationName_object_(
-            NSSplitViewWillResizeSubviewsNotification, self)
+        fn.NSNotificationCenter.defaultCenter().postNotificationName_object_(
+            ak.NSSplitViewWillResizeSubviewsNotification, self)
         clickloc = event.locationInWindow()
         frame = self.fixedSizeView.frame()
         frame.size.width = clickloc.x + self.resizeOffset
@@ -126,8 +127,8 @@ class ThinSplitView(NSSplitView):
         self.fixedSizeView.setFrame_(frame)
         self.adjustSubviews()
 
-        NSNotificationCenter.defaultCenter().postNotificationName_object_(
-            NSSplitViewDidResizeSubviewsNotification, self)
+        fn.NSNotificationCenter.defaultCenter().postNotificationName_object_(
+            ak.NSSplitViewDidResizeSubviewsNotification, self)
 
     # slider position get/set ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -184,20 +185,20 @@ class ThinSplitView(NSSplitView):
         self._animate_view(view, rect)
 
     def _animate_view(self, view, rect, delegate=None):
-        resize = NSDictionary.dictionaryWithObjectsAndKeys_(
-            view, NSViewAnimationTargetKey,
-            NSValue.valueWithRect_(rect), NSViewAnimationEndFrameKey,
+        resize = fn.NSDictionary.dictionaryWithObjectsAndKeys_(
+            view, ak.NSViewAnimationTargetKey,
+            fn.NSValue.valueWithRect_(rect), ak.NSViewAnimationEndFrameKey,
             None,
         )
-        anims = NSArray.arrayWithObject_(resize)
-        animation = NSViewAnimation.alloc().initWithViewAnimations_(anims)
+        anims = fn.NSArray.arrayWithObject_(resize)
+        animation = ak.NSViewAnimation.alloc().initWithViewAnimations_(anims)
         animation.setDuration_(0.5)
         if delegate is not None:
             animation.setDelegate_(delegate)
         animation.startAnimation()
 
 
-class RedrawOnAnimationEndedDelegate(NSObject):
+class RedrawOnAnimationEndedDelegate(fn.NSObject):
 
     @objc.namedSelector(b"init:")
     def init(self, view):
@@ -219,7 +220,7 @@ class RedrawOnAnimationEndedDelegate(NSObject):
 
 from editxt.util import load_image
 
-class SliderImageView(NSImageView):
+class SliderImageView(ak.NSImageView):
 
     splitView = objc.IBOutlet()
 
@@ -233,7 +234,7 @@ class SliderImageView(NSImageView):
         self.splitView.mouseDragged_(event)
 
 
-class MailStyleFunctioBarBackgroundView(NSImageView):
+class MailStyleFunctioBarBackgroundView(ak.NSImageView):
 
     def initWithFrame_(self, frame):
         super(MailStyleFunctioBarBackgroundView, self).initWithFrame_(frame)
@@ -242,7 +243,7 @@ class MailStyleFunctioBarBackgroundView(NSImageView):
 
     def drawRect_(self, rect):
         img = self.bgimage
-        rct = NSMakeRect(0, 0, img.size().width, img.size().height)
+        rct = fn.NSMakeRect(0, 0, img.size().width, img.size().height)
         img.drawInRect_fromRect_operation_fraction_(
-            self.bounds(), rct, NSCompositeSourceAtop, 1.0)
+            self.bounds(), rct, ak.NSCompositeSourceAtop, 1.0)
         super(MailStyleFunctioBarBackgroundView, self).drawRect_(rect)

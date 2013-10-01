@@ -24,8 +24,8 @@ import objc
 from mocker import Mocker, expect, ANY, MATCH
 from nose.plugins.skip import SkipTest
 from nose.tools import eq_, assert_raises
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 import editxt.constants as const
 import editxt.util as mod
@@ -40,7 +40,7 @@ def test_create_kvolist():
 
 def test_kvolist_items():
     lst = KVOList.alloc().init()
-    newitems = NSMutableArray.alloc().init()
+    newitems = fn.NSMutableArray.alloc().init()
     lst.setItems_(newitems)
     eq_(lst.items(), newitems)
 
@@ -305,7 +305,7 @@ def do_fetch_icon(path_exists):
 
 def test_load_image():
     img = load_image("close-hover.png")
-    assert isinstance(img, NSImage)
+    assert isinstance(img, ak.NSImage)
 
 # def loadImage(name):
 #     # TODO test
@@ -364,7 +364,7 @@ def test_register_undo():
     m = Mocker()
     inv_class = m.replace(mod, 'Invoker')
     cb = m.mock()
-    und = m.mock(NSUndoManager)
+    und = m.mock(fn.NSUndoManager)
     inv = inv_class.alloc().init(cb) >> m.mock(mod.Invoker)
     und.registerUndoWithTarget_selector_object_(inv_class, "invoke:", inv)
     with m:
@@ -430,7 +430,7 @@ def test_KVOLink():
     yield test, c(lks=[("path.to.key", "other_key")])
     yield test, c(lks=[("path.to.key1", "other_key"), ("path.to.key2", "other_key")])
 
-class KVOLinkItem(NSObject):
+class KVOLinkItem(fn.NSObject):
     @objc.namedSelector(b"init:subject:")
     def init(self, key, subj):
         super(KVOLinkItem, self).init()
@@ -443,7 +443,7 @@ class KVOLinkItem(NSObject):
     def _get_path(self):
         return self.subj.key
 
-class KVOLinkTester(NSObject):
+class KVOLinkTester(fn.NSObject):
     was_notified = False
     def observeValueForKeyPath_ofObject_change_context_(self, path, obj, change, context):
         self.was_notified = True

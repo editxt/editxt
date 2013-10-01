@@ -21,8 +21,8 @@ import logging
 from collections import Callable
 from functools import wraps
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 import editxt
 from editxt.command.parser import CommandParser, Options, VarArgs
@@ -190,7 +190,7 @@ class SheetController(CommandController):
 
     def begin_sheet(self, sender):
         self.caller = Caller.alloc().init(self.sheet_did_end)
-        NSApp.beginSheet_modalForWindow_modalDelegate_didEndSelector_contextInfo_(
+        ak.NSApp.beginSheet_modalForWindow_modalDelegate_didEndSelector_contextInfo_(
             self.gui.window(), self.textview.window(), self.caller,
             "alertDidEnd:returnCode:contextInfo:", 0)
 
@@ -199,7 +199,7 @@ class SheetController(CommandController):
 
     @objc_delegate
     def cancel_(self, sender):
-        NSApp.endSheet_returnCode_(self.gui.window(), 0)
+        ak.NSApp.endSheet_returnCode_(self.gui.window(), 0)
 
 
 class PanelController(CommandController):
@@ -214,7 +214,7 @@ class PanelController(CommandController):
         return ctl
 
 
-class _BaseCommandController(NSWindowController):
+class _BaseCommandController(ak.NSWindowController):
 
     controller = WeakProperty()
 

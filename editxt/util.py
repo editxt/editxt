@@ -25,8 +25,8 @@ import types
 
 import objc
 import yaml
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 import editxt.constants as const
 
@@ -87,11 +87,11 @@ def load_yaml(*args, **kw):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class KVOList(NSObject):
+class KVOList(fn.NSObject):
 
     def init(self):
         super(KVOList, self).init()
-        self._items = NSMutableArray.alloc().init()
+        self._items = fn.NSMutableArray.alloc().init()
         return self
 
     def items(self):
@@ -272,11 +272,11 @@ class ContextMap(object):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def fetch_icon(path, size=NSMakeSize(16, 16), default_type="txt"):
+def fetch_icon(path, size=fn.NSMakeSize(16, 16), default_type="txt"):
     if path is None or not os.path.exists(path):
-        img = NSWorkspace.sharedWorkspace().iconForFileType_(default_type)
+        img = ak.NSWorkspace.sharedWorkspace().iconForFileType_(default_type)
     else:
-        img = NSWorkspace.sharedWorkspace().iconForFile_(path)
+        img = ak.NSWorkspace.sharedWorkspace().iconForFile_(path)
     img.setSize_(size)
     return img
 
@@ -286,10 +286,10 @@ def load_image(name):
     try:
         return images[name]
     except KeyError:
-        path = NSBundle.mainBundle().pathForImageResource_(name)
+        path = fn.NSBundle.mainBundle().pathForImageResource_(name)
         log.debug("loading image: %s", path)
-        url = NSURL.fileURLWithPath_(path)
-        image = NSImage.alloc().initWithContentsOfURL_(url)
+        url = fn.NSURL.fileURLWithPath_(path)
+        image = ak.NSImage.alloc().initWithContentsOfURL_(url)
         images[name] = image
         return image
 
@@ -322,7 +322,7 @@ def perform_selector(delegate, selector, *args):
     getattr(delegate, selector)(*args)
 
 
-class Invoker(NSObject):
+class Invoker(fn.NSObject):
     """NSInvocation factory for python methods"""
 
     @objc.namedSelector(b"init:")
@@ -347,7 +347,7 @@ def representedObject(node):
         return node.observedObject()
 
 def get_color(value, cache={}):
-    if isinstance(value, NSColor):
+    if isinstance(value, ak.NSColor):
         return value
     try:
         return cache[value]
@@ -358,11 +358,11 @@ def get_color(value, cache={}):
         r = int(value[:2], 16) / 255.0
         g = int(value[2:4], 16) / 255.0
         b = int(value[4:], 16) / 255.0
-        color = cache[value] = NSColor.colorWithCalibratedRed_green_blue_alpha_(r, g, b, 1.0)
+        color = cache[value] = ak.NSColor.colorWithCalibratedRed_green_blue_alpha_(r, g, b, 1.0)
         return color
 
 def hex_value(color):
-    """Get hex value of NSColor object"""
+    """Get hex value of ak.NSColor object"""
     return "{:02X}{:02X}{:02X}".format(
         int(color.redComponent() * 0xFF),
         int(color.greenComponent() * 0xFF),
@@ -381,7 +381,7 @@ def KVOProxy(target, _registry={}):
     except KeyError:
         dependent_key_paths = getattr(target, "dependent_key_paths", {})
         def keyPathsForValuesAffectingValueForKey_(cls, key):
-            return NSSet.setWithArray_(dependent_key_paths.get(key, []))
+            return fn.NSSet.setWithArray_(dependent_key_paths.get(key, []))
         name = "%s_KVOProxy" % type(target).__name__
         members = {
             "keyPathsForValuesAffectingValueForKey_":
@@ -392,7 +392,7 @@ def KVOProxy(target, _registry={}):
     return proxy_class.alloc().init_(target)
 
 
-class _KVOProxy(NSObject):
+class _KVOProxy(fn.NSObject):
 
     NA = object()
     keygen = count()
@@ -465,7 +465,7 @@ class KVOLink(object):
         self.close()
 
 
-class _KVOLink(NSObject):
+class _KVOLink(fn.NSObject):
 
     @objc.namedSelector(b"init:")
     def init(self, subjects):
@@ -489,7 +489,7 @@ class KVOManager(object):
     class MyKVOClass(kvc):
         kvo = KVOManager()
         def __init__(self):
-            super(MyKVOClass, self).__init__(NSObject.alloc().init())
+            super(MyKVOClass, self).__init__(fn.NSObject.alloc().init())
             self.kvo.activate_observers(self)
         @kvo.observe("someKeyPath")
         def someKeyPathCallback(self, oldvalue, newvalue):
@@ -517,7 +517,7 @@ class KVOManager(object):
         for observer in self.observers:
             observer.deactivate(instance)
 
-class CallbackObserver(NSObject):
+class CallbackObserver(fn.NSObject):
     # TODO test
     def initWithCallback_forKeypath_options_(self, callback, keypath, options):
         self = super(CallbackObserver, self).init()
@@ -531,9 +531,9 @@ class CallbackObserver(NSObject):
                 raise Error("cannot determine number of arguments for function: %r\n"
                     "WORKAROUND: use options arg of kvo.observes decorator" % (callback,))
             if numargs > 1:
-                options |= NSKeyValueObservingOptionNew
+                options |= fn.NSKeyValueObservingOptionNew
             if numargs > 2:
-                options |= NSKeyValueObservingOptionOld
+                options |= fn.NSKeyValueObservingOptionOld
         self.options = options
         callback.__observer = self
         return self
@@ -547,10 +547,10 @@ class CallbackObserver(NSObject):
         raise NotSupported("directly calling observer methods is not supported (yet)")
     def observeValueForKeyPath_ofObject_change_context_(self, path, object, change, context):
         args = [object]
-        if self.options & NSKeyValueObservingOptionNew:
-            args.append(change[NSKeyValueChangeNewKey])
-        if self.options & NSKeyValueObservingOptionOld:
-            args.append(change[NSKeyValueChangeOldKey])
+        if self.options & fn.NSKeyValueObservingOptionNew:
+            args.append(change[fn.NSKeyValueChangeNewKey])
+        if self.options & fn.NSKeyValueObservingOptionOld:
+            args.append(change[fn.NSKeyValueChangeOldKey])
         self.callback(*args)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

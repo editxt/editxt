@@ -22,8 +22,8 @@ import os
 from contextlib import closing
 from tempfile import gettempdir
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state
@@ -194,8 +194,8 @@ def test_NoHighlight_scan():
         nh = NoHighlight("Test", "")
         setcolor = m.mock()
         def check(x, arg, y, z):
-            assert isinstance(arg, NSRange), "wrong value: %r" % (arg,)
-            eq_(arg, NSRange(len(c.value) - 1, 0))
+            assert isinstance(arg, fn.NSRange), "wrong value: %r" % (arg,)
+            eq_(arg, fn.NSRange(len(c.value) - 1, 0))
         if c.offset == 0:
             expect(setcolor(None, ANY, 0, None)).call(check)
         with m:

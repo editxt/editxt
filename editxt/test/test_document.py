@@ -22,8 +22,8 @@ import os
 from contextlib import closing
 from tempfile import gettempdir
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state, replattr
@@ -142,11 +142,11 @@ def test_create_with_document():
 def test_TextDocumentView_window():
     def test(has_scroll_view):
         m = Mocker()
-        win = m.mock(NSWindow)
+        win = m.mock(ak.NSWindow)
         doc = m.mock(TextDocument)
         dv = TextDocumentView.alloc().init_with_document(doc)
         if has_scroll_view:
-            dv.scroll_view = sv = m.mock(NSScrollView)
+            dv.scroll_view = sv = m.mock(ak.NSScrollView)
             sv.window() >> win
         else:
             win = None
@@ -163,14 +163,14 @@ def test_document_set_main_view_of_window():
     def test(c):
         m = Mocker()
 
-        win = m.mock(NSWindow)
+        win = m.mock(ak.NSWindow)
         doc = m.mock(TextDocument)
-        ts = m.mock(NSTextStorage)
+        ts = m.mock(ak.NSTextStorage)
         dv = TextDocumentView.alloc().init_with_document(doc)
         m.property(dv, "soft_wrap")
         ewc = m.mock(EditorWindowController)
         dv.props = props = m.mock(dict)
-        view = m.mock(NSView)
+        view = m.mock(ak.NSView)
         tv = m.mock(mod.TextView)
         sv = m.mock(mod.StatusbarScrollView)
         lm_class = m.replace(mod, 'NSLayoutManager')
@@ -179,13 +179,13 @@ def test_document_set_main_view_of_window():
         tv_class = m.replace(mod, 'TextView')
         frame = (view.bounds() >> m.mock())
         if c.sv_is_none:
-            lm = m.mock(NSLayoutManager)
+            lm = m.mock(ak.NSLayoutManager)
             lm_class.alloc().init() >> lm
             doc.text_storage >> ts
             ts.addLayoutManager_(lm)
-            tc = m.mock(NSTextContainer)
+            tc = m.mock(ak.NSTextContainer)
             tc_class.alloc() >> tc
-            size = m.mock(NSSize)
+            size = m.mock(fn.NSSize)
             frame.size >> size
             tc.initWithContainerSize_(size) >> tc
             tc.setLineFragmentPadding_(10) # left margin
@@ -196,7 +196,7 @@ def test_document_set_main_view_of_window():
             sv_class.alloc().initWithFrame_(frame) >> sv
             sv.setHasHorizontalScroller_(True)
             sv.setHasVerticalScroller_(True)
-            sv.setAutoresizingMask_(NSViewWidthSizable | NSViewHeightSizable)
+            sv.setAutoresizingMask_(ak.NSViewWidthSizable | ak.NSViewHeightSizable)
 
             tv_class.alloc() >> tv
             tv.initWithFrame_textContainer_(frame, tc) >> tv
@@ -204,8 +204,8 @@ def test_document_set_main_view_of_window():
             tv.setAllowsUndo_(True)
             tv.setVerticallyResizable_(True)
             #tv.setHorizontallyResizable_(True)
-            tv.setMaxSize_(NSMakeSize(LARGE_NUMBER_FOR_TEXT, LARGE_NUMBER_FOR_TEXT))
-            tv.setTextContainerInset_(NSMakeSize(0, 0)) # top (and bottom?) margin
+            tv.setMaxSize_(fn.NSMakeSize(LARGE_NUMBER_FOR_TEXT, LARGE_NUMBER_FOR_TEXT))
+            tv.setTextContainerInset_(fn.NSMakeSize(0, 0)) # top (and bottom?) margin
             tv.setDrawsBackground_(False)
             tv.setSmartInsertDeleteEnabled_(False)
             tv.setRichText_(False)
@@ -217,10 +217,10 @@ def test_document_set_main_view_of_window():
             doc.default_text_attributes() >> attrs
             tv.setTypingAttributes_(attrs)
             font = m.mock()
-            attrs[NSFontAttributeName] >> font
+            attrs[ak.NSFontAttributeName] >> font
             tv.setFont_(font)
             psan = m.mock()
-            attrs[NSParagraphStyleAttributeName] >> psan
+            attrs[ak.NSParagraphStyleAttributeName] >> psan
             tv.setDefaultParagraphStyle_(psan)
 
             sv.setDocumentView_(tv)
@@ -259,8 +259,8 @@ def test_get_soft_wrap():
         if c.tv_is_none:
             dv.text_view = None
         else:
-            tv = dv.text_view = m.mock(NSTextView)
-            tc = None if c.tc_is_none else m.mock(NSTextContainer)
+            tv = dv.text_view = m.mock(ak.NSTextView)
+            tc = None if c.tc_is_none else m.mock(ak.NSTextContainer)
             (tv.textContainer() << tc).count(1, 2)
             if tc is not None:
                 tc.widthTracksTextView() >> \
@@ -280,21 +280,21 @@ def test_set_soft_wrap():
         doc = m.mock(TextDocument)
         wrap = (c.mode != const.WRAP_NONE)
         dv = TextDocumentView.alloc().init_with_document(doc)
-        sv = dv.scroll_view = m.mock(NSScrollView)
-        tv = dv.text_view = m.mock(NSTextView)
-        tc = tv.textContainer() >> m.mock(NSTextContainer)
+        sv = dv.scroll_view = m.mock(ak.NSScrollView)
+        tv = dv.text_view = m.mock(ak.NSTextView)
+        tc = tv.textContainer() >> m.mock(ak.NSTextContainer)
         if wrap:
-            size = sv.contentSize() >> m.mock(NSRect)
+            size = sv.contentSize() >> m.mock(fn.NSRect)
             width = size.width >> 100.0
             tv.setFrameSize_(size)
             tv.sizeToFit()
         else:
             width = const.LARGE_NUMBER_FOR_TEXT
-        tc.setContainerSize_(NSMakeSize(width, const.LARGE_NUMBER_FOR_TEXT))
+        tc.setContainerSize_(fn.NSMakeSize(width, const.LARGE_NUMBER_FOR_TEXT))
         tc.setWidthTracksTextView_(wrap)
         tv.setHorizontallyResizable_(not wrap)
-        tv.setAutoresizingMask_(NSViewWidthSizable
-            if wrap else NSViewWidthSizable | NSViewHeightSizable)
+        tv.setAutoresizingMask_(ak.NSViewWidthSizable
+            if wrap else ak.NSViewWidthSizable | ak.NSViewHeightSizable)
         with m:
             dv.soft_wrap = c.mode
     c = TestConfig(mode=const.WRAP_NONE)
@@ -342,7 +342,7 @@ def test_TextDocumentView_document_properties():
 
     def do(x):
         c, m = x.c, x.m
-        undoman = x.doc.undoManager() >> x.m.mock(NSUndoManager)
+        undoman = x.doc.undoManager() >> x.m.mock(fn.NSUndoManager)
         undoman.isUndoing() >> c.undoing
         if not c.undoing:
             undoman.isRedoing() >> c.redoing
@@ -365,8 +365,8 @@ def test_TextDocumentView_document_properties():
 
 def test_TextDocumentView_prompt():
     from editxt.controls.alert import Alert
-    eq_(NSAlertSecondButtonReturn - NSAlertFirstButtonReturn, 1)
-    eq_(NSAlertThirdButtonReturn - NSAlertFirstButtonReturn, 2)
+    eq_(ak.NSAlertSecondButtonReturn - ak.NSAlertFirstButtonReturn, 1)
+    eq_(ak.NSAlertThirdButtonReturn - ak.NSAlertFirstButtonReturn, 2)
     def test(c):
         m = Mocker()
         doc = m.mock(TextDocument)
@@ -374,10 +374,10 @@ def test_TextDocumentView_prompt():
         dv_window = m.method(dv.window)
         alert_class = m.replace(mod, 'Alert')
         callback = m.mock(name="callback")
-        win = dv_window() >> (m.mock(NSWindow) if c.has_window else None)
+        win = dv_window() >> (m.mock(ak.NSWindow) if c.has_window else None)
         if c.has_window:
             alert = alert_class.alloc() >> m.mock(Alert); alert.init() >> alert
-            alert.setAlertStyle_(NSInformationalAlertStyle)
+            alert.setAlertStyle_(ak.NSInformationalAlertStyle)
             alert.setMessageText_(c.message)
             if c.info:
                 alert.setInformativeText_(c.info)
@@ -387,7 +387,7 @@ def test_TextDocumentView_prompt():
                 buttons.append(text)
                 alert.addButtonWithTitle_(text)
             def do(window, callback):
-                callback(NSAlertFirstButtonReturn + c.response)
+                callback(ak.NSAlertFirstButtonReturn + c.response)
                 return True
             expect(alert.beginSheetModalForWindow_withCallback_(win, ANY)).call(do)
         else:
@@ -414,7 +414,7 @@ def test_TextDocumentView_change_indentation():
         convert = m.replace(mod, 'change_indentation')
         doc = m.mock(TextDocument)
         dv = TextDocumentView.create_with_document(doc)
-        tv = dv.text_view = m.mock(NSTextView)
+        tv = dv.text_view = m.mock(ak.NSTextView)
         if c.convert:
             old_indent = "\t" if c.oldm is TAB else (" " * c.olds)
             new_indent = "\t" if c.newm is TAB else (" " * c.news)
@@ -428,7 +428,7 @@ def test_TextDocumentView_change_indentation():
             def _undo(undoman, undo):
                 dv.change_indentation = undo_change
                 undo()
-            undoman = doc.undoManager() >> m.mock(NSUndoManager)
+            undoman = doc.undoManager() >> m.mock(fn.NSUndoManager)
             expect(regundo(undoman, ANY)).call(_undo)
         with m:
             dv.change_indentation(c.oldm, c.olds, c.newm, c.news, c.convert)
@@ -456,10 +456,10 @@ def test_get_edit_state():
             else:
                 state = {}
         else:
-            dv.text_view = m.mock(NSTextView)
-            dv.scroll_view = m.mock(NSScrollView)
-            sel = m.mock(NSRange)
-            sp = m.mock(NSPoint)
+            dv.text_view = m.mock(ak.NSTextView)
+            dv.scroll_view = m.mock(ak.NSScrollView)
+            sel = m.mock(fn.NSRange)
+            sp = m.mock(fn.NSPoint)
             dv.text_view.selectedRange() >> sel
             dv.scroll_view.contentView().bounds().origin >> sp
             sel.location >> "<sel.location>"
@@ -504,17 +504,17 @@ def test_set_edit_state():
             eq_state.setdefault("soft_wrap", const.WRAP_NONE)
             point = eq_state["scrollpoint"]
             sel = eq_state["selection"]
-            dv.text_view = m.mock(NSTextView)
-            dv.scroll_view = m.mock(NSScrollView)
+            dv.text_view = m.mock(ak.NSTextView)
+            dv.scroll_view = m.mock(ak.NSScrollView)
             props.soft_wrap = eq_state["soft_wrap"]
             doc.text_storage.length() >> ts_len
             if ts_len - 1 > 0:
-                dv.text_view.setSelectedRange_(NSRange(ts_len - 1, 0))
-            dv.scroll_view.documentView().scrollPoint_(NSPoint(*point))
+                dv.text_view.setSelectedRange_(fn.NSRange(ts_len - 1, 0))
+            dv.scroll_view.documentView().scrollPoint_(fn.NSPoint(*point))
             if sel[0] < ts_len - 1:
                 if sel[0] + sel[1] > ts_len - 1:
                     sel = (sel[0], ts_len - 1 - sel[0])
-                dv.text_view.setSelectedRange_(NSRange(*sel))
+                dv.text_view.setSelectedRange_(fn.NSRange(*sel))
         with m:
             dv.edit_state = state
             if not isinstance(state, dict):
@@ -635,13 +635,13 @@ def test_TextDocumentView_close():
             dv.scroll_view = None
             dv.text_view = None
         else:
-            dv.scroll_view = sv = m.mock(NSScrollView)
-            dv.text_view = tv = m.mock(NSTextView)
+            dv.scroll_view = sv = m.mock(ak.NSScrollView)
+            dv.text_view = tv = m.mock(ak.NSTextView)
             sv.removeFromSuperview()
             sv.verticalRulerView().denotify()
-            doc.text_storage >> None if c.ts_is_none else m.mock(NSTextStorage)
+            doc.text_storage >> None if c.ts_is_none else m.mock(ak.NSTextStorage)
             if not c.ts_is_none:
-                lm = tv.layoutManager() >> m.mock(NSLayoutManager)
+                lm = tv.layoutManager() >> m.mock(ak.NSLayoutManager)
                 doc.text_storage.removeLayoutManager_(lm)
             tv.setDelegate_(None)
         wcs = []
@@ -687,7 +687,7 @@ def test_TextDocumentView_textView_doCommandBySelector_():
     yield test, "bogusOperation:", lambda m, dv, tv: False
 
     def setup_mocks(m, docview, textview):
-        docview.scroll_view = m.mock(NSScrollView)
+        docview.scroll_view = m.mock(ak.NSScrollView)
         cmd = docview.scroll_view.commandView >> m.mock(CommandView)
         cmd.dismiss()
         return True
@@ -739,8 +739,8 @@ def test_TextDocument_init():
     eq_(doc.id, ident)
     eq_(doc.icon_cache, (None, None))
     eq_(doc.document_attrs, {
-        NSDocumentTypeDocumentAttribute: NSPlainTextDocumentType,
-        NSCharacterEncodingDocumentAttribute: NSUTF8StringEncoding,
+        ak.NSDocumentTypeDocumentAttribute: ak.NSPlainTextDocumentType,
+        ak.NSCharacterEncodingDocumentAttribute: fn.NSUTF8StringEncoding,
     })
     assert doc.text_storage is not None
     assert doc.syntaxer is not None
@@ -776,15 +776,15 @@ def test_TextDocument_properties():
     c = TestConfig(attr="text", default="")
     yield property_value_util, c(value="abc")
 
-    c = TestConfig(attr="character_encoding", default=NSUTF8StringEncoding)
+    c = TestConfig(attr="character_encoding", default=fn.NSUTF8StringEncoding)
     for encoding in const.CHARACTER_ENCODINGS:
         yield property_value_util, c(value=encoding)
     def test():
         doc = TextDocument.alloc().init()
         doc.character_encoding = 42
-        eq_(doc.document_attrs[NSCharacterEncodingDocumentAttribute], 42)
+        eq_(doc.document_attrs[ak.NSCharacterEncodingDocumentAttribute], 42)
         doc.character_encoding = None
-        assert NSCharacterEncodingDocumentAttribute not in doc.document_attrs
+        assert ak.NSCharacterEncodingDocumentAttribute not in doc.document_attrs
     yield test,
 
 def test_TextDocument_eol():
@@ -842,8 +842,8 @@ def test_TextDocument_eol():
 def test_TextDocument_default_text_attributes():
     doc = TextDocument.alloc().init()
     attrs = doc.default_text_attributes()
-    assert NSFontAttributeName in attrs
-    assert NSParagraphStyleAttributeName in attrs
+    assert ak.NSFontAttributeName in attrs
+    assert ak.NSParagraphStyleAttributeName in attrs
     assert attrs is doc.default_text_attributes()
 
 def test_TextDocument_reset_text_attributes():
@@ -852,19 +852,19 @@ def test_TextDocument_reset_text_attributes():
     app = m.replace(mod, 'app')
     ps_class = m.replace(mod, 'NSParagraphStyle')
     doc = TextDocument.alloc().init()
-    ts = doc.text_storage = m.mock(NSTextStorage)
+    ts = doc.text_storage = m.mock(ak.NSTextStorage)
     undoer = m.method(doc.undoManager)
-    font = NSFont.fontWithName_size_("Monaco", 10.0)
-    spcw = font.screenFontWithRenderingMode_(NSFontDefaultRenderingMode) \
+    font = ak.NSFont.fontWithName_size_("Monaco", 10.0)
+    spcw = font.screenFontWithRenderingMode_(ak.NSFontDefaultRenderingMode) \
         .advancementForGlyph_(ord(" ")).width
     ps = ps_class.defaultParagraphStyle().mutableCopy() >> m.mock()
     ps.setTabStops_([])
     ps.setDefaultTabInterval_(spcw * INDENT_SIZE)
     real_ps = ps.copy() >> "<paragraph style>"
-    attrs = {NSFontAttributeName: font, NSParagraphStyleAttributeName: real_ps}
-    ts.addAttributes_range_(attrs, NSMakeRange(0, ts.length() >> 20))
+    attrs = {ak.NSFontAttributeName: font, ak.NSParagraphStyleAttributeName: real_ps}
+    ts.addAttributes_range_(attrs, fn.NSMakeRange(0, ts.length() >> 20))
     views = [
-        (m.mock(TextDocumentView), m.mock(NSTextView)),
+        (m.mock(TextDocumentView), m.mock(ak.NSTextView)),
         (m.mock(TextDocumentView), None),
     ]
     app.iter_views_of_document(doc) >> (dv for dv, tv in views)
@@ -879,7 +879,7 @@ def test_TextDocument_reset_text_attributes():
 
 def test_setFileModificationDate_():
     from datetime import datetime
-    dt = NSDate.date()
+    dt = fn.NSDate.date()
     doc = TextDocument.alloc().init()
     eq_(doc.fileModificationDate(), None)
     eq_(doc._filestat, None)
@@ -903,13 +903,13 @@ def test_is_externally_modified():
             return c.exists
         fileURL = m.method(doc.fileURL)
         modDate = m.method(doc.fileModificationDate)
-        url = fileURL() >> (None if c.url_is_none else m.mock(NSURL))
+        url = fileURL() >> (None if c.url_is_none else m.mock(fn.NSURL))
         path = "<path>"
         if not c.url_is_none:
             url.path() >> path
             if c.exists:
                 url.getResourceValue_forKey_error_(
-                    None, NSURLContentModificationDateKey, None) \
+                    None, fn.NSURLContentModificationDateKey, None) \
                     >> (c.date_ok, c.loc_stat, None)
                 if c.date_ok:
                     modDate() >> c.ext_stat
@@ -949,10 +949,10 @@ def test_check_for_external_changes():
         if isdirty() >> c.isdirty:
             if c.win_is_none:
                 return end()
-            win = m.mock(NSWindow)
+            win = m.mock(ak.NSWindow)
             if c.prestat is not None:
                 doc._filestat = c.prestat
-            path = (m.method(doc.fileURL)() >> m.mock(NSURL)).path() >> "<path>"
+            path = (m.method(doc.fileURL)() >> m.mock(fn.NSURL)).path() >> "<path>"
             #filestat(path) >> c.modstat
             if c.prestat == c.modstat:
                 return end()
@@ -963,7 +963,7 @@ def test_check_for_external_changes():
             alert.addButtonWithTitle_("Reload")
             alert.addButtonWithTitle_("Cancel")
             def callback(win, method):
-                method(NSAlertFirstButtonReturn if c.reload else None)
+                method(ak.NSAlertFirstButtonReturn if c.reload else None)
                 return True
             expect(alert.beginSheetModalForWindow_withCallback_(win, ANY)) \
                 .call(callback)
@@ -997,16 +997,16 @@ def test_reload_document():
         doc_log = m.replace(mod, 'log')
         ts_class = m.replace(mod, 'NSTextStorage')
         fileURL = m.method(doc.fileURL)
-        fw = m.mock(NSFileWrapper)
-        ts = m.mock(NSTextStorage)
-        doc_ts = doc.text_storage = m.mock(NSTextStorage)
-        url = fileURL() >> (None if c.url_is_none else m.mock(NSURL))
+        fw = m.mock(ak.NSFileWrapper)
+        ts = m.mock(ak.NSTextStorage)
+        doc_ts = doc.text_storage = m.mock(ak.NSTextStorage)
+        url = fileURL() >> (None if c.url_is_none else m.mock(fn.NSURL))
         if c.url_is_none:
             return end()
         path = url.path() >> "<path>"
         if not c.exists:
             return end()
-        undo = m.method(doc.undoManager)() >> m.mock(NSUndoManager)
+        undo = m.method(doc.undoManager)() >> m.mock(fn.NSUndoManager)
         undo.should_remove = False
         (ts_class.alloc() >> ts).init() >> ts
         m.method(doc.revertToContentsOfURL_ofType_error_)(
@@ -1016,7 +1016,7 @@ def test_reload_document():
         if not c.read2_success:
             doc_log.error(ANY, "<err>")
             return end()
-        tv = m.mock(NSTextView)
+        tv = m.mock(ak.NSTextView)
         def views():
             for text_view_exists in c.view_state:
                 view = m.mock(TextDocumentView)
@@ -1026,7 +1026,7 @@ def test_reload_document():
         # I don't know, but it turns to None if we don't do it!! ???
         app.iter_views_of_document(doc) >> views
         text = ts.string() >> "<string>"
-        range = NSRange(0, doc_ts.length() >> 10)
+        range = fn.NSRange(0, doc_ts.length() >> 10)
         if not any(c.view_state):
             # TODO reload without undo
             doc_ts.replaceCharactersInRange_withString_(range, text)
@@ -1045,7 +1045,7 @@ def test_reload_document():
             # HACK use timed invocation to allow didChangeText notification
             # to update change count before _clearUndo is invoked
             perform_clear_undo("_clearChanges", doc, 0)
-            tv.setSelectedRange_(NSRange(0, 0)) # TODO remove
+            tv.setSelectedRange_(fn.NSRange(0, 0)) # TODO remove
             m.method(doc.update_syntaxer)()
         end()
     from editxt.test.util import profile
@@ -1064,14 +1064,14 @@ def test_reload_document():
 def test_clearChanges():
     m = Mocker()
     doc = TextDocument.alloc().init()
-    m.method(doc.updateChangeCount_)(NSChangeCleared)
+    m.method(doc.updateChangeCount_)(ak.NSChangeCleared)
     with m:
         doc._clearChanges()
 
 class TestTextDocument(MockerTestCase):
 
     def test_get_with_path_1(self):
-        dc = NSDocumentController.sharedDocumentController()
+        dc = ak.NSDocumentController.sharedDocumentController()
         eq_(len(dc.documents()), 0)
         path = self.makeFile(content="", suffix="txt")
         doc = TextDocument.get_with_path(path)
@@ -1082,8 +1082,8 @@ class TestTextDocument(MockerTestCase):
 
     def test_get_with_path_2(self):
         path = self.makeFile(content="", suffix="txt")
-        url = NSURL.fileURLWithPath_(path)
-        dc = NSDocumentController.sharedDocumentController()
+        url = fn.NSURL.fileURLWithPath_(path)
+        dc = ak.NSDocumentController.sharedDocumentController()
         eq_(len(dc.documents()), 0)
         doc1, err = dc.openDocumentWithContentsOfURL_display_error_(url, False, None)
         doc2 = TextDocument.get_with_path(path)
@@ -1094,7 +1094,7 @@ class TestTextDocument(MockerTestCase):
     def test_get_with_path_3(self):
         from tempfile import mktemp
         path = path = mktemp(suffix="txt")
-        dc = NSDocumentController.sharedDocumentController()
+        dc = ak.NSDocumentController.sharedDocumentController()
         eq_(len(dc.documents()), 0)
         m = Mocker()
         factory = m.mock()
@@ -1107,34 +1107,34 @@ class TestTextDocument(MockerTestCase):
         eq_(len(dc.documents()), 0)
 
     def test_untitled_displayName(self):
-        dc = NSDocumentController.sharedDocumentController()
+        dc = ak.NSDocumentController.sharedDocumentController()
         doc, err = dc.makeUntitledDocumentOfType_error_(TEXT_DOCUMENT, None)
         assert doc.displayName() == "Untitled"
 
     def test_titled_displayName(self):
-        dc = NSDocumentController.sharedDocumentController()
+        dc = ak.NSDocumentController.sharedDocumentController()
         path = self.makeFile(content="", prefix="text", suffix="txt")
-        url = NSURL.fileURLWithPath_(path)
+        url = fn.NSURL.fileURLWithPath_(path)
         doc, err = dc.makeDocumentWithContentsOfURL_ofType_error_(url, TEXT_DOCUMENT, None)
         assert doc.displayName() == os.path.split(path)[1]
 
     def test_readData_ofType(self):
-        dc = NSDocumentController.sharedDocumentController()
+        dc = ak.NSDocumentController.sharedDocumentController()
         content = "test content"
         path = self.makeFile(content=content, prefix="text", suffix=".txt")
-        url = NSURL.fileURLWithPath_(path)
+        url = fn.NSURL.fileURLWithPath_(path)
         doc, err = dc.makeDocumentWithContentsOfURL_ofType_error_(url, TEXT_DOCUMENT, None)
         assert doc.text_storage.string() == content
 
     def test_saveDocument(self):
         m = Mocker()
         app = m.replace(mod, 'app')
-        dc = NSDocumentController.sharedDocumentController()
+        dc = ak.NSDocumentController.sharedDocumentController()
         path = self.makeFile(content="", prefix="text", suffix=".txt")
         file = open(path)
         with closing(open(path)) as file:
             assert file.read() == ""
-        url = NSURL.fileURLWithPath_(path)
+        url = fn.NSURL.fileURLWithPath_(path)
         doc, err = dc.makeDocumentWithContentsOfURL_ofType_error_(url, TEXT_DOCUMENT, None)
         content = "test content"
         m.method(doc.update_syntaxer)()
@@ -1148,11 +1148,11 @@ class TestTextDocument(MockerTestCase):
             assert saved_content == content, "got %r" % saved_content
 
     def test_icon_cache(self):
-        dc = NSDocumentController.sharedDocumentController()
+        dc = ak.NSDocumentController.sharedDocumentController()
         doc, err = dc.makeUntitledDocumentOfType_error_(TEXT_DOCUMENT, None)
         eq_(doc.icon_cache, (None, None))
         icon = doc.icon()
-        assert isinstance(icon, NSImage)
+        assert isinstance(icon, ak.NSImage)
         eq_(doc.icon_cache, ("", icon))
 
 def test_readFromData_ofType_error_():
@@ -1161,7 +1161,7 @@ def test_readFromData_ofType_error_():
         data = "<data>"
         typ = m.mock()
         doc = TextDocument.alloc().init()
-        doc.text_storage = ts = m.mock(NSTextStorage)
+        doc.text_storage = ts = m.mock(ak.NSTextStorage)
         m.method(doc.read_data_into_textstorage)(data, ts) >> (c.success, None)
         analyze = m.method(doc.analyze_content)
         if c.success:
@@ -1180,8 +1180,8 @@ def test_read_data_into_textstorage():
         typ = m.mock()
         doc = TextDocument.alloc().init()
         doc.document_attrs = INIT_ATTRS = {"attr": 0,
-            NSCharacterEncodingDocumentAttribute: "<encoding>"}
-        ts = m.mock(NSTextStorage)
+            ak.NSCharacterEncodingDocumentAttribute: "<encoding>"}
+        ts = m.mock(ak.NSTextStorage)
         analyze = m.method(doc.analyze_content)
         m.method(doc.default_text_attributes)() >> "<text attributes>"
         (ts.readFromData_options_documentAttributes_error_(data, ANY, None, None)
@@ -1209,8 +1209,8 @@ def test_analyze_content():
         m.property(doc, "newline_mode")
         m.property(doc, "indent_mode")
         m.property(doc, "indent_size")
-        doc.text_storage = ts = m.mock(NSTextStorage)
-        ts.string() >> NSString.stringWithString_(c.text)
+        doc.text_storage = ts = m.mock(ak.NSTextStorage)
+        ts.string() >> fn.NSString.stringWithString_(c.text)
         if "eol" in c:
             doc.newline_mode = c.eol
         if "imode" in c:
@@ -1291,7 +1291,7 @@ def test_update_syntaxer():
         m = Mocker()
         app = m.replace(mod, 'app')
         doc = TextDocument.alloc().init()
-        doc.text_storage = ts = m.mock(NSTextStorage)
+        doc.text_storage = ts = m.mock(ak.NSTextStorage)
         m.property(doc, "syntaxdef")
         m.property(doc, "props")
         syn = doc.syntaxer = m.mock(SyntaxCache)
@@ -1328,9 +1328,9 @@ def test_textStorageDidProcessEditing_():
     from editxt.syntax import SyntaxCache
     m = Mocker()
     doc = TextDocument.alloc().init()
-    ts = doc.text_storage = m.mock(NSTextStorage)
+    ts = doc.text_storage = m.mock(ak.NSTextStorage)
     syn = doc.syntaxer = m.mock(SyntaxCache)
-    range = ts.editedRange() >> m.mock(NSRange)
+    range = ts.editedRange() >> m.mock(fn.NSRange)
     syn.color_text(ts, range)
     with m:
         doc.textStorageDidProcessEditing_(None)

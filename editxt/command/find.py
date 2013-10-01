@@ -23,8 +23,8 @@ import os
 import re
 import time
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 import editxt
 import editxt.constants as const
@@ -216,7 +216,7 @@ class Finder(object):
                 target.didChangeText()
                 target.setNeedsDisplay_(True)
                 return
-        NSBeep()
+        ak.NSBeep()
 
     def replace_all(self, sender):
         self._replace_all()
@@ -247,9 +247,9 @@ class Finder(object):
         if color is None:
             color = editxt.app.config["highlight_selected_text.color"] # HACK global resource
         layout = target.layoutManager()
-        full_range = NSMakeRange(0, target.textStorage().length())
+        full_range = fn.NSMakeRange(0, target.textStorage().length())
         layout.removeTemporaryAttribute_forCharacterRange_(
-            NSBackgroundColorAttributeName, full_range)
+            ak.NSBackgroundColorAttributeName, full_range)
         if not ftext:
             target._Finder__last_mark = (ftext, 0)
             return 0
@@ -264,7 +264,7 @@ class Finder(object):
         else:
             finditer = self.simplefinditer
         count = 0
-        attr = NSBackgroundColorAttributeName
+        attr = ak.NSBackgroundColorAttributeName
         mark_range = layout.addTemporaryAttribute_value_forCharacterRange_
         for found in finditer(text, ftext, full_range, FORWARD, False):
             mark_range(attr, color, found.range)
@@ -282,7 +282,7 @@ class Finder(object):
                 target.setSelectedRange_(range)
                 target.scrollRangeToVisible_(range)
                 return
-        NSBeep()
+        ak.NSBeep()
 
     def _find(self, target, ftext, selection, direction):
         """Return the range of the found text or None if not found"""
@@ -295,7 +295,7 @@ class Finder(object):
         else:
             finditer = self.simplefinditer
         text = target.string()
-        range = NSMakeRange(selection.location, 0)
+        range = fn.NSMakeRange(selection.location, 0)
         for i, found in enumerate(finditer(text, ftext, range, direction, True)):
             if found is WRAPTOKEN:
                 # TODO show wrap overlay
@@ -313,18 +313,18 @@ class Finder(object):
         ftext = self.options.find_text
         range = None if target is None else target.selectedRange()
         if target is None or not ftext or (in_selection and range.length == 0):
-            NSBeep()
+            ak.NSBeep()
             return
         text = target.string()
         options = self.options
         if not in_selection:
             if options.wrap_around:
-                range = NSMakeRange(0, 0)
+                range = fn.NSMakeRange(0, 0)
             else:
                 # Replace all to the end of the file. Logically there should be
                 # another option: replace all (backward) to the beginning of the
                 # file, but there's no way to do that with the interface.
-                range = NSMakeRange(range.location, len(text) - range.location)
+                range = fn.NSMakeRange(range.location, len(text) - range.location)
         if options.regular_expression:
             finditer = self.regexfinditer
         elif options.match_entire_word:
@@ -345,14 +345,14 @@ class Finder(object):
             rtexts.append(found.expand(rtext))
         if range0 is not None:
             start = range0.location
-            range = NSMakeRange(start, sum(range1) - start)
+            range = fn.NSMakeRange(start, sum(range1) - start)
             value = "".join(rtexts)
             if target.shouldChangeTextInRange_replacementString_(range, value):
                 target.textStorage().replaceCharactersInRange_withString_(range, value)
                 target.didChangeText()
                 target.setNeedsDisplay_(True)
                 return
-        NSBeep()
+        ak.NSBeep()
 
     def simplefinditer(self, text, ftext, range,
                        direction=FORWARD, yield_on_wrap=True):
@@ -365,20 +365,20 @@ class Finder(object):
         opts = 0
         options = self.options
         if options.ignore_case:
-            opts |= NSCaseInsensitiveSearch
+            opts |= fn.NSCaseInsensitiveSearch
         forwardSearch = (direction == FORWARD)
         if forwardSearch:
             startindex = index = range.location
         else:
             startindex = index = range.location + range.length
-            opts |= NSBackwardsSearch
+            opts |= fn.NSBackwardsSearch
         if range.length == 0:
             if options.wrap_around:
-                range = NSMakeRange(0, text.length())
+                range = fn.NSMakeRange(0, text.length())
             elif forwardSearch:
-                range = NSMakeRange(startindex, text.length() - startindex)
+                range = fn.NSMakeRange(startindex, text.length() - startindex)
             else:
-                range = NSMakeRange(0, startindex)
+                range = fn.NSMakeRange(0, startindex)
         endindex = range.location + range.length
         FoundRange = make_found_range_factory(options)
         wrapped = False
@@ -388,17 +388,17 @@ class Finder(object):
                     if index >= startindex:
                         break # searched to or beyond where we started
                     else:
-                        frange = NSRange(index, startindex - index)
+                        frange = fn.NSRange(index, startindex - index)
                 else:
-                    frange = NSRange(index, endindex - index)
+                    frange = fn.NSRange(index, endindex - index)
             else:
                 if wrapped:
                     if index <= startindex:
                         break # searched to or beyond where we started
                     else:
-                        frange = NSRange(startindex, index - startindex)
+                        frange = fn.NSRange(startindex, index - startindex)
                 else:
-                    frange = NSRange(range.location, index - range.location)
+                    frange = fn.NSRange(range.location, index - range.location)
             found = text.rangeOfString_options_range_(ftext, opts, frange)
             if found and found.length > 0 and found.location < endindex:
                 yield FoundRange(found)
@@ -425,7 +425,7 @@ class Finder(object):
         try:
             regex = re.compile(ftext, flags)
         except re.error as err:
-            NSBeep()
+            ak.NSBeep()
             log.error("cannot compile regex %r : %s", ftext, err)
         else:
             FoundRange = make_found_range_factory(options)
@@ -445,7 +445,7 @@ class Finder(object):
                     s = match.start()
                     e = match.end()
                     #log.debug("searching for %r found %r at (%s, %s)", ftext, match.group(), s, e)
-                    yield FoundRange(NSMakeRange(s, e - s), match)
+                    yield FoundRange(fn.NSMakeRange(s, e - s), match)
                 if options.wrap_around and not wrapped and range.length == 0:
                     if yield_on_wrap:
                         yield WRAPTOKEN
@@ -474,14 +474,14 @@ class FindController(PanelController):
         super(FindController, self).__init__()
         self.finder = Finder(self.find_target, self.options)
         self.action_registry = {
-            NSFindPanelActionShowFindPanel: self.show_find_panel,
-            NSFindPanelActionNext: self.find_next,
-            NSFindPanelActionPrevious: self.find_previous,
-            NSFindPanelActionReplace: self.replace_one,
-            NSFindPanelActionReplaceAll: self.replace_all,
-            NSFindPanelActionReplaceAndFind: self.replace_and_find_next,
-            NSFindPanelActionReplaceAllInSelection: self.replace_all_in_selection,
-            NSFindPanelActionSetFindString: self.set_find_text_with_selection,
+            ak.NSFindPanelActionShowFindPanel: self.show_find_panel,
+            ak.NSFindPanelActionNext: self.find_next,
+            ak.NSFindPanelActionPrevious: self.find_previous,
+            ak.NSFindPanelActionReplace: self.replace_one,
+            ak.NSFindPanelActionReplaceAll: self.replace_all,
+            ak.NSFindPanelActionReplaceAndFind: self.replace_and_find_next,
+            ak.NSFindPanelActionReplaceAllInSelection: self.replace_all_in_selection,
+            ak.NSFindPanelActionSetFindString: self.set_find_text_with_selection,
             ACTION_FIND_SELECTED_TEXT: self.find_selected_text,
             ACTION_FIND_SELECTED_TEXT_REVERSE: self.find_selected_text_reverse,
         }
@@ -489,10 +489,10 @@ class FindController(PanelController):
 
     @objc_delegate
     def windowDidLoad(self):
-        self.gui.window().setLevel_(NSFloatingWindowLevel)
+        self.gui.window().setLevel_(ak.NSFloatingWindowLevel)
         target = self.find_target()
         if target is not None:
-            font = target.doc_view.document.default_text_attributes()[NSFontAttributeName]
+            font = target.doc_view.document.default_text_attributes()[ak.NSFontAttributeName]
             self.gui.find_text.setFont_(font)
             self.gui.replace_text.setFont_(font)
 
@@ -631,8 +631,8 @@ class FindController(PanelController):
         # TODO possibly open a sheet with a short description of how regular
         # expressions are used here, including notes about the default flags
         # that are set (MULTILINE | UNICODE) and the syntax that should be used.
-        url = NSURL.URLWithString_(const.REGEX_HELP_URL)
-        NSWorkspace.sharedWorkspace().openURL_(url)
+        url = fn.NSURL.URLWithString_(const.REGEX_HELP_URL)
+        ak.NSWorkspace.sharedWorkspace().openURL_(url)
 
     # Utility methods ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -656,7 +656,7 @@ class FindController(PanelController):
             else:
                 self.flash_status_text("Not found")
         else:
-            NSBeep()
+            ak.NSBeep()
 
     def flash_status_text(self, text):
         self.stop_flashing_status()
@@ -693,12 +693,12 @@ class FindController(PanelController):
                 title = "Cannot Compile Python Expression"
                 error = err
             if error:
-                NSBeep()
+                ak.NSBeep()
                 # Note: if the find dialog type is NSPanel (instead of NSWindow)
                 # the focus will switch back to the main document window rather
                 # than to the find dialog, which is not what we want. Therefore
                 # we set the Custom Class of the find dialog to NSWindow.
-                NSBeginAlertSheet(
+                ak.NSBeginAlertSheet(
                     title,
                     "OK", None, None,
                     self.gui.window(), None, None, None, 0,
@@ -723,7 +723,7 @@ class FindController(PanelController):
         return True
 
 
-class StatusFlasher(NSObject):
+class StatusFlasher(fn.NSObject):
 
     timing = (0.2, 0.2, 0.2, 5)
 
@@ -856,18 +856,18 @@ class InvalidPythonExpression(CommandError):
 
 
 def load_find_pasteboard_string():
-    """Get value of system NSFindPboard if it is a string
+    """Get value of system ak.NSFindPboard if it is a string
 
     :returns: String if pasteboard contains a string, otherwise ``None``.
     """
-    pboard = NSPasteboard.pasteboardWithName_(NSFindPboard)
-    if pboard.availableTypeFromArray_([NSStringPboardType]):
-        return pboard.stringForType_(NSStringPboardType)
+    pboard = ak.NSPasteboard.pasteboardWithName_(ak.NSFindPboard)
+    if pboard.availableTypeFromArray_([ak.NSStringPboardType]):
+        return pboard.stringForType_(ak.NSStringPboardType)
     return None
 
 
 def save_to_find_pasteboard(text):
-    """Save the given text to the system NSFindPboard"""
-    pboard = NSPasteboard.pasteboardWithName_(NSFindPboard)
-    pboard.declareTypes_owner_([NSStringPboardType], None)
-    pboard.setString_forType_(text, NSStringPboardType)
+    """Save the given text to the system ak.NSFindPboard"""
+    pboard = ak.NSPasteboard.pasteboardWithName_(ak.NSFindPboard)
+    pboard.declareTypes_owner_([ak.NSStringPboardType], None)
+    pboard.setString_forType_(text, ak.NSStringPboardType)

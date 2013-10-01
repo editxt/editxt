@@ -21,13 +21,13 @@ import logging
 import time
 
 import objc
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 log = logging.getLogger(__name__)
 
 
-class EditorWindow(NSWindow):
+class EditorWindow(ak.NSWindow):
     """NSWindow subclass that provides mouseMoved events to registered subviews"""
 
     @property

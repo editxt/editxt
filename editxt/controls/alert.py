@@ -21,13 +21,13 @@ import logging
 import time
 
 import objc
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 log = logging.getLogger(__name__)
 
 
-class Caller(NSObject):
+class Caller(fn.NSObject):
 
     @objc.namedSelector(b"init:")
     def init(self, callback):
@@ -40,7 +40,7 @@ class Caller(NSObject):
         self.callback(code)
 
 
-class Alert(NSAlert):
+class Alert(ak.NSAlert):
     """Python-friendly alert class
 
     WARNING it is not safe to invoke beginSheet...withCallback_() multiple

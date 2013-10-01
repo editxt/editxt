@@ -19,7 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import os
 
-from AppKit import *
+import AppKit as ak
 from Foundation import NSRect
 
 from mocker import Mocker, expect, ANY
@@ -49,7 +49,7 @@ def test_iatc_cellSize():
     assert cell.image() is None
     size = cell.cellSize()
     m = Mocker()
-    image = m.mock(NSImage)
+    image = m.mock(ak.NSImage)
     image.size().width >> 10
     m.replay()
     cell.setImage_(image)
@@ -62,26 +62,26 @@ def test_iatc_cellSize():
 def test_expansionFrameWithFrame_inView_():
     cell = mod.ImageAndTextCell.alloc().init()
     #frame = NSMakeRect(0, 0, 50, 16)
-    eq_(cell.expansionFrameWithFrame_inView_(NSZeroRect, None), NSZeroRect)
+    eq_(cell.expansionFrameWithFrame_inView_(fn.NSZeroRect, None), fn.NSZeroRect)
 
 def test_drawWithFrame_inView_():
     def test(c):
         m = Mocker()
         cell = mod.ImageAndTextCell.alloc().init()
-        img = cell._image = m.mock(NSImage) if c.image else None
-        frame = NSMakeRect(0, 0, 20, 100)
-        view = m.mock(NSView)
+        img = cell._image = m.mock(ak.NSImage) if c.image else None
+        frame = fn.NSMakeRect(0, 0, 20, 100)
+        view = m.mock(ak.NSView)
         draws = m.method(mod.ImageAndTextCell.drawsBackground)
         color = m.method(mod.ImageAndTextCell.backgroundColor)
         fill = m.replace(mod, 'NSRectFill', spec=(lambda a: None))
         if c.image:
-            img.size() >> NSSize(20, 20)
+            img.size() >> fn.NSSize(20, 20)
             if draws() >> c.draws:
                 color().set()
                 fill(ANY)
             view.isFlipped() >> c.flipped
-            img.compositeToPoint_operation_(ANY, NSCompositeSourceOver)
-        m.method(NSTextFieldCell.drawWithFrame_inView_)(frame, view)
+            img.compositeToPoint_operation_(ANY, ak.NSCompositeSourceOver)
+        m.method(ak.NSTextFieldCell.drawWithFrame_inView_)(frame, view)
         with m:
             cell.drawWithFrame_inView_(frame, view)
     c = TestConfig(image=True)
@@ -127,7 +127,7 @@ def test_HBC_buttonImageForFrame_inView_():
         m = Mocker()
         hbc = HoverButtonCell.alloc().init()
         frame = m.mock(NSRect)
-        view = m.mock(NSOutlineView)
+        view = m.mock(ak.NSOutlineView)
         point, pressed = hbc.hover_info = c.info
         if point is not None:
             m.replace(mod, 'NSPointInRect')(point, frame) >> (point == "in")
@@ -171,7 +171,7 @@ def test_HBC_mouseMoveHandlers():
                 hbc.hover_info = (None, None)
             elif pir("initial", frame) >> c.inside[0] \
                 and pir(point, frame) >> c.inside[1]:
-                row = (m.method(hbc, "controlView")() >> m.mock(NSOutlineView)) \
+                row = (m.method(hbc, "controlView")() >> m.mock(ak.NSOutlineView)) \
                     .rowAtPoint_(point) >> 2
                 (m.property(hbc, "delegate").value >> m.mock(EditorWindowController)) \
                     .hoverButton_rowClicked_(hbc, row)

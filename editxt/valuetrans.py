@@ -20,15 +20,15 @@
 import logging
 
 import objc
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 import editxt.constants as const
 
 log = logging.getLogger(__name__)
 
 
-class KeyValueTransformer(NSValueTransformer):
+class KeyValueTransformer(fn.NSValueTransformer):
 
     @classmethod
     def transformedValueClass(cls):
@@ -89,7 +89,7 @@ class NewlineModeTransformer(KeyValueTransformer):
         })
 
 
-class IntTransformer(NSValueTransformer):
+class IntTransformer(fn.NSValueTransformer):
 
     @classmethod
     def create(cls):
@@ -97,7 +97,7 @@ class IntTransformer(NSValueTransformer):
 
     @classmethod
     def transformedValueClass(cls):
-        return NSDecimalNumber
+        return fn.NSDecimalNumber
 
     @classmethod
     def allowsReverseTransformation(cls):
@@ -106,9 +106,9 @@ class IntTransformer(NSValueTransformer):
     def transformedValue_(self, value):
         if value is None:
             return None
-        if isinstance(value, (str, NSString)):
-            return NSDecimalNumber.decimalNumberWithString_(value)
-        return NSDecimalNumber.numberWithInt_(value)
+        if isinstance(value, (str, fn.NSString)):
+            return fn.NSDecimalNumber.decimalNumberWithString_(value)
+        return fn.NSDecimalNumber.numberWithInt_(value)
 
     def reverseTransformedValue_(self, value):
         if value is None:
@@ -118,7 +118,7 @@ class IntTransformer(NSValueTransformer):
         return value.integerValue()
 
 
-class AbstractNameTransformer(NSValueTransformer):
+class AbstractNameTransformer(fn.NSValueTransformer):
 
     @classmethod
     def create(cls):
@@ -136,7 +136,7 @@ class AbstractNameTransformer(NSValueTransformer):
 
     @classmethod
     def transformedValueClass(cls):
-        return NSString
+        return fn.NSString
 
     @classmethod
     def allowsReverseTransformation(cls):
@@ -155,14 +155,14 @@ class CharacterEncodingTransformer(AbstractNameTransformer):
         self = super(CharacterEncodingTransformer, self).init()
         self.add_named_object("Unspecified", None)
         for value in const.CHARACTER_ENCODINGS:
-            name = NSString.localizedNameOfStringEncoding_(value)
+            name = fn.NSString.localizedNameOfStringEncoding_(value)
             self.add_named_object(name, value)
         return self
 
     def transformedValue_(self, value):
         if value is None:
             return "Unspecified"
-        return NSString.localizedNameOfStringEncoding_(value)
+        return fn.NSString.localizedNameOfStringEncoding_(value)
 
 
 class SyntaxDefTransformer(AbstractNameTransformer):
@@ -193,5 +193,5 @@ def register_value_transformers():
     ]
     for t in trans_types:
         trans = t.create()
-        NSValueTransformer.setValueTransformer_forName_(trans, t.__name__)
+        fn.NSValueTransformer.setValueTransformer_forName_(trans, t.__name__)
 

@@ -22,8 +22,8 @@ import objc
 import os
 
 import objc
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 # from NDAlias import NDAlias
 
 import editxt.constants as const
@@ -62,7 +62,7 @@ def document_property(do):
     return property(fget, fset)
 
 
-class TextDocumentView(NSObject):
+class TextDocumentView(fn.NSObject):
 
     id = None # will be overwritten (put here for type api compliance for testing)
 
@@ -90,7 +90,7 @@ class TextDocumentView(NSObject):
         self.text_view = None
         self.scroll_view = None
         self.props = KVOProxy(self)
-        if isinstance(document, NSDocument):
+        if isinstance(document, ak.NSDocument):
             # HACK this should not be conditional (but it is for tests)
             self.kvolink = KVOLink([
                 (document, "properties.indent_mode", self.props, "indent_mode"),
@@ -140,25 +140,25 @@ class TextDocumentView(NSObject):
     def set_main_view_of_window(self, view, window):
         frame = view.bounds()
         if self.scroll_view is None:
-            lm = NSLayoutManager.alloc().init()
+            lm = ak.NSLayoutManager.alloc().init()
             self.document.text_storage.addLayoutManager_(lm)
-            tc = NSTextContainer.alloc().initWithContainerSize_(frame.size)
+            tc = ak.NSTextContainer.alloc().initWithContainerSize_(frame.size)
             tc.setLineFragmentPadding_(10) # left margin
             lm.addTextContainer_(tc)
 
             self.scroll_view = sv = StatusbarScrollView.alloc().initWithFrame_(frame)
             sv.setHasHorizontalScroller_(True)
             sv.setHasVerticalScroller_(True)
-            sv.setAutoresizingMask_(NSViewWidthSizable | NSViewHeightSizable)
+            sv.setAutoresizingMask_(ak.NSViewWidthSizable | ak.NSViewHeightSizable)
 
             self.text_view = tv = TextView.alloc().initWithFrame_textContainer_(frame, tc)
             tv.setAllowsUndo_(True)
             tv.setVerticallyResizable_(True)
-            tv.setMaxSize_(NSMakeSize(LARGE_NUMBER_FOR_TEXT, LARGE_NUMBER_FOR_TEXT))
+            tv.setMaxSize_(fn.NSMakeSize(LARGE_NUMBER_FOR_TEXT, LARGE_NUMBER_FOR_TEXT))
             # setTextContainerInset() with height > 0 causes a strange bug with
             # the movement of the line number ruler (it moves down when
             # scrolling down near the top of the document)
-            tv.setTextContainerInset_(NSMakeSize(0, 0)) # width/height
+            tv.setTextContainerInset_(fn.NSMakeSize(0, 0)) # width/height
             tv.setDrawsBackground_(False)
             tv.setSmartInsertDeleteEnabled_(False)
             tv.setRichText_(False)
@@ -170,9 +170,9 @@ class TextDocumentView(NSObject):
 #           #    self, "processEdit:", NSTextStorageDidProcessEditingNotification, store)
             attrs = self.document.default_text_attributes()
             tv.setTypingAttributes_(attrs)
-            font = attrs[NSFontAttributeName]
+            font = attrs[ak.NSFontAttributeName]
             tv.setFont_(font)
-            tv.setDefaultParagraphStyle_(attrs[NSParagraphStyleAttributeName])
+            tv.setDefaultParagraphStyle_(attrs[ak.NSParagraphStyleAttributeName])
 
             sv.setDocumentView_(tv)
 #           sv.setHorizontalLineScroll_(font.advancementForGlyph_(ord(u" ")).width)
@@ -205,18 +205,18 @@ class TextDocumentView(NSObject):
         tv = self.text_view
         tc = tv.textContainer()
         if wrap:
-            mask = NSViewWidthSizable
+            mask = ak.NSViewWidthSizable
             size = self.scroll_view.contentSize()
             width = size.width
         else:
-            mask = NSViewWidthSizable | NSViewHeightSizable
+            mask = ak.NSViewWidthSizable | ak.NSViewHeightSizable
             width = LARGE_NUMBER_FOR_TEXT
         # TODO
         # if selection is visible:
         #     get position of selection
         # else:
         #     get position top visible line
-        tc.setContainerSize_(NSMakeSize(width, LARGE_NUMBER_FOR_TEXT))
+        tc.setContainerSize_(fn.NSMakeSize(width, LARGE_NUMBER_FOR_TEXT))
         tc.setWidthTracksTextView_(wrap)
         tv.setHorizontallyResizable_(not wrap)
         tv.setAutoresizingMask_(mask)
@@ -274,14 +274,14 @@ class TextDocumentView(NSObject):
             callback(len(buttons) - 1)
         else:
             self.alert = alert = Alert.alloc().init()
-            alert.setAlertStyle_(NSInformationalAlertStyle)
+            alert.setAlertStyle_(ak.NSInformationalAlertStyle)
             alert.setMessageText_(message)
             if infotext:
                 alert.setInformativeText_(infotext)
             for button in buttons:
                 alert.addButtonWithTitle_(button)
             def respond(response):
-                callback(response - NSAlertFirstButtonReturn)
+                callback(response - ak.NSAlertFirstButtonReturn)
             alert.beginSheetModalForWindow_withCallback_(window, respond)
 
     def change_indentation(self, old_mode, old_size, new_mode, new_size, convert_text):
@@ -320,12 +320,12 @@ class TextDocumentView(NSObject):
             length = self.document.text_storage.length() - 1
             if length > 0:
                 # HACK next line does not seem to work without this
-                self.text_view.setSelectedRange_(NSRange(length, 0))
-            self.scroll_view.documentView().scrollPoint_(NSPoint(*point))
+                self.text_view.setSelectedRange_(fn.NSRange(length, 0))
+            self.scroll_view.documentView().scrollPoint_(fn.NSPoint(*point))
             if sel[0] < length:
                 if sel[0] + sel[1] > length:
                     sel = (sel[0], length - sel[0])
-                self.text_view.setSelectedRange_(NSRange(*sel))
+                self.text_view.setSelectedRange_(fn.NSRange(*sel))
         else:
             self._state = state
     edit_state = property(_get_edit_state, _set_edit_state)
@@ -417,7 +417,7 @@ class TextDocumentView(NSObject):
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-class UndoManager(NSUndoManager):
+class UndoManager(fn.NSUndoManager):
     """HACK custom undo manager that can prevent actions from being removed"""
 
     def init(self):
@@ -429,7 +429,7 @@ class UndoManager(NSUndoManager):
             super(UndoManager, self).removeAllActions()
 
 
-class TextDocument(NSDocument):
+class TextDocument(ak.NSDocument):
 
     @classmethod
     def get_with_path(cls, path):
@@ -438,8 +438,8 @@ class TextDocument(NSDocument):
         Documents returned by this method have been added to the document
         controllers list of documents.
         """
-        url = NSURL.fileURLWithPath_(path)
-        dc = NSDocumentController.sharedDocumentController()
+        url = fn.NSURL.fileURLWithPath_(path)
+        dc = ak.NSDocumentController.sharedDocumentController()
         doc = dc.documentForURL_(url)
         if doc is None:
             if os.path.exists(path):
@@ -464,10 +464,10 @@ class TextDocument(NSDocument):
         self.id = next(doc_id_gen)
         self.icon_cache = (None, None)
         self.document_attrs = {
-            NSDocumentTypeDocumentAttribute: NSPlainTextDocumentType,
-            NSCharacterEncodingDocumentAttribute: NSUTF8StringEncoding,
+            ak.NSDocumentTypeDocumentAttribute: ak.NSPlainTextDocumentType,
+            ak.NSCharacterEncodingDocumentAttribute: fn.NSUTF8StringEncoding,
         }
-        self.text_storage = NSTextStorage.alloc().initWithString_attributes_("", {})
+        self.text_storage = ak.NSTextStorage.alloc().initWithString_attributes_("", {})
         self.syntaxer = SyntaxCache()
         self._filestat = None
         self.props = KVOProxy(self)
@@ -503,28 +503,28 @@ class TextDocument(NSDocument):
 
     @property
     def character_encoding(self):
-        return self.document_attrs.get(NSCharacterEncodingDocumentAttribute)
+        return self.document_attrs.get(ak.NSCharacterEncodingDocumentAttribute)
     @character_encoding.setter
     def character_encoding(self, value):
         # TODO when value is None encoding should be removed from document_attrs
         if value is not None:
-            self.document_attrs[NSCharacterEncodingDocumentAttribute] = value
+            self.document_attrs[ak.NSCharacterEncodingDocumentAttribute] = value
         else:
-            self.document_attrs.pop(NSCharacterEncodingDocumentAttribute, None)
+            self.document_attrs.pop(ak.NSCharacterEncodingDocumentAttribute, None)
 
     def reset_text_attributes(self, indent_size):
-        font = NSFont.fontWithName_size_("Monaco", 10.0)
-        spcw = font.screenFontWithRenderingMode_(NSFontDefaultRenderingMode) \
+        font = ak.NSFont.fontWithName_size_("Monaco", 10.0)
+        spcw = font.screenFontWithRenderingMode_(ak.NSFontDefaultRenderingMode) \
             .advancementForGlyph_(ord(" ")).width
-        ps = NSParagraphStyle.defaultParagraphStyle().mutableCopy()
+        ps = ak.NSParagraphStyle.defaultParagraphStyle().mutableCopy()
         ps.setTabStops_([])
         ps.setDefaultTabInterval_(spcw * indent_size)
         ps = ps.copy()
         self._text_attributes = attrs = {
-            NSFontAttributeName: font,
-            NSParagraphStyleAttributeName: ps,
+            ak.NSFontAttributeName: font,
+            ak.NSParagraphStyleAttributeName: ps,
         }
-        range = NSMakeRange(0, self.text_storage.length())
+        range = fn.NSMakeRange(0, self.text_storage.length())
         self.text_storage.addAttributes_range_(attrs, range)
         for view in app.iter_views_of_document(self):
             if view.text_view is not None:
@@ -550,23 +550,23 @@ class TextDocument(NSDocument):
         return (success, err)
 
     def read_data_into_textstorage(self, data, text_storage):
-        options = {NSDefaultAttributesDocumentOption: self.default_text_attributes()}
+        options = {ak.NSDefaultAttributesDocumentOption: self.default_text_attributes()}
         options.update(self.document_attrs)
         while True:
             success, attrs, err = text_storage \
                 .readFromData_options_documentAttributes_error_(
                     data, options, None, None)
-            if success or NSCharacterEncodingDocumentAttribute not in options:
+            if success or ak.NSCharacterEncodingDocumentAttribute not in options:
                 if success:
                     self.document_attrs = attrs
                 break
             if err:
                 log.error(err)
-            options.pop(NSCharacterEncodingDocumentAttribute, None)
+            options.pop(ak.NSCharacterEncodingDocumentAttribute, None)
         return success, err
 
     def dataOfType_error_(self, doctype, error):
-        range = NSMakeRange(0, self.text_storage.length())
+        range = fn.NSMakeRange(0, self.text_storage.length())
         attrs = self.document_attrs
         data, err = self.text_storage \
             .dataFromRange_documentAttributes_error_(range, attrs, None)
@@ -603,7 +603,7 @@ class TextDocument(NSDocument):
         url = self.fileURL()
         if url is not None and os.path.exists(url.path()):
             ok, mdate, err = url.getResourceValue_forKey_error_(
-                None, NSURLContentModificationDateKey, None)
+                None, fn.NSURLContentModificationDateKey, None)
             if ok:
                 return self.fileModificationDate() != mdate
         return None
@@ -619,7 +619,7 @@ class TextDocument(NSDocument):
                 return
             self._filestat = stat
             def callback(code):
-                if code == NSAlertFirstButtonReturn:
+                if code == ak.NSAlertFirstButtonReturn:
                     self.reload_document()
             alert = Alert.alloc().init()
             alert.setMessageText_("“%s” source document changed" % self.displayName())
@@ -644,7 +644,7 @@ class TextDocument(NSDocument):
         undo = self.undoManager()
         undo.should_remove = False
         textstore = self.text_storage
-        self.text_storage = NSTextStorage.alloc().init()
+        self.text_storage = ak.NSTextStorage.alloc().init()
         try:
             ok, err = self.revertToContentsOfURL_ofType_error_(
                 url, self.fileType(), None)
@@ -661,7 +661,7 @@ class TextDocument(NSDocument):
             if textview is not None:
                 break
         text = tempstore.string()
-        range = NSRange(0, textstore.length())
+        range = fn.NSRange(0, textstore.length())
         if textview is None:
             textstore.replaceCharactersInRange_withString_(range, text)
             undo.removeAllActions()
@@ -674,7 +674,7 @@ class TextDocument(NSDocument):
             # HACK use timed invocation to allow didChangeText notification
             # to update change count before _clearUndo is invoked
             self.performSelector_withObject_afterDelay_("_clearChanges", self, 0)
-            textview.setSelectedRange_(NSRange(0, 0))
+            textview.setSelectedRange_(fn.NSRange(0, 0))
             self.update_syntaxer()
 
     @untested
@@ -705,7 +705,7 @@ class TextDocument(NSDocument):
         return True
 
     def _clearChanges(self):
-        self.updateChangeCount_(NSChangeCleared)
+        self.updateChangeCount_(ak.NSChangeCleared)
 
     def icon(self):
         url = self.fileURL()

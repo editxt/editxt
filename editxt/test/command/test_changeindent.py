@@ -24,8 +24,6 @@ import os
 from contextlib import closing
 from tempfile import gettempdir
 
-from AppKit import *
-from Foundation import *
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state

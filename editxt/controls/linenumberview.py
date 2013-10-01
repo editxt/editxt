@@ -21,8 +21,8 @@ import logging
 import re
 
 import objc
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 from editxt import app
 from editxt.util import untested
@@ -30,15 +30,15 @@ from editxt.util import untested
 log = logging.getLogger(__name__)
 
 
-class LineNumberView(NSRulerView):
+class LineNumberView(ak.NSRulerView):
 
     def initWithScrollView_orientation_(self, scrollview, orientation):
         super(LineNumberView, self).initWithScrollView_orientation_(scrollview, orientation)
         self.textview = scrollview.documentView()
         self.lines = []
-        self.paragraph_style = ps = NSParagraphStyle.defaultParagraphStyle().mutableCopy()
+        self.paragraph_style = ps = ak.NSParagraphStyle.defaultParagraphStyle().mutableCopy()
         self.paragraphStyle = ps
-        ps.setAlignment_(NSRightTextAlignment)
+        ps.setAlignment_(ak.NSRightTextAlignment)
         self.line_count = 1
 
         # [[NSNotificationCenter defaultCenter]
@@ -48,13 +48,13 @@ class LineNumberView(NSRulerView):
         #     object:[(NSTextView *)aView textStorage]];
 
         # subscribe to text edit notifications
-        NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
-            self, "invalidateRuleThickness", NSTextDidChangeNotification,
+        fn.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
+            self, "invalidateRuleThickness", ak.NSTextDidChangeNotification,
             self.textview)
         return self
 
     def denotify(self):
-        NSNotificationCenter.defaultCenter().removeObserver_(self)
+        fn.NSNotificationCenter.defaultCenter().removeObserver_(self)
 
     # Line Counting ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -127,15 +127,15 @@ class LineNumberView(NSRulerView):
         lineHeight = tv.layoutManager().defaultLineHeightForFont_(font)
         offset = (tv.textContainerInset().height - 1) \
             - self.scrollView().documentVisibleRect().origin.y
-        top = NSMakePoint(0, rect.origin.y - offset)
-        bot = NSMakePoint(0, rect.origin.y - offset + rect.size.height)
+        top = fn.NSMakePoint(0, rect.origin.y - offset)
+        bot = fn.NSMakePoint(0, rect.origin.y - offset + rect.size.height)
         topGlyph = lm.glyphIndexForPoint_inTextContainer_(top, tv.textContainer())
         botGlyph = lm.glyphIndexForPoint_inTextContainer_(bot, tv.textContainer())
         drawWidth = self.baselineLocation() + self.requiredThickness() - (lineHeight / 2)
-        drawRect = NSMakeRect(0, 0, drawWidth, lineHeight)
+        drawRect = fn.NSMakeRect(0, 0, drawWidth, lineHeight)
         attr = {
-            NSFontAttributeName: font,
-            NSParagraphStyleAttributeName: self.paragraphStyle,
+            ak.NSFontAttributeName: font,
+            ak.NSParagraphStyleAttributeName: self.paragraphStyle,
         }
         i = topGlyph
         line = max(0, int(top.y)) / int(lineHeight) + 1
@@ -143,7 +143,7 @@ class LineNumberView(NSRulerView):
 
         while i <= botGlyph:
             lrect, range = lm.lineFragmentRectForGlyphAtIndex_effectiveRange_(i, None)
-            text = NSString.stringWithString_(str(line))
+            text = fn.NSString.stringWithString_(str(line))
             drawRect.origin.y = lrect.origin.y + offset
             text.drawInRect_withAttributes_(drawRect, attr)
             line += 1
@@ -151,7 +151,7 @@ class LineNumberView(NSRulerView):
         last = tv.textStorage().length() - 1
         if i >= last and tv.string()[last] in "\n\r":
             # draw last line number when the last character is newline
-            text = NSString.stringWithString_(str(line))
+            text = fn.NSString.stringWithString_(str(line))
             drawRect.origin.y = lrect.origin.y + offset + lineHeight
             text.drawInRect_withAttributes_(drawRect, attr)
             self.update_line_count(line + 1)

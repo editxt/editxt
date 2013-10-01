@@ -23,8 +23,8 @@ import re
 from contextlib import closing
 from tempfile import gettempdir
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state
@@ -116,8 +116,8 @@ def test_sortlines():
             for abbr, opt in optmap if abbr in c.opts})
         m = Mocker()
         tv = m.mock(TextView)
-        ts = tv.textStorage() >> m.mock(NSTextStorage)
-        text = tv.string() >> NSString.stringWithString_(c.text)
+        ts = tv.textStorage() >> m.mock(ak.NSTextStorage)
+        text = tv.string() >> fn.NSString.stringWithString_(c.text)
         if opts.selection:
             sel = tv.selectedRange() >> c.sel
             sel = text.lineRangeForRange_(sel)
@@ -162,7 +162,7 @@ def sort_result(value):
 
 class FakeTextView(object):
 
-    def __init__(self, text, sel=NSMakeRange(0, 0)):
+    def __init__(self, text, sel=fn.NSMakeRange(0, 0)):
         self.text = text
         self.sel = sel
 
@@ -173,7 +173,7 @@ class FakeTextView(object):
         self.sel = sel
 
     def string(self):
-        return NSString.alloc().initWithString_(self.text)
+        return fn.NSString.alloc().initWithString_(self.text)
 
     def shouldChangeTextInRange_replacementString_(self, rng, str):
         return True

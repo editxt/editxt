@@ -21,8 +21,8 @@ import logging
 import os
 
 from tempfile import gettempdir
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import *
@@ -110,12 +110,12 @@ def test_application_will_finish_launching():
         app = Application()
         m = Mocker()
         create_editor = m.method(app.create_editor)
-        nsapp = m.mock(NSApplication)
+        nsapp = m.mock(ak.NSApplication)
         ud_class = m.replace(mod, 'NSUserDefaults')
         m.method(app.iter_saved_editor_states)() >> iter(eds_config)
         tc = m.replace(app, 'text_commander', spec=TextCommandController)
         dc = m.mock(DocumentController)
-        menu = dc.textMenu >> m.mock(NSMenu)
+        menu = dc.textMenu >> m.mock(ak.NSMenu)
         m.method(app.init_syntax_definitions)()
         tc.load_commands(menu)
         if eds_config:
@@ -483,7 +483,7 @@ def test_iter_editors():
         z_windows = []
         for item in config:
             if item is None:
-                wc = m.mock(NSWindowController)
+                wc = m.mock(ak.NSWindowController)
             else:
                 wc = m.mock(EditorWindowController)
                 ed = m.mock(Editor)
@@ -494,7 +494,7 @@ def test_iter_editors():
                 else:
                     wc.editor >> ed
                 eds[item] = ed
-            win = m.mock(NSWindow)
+            win = m.mock(ak.NSWindow)
             win.windowController() >> wc
             z_windows.append(win)
         for x in range(unordered):
@@ -815,7 +815,7 @@ def test_get_document_controller():
     assert isinstance(dc, DocumentController)
 
 def test_document_controller_has_app_controller():
-    dc = NSDocumentController.sharedDocumentController()
+    dc = ak.NSDocumentController.sharedDocumentController()
     assert dc.controller is not None
 
 def test_applicationShouldOpenUntitledFile_():
@@ -826,17 +826,17 @@ def test_applicationWillFinishLaunching_():
     dc = DocumentController.sharedDocumentController()
     m = Mocker()
     app = m.replace(editxt, 'app')
-    nsapp = m.mock(NSApplication)
+    nsapp = m.mock(ak.NSApplication)
     app.application_will_finish_launching(nsapp, dc)
     with m:
         dc.applicationWillFinishLaunching_(nsapp)
 
 def test_applicationWillTerminate():
-    dc = NSDocumentController.sharedDocumentController()
+    dc = ak.NSDocumentController.sharedDocumentController()
     m = Mocker()
     app = m.replace(editxt, 'app')
-    notif = m.mock() # NSApplicationWillTerminateNotification
-    nsapp = m.mock(NSApplication)
+    notif = m.mock() # ak.NSApplicationWillTerminateNotification
+    nsapp = m.mock(ak.NSApplication)
     app.app_will_terminate(notif.object() >> nsapp)
     with m:
         dc.applicationWillTerminate_(notif)
@@ -844,7 +844,7 @@ def test_applicationWillTerminate():
 def test_closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_():
     import editxt.util as util
     context = 42
-    dc = NSDocumentController.sharedDocumentController()
+    dc = ak.NSDocumentController.sharedDocumentController()
     m = Mocker()
     app = m.replace(editxt, 'app')
     def perf_sel(delegate, selector, *args):
@@ -934,7 +934,7 @@ def test_save_next_document():
                 win = m.mock()
                 doc.window() >> win
                 note_ctr.defaultCenter().addObserver_selector_name_object_(
-                    saver, "windowDidEndSheet:", NSWindowDidEndSheetNotification, win)
+                    saver, "windowDidEndSheet:", ak.NSWindowDidEndSheetNotification, win)
                 document = doc.document >> m.mock(TextDocument)
                 wcs = m.mock(list)
                 (document.windowControllers() << wcs).count(1, 2)
@@ -992,12 +992,12 @@ def test_windowDidEndSheet_():
         m = Mocker()
         saver = DocumentSavingDelegate.alloc().init_callback_(m.mock(), m.mock())
         saver.document_called_back = called_back
-        notif = m.mock(NSNotification)
-        win = m.mock(NSWindow)
+        notif = m.mock(fn.NSNotification)
+        win = m.mock(ak.NSWindow)
         notif.object() >> win
         note_ctr = m.replace(mod, 'NSNotificationCenter')
         note_ctr.defaultCenter().removeObserver_name_object_(
-            saver, NSWindowDidEndSheetNotification, win)
+            saver, ak.NSWindowDidEndSheetNotification, win)
         save_next_document = m.method(saver.save_next_document)
         if called_back:
             save_next_document()
@@ -1017,12 +1017,12 @@ def test_OpenPathController_init():
 def test_OpenPathController_windowDidLoad():
     m = Mocker()
     opc = OpenPathController.alloc().init()
-    tv = m.property(opc, "paths").value >> m.mock(NSTextView)
-    tc = tv.textContainer() >> m.mock(NSTextContainer)
-    tc.setContainerSize_(NSMakeSize(const.LARGE_NUMBER_FOR_TEXT, const.LARGE_NUMBER_FOR_TEXT))
+    tv = m.property(opc, "paths").value >> m.mock(ak.NSTextView)
+    tc = tv.textContainer() >> m.mock(ak.NSTextContainer)
+    tc.setContainerSize_(fn.NSMakeSize(const.LARGE_NUMBER_FOR_TEXT, const.LARGE_NUMBER_FOR_TEXT))
     tc.setWidthTracksTextView_(False)
     tv.setHorizontallyResizable_(True)
-    tv.setAutoresizingMask_(NSViewNotSizable)
+    tv.setAutoresizingMask_(ak.NSViewNotSizable)
     tv.setFieldEditor_(True)
     tv.setFont_(ANY)
     with m:
@@ -1033,9 +1033,9 @@ def test_OpenPathController_populateWithClipboard():
     def test(c):
         m = Mocker()
         opc = OpenPathController.alloc().init()
-        paths = m.property(opc, "paths").value >> m.mock(NSTextView)
+        paths = m.property(opc, "paths").value >> m.mock(ak.NSTextView)
         with m.order():
-            ts = paths.textStorage() >> m.mock(NSTextStorage)
+            ts = paths.textStorage() >> m.mock(ak.NSTextStorage)
             #ts.deleteCharactersInRange_((0, ts.string().length() >> c.len0))
             paths.setSelectedRange_((0, ts.string().length() >> c.len0))
             paths.pasteAsPlainText_(opc)
@@ -1051,10 +1051,10 @@ def test_OpenPathController_textView_doCommandBySelector_():
         m = Mocker()
         nsapp = m.replace(mod, 'NSApp', spec=False)
         opc = OpenPathController.alloc().init()
-        tv = m.mock(NSTextView)
+        tv = m.mock(ak.NSTextView)
         if c.sel == "insertNewline:":
             nsapp().currentEvent().modifierFlags() >> c.mod
-            if c.mod & NSCommandKeyMask or c.mod & NSShiftKeyMask:
+            if c.mod & ak.NSCommandKeyMask or c.mod & ak.NSShiftKeyMask:
                 tv.insertNewlineIgnoringFieldEditor_(opc)
             else:
                 m.method(opc.open_)(opc)
@@ -1064,9 +1064,9 @@ def test_OpenPathController_textView_doCommandBySelector_():
             eq_(opc.textView_doCommandBySelector_(tv, c.sel), c.res)
     c = TestConfig(sel="insertNewline:", mod=0, res=False)
     yield test, c
-    yield test, c(mod=NSCommandKeyMask, res=True)
-    yield test, c(mod=NSShiftKeyMask, res=True)
-    yield test, c(mod=NSAlternateKeyMask, res=False)
+    yield test, c(mod=ak.NSCommandKeyMask, res=True)
+    yield test, c(mod=ak.NSShiftKeyMask, res=True)
+    yield test, c(mod=ak.NSAlternateKeyMask, res=False)
     yield test, c(sel="<otherSelector>")
 
 def test_OpenPathController_open_():
@@ -1075,10 +1075,10 @@ def test_OpenPathController_open_():
         m = Mocker()
         app = m.replace(editxt, 'app')
         opc = OpenPathController.alloc().init()
-        paths = m.property(opc, "paths").value >> m.mock(NSTextView)
+        paths = m.property(opc, "paths").value >> m.mock(ak.NSTextView)
         paths.textStorage().string() >> c.text
         app.open_documents_with_paths(c.paths)
-        (m.method(opc.window)() >> m.mock(NSWindow)).orderOut_(opc)
+        (m.method(opc.window)() >> m.mock(ak.NSWindow)).orderOut_(opc)
         with m:
             opc.open_(None)
     c = TestConfig()

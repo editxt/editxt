@@ -21,8 +21,8 @@ import logging
 import re
 
 import objc
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 from editxt import app
 from editxt.command.find import FindController
@@ -30,7 +30,7 @@ from editxt.command.find import FindController
 log = logging.getLogger(__name__)
 
 
-class TextView(NSTextView):
+class TextView(ak.NSTextView):
 
     doc_view = objc.ivar("doc_view")
 
@@ -53,7 +53,7 @@ class TextView(NSTextView):
             self.setSelectedRange_(range)
             self.scrollRangeToVisible_(range)
         else:
-            NSBeep()
+            ak.NSBeep()
 
     # Find panel amd text command interaction ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -99,7 +99,7 @@ class TextView(NSTextView):
         if not nchars:
             self._marginParams = None
             return
-        font = self.doc_view.document.default_text_attributes()[NSFontAttributeName]
+        font = self.doc_view.document.default_text_attributes()[ak.NSFontAttributeName]
         charw = font.advancementForGlyph_(ord(" ")).width
         padding = self.textContainer().lineFragmentPadding()
         color1 = app.config["right_margin.line_color"]
@@ -110,12 +110,12 @@ class TextView(NSTextView):
     def drawViewBackgroundInRect_(self, rect):
         if self.marginParams is not None:
             guideX, color1, color2 = self.marginParams
-            NSGraphicsContext.currentContext().saveGraphicsState()
+            ak.NSGraphicsContext.currentContext().saveGraphicsState()
             color1.set()
-            NSRectFill(NSMakeRect(guideX, rect.origin.y, 1, rect.size.height))
+            ak.NSRectFill(fn.NSMakeRect(guideX, rect.origin.y, 1, rect.size.height))
             color2.set()
-            NSRectFill(NSMakeRect(guideX + 1, rect.origin.y, 10**7, rect.size.height))
-            NSGraphicsContext.currentContext().restoreGraphicsState()
+            ak.NSRectFill(fn.NSMakeRect(guideX + 1, rect.origin.y, 10**7, rect.size.height))
+            ak.NSGraphicsContext.currentContext().restoreGraphicsState()
         super(TextView, self).drawViewBackgroundInRect_(rect)
 
     def setFrameSize_(self, size):
@@ -129,7 +129,7 @@ class TextView(NSTextView):
             extra_space = sv.contentSize().height * 0.75
             if text_height + extra_space > height:
                 height = text_height + extra_space
-        super(TextView, self).setFrameSize_(NSMakeSize(size.width, height))
+        super(TextView, self).setFrameSize_(fn.NSMakeSize(size.width, height))
 
     # Scrolling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

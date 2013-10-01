@@ -20,15 +20,15 @@
 import logging
 from math import ceil
 
-from objc import Category
-from AppKit import *
-from Foundation import *
+from objc import Category, IBOutlet
+import AppKit as ak
+import Foundation as fn
 
 log = logging.getLogger(__name__)
 
 ICON_PADDING = -23.0
 
-class ImageAndTextCell(NSTextFieldCell):
+class ImageAndTextCell(ak.NSTextFieldCell):
     """Image/text cell
 
     Adapted from DragNDropOutlineView example code
@@ -63,23 +63,23 @@ class ImageAndTextCell(NSTextFieldCell):
 
     def expansionFrameWithFrame_inView_(self, frame, view):
         """prevent tooltip (expansion frame) for elided text"""
-        return NSZeroRect
+        return fn.NSZeroRect
 
     def drawWithFrame_inView_(self, frame, view):
         if self._image is not None:
             isize = self._image.size()
-            iframe, frame = NSDivideRect(
-                frame, None, None, isize.width + ICON_PADDING, NSMinXEdge)
+            iframe, frame = fn.NSDivideRect(
+                frame, None, None, isize.width + ICON_PADDING, fn.NSMinXEdge)
             if self.drawsBackground():
                 self.backgroundColor().set()
-                NSRectFill(iframe)
+                ak.NSRectFill(iframe)
             iframe.origin.x += ICON_PADDING
             iframe.size = isize
             if view.isFlipped():
                 iframe.origin.y += ceil((frame.size.height + iframe.size.height) / 2)
             else:
                 iframe.origin.y += ceil((frame.size.height - iframe.size.height) / 2)
-            self._image.compositeToPoint_operation_(iframe.origin, NSCompositeSourceOver)
+            self._image.compositeToPoint_operation_(iframe.origin, ak.NSCompositeSourceOver)
         frame.origin.x += 3
         frame.size.width -= 3
         super(ImageAndTextCell, self).drawWithFrame_inView_(frame, view)
@@ -109,18 +109,18 @@ BUTTON_STATE_HOVER = "HOVER"
 BUTTON_STATE_NORMAL = "NORMAL"
 BUTTON_STATE_PRESSED = "PRESSED"
 
-class HoverButtonCell(NSButtonCell):
+class HoverButtonCell(ak.NSButtonCell):
     """Hover button cell
 
-    A single cell instance is used for an entire column in NSOutlineView.
+    A single cell instance is used for an entire column in ak.NSOutlineView.
     """
 
-    delegate = objc.IBOutlet()
+    delegate = IBOutlet()
 
     def _init(self):
         self.setBordered_(False)
-        self.setButtonType_(NSMomentaryChangeButton)
-        self.setImagePosition_(NSImageOnly)
+        self.setButtonType_(ak.NSMomentaryChangeButton)
+        self.setImagePosition_(ak.NSImageOnly)
         self.hover_info = (None, False) # (<mouse location>, <bool pressed>)
         self.maxImageWidth = 128
 
@@ -136,7 +136,7 @@ class HoverButtonCell(NSButtonCell):
 
     def buttonImageForFrame_inView_(self, frame, view):
         point, pressed = self.hover_info
-        if point is not None and NSPointInRect(point, frame):
+        if point is not None and fn.NSPointInRect(point, frame):
             if pressed:
                 state = BUTTON_STATE_PRESSED
             else:
@@ -163,8 +163,8 @@ class HoverButtonCell(NSButtonCell):
     def mouseUpAtPoint_invalidatesForFrame_(self, point, frame):
         #log.debug("up: %s", point)
         old_point = self.hover_info[0]
-        if old_point is not None and NSPointInRect(old_point, frame) \
-            and NSPointInRect(point, frame):
+        if old_point is not None and fn.NSPointInRect(old_point, frame) \
+            and fn.NSPointInRect(point, frame):
             row = self.controlView().rowAtPoint_(point)
             self.delegate.hoverButton_rowClicked_(self, row)
         self.hover_info = (point, False)
@@ -182,7 +182,7 @@ class HoverButtonCell(NSButtonCell):
         return True, False
 
     def buttonRectForFrame_imageSize_(self, frame, size):
-        dest = NSMakeRect(frame.origin.x, frame.origin.y, size.width, size.height)
+        dest = fn.NSMakeRect(frame.origin.x, frame.origin.y, size.width, size.height)
 
         # scale image to frame
         #if dest.size.height > frame.size.height:
@@ -227,15 +227,15 @@ class HoverButtonCell(NSButtonCell):
             # Decrease the cell width by the width of the image we drew and its left padding
             frame.size.width -= dest.size.width
 
-            NSGraphicsContext.currentContext().saveGraphicsState()
-            NSGraphicsContext.currentContext().setImageInterpolation_(NSImageInterpolationHigh)
+            ak.NSGraphicsContext.currentContext().saveGraphicsState()
+            ak.NSGraphicsContext.currentContext().setImageInterpolation_(ak.NSImageInterpolationHigh)
             image.drawInRect_fromRect_operation_fraction_(
-                NSMakeRect(dest.origin.x, dest.origin.y, dest.size.width, dest.size.height),
-                NSMakeRect(0.0, 0.0, image.size().width, image.size().height),
-                NSCompositeSourceOver,
+                fn.NSMakeRect(dest.origin.x, dest.origin.y, dest.size.width, dest.size.height),
+                fn.NSMakeRect(0.0, 0.0, image.size().width, image.size().height),
+                ak.NSCompositeSourceOver,
                 1.0,
             )
-            NSGraphicsContext.currentContext().restoreGraphicsState()
+            ak.NSGraphicsContext.currentContext().restoreGraphicsState()
 
         # draw the rest of the cell
         super(HoverButtonCell, self).drawInteriorWithFrame_inView_(frame, view)

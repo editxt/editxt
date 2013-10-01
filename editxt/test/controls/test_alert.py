@@ -22,8 +22,8 @@ import os
 
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 from editxt.controls.alert import Alert, Caller
 
@@ -38,7 +38,7 @@ def test_beginSheetModalForWindow_withCallback_():
     alert = Alert.alloc().init()
     beginSheet = m.method(alert.beginSheetModalForWindow_modalDelegate_didEndSelector_contextInfo_)
     callback = m.mock()
-    win = m.mock(NSWindow)
+    win = m.mock(ak.NSWindow)
     def do(win, dgt, sel, context):
         dgt.alertDidEnd_returnCode_contextInfo_(alert, 42, 0)
     expect(beginSheet(win, ANY, "alertDidEnd:returnCode:contextInfo:", 0)).call(do)

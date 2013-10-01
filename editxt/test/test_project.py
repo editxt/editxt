@@ -21,7 +21,7 @@ import logging
 import os
 from tempfile import gettempdir
 
-from AppKit import *
+import AppKit as ak
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import *
 
@@ -312,7 +312,7 @@ def test_create_document_view():
     m = Mocker()
     nsdc = m.replace(mod, 'NSDocumentController')
     append_document_view = m.method(proj.append_document_view)
-    dc = m.mock(NSDocumentController)
+    dc = m.mock(ak.NSDocumentController)
     doc = m.mock(TextDocument)
     dv_class = m.replace(mod, 'TextDocumentView')
     dv = m.mock(TextDocumentView)
@@ -463,8 +463,8 @@ def test_setDisplayName_():
 def test_set_main_view_of_window():
     proj = Project.create()
     m = Mocker()
-    view = m.mock(NSView)
-    win = m.mock(NSWindow)
+    view = m.mock(ak.NSView)
+    win = m.mock(ak.NSWindow)
     with m:
         proj.set_main_view_of_window(view, win) # for now this does nothing
 

@@ -24,8 +24,8 @@ import os
 from itertools import chain, repeat, count
 
 import objc
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 from PyObjCTools import AppHelper
 
 import editxt
@@ -67,11 +67,11 @@ class Application(object):
 
     @classmethod
     def name(cls):
-        return NSBundle.mainBundle().objectForInfoDictionaryKey_("CFBundleName")
+        return fn.NSBundle.mainBundle().objectForInfoDictionaryKey_("CFBundleName")
 
     @classmethod
     def resource_path(cls):
-        return NSBundle.mainBundle().resourcePath()
+        return fn.NSBundle.mainBundle().resourcePath()
 
     @classmethod
     def default_profile(cls):
@@ -254,7 +254,7 @@ class Application(object):
         front-most editor window"""
         from editxt.editor import EditorWindowController
         if app is None:
-            app = NSApp()
+            app = ak.NSApp()
         z_ordered_eds = set()
         for win in app.orderedWindows():
             wc = win.windowController()
@@ -311,13 +311,13 @@ class Application(object):
         def pythonify(value):
             if isinstance(value, (str, int, float, bool)):
                 return value
-            if isinstance(value, (dict, NSDictionary)):
+            if isinstance(value, (dict, fn.NSDictionary)):
                 return {k: pythonify(v) for k, v in value.items()}
-            if isinstance(value, (list, NSArray)):
+            if isinstance(value, (list, fn.NSArray)):
                 return [pythonify(v) for v in value]
             raise ValueError('unknown value type: {} {}'
                 .format(type(value), repr(value)))
-        defaults = NSUserDefaults.standardUserDefaults()
+        defaults = fn.NSUserDefaults.standardUserDefaults()
         serials = defaults.arrayForKey_(const.WINDOW_CONTROLLERS_DEFAULTS_KEY)
         settings = defaults.arrayForKey_(const.WINDOW_SETTINGS_DEFAULTS_KEY)
         serials = list(reversed(serials))
@@ -392,7 +392,7 @@ class Application(object):
         self.save_editor_states()
 
 
-class DocumentController(NSDocumentController):
+class DocumentController(ak.NSDocumentController):
 
     textMenu = objc.IBOutlet()
     textEditCommandsMenu = objc.IBOutlet()
@@ -466,7 +466,7 @@ class DocumentController(NSDocumentController):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Document saving helper
 
-class DocumentSavingDelegate(NSObject):
+class DocumentSavingDelegate(fn.NSObject):
     """Prompt to save each document by asking if it can be closed
 
     Any Projects will be saved by calling saveIfNecessary() rather than
@@ -512,8 +512,8 @@ class DocumentSavingDelegate(NSObject):
         if document.windowControllers()[0].window() != window:
             # HACK rearrange document window controllers to make the sheet appear on our window
             document.windowControllers().sort(key=lambda wc: -abs(wc.window() is window))
-        NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
-            self, "windowDidEndSheet:", NSWindowDidEndSheetNotification, window)
+        fn.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
+            self, "windowDidEndSheet:", ak.NSWindowDidEndSheetNotification, window)
         document.canCloseDocumentWithDelegate_shouldCloseSelector_contextInfo_(
             self, "document:shouldClose:contextInfo:", 0)
 
@@ -529,8 +529,8 @@ class DocumentSavingDelegate(NSObject):
     @objc.typedSelector(b'v@:@')
     def windowDidEndSheet_(self, notification):
         self.sheet_did_end = True
-        NSNotificationCenter.defaultCenter().removeObserver_name_object_(
-            self, NSWindowDidEndSheetNotification, notification.object())
+        fn.NSNotificationCenter.defaultCenter().removeObserver_name_object_(
+            self, ak.NSWindowDidEndSheetNotification, notification.object())
         if self.document_called_back:
             self.save_next_document()
 
@@ -553,7 +553,7 @@ class DocumentSavingDelegate(NSObject):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Open path controller
 
-class OpenPathController(NSWindowController):
+class OpenPathController(ak.NSWindowController):
 
     paths = objc.IBOutlet()
 
@@ -561,12 +561,12 @@ class OpenPathController(NSWindowController):
         LNFT = const.LARGE_NUMBER_FOR_TEXT
         tv = self.paths
         tc = tv.textContainer()
-        tc.setContainerSize_(NSMakeSize(LNFT, LNFT))
+        tc.setContainerSize_(fn.NSMakeSize(LNFT, LNFT))
         tc.setWidthTracksTextView_(False)
         tv.setHorizontallyResizable_(True)
-        tv.setAutoresizingMask_(NSViewNotSizable)
+        tv.setAutoresizingMask_(ak.NSViewNotSizable)
         tv.setFieldEditor_(True)
-        tv.setFont_(NSFont.fontWithName_size_("Monaco", 10.0))
+        tv.setFont_(ak.NSFont.fontWithName_size_("Monaco", 10.0))
 
     def populateWithClipboard(self):
         paths = self.paths
@@ -578,8 +578,8 @@ class OpenPathController(NSWindowController):
 
     def textView_doCommandBySelector_(self, view, selector):
         if selector == "insertNewline:":
-            mod = NSApp().currentEvent().modifierFlags()
-            if mod & NSCommandKeyMask or mod & NSShiftKeyMask:
+            mod = ak.NSApp().currentEvent().modifierFlags()
+            if mod & ak.NSCommandKeyMask or mod & ak.NSShiftKeyMask:
                 view.insertNewlineIgnoringFieldEditor_(self)
                 return True
             else:

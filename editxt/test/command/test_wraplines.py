@@ -22,8 +22,8 @@ import os
 from contextlib import closing
 from tempfile import gettempdir
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state
@@ -41,7 +41,7 @@ log = logging.getLogger(__name__)
 
 def test_wrap_to_margin_guide():
     m = Mocker()
-    tv = m.mock(NSTextView)
+    tv = m.mock(ak.NSTextView)
     wrap = m.replace(mod, 'wrap_selected_lines')
     wrap(tv, mod.Options(wrap_column=const.DEFAULT_RIGHT_MARGIN, indent=True))
     with m:
@@ -71,10 +71,10 @@ def test_wrap_selected_lines():
         m = Mocker()
         opts = "<options>"
         tv = m.mock(TextView)
-        ts = tv.textStorage() >> m.mock(NSTextStorage)
+        ts = tv.textStorage() >> m.mock(ak.NSTextStorage)
         wrap = m.replace(mod, 'wraplines')
         iterlines = m.replace("editxt.command.wraplines.iterlines")
-        text = tv.string() >> NSString.stringWithString_(c.text)
+        text = tv.string() >> fn.NSString.stringWithString_(c.text)
         sel = (0, len(text)) if c.sel is None else c.sel
         sel = text.lineRangeForRange_(tv.selectedRange() >> sel)
         eol = tv.doc_view.document.eol >> m.mock()
@@ -102,7 +102,7 @@ def test_wraplines():
         if c.ind:
             tv.doc_view.document.comment_token >> c.comment
         opts = TestConfig(wrap_column=c.wid, indent=c.ind)
-        text = NSString.stringWithString_(c.text)
+        text = fn.NSString.stringWithString_(c.text)
         sel = (0, len(c.text))
         with m:
             if c._get("debug", False):

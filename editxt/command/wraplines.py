@@ -23,8 +23,8 @@ import os
 import re
 import time
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 import editxt.constants as const
 from editxt.command.base import command, objc_delegate, SheetController
@@ -37,7 +37,7 @@ WHITESPACE = re.compile(r"[ \t]*")
 
 
 @command(name='wrap', title="Hard Wrap...",
-    hotkey=("\\", NSCommandKeyMask | NSShiftKeyMask),
+    hotkey=("\\", ak.NSCommandKeyMask | ak.NSShiftKeyMask),
     is_enabled=has_selection,
     arg_parser=CommandParser( # TODO test
         Int('wrap_column', default=const.DEFAULT_RIGHT_MARGIN),
@@ -52,7 +52,7 @@ def wrap_lines(textview, sender, args):
 
 
 @command(title="Hard Wrap At Margin",
-    hotkey=("\\", NSCommandKeyMask),
+    hotkey=("\\", ak.NSCommandKeyMask),
     arg_parser=CommandParser( # TODO test
         Choice(('indent', True), ('no-indent', False)), # TODO default to last used value
     ),

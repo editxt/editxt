@@ -20,8 +20,8 @@
 import logging
 from math import ceil
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 from objc import Category
 
 from editxt.controls.cells import HoverButtonCell
@@ -33,8 +33,8 @@ log = logging.getLogger(__name__)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # NSTreeControllers and NSOutlineView categories
 
-class NSTreeController(Category(NSTreeController)):
-    """Category to make NSTreeController more useable
+class NSTreeController(Category(ak.NSTreeController)):
+    """Category to make ak.NSTreeController more useable
 
     Based on extension by Wil Shipley
     http://www.wilshipley.com/blog/2006/04/pimp-my-code-part-10-whining-about.html
@@ -78,7 +78,7 @@ class NSTreeController(Category(NSTreeController)):
                     childsChildren = child.valueForKeyPath_(self.childrenKeyPath())
             if obj is child or childsChildren:
                 if basePath is None:
-                    path = NSIndexPath.indexPathWithIndex_(childIndex)
+                    path = fn.NSIndexPath.indexPathWithIndex_(childIndex)
                 else:
                     path = basePath.indexPathByAddingIndex_(childIndex)
                 if obj is child:
@@ -89,8 +89,8 @@ class NSTreeController(Category(NSTreeController)):
                         return path
         return None
 
-class NSOutlineView(Category(NSOutlineView)):
-    """Category to improve usability of NSOutlineView
+class NSOutlineView(Category(ak.NSOutlineView)):
+    """Category to improve usability of ak.NSOutlineView
 
     Originally based on extension by Wil Shipley
     http://www.wilshipley.com/blog/2006/04/pimp-my-code-part-10-whining-about.html
@@ -113,7 +113,7 @@ class NSOutlineView(Category(NSOutlineView)):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # HoverButtonCell-aware OutlineView
 
-class OutlineView(NSOutlineView):
+class OutlineView(ak.NSOutlineView):
 
     def initWithCoder_(self, coder):
         self = super(OutlineView, self).initWithCoder_(coder)
@@ -230,8 +230,8 @@ class OutlineView(NSOutlineView):
 
     def mouseDown_(self, event):
         cevent = event
-        emask = NSLeftMouseDraggedMask | NSLeftMouseUpMask
-        future = NSDate.distantFuture()
+        emask = ak.NSLeftMouseDraggedMask | ak.NSLeftMouseUpMask
+        future = fn.NSDate.distantFuture()
         while True:
             etype = cevent.type()
             point = self.convertPoint_fromView_(
@@ -255,15 +255,15 @@ class OutlineView(NSOutlineView):
 
             redraw = False
             finished = False
-            if etype == NSLeftMouseDown:
+            if etype == ak.NSLeftMouseDown:
                 finished, redraw = cell.trackMouseAtPoint_invalidatesForFrame_redraw_(
                     point, cellFrame, redraw)
                 finished = not finished
-            elif etype == NSLeftMouseDragged:
+            elif etype == ak.NSLeftMouseDragged:
                 finished, redraw = cell.continueTrackingMouseAtPoint_invalidatesForFrame_redraw_(
                     point, cellFrame, redraw)
                 finished = not finished
-            elif etype == NSLeftMouseUp:
+            elif etype == ak.NSLeftMouseUp:
                 redraw = cell.mouseUpAtPoint_invalidatesForFrame_(point, cellFrame)
                 finished = True
             else:
@@ -278,7 +278,7 @@ class OutlineView(NSOutlineView):
             if finished: break
 
             cevent = self.window().nextEventMatchingMask_untilDate_inMode_dequeue_(
-                emask, future, NSEventTrackingRunLoopMode, True)
+                emask, future, ak.NSEventTrackingRunLoopMode, True)
             if cevent is None:
                 break
 

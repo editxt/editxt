@@ -23,8 +23,8 @@ import os
 from collections import defaultdict
 
 import objc
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 from PyObjCTools import AppHelper
 
 import editxt
@@ -45,7 +45,7 @@ BUTTON_STATE_SELECTED = object()
 
 class Editor(object):
 
-    supported_drag_types = [const.DOC_ID_LIST_PBOARD_TYPE, NSFilenamesPboardType]
+    supported_drag_types = [const.DOC_ID_LIST_PBOARD_TYPE, ak.NSFilenamesPboardType]
     app = WeakProperty()
 
     def __init__(self, app, window_controller, state=None):
@@ -68,8 +68,8 @@ class Editor(object):
         wc.propsViewButton.setImage_(load_image(const.PROPS_DOWN_BUTTON_IMAGE))
         wc.propsViewButton.setAlternateImage_(load_image(const.PROPS_UP_BUTTON_IMAGE))
 
-        NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
-            wc, "windowDidBecomeKey:", NSWindowDidBecomeKeyNotification, wc.window())
+        fn.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
+            wc, "windowDidBecomeKey:", ak.NSWindowDidBecomeKeyNotification, wc.window())
         assert hasattr(EditorWindowController, "windowDidBecomeKey_")
 
         wc.cleanImages = {
@@ -262,7 +262,7 @@ class Editor(object):
     def toggle_properties_pane(self):
         tree_rect = self.wc.docsScrollview.frame()
         prop_rect = self.wc.propsView.frame()
-        if self.wc.propsViewButton.state() == NSOnState:
+        if self.wc.propsViewButton.state() == ak.NSOnState:
             # hide properties view
             tree_rect.size.height += prop_rect.size.height - 1.0
             tree_rect.origin.y = prop_rect.origin.y
@@ -275,18 +275,18 @@ class Editor(object):
             tree_rect.origin.y = prop_rect.origin.y + 115.0
             prop_rect.size.height = 116.0
             self.wc.propsView.setHidden_(False)
-        resize_tree = NSDictionary.dictionaryWithObjectsAndKeys_(
-            self.wc.docsScrollview, NSViewAnimationTargetKey,
-            NSValue.valueWithRect_(tree_rect), NSViewAnimationEndFrameKey,
+        resize_tree = fn.NSDictionary.dictionaryWithObjectsAndKeys_(
+            self.wc.docsScrollview, ak.NSViewAnimationTargetKey,
+            fn.NSValue.valueWithRect_(tree_rect), ak.NSViewAnimationEndFrameKey,
             None,
         )
-        resize_props = NSDictionary.dictionaryWithObjectsAndKeys_(
-            self.wc.propsView, NSViewAnimationTargetKey,
-            NSValue.valueWithRect_(prop_rect), NSViewAnimationEndFrameKey,
+        resize_props = fn.NSDictionary.dictionaryWithObjectsAndKeys_(
+            self.wc.propsView, ak.NSViewAnimationTargetKey,
+            fn.NSValue.valueWithRect_(prop_rect), ak.NSViewAnimationEndFrameKey,
             None,
         )
-        anims = NSArray.arrayWithObjects_(resize_tree, resize_props, None)
-        animation = NSViewAnimation.alloc().initWithViewAnimations_(anims)
+        anims = fn.NSArray.arrayWithObjects_(resize_tree, resize_props, None)
+        animation = ak.NSViewAnimation.alloc().initWithViewAnimations_(anims)
         #animation.setAnimationBlockingMode_(NSAnimationBlocking)
         animation.setDuration_(0.25)
         animation.startAnimation()
@@ -311,7 +311,7 @@ class Editor(object):
             path = docs_controller.selectionIndexPath()
             if path is not None:
                 index = path.indexAtPosition_(0)
-                path2 = NSIndexPath.indexPathWithIndex_(index)
+                path2 = fn.NSIndexPath.indexPathWithIndex_(index)
                 return docs_controller.objectAtArrangedIndexPath_(path2)
         if create:
             proj = Project.create()
@@ -388,7 +388,7 @@ class Editor(object):
         return dict(
             frame_string=str(self.wc.window().stringWithSavedFrame()),
             splitter_pos=self.wc.splitView.fixedSideThickness(),
-            properties_hidden=(self.wc.propsViewButton.state() == NSOnState),
+            properties_hidden=(self.wc.propsViewButton.state() == ak.NSOnState),
         )
     def _set_window_settings(self, settings):
         fs = settings.get("frame_string")
@@ -400,7 +400,7 @@ class Editor(object):
             self.wc.splitView.setFixedSideThickness_(sp)
         if settings.get("properties_hidden", False):
             # REFACTOR eliminate boilerplate here (similar to toggle_properties_pane)
-            self.wc.propsViewButton.setState_(NSOnState)
+            self.wc.propsViewButton.setState_(ak.NSOnState)
             tree_view = self.wc.docsScrollview
             prop_view = self.wc.propsView
             tree_rect = tree_view.frame()
@@ -432,8 +432,8 @@ class Editor(object):
         if t == const.DOC_ID_LIST_PBOARD_TYPE:
             items = self.iter_dropped_id_list(pb)
             return all(isinstance(item, Project) for item in items)
-        elif t == NSFilenamesPboardType:
-            paths = pb.propertyListForType_(NSFilenamesPboardType)
+        elif t == ak.NSFilenamesPboardType:
+            paths = pb.propertyListForType_(ak.NSFilenamesPboardType)
             return all(Project.is_project_path(path) for path in paths)
         return False
 
@@ -442,7 +442,7 @@ class Editor(object):
 
         :param outline_view: The OutlineView containing the items.
         :param items: A list of opaque outline view item objects.
-        :param pboard: NSPasteboard object.
+        :param pboard: ak.NSPasteboard object.
         :returns: True if items were written else False.
         """
         data = defaultdict(list)
@@ -451,7 +451,7 @@ class Editor(object):
             data[const.DOC_ID_LIST_PBOARD_TYPE].append(item.id)
             path = item.file_path
             if path is not None and os.path.exists(path):
-                data[NSFilenamesPboardType].append(path)
+                data[ak.NSFilenamesPboardType].append(path)
         if data:
             types = [t for t in self.supported_drag_types if t in data]
             pboard.declareTypes_owner_(types, None)
@@ -468,7 +468,7 @@ class Editor(object):
                     index = path.indexAtPosition_(0)
                     outline_view.setDropItem_dropChildIndex_(None, index)
                 else:
-                    return NSDragOperationNone
+                    return ak.NSDragOperationNone
             elif index < 0:
                 nprojs = len(self.projects)
                 outline_view.setDropItem_dropChildIndex_(None, nprojs)
@@ -482,21 +482,21 @@ class Editor(object):
                         # the following might be more correct, but is too confusing
                         outline_view.setDropItem_dropChildIndex_(item, len(obj.documents()))
                 else:
-                    return NSDragOperationNone # document view cannot have children
+                    return ak.NSDragOperationNone # document view cannot have children
             else:
                 if index < 0:
                     # drop on listview background
                     last_proj_index = len(self.projects) - 1
                     if last_proj_index > -1:
                         # we have at least one project
-                        path = NSIndexPath.indexPathWithIndex_(last_proj_index)
+                        path = fn.NSIndexPath.indexPathWithIndex_(last_proj_index)
                         node = self.wc.docsController.nodeAtArrangedIndexPath_(path)
                         proj = representedObject(node)
                         outline_view.setDropItem_dropChildIndex_(node, len(proj.documents()))
                     else:
                         outline_view.setDropItem_dropChildIndex_(None, -1)
                 elif index == 0:
-                    return NSDragOperationNone # prevent drop above top project
+                    return ak.NSDragOperationNone # prevent drop above top project
         # src = info.draggingSource()
         # if src is not None:
         #   # internal drag
@@ -506,7 +506,7 @@ class Editor(object):
         #           delegate is not self.wc:
         #           # drag from some other window controller
         #           # allow copy (may need to override outline_view.ignoreModifierKeysWhileDragging)
-        return NSDragOperationGeneric
+        return ak.NSDragOperationGeneric
 
     def accept_drop(self, outline_view, info, item, index):
         """Accept drop operation
@@ -524,7 +524,7 @@ class Editor(object):
         if t == const.DOC_ID_LIST_PBOARD_TYPE:
             items = self.iter_dropped_id_list(pb)
             action = const.MOVE
-        elif t == NSFilenamesPboardType:
+        elif t == ak.NSFilenamesPboardType:
             items = self.iter_dropped_paths(pb)
         else:
             assert t is None, t
@@ -544,9 +544,9 @@ class Editor(object):
 
     def iter_dropped_paths(self, pasteboard):
         from editxt.document import TextDocument
-        if not pasteboard.types().containsObject_(NSFilenamesPboardType):
+        if not pasteboard.types().containsObject_(ak.NSFilenamesPboardType):
             raise StopIteration()
-        for path in pasteboard.propertyListForType_(NSFilenamesPboardType):
+        for path in pasteboard.propertyListForType_(ak.NSFilenamesPboardType):
             if Project.is_project_path(path):
                 proj = self.app.find_project_with_path(path)
                 if proj is None:
@@ -649,11 +649,11 @@ class Editor(object):
     def undo_manager(self):
         doc = self.wc.document()
         if doc is None:
-            return NSUndoManager.alloc().init()
+            return fn.NSUndoManager.alloc().init()
         return doc.undoManager()
 
 
-class EditorWindowController(NSWindowController):
+class EditorWindowController(ak.NSWindowController):
 
     docsController = objc.IBOutlet()
     docsScrollview = objc.IBOutlet()
@@ -674,7 +674,7 @@ class EditorWindowController(NSWindowController):
         self.editor.window_did_load()
 
     def characterEncodings(self):
-        return NSValueTransformer.valueTransformerForName_("CharacterEncodingTransformer").names
+        return fn.NSValueTransformer.valueTransformerForName_("CharacterEncodingTransformer").names
         #return const.CHARACTER_ENCODINGS
 
     def setCharacterEncodings_(self, value):

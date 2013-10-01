@@ -23,8 +23,8 @@ from os.path import join
 
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_, assert_raises
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 from editxt.test.util import TestConfig, tempdir
 
 import editxt.constants as const
@@ -384,7 +384,7 @@ def test_CommandBar_message():
         format_exc = m.replace(mod.traceback, "format_exception")
         bar = mod.CommandBar(editor, commander)
         view = editor.current_view >> m.mock(TextDocumentView)
-        tv = view.text_view >> m.mock(NSTextView)
+        tv = view.text_view >> m.mock(ak.NSTextView)
         cmd = view.scroll_view.commandView >> m.mock(CommandView)
         kw = {}
         if c.exc_info is not None:
@@ -419,7 +419,7 @@ def test_CommandBar_reset():
 
 def test_TextCommandController_init():
     m = Mocker()
-    menu = m.mock(NSMenu)
+    menu = m.mock(ak.NSMenu)
     with m:
         ctl = TextCommandController("<history>")
         eq_(ctl.history, "<history>")
@@ -431,7 +431,7 @@ def test_TextCommandController_init():
 def test_TextCommandController_lookup():
     def test(c):
         m = Mocker()
-        menu = m.mock(NSMenu)
+        menu = m.mock(ak.NSMenu)
         ctl = TextCommandController("<history>")
         for command in c.commands:
             ctl.add_command(command, None, menu)
@@ -455,7 +455,7 @@ def test_TextCommandController_lookup():
 def test_TextCommandController_lookup_full_command():
     def test(c):
         m = Mocker()
-        menu = m.mock(NSMenu)
+        menu = m.mock(ak.NSMenu)
         ctl = TextCommandController("<history>")
         for command in c.commands:
             ctl.add_command(command, None, menu)
@@ -478,7 +478,7 @@ def test_TextCommandController_lookup_full_command():
 def test_TextCommandController_load_commands():
     def test(c):
         m = Mocker()
-        menu = m.mock(NSMenu)
+        menu = m.mock(ak.NSMenu)
         ctl = TextCommandController("<history>")
         handlers = ctl.input_handlers = m.mock(dict)
         add = m.method(ctl.add_command)
@@ -502,7 +502,7 @@ def test_TextCommandController_load_commands():
 def test_TextCommandController_add_command():
     def test(c):
         m = Mocker()
-        menu = m.mock(NSMenu)
+        menu = m.mock(ak.NSMenu)
         mi_class = m.replace(mod, 'NSMenuItem')
         ctl = TextCommandController("<history>")
         handlers = m.replace(ctl, 'input_handlers')
@@ -512,7 +512,7 @@ def test_TextCommandController_add_command():
         cmd.lookup_with_arg_parser >> False
         tag = cmd._TextCommandController__tag = next(ctl.tagger) + 1
         validate(cmd.hotkey >> "<hotkey>") >> ("<hotkey>", "<keymask>")
-        mi = mi_class.alloc() >> m.mock(NSMenuItem)
+        mi = mi_class.alloc() >> m.mock(ak.NSMenuItem)
         (cmd.title << "<title>").count(2)
         mi.initWithTitle_action_keyEquivalent_(
             '<title>', "performTextCommand:" ,"<hotkey>") >> mi
@@ -536,8 +536,8 @@ def test_TextCommandController_is_textview_command_enabled():
     def test(c):
         m = Mocker()
         lg = m.replace("editxt.textcommand.log")
-        mi = m.mock(NSMenuItem)
-        tv = m.mock(NSTextView)
+        mi = m.mock(ak.NSMenuItem)
+        tv = m.mock(ak.NSTextView)
         tc = m.mock()
         tcc = TextCommandController("<history>")
         cmds = m.replace(tcc, 'commands')
@@ -561,8 +561,8 @@ def test_TextCommandController_do_textview_command():
     def test(c):
         m = Mocker()
         lg = m.replace("editxt.textcommand.log")
-        mi = m.mock(NSMenuItem)
-        tv = m.mock(NSTextView)
+        mi = m.mock(ak.NSMenuItem)
+        tv = m.mock(ak.NSTextView)
         tc = m.mock()
         tcc = TextCommandController("<history>")
         cmds = m.replace(tcc, 'commands')
@@ -583,7 +583,7 @@ def test_TextCommandController_do_textview_command_by_selector():
     def test(c):
         m = Mocker()
         lg = m.replace("editxt.textcommand.log")
-        tv = m.mock(NSTextView)
+        tv = m.mock(ak.NSTextView)
         tcc = TextCommandController("<history>")
         sel = "<selector>"
         callback = m.mock()

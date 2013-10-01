@@ -22,8 +22,8 @@ import os
 from contextlib import closing
 from tempfile import gettempdir
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import TestConfig, untested, check_app_state
@@ -47,7 +47,7 @@ log = logging.getLogger(__name__)
 
 def test_ErrorLog_init():
     el = ErrorLog()
-    assert isinstance(el.text, NSTextStorage), repr(el.text)
+    assert isinstance(el.text, ak.NSTextStorage), repr(el.text)
     eq_(el._document, None)
 
 def test_ErrorLog_document():
@@ -76,13 +76,13 @@ def test_ErrorLog_write():
         m = Mocker()
         value = "some text"
         el = ErrorLog()
-        el.text = ts = m.mock(NSTextStorage)
+        el.text = ts = m.mock(ak.NSTextStorage)
         ts.length() >> 42
-        range = NSRange(42, 0)
+        range = fn.NSRange(42, 0)
         ts.replaceCharactersInRange_withString_(range, value)
         if c.has_doc:
             el._document = doc = m.mock(TextDocument)
-            doc.updateChangeCount_(NSChangeDone)
+            doc.updateChangeCount_(ak.NSChangeDone)
         with m:
             el.write(value)
     c = TestConfig(has_doc=False)

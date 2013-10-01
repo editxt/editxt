@@ -19,9 +19,6 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import os
 
-from AppKit import *
-from Foundation import NSRect
-
 from mocker import Mocker, expect, ANY
 from nose.tools import eq_
 from editxt.test.util import TestConfig

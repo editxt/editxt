@@ -20,8 +20,8 @@
 import logging
 import os
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 from mocker import Mocker, expect, ANY
 from nose.tools import *
 from editxt.test.util import TestConfig, untested
@@ -46,25 +46,25 @@ def create_lnv(textview=None, scrollview=None):
     if scrollview is None:
         scrollview = MockScrollView()
     lnv = mod.LineNumberView.alloc().initWithScrollView_orientation_(
-        scrollview, NSVerticalRuler)
+        scrollview, ak.NSVerticalRuler)
     if textview is not None:
         lnv.textview = textview
     return lnv
 
 def test_create():
     m = Mocker()
-    sv = m.mock(NSScrollView)
+    sv = m.mock(ak.NSScrollView)
     tv = m.mock(TextView)
     sv.documentView() >> tv
     not_class = m.replace(mod, 'NSNotificationCenter')
-    notifier = not_class.defaultCenter() >> m.mock(NSNotificationCenter)
+    notifier = not_class.defaultCenter() >> m.mock(fn.NSNotificationCenter)
     notifier.addObserver_selector_name_object_(ANY, "invalidateRuleThickness",
-        NSTextDidChangeNotification, tv)
+        ak.NSTextDidChangeNotification, tv)
     with m:
         lnv = create_lnv(scrollview=sv)
         eq_(lnv.lines, [])
         eq_(lnv.textview, tv)
-        eq_(lnv.paragraph_style.alignment(), NSRightTextAlignment)
+        eq_(lnv.paragraph_style.alignment(), ak.NSRightTextAlignment)
 
 def test_requiredThickness():
     m = Mocker()
@@ -81,8 +81,8 @@ def test_calculate_thickness():
         estimate_line_count = m.method(lnv.estimate_line_count)
         ruleThickness = m.method(lnv.ruleThickness)
         lines = []
-        font = None if c.font_is_none else m.mock(NSFont)
-        (tv.textStorage() >> m.mock(NSTextStorage)).font() >> font
+        font = None if c.font_is_none else m.mock(ak.NSFont)
+        (tv.textStorage() >> m.mock(ak.NSTextStorage)).font() >> font
         if c.font_is_none:
             ruleThickness() >> c.result
         else:
@@ -104,12 +104,12 @@ def test_line_number_at_char_index():
         m = Mocker()
         tv = m.mock(TextView)
         lnv = create_lnv(tv)
-        font = None if c.font_is_none else m.mock(NSFont)
-        (tv.textStorage() >> m.mock(NSTextStorage)).font() >> font
+        font = None if c.font_is_none else m.mock(ak.NSFont)
+        (tv.textStorage() >> m.mock(ak.NSTextStorage)).font() >> font
         if not c.font_is_none:
-            rect = m.mock(NSRect)
-            rng = m.mock(NSRange)
-            lm = tv.layoutManager() >> m.mock(NSLayoutManager)
+            rect = m.mock(fn.NSRect)
+            rng = m.mock(fn.NSRange)
+            lm = tv.layoutManager() >> m.mock(ak.NSLayoutManager)
             lm.defaultLineHeightForFont_(font) >> 10
             lm.lineFragmentRectForGlyphAtIndex_effectiveRange_(c.index, None) >> (rect, rng)
             rect.origin.y >> (10 * c.index)

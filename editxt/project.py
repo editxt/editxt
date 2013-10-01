@@ -20,8 +20,8 @@
 import logging
 import os
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 import editxt.constants as const
 from editxt import app
@@ -32,7 +32,7 @@ from editxt.util import KVOList
 log = logging.getLogger(__name__)
 
 
-class Project(NSObject):
+class Project(fn.NSObject):
 
     id = None # will be overwritten (put here for type api compliance for testing)
 
@@ -90,10 +90,10 @@ class Project(NSObject):
     def deserialize(self, serial):
         if "path" in serial:
             self.path = serial["path"]
-            plistData = NSData.dataWithContentsOfFile_(self.path)
-            serial, format, error = NSPropertyListSerialization. \
+            plistData = fn.NSData.dataWithContentsOfFile_(self.path)
+            serial, format, error = fn.NSPropertyListSerialization. \
                 propertyListFromData_mutabilityOption_format_errorDescription_(
-                    plistData, NSPropertyListImmutable, None, None)
+                    plistData, fn.NSPropertyListImmutable, None, None)
         if serial:
             if "name" in serial:
                 self.name = serial["name"]
@@ -117,7 +117,7 @@ class Project(NSObject):
             self.reset_serial_cache()
 
     def save_with_path(self, path):
-        data = NSMutableDictionary.alloc().init()
+        data = fn.NSMutableDictionary.alloc().init()
         data.update(self.serialize_full())
         data.writeToFile_atomically_(path, True)
 
@@ -190,7 +190,7 @@ class Project(NSObject):
         return None
 
     def create_document_view(self):
-        dc = NSDocumentController.sharedDocumentController()
+        dc = ak.NSDocumentController.sharedDocumentController()
         doc, err = dc.makeUntitledDocumentOfType_error_(const.TEXT_DOCUMENT, None)
         if err:
             raise Exception(err)

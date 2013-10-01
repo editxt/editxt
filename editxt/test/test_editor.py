@@ -21,8 +21,8 @@ import logging
 import os
 from collections import defaultdict
 
-from AppKit import *
-from Foundation import NSRect
+import AppKit as ak
+from Foundation import fn.NSRect
 
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import *
@@ -95,10 +95,10 @@ def test_window_did_load():
         wc.propsViewButton.setImage_(load_image(const.PROPS_DOWN_BUTTON_IMAGE))
         wc.propsViewButton.setAlternateImage_(load_image(const.PROPS_UP_BUTTON_IMAGE))
 
-        win = ed.wc.window() >> m.mock(NSWindow)
+        win = ed.wc.window() >> m.mock(ak.NSWindow)
         note_ctr = m.replace(mod, 'NSNotificationCenter')
         note_ctr.defaultCenter().addObserver_selector_name_object_(
-            ed.wc, "windowDidBecomeKey:", NSWindowDidBecomeKeyNotification, win)
+            ed.wc, "windowDidBecomeKey:", ak.NSWindowDidBecomeKeyNotification, win)
 
         wc.cleanImages = {
             cells.BUTTON_STATE_HOVER: load_image(const.CLOSE_CLEAN_HOVER),
@@ -114,7 +114,7 @@ def test_window_did_load():
         }
 
         wc.docsView.registerForDraggedTypes_(
-            [const.DOC_ID_LIST_PBOARD_TYPE, NSFilenamesPboardType])
+            [const.DOC_ID_LIST_PBOARD_TYPE, ak.NSFilenamesPboardType])
 
         _setstate(state)
         if state:
@@ -304,9 +304,9 @@ def test_set_current_view():
         if c.view_is_current:
             ed._current_view = dv
         else:
-            ed._current_view = m.mock(NSView)
-            mv = wc.mainView >> m.mock(NSView)
-            sv = m.mock(NSView)
+            ed._current_view = m.mock(ak.NSView)
+            mv = wc.mainView >> m.mock(ak.NSView)
+            sv = m.mock(ak.NSView)
             (mv.subviews() << [sv]).count(1, 2)
             if c.view_class is not None:
                 if c.has_selection:
@@ -324,7 +324,7 @@ def test_set_current_view():
                 if not c.view_is_main:
                     sv.removeFromSuperview()
                     doc = dv.document >> m.mock(TextDocument)
-                    win = m.mock(NSWindow)
+                    win = m.mock(ak.NSWindow)
                     wc.window() >> win
                     with m.order():
                         doc.addWindowController_(wc)
@@ -415,11 +415,11 @@ def test_toggle_properties_pane():
         nsarr = m.replace(mod, 'NSArray')
         wc = m.mock(EditorWindowController)
         ed = Editor(editxt.app, wc)
-        tree_view = m.mock(NSScrollView); (wc.docsScrollview << tree_view).count(2)
-        prop_view = m.mock(NSView); (wc.propsView << prop_view).count(2, 3)
-        tree_rect = tree_view.frame() >> m.mock(NSRect)
-        prop_rect = prop_view.frame() >> m.mock(NSRect)
-        wc.propsViewButton.state() >> (NSOnState if c.is_on else NSOffState)
+        tree_view = m.mock(ak.NSScrollView); (wc.docsScrollview << tree_view).count(2)
+        prop_view = m.mock(ak.NSView); (wc.propsView << prop_view).count(2, 3)
+        tree_rect = tree_view.frame() >> m.mock(fn.NSRect)
+        prop_rect = prop_view.frame() >> m.mock(fn.NSRect)
+        wc.propsViewButton.state() >> (ak.NSOnState if c.is_on else ak.NSOffState)
         if c.is_on:
             prop_rect.size.height >> 10
             tree_rect.size.height = (tree_rect.size.height >> 20) + 9
@@ -436,17 +436,17 @@ def test_toggle_properties_pane():
             prop_rect.size.height = 116.0
             prop_view.setHidden_(False)
         resize_tree = nsdict.dictionaryWithObjectsAndKeys_(
-            tree_view, NSViewAnimationTargetKey,
-            (nsval.valueWithRect_(tree_rect) >> m.mock()), NSViewAnimationEndFrameKey,
+            tree_view, ak.NSViewAnimationTargetKey,
+            (nsval.valueWithRect_(tree_rect) >> m.mock()), ak.NSViewAnimationEndFrameKey,
             None,
-        ) >> m.mock(NSDictionary)
+        ) >> m.mock(fn.NSDictionary)
         resize_props = nsdict.dictionaryWithObjectsAndKeys_(
-            prop_view, NSViewAnimationTargetKey,
-            (nsval.valueWithRect_(prop_rect) >> m.mock()), NSViewAnimationEndFrameKey,
+            prop_view, ak.NSViewAnimationTargetKey,
+            (nsval.valueWithRect_(prop_rect) >> m.mock()), ak.NSViewAnimationEndFrameKey,
             None,
-        ) >> m.mock(NSDictionary)
-        anims = nsarr.arrayWithObjects_(resize_tree, resize_props, None) >> m.mock(NSArray)
-        anim = nsanim.alloc() >> m.mock(NSViewAnimation)
+        ) >> m.mock(fn.NSDictionary)
+        anims = nsarr.arrayWithObjects_(resize_tree, resize_props, None) >> m.mock(fn.NSArray)
+        anim = nsanim.alloc() >> m.mock(ak.NSViewAnimation)
         anim.initWithViewAnimations_(anims) >> anim
         anim.setDuration_(0.25)
         anim.startAnimation()
@@ -509,17 +509,17 @@ def test_get_current_project():
         proj = None
         m = Mocker()
         ed = Editor(editxt.app, m.mock(EditorWindowController))
-        tc = m.mock(NSTreeController)
+        tc = m.mock(ak.NSTreeController)
         ed.wc.docsController >> (tc if docsController_is_not_none else None)
         ip_class = m.replace(mod, 'NSIndexPath')
         proj_class = m.replace(mod, 'Project')
         if docsController_is_not_none:
-            path = m.mock(NSIndexPath)
+            path = m.mock(fn.NSIndexPath)
             tc.selectionIndexPath() >> (path if path_config is not None else None)
             if path_config is not None:
                 index = path_config[0]
                 path.indexAtPosition_(0) >> index
-                path2 = m.mock(NSIndexPath)
+                path2 = m.mock(fn.NSIndexPath)
                 ip_class.indexPathWithIndex_(index) >> path2
                 proj = m.mock(Project)
                 tc.objectAtArrangedIndexPath_(path2) >> proj
@@ -595,7 +595,7 @@ def test_item_changed():
     def test(c):
         m = Mocker()
         ed = Editor(editxt.app, m.mock(EditorWindowController))
-        vw = ed.wc.docsView >> (None if c.view_is_none else m.mock(NSOutlineView))
+        vw = ed.wc.docsView >> (None if c.view_is_none else m.mock(ak.NSOutlineView))
         item = None
         if not (c.view_is_none or c.item_is_none):
             objs = []
@@ -618,7 +618,7 @@ def test_item_changed():
             if found:
                 row, item = found
                 eq_(c.row, row)
-                vw.setNeedsDisplayInRect_(vw.rectOfRow_(row) >> m.mock(NSRect))
+                vw.setNeedsDisplayInRect_(vw.rectOfRow_(row) >> m.mock(fn.NSRect))
             else:
                 eq_(c.row, None)
                 item = m.mock(name="<unknown>")
@@ -636,7 +636,7 @@ def test_item_changed():
 def test_tool_tip_for_item():
     def test(doctype, null_path):
         m = Mocker()
-        view = m.mock(NSOutlineView)
+        view = m.mock(ak.NSOutlineView)
         if doctype is not None:
             tip = "test_tip"
             doc = m.mock(doctype)
@@ -658,7 +658,7 @@ def test_should_edit_item():
         m = Mocker()
         ed = Editor(editxt.app, None)
         item = m.mock()
-        col = m.mock(NSTableColumn)
+        col = m.mock(ak.NSTableColumn)
         if (col.isEditable() >> c.col_is_editable):
             obj = m.mock(Project if c.item_is_project else TextDocumentView)
             if c.item_is_project:
@@ -678,7 +678,7 @@ def test_close_button_clicked():
         m = Mocker()
         ed = Editor(editxt.app, m.mock(EditorWindowController))
         ed.recent = m.mock()
-        dv = ed.wc.docsView >> m.mock(NSOutlineView)
+        dv = ed.wc.docsView >> m.mock(ak.NSOutlineView)
         dv.numberOfRows() >> num_rows
         if row < num_rows:
             item = m.mock()
@@ -697,7 +697,7 @@ def test_window_did_become_key():
     def test(c):
         m = Mocker()
         ed = Editor(editxt.app, None)
-        win = m.mock(NSWindowController)
+        win = m.mock(ak.NSWindowController)
         cv = m.property(ed, "current_view")
         dv = cv.value >> (m.mock(c.view_type) if c.has_current else None)
         if c.has_current and c.view_type is TextDocumentView:
@@ -713,7 +713,7 @@ def test_window_should_close():
     import editxt.application
     def test(c):
         m = Mocker()
-        win = m.mock(NSWindow)
+        win = m.mock(ak.NSWindow)
         dsd_class = m.replace('editxt.application.DocumentSavingDelegate')
         editor = Editor(editxt.app, m.mock(EditorWindowController))
         app = m.replace(editor, 'app')
@@ -788,7 +788,7 @@ def test_get_window_settings():
         ed = Editor(editxt.app, m.mock(EditorWindowController))
         ed.wc.window().stringWithSavedFrame() >> settings["frame_string"]
         ed.wc.splitView.fixedSideThickness() >> settings["splitter_pos"]
-        ed.wc.propsViewButton.state() >> (NSOnState if c.props_hidden else NSOffState)
+        ed.wc.propsViewButton.state() >> (ak.NSOnState if c.props_hidden else ak.NSOffState)
         with m:
             result = ed.window_settings
             eq_(result, settings)
@@ -812,14 +812,14 @@ def test_set_window_settings():
     ed = Editor(editxt.app, m.mock(EditorWindowController))
     fs = "<test frame string>"
     sp = "<test splitter position>"
-    (ed.wc.window() >> m.mock(NSWindow)).setFrameFromString_(fs)
+    (ed.wc.window() >> m.mock(ak.NSWindow)).setFrameFromString_(fs)
     ed.wc.setShouldCascadeWindows_(False)
     (ed.wc.splitView >> m.mock(ThinSplitView)).setFixedSideThickness_(sp)
-    ed.wc.propsViewButton.setState_(NSOnState)
-    prop_view = ed.wc.propsView >> m.mock(NSView)
-    prop_rect = prop_view.frame() >> m.mock(NSRect)
-    tree_view = ed.wc.docsScrollview >> m.mock(NSScrollView)
-    tree_rect = tree_view.frame() >> m.mock(NSRect)
+    ed.wc.propsViewButton.setState_(ak.NSOnState)
+    prop_view = ed.wc.propsView >> m.mock(ak.NSView)
+    prop_rect = prop_view.frame() >> m.mock(fn.NSRect)
+    tree_view = ed.wc.docsScrollview >> m.mock(ak.NSScrollView)
+    tree_rect = tree_view.frame() >> m.mock(fn.NSRect)
     tree_rect.size.height = (tree_rect.size.height >> 50) + (prop_rect.size.height >> 50) - 1
     tree_rect.origin.y = prop_rect.origin.y >> 20
     tree_view.setFrame_(tree_rect)
@@ -860,11 +860,11 @@ def test_is_project_drag():
         m = Mocker()
         ed = Editor(editxt.app, None)
         ed.iter_dropped_id_list = m.method(ed.iter_dropped_id_list)
-        pb = m.mock(NSPasteboard)
+        pb = m.mock(ak.NSPasteboard)
         result_items = []
         info = m.mock() #NSDraggingInfo
         items = []
-        pb = info.draggingPasteboard() >> m.mock(NSPasteboard)
+        pb = info.draggingPasteboard() >> m.mock(ak.NSPasteboard)
         pb.availableTypeFromArray_(ed.supported_drag_types) >> c.accepted_type
         if c.accepted_type == const.DOC_ID_LIST_PBOARD_TYPE:
             ed.iter_dropped_id_list(pb) >> items
@@ -872,8 +872,8 @@ def test_is_project_drag():
                 p=(lambda:m.mock(Project)),
                 d=(lambda:m.mock(TextDocumentView)),
             )
-        elif c.accepted_type == NSFilenamesPboardType:
-            pb.propertyListForType_(NSFilenamesPboardType) >> items
+        elif c.accepted_type == ak.NSFilenamesPboardType:
+            pb.propertyListForType_(ak.NSFilenamesPboardType) >> items
             factories = dict(
                 p=(lambda:"/path/to/project." + const.PROJECT_EXT),
                 d=(lambda:"/path/to/document.txt"),
@@ -888,7 +888,7 @@ def test_is_project_drag():
             eq_(result, c.result)
     c = TestConfig(result=False)
     yield test, c(items="", accepted_type="unknown type")
-    for atype in (const.DOC_ID_LIST_PBOARD_TYPE, NSFilenamesPboardType):
+    for atype in (const.DOC_ID_LIST_PBOARD_TYPE, ak.NSFilenamesPboardType):
         for items in ("d", "p", "pdp", "ppp"):
             result = not items.replace("p", "")
             yield test, c(items=items, accepted_type=atype, result=result)
@@ -897,8 +897,8 @@ def test_write_items_to_pasteboard():
     def test(c):
         m = Mocker()
         ed = Editor(editxt.app, None)
-        ov = m.mock(NSOutlineView)
-        pb = m.mock(NSPasteboard)
+        ov = m.mock(ak.NSOutlineView)
+        pb = m.mock(ak.NSPasteboard)
         def path_exists(path):
             return True
         items = []
@@ -915,9 +915,9 @@ def test_write_items_to_pasteboard():
                 data[const.DOC_ID_LIST_PBOARD_TYPE].append(ident)
                 dragitem.file_path >> item.path
                 if item.path is not None:
-                    if NSFilenamesPboardType not in data:
-                        types.append(NSFilenamesPboardType)
-                    data[NSFilenamesPboardType].append(item.path)
+                    if ak.NSFilenamesPboardType not in data:
+                        types.append(ak.NSFilenamesPboardType)
+                    data[ak.NSFilenamesPboardType].append(item.path)
             if data:
                 pb.declareTypes_owner_(types, None)
                 for dtype, ddata in data.items():
@@ -938,7 +938,7 @@ def test_validate_drop():
     def test(config):
         m = Mocker()
         ed = Editor(editxt.app, m.mock(EditorWindowController))
-        ov = m.mock(NSOutlineView)
+        ov = m.mock(ak.NSOutlineView)
         # TODO investigate where NSDraggingInfo went during the upgrade to 10.5
         info = m.mock() #NSDraggingInfo)
         item = m.mock()
@@ -952,7 +952,7 @@ def test_validate_drop():
                 if config.path_is_none:
                     path = None
                 else:
-                    path = m.mock(NSIndexPath)
+                    path = m.mock(fn.NSIndexPath)
                     path.indexAtPosition_(0) >> config.path_index
                     ov.setDropItem_dropChildIndex_(None, config.path_index)
                 ed.wc.docsController.indexPathForObject_(obj) >> path
@@ -979,7 +979,7 @@ def test_validate_drop():
                 if config.index < 0:
                     ed.projects = ["<proj>"] * (config.last_proj_index + 1)
                     if config.last_proj_index > -1:
-                        path = NSIndexPath.indexPathWithIndex_(config.last_proj_index)
+                        path = fn.NSIndexPath.indexPathWithIndex_(config.last_proj_index)
                         proj = m.mock(Project)
                         node = m.mock()
                         ed.wc.docsController.nodeAtArrangedIndexPath_(path) >> node
@@ -991,22 +991,22 @@ def test_validate_drop():
         with m:
             result = ed.validate_drop(ov, info, item, index)
             eq_(result, config.result)
-    cfg = TestConfig(is_proj=True, item_is_none=False, result=NSDragOperationGeneric)
+    cfg = TestConfig(is_proj=True, item_is_none=False, result=ak.NSDragOperationGeneric)
     for i in (-1, 0, 1, 2):
         yield test, cfg(item_is_none=True, index=i, num_projs=2)
-    yield test, cfg(path_is_none=True, result=NSDragOperationNone)
+    yield test, cfg(path_is_none=True, result=ak.NSDragOperationNone)
     for p in (0, 1, 2):
         yield test, cfg(path_is_none=False, path_index=p)
     cfg = cfg(is_proj=False)
     for i in (-1, 0, 2):
         yield test, cfg(item_is_proj=True, index=i, proj_docs=2)
-    yield test, cfg(item_is_proj=False, result=NSDragOperationNone)
+    yield test, cfg(item_is_proj=False, result=ak.NSDragOperationNone)
     cfg = cfg(item_is_none=True)
     yield test, cfg(index=-1, last_proj_index=-1)
     yield test, cfg(index=-1, last_proj_index=0, proj_docs=0)
     yield test, cfg(index=-1, last_proj_index=0, proj_docs=2)
     yield test, cfg(index=-1, last_proj_index=2, proj_docs=2)
-    yield test, cfg(index=0, result=NSDragOperationNone)
+    yield test, cfg(index=0, result=ak.NSDragOperationNone)
     yield test, cfg(index=1)
     yield test, cfg(index=2)
 
@@ -1017,7 +1017,7 @@ def test_accept_drop():
         ed.accept_dropped_items = m.method(ed.accept_dropped_items)
         ed.iter_dropped_id_list = m.method(ed.iter_dropped_id_list)
         ed.iter_dropped_paths = m.method(ed.iter_dropped_paths)
-        ov = m.mock(NSOutlineView)
+        ov = m.mock(ak.NSOutlineView)
         # TODO investigate where NSDraggingInfo went during the upgrade to 10.5
         info = m.mock() #NSDraggingInfo
         item = None if c.item_is_none else m.mock()
@@ -1025,12 +1025,12 @@ def test_accept_drop():
         index = 0
         act = None
         items = m.mock()
-        pb = info.draggingPasteboard() >> m.mock(NSPasteboard)
+        pb = info.draggingPasteboard() >> m.mock(ak.NSPasteboard)
         pb.availableTypeFromArray_(ed.supported_drag_types) >> c.accepted_type
         if c.accepted_type == const.DOC_ID_LIST_PBOARD_TYPE:
             ed.iter_dropped_id_list(pb) >> items
             act = const.MOVE
-        elif c.accepted_type == NSFilenamesPboardType:
+        elif c.accepted_type == ak.NSFilenamesPboardType:
             ed.iter_dropped_paths(pb) >> items
         else:
             items = None
@@ -1044,8 +1044,8 @@ def test_accept_drop():
             eq_(result, c.result)
     c = TestConfig(result=True, item_is_none=False)
     yield test, c(accepted_type=const.DOC_ID_LIST_PBOARD_TYPE)
-    yield test, c(accepted_type=NSFilenamesPboardType)
-    yield test, c(accepted_type=NSFilenamesPboardType, item_is_none=True)
+    yield test, c(accepted_type=ak.NSFilenamesPboardType)
+    yield test, c(accepted_type=ak.NSFilenamesPboardType, item_is_none=True)
     yield test, c(accepted_type=None, result=False)
 
 def test_iter_dropped_id_list():
@@ -1053,7 +1053,7 @@ def test_iter_dropped_id_list():
         m = Mocker()
         ed = Editor(editxt.app, None)
         app = m.replace(ed, 'app')
-        pb = m.mock(NSPasteboard)
+        pb = m.mock(ak.NSPasteboard)
         result_items = []
         pb.types().containsObject_(const.DOC_ID_LIST_PBOARD_TYPE) >> c.has_ids
         if c.has_ids:
@@ -1086,17 +1086,17 @@ def test_iter_dropped_paths():
         app = m.replace(ed, 'app')
         doc_class = m.replace('editxt.document.TextDocument')
         create_with_path = m.method(Project.create_with_path)
-        pb = m.mock(NSPasteboard)
+        pb = m.mock(ak.NSPasteboard)
         dc = m.mock(DocumentController)
         result_items = []
         #item = None if c.item_is_none else m.mock()
-        pb.types().containsObject_(NSFilenamesPboardType) >> c.has_paths
+        pb.types().containsObject_(ak.NSFilenamesPboardType) >> c.has_paths
         if c.has_paths:
             #parent = None if c.item_is_none else m.mock(Project)
             #if not c.item_is_none:
             #    representedObject(item) >> parent
             paths = []
-            pb.propertyListForType_(NSFilenamesPboardType) >> paths
+            pb.propertyListForType_(ak.NSFilenamesPboardType) >> paths
             for it in c.paths:
                 paths.append(it.path)
                 if Project.is_project_path(it.path):
@@ -1171,7 +1171,7 @@ def test_accept_dropped_items():
                 pindex += 1
             else:
                 doc = TextDocument.alloc().init()
-                doc.setFileURL_(NSURL.fileURLWithPath_(char))
+                doc.setFileURL_(fn.NSURL.fileURLWithPath_(char))
                 item = TextDocumentView.create_with_document(doc)
                 project.append_document_view(item)
                 dindex += 1
@@ -1184,7 +1184,7 @@ def test_accept_dropped_items():
         for char in c.drop[0]:
             if char not in rmap and char not in '0123456789':
                 drop[char] = rmap[char] = TextDocument.alloc().init()
-                drop[char].setFileURL_(NSURL.fileURLWithPath_(char))
+                drop[char].setFileURL_(fn.NSURL.fileURLWithPath_(char))
         items = [drop[char] for char in c.drop[0]]
 
         act = None if len(c.drop) == 2 else \
@@ -1308,7 +1308,7 @@ def test_undo_manager():
         if not c.has_doc:
             doc = None
         else:
-            doc = m.mock(NSDocument)
+            doc = m.mock(ak.NSDocument)
             doc.undoManager() >> "<undo_manager>"
         wc.document() >> doc
         with m:
@@ -1316,7 +1316,7 @@ def test_undo_manager():
             if c.has_doc:
                 eq_(result, "<undo_manager>")
             else:
-                assert isinstance(result, NSUndoManager), result
+                assert isinstance(result, fn.NSUndoManager), result
     c = TestConfig(has_doc=True)
     yield test, c
     yield test, c(has_doc=False)
@@ -1371,7 +1371,7 @@ def test_syntaxDefNames():
 
 def test_characterEncodings():
     wc = EditorWindowController.alloc().init()
-    names = NSValueTransformer.valueTransformerForName_("CharacterEncodingTransformer").names
+    names = fn.NSValueTransformer.valueTransformerForName_("CharacterEncodingTransformer").names
     eq_(wc.characterEncodings(), names)
     wc.setCharacterEncodings_(None) # should be no-op
     eq_(wc.characterEncodings(), names)
@@ -1389,8 +1389,8 @@ def test_outlineViewItemDidExpandCollapse():
         m = Mocker()
         ewc = EditorWindowController.alloc().init()
         ed = ewc.editor = m.mock(Editor)
-        n = m.mock() # NSOutlineViewItemDid___Notification
-        node = m.mock(NSTreeControllerTreeNode); n.userInfo() >> {"NSObject": node}
+        n = m.mock() # ak.NSOutlineViewItemDid___Notification
+        node = m.mock(ak.NSTreeControllerTreeNode); n.userInfo() >> {"NSObject": node}
         it = representedObject(node) >> m.mock(Project)
         it.expanded = c.exp
         with m:
@@ -1432,7 +1432,7 @@ def test_outlineViewItemDidExpandCollapse():
 def test_outlineView_shouldSelectItem_():
     ewc = EditorWindowController.alloc().init()
     m = Mocker()
-    ov = m.mock(NSOutlineView)
+    ov = m.mock(ak.NSOutlineView)
     ewc.editor = m.mock(Editor)
     ewc.editor.should_select_item(ov, None)
     with m:
@@ -1453,7 +1453,7 @@ def test_outlineView_willDisplayCell_forTableColumn_item_():
     from editxt.controls.cells import ImageAndTextCell
     ewc = EditorWindowController.alloc().init()
     m = Mocker()
-    view = m.mock(NSOutlineView)
+    view = m.mock(ak.NSOutlineView)
     cell = m.mock(ImageAndTextCell)
     col, item, icon = m.mock(), m.mock(), m.mock()
     col.identifier() >> "name"
@@ -1466,7 +1466,7 @@ def test_outlineView_toolTipForCell_rect_tableColumn_item_mouseLocation_():
     ewc = EditorWindowController.alloc().init()
     m = Mocker()
     ewc.editor = ed = m.mock(Editor)
-    ov = m.mock(NSOutlineView)
+    ov = m.mock(ak.NSOutlineView)
     rect, item = m.mock(), m.mock()
     ed.tooltip_for_item(ov, item) >> "test tip"
     with m:
@@ -1479,7 +1479,7 @@ def test_outlineView_toolTipForCell_rect_tableColumn_item_mouseLocation_():
 def test_EditorWindowController_undo_manager():
     wc = EditorWindowController.alloc().init()
     m = Mocker()
-    win = m.mock(NSWindow)
+    win = m.mock(ak.NSWindow)
     wc.editor = m.mock(Editor)
     wc.editor.undo_manager() >> "<undo_manager>"
     with m:
@@ -1491,14 +1491,14 @@ def test_windowDidBecomeKey_():
     m = Mocker()
     notif = m.mock()
     ed = wc.editor = m.mock(Editor)
-    ed.window_did_become_key(notif.object() >> m.mock(NSWindow))
+    ed.window_did_become_key(notif.object() >> m.mock(ak.NSWindow))
     with m:
         wc.windowDidBecomeKey_(notif)
 
 def test_windowShouldClose_():
     wc = EditorWindowController.alloc().init()
     m = Mocker()
-    win = m.mock(NSWindow)
+    win = m.mock(ak.NSWindow)
     wc.editor = m.mock(Editor)
     wc.editor.window_should_close(win) >> "<should_close>"
     with m:

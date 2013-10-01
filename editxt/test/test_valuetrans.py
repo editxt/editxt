@@ -21,8 +21,8 @@ import logging
 
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 import editxt.constants as const
 
@@ -68,14 +68,14 @@ def test_key_value_transformer():
 def test_int_transformer():
     from editxt.valuetrans import IntTransformer
     assert IntTransformer.allowsReverseTransformation()
-    eq_(IntTransformer.transformedValueClass(), NSDecimalNumber)
+    eq_(IntTransformer.transformedValueClass(), fn.NSDecimalNumber)
     def test(func, val, trans):
         eq_(func(val), trans)
     def ftest(func, val):
         if isinstance(val, str):
-            tval = NSDecimalNumber.decimalNumberWithString_(val)
+            tval = fn.NSDecimalNumber.decimalNumberWithString_(val)
         else:
-            tval = NSDecimalNumber.numberWithInt_(val)
+            tval = fn.NSDecimalNumber.numberWithInt_(val)
         test(func, val, tval)
         eq_(type(func(val)), type(tval))
     def rtest(func, val):
@@ -83,7 +83,7 @@ def test_int_transformer():
             tval = val
             val = int(float(val))
         else:
-            tval = NSDecimalNumber.numberWithInt_(val)
+            tval = fn.NSDecimalNumber.numberWithInt_(val)
         test(func, tval, val)
         eq_(type(func(tval)), type(val))
     trans = IntTransformer.alloc().init()
@@ -109,57 +109,57 @@ def test_int_transformer():
 def test_encoding_transformer():
     from editxt.valuetrans import CharacterEncodingTransformer
     assert CharacterEncodingTransformer.allowsReverseTransformation()
-    eq_(CharacterEncodingTransformer.transformedValueClass(), NSString)
+    eq_(CharacterEncodingTransformer.transformedValueClass(), fn.NSString)
     def test(func, val, trans):
         eq_(func(val), trans)
     def ftest(func, val):
-        tval = NSString.localizedNameOfStringEncoding_(val)
+        tval = fn.NSString.localizedNameOfStringEncoding_(val)
         test(func, val, tval)
         eq_(type(func(val)), type(tval))
     def rtest(func, val):
-        tval = NSString.localizedNameOfStringEncoding_(val)
+        tval = fn.NSString.localizedNameOfStringEncoding_(val)
         test(func, tval, val)
         eq_(type(func(tval)), type(val))
     trans = CharacterEncodingTransformer.alloc().init()
     # forward transformations
     yield test, trans.transformedValue_, None, "Unspecified"
-    yield ftest, trans.transformedValue_, NSASCIIStringEncoding
-    yield ftest, trans.transformedValue_, NSNEXTSTEPStringEncoding
-    yield ftest, trans.transformedValue_, NSJapaneseEUCStringEncoding
-    yield ftest, trans.transformedValue_, NSUTF8StringEncoding
-    yield ftest, trans.transformedValue_, NSISOLatin1StringEncoding
-    yield ftest, trans.transformedValue_, NSSymbolStringEncoding
-    yield ftest, trans.transformedValue_, NSNonLossyASCIIStringEncoding
-    yield ftest, trans.transformedValue_, NSShiftJISStringEncoding
-    yield ftest, trans.transformedValue_, NSISOLatin2StringEncoding
-    yield ftest, trans.transformedValue_, NSUnicodeStringEncoding
-    yield ftest, trans.transformedValue_, NSWindowsCP1251StringEncoding
-    yield ftest, trans.transformedValue_, NSWindowsCP1252StringEncoding
-    yield ftest, trans.transformedValue_, NSWindowsCP1253StringEncoding
-    yield ftest, trans.transformedValue_, NSWindowsCP1254StringEncoding
-    yield ftest, trans.transformedValue_, NSWindowsCP1250StringEncoding
-    yield ftest, trans.transformedValue_, NSISO2022JPStringEncoding
-    yield ftest, trans.transformedValue_, NSMacOSRomanStringEncoding
+    yield ftest, trans.transformedValue_, fn.NSASCIIStringEncoding
+    yield ftest, trans.transformedValue_, fn.NSNEXTSTEPStringEncoding
+    yield ftest, trans.transformedValue_, fn.NSJapaneseEUCStringEncoding
+    yield ftest, trans.transformedValue_, fn.NSUTF8StringEncoding
+    yield ftest, trans.transformedValue_, fn.NSISOLatin1StringEncoding
+    yield ftest, trans.transformedValue_, fn.NSSymbolStringEncoding
+    yield ftest, trans.transformedValue_, fn.NSNonLossyASCIIStringEncoding
+    yield ftest, trans.transformedValue_, fn.NSShiftJISStringEncoding
+    yield ftest, trans.transformedValue_, fn.NSISOLatin2StringEncoding
+    yield ftest, trans.transformedValue_, fn.NSUnicodeStringEncoding
+    yield ftest, trans.transformedValue_, ak.NSWindowsCP1251StringEncoding
+    yield ftest, trans.transformedValue_, ak.NSWindowsCP1252StringEncoding
+    yield ftest, trans.transformedValue_, ak.NSWindowsCP1253StringEncoding
+    yield ftest, trans.transformedValue_, ak.NSWindowsCP1254StringEncoding
+    yield ftest, trans.transformedValue_, ak.NSWindowsCP1250StringEncoding
+    yield ftest, trans.transformedValue_, fn.NSISO2022JPStringEncoding
+    yield ftest, trans.transformedValue_, fn.NSMacOSRomanStringEncoding
     #yield ftest, trans.transformedValue_, NSProprietaryStringEncoding
     # reverse transformations
     yield test, trans.reverseTransformedValue_, "Unspecified", None
-    yield rtest, trans.reverseTransformedValue_, NSASCIIStringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSNEXTSTEPStringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSJapaneseEUCStringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSUTF8StringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSISOLatin1StringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSSymbolStringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSNonLossyASCIIStringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSShiftJISStringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSISOLatin2StringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSUnicodeStringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSWindowsCP1251StringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSWindowsCP1252StringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSWindowsCP1253StringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSWindowsCP1254StringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSWindowsCP1250StringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSISO2022JPStringEncoding
-    yield rtest, trans.reverseTransformedValue_, NSMacOSRomanStringEncoding
+    yield rtest, trans.reverseTransformedValue_, fn.NSASCIIStringEncoding
+    yield rtest, trans.reverseTransformedValue_, fn.NSNEXTSTEPStringEncoding
+    yield rtest, trans.reverseTransformedValue_, fn.NSJapaneseEUCStringEncoding
+    yield rtest, trans.reverseTransformedValue_, fn.NSUTF8StringEncoding
+    yield rtest, trans.reverseTransformedValue_, fn.NSISOLatin1StringEncoding
+    yield rtest, trans.reverseTransformedValue_, fn.NSSymbolStringEncoding
+    yield rtest, trans.reverseTransformedValue_, fn.NSNonLossyASCIIStringEncoding
+    yield rtest, trans.reverseTransformedValue_, fn.NSShiftJISStringEncoding
+    yield rtest, trans.reverseTransformedValue_, fn.NSISOLatin2StringEncoding
+    yield rtest, trans.reverseTransformedValue_, fn.NSUnicodeStringEncoding
+    yield rtest, trans.reverseTransformedValue_, ak.NSWindowsCP1251StringEncoding
+    yield rtest, trans.reverseTransformedValue_, ak.NSWindowsCP1252StringEncoding
+    yield rtest, trans.reverseTransformedValue_, ak.NSWindowsCP1253StringEncoding
+    yield rtest, trans.reverseTransformedValue_, ak.NSWindowsCP1254StringEncoding
+    yield rtest, trans.reverseTransformedValue_, ak.NSWindowsCP1250StringEncoding
+    yield rtest, trans.reverseTransformedValue_, fn.NSISO2022JPStringEncoding
+    yield rtest, trans.reverseTransformedValue_, fn.NSMacOSRomanStringEncoding
     #yield rtest, trans.reverseTransformedValue_, NSProprietaryStringEncoding
 
 def test_syntaxdef_transformer():
@@ -167,7 +167,7 @@ def test_syntaxdef_transformer():
     from editxt.syntax import PLAIN_TEXT
     from editxt.valuetrans import SyntaxDefTransformer
     assert SyntaxDefTransformer.allowsReverseTransformation()
-    eq_(SyntaxDefTransformer.transformedValueClass(), NSString)
+    eq_(SyntaxDefTransformer.transformedValueClass(), fn.NSString)
     def test(func, val, trans):
         eq_(func(val), trans)
     sdef = type("FakeDef", (object,), {"name": "Fake Syntax"})

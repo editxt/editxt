@@ -25,8 +25,8 @@ import string
 from fnmatch import fnmatch
 from itertools import chain, count
 
-from AppKit import *
-from Foundation import NSRange, NSUnionRange
+import AppKit as ak
+from Foundation import NSRange, NSUnionRange, NSValueTransformer
 
 # from pygments.formatter import Formatter
 # from pygments.lexers import get_lexer_by_name
@@ -111,7 +111,7 @@ class SyntaxCache(object):
     syntaxdef = property(_get_syntaxdef, _set_syntaxdef)
 
     def color_text(self, ts, minrange=None):
-        if ts.editedMask() == NSTextStorageEditedAttributes:
+        if ts.editedMask() == ak.NSTextStorageEditedAttributes:
             return # we don't care if only attributes changed
         sdef = self._syntaxdef
         if sdef is None:
@@ -144,9 +144,9 @@ class SyntaxCache(object):
             rangelen = max((range_.location - prevend) + range_.length, 0)
             prevrange = NSRange(prevend, rangelen)
             cache.clear(prevrange)
-            ts.removeAttribute_range_(NSForegroundColorAttributeName, prevrange)
+            ts.removeAttribute_range_(ak.NSForegroundColorAttributeName, prevrange)
             if color is not None:
-                ts.addAttribute_value_range_(NSForegroundColorAttributeName, color, range_)
+                ts.addAttribute_value_range_(ak.NSForegroundColorAttributeName, color, range_)
                 cache.set(range_, info)
             if range_.location + range_.length > minend and (range_, info) == prevcache:
                 raise StopHighlight()

@@ -21,13 +21,13 @@ import logging
 import time
 
 import objc
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 log = logging.getLogger(__name__)
 
 
-class TableView(NSOutlineView):
+class TableView(ak.NSOutlineView):
     # no longer in use?
 
     def initWithCoder_(self, coder):
@@ -115,7 +115,7 @@ class TableView(NSOutlineView):
 
         # Add a tracking rect if our superview and window are ready
         if self.trackMouseEvents() and self.superview() and self.window():
-            event = NSApp().currentEvent()
+            event = ak.NSApp().currentEvent()
             if event is not None:
                 mloc = self.convertPoint_fromView_(event.locationInWindow(), None)
                 rect = self.bounds()
@@ -154,8 +154,8 @@ class TableView(NSOutlineView):
 
     def mouseDown_(self, event):
         cevent = event
-        emask = NSLeftMouseDraggedMask | NSLeftMouseUpMask
-        future = NSDate.distantFuture()
+        emask = ak.NSLeftMouseDraggedMask | ak.NSLeftMouseUpMask
+        future = fn.NSDate.distantFuture()
         while True:
             etype = cevent.type()
             point = self.convertPoint_fromView_(
@@ -179,15 +179,15 @@ class TableView(NSOutlineView):
 
             redraw = False
             finished = False
-            if etype == NSLeftMouseDown:
+            if etype == ak.NSLeftMouseDown:
                 finished, redraw = cell.trackMouseAtPoint_invalidatesForFrame_redraw_(
                     point, cellFrame, redraw)
                 finished = not finished
-            elif etype == NSLeftMouseDragged:
+            elif etype == ak.NSLeftMouseDragged:
                 finished, redraw = cell.continueTrackingMouseAtPoint_invalidatesForFrame_redraw_(
                     point, cellFrame, redraw)
                 finished = not finished
-            elif etype == NSLeftMouseUp:
+            elif etype == ak.NSLeftMouseUp:
                 redraw = cell.mouseUpAtPoint_invalidatesForFrame_(point, cellFrame)
                 finished = True
             else:
@@ -202,7 +202,7 @@ class TableView(NSOutlineView):
             if finished: break
 
             cevent = self.window().nextEventMatchingMask_untilDate_inMode_dequeue_(
-                emask, future, NSEventTrackingRunLoopMode, True)
+                emask, future, ak.NSEventTrackingRunLoopMode, True)
             if cevent is None:
                 break
 

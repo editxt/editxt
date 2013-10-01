@@ -23,9 +23,6 @@ import os
 import re
 import time
 
-from AppKit import *
-from Foundation import *
-
 import editxt.constants as const
 from editxt.command.base import command, objc_delegate, SheetController
 from editxt.command.parser import (Choice, Regex, RegexPattern, CommandParser,

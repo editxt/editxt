@@ -20,8 +20,8 @@
 import logging
 import re
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 import editxt.constants as const
 from editxt.command.base import command, CommandError
@@ -80,13 +80,13 @@ def load_commands():
     )
 
 
-@command(title="Command Bar", hotkey=(";", NSCommandKeyMask))
+@command(title="Command Bar", hotkey=(";", ak.NSCommandKeyMask))
 def show_command_bar(textview, sender, args):
     """Show the command bar"""
     from editxt import app
     editor = app.find_editor_with_document_view(textview.doc_view)
     if editor is None:
-        NSBeep()
+        ak.NSBeep()
     else:
         editor.command.activate()
 
@@ -103,7 +103,7 @@ def goto_line(textview, sender, opts):
 
 
 @command(title="(Un)comment Selected Lines",
-    hotkey=(",", NSCommandKeyMask),
+    hotkey=(",", ak.NSCommandKeyMask),
     is_enabled=has_selection)
 def comment_text(textview, sender, args):
     """Comment/uncomment the selected text region
@@ -114,7 +114,7 @@ def comment_text(textview, sender, args):
     _comment_text(textview, sender, args, False)
 
 @command(title="(Un)comment + Space Selected Lines",
-    hotkey=(",", NSCommandKeyMask | NSShiftKeyMask),
+    hotkey=(",", ak.NSCommandKeyMask | ak.NSShiftKeyMask),
     is_enabled=has_selection)
 def pad_comment_text(textview, sender, args):
     """Comment/uncomment + space the selected text region
@@ -191,7 +191,7 @@ def uncomment_line(text, token, indent_mode, indent_size, pad=False):
 
 
 @command(title="Indent Selected Lines",
-    hotkey=("]", NSCommandKeyMask),
+    hotkey=("]", ak.NSCommandKeyMask),
     is_enabled=has_selection)
 def indent_lines(textview, sender, args):
     indent_mode = textview.doc_view.document.indent_mode
@@ -226,7 +226,7 @@ def indent_lines(textview, sender, args):
             textview.scrollRangeToVisible_((sel[0] + len(seltext), 0))
 
 
-@command(title="Un-indent Selected Lines", hotkey=("[", NSCommandKeyMask))
+@command(title="Un-indent Selected Lines", hotkey=("[", ak.NSCommandKeyMask))
 def dedent_lines(textview, sender, args):
     def dedent(line, spt=textview.doc_view.document.indent_size):
         if not line.strip():

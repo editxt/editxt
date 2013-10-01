@@ -19,19 +19,19 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 
 from editxt.controls.commandview import CommandView
 
 log = logging.getLogger(__name__)
 
 
-class StatusbarScrollView(NSScrollView):
+class StatusbarScrollView(ak.NSScrollView):
 
     def initWithFrame_(self, frame):
         super(StatusbarScrollView, self).initWithFrame_(frame)
-        rect = NSMakeRect(0, 0, 0, NSScroller.scrollerWidth())
+        rect = fn.NSMakeRect(0, 0, 0, ak.NSScroller.scrollerWidth())
         self.commandView = CommandView.alloc().initWithFrame_(rect)
         self.addSubview_(self.commandView)
         self.statusView = StatusView.alloc().initWithFrame_(rect)
@@ -47,10 +47,10 @@ class StatusbarScrollView(NSScrollView):
         if not (content and status and vscroll and hscroll):
             return
 
-        scrollw = NSScroller.scrollerWidth()
+        scrollw = ak.NSScroller.scrollerWidth()
         rect = self.bounds()
         # (status+hscroll) | (content+vscroll)
-        arect, brect = NSDivideRect(rect, None, None, scrollw, NSMaxYEdge)
+        arect, brect = fn.NSDivideRect(rect, None, None, scrollw, fn.NSMaxYEdge)
 
         max_command_height = int(brect.size.height * 0.8)
         command = self.commandView
@@ -58,7 +58,7 @@ class StatusbarScrollView(NSScrollView):
             # uncommon case: command view is very tall
             # put command view under main vertical scroller
             # command | (content+vscroll)
-            crect, drect = NSDivideRect(brect, None, None, max_command_height, NSMaxYEdge)
+            crect, drect = fn.NSDivideRect(brect, None, None, max_command_height, fn.NSMaxYEdge)
 
             # HACK adjust size for this scroller's border
             crect.origin.x -= 1
@@ -67,20 +67,20 @@ class StatusbarScrollView(NSScrollView):
             command.setHidden_(False)
             command.setFrame_(crect)
 
-            crect, drect = NSDivideRect(drect, None, None, scrollw, NSMaxXEdge)
+            crect, drect = fn.NSDivideRect(drect, None, None, scrollw, fn.NSMaxXEdge)
             vscroll.setFrame_(crect)
         else:
             # common case: command view is short
             # put command view inside (to right of) main vertical scroller
 
             # vscroll | content
-            crect, drect = NSDivideRect(brect, None, None, scrollw, NSMaxXEdge)
+            crect, drect = fn.NSDivideRect(brect, None, None, scrollw, fn.NSMaxXEdge)
             vscroll.setFrame_(crect)
 
             if command:
                 commandh = command.preferred_height
                 # command | content
-                crect, drect = NSDivideRect(drect, None, None, commandh, NSMaxYEdge)
+                crect, drect = fn.NSDivideRect(drect, None, None, commandh, fn.NSMaxYEdge)
                 command.setHidden_(False)
                 command.setFrame_(crect)
             else:
@@ -90,7 +90,7 @@ class StatusbarScrollView(NSScrollView):
         if ruler:
             rulew = ruler.calculate_thickness()
             # ruler | content
-            crect, drect = NSDivideRect(drect, None, None, rulew, NSMinXEdge)
+            crect, drect = fn.NSDivideRect(drect, None, None, rulew, fn.NSMinXEdge)
             ruler.setFrame_(crect)
         else:
             rulew = 0
@@ -98,7 +98,7 @@ class StatusbarScrollView(NSScrollView):
         content.setFrame_(drect)
 
         # status | scrollers
-        grect, hrect = NSDivideRect(arect, None, None, svwidth, NSMinXEdge)
+        grect, hrect = fn.NSDivideRect(arect, None, None, svwidth, fn.NSMinXEdge)
         status.setFrame_(grect)
         hscroll.setFrame_(hrect)
 
@@ -107,18 +107,18 @@ class StatusbarScrollView(NSScrollView):
         self.setNeedsDisplay_(True)
 
 
-class StatusView(NSView):
+class StatusView(ak.NSView):
 
     def initWithFrame_(self, rect):
         super(StatusView, self).initWithFrame_(rect)
-        font = NSFont.fontWithName_size_("Monaco", 9.0)
+        font = ak.NSFont.fontWithName_size_("Monaco", 9.0)
         for fname in ["linenumView", "columnView", "selectionView"]:
-            field = NSTextField.alloc().initWithFrame_(NSZeroRect)
+            field = ak.NSTextField.alloc().initWithFrame_(fn.NSZeroRect)
             field.setStringValue_("")
             field.setEditable_(False)
-            field.setBackgroundColor_(NSColor.controlColor())
+            field.setBackgroundColor_(ak.NSColor.controlColor())
             field.setFont_(font)
-            field.setAlignment_(NSRightTextAlignment)
+            field.setAlignment_(ak.NSRightTextAlignment)
             self.addSubview_(field)
             setattr(self, fname, field)
         return self
@@ -126,9 +126,9 @@ class StatusView(NSView):
     def tileWithRuleWidth_(self, width):
         rect = self.bounds()
         width = width if width else 50
-        arect, brect = NSDivideRect(rect, None, None, width, NSMinXEdge)
+        arect, brect = fn.NSDivideRect(rect, None, None, width, fn.NSMinXEdge)
         self.linenumView.setFrame_(arect)
-        crect, drect = NSDivideRect(brect, None, None, 50, NSMinXEdge)
+        crect, drect = fn.NSDivideRect(brect, None, None, 50, fn.NSMinXEdge)
         crect.origin.x -= 1
         crect.size.width += 1
         self.columnView.setFrame_(crect)

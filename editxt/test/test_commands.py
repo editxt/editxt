@@ -20,8 +20,8 @@
 import logging
 
 from mocker import Mocker, expect, ANY, MATCH
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 from editxt.test.util import assert_raises, eq_, TestConfig, replattr
 
 import editxt.constants as const
@@ -239,14 +239,14 @@ def test_text_commands():
         result = TestConfig()
         default = False
         m = Mocker()
-        tv = m.mock(NSTextView)
+        tv = m.mock(ak.NSTextView)
         (tv.doc_view.document.indent_mode << c.mode).count(0, None)
         (tv.doc_view.document.indent_size << c.size).count(0, None)
         (tv.doc_view.document.eol << c.eol).count(0, None)
-        sel = NSMakeRange(*c.oldsel); (tv.selectedRange() << sel).count(0, None)
-        (tv.string() << NSString.stringWithString_(c.input)).count(0, None)
+        sel = fn.NSMakeRange(*c.oldsel); (tv.selectedRange() << sel).count(0, None)
+        (tv.string() << fn.NSString.stringWithString_(c.input)).count(0, None)
         (tv.shouldChangeTextInRange_replacementString_(ANY, ANY) << True).count(0, None)
-        ts = m.mock(NSTextStorage); (tv.textStorage() << ts).count(0, None)
+        ts = m.mock(ak.NSTextStorage); (tv.textStorage() << ts).count(0, None)
         c.setup(m, c, TestConfig(locals()))
         def do_text(sel, repl):
             result.text = c.input[:sel[0]] + repl + c.input[sel[0] + sel[1]:]
@@ -429,7 +429,7 @@ def test_reload_config():
     m = Mocker()
     config = m.mock(Config)
     config.reload()
-    tv = m.mock(NSTextView)
+    tv = m.mock(ak.NSTextView)
     with m, replattr(app, "config", config):
         mod.reload_config(tv, "<sender>", None)
 
@@ -505,7 +505,7 @@ def test_panel_actions():
     import sys
     def test(c):
         m = Mocker()
-        tv = m.mock(NSTextView)
+        tv = m.mock(ak.NSTextView)
         ctl_class = m.replace("editxt.command.{}.{}".format(c.mod, c.ctl.__name__))
         if c.func is not None:
             func = m.replace("editxt.command.{}.{}".format(c.mod, c.func.__name__))

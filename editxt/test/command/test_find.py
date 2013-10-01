@@ -23,8 +23,8 @@ import re
 from contextlib import closing
 from tempfile import gettempdir
 
-from AppKit import *
-from Foundation import *
+import AppKit as ak
+import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import (assert_raises, TestConfig, untested,
@@ -60,7 +60,7 @@ def test_find_command():
     def test(c):
         options = make_options(c)
         m = Mocker()
-        tv = m.mock(NSTextView)
+        tv = m.mock(ak.NSTextView)
         finder_cls = m.replace("editxt.command.find.Finder")
         save_paste = m.replace(mod, "save_to_find_pasteboard")
         def check_options(get_tv, args):
@@ -110,20 +110,20 @@ def test_Finder_mark_occurrences():
         tv = m.mock(TextView)
         tv._Finder__last_mark >> (None, 0)
         tv._Finder__last_mark = (c.options.find_text, c.count)
-        ts = tv.textStorage() >> m.mock(NSTextStorage)
+        ts = tv.textStorage() >> m.mock(ak.NSTextStorage)
         app = m.replace(editxt, "app")
         app.config["highlight_selected_text.color"] >> "<color>"
-        full_range = NSMakeRange(0, ts.length() >> len(text))
+        full_range = fn.NSMakeRange(0, ts.length() >> len(text))
         layout = tv.layoutManager()
         layout.removeTemporaryAttribute_forCharacterRange_(
-            NSBackgroundColorAttributeName, full_range)
+            ak.NSBackgroundColorAttributeName, full_range)
         find_target = lambda: tv
         finder = Finder(find_target, c.options)
         if c.options.find_text:
-            text = NSString.alloc().initWithString_(text)
+            text = fn.NSString.alloc().initWithString_(text)
             (tv.string() << text).count(1, None)
             mark_range = layout.addTemporaryAttribute_value_forCharacterRange_ >> m.mock()
-            mark = mark_range(NSBackgroundColorAttributeName, ANY, ANY)
+            mark = mark_range(ak.NSBackgroundColorAttributeName, ANY, ANY)
             expect(mark).count(c.count)
         with m:
             count = finder.mark_occurrences(c.options.find_text, c.allow_regex)
@@ -144,8 +144,8 @@ def test_Finder_python_replace():
         m = Mocker()
         options = make_options(c)
         tv = m.mock(TextView)
-        tv.selectedRange() >> NSMakeRange(0, 16)
-        tv.string() >> NSString.alloc().initWithString_(c.text)
+        tv.selectedRange() >> fn.NSMakeRange(0, 16)
+        tv.string() >> fn.NSString.alloc().initWithString_(c.text)
         if not isinstance(c.expect, Exception):
             result = [c.text]
             def replace(range, value):
@@ -215,14 +215,14 @@ def test_FindController_validate_action():
     yield test, c(tag=mod.ACTION_FIND_SELECTED_TEXT_REVERSE+1, result=False)
 
     for tag in [
-        NSFindPanelActionShowFindPanel,
-        NSFindPanelActionNext,
-        NSFindPanelActionPrevious,
-        NSFindPanelActionReplace,
-        NSFindPanelActionReplaceAll,
-        NSFindPanelActionReplaceAndFind,
-        NSFindPanelActionReplaceAllInSelection,
-        NSFindPanelActionSetFindString,
+        ak.NSFindPanelActionShowFindPanel,
+        ak.NSFindPanelActionNext,
+        ak.NSFindPanelActionPrevious,
+        ak.NSFindPanelActionReplace,
+        ak.NSFindPanelActionReplaceAll,
+        ak.NSFindPanelActionReplaceAndFind,
+        ak.NSFindPanelActionReplaceAllInSelection,
+        ak.NSFindPanelActionSetFindString,
     ]:
         yield test, c(tag=tag)
 
@@ -254,14 +254,14 @@ def test_FindController_perform_action():
     c = TestConfig(fail=False)
     yield test, c(tag=mod.ACTION_FIND_SELECTED_TEXT_REVERSE + 1, fail=True)
     for tag in [
-        NSFindPanelActionShowFindPanel,
-        NSFindPanelActionNext,
-        NSFindPanelActionPrevious,
-        NSFindPanelActionReplace,
-        NSFindPanelActionReplaceAll,
-        NSFindPanelActionReplaceAndFind,
-        NSFindPanelActionReplaceAllInSelection,
-        NSFindPanelActionSetFindString,
+        ak.NSFindPanelActionShowFindPanel,
+        ak.NSFindPanelActionNext,
+        ak.NSFindPanelActionPrevious,
+        ak.NSFindPanelActionReplace,
+        ak.NSFindPanelActionReplaceAll,
+        ak.NSFindPanelActionReplaceAndFind,
+        ak.NSFindPanelActionReplaceAllInSelection,
+        ak.NSFindPanelActionSetFindString,
         mod.ACTION_FIND_SELECTED_TEXT,
         mod.ACTION_FIND_SELECTED_TEXT_REVERSE,
     ]:
@@ -358,7 +358,7 @@ def test_FindController_actions():
 
     def do(m, c, fc, sender):
         if m.method(fc.save_options)() >> c.saved:
-            (m.method(fc.gui.window)() >> m.mock(NSWindow)).orderOut_(sender)
+            (m.method(fc.gui.window)() >> m.mock(ak.NSWindow)).orderOut_(sender)
             m.method(fc.finder, c.real)(sender)
     for saved in (True, False):
         cx = c(saved=saved, do=do)
@@ -382,8 +382,8 @@ def test_FindController_actions():
 
     def do(m, c, fc, sender):
         ws = m.replace(mod, 'NSWorkspace')
-        url = NSURL.URLWithString_(const.REGEX_HELP_URL)
-        (ws.sharedWorkspace() >> m.mock(NSWorkspace)).openURL_(url)
+        url = fn.NSURL.URLWithString_(const.REGEX_HELP_URL)
+        (ws.sharedWorkspace() >> m.mock(ak.NSWorkspace)).openURL_(url)
     yield test, c(meth="regexHelp_", do=do)
 
 def test_FindController_recentFindSelected_():
@@ -391,8 +391,8 @@ def test_FindController_recentFindSelected_():
     def test(command, options):
         m = Mocker()
         nspb = m.replace(mod, 'NSPasteboard')
-        pboard = nspb.pasteboardWithName_(NSFindPboard)
-        pboard.availableTypeFromArray_([NSStringPboardType]) >> None
+        pboard = nspb.pasteboardWithName_(ak.NSFindPboard)
+        pboard.availableTypeFromArray_([ak.NSStringPboardType]) >> None
         with m, replace_history() as history:
             fc = FindController()
             sender = Config(selectedItem=lambda:Config(title=lambda:command))
@@ -444,7 +444,7 @@ def test_FindController__find():
         tv = m.mock(TextView)
         regexfind = m.method(fc.finder.regexfinditer)
         simplefind = m.method(fc.finder.simplefinditer)
-        sel = NSMakeRange(1, 2)
+        sel = fn.NSMakeRange(1, 2)
         direction = "<direction>"
         options = m.property(fc.finder, "options").value >> m.mock(FindOptions)
         ftext = "<find>"
@@ -455,7 +455,7 @@ def test_FindController__find():
             ftext = "\\b" + re.escape(ftext) + "\\b"
         else:
             finditer = simplefind
-        range = NSMakeRange(sel.location, 0)
+        range = fn.NSMakeRange(sel.location, 0)
         items = []
         rng = None
         tv.string() >> "<text>"
@@ -465,7 +465,7 @@ def test_FindController__find():
             if r is mod.WRAPTOKEN:
                 items.append(r)
                 continue
-            found = FoundRange(NSMakeRange(*r))
+            found = FoundRange(fn.NSMakeRange(*r))
             items.append(found)
             if i == 0 and found.range == sel:
                 continue
@@ -496,14 +496,14 @@ def test_FindController__replace_all():
         tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
         options = m.replace(fc.finder, "options")
         ftext = options.find_text >> c.ftext
-        range = (tv.selectedRange() >> NSRange(*c.sel)) if c.has_tv else None
+        range = (tv.selectedRange() >> fn.NSRange(*c.sel)) if c.has_tv else None
         if c.has_tv and c.ftext and ((c.sel_only and c.sel[1] > 0) or not c.sel_only):
             text = tv.string() >> c.text
             if not c.sel_only:
                 if (options.wrap_around >> c.wrap):
-                    range = NSMakeRange(0, 0)
+                    range = fn.NSMakeRange(0, 0)
                 else:
-                    range = NSMakeRange(range[0], len(text) - range[0])
+                    range = fn.NSMakeRange(range[0], len(text) - range[0])
             if options.regular_expression >> c.regex:
                 finditer = m.method(fc.finder.regexfinditer)
             elif options.match_entire_word >> c.mword:
@@ -519,7 +519,7 @@ def test_FindController__replace_all():
             FoundRange = make_found_range_factory(
                 FindOptions(regular_expression=c.regex, match_entire_word=c.mword))
             for r in c.ranges:
-                found = FoundRange(NSMakeRange(*r))
+                found = FoundRange(fn.NSMakeRange(*r))
                 if ranges:
                     rtexts.append(text[sum(ranges[-1]):r[0]])
                 ranges.append(found.range)
@@ -528,10 +528,10 @@ def test_FindController__replace_all():
             finditer(text, ftext, range, FORWARD, False) >> items
             if ranges:
                 start = c.ranges[0][0]
-                range = NSMakeRange(start, sum(c.ranges[-1]) - start)
+                range = fn.NSMakeRange(start, sum(c.ranges[-1]) - start)
                 value = "".join(rtexts)
                 if tv.shouldChangeTextInRange_replacementString_(range, value) >> c.replace:
-                    ts = tv.textStorage() >> m.mock(NSTextStorage)
+                    ts = tv.textStorage() >> m.mock(ak.NSTextStorage)
                     ts.replaceCharactersInRange_withString_(range, value)
                     tv.didChangeText()
                     tv.setNeedsDisplay_(True)
@@ -683,10 +683,10 @@ def test_FindController_load_options():
     def test(c):
         m = Mocker()
         nspb = m.replace(mod, 'NSPasteboard')
-        pboard = nspb.pasteboardWithName_(NSFindPboard)
-        pboard.availableTypeFromArray_([NSStringPboardType]) >> (c.ftext is not None)
+        pboard = nspb.pasteboardWithName_(ak.NSFindPboard)
+        pboard.availableTypeFromArray_([ak.NSStringPboardType]) >> (c.ftext is not None)
         if c.ftext is not None:
-            pboard.stringForType_(NSStringPboardType) >> c.ftext
+            pboard.stringForType_(ak.NSStringPboardType) >> c.ftext
         with replace_history() as history:
             if c.hist is not None:
                 history.append(c.hist)
@@ -720,9 +720,9 @@ def test_FindController_save_options():
             fc.options.ignore_case = False
             nspb = m.replace(mod, 'NSPasteboard')
             if "find_text" in c.opts:
-                pboard = nspb.pasteboardWithName_(NSFindPboard)
-                pboard.declareTypes_owner_([NSStringPboardType], None)
-                pboard.setString_forType_(c.opts["find_text"], NSStringPboardType)
+                pboard = nspb.pasteboardWithName_(ak.NSFindPboard)
+                pboard.declareTypes_owner_([ak.NSStringPboardType], None)
+                pboard.setString_forType_(c.opts["find_text"], ak.NSStringPboardType)
             with m:
                 for k, v in c.opts.items():
                     setattr(fc.options, k, v)
