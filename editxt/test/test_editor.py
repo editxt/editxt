@@ -96,7 +96,7 @@ def test_window_did_load():
         wc.propsViewButton.setAlternateImage_(load_image(const.PROPS_UP_BUTTON_IMAGE))
 
         win = ed.wc.window() >> m.mock(ak.NSWindow)
-        note_ctr = m.replace(mod, 'NSNotificationCenter')
+        note_ctr = m.replace(fn, 'NSNotificationCenter')
         note_ctr.defaultCenter().addObserver_selector_name_object_(
             ed.wc, "windowDidBecomeKey:", ak.NSWindowDidBecomeKeyNotification, win)
 
@@ -409,10 +409,10 @@ def test_toggle_properties_pane():
     slow_skip()
     def test(c):
         m = Mocker()
-        nsanim = m.replace(mod, 'NSViewAnimation')
-        nsdict = m.replace(mod, 'NSDictionary')
-        nsval = m.replace(mod, 'NSValue')
-        nsarr = m.replace(mod, 'NSArray')
+        nsanim = m.replace(ak, 'NSViewAnimation')
+        nsdict = m.replace(fn, 'NSDictionary')
+        nsval = m.replace(fn, 'NSValue')
+        nsarr = m.replace(fn, 'NSArray')
         wc = m.mock(EditorWindowController)
         ed = Editor(editxt.app, wc)
         tree_view = m.mock(ak.NSScrollView); (wc.docsScrollview << tree_view).count(2)
@@ -511,7 +511,7 @@ def test_get_current_project():
         ed = Editor(editxt.app, m.mock(EditorWindowController))
         tc = m.mock(ak.NSTreeController)
         ed.wc.docsController >> (tc if docsController_is_not_none else None)
-        ip_class = m.replace(mod, 'NSIndexPath')
+        ip_class = m.replace(fn, 'NSIndexPath')
         proj_class = m.replace(mod, 'Project')
         if docsController_is_not_none:
             path = m.mock(fn.NSIndexPath)

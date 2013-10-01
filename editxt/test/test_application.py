@@ -111,7 +111,7 @@ def test_application_will_finish_launching():
         m = Mocker()
         create_editor = m.method(app.create_editor)
         nsapp = m.mock(ak.NSApplication)
-        ud_class = m.replace(mod, 'NSUserDefaults')
+        ud_class = m.replace(fn, 'NSUserDefaults')
         m.method(app.iter_saved_editor_states)() >> iter(eds_config)
         tc = m.replace(app, 'text_commander', spec=TextCommandController)
         dc = m.mock(DocumentController)
@@ -476,7 +476,7 @@ def test_iter_editors():
         """
         ac = Application()
         m = Mocker()
-        app_class = m.replace(mod, 'NSApp')
+        app_class = m.replace(ak, 'NSApp')
         app = app_class()
         eds = {}
         unordered_eds = []
@@ -913,7 +913,7 @@ def test_save_next_document():
         app = m.replace(editxt, 'app')
         docs = m.mock()
         dc = m.mock(DocumentController)
-        note_ctr = m.replace(mod, 'NSNotificationCenter')
+        note_ctr = m.replace(fn, 'NSNotificationCenter')
         controller = m.mock()
         callback = m.mock()
         context = 0
@@ -995,7 +995,7 @@ def test_windowDidEndSheet_():
         notif = m.mock(fn.NSNotification)
         win = m.mock(ak.NSWindow)
         notif.object() >> win
-        note_ctr = m.replace(mod, 'NSNotificationCenter')
+        note_ctr = m.replace(fn, 'NSNotificationCenter')
         note_ctr.defaultCenter().removeObserver_name_object_(
             saver, ak.NSWindowDidEndSheetNotification, win)
         save_next_document = m.method(saver.save_next_document)
@@ -1049,7 +1049,7 @@ def test_OpenPathController_populateWithClipboard():
 def test_OpenPathController_textView_doCommandBySelector_():
     def test(c):
         m = Mocker()
-        nsapp = m.replace(mod, 'NSApp', spec=False)
+        nsapp = m.replace(ak, 'NSApp', spec=False)
         opc = OpenPathController.alloc().init()
         tv = m.mock(ak.NSTextView)
         if c.sel == "insertNewline:":

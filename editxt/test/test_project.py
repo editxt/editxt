@@ -166,8 +166,8 @@ def test_deserialize_project():
         m = Mocker()
         proj = Project.create()
         log = m.replace(mod, 'log')
-        nsdat = m.replace(mod, 'NSData')
-        nspls = m.replace(mod, 'NSPropertyListSerialization')
+        nsdat = m.replace(fn, 'NSData')
+        nspls = m.replace(fn, 'NSPropertyListSerialization')
         create_document_view_with_state = m.method(Project.create_document_view_with_state)
         create_document_view = m.method(Project.create_document_view)
         proj._documents = docs = m.mock(KVOList)
@@ -233,7 +233,7 @@ def test_save():
 def test_save_with_path_when_project_has_a_path():
     m = Mocker()
     path = "<path>"
-    nsdict = m.replace(mod, 'NSMutableDictionary')
+    nsdict = m.replace(fn, 'NSMutableDictionary')
     proj = Project.create()
     proj.name = "<name>"
     serial = proj.serialize()
@@ -310,7 +310,7 @@ def test_create_document_view_with_state():
 def test_create_document_view():
     proj = Project.create()
     m = Mocker()
-    nsdc = m.replace(mod, 'NSDocumentController')
+    nsdc = m.replace(ak, 'NSDocumentController')
     append_document_view = m.method(proj.append_document_view)
     dc = m.mock(ak.NSDocumentController)
     doc = m.mock(TextDocument)

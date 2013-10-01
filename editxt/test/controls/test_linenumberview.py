@@ -56,7 +56,7 @@ def test_create():
     sv = m.mock(ak.NSScrollView)
     tv = m.mock(TextView)
     sv.documentView() >> tv
-    not_class = m.replace(mod, 'NSNotificationCenter')
+    not_class = m.replace(fn, 'NSNotificationCenter')
     notifier = not_class.defaultCenter() >> m.mock(fn.NSNotificationCenter)
     notifier.addObserver_selector_name_object_(ANY, "invalidateRuleThickness",
         ak.NSTextDidChangeNotification, tv)

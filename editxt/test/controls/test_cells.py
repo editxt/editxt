@@ -73,7 +73,7 @@ def test_drawWithFrame_inView_():
         view = m.mock(ak.NSView)
         draws = m.method(mod.ImageAndTextCell.drawsBackground)
         color = m.method(mod.ImageAndTextCell.backgroundColor)
-        fill = m.replace(mod, 'NSRectFill', spec=(lambda a: None))
+        fill = m.replace(ak, 'NSRectFill', spec=(lambda a: None))
         if c.image:
             img.size() >> fn.NSSize(20, 20)
             if draws() >> c.draws:
@@ -130,7 +130,7 @@ def test_HBC_buttonImageForFrame_inView_():
         view = m.mock(ak.NSOutlineView)
         point, pressed = hbc.hover_info = c.info
         if point is not None:
-            m.replace(mod, 'NSPointInRect')(point, frame) >> (point == "in")
+            m.replace(fn, 'NSPointInRect')(point, frame) >> (point == "in")
         row = view.rowAtPoint_(frame.origin >> (1, 1)) >> 2
         dgt = m.property(hbc, "delegate").value >> m.mock(EditorWindowController)
         image = dgt.hoverButtonCell_imageForState_row_(hbc, c.state, row) >> "<img>"
@@ -165,7 +165,7 @@ def test_HBC_mouseMoveHandlers():
         hbc.hover_info = ("initial", None)
         frame = m.mock(NSRect)
         point = c.info[0]
-        pir = m.replace(mod, 'NSPointInRect')
+        pir = m.replace(fn, 'NSPointInRect')
         if c.method.startswith("mouseUp"):
             if c.inside is None:
                 hbc.hover_info = (None, None)

@@ -313,7 +313,7 @@ def test_FindController_actions():
     yield test, c(meth="find_selected_text_reverse", do=do, saved=False)
 
     def do(m, c, fc, sender):
-        beep = m.replace(mod, 'NSBeep')
+        beep = m.replace(ak, 'NSBeep')
         dobeep = True
         tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
         if c.has_tv:
@@ -381,7 +381,7 @@ def test_FindController_actions():
         yield test, cx(meth="panelCountReplaceText_", val="replace_text", regex=False)
 
     def do(m, c, fc, sender):
-        ws = m.replace(mod, 'NSWorkspace')
+        ws = m.replace(ak, 'NSWorkspace')
         url = fn.NSURL.URLWithString_(const.REGEX_HELP_URL)
         (ws.sharedWorkspace() >> m.mock(ak.NSWorkspace)).openURL_(url)
     yield test, c(meth="regexHelp_", do=do)
@@ -390,7 +390,7 @@ def test_FindController_recentFindSelected_():
     Config = TestConfig
     def test(command, options):
         m = Mocker()
-        nspb = m.replace(mod, 'NSPasteboard')
+        nspb = m.replace(ak, 'NSPasteboard')
         pboard = nspb.pasteboardWithName_(ak.NSFindPboard)
         pboard.availableTypeFromArray_([ak.NSStringPboardType]) >> None
         with m, replace_history() as history:
@@ -414,7 +414,7 @@ def test_FindController_finder_find():
     def test(c):
         m = Mocker()
         fc = FindController.shared_controller()
-        beep = m.replace(mod, 'NSBeep')
+        beep = m.replace(ak, 'NSBeep')
         dobeep = True
         direction = "<direction>"
         _find = m.method(fc.finder._find)
@@ -491,7 +491,7 @@ def test_FindController__replace_all():
     def test(c):
         m = Mocker()
         fc = FindController.shared_controller()
-        beep = m.replace(mod, 'NSBeep')
+        beep = m.replace(ak, 'NSBeep')
         dobeep = True
         tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
         options = m.replace(fc.finder, "options")
@@ -558,7 +558,7 @@ def test_FindController__replace_all():
 def test_FindController_count_occurrences():
     def test(c):
         m = Mocker()
-        beep = m.replace(mod, 'NSBeep')
+        beep = m.replace(ak, 'NSBeep')
         fc = FindController.shared_controller()
         flash = m.method(fc.flash_status_text)
         mark = m.method(fc.finder.mark_occurrences)
@@ -682,7 +682,7 @@ def test_FindOptions_dependent_options():
 def test_FindController_load_options():
     def test(c):
         m = Mocker()
-        nspb = m.replace(mod, 'NSPasteboard')
+        nspb = m.replace(ak, 'NSPasteboard')
         pboard = nspb.pasteboardWithName_(ak.NSFindPboard)
         pboard.availableTypeFromArray_([ak.NSStringPboardType]) >> (c.ftext is not None)
         if c.ftext is not None:
@@ -718,7 +718,7 @@ def test_FindController_save_options():
             fc = FindController() # calls load_options()
             fc.options.find_text = "" # clear value from real pasteboard
             fc.options.ignore_case = False
-            nspb = m.replace(mod, 'NSPasteboard')
+            nspb = m.replace(ak, 'NSPasteboard')
             if "find_text" in c.opts:
                 pboard = nspb.pasteboardWithName_(ak.NSFindPboard)
                 pboard.declareTypes_owner_([ak.NSStringPboardType], None)

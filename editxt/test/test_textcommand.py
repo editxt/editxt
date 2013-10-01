@@ -59,7 +59,7 @@ def test_CommandBar_execute():
     def test(c):
         m = Mocker()
         editor = m.mock()
-        beep = m.replace(mod, 'NSBeep')
+        beep = m.replace(ak, 'NSBeep')
         commander = m.mock(TextCommandController)
         bar = mod.CommandBar(editor, commander)
         message = m.replace(bar, "message")
@@ -126,7 +126,7 @@ def test_CommandBar_get_placeholder():
     from editxt.command.parser import CommandParser, Choice, Regex, VarArgs
     def test(c):
         m = Mocker()
-        beep = m.replace(mod, 'NSBeep')
+        beep = m.replace(ak, 'NSBeep')
         @command(arg_parser=CommandParser(
             Choice(('selection', True), ('all', False)),
             Choice(('no', False), ('yes', True)),
@@ -188,7 +188,7 @@ def test_CommandBar_get_completions():
     from editxt.command.parser import CommandParser, Choice, Regex, VarArgs
     def test(c):
         m = Mocker()
-        beep = m.replace(mod, 'NSBeep')
+        beep = m.replace(ak, 'NSBeep')
         @command(arg_parser=CommandParser(
             Choice(('selection', True), ('all', False)),
             Choice(('forward', False), ('reverse xyz', True), name='reverse'),
@@ -503,7 +503,7 @@ def test_TextCommandController_add_command():
     def test(c):
         m = Mocker()
         menu = m.mock(ak.NSMenu)
-        mi_class = m.replace(mod, 'NSMenuItem')
+        mi_class = m.replace(ak, 'NSMenuItem')
         ctl = TextCommandController("<history>")
         handlers = m.replace(ctl, 'input_handlers')
         validate = m.method(ctl.validate_hotkey)

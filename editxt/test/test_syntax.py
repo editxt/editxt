@@ -155,7 +155,7 @@ def test_SyntaxFactory_index_definitions():
     }
     defs = sorted([text1, text2, python], key=lambda d:(d.name, id(d)))
     m = Mocker()
-    vt = m.replace(mod, 'NSValueTransformer')
+    vt = m.replace(fn, 'NSValueTransformer')
     st = vt.valueTransformerForName_("SyntaxDefTransformer") >> \
         m.mock(SyntaxDefTransformer)
     st.update_definitions(defs)

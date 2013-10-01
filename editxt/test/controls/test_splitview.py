@@ -116,7 +116,7 @@ def test_animate_view():
     def test(c):
         m = Mocker()
         sv = mod.ThinSplitView.alloc().init()
-        nsanim = m.replace(mod, 'NSViewAnimation')
+        nsanim = m.replace(ak, 'NSViewAnimation')
         view = m.mock(ak.NSView)
         rect = fn.NSMakeRect(0, 0, 1, 1)
         anim = nsanim.alloc() >> m.mock(ak.NSViewAnimation)
