@@ -83,14 +83,14 @@ class MockExt(mocker.Mock):
         return self.__mocker_act__("__rshift__", (value,))
 
     def __bool__(self):
-        """improved __nonzero__ implementation
+        """improved __bool__ implementation
 
         This now works in Python 2.5 (just guesssing that it broke in that
         version). HOWEVER, this will not return a mock instance, so it cannot
         be used with expect(...).
         """
         try:
-            result = self.__mocker_act__("nonzero")
+            result = self.__mocker_act__("bool")
         except mocker.MatchError as e:
             result = True
         if not isinstance(result, (bool, int)):
@@ -263,8 +263,7 @@ class ReplacedMethod(object):
         for mocked, mock, passthrough in self.registry:
             if obj is mocked or mocked is None:
                 # TODO implement passthrough
-                method = getattr(mock, self.name)
-                return method
+                return getattr(mock, self.name)
         return self.func.__get__(obj, objtype)
     
 #   def __set__(self, obj, value):
@@ -320,24 +319,23 @@ class MethodReplacer(mocker.Task):
             if method is not None:
                 obj = method.self
                 if name is None:
-                    name = method.selector.replace(":", "_")
+                    name = method.selector.replace(b":", b"_").decode('utf8')
             objtype = method.definingClass if obj is None else type(obj)
             func = getattr(objtype, name)
             class_ = type(objtype.__name__, (object,), {name: func})
         else:
-            if method is not None:
-                obj = getattr(method, "im_self", None)
+            if obj is None:
+                obj = getattr(method, "__self__", None)
                 if obj is None:
-                    obj = getattr(method, "im_class", None)
+                    obj = get_class(method)
             else:
-                assert obj is not None
                 method = getattr(obj, name)
             # TODO static method on pure python type
             if isinstance(obj, type):
                 # class method on pure python object
                 self.is_classmethod = True
                 name = method.__name__ if name is None else name
-                func = method.__func__
+                func = method
                 class_ = objtype = obj
                 obj = None
             elif obj is not None:
@@ -455,17 +453,22 @@ class SpecCheckerExt(mocker.SpecChecker):
     """Task to check if arguments of the last action conform to a real method.
     
     mockerext improvements:
-     -  avoids method.__nonzero__ ()
+     -  avoids method.__bool__ ()
      -  handles pyobjc methods
     note: most of these are ugly patches because they redefine entire methods
     """
     
     VARARGS_METHOD_SPECS = {
-        "arrayWithObjects:": (("self",), "args", None, None),
-        "dictionaryWithObjectsAndKeys:": (("self",), "args", None, None),
+        b"arrayWithObjects:": (("self",), "args", None, None),
+        b"dictionaryWithObjectsAndKeys:": (("self",), "args", None, None),
     }
 
     def __init__(self, method):
+        if type(method) == type(is_instancemethod.__call__) \
+                and getattr(method, "__self__", None) is not None:
+            # TODO move into mocker.py
+            method = method.__self__
+
         self._method = method
         self._unsupported = False
 
@@ -478,7 +481,8 @@ class SpecCheckerExt(mocker.SpecChecker):
             else:
                 if self._defaults is None:
                     self._defaults = ()
-                if type(method) is type(self.run) \
+                # TODO move is_instancemethod into mocker.py for Python 3 support
+                if is_instancemethod(method) \
                     or isinstance(method, objc_selector):
                     self._args = self._args[1:]
 
@@ -493,7 +497,7 @@ class SpecCheckerExt(mocker.SpecChecker):
                     return cls.VARARGS_METHOD_SPECS[method.selector]
                 except KeyError:
                     pass
-                nargs = method.selector.count(":")
+                nargs = method.selector.count(b":")
                 names = tuple(["self"] + ["arg%i" % i for i in range(nargs)])
                 return names, None, None, None
         return inspect.getargspec(method)
@@ -501,6 +505,24 @@ class SpecCheckerExt(mocker.SpecChecker):
     def verify(self):
         if self._method is None:
             raise AssertionError("Method not found in real specification")
+
+
+def get_class(unbound_method):
+    assert unbound_method.__module__ is not None, unbound_method
+    assert "." in unbound_method.__qualname__, unbound_method
+    assert "<locals>" not in unbound_method.__qualname__, unbound_method
+    obj = import_module(unbound_method.__module__)
+    for name in unbound_method.__qualname__.split(".")[:-1]:
+        obj = getattr(obj, name)
+    return obj
+
+
+def is_instancemethod(method):
+    return hasattr(method, "__self__") or (
+        hasattr(method, "__qualname__") and
+        method.__name__ != method.__qualname__ and
+        method.__qualname__.rsplit(".", 2)[1] != "<locals>"
+    )
 
 
 def install():

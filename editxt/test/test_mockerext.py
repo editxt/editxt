@@ -25,9 +25,8 @@ testing of PyObjC applications more convenient.
 import logging
 import mocker
 import objc
-from nose.tools import eq_, assert_raises
 from editxt.test.mockerext import install, MockerExt
-from editxt.test.util import TestConfig
+from editxt.test.util import assert_raises, eq_, TestConfig
 
 log = logging.getLogger(__name__)
 
@@ -292,8 +291,20 @@ def test_MockerExt_property_multiple_instances():
         eq(t1.bar, 1)
         eq(t2.bar, 2)
 
-# def test():
-#     assert False, "stop"
+def test_SpecCheckerExt_function_signature():
+    def test(args, msg):
+        class Test(object): pass
+        def func(arg): pass
+        t = Test()
+        t.func = func
+        m = MockerExt()
+        m.replace(t, "func")(*args)
+        def check(err):
+            assert msg in str(err), "{!r} not in {!r}".format(msg, err)
+        with m, assert_raises(AssertionError, msg=check):
+            t.func(*args)
+    yield test, (1, 2), "Specification is func(arg): too many args provided"
+    yield test, (), "Specification is func(arg): 'arg' not provided"
 
 if __name__ == "__main__":
     test_MockExt__lshift__()

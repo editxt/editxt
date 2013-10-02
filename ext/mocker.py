@@ -725,8 +725,8 @@ class MockerBase(object):
                     for attr in attr_stack:
                         object = getattr(object, attr)
                     break
-        if isinstance(object, types.UnboundMethodType):
-            object = object.__func__
+        #if isinstance(object, types.UnboundMethodType):
+        #    object = object.__func__
         if spec is True:
             spec = object
         if type is True:
@@ -1189,14 +1189,14 @@ class Mock(object):
                 return path.execute(path.root_object)
             # Reinstantiate to show raise statement on traceback, and
             # also to make the traceback shown shorter.
-            raise MatchError(str(exception))
+            raise MatchError(str(exception)) from None
         except AssertionError as e:
             lines = str(e).splitlines()
             message = [ERROR_PREFIX + "Unmet expectation:", ""]
             message.append("=> " + lines.pop(0))
             message.extend([" " + line for line in lines])
             message.append("")
-            raise AssertionError(os.linesep.join(message))
+            raise AssertionError(os.linesep.join(message)) from None
 
     def __getattribute__(self, name):
         if name.startswith("__mocker_"):
@@ -1241,14 +1241,14 @@ class Mock(object):
         try:
             result = self.__mocker_act__("len")
         except MatchError as e:
-            raise AttributeError(str(e))
+            raise AttributeError(str(e)) from None
         if type(result) is Mock:
             return 0
         return result
 
     def __bool__(self):
         try:
-            result = self.__mocker_act__("nonzero")
+            result = self.__mocker_act__("bool")
         except MatchError as e:
             return True
         if type(result) is Mock:
@@ -1353,7 +1353,7 @@ class Action(object):
                 result = None
             elif kind == "len":
                 result = len(object)
-            elif kind == "nonzero":
+            elif kind == "bool":
                 result = bool(object)
             elif kind == "iter":
                 result = iter(object)
@@ -1446,7 +1446,7 @@ class Path(object):
                 result = "del %s[%r]" % (result, action.args[0])
             elif action.kind == "len":
                 result = "len(%s)" % result
-            elif action.kind == "nonzero":
+            elif action.kind == "bool":
                 result = "bool(%s)" % result
             elif action.kind == "iter":
                 result = "iter(%s)" % result
