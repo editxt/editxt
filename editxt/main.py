@@ -119,15 +119,7 @@ def main(argv=list(sys.argv)):
             doc = __doc__.replace('Profile directory.',
                 'Profile directory [default: {}].'
                 .format(Application.default_profile()))
-            try:
-                opts = docopt.docopt(doc, argv, version=editxt.__version__)
-            except docopt.DocoptExit as err:
-                # HACK ignore unrecognized arguments passed by Mac OS X
-                if 'is not recognized' in str(err):
-                    log.debug('argument parse error: %s\nargv: %r', err, argv)
-                    opts = {}
-                else:
-                    raise
+            opts = docopt.docopt(doc, argv, version=editxt.__version__)
             app = Application(opts.get('--profile'))
 
         editxt.app = app

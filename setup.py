@@ -96,7 +96,7 @@ setup(
         # not play nicely with Exposé (the window does not come to the front
         # when switching to EditXT with Exposé). Luckily everything seems to
         # work as expected without it!!
-        #argv_emulation=True,
+        argv_emulation=True,
         packages=["editxt"],
         #frameworks=["lib/Frameworks/NDAlias.framework"],
         plist=dict(
