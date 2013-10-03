@@ -463,6 +463,18 @@ class DocumentController(ak.NSDocumentController):
     def applicationWillTerminate_(self, notification):
         self.controller.app_will_terminate(notification.object())
 
+
+# This may be removed if the app does not crash when the save panel is
+# cancelled after quitting with unsaved documents.
+# See also:
+# [PyObjC-svn] r2350 - in trunk/pyobjc/pyobjc-framework-Cocoa: . Lib/AppKit PyObjCTest
+#     http://permalink.gmane.org/gmane.comp.python.pyobjc.cvs/2763
+# Re: Crash when closing all documents
+#     http://permalink.gmane.org/gmane.comp.python.pyobjc.devel/5563
+objc.registerMetaDataForSelector(b'NSDocumentController',
+    b'_documentController:shouldTerminate:context:',
+    {'arguments': {4: {'type': b'^v'}}})
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Document saving helper
 
