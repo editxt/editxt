@@ -983,6 +983,9 @@ class Error(Exception):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __hash__(self):
+        return id(self)
+
 
 class ArgumentError(Error):
 

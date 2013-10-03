@@ -587,15 +587,15 @@ def test_FindController_find_target():
         m = Mocker()
         fc = FindController.shared_controller()
         app = m.replace(editxt, "app")
-        x = expect(next(app.iter_editors()))
         if c.has_ed:
             ed = m.mock(Editor)
-            x.result(ed)
+            x = iter([ed])
             dv = ed.current_view >> (m.mock(TextDocumentView) if c.has_dv else None)
             if c.has_dv:
                 dv.text_view >> (m.mock(TextView) if c.has_tv else None)
         else:
-            x.throw(StopIteration)
+            x = iter([])
+        app.iter_editors() >> x
         with m:
             result = fc.find_target()
             if c.has_ed and c.has_tv:

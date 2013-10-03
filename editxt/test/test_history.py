@@ -39,10 +39,12 @@ def test_History__iter__():
             for i, value in enumerate(files):
                 index.append(pattern.format(name, i))
                 if value is not None:
-                    with open(join(tmp, pattern.format(name, i)), "wb") as fh:
+                    path = join(tmp, pattern.format(name, i))
+                    with open(path, "w", encoding="utf-8") as fh:
                         for command in reversed(value):
                             fh.write(json.dumps(command) + "\n")
-            with open(join(tmp, mod.History.INDEX_FILENAME), "wb") as fh:
+            path = join(tmp, mod.History.INDEX_FILENAME)
+            with open(path, "w", encoding="utf-8") as fh:
                 json.dump(index, fh)
 
             history = mod.History(tmp, 3, 5, name=name)

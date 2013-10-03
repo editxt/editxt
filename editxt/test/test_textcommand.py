@@ -389,8 +389,8 @@ def test_CommandBar_message():
         kw = {}
         if c.exc_info is not None:
             kw["exc_info"] = c.exc_info
-            sys_exc_info() >> ("<exc info>",)
-            format_exc("<exc info>") >> ["Traceback", "...", "Error!"]
+            exc_info = sys_exc_info() >> ("<type>", "<exc>", "<tb>")
+            format_exc(*exc_info) >> ["Traceback", "...", "Error!"]
         def check(text, textview=None, **kw):
             eq_(text, c.msg)
             return True

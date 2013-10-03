@@ -184,7 +184,7 @@ def test_register_value_transformers():
     import editxt.valuetrans as mod
     from editxt.valuetrans import register_value_transformers
     m = Mocker()
-    vt = m.replace(mod, 'NSValueTransformer')
+    vt = m.replace(fn, 'NSValueTransformer')
     trans = [
         mod.WrapModeTransformer,
         mod.IndentModeTransformer,

@@ -20,7 +20,7 @@
 import os
 
 import AppKit as ak
-from Foundation import NSRect
+import Foundation as fn
 
 from mocker import Mocker, expect, ANY
 from nose.tools import eq_
@@ -73,7 +73,7 @@ def test_drawWithFrame_inView_():
         view = m.mock(ak.NSView)
         draws = m.method(mod.ImageAndTextCell.drawsBackground)
         color = m.method(mod.ImageAndTextCell.backgroundColor)
-        fill = m.replace(ak, 'NSRectFill', spec=(lambda a: None))
+        fill = m.replace(ak, 'NSRectFill')
         if c.image:
             img.size() >> fn.NSSize(20, 20)
             if draws() >> c.draws:
@@ -126,7 +126,7 @@ def test_HBC_buttonImageForFrame_inView_():
     def test(c):
         m = Mocker()
         hbc = HoverButtonCell.alloc().init()
-        frame = m.mock(NSRect)
+        frame = m.mock(fn.NSRect)
         view = m.mock(ak.NSOutlineView)
         point, pressed = hbc.hover_info = c.info
         if point is not None:
@@ -163,7 +163,7 @@ def test_HBC_mouseMoveHandlers():
         m = Mocker()
         hbc = HoverButtonCell.alloc().init()
         hbc.hover_info = ("initial", None)
-        frame = m.mock(NSRect)
+        frame = m.mock(fn.NSRect)
         point = c.info[0]
         pir = m.replace(fn, 'NSPointInRect')
         if c.method.startswith("mouseUp"):
@@ -191,7 +191,7 @@ def test_HBC_mouseDragHandlers():
         m = Mocker()
         hbc = HoverButtonCell.alloc().init()
         hbc.hover_info = "<initial value>"
-        frame = m.mock(NSRect)
+        frame = m.mock(fn.NSRect)
         point = c.info[0]
         with m:
             result = getattr(hbc, c.method)(point, frame, None)
@@ -210,7 +210,7 @@ def test_HBC_mouseDragHandlers():
 #   def test(c):
 #       m = Mocker()
 #       hbc = HoverButtonCell.alloc().init()
-#       frame = m.mock(NSRect)
+#       frame = m.mock(fn.NSRect)
 #       view = m.mock(NSOutlineView)
 #       img = m.method(hbc, "buttonImageForFrame_inView_")(frame, view) \
 #           >> (None if not c.img else m.mock(NSImage))

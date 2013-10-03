@@ -22,7 +22,7 @@ import os
 from collections import defaultdict
 
 import AppKit as ak
-from Foundation import fn.NSRect
+import Foundation as fn
 
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import *

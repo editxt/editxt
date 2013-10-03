@@ -48,7 +48,7 @@ class History(object):
         index_file = join(self.store_dir, self.INDEX_FILENAME.format(self.name))
         if exists(index_file):
             try:
-                with open(index_file) as fh:
+                with open(index_file, encoding="utf-8") as fh:
                     self.pages = pages = json.load(fh)
                 assert all(isinstance(p, str) for p in pages), repr(pages)
             except Exception:
@@ -67,7 +67,7 @@ class History(object):
         self.zeropage = next(self.iter_pages(0))
         zeropath = join(self.store_dir, self.zerofile)
         if exists(zeropath) and not self.zeropage:
-            with open(zeropath, "wb") as fh:
+            with open(zeropath, "w", encoding="utf-8") as fh:
                 pass # truncate corrupt page file
 
     def iter_pages(self, start=1):
@@ -76,7 +76,7 @@ class History(object):
             pagepath = join(self.store_dir, pagefile)
             if exists(pagepath):
                 page = []
-                with open(pagepath) as fh:
+                with open(pagepath, encoding="utf-8") as fh:
                     for i, line in enumerate(fh):
                         try:
                             page.append(json.loads(line.rstrip("\n")))

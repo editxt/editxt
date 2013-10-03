@@ -567,7 +567,7 @@ class CommandTester(object):
         self.refs = (editor, commander)
 
     def __call__(self, command):
-        with replattr(textcommand, "NSBeep", lambda:None): # HACK
+        with replattr(ak, "NSBeep", lambda:None): # HACK
             self.bar.execute(command)
 
     def __getattr__(self, name):

@@ -22,6 +22,7 @@ import os
 from tempfile import gettempdir
 
 import AppKit as ak
+import Foundation as fn
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import *
 
@@ -525,15 +526,11 @@ def test_close():
     from editxt.util import KVOList
     proj = Project.create()
     m = Mocker()
-    proj._documents = m.mock(KVOList)
-    docs = []
+    proj._documents = docs = []
     for i in range(2):
         dv = m.mock(TextDocumentView)
         docs.append(dv)
         dv.close()
-    iter(proj._documents); m.generate(docs)
-    #proj._documents.__length_hint__ >> len(docs)
-    #proj._documents.setItems_([])
     with m:
         proj.close()
 

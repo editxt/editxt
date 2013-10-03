@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 
 
 def test_Caller_alertDidEnd_returnCode_contextInfo_signature():
-    assert Caller.alertDidEnd_returnCode_contextInfo_.signature == 'v@:@ii'
+    assert Caller.alertDidEnd_returnCode_contextInfo_.signature == b'v@:@ii'
 
 def test_beginSheetModalForWindow_withCallback_():
     m = Mocker()

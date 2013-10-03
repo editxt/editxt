@@ -614,7 +614,7 @@ def test_document_shouldClose_contextInfo_():
             ed.discard_and_focus_recent(dv)
         with m:
             dv.document_shouldClose_contextInfo_(doc, should_close, 42)
-        eq_(TextDocumentView.document_shouldClose_contextInfo_.signature, 'v@:@ii')
+        eq_(TextDocumentView.document_shouldClose_contextInfo_.signature, b'v@:@ii')
     yield test, True
     yield test, False
 

@@ -245,18 +245,18 @@ def test_open_error_log():
         dv_class = m.replace(edoc, 'TextDocumentView')
         app = Application()
         err = m.property(mod.errlog, "document").value >> m.mock(TextDocument)
-        idocs = m.method(app.iter_views_of_document)(err) >> m.mock()
         if c.is_open:
-            next(idocs) >> dv
+            idocs = iter([dv])
             m.method(app.set_current_document_view)(dv)
         else:
-            expect(next(idocs)).throw(StopIteration)
+            idocs = iter([])
             m.method(app.current_editor)() >> (ed if c.has_editor else None)
             if not c.has_editor:
                 m.method(app.create_editor)() >> ed
             dv_class.create_with_document(err) >> dv
             ed.add_document_view(dv)
             ed.current_view = dv
+        m.method(app.iter_views_of_document)(err) >> idocs
         with m:
             app.open_error_log()
     c = TestConfig(is_open=False)
@@ -867,33 +867,6 @@ def test_closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_():
         dc.closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_(
             delegate, selector, context)
 
-def test_closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_bug():
-    import AppKit
-    path = os.path.join(os.path.dirname(AppKit.__file__), "PyObjC.bridgesupport")
-    with open(path) as f:
-        assert '_documentController:shouldTerminate:context:' in f.read(), (""
-            """
-            PyObjC patch not found. This test may be removed if the app does
-            not crash when the save panel is cancelled after quitting with
-            unsaved documents.
-
-            The following method directive was manually added to the
-            AppKit PyObjC.bridgesupport to fix the error.
-
-              <class name='NSDocumentController'>
-                <!-- begin patch -->
-                <method selector='_documentController:shouldTerminate:context:'>
-                  <arg index='2' type='^v' type64='^v' />
-                </method>
-                <!-- end patch -->
-
-            See also:
-            [PyObjC-svn] r2350 - in trunk/pyobjc/pyobjc-framework-Cocoa: . Lib/AppKit PyObjCTest
-                http://permalink.gmane.org/gmane.comp.python.pyobjc.cvs/2763
-            Re: Crash when closing all documents
-                http://permalink.gmane.org/gmane.comp.python.pyobjc.devel/5563
-            """)
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # DocumentSavingDelegate tests
 
@@ -911,21 +884,20 @@ def test_save_next_document():
     def do_test(doctype, doc_window_is_front=True):
         m = Mocker()
         app = m.replace(editxt, 'app')
-        docs = m.mock()
+        docs = []
         dc = m.mock(DocumentController)
         note_ctr = m.replace(fn, 'NSNotificationCenter')
         controller = m.mock()
         callback = m.mock()
         context = 0
-        saver = DocumentSavingDelegate.alloc().init_callback_(docs, callback)
+        saver = DocumentSavingDelegate.alloc().init_callback_(iter(docs), callback)
         def do_stop_routine():
-            expect(next(docs)).throw(StopIteration)
             callback(saver.should_close)
         if doctype is None:
             do_stop_routine()
         else:
             doc = m.mock(doctype)
-            next(docs) >> doc
+            docs.append(doc)
             if doctype is Project:
                 doc.save()
                 do_stop_routine()
@@ -957,7 +929,7 @@ def test_save_next_document():
     yield do_test, None
 
 def test_document_shouldClose_contextInfo_():
-    assert DocumentSavingDelegate.document_shouldClose_contextInfo_.signature == 'v@:@ci'
+    assert DocumentSavingDelegate.document_shouldClose_contextInfo_.signature == b'v@:@ci'
     def do_test(should_close, sheet_did_end):
         context = 0
         m = Mocker()
@@ -985,7 +957,7 @@ def test_document_shouldClose_contextInfo_():
     yield do_test, False, False
 
 def test_windowDidEndSheet_signature():
-    assert DocumentSavingDelegate.windowDidEndSheet_.signature == 'v@:@'
+    assert DocumentSavingDelegate.windowDidEndSheet_.signature == b'v@:@'
 
 def test_windowDidEndSheet_():
     def do_test(called_back):

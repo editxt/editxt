@@ -26,7 +26,7 @@ import AppKit as ak
 import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
-from editxt.test.util import TestConfig, untested, check_app_state
+from editxt.test.util import TestConfig, untested, check_app_state, tempdir
 
 import editxt.constants as const
 import editxt.syntax as mod
@@ -99,33 +99,32 @@ def test_SyntaxFactory_load_definitions():
     yield test, c(exists=False)
 
 def test_SyntaxFactory_load_definition():
+    import builtins
     defaults = dict(
         comment_token="",
         word_groups=[],
         delimited_ranges=[],
     )
     def test(c):
-        m = Mocker()
-        sf = SyntaxFactory()
-        execf = m.replace(__builtins__, 'execfile', dict=True)
-        def do(filename, ns):
-            ns.update(__builtins__="__builtins__")
-            return ns.update(c.info)
-        if c.error is not Exception:
-            expect(execf("<filename>", ANY)).call(do)
-        else:
-            expect(execf("<filename>", ANY)).throw(c.error)
-        values = dict(defaults)
-        values.update(c.info)
-        with m:
+        with tempdir() as tmp:
+            sf = SyntaxFactory()
+            filename = os.path.join(tmp, "file")
+            with open(filename, "w", encoding="utf-8") as fh:
+                if c.error is not Exception:
+                    fh.write("\n".join("{} = {!r}".format(k, v)
+                        for k, v in c.info.items()))
+                else:
+                    fh.write("raise {}".format(c.error.__name__))
+            values = dict(defaults)
+            values.update(c.info)
             if c.error is None:
-                res = sf.load_definition("<filename>")
+                res = sf.load_definition(filename)
                 for name, value in values.items():
                     if name == "filepatterns":
                         value = set(value)
                     eq_(getattr(res, name), value, name)
             else:
-                assert_raises(c.error, sf.load_definition, "<filename>")
+                assert_raises(c.error, sf.load_definition, filename)
     c = TestConfig(error=None)
     yield test, c(info=dict(name="dis", filepatterns=[], disabled=True))
     yield test, c(info={}, error=Exception)
@@ -155,7 +154,7 @@ def test_SyntaxFactory_index_definitions():
     }
     defs = sorted([text1, text2, python], key=lambda d:(d.name, id(d)))
     m = Mocker()
-    vt = m.replace(fn, 'NSValueTransformer')
+    vt = m.replace(mod, 'NSValueTransformer')
     st = vt.valueTransformerForName_("SyntaxDefTransformer") >> \
         m.mock(SyntaxDefTransformer)
     st.update_definitions(defs)
