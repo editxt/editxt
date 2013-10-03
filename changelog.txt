@@ -23,6 +23,7 @@ This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
 ????-??-?? - 1.4.0
+  - Runs on Python 3.
   - Fix bug that prevented replace with nothing (empty string).
   - Added Python Replace feature to find command. This feature evaluates a
     Python expression during the replace phase of a find/replace operation
