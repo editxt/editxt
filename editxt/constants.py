@@ -105,5 +105,5 @@ CLOSE_DIRTY_NORMAL = "close-dirty-normal.png"
 CLOSE_DIRTY_PRESSED = "close-dirty-pressed.png"
 CLOSE_DIRTY_SELECTED = "close-dirty-selected.png"
 
-REGEX_HELP_URL = "http://docs.python.org/library/re.html#regular-expression-syntax"
+REGEX_HELP_URL = "http://docs.python.org/3/library/re.html#regular-expression-syntax"
 
