@@ -19,13 +19,16 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import inspect
 import logging
-import mocker
+import sys
 import types
 import weakref
 from editxt.test.util import replattr
 from importlib import import_module
 
 log = logging.getLogger(__name__)
+
+import editxt.test.mocker as mocker
+sys.modules["mocker"] = mocker # version patched for Python 3
 
 try:
     from Foundation import NSObject
