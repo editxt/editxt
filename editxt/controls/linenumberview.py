@@ -138,7 +138,7 @@ class LineNumberView(ak.NSRulerView):
             ak.NSParagraphStyleAttributeName: self.paragraphStyle,
         }
         i = topGlyph
-        line = max(0, int(top.y)) / int(lineHeight) + 1
+        line = max(0, int(top.y)) // int(lineHeight) + 1
         # TODO handle word-wrap mode line counting (when that feature is implemented)
 
         while i <= botGlyph:
