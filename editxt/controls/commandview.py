@@ -97,7 +97,7 @@ class CommandView(ak.NSView):
             self.output.setString_("")
             self.deactivate()
 
-    def message(self, message, textview=None, msg_type=ERROR):
+    def message(self, message, textview=None, msg_type=INFO):
         if msg_type == HTML:
             raise NotImplementedError("convert message to NSAttributedString")
         else:

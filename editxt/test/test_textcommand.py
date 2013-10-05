@@ -384,17 +384,12 @@ def test_CommandBar_message():
         format_exc = m.replace(mod.traceback, "format_exception")
         bar = mod.CommandBar(editor, commander)
         view = editor.current_view >> m.mock(TextDocumentView)
-        tv = view.text_view >> m.mock(ak.NSTextView)
-        cmd = view.scroll_view.commandView >> m.mock(CommandView)
         kw = {}
         if c.exc_info is not None:
             kw["exc_info"] = c.exc_info
             exc_info = sys_exc_info() >> ("<type>", "<exc>", "<tb>")
             format_exc(*exc_info) >> ["Traceback", "...", "Error!"]
-        def check(text, textview=None, **kw):
-            eq_(text, c.msg)
-            return True
-        expect(cmd.message(ANY, textview=tv)).call(check)
+        view.message(c.msg, msg_type=const.ERROR)
         with m:
             bar.message(c.text, **kw)
     c = TestConfig(text="command error", exc_info=None)

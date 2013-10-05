@@ -150,7 +150,7 @@ class CommandBar(object):
             self.history_view = self.text_commander.history.view()
         return self.history_view.get(current_text, forward)
 
-    def message(self, text, exc_info=None, **kw):
+    def message(self, text, exc_info=None, msg_type=const.ERROR):
         if exc_info:
             if isinstance(exc_info, (int, bool)):
                 exc_info = sys.exc_info()
@@ -161,10 +161,10 @@ class CommandBar(object):
         view = self.editor.current_view
         if view is None:
             log.info(text, exc_info=exc_info)
-            ak.NSBeep()
+            if msg_type == const.ERROR:
+                ak.NSBeep()
         else:
-            view.scroll_view.commandView.message(
-                msg, textview=view.text_view, **kw)
+            view.message(msg, msg_type=msg_type)
 
     def reset(self):
         view, self.history_view = self.history_view, None

@@ -336,6 +336,10 @@ class TextDocumentView(fn.NSObject):
             self.edit_state = state
             del self._state
 
+    def message(self, msg, msg_type=const.INFO):
+        """Display a message in the command view"""
+        self.scroll_view.commandView.message(msg, self.text_view, msg_type)
+
     def perform_close(self, editor):
         if list(app.iter_editors_with_view_of_document(self.document)) == [editor]:
             info = app.context.put(editor)
