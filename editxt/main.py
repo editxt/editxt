@@ -57,7 +57,7 @@ DEFAULT_LOGGING_CONFIG = {
             'formatter': 'brief',
         },
         'logview': {
-            'class': 'logging.StreamHandler',
+            'class': 'editxt.errorlog.StreamHandler',
             'level': 'INFO',
             'formatter': 'brief',
             'stream': 'ext://editxt.errorlog.errlog',

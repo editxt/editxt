@@ -100,10 +100,10 @@ def test_ErrorLog_unexpected_error():
         app = m.replace('editxt.app')
         log = m.replace(mod, 'log')
         log.error("unexpected error", exc_info=True)
-        open_error = app.open_error_log(set_current=False)
-        if c.open_fail:
-            expect(open_error).throw(Exception)
-            log.error("cannot open error log", exc_info=True)
+#        open_error = app.open_error_log(set_current=False)
+#        if c.open_fail:
+#            expect(open_error).throw(Exception)
+#            log.warn("cannot open error log", exc_info=True)
         with m:
             assert el.unexpected_error()
     c = TestConfig()

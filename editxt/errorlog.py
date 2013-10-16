@@ -59,13 +59,23 @@ class ErrorLog(object):
     @staticmethod
     def unexpected_error():
         """error handler function for objc.AppHelper.runEventLoop"""
-        from editxt import app
         log.error("unexpected error", exc_info=True)
-        try:
-            app.open_error_log(set_current=False)
-        except Exception:
-            log.error("cannot open error log", exc_info=True)
         return True
+
+
+class StreamHandler(logging.StreamHandler):
+
+    def emit(self, record):
+        try:
+            return super().emit(record)
+        finally:
+            if record.levelno > logging.WARNING:
+                try:
+                    from editxt import app
+                    app.open_error_log(set_current=False)
+                except Exception:
+                    log.warn("cannot open error log", exc_info=True)
+
 
 def create_error_log_document(closefunc):
     """create an error document
