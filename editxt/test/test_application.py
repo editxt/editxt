@@ -89,8 +89,8 @@ def test_init_syntax_definitions():
     SyntaxFactory = m.replace(syntax, 'SyntaxFactory', spec=False)
     sf = SyntaxFactory() >> m.mock(syntax.SyntaxFactory)
     app_log = m.replace("editxt.application.log")
-    for path in [rsrc_path, '/editxtdev']:
-        sf.load_definitions(os.path.join(path, const.SYNTAX_DEFS_DIR))
+    for path, info in [(rsrc_path, False), ('/editxtdev', True)]:
+        sf.load_definitions(os.path.join(path, const.SYNTAX_DEFS_DIR), info)
     sf.index_definitions()
     with m:
         app.init_syntax_definitions()

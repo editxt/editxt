@@ -34,7 +34,8 @@ from editxt.commands import iterlines
 from editxt.config import Config
 from editxt.errorlog import errlog
 from editxt.textcommand import CommandHistory, TextCommandController
-from editxt.util import ContextMap, perform_selector, dump_yaml, load_yaml
+from editxt.util import (ContextMap, perform_selector,
+    atomicfile, dump_yaml, load_yaml)
 from editxt.valuetrans import register_value_transformers
 
 #from editxt.test.util import todo_remove # NOTE: this import causes error on start app:
@@ -80,10 +81,10 @@ class Application(object):
     def init_syntax_definitions(self):
         from editxt.syntax import SyntaxFactory
         self.syntax_factory = sf = SyntaxFactory()
-        paths = [self.resource_path(), self.profile_path]
-        for path in paths:
+        paths = [(self.resource_path(), False), (self.profile_path, True)]
+        for path, log_info in paths:
             path = os.path.join(path, const.SYNTAX_DEFS_DIR)
-            sf.load_definitions(path)
+            sf.load_definitions(path, log_info)
         sf.index_definitions()
 
     @property

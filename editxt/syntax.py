@@ -50,7 +50,7 @@ class SyntaxFactory():
         self.registry = {"*.txt": PLAIN_TEXT}
         self.definitions = [PLAIN_TEXT]
 
-    def load_definitions(self, path):
+    def load_definitions(self, path, log_info=True):
         if path and os.path.exists(path):
             for filename in glob.glob(os.path.join(path, "*" + const.SYNTAX_DEF_EXTENSION)):
                 try:
@@ -70,7 +70,8 @@ class SyntaxFactory():
                     elif overrides:
                         stat.extend(["overrides", ", ".join(overrides)])
                     stat.append(filename)
-                    log.info("syntax definition: %s", " ".join(stat))
+                    if log_info:
+                        log.info("syntax definition: %s", " ".join(stat))
 
     def load_definition(self, filename):
         ns = {"RE": RE}
