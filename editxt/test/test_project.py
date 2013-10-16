@@ -23,6 +23,7 @@ from tempfile import gettempdir
 
 import AppKit as ak
 import Foundation as fn
+import objc
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import *
 
@@ -32,6 +33,7 @@ from editxt.application import Application, DocumentController
 from editxt.editor import Editor, EditorWindowController
 from editxt.document import TextDocumentView, TextDocument
 from editxt.project import Project
+from editxt.util import dump_yaml
 
 from editxt.test.util import TestConfig, check_app_state
 
@@ -144,7 +146,8 @@ def test_serialize_full():
         if c.path:
             proj.path = "<path>"
         if c.name:
-            proj.name = "<name>"
+            proj.name = ak.NSString.alloc().initWithString_("<name>")
+            assert isinstance(proj.name, objc.pyobjc_unicode), type(proj.name)
         if c.docs:
             proj._documents = [MockDoc(1)]
         proj.expanded = c.expn
@@ -153,6 +156,7 @@ def test_serialize_full():
         check(c.name, "name", serial, proj.name)
         check(c.docs, "documents", serial)
         check(True, "expanded", serial, c.expn)
+        dump_yaml(serial) # verify that it does not crash
     c = TestConfig()
     for path in (True, False):
         for name in (True, False):
