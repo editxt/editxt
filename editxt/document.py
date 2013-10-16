@@ -575,8 +575,11 @@ class TextDocument(ak.NSDocument):
         data, err = self.text_storage \
             .dataFromRange_documentAttributes_error_(range, attrs, None)
         if err is None:
-            self.update_syntaxer()
-            app.save_editor_states()
+            try:
+                self.update_syntaxer()
+                app.save_editor_states()
+            except Exception:
+                log.error("unexpected error", exc_info=True)
 #             if self.project is not None:
 #                 self.project.save()
 #                 self.updateSyntaxer()

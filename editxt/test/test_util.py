@@ -23,16 +23,52 @@ import os
 import objc
 from mocker import Mocker, expect, ANY, MATCH
 from nose.plugins.skip import SkipTest
-from nose.tools import eq_, assert_raises
 import AppKit as ak
 import Foundation as fn
 
 import editxt.constants as const
 import editxt.util as mod
 from editxt.util import KVOList
-from editxt.test.util import TestConfig
+from editxt.test.util import assert_raises, eq_, tempdir, TestConfig
 
 log = logging.getLogger(__name__)
+
+def test_atomicfile():
+    def test(expect, old_value=None):
+        if isinstance(expect, Exception):
+            exc = type(expect)
+            exc_val = expect
+        elif expect == old_value:
+            exc = IOError
+            exc_val = IOError("fail")
+        else:
+            exc = exc_val = None
+        with tempdir() as tmp:
+            path = os.path.join(tmp, "file.txt")
+            if old_value is not None:
+                with open(path, "x") as fh:
+                    fh.write(old_value)
+            with assert_raises(exc, msg=exc_val):
+                with mod.atomicfile(path) as fh:
+                    fh.write("new")
+                    if exc_val is not None:
+                        raise exc_val
+            files = os.listdir(tmp)
+            if exc is None:
+                with open(path) as fh:
+                    eq_(fh.read(), expect)
+                assert files == ["file.txt"], files
+            elif old_value is not None:
+                assert files == ["file.txt"], files
+                with open(path) as fh:
+                    eq_(fh.read(), old_value)
+            else:
+                assert not files, files
+    yield test, "new"
+    yield test, "new", "old"
+    yield test, "old", "old"
+    yield test, KeyError("fail!")
+    yield test, KeyError("fail!"), "old"
 
 def test_create_kvolist():
     lst = KVOList.alloc().init()

@@ -19,9 +19,12 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+import random
 import re
+import string
 import sys
 import types
+from contextlib import contextmanager
 
 import objc
 import yaml
@@ -84,6 +87,27 @@ def dump_yaml(*args, **kw):
 def load_yaml(*args, **kw):
     kw.setdefault('Loader', next(yaml_dumper_loader)[1])
     return yaml.load(*args, **kw)
+
+@contextmanager
+def atomicfile(path, mode="w", **kw):
+    """Open a file for writing
+
+    Atomically overwrites existing file (if any) on exit.
+    """
+    assert mode in "wt wb", "invalid mode: {}".format(mode)
+    mode.replace("w", "x")
+    chars = string.ascii_lowercase + string.digits
+    ext = "".join(random.choice(chars) for i in range(8))
+    temp = path + "-" + ext
+    moved = False
+    try:
+        with open(temp, mode=mode, **kw) as fh:
+            yield fh
+        os.rename(temp, path)
+        moved = True
+    finally:
+        if not moved:
+            os.remove(temp)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

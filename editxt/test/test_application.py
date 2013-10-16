@@ -731,19 +731,27 @@ def test_iter_saved_editor_states():
     yield test, [3, 1, 2, 0]
 
 def test_save_editor_state():
-    def test(c):
+    def test(with_id=True, fail=False):
         with tempdir() as tmp:
             state_path = os.path.join(tmp, const.STATE_DIR)
             editor = TestConfig(state=[42], id=9)
-            args = (editor.id,) if c.with_id else ()
+            args = (editor.id,) if with_id else ()
             app = Application(tmp)
             state_name = app.save_editor_state(editor, *args)
+            if fail:
+                editor = editor(state="should not be written")
+                def dump_fail(state, fh=None):
+                    if fh is not None:
+                        fh.write("should not be seen")
+                    raise Exception("dump fail!")
+                with replattr(mod, "dump_yaml", dump_fail, sigcheck=False):
+                    state_name = app.save_editor_state(editor, *args)
             assert os.path.isdir(state_path), state_path
             with open(os.path.join(state_path, state_name)) as f:
                 eq_(load_yaml(f), [42])
-    c = TestConfig()
-    yield test, c(with_id=True)
-    #yield test, c(with_id=False) not implemented
+    yield test, True
+    yield test, True, True
+    #yield test, False not implemented
 
 def test_save_editor_states():
     def mock_editors(mock_iter_editors, editors):

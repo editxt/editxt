@@ -367,11 +367,10 @@ class Application(object):
             self.profile_path, const.STATE_DIR, state_name)
         state = editor.state
         try:
-            with open(state_file, 'w', encoding="utf-8") as fh:
+            with atomicfile(state_file, encoding="utf-8") as fh:
                 dump_yaml(state, fh)
         except Exception:
-            log.error('cannot write %s\n%s\n',
-                state_file, dump_yaml(state), exc_info=True)
+            log.error('cannot write %s\n%s\n', state_file, state, exc_info=True)
         return state_name
 
     def save_editor_states(self):

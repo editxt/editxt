@@ -167,6 +167,8 @@ def assert_raises(*args, **kw):
             except args[0] as err:
                 if isinstance(msg, basestring):
                     eq_(str(err), msg)
+                elif isinstance(msg, BaseException):
+                    eq_(err, msg)
                 elif hasattr(msg, 'search'):
                     assert msg.search(str(err)), \
                         '{!r} does not match {!r}'.foramt(msg.pattern, str(err))
