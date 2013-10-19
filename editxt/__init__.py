@@ -19,6 +19,6 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
 # TODO make __version__ more specific (include date and git revision)
-__version__ = "1.3.1"
+__version__ = "1.3.2"
 
 app = None # will be the singleton instance of editxt.application.Application

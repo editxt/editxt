@@ -88,7 +88,7 @@ class Project(NSObject):
         if self.path is not None:
             data["path"] = self.path
         if self.name != const.UNTITLED_PROJECT_NAME:
-            data["name"] = self.name
+            data["name"] = unicode(self.name)
         states = (d.edit_state for d in self._documents)
         documents = [s for s in states if "path" in s]
         if documents:
