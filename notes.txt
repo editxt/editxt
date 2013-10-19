@@ -74,6 +74,7 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+Release v1.3.2
 File tree as main project view
 open command
 grep command (for finding/printing lines in file)
