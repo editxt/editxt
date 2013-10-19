@@ -58,7 +58,8 @@ class Application(object):
         self._setup_profile = set()
         self.editors = []
         self.path_opener = None
-        self.config = Config(self.profile_path)
+        self.config = Config(
+            os.path.join(self.profile_path, const.CONFIG_FILENAME))
         self.context = ContextMap()
         self.syntax_factory = None
         state_dir = os.path.join(self.profile_path, const.STATE_DIR)

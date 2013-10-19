@@ -32,15 +32,17 @@ SCHEMA = {
 
 def test_Config_init_with_no_file():
     with tempdir() as tmp:
-        conf = mod.Config(tmp, SCHEMA)
+        path = join(tmp, const.CONFIG_FILENAME)
+        conf = mod.Config(path, SCHEMA)
         with assert_raises(KeyError):
             conf["key"]
 
 def test_Config_init():
     with tempdir() as tmp:
-        with open(join(tmp, const.CONFIG_FILENAME), "w") as f:
+        path = join(tmp, const.CONFIG_FILENAME)
+        with open(path, "w") as f:
             f.write("key: value\n")
-        conf = mod.Config(tmp, SCHEMA)
+        conf = mod.Config(path, SCHEMA)
         eq_(conf["key"], "value")
 
 def test_Config_init_invalid_config():
@@ -49,7 +51,7 @@ def test_Config_init_invalid_config():
             path = join(tmp, const.CONFIG_FILENAME)
             with open(path, "w") as f:
                 f.write(config_data)
-            conf = mod.Config(tmp, SCHEMA)
+            conf = mod.Config(path, SCHEMA)
             with assert_raises(KeyError):
                 conf["key"]
             regex = Regex("cannot load [^:]+/config\.yaml: {}".format(error))
@@ -60,12 +62,13 @@ def test_Config_init_invalid_config():
 
 def test_Config_reload():
     with tempdir() as tmp:
-        with open(join(tmp, const.CONFIG_FILENAME), "w") as f:
+        path = join(tmp, const.CONFIG_FILENAME)
+        with open(path, "w") as f:
             f.write("key: value\n")
-        conf = mod.Config(tmp, SCHEMA)
+        conf = mod.Config(path, SCHEMA)
         eq_(conf["key"], "value")
 
-        with open(join(tmp, const.CONFIG_FILENAME), "w") as f:
+        with open(path, "w") as f:
             f.write("answer: 42\n")
         conf.reload()
         eq_(conf["answer"], 42)

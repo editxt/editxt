@@ -179,8 +179,8 @@ class Color(Type):
 
 class Config(object):
 
-    def __init__(self, profile_path, schema=config_schema()):
-        self.path = join(profile_path, const.CONFIG_FILENAME)
+    def __init__(self, path, schema=config_schema()):
+        self.path = path
         self.data = {}
         self.valid = {}
         self.errors = {}
@@ -202,7 +202,7 @@ class Config(object):
                     log.error("cannot load %s: root object is a %s, "
                         "expected a dict", self.path, type(data).__name__)
                     return
-            log.info("loaded config: %s", self.path)
+            log.info("loaded %s", self.path)
             self.data = data
         else:
             self.data = {}
