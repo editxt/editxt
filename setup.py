@@ -91,6 +91,10 @@ setup(
     name=appname,
     app=['boot.py'],
     version=version,
+    classifiers=[
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3'
+    ],
     options=dict(py2app=dict(
         # argv_emulation causes the app to launch in a strange mode that does
         # not play nicely with Exposé (the window does not come to the front
