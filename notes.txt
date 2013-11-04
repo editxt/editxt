@@ -74,13 +74,17 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Release v1.3.2
+Support opening symlinks
+Use something like Sparkle to auto-update http://sparkle.andymatuschak.org/
 File tree as main project view
 open command
 grep command (for finding/printing lines in file)
 Persistent unsaved docs
 Embed file type icons in app (also provide support for user icon sets)
 Diff doc with file on disk (or other file)
+
+Display errors and open config files that cannot be loaded automatically
+  - Do not overwrite files on save/close
 
 Command bar enhancements:
     contextual command help

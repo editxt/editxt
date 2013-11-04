@@ -110,6 +110,7 @@ def test_application_will_finish_launching():
         app = Application()
         m = Mocker()
         create_editor = m.method(app.create_editor)
+        open_error_log = m.method(app.open_error_log)
         nsapp = m.mock(ak.NSApplication)
         ud_class = m.replace(fn, 'NSUserDefaults')
         m.method(app.iter_saved_editor_states)() >> iter(eds_config)
@@ -119,16 +120,24 @@ def test_application_will_finish_launching():
         m.method(app.init_syntax_definitions)()
         tc.load_commands(menu)
         if eds_config:
+            error = False
             for ed_config in eds_config:
-                create_editor(ed_config)
+                if isinstance(ed_config, mod.StateLoadFailure):
+                    error = True
+                else:
+                    create_editor(ed_config)
+            if error:
+                open_error_log()
         else:
             create_editor()
         with m:
             app.application_will_finish_launching(nsapp, dc)
             eq_(app.text_commander, tc)
     yield test, []
+    yield test, [mod.StateLoadFailure("<path>")]
     yield test, ["project"]
     yield test, ["project 1", "project 2"]
+    yield test, ["project 1", mod.StateLoadFailure("<path>"), "project 2"]
 
 def test_create_editor():
     import editxt.editor as editor #import Editor
@@ -710,7 +719,7 @@ def test_setup_profile_at_file():
         assert os.path.isfile(path), path
 
 def test_iter_saved_editor_states():
-    def test(states):
+    def test(states, error=None):
         with tempdir() as tmp:
             state_path = os.path.join(tmp, const.STATE_DIR)
             if states:
@@ -724,11 +733,18 @@ def test_iter_saved_editor_states():
                 with m:
                     app.save_editor_states()
                 assert os.listdir(state_path), state_path
+                if error is not None:
+                    fail_path = os.path.join(
+                        state_path, const.EDITOR_STATE.format(error))
+                    with open(fail_path, "w") as fh:
+                        fh.write('!!invalid "yaml"')
             app = Application(tmp)
             result = list(app.iter_saved_editor_states())
-            eq_(result, [[id] for id in states])
+            eq_(result, [[id] if error != i else mod.StateLoadFailure(fail_path)
+                         for i, id in enumerate(states)])
     yield test, []
     yield test, [3, 1, 2, 0]
+    yield test, [666], 0
 
 def test_save_editor_state():
     def test(with_id=True, fail=False):

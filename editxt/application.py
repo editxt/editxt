@@ -97,8 +97,14 @@ class Application(object):
         self.text_commander.load_commands(doc_ctrl.textMenu)
         states = list(self.iter_saved_editor_states())
         if states:
+            errors = []
             for state in reversed(states):
-                self.create_editor(state)
+                if isinstance(state, StateLoadFailure):
+                    errors.append(state)
+                else:
+                    self.create_editor(state)
+            if errors:
+                self.open_error_log()
         else:
             self.create_editor()
 
@@ -348,6 +354,7 @@ class Application(object):
                     yield load_yaml(f)
             except Exception:
                 log.error('cannot load %s', path, exc_info=True)
+                yield StateLoadFailure(path)
 
     def save_editor_state(self, editor, ident=None):
         """Save a single editor's state
@@ -463,6 +470,21 @@ class DocumentController(ak.NSDocumentController):
 
     def applicationWillTerminate_(self, notification):
         self.controller.app_will_terminate(notification.object())
+
+
+class StateLoadFailure(object):
+
+    def __init__(self, path):
+        self.path = path
+
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and self.path == other.path
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __repr__(self):
+        return "<{} {}>".format(type(self).__name__, self.path)
 
 
 # This may be removed if the app does not crash when the save panel is
