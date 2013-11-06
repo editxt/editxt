@@ -35,14 +35,12 @@ import os
 import sys
 
 import docopt
-import objc
-from PyObjCTools import AppHelper, Debugging
 
 import editxt
+import editxt.platform as platform
 from editxt.errorlog import errlog
 from editxt.errors import install_exception_handler
 
-docopt.exit = sys.exit # Fix for Python 2
 log = logging.getLogger(__name__)
 
 DEFAULT_LOGGING_CONFIG = {
@@ -73,41 +71,17 @@ DEFAULT_LOGGING_CONFIG = {
 }
 
 
-def run(app, argv, use_pdb):
-    # TODO move into PyObjC-specific application init
-
-    # HACK monkey-patch pyobc exception handler to use our logger
-    Debugging.NSLog = lambda x, y=None: log.error(x if y is None else y)
-    if not use_pdb:
-        install_exception_handler()
-
-    # initialize class definitions
-    import editxt.controls.cells
-    import editxt.controls.linenumberview
-    import editxt.controls.outlineview
-    import editxt.controls.splitview
-    import editxt.controls.textview
-    import editxt.controls.window
-    import editxt.application
-    import editxt.editor
-    import editxt.project
-    import editxt.document
-
-    AppHelper.runEventLoop(argv, errlog.unexpected_error, pdb=use_pdb)
-
-
 def main(argv=list(sys.argv)):
     try:
         if "--test" in argv or "--pdb" in argv:
             DEFAULT_LOGGING_CONFIG['handlers']['console']['level'] = 'DEBUG'
 
+        platform.init()
+
         use_pdb = "--pdb" in argv
         if use_pdb:
             argv.remove("--pdb")
-            objc.setVerbose(1)
-
-            # make PyObjC use our exception handler
-            Debugging.installExceptionHandler = install_exception_handler
+        platform.main.setup_error_handlers(use_pdb, install_exception_handler)
 
         if "--test" in argv:
             from editxt.test.runner import TestApplication
@@ -123,9 +97,9 @@ def main(argv=list(sys.argv)):
             app = Application(opts.get('--profile'))
 
         editxt.app = app
-        run(app, argv, use_pdb)
+        platform.main.run(app, argv, errlog.unexpected_error, use_pdb)
     except Exception as err:
-        if len(logging.root.handlers) == 0:
+        if not logging.root.handlers:
             logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
         log.error('unhandled error', exc_info=True)
         sys.exit(1)
