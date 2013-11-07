@@ -88,11 +88,13 @@ class LineNumberView(ak.NSRulerView):
     # Rule thickness and drawing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def calculate_thickness(self):
-        font = self.textview.textStorage().font()
-        if font is not None:
-            charwidth = font.advancementForGlyph_(ord("0")).width
-            lines = self.estimate_line_count(font)
-            return int((len(str(lines)) + 3) * charwidth)
+        store = self.textview.textStorage()
+        if store is not None:
+            font = store.font()
+            if font is not None:
+                charwidth = font.advancementForGlyph_(ord("0")).width
+                lines = self.estimate_line_count(font)
+                return int((len(str(lines)) + 3) * charwidth)
         return self.ruleThickness()
 
     def requiredThickness(self):
