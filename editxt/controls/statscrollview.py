@@ -75,19 +75,20 @@ class StatusbarScrollView(ak.NSScrollView):
             command.setHidden_(False)
             command.setFrame_(crect)
 
+            # vscroll | content
+            crect, erect = fn.NSDivideRect(drect, None, None, scrollw, fn.NSMaxXEdge)
+            vscroll.setFrame_(crect)
             if not self.can_overlay_scrollers:
-                crect, drect = fn.NSDivideRect(drect, None, None, scrollw, fn.NSMaxXEdge)
-                vscroll.setFrame_(crect)
+                drect = erect
         else:
             # common case: command view is short
             # put command view inside (to right of) main vertical scroller
 
+            # vscroll | content
+            crect, drect = fn.NSDivideRect(brect, None, None, scrollw, fn.NSMaxXEdge)
+            vscroll.setFrame_(crect)
             if self.can_overlay_scrollers:
                 drect = brect
-            else:
-                # vscroll | content
-                crect, drect = fn.NSDivideRect(brect, None, None, scrollw, fn.NSMaxXEdge)
-                vscroll.setFrame_(crect)
 
             if command:
                 commandh = command.preferred_height
@@ -113,10 +114,13 @@ class StatusbarScrollView(ak.NSScrollView):
         grect, hrect = fn.NSDivideRect(arect, None, None, svwidth, fn.NSMinXEdge)
         status.setFrame_(grect)
         hscroll.setFrame_(hrect)
+        if self.can_overlay_scrollers \
+                and self.scrollerStyle() != ak.NSScrollerStyleOverlay:
+            self.setScrollerStyle_(ak.NSScrollerStyleOverlay)
+        self.setNeedsDisplay_(True)
 
     def tile_and_redraw(self):
         self.tile()
-        self.setNeedsDisplay_(True)
 
 
 class StatusView(ak.NSView):
