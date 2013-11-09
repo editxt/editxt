@@ -26,7 +26,6 @@ from itertools import chain, repeat, count
 import objc
 import AppKit as ak
 import Foundation as fn
-from PyObjCTools import AppHelper
 
 import editxt
 import editxt.constants as const
