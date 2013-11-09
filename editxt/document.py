@@ -35,6 +35,8 @@ from editxt.command.util import (calculate_indent_mode_and_size,
     change_indentation, iterlines, replace_newlines)
 from editxt.constants import TEXT_DOCUMENT, LARGE_NUMBER_FOR_TEXT
 from editxt.controls.alert import Alert
+from editxt.controls.commandview import CommandView
+from editxt.controls.dualview import DualView
 from editxt.controls.linenumberview import LineNumberView
 from editxt.controls.statscrollview import StatusbarScrollView
 from editxt.controls.textview import TextView
@@ -89,6 +91,8 @@ class TextDocumentView(fn.NSObject):
         self.document = document
         self.text_view = None
         self.scroll_view = None
+        self.command_view = None
+        self.dual_view = None
         self.props = KVOProxy(self)
         if isinstance(document, ak.NSDocument):
             # HACK this should not be conditional (but it is for tests)
@@ -184,12 +188,20 @@ class TextDocumentView(fn.NSObject):
             #sv.verticalRulerView().invalidateRuleThickness()
             sv.setRulersVisible_(True)
 
+            self.command_view = CommandView.alloc().initWithFrame_(frame)
+            def doc_height():
+                return sv.contentSize().height
+            def command_height():
+                return self.command_view.preferred_height
+            self.dual_view = DualView.alloc().init(
+                frame, sv, self.command_view, doc_height, command_height, 0.2)
+
             self.soft_wrap = app.config["soft_wrap"]
             self.reset_edit_state()
         else:
             # reset frame in case the window was resized
-            self.scroll_view.setFrame_(frame)
-        view.addSubview_(self.scroll_view)
+            self.dual_view.setFrame_(frame)
+        view.addSubview_(self.dual_view)
         window.makeFirstResponder_(self.text_view)
         self.document.update_syntaxer()
         self.scroll_view.verticalRulerView().invalidateRuleThickness()
@@ -338,7 +350,7 @@ class TextDocumentView(fn.NSObject):
 
     def message(self, msg, msg_type=const.INFO):
         """Display a message in the command view"""
-        self.scroll_view.commandView.message(msg, self.text_view, msg_type)
+        self.command_view.message(msg, self.text_view, msg_type)
 
     def perform_close(self, editor):
         if list(app.iter_editors_with_view_of_document(self.document)) == [editor]:
@@ -395,7 +407,7 @@ class TextDocumentView(fn.NSObject):
 
     def textView_doCommandBySelector_(self, textview, selector):
         if selector == "cancelOperation:": # escape key
-            self.scroll_view.commandView.dismiss()
+            self.command_view.dismiss()
             return True
         return False
 

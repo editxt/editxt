@@ -52,7 +52,7 @@ class CommandBar(object):
         if view is None:
             ak.NSBeep()
             return
-        view.scroll_view.commandView.activate(self)
+        view.command_view.activate(self)
 
     def execute(self, text):
         self.reset()

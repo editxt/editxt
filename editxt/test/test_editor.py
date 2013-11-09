@@ -320,7 +320,7 @@ def test_set_current_view():
                 wc.docsController.selectedObjects() >> sel
                 ed.recent.push(dv.id >> m.mock())
             if c.view_class is TextDocumentView:
-                dv.scroll_view >> (sv if c.view_is_main else None)
+                dv.dual_view >> (sv if c.view_is_main else None)
                 if not c.view_is_main:
                     sv.removeFromSuperview()
                     doc = dv.document >> m.mock(TextDocument)

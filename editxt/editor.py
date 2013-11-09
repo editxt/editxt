@@ -198,7 +198,7 @@ class Editor(object):
                 self.wc.docsController.setSelectedObject_(view)
             self.recent.push(view.id)
             if isinstance(view, TextDocumentView):
-                if view.scroll_view not in main_view.subviews():
+                if view.dual_view not in main_view.subviews():
                     for subview in main_view.subviews():
                         subview.removeFromSuperview()
                     view.document.addWindowController_(self.wc)
@@ -508,10 +508,10 @@ class Editor(object):
         #           # allow copy (may need to override outline_view.ignoreModifierKeysWhileDragging)
         return ak.NSDragOperationGeneric
 
-    def accept_drop(self, outline_view, info, item, index):
+    def accept_drop(self, view, info, item, index):
         """Accept drop operation
 
-        :param outline_view: The OutlineView on which the drop occurred.
+        :param view: The view on which the drop occurred.
         :param info: NSDraggingInfo object.
         :param item: The parent item in the outline view.
         :param index: The index in the outline view or parent item at which the
@@ -556,7 +556,7 @@ class Editor(object):
                 yield TextDocument.get_with_path(path)
 
     @untested("untested with non-null project and index < 0")
-    def accept_dropped_items(self, items, project, index, action):
+    def accept_dropped_items(self, items, project=None, index=-1, action=None):
         """Insert dropped items into the document tree
 
         :param items: A sequence of dropped projects and/or documents.

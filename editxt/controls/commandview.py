@@ -25,25 +25,30 @@ from objc import pyobjc_unicode
 from Quartz.CoreGraphics import CGRectIntersectsRect
 
 from editxt.constants import ERROR, HTML, INFO, LARGE_NUMBER_FOR_TEXT
+from editxt.controls.dualview import DualView
 
 log = logging.getLogger(__name__)
 ACTIVATE = "activate"
 SHOULD_RESIZE = "should_resize"
 MESSAGE_COLORS = {INFO: None, ERROR: ak.NSColor.redColor()}
 
-class CommandView(ak.NSView):
+class CommandView(DualView):
 
     def initWithFrame_(self, rect):
-        super(CommandView, self).initWithFrame_(rect)
         self.input = ContentSizedTextView.alloc().initWithFrame_(rect)
         self.input.scroller.setBorderType_(ak.NSBezelBorder)
         self.output = ContentSizedTextView.alloc().initWithFrame_(rect)
         self.output.scroller.setBorderType_(ak.NSBezelBorder)
+
+        def input_height(rect=None):
+            return 0 if self.command is None else self.input.preferred_height
+        def output_height():
+            return self.output.preferred_height if self.output.string() else 0
+        super(CommandView, self).init(rect,
+            self.output.scroller, self.input.scroller, output_height, input_height)
+
         self.output.setEditable_(False)
         self.output.setSelectable_(True)
-        self.setAutoresizesSubviews_(True)
-        self.addSubview_(self.input.scroller)
-        self.addSubview_(self.output.scroller)
         self.input.setDelegate_(self)
         def text_did_change_handler(textview):
             if self.command is not None:
@@ -62,10 +67,8 @@ class CommandView(ak.NSView):
 
     @property
     def preferred_height(self):
-        return (
-            (self.input.preferred_height if self.command is not None else 0) +
-            (self.output.preferred_height if self.output.string() else 0)
-        )
+        # top_height and bottom_height are members of DualView
+        return self.top_height() + self.bottom_height()
 
     def activate(self, command, initial_text=""):
         new_activation = self.command is None
@@ -80,7 +83,7 @@ class CommandView(ak.NSView):
             self.output.setString_("")
         if new_activation or initial_text:
             self.input.setString_(initial_text)
-            self.tile_and_redraw()
+            self.tile()
         self.window().makeFirstResponder_(self.input)
 
     def deactivate(self):
@@ -90,7 +93,7 @@ class CommandView(ak.NSView):
             if view is not None:
                 self.window().makeFirstResponder_(view.text_view)
             command.reset()
-        self.tile_and_redraw()
+        self.tile()
 
     def dismiss(self):
         if self:
@@ -112,7 +115,7 @@ class CommandView(ak.NSView):
         self.output.setAttributedString_(text)
         if msg_type == ERROR:
             ak.NSBeep()
-        self.tile_and_redraw()
+        self.tile()
 
     #def textDidEndEditing_(self, notification):
     #    self.deactivate()
@@ -193,37 +196,7 @@ class CommandView(ak.NSView):
         self.input.setString_(text)
 
     def resize_(self, notification):
-        self.tile_and_redraw()
-
-    def tile_and_redraw(self):
-        self.superview().tile_and_redraw()
-
-    def setHidden_(self, value):
-        if not value:
-            self.input.scroller.setHidden_(self.command is None)
-            self.output.scroller.setHidden_(not self.output.string())
-        return super(CommandView, self).setHidden_(value)
-
-    def resizeSubviewsWithOldSize_(self, old_size):
-        rect = self.bounds()
-        input = self.input
-        output = self.output
-        if not output.string():
-            input.scroller.setFrame_(rect)
-            return
-        if self.command is None:
-            output.scroller.setFrame_(rect)
-            return
-        line = output.layoutManager().defaultLineHeightForFont_(output.font())
-        if input.preferred_height < rect.size.height - line:
-            input_height = input.preferred_height
-        else:
-            input_height = rect.size.height - line
-        assert input_height > 0, (input_height, output_height)
-        input_rect, output_rect = ak.NSDivideRect(
-            rect, None, None, input_height, ak.NSMinYEdge)
-        input.scroller.setFrame_(input_rect)
-        output.scroller.setFrame_(output_rect)
+        self.tile()
 
 
 class ContentSizedTextView(ak.NSTextView):

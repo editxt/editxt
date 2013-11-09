@@ -176,8 +176,10 @@ def test_document_set_main_view_of_window():
         lm_class = m.replace(ak, 'NSLayoutManager')
         tc_class = m.replace(ak, 'NSTextContainer')
         sv_class = m.replace(mod, 'StatusbarScrollView')
+        cv_class = m.replace(mod, 'CommandView')
+        dv_class = m.replace(mod, 'DualView')
         tv_class = m.replace(mod, 'TextView')
-        frame = (view.bounds() >> m.mock())
+        frame = view.bounds() >> ak.NSMakeRect(0, 0, 50, 16)
         if c.sv_is_none:
             lm = m.mock(ak.NSLayoutManager)
             lm_class.alloc().init() >> lm
@@ -185,9 +187,7 @@ def test_document_set_main_view_of_window():
             ts.addLayoutManager_(lm)
             tc = m.mock(ak.NSTextContainer)
             tc_class.alloc() >> tc
-            size = m.mock(fn.NSSize)
-            frame.size >> size
-            tc.initWithContainerSize_(size) >> tc
+            tc.initWithContainerSize_(frame.size) >> tc
             tc.setLineFragmentPadding_(10) # left margin
             lm.addTextContainer_(tc)
             #tc.setWidthTracksTextView_(False)
@@ -229,6 +229,13 @@ def test_document_set_main_view_of_window():
             sv.setHasVerticalRuler_(True)
             sv.setRulersVisible_(True)
 
+            cv = m.mock(mod.CommandView)
+            cv_class.alloc() >> cv
+            cv.initWithFrame_(frame) >> cv
+            # Do not check spec. It's broken because of DualView.init namedSelector
+            dual = dv_class.alloc() >> m.mock()
+            dual.init(frame, sv, cv, ANY, ANY, 0.2) >> dual
+
             dv.soft_wrap = const.WRAP_NONE
             m.method(dv.reset_edit_state)()
             assert dv.scroll_view is None
@@ -236,8 +243,9 @@ def test_document_set_main_view_of_window():
         else:
             dv.text_view = tv
             dv.scroll_view = sv
-            sv.setFrame_(frame)
-        view.addSubview_(sv)
+            dv.dual_view = dual = m.mock(mod.DualView)
+            dual.setFrame_(frame)
+        view.addSubview_(dual)
         win.makeFirstResponder_(tv)
         sv.verticalRulerView().invalidateRuleThickness()
         doc.update_syntaxer()
@@ -688,7 +696,7 @@ def test_TextDocumentView_textView_doCommandBySelector_():
 
     def setup_mocks(m, docview, textview):
         docview.scroll_view = m.mock(ak.NSScrollView)
-        cmd = docview.scroll_view.commandView >> m.mock(CommandView)
+        cmd = m.replace(docview, "command_view", spec=CommandView)
         cmd.dismiss()
         return True
     yield test, "cancelOperation:", setup_mocks

@@ -74,7 +74,12 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+Use Editor.iter_dropped_paths in Application.open_documents_with_paths
+  - change Editor.iter_dropped_paths to yield paths instead of objects
 Support opening symlinks
+  - convert to real path
+  - open directory as project
+
 Use something like Sparkle to auto-update http://sparkle.andymatuschak.org/
 File tree as main project view
 open command
@@ -113,6 +118,18 @@ refactor object hierarchy to make it more modular and easier to add features
     ? app.extensions - [Extension]
     app.history - [...] recently closed editors
 
+    editor.groups - [Group]
+    editor.current_group - Group
+    editor.config - settings like is_config_pane_visible
+    editor.history - [...] recently closed groups
+
+    group.name
+    group.root - path of root directory (default ~)
+    group.expanded - bool, is group expanded
+    group.views - [View]
+    group.current_view - View
+    group.history - [...] recently closed views
+
     document.path
     document.newline_style
     document.indent_style
@@ -122,17 +139,6 @@ refactor object hierarchy to make it more modular and easier to add features
     document.realpath
     document.id - hash of realpath?
     ? document.views - [View]
-
-    editor.groups - [Group]
-    editor.current_group - Group
-    editor.config - settings like is_config_pane_visible
-    editor.history - [...] recently closed groups
-
-    group.name
-    group.expanded - bool, is group expanded
-    group.views - [View]
-    group.current_view - View
-    group.history - [...] recently closed views
 
     view.document - Document
     view.group - Group
