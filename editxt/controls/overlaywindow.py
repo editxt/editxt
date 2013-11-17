@@ -33,12 +33,6 @@ class OverlayWindow(ak.NSWindow):
 
     def initWithView_(self, parent):
         rect = fn.NSMakeRect(0, 0, *parent.frame().size)
-        self.initWithContentRect_styleMask_backing_defer_(
-            rect, ak.NSBorderlessWindowMask, ak.NSBackingStoreBuffered, False)
-        self.attachToView_(parent)
-        return self
-
-    def initWithContentRect_styleMask_backing_defer_(self, rect, mask, back, defer):
         super(OverlayWindow, self).initWithContentRect_styleMask_backing_defer_(
             rect, ak.NSBorderlessWindowMask, ak.NSBackingStoreBuffered, False)
         self.setBackgroundColor_(fn.NSColor.clearColor())
@@ -46,20 +40,26 @@ class OverlayWindow(ak.NSWindow):
         self.setAlphaValue_(1.0)
         self.setOpaque_(False)
         self.setHasShadow_(False)
-        ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
-            self, 'updateSize', ak.NSWindowDidResizeNotification, None)
+        self.parent = None
+        self.attachToView_(parent)
         return self
 
     def attachToView_(self, parent):
-        self.parent = parent
         if self not in (parent.window().childWindows() or []):
             if self.parentWindow() is not None:
                 self.parentWindow().removeChildWindow_(self)
             # Attach the overlay window to the parent's window
             parent.window().addChildWindow_ordered_(self, ak.NSWindowAbove)
+        if self.parent is not None:
+            ak.NSNotificationCenter.defaultCenter().removeObserver_name_object_(
+                self, ak.NSViewFrameDidChangeNotification, self.parent)
+        ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
+            self, 'updateSize', ak.NSViewFrameDidChangeNotification, parent)
+        self.parent = parent
         self.updateSize()
 
     def detach(self):
+        ak.NSNotificationCenter.defaultCenter().removeObserver_(self)
         self.parentWindow().removeChildWindow_(self)
         self.parent = None
         self.close()
@@ -67,10 +67,8 @@ class OverlayWindow(ak.NSWindow):
     def updateSize(self):
         window_rect = self.parent.convertRect_toView_(self.parent.bounds(), None)
         screen_rect = self.parent.window().convertRectToScreen_(window_rect)
-        self.setFrame_display_(screen_rect, True)
-
-    def windowDidResize_(self, notification):
-        self.updateSize()
+        if self.frame() != screen_rect:
+            self.setFrame_display_(screen_rect, True)
 
     def acceptsFirstResponder(self):
         return True
@@ -82,6 +80,5 @@ class OverlayWindow(ak.NSWindow):
         return False
 
     def cleanAndRelease(self):
-        ak.NSNotificationCenter.defaultCenter().removeObserver_(self)
         self.detach()
         self.release()

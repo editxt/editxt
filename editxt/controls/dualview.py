@@ -20,6 +20,8 @@
 import AppKit as ak
 import objc
 
+SHOULD_RESIZE = "should_resize"
+
 
 class DualView(ak.NSView):
 
@@ -67,12 +69,21 @@ class DualView(ak.NSView):
             self.bottom.setHidden_(not self.bottom_height())
         return super(DualView, self).setHidden_(value)
 
-    def tile(self):
-        getattr(self.superview(), 'tile', lambda:None)()
-        self.resizeSubviewsWithOldSize_(None)
-        self.setNeedsDisplay_(True)
+    @objc.namedSelector(b"shouldResize:")
+    def should_resize(self, ignored=None):
+        """Notify this view's superview that this view wants to be resized
 
-    def resizeSubviewsWithOldSize_(self, old_size):
+        This is intended to be called when subviews want to be resized.
+
+        The superview may observe SHOULD_RESIZE notifications posted
+        by this view to know when to resize its subviews.
+        """
+        ak.NSNotificationCenter.defaultCenter() \
+            .postNotificationName_object_(SHOULD_RESIZE, self)
+
+    @objc.namedSelector(b"tile:")
+    def tile(self, ignored=None):
+        """Tile subviews within the bounds of this view"""
         rect = self.bounds()
         top_height = self.top_height()
         bottom_height = self.bottom_height()
@@ -121,3 +132,6 @@ class DualView(ak.NSView):
         self.top.setHidden_(False)
         self.bottom.setFrame_(bottom_rect)
         self.bottom.setHidden_(False)
+
+    def resizeSubviewsWithOldSize_(self, old_size):
+        self.tile()

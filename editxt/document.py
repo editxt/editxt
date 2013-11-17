@@ -36,7 +36,7 @@ from editxt.command.util import (calculate_indent_mode_and_size,
 from editxt.constants import TEXT_DOCUMENT, LARGE_NUMBER_FOR_TEXT
 from editxt.controls.alert import Alert
 from editxt.controls.commandview import CommandView
-from editxt.controls.dualview import DualView
+from editxt.controls.dualview import DualView, SHOULD_RESIZE
 from editxt.controls.linenumberview import LineNumberView
 from editxt.controls.statscrollview import StatusbarScrollView
 from editxt.controls.textview import TextView
@@ -195,6 +195,9 @@ class TextDocumentView(fn.NSObject):
                 return self.command_view.preferred_height
             self.dual_view = DualView.alloc().init(
                 frame, sv, self.command_view, doc_height, command_height, 0.2)
+            ak.NSNotificationCenter.defaultCenter() \
+                .addObserver_selector_name_object_(
+                    self.dual_view, "tile:", SHOULD_RESIZE, self.command_view)
 
             self.soft_wrap = app.config["soft_wrap"]
             self.reset_edit_state()
@@ -387,6 +390,9 @@ class TextDocumentView(fn.NSObject):
             if app.count_views_of_document(doc) == 0:
                 doc.close()
             self.document = None
+        if self.dual_view is not None:
+            ak.NSNotificationCenter.defaultCenter().removeObserver_(self.dual_view)
+            self.dual_view = None
 
     def __repr__(self):
         name = 'N/A' if self.document is None else self.displayName()

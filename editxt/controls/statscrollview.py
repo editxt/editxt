@@ -69,14 +69,13 @@ class StatusbarScrollView(ak.NSScrollView):
         # status | scrollers
         status_rect, hrect = fn.NSDivideRect(arect, None, None, svwidth, fn.NSMinXEdge)
 
-        status.setFrameSize_(status_rect.size)
         if self.can_overlay_scrollers:
-            if self.overlay is not None:
-                self.overlay.updateSize()
+            status.setFrameSize_(status_rect.size)
         else:
             vscroll.setFrame_(vscroll_rect)
             if ruler:
                 ruler.setFrame_(rule_rect)
+            status.setFrame_(status_rect)
             content.setFrame_(crect)
             hscroll.setFrame_(hrect)
             self.setNeedsDisplay_(True)
@@ -133,6 +132,7 @@ class StatusView(ak.NSView):
         rect = self.bounds()
         rect.origin.x -= 1
         rect.origin.y -= 1
+        rect.size.height += 1
         width = width + 1 if width else 50
         arect, brect = fn.NSDivideRect(rect, None, None, width, fn.NSMinXEdge)
         self.linenumView.setFrame_(arect)

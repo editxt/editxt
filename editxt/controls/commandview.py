@@ -26,11 +26,10 @@ from objc import pyobjc_unicode
 from Quartz.CoreGraphics import CGRectIntersectsRect
 
 from editxt.constants import ERROR, HTML, INFO, LARGE_NUMBER_FOR_TEXT
-from editxt.controls.dualview import DualView
+from editxt.controls.dualview import DualView, SHOULD_RESIZE
 
 log = logging.getLogger(__name__)
 ACTIVATE = "activate"
-SHOULD_RESIZE = "should_resize"
 MESSAGE_COLORS = {INFO: None, ERROR: ak.NSColor.redColor()}
 
 class CommandView(DualView):
@@ -61,8 +60,12 @@ class CommandView(DualView):
         self.command = None
         self._last_completions = [None]
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
-            self, "resize:", SHOULD_RESIZE, self.input)
+            self, "shouldResize:", SHOULD_RESIZE, self.input)
         return self
+
+    def dealloc(self):
+        ak.NSNotificationCenter.defaultCenter().removeObserver_(self)
+        super().dealloc()
 
     def __bool__(self):
         return self.command is not None or bool(self.output.string())
@@ -85,7 +88,7 @@ class CommandView(DualView):
             self.output.setString_("")
         if new_activation or initial_text:
             self.input.setString_(initial_text)
-            self.tile()
+            self.should_resize()
         self.window().makeFirstResponder_(self.input)
 
     def deactivate(self):
@@ -95,7 +98,7 @@ class CommandView(DualView):
             if view is not None:
                 self.window().makeFirstResponder_(view.text_view)
             command.reset()
-        self.tile()
+        self.should_resize()
 
     def dismiss(self):
         if self:
@@ -117,7 +120,7 @@ class CommandView(DualView):
         self.output.setAttributedString_(text)
         if msg_type == ERROR:
             ak.NSBeep()
-        self.tile()
+        self.should_resize()
 
     #def textDidEndEditing_(self, notification):
     #    self.deactivate()
@@ -196,9 +199,6 @@ class CommandView(DualView):
             ak.NSBeep()
             return
         self.input.setString_(text)
-
-    def resize_(self, notification):
-        self.tile()
 
 
 class ContentSizedTextView(ak.NSTextView):
