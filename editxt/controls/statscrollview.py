@@ -22,6 +22,8 @@ import logging
 import AppKit as ak
 import Foundation as fn
 
+from editxt.controls.overlaywindow import OverlayWindow
+
 log = logging.getLogger(__name__)
 
 
@@ -30,22 +32,19 @@ class StatusbarScrollView(ak.NSScrollView):
     def initWithFrame_(self, frame):
         super(StatusbarScrollView, self).initWithFrame_(frame)
         rect = fn.NSMakeRect(0, 0, 0, ak.NSScroller.scrollerWidth())
-        self.statusView = StatusView.alloc().initWithFrame_(rect)
-        self.addSubview_(self.statusView)
+        self.status_view = StatusView.alloc().initWithFrame_(rect)
         try:
-            self.setScrollerStyle_(ak.NSScrollerStyleOverlay)
-            self.setVerticalScrollElasticity_(ak.NSScrollElasticityAllowed)
-            self.setHorizontalScrollElasticity_(ak.NSScrollElasticityAllowed)
-            self.setAutohidesScrollers_(True)
+            self.scrollerStyle # raises AttributeError on OS X 10.6 or lower
             self.can_overlay_scrollers = True
         except AttributeError:
             self.can_overlay_scrollers = False
+            self.addSubview_(self.status_view)
         return self
 
     def tile(self):
         super(StatusbarScrollView, self).tile()
         content = self.contentView()
-        status = self.statusView
+        status = self.status_view
         vscroll = self.verticalScroller()
         hscroll = self.horizontalScroller()
         if not (content and status and vscroll and hscroll):
@@ -55,32 +54,63 @@ class StatusbarScrollView(ak.NSScrollView):
         rect = self.bounds()
         # (status+hscroll) | (content+vscroll)
         arect, brect = fn.NSDivideRect(rect, None, None, scrollw, fn.NSMaxYEdge)
-
         # vscroll | content
-        crect, drect = fn.NSDivideRect(brect, None, None, scrollw, fn.NSMaxXEdge)
-        vscroll.setFrame_(crect)
-        if self.can_overlay_scrollers:
-            drect = brect
+        vscroll_rect, crect = fn.NSDivideRect(brect, None, None, scrollw, fn.NSMaxXEdge)
 
         ruler = self.verticalRulerView()
         if ruler:
             rulew = ruler.calculate_thickness()
             # ruler | content
-            crect, drect = fn.NSDivideRect(drect, None, None, rulew, fn.NSMinXEdge)
-            ruler.setFrame_(crect)
+            rule_rect, crect = fn.NSDivideRect(crect, None, None, rulew, fn.NSMinXEdge)
         else:
             rulew = 0
         svwidth = status.tileWithRuleWidth_(rulew)
-        content.setFrame_(drect)
 
         # status | scrollers
-        grect, hrect = fn.NSDivideRect(arect, None, None, svwidth, fn.NSMinXEdge)
-        status.setFrame_(grect)
-        hscroll.setFrame_(hrect)
-        if self.can_overlay_scrollers \
-                and self.scrollerStyle() != ak.NSScrollerStyleOverlay:
-            self.setScrollerStyle_(ak.NSScrollerStyleOverlay)
-        self.setNeedsDisplay_(True)
+        status_rect, hrect = fn.NSDivideRect(arect, None, None, svwidth, fn.NSMinXEdge)
+
+        status.setFrameSize_(status_rect.size)
+        if self.can_overlay_scrollers:
+            if self.overlay is not None:
+                self.overlay.updateSize()
+        else:
+            vscroll.setFrame_(vscroll_rect)
+            if ruler:
+                ruler.setFrame_(rule_rect)
+            content.setFrame_(crect)
+            hscroll.setFrame_(hrect)
+            self.setNeedsDisplay_(True)
+
+    @property
+    def overlay(self):
+        window = self.window()
+        if window is None:
+            return None
+        try:
+            overlay = window.__overlay
+        except AttributeError:
+            overlay = window.__overlay = OverlayWindow.alloc().initWithView_(self)
+        if self.status_view not in overlay.contentView().subviews():
+            self.status_view.setAutoresizingMask_(
+                ak.NSViewMaxXMargin | ak.NSViewMaxYMargin)
+            overlay.contentView().setSubviews_([self.status_view])
+        return overlay
+
+    def viewWillMoveToWindow_(self, new_window):
+        if not self.can_overlay_scrollers:
+            return
+        old_window = self.window()
+        if old_window is not None:
+            try:
+                overlay = old_window.__overlay
+            except AttributeError:
+                return
+            if self.status_view in overlay.contentView().subviews():
+                self.status_view.removeFromSuperview()
+
+    def viewDidMoveToWindow(self):
+        if self.can_overlay_scrollers and self.overlay is not None:
+            self.overlay.attachToView_(self)
 
 
 class StatusView(ak.NSView):

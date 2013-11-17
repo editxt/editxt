@@ -423,7 +423,7 @@ class TextDocumentView(fn.NSObject):
             i -= 1
         col = (index - i)
         sel = range.length
-        self.scroll_view.statusView.updateLine_column_selection_(line, col, sel)
+        self.scroll_view.status_view.updateLine_column_selection_(line, col, sel)
 
         if self.document.highlight_selected_text:
             ftext = text.substringWithRange_(range)
