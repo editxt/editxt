@@ -58,6 +58,7 @@ class DualView(ak.NSView):
         self.addSubview_(self.bottom)
         self.setAutoresizesSubviews_(True)
         self.setAutoresizingMask_(ak.NSViewWidthSizable | ak.NSViewHeightSizable)
+        self.subview_offset_rect = ak.NSZeroRect
         return self
 
     def setHidden_(self, value):
@@ -75,15 +76,24 @@ class DualView(ak.NSView):
         rect = self.bounds()
         top_height = self.top_height()
         bottom_height = self.bottom_height()
+        offset = self.subview_offset_rect
         if not bottom_height and self.flex_top:
-            self.top.setHidden_(False)
+            rect.size.width += offset.size.width
+            rect.size.height += offset.size.height
+            rect.origin.x += offset.origin.x
+            rect.origin.y += offset.origin.y
             self.top.setFrame_(rect)
+            self.top.setHidden_(False)
             self.bottom.setHidden_(True)
             return
         if not top_height and not self.flex_top:
-            self.bottom.setHidden_(False)
+            rect.size.width += offset.size.width
+            rect.size.height += offset.size.height
+            rect.origin.x += offset.origin.x
+            rect.origin.y += offset.origin.y
             self.bottom.setFrame_(rect)
-            self.top.setHidden_(False)
+            self.bottom.setHidden_(False)
+            self.top.setHidden_(True)
             return
         if top_height + bottom_height > rect.size.height:
             min_height = int(rect.size.height * self.min_collapse)
@@ -99,7 +109,15 @@ class DualView(ak.NSView):
         assert top_height < rect.size.height, (top_height, rect.size.height)
         top_rect, bottom_rect = ak.NSDivideRect(
             rect, None, None, top_height, ak.NSMaxYEdge)
-        self.top.setHidden_(False)
+        top_rect.size.width += offset.size.width
+        top_rect.size.height += offset.size.height
+        top_rect.origin.x += offset.origin.x
+        top_rect.origin.y += offset.origin.y
+        bottom_rect.size.width += offset.size.width
+        bottom_rect.size.height += offset.size.height
+        bottom_rect.origin.x += offset.origin.x
+        bottom_rect.origin.y += offset.origin.y
         self.top.setFrame_(top_rect)
-        self.bottom.setHidden_(False)
+        self.top.setHidden_(False)
         self.bottom.setFrame_(bottom_rect)
+        self.bottom.setHidden_(False)

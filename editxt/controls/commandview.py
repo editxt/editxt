@@ -21,6 +21,7 @@ import logging
 import math
 
 import AppKit as ak
+import Foundation as fn
 from objc import pyobjc_unicode
 from Quartz.CoreGraphics import CGRectIntersectsRect
 
@@ -44,8 +45,9 @@ class CommandView(DualView):
             return 0 if self.command is None else self.input.preferred_height
         def output_height():
             return self.output.preferred_height if self.output.string() else 0
-        super(CommandView, self).init(rect,
+        super().init(rect,
             self.output.scroller, self.input.scroller, output_height, input_height)
+        self.subview_offset_rect = fn.NSMakeRect(-1, -1, 2, 1)
 
         self.output.setEditable_(False)
         self.output.setSelectable_(True)

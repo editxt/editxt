@@ -131,7 +131,9 @@ class StatusView(ak.NSView):
 
     def tileWithRuleWidth_(self, width):
         rect = self.bounds()
-        width = width if width else 50
+        rect.origin.x -= 1
+        rect.origin.y -= 1
+        width = width + 1 if width else 50
         arect, brect = fn.NSDivideRect(rect, None, None, width, fn.NSMinXEdge)
         self.linenumView.setFrame_(arect)
         crect, drect = fn.NSDivideRect(brect, None, None, 50, fn.NSMinXEdge)
