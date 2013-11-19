@@ -41,11 +41,11 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <customView id="258">
-                                <rect key="frame" x="0.0" y="0.0" width="139" height="378"/>
+                                <rect key="frame" x="0.0" y="0.0" width="158" height="378"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                 <subviews>
                                     <imageView id="257" customClass="SliderImageView">
-                                        <rect key="frame" x="121" y="0.0" width="20" height="23"/>
+                                        <rect key="frame" x="140" y="0.0" width="20" height="23"/>
                                         <autoresizingMask key="autoresizingMask" flexibleMinX="YES"/>
                                         <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" id="464"/>
                                         <connections>
@@ -53,7 +53,7 @@
                                         </connections>
                                     </imageView>
                                     <customView id="256" customClass="MailStyleFunctioBarBackgroundView">
-                                        <rect key="frame" x="61" y="0.0" width="60" height="23"/>
+                                        <rect key="frame" x="61" y="0.0" width="79" height="23"/>
                                         <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
                                     </customView>
                                     <button id="306">
@@ -79,11 +79,11 @@
                                         </connections>
                                     </button>
                                     <customView id="304">
-                                        <rect key="frame" x="0.0" y="23" width="140" height="116"/>
+                                        <rect key="frame" x="0.0" y="23" width="159" height="116"/>
                                         <autoresizingMask key="autoresizingMask" widthSizable="YES"/>
                                         <subviews>
                                             <popUpButton id="342">
-                                                <rect key="frame" x="8" y="27" width="113" height="15"/>
+                                                <rect key="frame" x="8" y="27" width="132" height="15"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="bevel" title="Syntax" bezelStyle="rounded" alignment="left" controlSize="mini" lineBreakMode="truncatingTail" state="on" borderStyle="bezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="344" id="470">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -115,14 +115,14 @@
                                                 </connections>
                                             </popUpButton>
                                             <box verticalHuggingPriority="750" title="Box" boxType="separator" titlePosition="noTitle" id="335">
-                                                <rect key="frame" x="0.0" y="112" width="140" height="5"/>
+                                                <rect key="frame" x="0.0" y="112" width="159" height="5"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                 <color key="borderColor" white="0.0" alpha="0.41999999999999998" colorSpace="calibratedWhite"/>
                                                 <color key="fillColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                                                 <font key="titleFont" metaFont="system"/>
                                             </box>
                                             <popUpButton id="329">
-                                                <rect key="frame" x="8" y="6" width="113" height="15"/>
+                                                <rect key="frame" x="8" y="6" width="132" height="15"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="bevel" title="Character encoding" bezelStyle="rounded" alignment="left" controlSize="mini" lineBreakMode="truncatingTail" state="on" borderStyle="bezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="331" id="469">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -154,7 +154,7 @@
                                                 </connections>
                                             </popUpButton>
                                             <popUpButton id="319">
-                                                <rect key="frame" x="8" y="48" width="113" height="15"/>
+                                                <rect key="frame" x="8" y="48" width="132" height="15"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="bevel" title="Unix (LF)" bezelStyle="rounded" alignment="left" controlSize="mini" lineBreakMode="truncatingTail" state="on" borderStyle="bezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="323" id="468">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -187,7 +187,7 @@
                                                 </connections>
                                             </popUpButton>
                                             <textField verticalHuggingPriority="750" id="318">
-                                                <rect key="frame" x="94" y="71" width="26" height="16"/>
+                                                <rect key="frame" x="113" y="71" width="26" height="16"/>
                                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMinY="YES"/>
                                                 <textFieldCell key="cell" controlSize="mini" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="467">
                                                     <numberFormatter key="formatter" formatterBehavior="10_0" positiveFormat="0" negativeFormat="-0" localizesFormat="NO" hasThousandSeparators="NO" thousandSeparator="," id="433">
@@ -221,7 +221,7 @@
                                                 </connections>
                                             </textField>
                                             <popUpButton id="313">
-                                                <rect key="frame" x="8" y="72" width="81" height="15"/>
+                                                <rect key="frame" x="8" y="72" width="100" height="15"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                 <popUpButtonCell key="cell" type="bevel" title="Tab indent" bezelStyle="rounded" alignment="left" controlSize="mini" lineBreakMode="truncatingTail" state="on" borderStyle="bezel" inset="2" arrowPosition="arrowAtCenter" preferredEdge="maxY" selectedItem="316" id="466">
                                                     <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
@@ -252,7 +252,7 @@
                                                 </connections>
                                             </popUpButton>
                                             <button id="312">
-                                                <rect key="frame" x="16" y="94" width="106" height="18"/>
+                                                <rect key="frame" x="16" y="94" width="125" height="18"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                                                 <buttonCell key="cell" type="check" title="Soft wrap" bezelStyle="regularSquare" imagePosition="left" alignment="left" controlSize="mini" inset="2" id="465">
                                                     <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
@@ -279,20 +279,20 @@
                                         </subviews>
                                     </customView>
                                     <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="22" horizontalPageScroll="0.0" verticalLineScroll="22" verticalPageScroll="0.0" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" id="21">
-                                        <rect key="frame" x="0.0" y="138" width="140" height="240"/>
+                                        <rect key="frame" x="0.0" y="138" width="159" height="240"/>
                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                         <clipView key="contentView" id="A3x-ig-Kg5">
-                                            <rect key="frame" x="0.0" y="0.0" width="140" height="240"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="159" height="240"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <subviews>
                                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="firstColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveName="docsView" rowHeight="20" id="22" customClass="OutlineView">
-                                                    <rect key="frame" x="0.0" y="0.0" width="140" height="240"/>
+                                                    <rect key="frame" x="0.0" y="0.0" width="159" height="240"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <size key="intercellSpacing" width="3" height="2"/>
                                                     <color key="backgroundColor" red="0.90196078999999996" green="0.92941176999999997" blue="0.96470588000000002" alpha="1" colorSpace="deviceRGB"/>
                                                     <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                                     <tableColumns>
-                                                        <tableColumn identifier="name" width="117" minWidth="40" maxWidth="1000" id="23">
+                                                        <tableColumn identifier="name" width="136" minWidth="40" maxWidth="1000" id="23">
                                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left">
                                                                 <font key="font" metaFont="smallSystem"/>
                                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -329,8 +329,8 @@
                                                             <connections>
                                                                 <binding destination="272" name="target" keyPath="arrangedObjects" id="277">
                                                                     <dictionary key="options">
-                                                                        <string key="NSSelectorName">attemptClose:</string>
                                                                         <bool key="NSConditionallySetsEnabled" value="NO"/>
+                                                                        <string key="NSSelectorName">attemptClose:</string>
                                                                         <bool key="NSAlwaysPresentsApplicationModalAlerts" value="YES"/>
                                                                     </dictionary>
                                                                 </binding>
@@ -357,7 +357,7 @@
                                 </subviews>
                             </customView>
                             <customView id="266">
-                                <rect key="frame" x="148" y="0.0" width="473" height="378"/>
+                                <rect key="frame" x="167" y="0.0" width="454" height="378"/>
                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                             </customView>
                         </subviews>

@@ -23,6 +23,7 @@ This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
 ????-??-?? - 1.4.0
+  - Overlay scrollers on OS X 10.7+
   - Runs on Python 3.
   - Fix bug that prevented replace with nothing (empty string).
   - Added Python Replace feature to find command. This feature evaluates a
