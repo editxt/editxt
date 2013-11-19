@@ -57,16 +57,9 @@ def test_editxt_app():
 
 def test_application_init():
     from editxt.util import ContextMap
-    from editxt.errorlog import ErrorLog
-    m = Mocker()
-    reg_vtrans = []
-    def vtrans():
-        reg_vtrans.append(1)
-    with replattr(mod, 'register_value_transformers', vtrans), m:
-        app = Application()
-        eq_(app.editors, [])
-        assert isinstance(app.context, ContextMap)
-        assert reg_vtrans
+    app = Application()
+    eq_(app.editors, [])
+    assert isinstance(app.context, ContextMap)
 
 def test_profile_path():
     def test(profile, profile_path):

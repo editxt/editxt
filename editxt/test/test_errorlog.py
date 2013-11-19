@@ -98,7 +98,7 @@ def test_ErrorLog_unexpected_error():
         m = Mocker()
         el = ErrorLog()
         app = m.replace('editxt.app')
-        log = m.replace(mod, 'log')
+        log = m.replace(mod, 'root_log')
         log.error("unexpected error", exc_info=True)
 #        open_error = app.open_error_log(set_current=False)
 #        if c.open_fail:

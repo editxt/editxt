@@ -17,7 +17,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-import logging
 import os
 import sys
 import traceback
@@ -28,7 +27,7 @@ from ExceptionHandling import NSExceptionHandler, NSStackTraceKey
 from PyObjCTools.Debugging import (isPythonException,
     DEFAULTVERBOSITY, DEFAULTMASK, LOGSTACKTRACE)
 
-log = logging.getLogger(__name__)
+from editxt import log
 
 
 def log_python_exception(exception):

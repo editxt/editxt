@@ -18,6 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
-def init():
+def init(use_pdb):
     global main
     import editxt.platform.mac.main as main
+
+    main.init(use_pdb)

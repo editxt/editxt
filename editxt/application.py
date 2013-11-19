@@ -35,7 +35,6 @@ from editxt.errorlog import errlog
 from editxt.textcommand import CommandHistory, TextCommandController
 from editxt.util import (ContextMap, perform_selector,
     atomicfile, dump_yaml, load_yaml)
-from editxt.valuetrans import register_value_transformers
 
 #from editxt.test.util import todo_remove # NOTE: this import causes error on start app:
 # DistutilsPlatformError: invalid Python installation: unable to open ...
@@ -64,7 +63,6 @@ class Application(object):
         state_dir = os.path.join(self.profile_path, const.STATE_DIR)
         command_history = CommandHistory(state_dir)
         self.text_commander = TextCommandController(command_history)
-        register_value_transformers()
 
     @classmethod
     def name(cls):

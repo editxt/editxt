@@ -21,6 +21,7 @@ import logging
 from AppKit import NSTextStorage, NSDocument, NSChangeDone, NSChangeCleared
 
 import editxt.constants as const
+from editxt import log as root_log
 
 log = logging.getLogger(__name__)
 
@@ -59,7 +60,7 @@ class ErrorLog(object):
     @staticmethod
     def unexpected_error():
         """error handler function for objc.AppHelper.runEventLoop"""
-        log.error("unexpected error", exc_info=True)
+        root_log.error("unexpected error", exc_info=True)
         return True
 
 

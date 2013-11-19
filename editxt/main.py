@@ -39,7 +39,6 @@ import docopt
 import editxt
 import editxt.platform as platform
 from editxt.errorlog import errlog
-from editxt.errors import install_exception_handler
 
 log = logging.getLogger(__name__)
 
@@ -76,12 +75,11 @@ def main(argv=list(sys.argv)):
         if "--test" in argv or "--pdb" in argv:
             DEFAULT_LOGGING_CONFIG['handlers']['console']['level'] = 'DEBUG'
 
-        platform.init()
-
         use_pdb = "--pdb" in argv
         if use_pdb:
             argv.remove("--pdb")
-        platform.main.setup_error_handlers(use_pdb, install_exception_handler)
+
+        platform.init(use_pdb)
 
         if "--test" in argv:
             from editxt.test.runner import TestApplication
