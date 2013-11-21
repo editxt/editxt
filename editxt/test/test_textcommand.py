@@ -48,10 +48,8 @@ def test_CommandBar_editor():
     eq_(cmd.text_commander, text_commander)
     # NOTE the following depends on CPython weakref behavior
     del editor, text_commander
-    with assert_raises(AttributeError):
-        cmd.editor
-    with assert_raises(AttributeError):
-        cmd.text_commander
+    eq_(cmd.editor, None)
+    eq_(cmd.text_commander, None)
 
 def test_CommandBar_execute():
     from editxt.document import TextDocumentView
