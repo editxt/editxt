@@ -19,7 +19,6 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import glob
 import logging
-import objc
 import os
 from itertools import chain, repeat, count
 

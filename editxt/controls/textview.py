@@ -130,31 +130,3 @@ class TextView(ak.NSTextView):
             if text_height + extra_space > height:
                 height = text_height + extra_space
         super(TextView, self).setFrameSize_(fn.NSMakeSize(size.width, height))
-
-    # Scrolling ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-#     def adjustScroll_(self, rect):
-#         vrect = self.superview().documentVisibleRect()
-#         # calculate based on distance scrolled
-#         deltaY = rect.origin.y - vrect.origin.y
-#         lm = self.layoutManager()
-#         glyph = lm.glyphIndexForPoint_inTextContainer_(rect.origin, self.textContainer())
-#         lrect = lm.lineFragmentRectForGlyphAtIndex_effectiveRange_(glyph)[0]
-#         if abs(deltaY) == lrect.size.height:
-#             pass
-#         elif abs(deltaY) > lrect.size.height / 2:
-#             if deltaY < 0:
-#                 # scroll up
-#                 rect.origin.y = lrect.origin.y
-#             elif deltaY > 0:
-#                 # scroll down
-#                 rect.origin.y = lrect.origin.y + lrect.size.height
-#         else:
-#             rect.origin.y -= deltaY
-#         log.debug((deltaY, rect.origin))
-#         return rect
-
-#     def didChangeText(self):
-#         lm = self.layoutManager()
-#         range = self.rangeForUserTextChange()
-
