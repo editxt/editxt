@@ -82,7 +82,7 @@ class TextView(ak.NSTextView):
             items = editor.iter_dropped_paths(pasteboard)
             parent = editor.find_project_with_document_view(self.doc_view)
             index = len(editor.projects) if parent is None else -1
-            result = editor.accept_dropped_items(items, parent, index, None)
+            result = editor.insert_items(items, parent, index, None)
             if result: return True
         return super(TextView, self).readSelectionFromPasteboard_type_(pasteboard, type_)
 

@@ -1014,7 +1014,7 @@ def test_accept_drop():
     def test(c):
         m = Mocker()
         ed = Editor(editxt.app, m.mock(EditorWindowController))
-        ed.accept_dropped_items = m.method(ed.accept_dropped_items)
+        ed.insert_items = m.method(ed.insert_items)
         ed.iter_dropped_id_list = m.method(ed.iter_dropped_id_list)
         ed.iter_dropped_paths = m.method(ed.iter_dropped_paths)
         ov = m.mock(ak.NSOutlineView)
@@ -1038,7 +1038,7 @@ def test_accept_drop():
         if items is not None:
             if not c.item_is_none:
                 representedObject(item) >> parent
-            ed.accept_dropped_items(items, parent, index, act) >> c.result
+            ed.insert_items(items, parent, index, act) >> c.result
         with m:
             result = ed.accept_drop(ov, info, item, index)
             eq_(result, c.result)
@@ -1127,7 +1127,7 @@ def test_iter_dropped_paths():
     yield test, c(paths=[path(proj, 1, True)])
     yield test, c(paths=[path(proj, 1, True), path(doc, 1), path(proj, 2)])
 
-def test_accept_dropped_items():
+def test_insert_items():
     class MatchingName(object):
         def __init__(self, name, rmap):
             self.name = name
@@ -1195,7 +1195,7 @@ def test_accept_dropped_items():
 
         print(('drop(%s) %s at %s of %s' % (act, c.drop[0], index, parent)))
         with m:
-            result = ed.accept_dropped_items(items, parent, index, act)
+            result = ed.insert_items(items, parent, index, act)
 
         eq_(result, c.result)
         final = []

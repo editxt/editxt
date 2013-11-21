@@ -530,7 +530,7 @@ class Editor(object):
             assert t is None, t
             return False
         parent = None if item is None else representedObject(item)
-        return self.accept_dropped_items(items, parent, index, action)
+        return self.insert_items(items, parent, index, action)
 
     def iter_dropped_id_list(self, pasteboard):
         """Iterate TextDocument objects referenced by pasteboard (if any)"""
@@ -556,8 +556,8 @@ class Editor(object):
                 yield TextDocument.get_with_path(path)
 
     @untested("untested with non-null project and index < 0")
-    def accept_dropped_items(self, items, project=None, index=-1, action=None):
-        """Insert dropped items into the document tree
+    def insert_items(self, items, project=None, index=-1, action=None):
+        """Insert items into the document tree
 
         :param items: A sequence of dropped projects and/or documents.
         :param project: The parent project into which items are being dropped.
