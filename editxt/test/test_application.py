@@ -164,7 +164,7 @@ def test_open_path_dialog():
         if c.exists:
             app.path_opener.window().makeKeyAndOrderFront_(app)
         else:
-            (opc_class.alloc() >> opc).initWithWindowNibName_("OpenPath") >> opc
+            opc_class.create(app) >> opc
             app.path_opener = opc
             opc.showWindow_(app)
         app.path_opener.populateWithClipboard()
@@ -1062,11 +1062,13 @@ def test_OpenPathController_open_():
     # TODO accept wildcards in filenames?
     def test(c):
         m = Mocker()
-        app = m.replace(editxt, 'app')
-        opc = OpenPathController.alloc().init()
+        app = m.mock(Application)
+        opc = OpenPathController.create(app)
         paths = m.property(opc, "paths").value >> m.mock(ak.NSTextView)
         paths.textStorage().string() >> c.text
-        app.open_documents_with_paths(c.paths)
+        def check_paths(paths):
+            eq_(c.paths, list(paths))
+        expect(app.open_documents_with_paths(ANY)).call(check_paths)
         (m.method(opc.window)() >> m.mock(ak.NSWindow)).orderOut_(opc)
         with m:
             opc.open_(None)

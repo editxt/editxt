@@ -1360,7 +1360,9 @@ def test_windowDidLoad():
 def test_syntaxDefNames():
     m = Mocker()
     wc = EditorWindowController.alloc().init()
-    app = m.replace(mod.editxt, 'app')
+    wc.editor = editor = m.mock(Editor)
+    app = m.mock(Application)
+    (editor.app << app).count(2)
     defs = [type("FakeDef", (object,), {"name": "Fake Syntax"})()]
     (app.syntaxdefs << defs).count(2)
     names = [d.name for d in defs]

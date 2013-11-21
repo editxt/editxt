@@ -27,7 +27,6 @@ import AppKit as ak
 import Foundation as fn
 from PyObjCTools import AppHelper
 
-import editxt
 import editxt.constants as const
 from editxt.controls.cells import BUTTON_STATE_HOVER, BUTTON_STATE_NORMAL, BUTTON_STATE_PRESSED
 from editxt.document import TextDocumentView
@@ -655,6 +654,7 @@ class Editor(object):
 
 class EditorWindowController(ak.NSWindowController):
 
+    editor = WeakProperty()
     docsController = objc.IBOutlet()
     docsScrollview = objc.IBOutlet()
     docsView = objc.IBOutlet()
@@ -681,7 +681,7 @@ class EditorWindowController(ak.NSWindowController):
         pass
 
     def syntaxDefNames(self):
-        return [d.name for d in editxt.app.syntaxdefs]
+        return [d.name for d in self.editor.app.syntaxdefs]
 
     def setSyntaxDefNames_(self, value):
         pass

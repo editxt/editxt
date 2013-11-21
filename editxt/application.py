@@ -33,7 +33,7 @@ from editxt.config import Config
 from editxt.errorlog import errlog
 from editxt.textcommand import CommandHistory, TextCommandController
 from editxt.util import (ContextMap, perform_selector,
-    atomicfile, dump_yaml, load_yaml)
+    atomicfile, dump_yaml, load_yaml, WeakProperty)
 
 #from editxt.test.util import todo_remove # NOTE: this import causes error on start app:
 # DistutilsPlatformError: invalid Python installation: unable to open ...
@@ -115,7 +115,7 @@ class Application(object):
 
     def open_path_dialog(self):
         if self.path_opener is None:
-            opc = OpenPathController.alloc().initWithWindowNibName_("OpenPath")
+            opc = OpenPathController.create(self)
             opc.showWindow_(self)
             self.path_opener = opc
         else:
@@ -587,6 +587,13 @@ class DocumentSavingDelegate(fn.NSObject):
 class OpenPathController(ak.NSWindowController):
 
     paths = objc.IBOutlet()
+    app = WeakProperty()
+
+    @classmethod
+    def create(cls, app):
+        opener = cls.alloc().initWithWindowNibName_("OpenPath")
+        opener.app = app
+        return opener
 
     def windowDidLoad(self):
         LNFT = const.LARGE_NUMBER_FOR_TEXT
@@ -618,8 +625,8 @@ class OpenPathController(ak.NSWindowController):
         return False
 
     def open_(self, sender):
-        from editxt import app
         paths = iterlines(self.paths.textStorage().string())
-        app.open_documents_with_paths([p.strip() for p in paths if p.strip()])
+        self.app.open_documents_with_paths(
+            p.strip() for p in paths if p.strip())
         self.window().orderOut_(self)
 
