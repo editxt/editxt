@@ -94,7 +94,7 @@ def test_init_with_serial():
     kvo_class = m.replace(mod, 'KVOList')
     deserialize = m.method(Project.deserialize)
     reset_cache = m.method(Project.reset_serial_cache)
-    docs = kvo_class.alloc().init() >> []
+    docs = kvo_class() >> []
     deserialize("<serial>")
     reset_cache(); m.count(2)
     with m:
@@ -527,7 +527,6 @@ def test_perform_close():
 #         proj.close_with_editor(ed)
 
 def test_close():
-    from editxt.util import KVOList
     proj = Project.create()
     m = Mocker()
     proj._documents = docs = []

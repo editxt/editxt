@@ -174,9 +174,24 @@ class _KVOProxy(fn.NSObject):
             finally:
                 self.didChangeValueForKey_(key)
 
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self._target == other._target
+        if isinstance(other, type(self._target)):
+            return other == self._target
+        return False
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __hash__(self):
+        return hash(self._target)
+
     def __iter__(self):
         return iter(self._target)
 
+    def __repr__(self):
+        return "<{} {!r}>".format(type(self).__name__, self._target)
 
 class _WeakKVOProxy(_KVOProxy):
 
@@ -186,6 +201,8 @@ class _WeakKVOProxy(_KVOProxy):
         self = super(_KVOProxy, self).init()
         type(self)._target.__set__(self, target)
         return self
+def proxy_target(proxy):
+    return proxy._target
 
 
 class KVOLink(object):

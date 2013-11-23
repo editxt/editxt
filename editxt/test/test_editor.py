@@ -131,37 +131,51 @@ def test_window_did_load():
     yield test, "<serial data>"
 
 def test__setstate():
+    from itertools import count
     from editxt.util import RecentItemStack
+    keygen = count()
+    class Item(dict):
+        def __init__(self, **kwargs):
+            self["id"] = next(keygen)
+            self.update(kwargs)
+        def __getattr__(self, name):
+            try:
+                return self[name]
+            except KeyError:
+                raise AttributeError(name)
     def test(data):
         m = Mocker()
         ed = Editor(editxt.app, m.mock(EditorWindowController))
         ed.discard_and_focus_recent = m.method(ed.discard_and_focus_recent)
         create_with_serial = m.method(Project.create_with_serial)
-        ed.projects = projs = m.mock(list)
         ed.recent = m.mock(RecentItemStack)
         ws = m.property(ed, 'window_settings')
+        projects = []
         if data:
             for serial in data.get("project_serials", []):
-                proj = create_with_serial(serial) >> m.mock(Project)
-                ed.projects.append(proj)
+                proj = create_with_serial(serial) >> Item()
+                projects.append(proj)
             for pi, di in data.get("recent_items", []):
-                len(projs); m.result(1)
                 if pi < 1:
-                    proj = projs[pi] >> m.mock(Project)
+                    while len(ed.projects) <= pi:
+                        docs = []
+                        proj = Item(_documents=docs, documents=lambda:docs)
+                        projects.append(proj)
+                        ed.projects.append(proj)
+                    proj = ed.projects[pi]
                     if di == "<project>":
-                        ed.recent.push(proj.id >> m.mock())
+                        ed.recent.push(proj.id)
                     else:
-                        docs = m.mock(list)
-                        (proj.documents() << docs).count(2 if di < 2 else 1)
-                        len(docs); m.result(2)
                         if di < 2:
-                            doc = docs[di] >> m.mock(TextDocumentView)
-                            ed.recent.push(doc.id >> m.mock())
+                            while len(proj._documents) <= di:
+                                proj._documents.append(Item())
+                            ed.recent.push(docs[di].id)
             ed.discard_and_focus_recent(None)
             if 'window_settings' in data:
                 ws.value = data['window_settings']
         with m:
             ed._setstate(data)
+            eq_(list(ed.projects), projects)
     yield test, None
     yield test, dict()
     yield test, dict(project_serials=["<serial>"])
@@ -394,15 +408,13 @@ def test_resume_recent_updates():
 def test_new_project():
     m = Mocker()
     ed = Editor(editxt.app, None)
-    proj_class = m.replace(mod, 'Project')
     cv = m.property(ed, "current_view")
-    proj = proj_class.create() >> m.mock(Project)
-    view = proj.create_document_view() >> m.mock(TextDocumentView)
+    view = m.method(Project.create_document_view)() >> m.mock(TextDocumentView)
     cv.value = view
     with m:
         result = ed.new_project()
-        eq_(result, proj)
-        assert proj in ed.projects
+        assert result in ed.projects, ed.projects
+        assert not result.documents(), result.documents()
 
 def test_toggle_properties_pane():
     from editxt.controls.splitview import ThinSplitView

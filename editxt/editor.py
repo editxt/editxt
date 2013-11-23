@@ -30,7 +30,7 @@ from PyObjCTools import AppHelper
 import editxt.constants as const
 from editxt.controls.cells import BUTTON_STATE_HOVER, BUTTON_STATE_NORMAL, BUTTON_STATE_PRESSED
 from editxt.document import TextDocumentView
-from editxt.platform.kvo import KVOList
+from editxt.platform.kvo import KVOList, KVOProxy
 from editxt.project import Project
 from editxt.textcommand import CommandBar
 from editxt.util import (RecentItemStack, load_image, perform_selector,
@@ -97,7 +97,7 @@ class Editor(object):
         if state:
             for serial in state.get("project_serials", []):
                 proj = Project.create_with_serial(serial)
-                self.projects.append(proj)
+                self.projects.append(KVOProxy(proj))
             for proj_index, doc_index in state.get("recent_items", []):
                 if proj_index < len(self.projects):
                     proj = self.projects[proj_index]
@@ -251,7 +251,7 @@ class Editor(object):
     def new_project(self):
         project = Project.create()
         view = project.create_document_view()
-        self.projects.append(project)
+        self.projects.append(KVOProxy(project))
         self.current_view = view
         return project
 
@@ -603,7 +603,7 @@ class Editor(object):
                     pdocs.extend(docs)
                     # END HACK
 
-                    self.projects.insert(proj_index, item)
+                    self.projects.insert(proj_index, KVOProxy(item))
                     proj_index += 1
                     focus = item
                     continue
@@ -615,7 +615,7 @@ class Editor(object):
                         item.project.remove_document_view(view)
                     else:
                         view = TextDocumentView.create_with_document(item, project)
-                    self.projects.insert(proj_index, project)
+                    self.projects.insert(proj_index, KVOProxy(project))
                     proj_index += 1
                     index = 0
                 else:

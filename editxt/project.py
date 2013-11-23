@@ -25,8 +25,9 @@ import Foundation as fn
 
 import editxt.constants as const
 from editxt import app
+from editxt.datatypes import WeakProperty
 from editxt.document import TextDocumentView, TextDocument, doc_id_gen
-from editxt.util import KVOList, WeakProperty
+from editxt.platform.kvo import KVOList
 
 
 log = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ class Project(object):
         self.path = None
         self.expanded = True
         self.is_dirty = False
-        self._documents = KVOList.alloc().init()
+        self._documents = KVOList()
         self.closing = False
         self.reset_serial_cache()
 

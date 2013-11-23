@@ -107,7 +107,7 @@ class WeakProperty(property):
 
     def __set__(self, obj, value):
         weak = ref(value) if value is not None else lambda:None
-        setattr(obj, self.name(obj), weak)
+        obj.__dict__[self.name(obj)] = weak
 
     def __delete__(self, obj):
         delattr(obj, self.name(obj))
