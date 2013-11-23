@@ -1223,7 +1223,8 @@ def test_makeWindowControllers():
         app.current_editor() >> (None if ed_is_none else ed)
         if ed_is_none:
             app.create_editor() >> ed
-        dv_class(ed, document=doc) >> dv
+        project = ed.get_current_project(create=True) >> Project()
+        dv_class(project, document=doc) >> dv
         ed.add_document_view(dv)
         add_ed = m.method(doc.addWindowController_)
         add_ed(ed.wc >> m.mock(EditorWindowController)) # simulate function call

@@ -132,11 +132,12 @@ class Application(object):
         editor = self.current_editor()
         if editor is None:
             editor = self.create_editor()
+        project = editor.get_current_project(create=True)
         focus = None
         views = []
         for path in paths:
             if os.path.isfile(path) or not os.path.exists(path):
-                view = TextDocumentView(editor, path=path) # FIXME editor should be project
+                view = TextDocumentView(project, path=path)
                 focus = editor.add_document_view(view)
                 views.append(view)
             else:
@@ -160,7 +161,8 @@ class Application(object):
             editor = self.current_editor()
             if editor is None:
                 editor = self.create_editor()
-            view = TextDocumentView(editor, document=doc) # FIXME editor should be project
+            project = editor.get_current_project(create=True)
+            view = TextDocumentView(project, document=doc)
             editor.add_document_view(view)
             if set_current:
                 editor.current_view = view

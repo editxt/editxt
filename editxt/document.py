@@ -566,7 +566,8 @@ class TextDocument(ak.NSDocument):
         editor = self.app.current_editor()
         if editor is None:
             editor = self.app.create_editor()
-        view = TextDocumentView(editor, document=self)
+        project = editor.get_current_project(create=True)
+        view = TextDocumentView(project, document=self)
         editor.add_document_view(view)
         self.addWindowController_(editor.wc)
         editor.current_view = view

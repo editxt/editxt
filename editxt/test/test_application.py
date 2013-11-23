@@ -198,15 +198,17 @@ def test_open_documents_with_paths():
         app = Application()
         exists = lambda path: True
         alog = m.replace(mod, 'log')
+        create_editor = m.method(app.create_editor)
         ed = m.mock(Editor)
+        project = ed.get_current_project(create=True) >> Project()
         dv_class = m.replace(edoc, 'TextDocumentView')
         m.method(app.current_editor)() >> (ed if c.has_editor else None)
         if not c.has_editor:
-            m.method(app.create_editor)() >> ed
+            create_editor() >> ed
         focus = None
         for p in c.paths:
             exists(p.path) >> p.exists
-            dv = dv_class(ed, path=p.path) >> m.mock(TextDocumentView)
+            dv = dv_class(project, path=p.path) >> m.mock(TextDocumentView)
             focus = ed.add_document_view(dv) >> dv
         if focus is not None:
             ed.current_view = dv
@@ -255,7 +257,8 @@ def test_open_error_log():
             m.method(app.current_editor)() >> (ed if c.has_editor else None)
             if not c.has_editor:
                 m.method(app.create_editor)() >> ed
-            dv_class(ed, document=err) >> dv
+            project = ed.get_current_project(create=True) >> Project()
+            dv_class(project, document=err) >> dv
             ed.add_document_view(dv)
             ed.current_view = dv
         m.method(app.iter_views_of_document)(err) >> idocs
