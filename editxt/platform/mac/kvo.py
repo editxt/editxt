@@ -139,6 +139,11 @@ def KVOProxy(target, weakref=False, _registry={}):
     return proxy_class.alloc().init_(target)
 
 
+#def proxy_target(proxy):
+#    """Retrieve the proxied object from a KVOProxy"""
+#    return proxy._target
+
+
 class _KVOProxy(fn.NSObject):
 
     NA = object()
@@ -193,6 +198,7 @@ class _KVOProxy(fn.NSObject):
     def __repr__(self):
         return "<{} {!r}>".format(type(self).__name__, self._target)
 
+
 class _WeakKVOProxy(_KVOProxy):
 
     _target = WeakProperty()
@@ -201,8 +207,6 @@ class _WeakKVOProxy(_KVOProxy):
         self = super(_KVOProxy, self).init()
         type(self)._target.__set__(self, target)
         return self
-def proxy_target(proxy):
-    return proxy._target
 
 
 class KVOLink(object):

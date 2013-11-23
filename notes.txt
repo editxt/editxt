@@ -74,6 +74,31 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+Eliminate editxt.app global/singleton
+  - Need a layer between the outline view and plain python objects
+    - objects to be bridged:
+x     - Project
+      - TextDocumentView
+    - properties used by Cocoa objects
+      - Editor (EditorWindowController)
+        - projects.items (projects is KVOList)
+      - Project
+        - displayName
+        - documents.items (documents is KVOList)
+        - isLeaf
+      - TextDocumentView
+        - displayName
+        - isLeaf
+        - properties
+          - character_encoding
+          - indent_mode
+          - indent_size
+          - newline_mode
+          - soft_wrap
+          - syntaxdef
+  - Clean up project
+    - eliminate constructors (see project-refactored.py)
+
 Use Editor.iter_dropped_paths in Application.open_documents_with_paths
   - change Editor.iter_dropped_paths to yield paths instead of objects
 Support opening symlinks

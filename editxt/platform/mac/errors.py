@@ -36,13 +36,13 @@ def log_python_exception(exception):
         tb = userInfo['__pyobjc_exc_traceback__']
     except KeyError:
         tb = userInfo['__pyobjc_exc_value__'].__traceback__
-    if tb is None and NSStackTraceKey in userInfo:
-        return log_objc_exception(exception)
     log.error('*** Python exception discarded!\n' +
         ''.join(traceback.format_exception(
             userInfo['__pyobjc_exc_type__'],
             userInfo['__pyobjc_exc_value__'],
             tb)))
+    if tb is None and NSStackTraceKey in userInfo:
+        return log_objc_exception(exception)
     # we logged it, so don't log it for us
     return False
 
