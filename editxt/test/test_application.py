@@ -437,7 +437,7 @@ def test_find_editor_with_document_view():
                 projects.append(project)
                 documents = []
                 if not found:
-                    project.documents() >> documents
+                    project.documents >> documents
                 for doc_name in project_documents:
                     if doc_name == DOC:
                         documents.append(dv)
@@ -629,7 +629,7 @@ def test_find_item_with_id():
                     if p.id == c.id:
                         found_item = proj
                     else:
-                        proj.documents() >> docs
+                        proj.documents >> docs
                 for d in p.docs:
                     doc = m.mock(TextDocumentView)
                     docs.append(doc)

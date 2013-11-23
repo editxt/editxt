@@ -223,7 +223,7 @@ class Application(object):
     def find_editor_with_document_view(self, doc_view):
         for editor in self.iter_editors():
             for proj in editor.projects:
-                for dv in proj.documents():
+                for dv in proj.documents:
                     if dv is doc_view:
                         return editor
         return None
@@ -244,7 +244,7 @@ class Application(object):
             for proj in editor.projects:
                 if proj.id == ident:
                     return proj
-                for doc in proj.documents():
+                for doc in proj.documents:
                     if doc.id == ident:
                         return doc
         return None

@@ -103,8 +103,8 @@ class Editor(object):
                     proj = self.projects[proj_index]
                     if doc_index == "<project>":
                         self.recent.push(proj.id)
-                    elif doc_index < len(proj.documents()):
-                        doc = proj.documents()[doc_index]
+                    elif doc_index < len(proj.documents):
+                        doc = proj.documents[doc_index]
                         self.recent.push(doc.id)
             if 'window_settings' in state:
                 self.window_settings = state['window_settings']
@@ -122,7 +122,7 @@ class Editor(object):
                     serials.append(serial)
                 indexes[project.id] = [i, "<project>"]
                 offset = 0
-                for j, doc in enumerate(project.documents()):
+                for j, doc in enumerate(project.documents):
                     if doc.file_path and os.path.exists(doc.file_path):
                         indexes[doc.id] = [i, j - offset]
                     else:
@@ -151,7 +151,7 @@ class Editor(object):
         try:
             for project in list(self.projects):
                 pid = project.id
-                for docview in list(project.documents()):
+                for docview in list(project.documents):
                     did = docview.id
                     if ident in (pid, did):
                         recent.discard(did)
@@ -289,7 +289,7 @@ class Editor(object):
 
     def find_project_with_document_view(self, doc):
         for proj in self.projects:
-            for d in proj.documents():
+            for d in proj.documents:
                 if doc is d:
                     return proj
         return None
@@ -476,7 +476,7 @@ class Editor(object):
                     if index < 0:
                         #outline_view.setDropItem_dropChildIndex_(item, 0)
                         # the following might be more correct, but is too confusing
-                        outline_view.setDropItem_dropChildIndex_(item, len(obj.documents()))
+                        outline_view.setDropItem_dropChildIndex_(item, len(obj.documents))
                 else:
                     return ak.NSDragOperationNone # document view cannot have children
             else:
@@ -488,7 +488,7 @@ class Editor(object):
                         path = fn.NSIndexPath.indexPathWithIndex_(last_proj_index)
                         node = self.wc.docsController.nodeAtArrangedIndexPath_(path)
                         proj = representedObject(node)
-                        outline_view.setDropItem_dropChildIndex_(node, len(proj.documents()))
+                        outline_view.setDropItem_dropChildIndex_(node, len(proj.documents))
                     else:
                         outline_view.setDropItem_dropChildIndex_(None, -1)
                 elif index == 0:
@@ -573,7 +573,7 @@ class Editor(object):
             proj_index = len(self.projects) # insert projects at end of list
             assert isinstance(project, Project), project
             if index < 0:
-                index = len(project.documents())
+                index = len(project.documents)
         accepted = False
         focus = None
         is_move = action is not const.COPY
@@ -597,7 +597,7 @@ class Editor(object):
                         editor = editors[0]
 
                     # BEGIN HACK crash on remove project with documents
-                    pdocs = item.documents()
+                    pdocs = item.documents
                     docs, pdocs[:] = list(pdocs), []
                     editor.projects.remove(item) # this line should be all that's necessary
                     pdocs.extend(docs)
@@ -625,7 +625,7 @@ class Editor(object):
                         view = project.document_view_for_document(item)
                     if is_move and view is not None:
                         if view.project == project:
-                            vindex = project.documents().index(view)
+                            vindex = project.documents.index(view)
                             if vindex in [index - 1, index]:
                                 continue
                             if vindex - index <= 0:

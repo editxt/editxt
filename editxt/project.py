@@ -60,7 +60,7 @@ class Project(object):
         self.path = None
         self.expanded = True
         self.is_dirty = False
-        self._documents = KVOList()
+        self.documents = KVOList()
         self.closing = False
         self.reset_serial_cache()
 
@@ -82,7 +82,7 @@ class Project(object):
             data["path"] = self.path
         if self.name != const.UNTITLED_PROJECT_NAME:
             data["name"] = str(self.name) # HACK dump_yaml doesn't like pyobjc_unicode
-        states = (d.edit_state for d in self._documents)
+        states = (d.edit_state for d in self.documents)
         documents = [s for s in states if "path" in s]
         if documents:
             data["documents"] = documents
@@ -104,7 +104,7 @@ class Project(object):
                 except Exception:
                     log.warn("cannot open document: %r" % (doc_state,))
             self.expanded = serial.get("expanded", True)
-        if not self._documents:
+        if not self.documents:
             self.create_document_view()
 
     def reset_serial_cache(self):
@@ -134,11 +134,8 @@ class Project(object):
 #         app.item_changed(self)
 #     is_dirty = property(_get_dirty, _set_dirty)
 
-    def documents(self):
-        return self._documents
-
     def dirty_documents(self):
-        return (doc for doc in self._documents if doc.is_dirty)
+        return (doc for doc in self.documents if doc.is_dirty)
 
     def icon(self):
         return None
@@ -185,7 +182,7 @@ class Project(object):
         """
         # TODO test
         if doc is not None:
-            for dv in self.documents():
+            for dv in self.documents:
                 if dv.document is doc:
                     return dv
         return None
@@ -207,13 +204,13 @@ class Project(object):
 
     def append_document_view(self, view):
         """Add view to the end of this projects document views"""
-        self._documents.append(view)
+        self.documents.append(view)
         view.project = self
 
     def insert_document_view(self, index, view):
         """Insert view at index in this projects document views
         """
-        self._documents.insert(index, view)
+        self.documents.insert(index, view)
         view.project = self
 
     def remove_document_view(self, doc_view):
@@ -221,20 +218,20 @@ class Project(object):
 
         Does nothing if the view does not belong to this project.
         """
-        if doc_view in self._documents:
-            self._documents.remove(doc_view)
+        if doc_view in self.documents:
+            self.documents.remove(doc_view)
             doc_view.project = None
             #self.is_dirty = True
 
     def find_view_with_document(self, doc):
-        for view in self._documents:
+        for view in self.documents:
             if view.document is doc:
                 return view
         return None
 
 #     def set_primary_window_controller(self, wc):
-#         if self._documents:
-#             wc.activate_document_view(self._documents[0])
+#         if self.documents:
+#             wc.activate_document_view(self.documents[0])
 
     def set_main_view_of_window(self, view, window):
         pass # TODO add project-specific view?
@@ -260,9 +257,9 @@ class Project(object):
     def close(self):
         self.closing = True
         try:
-            for dv in list(self._documents):
+            for dv in list(self.documents):
                 dv.close()
-            #self._documents.setItems_([])
+            #self.documents.setItems_([])
         finally:
             self.closing = False
 

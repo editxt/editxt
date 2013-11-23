@@ -159,7 +159,7 @@ def test__setstate():
                 if pi < 1:
                     while len(ed.projects) <= pi:
                         docs = []
-                        proj = Item(_documents=docs, documents=lambda:docs)
+                        proj = Item(documents=docs)
                         projects.append(proj)
                         ed.projects.append(proj)
                     proj = ed.projects[pi]
@@ -167,8 +167,8 @@ def test__setstate():
                         ed.recent.push(proj.id)
                     else:
                         if di < 2:
-                            while len(proj._documents) <= di:
-                                proj._documents.append(Item())
+                            while len(proj.documents) <= di:
+                                proj.documents.append(Item())
                             ed.recent.push(docs[di].id)
             ed.discard_and_focus_recent(None)
             if 'window_settings' in data:
@@ -201,7 +201,7 @@ def test_state():
             # setup for recent items
             proj.id >> p.id
             items[p.id] = [i, "<project>"]
-            docs = proj.documents() >> []
+            docs = proj.documents >> []
             offset = 0
             for j, d in enumerate(p.docs):
                 dv = m.mock(TextDocumentView)
@@ -254,7 +254,7 @@ def test_discard_and_focus_recent():
                     dv.close()
                 else:
                     lookup[d.id] = dv
-            proj.documents() >> docs
+            proj.documents >> docs
             if p.id == c.id:
                 ed.recent.discard(p.id)
                 proj.close()
@@ -414,7 +414,7 @@ def test_new_project():
     with m:
         result = ed.new_project()
         assert result in ed.projects, ed.projects
-        assert not result.documents(), result.documents()
+        assert not result.documents, result.documents
 
 def test_toggle_properties_pane():
     from editxt.controls.splitview import ThinSplitView
@@ -560,7 +560,7 @@ def test_add_document_view():
         m.method(ed.get_current_project)(create=True) >> proj
         with m:
             ed.add_document_view(dv)
-        eq_(len(proj.documents()), 1, proj.documents())
+        eq_(len(proj.documents), 1, proj.documents)
     yield test, False
     yield test, True
 
@@ -965,7 +965,7 @@ def test_validate_drop():
                     index = config.index
                     obj = m.mock(type=Project)
                     if index < 0:
-                        obj.documents() >> (["<doc>"] * config.proj_docs)
+                        obj.documents >> (["<doc>"] * config.proj_docs)
                         ov.setDropItem_dropChildIndex_(item, config.proj_docs)
                 else:
                     obj = m.mock(type=TextDocumentView)
@@ -981,7 +981,7 @@ def test_validate_drop():
                         node = m.mock()
                         ed.wc.docsController.nodeAtArrangedIndexPath_(path) >> node
                         representedObject(node) >> proj
-                        proj.documents() >> (["<doc>"] * config.proj_docs)
+                        proj.documents >> (["<doc>"] * config.proj_docs)
                         ov.setDropItem_dropChildIndex_(node, config.proj_docs)
                     else:
                         ov.setDropItem_dropChildIndex_(None, -1)
@@ -1199,7 +1199,7 @@ def test_insert_items():
         next_project = str(int(max(v for v in c.init if v in '0123456789')) + 1)
         for project in ed.projects:
             final.append(' ' + map.get(project, next_project))
-            for view in project.documents():
+            for view in project.documents:
                 final.append(map.get(view, view.displayName().upper()))
         eq_(str(''.join(final)), c.final)
 
@@ -1401,7 +1401,7 @@ def test_outlineViewItemDidExpandCollapse():
 # def test_setDocument_():
 #     wc = EditorWindowController.alloc().init()
 #     proj = wc.new_project()
-#     doc = proj.documents()[0].document
+#     doc = proj.documents[0].document
 #     m = Mocker()
 #     EditorWindowController.window = m.replace(EditorWindowController.window)
 #     win = m.mock(NSWindow)
@@ -1415,13 +1415,13 @@ def test_outlineViewItemDidExpandCollapse():
 #     ewc = EditorWindowController.alloc().init()
 #     ewc.window() # load window
 #     assert len(ewc.docsController.selectedObjects()) == 1
-#     doc = ewc.projects()[0].documents()[0]
+#     doc = ewc.projects()[0].documents[0]
 #     assert doc in ewc.docsController.selectedObjects()
 
 # def test_EditorWindowController_activate_document():
 #     ewc = EditorWindowController.alloc().init()
 #     ewc.window() # HACK load the window controller, create a project, etc.
-#     assert len(ewc.projects()[0].documents()) == 1
+#     assert len(ewc.projects()[0].documents) == 1
 #     doc = TextDocument.alloc().init()
 #     assert doc not in ewc.docsController.selectedObjects()
 #     ewc.activate_document(doc)

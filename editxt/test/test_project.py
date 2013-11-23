@@ -63,7 +63,7 @@ def test_is_project_path():
 def test_create_and_init():
     proj = Project.create()
     assert proj.path is None
-    eq_(len(proj.documents()), 0)
+    eq_(len(proj.documents), 0)
     eq_(proj.serial_cache, proj.serialize())
 
 @check_app_state
@@ -149,7 +149,7 @@ def test_serialize_full():
             proj.name = ak.NSString.alloc().initWithString_("<name>")
             assert isinstance(proj.name, objc.pyobjc_unicode), type(proj.name)
         if c.docs:
-            proj._documents = [MockDoc(1)]
+            proj.documents = [MockDoc(1)]
         proj.expanded = c.expn
         serial = proj.serialize_full()
         check(c.path, "path", serial, proj.path)
@@ -175,7 +175,7 @@ def test_deserialize_project():
         nspls = m.replace(fn, 'NSPropertyListSerialization')
         create_document_view_with_state = m.method(Project.create_document_view_with_state)
         create_document_view = m.method(Project.create_document_view)
-        proj._documents = docs = m.mock(KVOList)
+        proj.documents = docs = m.mock(KVOList)
         if "path" in serial:
             data = nsdat.dataWithContentsOfFile_(serial["path"]) >> m.mock()
             serial_, format, error = nspls. \
@@ -272,7 +272,7 @@ def test_save_and_load_project_with_path():
             proj = Project.create_with_path(path)
             try:
                 assert proj.path == path
-                assert len(proj.documents()) == 1
+                assert len(proj.documents) == 1
             finally:
                 proj.close()
     path = os.path.join(gettempdir(), "test.edxt")
@@ -310,7 +310,7 @@ def test_create_document_view_with_state():
     with m:
         result = proj.create_document_view_with_state(state)
         eq_(result, dv)
-        assert dv in proj.documents()
+        assert dv in proj.documents
 
 def test_create_document_view():
     proj = Project.create()
@@ -338,13 +338,13 @@ def test_append_document_view():
     doc.project = proj
     with m:
         proj.append_document_view(doc)
-    assert doc in proj.documents()
+    assert doc in proj.documents
     #assert proj.is_dirty
 
 def test_dirty_documents():
     def do_test(template):
         proj = Project.create()
-        temp_docs = proj._documents
+        temp_docs = proj.documents
         try:
             m = Mocker()
             all_docs = []
@@ -355,13 +355,13 @@ def test_dirty_documents():
                 doc.is_dirty >> (item == "d")
                 if item == "d":
                     dirty_docs.append(doc)
-            proj._documents = all_docs
+            proj.documents = all_docs
             with m:
                 result = list(proj.dirty_documents())
                 assert len(dirty_docs) == template.count("d")
                 assert dirty_docs == result, "%r != %r" % (dirty_docs, result)
         finally:
-            proj._documents = temp_docs
+            proj.documents = temp_docs
     yield do_test, ""
     yield do_test, "c"
     yield do_test, "d"
@@ -374,7 +374,7 @@ def test_append_document_view_already_in_project():
     dv = Fake()
     proj.append_document_view(dv)
     proj.append_document_view(dv)
-    assert len(proj.documents()) == 2, proj.documents()
+    assert len(proj.documents) == 2, proj.documents
 
 def test_remove_document_view():
     class MockView(object):
@@ -382,12 +382,12 @@ def test_remove_document_view():
     project = Project.create()
     doc = MockView()
     project.insert_document_view(0, doc)
-    assert doc in project.documents()
+    assert doc in project.documents
     eq_(doc.project, project)
     #project.is_dirty = False
     project.remove_document_view(doc)
     #assert project.is_dirty
-    assert doc not in project.documents()
+    assert doc not in project.documents
     eq_(doc.project, None)
 
 def test_find_view_with_document():
@@ -395,7 +395,7 @@ def test_find_view_with_document():
     def test(config):
         theview = None
         proj = Project.create()
-        proj._documents = docs = []
+        proj.documents = docs = []
         m = Mocker()
         doc = m.mock(TextDocument)
         found = False
@@ -529,7 +529,7 @@ def test_perform_close():
 def test_close():
     proj = Project.create()
     m = Mocker()
-    proj._documents = docs = []
+    proj.documents = docs = []
     for i in range(2):
         dv = m.mock(TextDocumentView)
         docs.append(dv)
