@@ -473,7 +473,7 @@ def test_find_project_with_document_view():
     ed = Editor(editxt.app, None)
     doc = object()
     proj = Project.create()
-    dv = TextDocumentView.alloc().init(doc, proj)
+    dv = TextDocumentView(proj, document=doc)
     proj.append_document_view(dv)
     assert dv.document is doc
     ed.projects.append(proj)
@@ -552,7 +552,7 @@ def test_add_document_view():
         m = Mocker()
         ed = Editor(editxt.app, None)
         doc = TextDocument.alloc().init()
-        dv = TextDocumentView.create_with_document(doc, None)
+        dv = TextDocumentView(None, document=doc)
         assert dv.project is None, dv.project
         proj = Project.create()
         if has_view:
@@ -1169,7 +1169,7 @@ def test_insert_items():
             else:
                 doc = TextDocument.alloc().init()
                 doc.setFileURL_(fn.NSURL.fileURLWithPath_(char))
-                item = TextDocumentView.create_with_document(doc, project)
+                item = TextDocumentView(project, document=doc)
                 project.append_document_view(item)
                 dindex += 1
             map[item] = char

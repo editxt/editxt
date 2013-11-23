@@ -64,31 +64,22 @@ def document_property(do):
     return property(fget, fset)
 
 
-class TextDocumentView(fn.NSObject):
+class TextDocumentView(object):
 
     id = None # will be overwritten (put here for type api compliance for testing)
     project = WeakProperty()
-
     def is_leaf(self): return True # TODO convert to plain static attribute
 
-    @classmethod
-    def create_with_state(cls, state, project):
-        dv = cls.create_with_path(state["path"], project)
-        dv.edit_state = state
-        return dv
-
-    @classmethod
-    def create_with_path(cls, path, project):
-        doc = TextDocument.get_with_path(path)
-        return cls.create_with_document(doc, project)
-
-    @classmethod
-    def create_with_document(cls, doc, project):
-        return cls.alloc().init(doc, project)
-
-    @objc.namedSelector(b'init:project:')
-    def init(self, document, project):
-        self = super(TextDocumentView, self).init()
+    def __init__(self, project, *, document=None, path=None, state=None):
+        if state is not None:
+            assert document is None, (state, document)
+            assert path is None, (state, path)
+            path = state["path"]
+        if path is not None:
+            assert document is None, (path, document)
+            # TODO use project to get document
+            document = TextDocument.get_with_path(path)
+        assert document is not None, (project, path, state)
         self._documents = KVOList.alloc().init()
         self.id = next(doc_id_gen)
         self.project = project
@@ -108,7 +99,8 @@ class TextDocumentView(fn.NSObject):
                 (document, "properties.character_encoding", self.props, "character_encoding"),
                 (document, "properties.highlight_selected_text", self.props, "highlight_selected_text"),
             ])
-        return self
+        if state is not None:
+            self.edit_state = state
 
     def icon(self):
         return self.document.icon()
@@ -574,7 +566,7 @@ class TextDocument(ak.NSDocument):
         editor = self.app.current_editor()
         if editor is None:
             editor = self.app.create_editor()
-        view = TextDocumentView.create_with_document(self, editor)
+        view = TextDocumentView(editor, document=self)
         editor.add_document_view(view)
         self.addWindowController_(editor.wc)
         editor.current_view = view

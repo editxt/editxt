@@ -614,7 +614,7 @@ class Editor(object):
                         view = item
                         item.project.remove_document_view(view)
                     else:
-                        view = TextDocumentView.create_with_document(item, project)
+                        view = TextDocumentView(project, document=item)
                     self.projects.insert(proj_index, KVOProxy(project))
                     proj_index += 1
                     index = 0
@@ -632,7 +632,7 @@ class Editor(object):
                                 index -= 1
                         view.project.remove_document_view(view)
                     else:
-                        view = TextDocumentView.create_with_document(item, project)
+                        view = TextDocumentView(project, document=item)
                 project.insert_document_view(index, view)
                 focus = view
                 index += 1

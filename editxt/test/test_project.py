@@ -305,7 +305,7 @@ def test_create_document_view_with_state():
     state = m.mock()
     dv_class = m.replace(mod, 'TextDocumentView')
     dv = m.mock(TextDocumentView)
-    dv_class.create_with_state(state, proj) >> dv
+    dv_class(proj, state=state) >> dv
     dv.project = proj
     with m:
         result = proj.create_document_view_with_state(state)
@@ -324,7 +324,7 @@ def test_create_document_view():
     nsdc.sharedDocumentController() >> dc
     dc.makeUntitledDocumentOfType_error_(const.TEXT_DOCUMENT, None) >> (doc, None)
     dc.addDocument_(doc)
-    dv_class.create_with_document(doc, proj) >> dv
+    dv_class(proj, document=doc) >> dv
     append_document_view(dv) >> dv
     with m:
         result = proj.create_document_view()

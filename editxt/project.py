@@ -177,12 +177,12 @@ class Project(object):
         if err:
             raise Exception(err)
         dc.addDocument_(doc)
-        dv = TextDocumentView.create_with_document(doc, self)
+        dv = TextDocumentView(self, document=doc)
         self.append_document_view(dv)
         return dv
 
     def create_document_view_with_state(self, state):
-        dv = TextDocumentView.create_with_state(state, self)
+        dv = TextDocumentView(self, state=state)
         self.append_document_view(dv)
         return dv
 
