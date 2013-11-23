@@ -329,8 +329,8 @@
                                                             <connections>
                                                                 <binding destination="272" name="target" keyPath="arrangedObjects" id="277">
                                                                     <dictionary key="options">
-                                                                        <bool key="NSConditionallySetsEnabled" value="NO"/>
                                                                         <string key="NSSelectorName">attemptClose:</string>
+                                                                        <bool key="NSConditionallySetsEnabled" value="NO"/>
                                                                         <bool key="NSAlwaysPresentsApplicationModalAlerts" value="YES"/>
                                                                     </dictionary>
                                                                 </binding>
@@ -410,9 +410,5 @@
                 </binding>
             </connections>
         </treeController>
-        <view id="336">
-            <rect key="frame" x="0.0" y="0.0" width="125" height="1"/>
-            <autoresizingMask key="autoresizingMask"/>
-        </view>
     </objects>
 </document>
