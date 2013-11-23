@@ -651,7 +651,13 @@ class Editor(object):
 
 class EditorWindowController(ak.NSWindowController):
 
-    editor = WeakProperty()
+    # 2013-11-23 08:56:28.994 EditXTDev[47194:707] An instance 0x10675fc30 of
+    # class _KVOList was deallocated while key value observers were still
+    # registered with it. Observation info was leaked, and may even become
+    # mistakenly attached to some other object. Set a breakpoint on
+    # NSKVODeallocateBreak to stop here in the debugger.
+    #editor = WeakProperty()
+
     docsController = objc.IBOutlet()
     docsScrollview = objc.IBOutlet()
     docsView = objc.IBOutlet()
