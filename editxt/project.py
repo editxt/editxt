@@ -26,15 +26,16 @@ import Foundation as fn
 import editxt.constants as const
 from editxt import app
 from editxt.document import TextDocumentView, TextDocument, doc_id_gen
-from editxt.util import KVOList
+from editxt.util import KVOList, WeakProperty
 
 
 log = logging.getLogger(__name__)
 
 
-class Project(fn.NSObject):
+class Project(object):
 
     id = None # will be overwritten (put here for type api compliance for testing)
+    editor = WeakProperty()
 
     @staticmethod
     def is_project_path(path):
@@ -42,7 +43,7 @@ class Project(fn.NSObject):
 
     @classmethod
     def create(cls):
-        return cls.alloc().init()
+        return cls()
 
     @classmethod
     def create_with_path(cls, path):
@@ -50,10 +51,9 @@ class Project(fn.NSObject):
 
     @classmethod
     def create_with_serial(cls, serial):
-        return cls.alloc().init_with_serial(serial)
+        return cls.init_with_serial(serial)
 
-    def init(self):
-        self = super(Project, self).init()
+    def __init__(self):
         self.id = next(doc_id_gen)
         self.name = const.UNTITLED_PROJECT_NAME
         self.path = None
@@ -62,10 +62,10 @@ class Project(fn.NSObject):
         self._documents = KVOList.alloc().init()
         self.closing = False
         self.reset_serial_cache()
-        return self
 
-    def init_with_serial(self, serial):
-        self = self.init()
+    @classmethod
+    def init_with_serial(cls, serial):
+        self = cls()
         self.deserialize(serial)
         self.reset_serial_cache()
         return self
@@ -163,8 +163,8 @@ class Project(fn.NSObject):
     def isLeaf(self):
         return False
 
-    def isDocumentEdited(self):
-        return False
+#    def isDocumentEdited(self):
+#        return False
 
     @property
     def file_path(self):
@@ -195,12 +195,12 @@ class Project(fn.NSObject):
         if err:
             raise Exception(err)
         dc.addDocument_(doc)
-        dv = TextDocumentView.create_with_document(doc)
+        dv = TextDocumentView.create_with_document(doc, self)
         self.append_document_view(dv)
         return dv
 
     def create_document_view_with_state(self, state):
-        dv = TextDocumentView.create_with_state(state)
+        dv = TextDocumentView.create_with_state(state, self)
         self.append_document_view(dv)
         return dv
 

@@ -18,6 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+import os
+
 import objc
 from PyObjCTools import AppHelper, Debugging
 
@@ -35,6 +37,8 @@ def init(use_pdb):
     else:
         install_exception_handler()
 
+    fix_PyObjCTools_path()
+
     # HACK monkey-patch pyobc exception handler to use our logger
     Debugging.NSLog = lambda x, y=None: log.error(x if y is None else y)
 
@@ -51,3 +55,17 @@ def run(app, argv, unexpected_error_callback, use_pdb):
     register_value_transformers()
 
     AppHelper.runEventLoop(argv, unexpected_error_callback, pdb=use_pdb)
+
+
+def fix_PyObjCTools_path():
+    try:
+        import PyObjCTools.KeyValueCoding
+    except ImportError:
+        # HACK fix path of namespace package
+        # I thought this was supposed to be handled by PEP 420
+        # http://www.python.org/dev/peps/pep-0420/
+        import PyObjCTools
+        assert len(PyObjCTools.__path__) == 1, PyObjCTools.__path__
+        head, tail = os.path.split(PyObjCTools.__path__[0])
+        assert tail == "PyObjCTools", PyObjCTools.__path__
+        PyObjCTools.__path__.append(os.path.join(head, "PyObjC", tail))

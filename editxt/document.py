@@ -41,8 +41,8 @@ from editxt.controls.linenumberview import LineNumberView
 from editxt.controls.statscrollview import StatusbarScrollView
 from editxt.controls.textview import TextView
 from editxt.syntax import SyntaxCache
-from editxt.util import KVOList, KVOProxy, KVOLink, untested, refactor
-from editxt.util import fetch_icon, filestat, register_undo_callback
+from editxt.util import (KVOList, KVOProxy, KVOLink, untested, refactor,
+    fetch_icon, filestat, register_undo_callback, WeakProperty)
 
 log = logging.getLogger(__name__)
 
@@ -67,27 +67,29 @@ def document_property(do):
 class TextDocumentView(fn.NSObject):
 
     id = None # will be overwritten (put here for type api compliance for testing)
+    project = WeakProperty()
 
     @classmethod
-    def create_with_state(cls, state):
-        dv = cls.create_with_path(state["path"])
+    def create_with_state(cls, state, project):
+        dv = cls.create_with_path(state["path"], project)
         dv.edit_state = state
         return dv
 
     @classmethod
-    def create_with_path(cls, path):
+    def create_with_path(cls, path, project):
         doc = TextDocument.get_with_path(path)
-        return cls.create_with_document(doc)
+        return cls.create_with_document(doc, project)
 
     @classmethod
-    def create_with_document(cls, doc):
-        return cls.alloc().init_with_document(doc)
+    def create_with_document(cls, doc, project):
+        return cls.alloc().init(doc, project)
 
-    def init_with_document(self, document):
+    @objc.namedSelector(b'init:project:')
+    def init(self, document, project):
         self = super(TextDocumentView, self).init()
         self._documents = KVOList.alloc().init()
         self.id = next(doc_id_gen)
-        self.project = None
+        self.project = project
         self.document = document
         self.text_view = None
         self.scroll_view = None
@@ -199,7 +201,7 @@ class TextDocumentView(fn.NSObject):
                 .addObserver_selector_name_object_(
                     self.dual_view, "tile:", SHOULD_RESIZE, self.command_view)
 
-            self.soft_wrap = app.config["soft_wrap"]
+            self.soft_wrap = self.document.app.config["soft_wrap"]
             self.reset_edit_state()
         else:
             # reset frame in case the window was resized
@@ -356,25 +358,25 @@ class TextDocumentView(fn.NSObject):
         self.command_view.message(msg, self.text_view, msg_type)
 
     def perform_close(self, editor):
-        if list(app.iter_editors_with_view_of_document(self.document)) == [editor]:
-            info = app.context.put(editor)
+        editor = self.project.editor
+        views = list(editor.app.iter_editors_with_view_of_document(self.document))
+        if views == [editor]:
             editor.current_view = self
             self.document.canCloseDocumentWithDelegate_shouldCloseSelector_contextInfo_(
-                self, "document:shouldClose:contextInfo:", info)
+                self, "document:shouldClose:contextInfo:", None)
         else:
             editor.discard_and_focus_recent(self)
 
     @objc.typedSelector(b'v@:@ii')
     def document_shouldClose_contextInfo_(self, doc, should_close, info):
-        editor = app.context.pop(info)
         if should_close:
-            editor.discard_and_focus_recent(self)
+            self.project.editor.discard_and_focus_recent(self)
 
     def close(self):
         doc = self.document
-        if self.project is not None and not self.project.closing:
+        if not self.project.closing:
             self.project.remove_document_view(self)
-            self.project = None
+        self.project = None
         if doc is not None:
             if self.text_view is not None:
                 self.scroll_view.removeFromSuperview()
@@ -387,7 +389,7 @@ class TextDocumentView(fn.NSObject):
             for wc in list(self.document.windowControllers()):
                 if wc.editor.count_views_of_document(doc) == 0:
                     doc.removeWindowController_(wc)
-            if app.count_views_of_document(doc) == 0:
+            if doc.app.count_views_of_document(doc) == 0:
                 doc.close()
             self.document = None
         if self.dual_view is not None:
@@ -453,6 +455,11 @@ class UndoManager(fn.NSUndoManager):
 
 class TextDocument(ak.NSDocument):
 
+    @property
+    def app(self):
+        # TODO pass app to constructor; eliminate global
+        return app
+
     @classmethod
     def get_with_path(cls, path):
         """Get a document with the given path
@@ -493,10 +500,10 @@ class TextDocument(ak.NSDocument):
         self.syntaxer = SyntaxCache()
         self._filestat = None
         self.props = KVOProxy(self)
-        self.indent_mode = app.config["indent.mode"]
-        self.indent_size = app.config["indent.size"] # should come from syntax definition
-        self.newline_mode = app.config["newline_mode"]
-        self.highlight_selected_text = app.config["highlight_selected_text.enabled"]
+        self.indent_mode = self.app.config["indent.mode"]
+        self.indent_size = self.app.config["indent.size"] # should come from syntax definition
+        self.newline_mode = self.app.config["newline_mode"]
+        self.highlight_selected_text = self.app.config["highlight_selected_text.enabled"]
         self.reset_text_attributes(self.indent_size)
         #self.save_hooks = []
         return self
@@ -548,7 +555,7 @@ class TextDocument(ak.NSDocument):
         }
         range = fn.NSMakeRange(0, self.text_storage.length())
         self.text_storage.addAttributes_range_(attrs, range)
-        for view in app.iter_views_of_document(self):
+        for view in self.app.iter_views_of_document(self):
             if view.text_view is not None:
                 view.text_view.setTypingAttributes_(attrs)
                 view.text_view.setDefaultParagraphStyle_(ps)
@@ -557,10 +564,10 @@ class TextDocument(ak.NSDocument):
         return self._text_attributes
 
     def makeWindowControllers(self):
-        editor = app.current_editor()
+        editor = self.app.current_editor()
         if editor is None:
-            editor = app.create_editor()
-        view = TextDocumentView.create_with_document(self)
+            editor = self.app.create_editor()
+        view = TextDocumentView.create_with_document(self, editor)
         editor.add_document_view(view)
         self.addWindowController_(editor.wc)
         editor.current_view = view
@@ -595,7 +602,7 @@ class TextDocument(ak.NSDocument):
         if err is None:
             try:
                 self.update_syntaxer()
-                app.save_editor_states()
+                self.app.save_editor_states()
             except Exception:
                 log.error("unexpected error", exc_info=True)
 #             if self.project is not None:
@@ -681,7 +688,7 @@ class TextDocument(ak.NSDocument):
             log.error("could not reload document: %s", err)
             return # TODO report err
         textview = None
-        for view in app.iter_views_of_document(self):
+        for view in self.app.iter_views_of_document(self):
             textview = view.text_view
             if textview is not None:
                 break
@@ -758,7 +765,7 @@ class TextDocument(ak.NSDocument):
         filename = self.lastComponentOfFileName()
         if filename != self.syntaxer.filename:
             self.syntaxer.filename = filename
-            syntaxdef = app.syntax_factory.get_definition(filename)
+            syntaxdef = self.app.syntax_factory.get_definition(filename)
             if self.syntaxdef is not syntaxdef:
                 self.props.syntaxdef = syntaxdef
                 self.syntaxer.color_text(self.text_storage)
@@ -769,7 +776,7 @@ class TextDocument(ak.NSDocument):
 
     def updateChangeCount_(self, ctype):
         super(TextDocument, self).updateChangeCount_(ctype)
-        app.item_changed(self, ctype)
+        self.app.item_changed(self, ctype)
 
 #     def set_primary_window_controller(self, wc):
 #         if wc.document() is self:

@@ -461,7 +461,7 @@ def test_find_project_with_document_view():
     ed = Editor(editxt.app, None)
     doc = object()
     proj = Project.create()
-    dv = TextDocumentView.alloc().init_with_document(doc)
+    dv = TextDocumentView.alloc().init(doc, proj)
     proj.append_document_view(dv)
     assert dv.document is doc
     ed.projects.append(proj)
@@ -540,7 +540,7 @@ def test_add_document_view():
         m = Mocker()
         ed = Editor(editxt.app, None)
         doc = TextDocument.alloc().init()
-        dv = TextDocumentView.create_with_document(doc)
+        dv = TextDocumentView.create_with_document(doc, None)
         assert dv.project is None, dv.project
         proj = Project.create()
         if has_view:
@@ -575,21 +575,6 @@ def test_Editor_iter_views_of_document():
     yield test, [False], 0
     yield test, [True], 1
     yield test, [False, True, True, False, True], 3
-
-def test_should_select_item():
-    def test(item_type, expected_result):
-        from editxt.controls.outlineview import OutlineView
-        ed = Editor(editxt.app, None)
-        m = Mocker()
-        ov = m.mock(OutlineView)
-        it = object() # outline view item
-        doc = item_type.alloc().init()
-        #ov.realItemForOpaqueItem_(it) >> doc
-        with m:
-            result = ed.should_select_item(ov, it)
-            eq_(result, expected_result)
-    yield test, TextDocument, True
-    yield test, Project, True
 
 def test_item_changed():
     def test(c):
@@ -1172,7 +1157,7 @@ def test_insert_items():
             else:
                 doc = TextDocument.alloc().init()
                 doc.setFileURL_(fn.NSURL.fileURLWithPath_(char))
-                item = TextDocumentView.create_with_document(doc)
+                item = TextDocumentView.create_with_document(doc, project)
                 project.append_document_view(item)
                 dindex += 1
             map[item] = char

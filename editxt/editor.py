@@ -246,10 +246,6 @@ class Editor(object):
 
     def should_select_item(self, outlineview, item):
         return True
-        obj = outlineview.realItemForOpaqueItem_(item)
-        if isinstance(obj, TextDocumentView):
-            return True
-        return False
 
     def new_project(self):
         project = Project.create()
@@ -612,12 +608,12 @@ class Editor(object):
                     continue
 
                 if project is None:
+                    project = Project.create()
                     if isinstance(item, TextDocumentView) and is_move:
                         view = item
                         item.project.remove_document_view(view)
                     else:
-                        view = TextDocumentView.create_with_document(item)
-                    project = Project.create()
+                        view = TextDocumentView.create_with_document(item, project)
                     self.projects.insert(proj_index, project)
                     proj_index += 1
                     index = 0
@@ -635,7 +631,7 @@ class Editor(object):
                                 index -= 1
                         view.project.remove_document_view(view)
                     else:
-                        view = TextDocumentView.create_with_document(item)
+                        view = TextDocumentView.create_with_document(item, project)
                 project.insert_document_view(index, view)
                 focus = view
                 index += 1

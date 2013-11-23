@@ -32,11 +32,17 @@ from editxt import log
 
 def log_python_exception(exception):
     userInfo = exception.userInfo()
+    try:
+        tb = userInfo['__pyobjc_exc_traceback__']
+    except KeyError:
+        tb = userInfo['__pyobjc_exc_value__'].__traceback__
+    if tb is None and NSStackTraceKey in userInfo:
+        return log_objc_exception(exception)
     log.error('*** Python exception discarded!\n' +
         ''.join(traceback.format_exception(
             userInfo['__pyobjc_exc_type__'],
             userInfo['__pyobjc_exc_value__'],
-            userInfo['__pyobjc_exc_traceback__'])))
+            tb)))
     # we logged it, so don't log it for us
     return False
 
@@ -84,7 +90,7 @@ class DebuggingDelegate(NSObject):
     def exceptionHandler_shouldHandleException_mask_(self, sender, exception, aMask):
         return False
 
-def install_exception_handler(verbosity=DEFAULTVERBOSITY, mask=DEFAULTMASK):
+def install_exception_handler(verbosity=LOGSTACKTRACE, mask=DEFAULTMASK):
     """
     Install the exception handling delegate that will log every exception
     matching the given mask with the given verbosity.
