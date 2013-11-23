@@ -27,7 +27,7 @@ import editxt.constants as const
 from editxt import app
 from editxt.datatypes import WeakProperty
 from editxt.document import TextDocumentView, TextDocument, doc_id_gen
-from editxt.platform.kvo import KVOList
+from editxt.platform.kvo import KVOList, SelfKVOProxy
 
 
 log = logging.getLogger(__name__)
@@ -37,6 +37,7 @@ class Project(object):
 
     id = None # will be overwritten (put here for type api compliance for testing)
     editor = WeakProperty()
+    proxy = SelfKVOProxy()
     properties = None
 
     @staticmethod
@@ -119,6 +120,7 @@ class Project(object):
             self.reset_serial_cache()
 
     def save_with_path(self, path):
+        raise NotImplementedError
         data = fn.NSMutableDictionary.alloc().init()
         data.update(self.serialize_full())
         data.writeToFile_atomically_(path, True)
@@ -188,13 +190,13 @@ class Project(object):
 
     def append_document_view(self, view):
         """Add view to the end of this projects document views"""
-        self.documents.append(view)
+        self.documents.append(view.proxy)
         view.project = self
 
     def insert_document_view(self, index, view):
         """Insert view at index in this projects document views
         """
-        self.documents.insert(index, view)
+        self.documents.insert(index, view.proxy)
         view.project = self
 
     def remove_document_view(self, doc_view):

@@ -88,17 +88,24 @@ class RecentItemStack(object):
                     break
 
 
-class WeakProperty(property):
+class AbstractNamedProperty(object):
+    """An abstract base class for properties that need to lookup the name
+    of the attribute in which they are stored
+    """
 
     def name(self, obj):
         try:
             return self._name
         except AttributeError:
-            self._name = "__WeakProperty_" + next(attr
+            self._name = "_{}__{}".format(type(self).__name__, next(attr
                 for class_ in type(obj).__mro__
                 for attr, value in class_.__dict__.items()
-                if value is self)
+                if value is self))
         return self._name
+
+
+class WeakProperty(AbstractNamedProperty):
+    """A property that maintains a weak reference to its vaule"""
 
     def __get__(self, obj, type_=None):
         if obj is None:

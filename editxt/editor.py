@@ -30,7 +30,7 @@ from PyObjCTools import AppHelper
 import editxt.constants as const
 from editxt.controls.cells import BUTTON_STATE_HOVER, BUTTON_STATE_NORMAL, BUTTON_STATE_PRESSED
 from editxt.document import TextDocumentView
-from editxt.platform.kvo import KVOList, KVOProxy, proxy_target
+from editxt.platform.kvo import KVOList, proxy_target
 from editxt.project import Project
 from editxt.textcommand import CommandBar
 from editxt.util import (RecentItemStack, load_image, perform_selector,
@@ -97,7 +97,7 @@ class Editor(object):
         if state:
             for serial in state.get("project_serials", []):
                 proj = Project.create_with_serial(serial)
-                self.projects.append(KVOProxy(proj))
+                self.projects.append(proj.proxy)
             for proj_index, doc_index in state.get("recent_items", []):
                 if proj_index < len(self.projects):
                     proj = self.projects[proj_index]
@@ -198,6 +198,7 @@ class Editor(object):
                 self.wc.docsController.setSelectedObject_(view)
             self.recent.push(view.id)
             if isinstance(view, TextDocumentView):
+                # FIXME does way too much ?
                 if view.dual_view not in main_view.subviews():
                     for subview in main_view.subviews():
                         subview.removeFromSuperview()
@@ -251,7 +252,7 @@ class Editor(object):
     def new_project(self):
         project = Project.create()
         view = project.create_document_view()
-        self.projects.append(KVOProxy(project))
+        self.projects.append(project.proxy)
         self.current_view = view
         return project
 
@@ -290,8 +291,8 @@ class Editor(object):
     def find_project_with_document_view(self, doc):
         for proj in self.projects:
             for d in proj.documents:
-                if doc is d:
-                    return proj
+                if doc is proxy_target(d):
+                    return proxy_target(proj)
         return None
 
     def find_project_with_path(self, path):
@@ -312,7 +313,7 @@ class Editor(object):
                 return proxy_target(proxy)
         if create:
             proj = Project.create()
-            self.projects.append(KVOProxy(proj))
+            self.projects.append(proj.proxy)
             return proj
         return None
 
@@ -604,7 +605,7 @@ class Editor(object):
                     pdocs.extend(docs)
                     # END HACK
 
-                    self.projects.insert(proj_index, KVOProxy(item))
+                    self.projects.insert(proj_index, item.proxy)
                     proj_index += 1
                     focus = item
                     continue
@@ -616,7 +617,7 @@ class Editor(object):
                         item.project.remove_document_view(view)
                     else:
                         view = TextDocumentView(project, document=item)
-                    self.projects.insert(proj_index, KVOProxy(project))
+                    self.projects.insert(proj_index, project.proxy)
                     proj_index += 1
                     index = 0
                 else:

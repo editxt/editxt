@@ -139,6 +139,9 @@ def test__setstate():
         def __init__(self, **kwargs):
             self["id"] = next(keygen)
             self.update(kwargs)
+        @property
+        def proxy(self):
+            return self
         def __getattr__(self, name):
             try:
                 return self[name]
@@ -477,10 +480,10 @@ def test_find_project_with_document_view():
     dv = TextDocumentView(proj, document=doc)
     proj.append_document_view(dv)
     assert dv.document is doc
-    ed.projects.append(proj)
-    assert ed.find_project_with_document_view(dv) is proj
+    ed.projects.append(proj.proxy)
+    eq_(ed.find_project_with_document_view(dv), proj)
     dv = object()
-    assert ed.find_project_with_document_view(dv) is None
+    eq_(ed.find_project_with_document_view(dv), None)
 
 def test_find_project_with_path():
     def test(c):

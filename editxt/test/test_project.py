@@ -104,6 +104,9 @@ class MockDoc(object):
     def __init__(self, ident):
         self.ident = ident
     @property
+    def proxy(self):
+        return self
+    @property
     def edit_state(self):
         return {"path": "doc_%s" % self.ident}
     @property
@@ -235,81 +238,16 @@ def test_save():
         yield test, True, is_changed
         yield test, False, is_changed
 
-def test_save_with_path_when_project_has_a_path():
-    m = Mocker()
-    path = "<path>"
-    nsdict = m.replace(fn, 'NSMutableDictionary')
-    proj = Project.create()
-    proj.name = "<name>"
-    serial = proj.serialize()
-    assert serial, "serial should not be empty: %r" % (serial,)
-    serial["path"] = path
-    proj.path = path
-    data = nsdict.alloc().init() >> m.mock(dict)
-    data.update(serial)
-    data.writeToFile_atomically_(path, True); m.nospec()
-    with m:
-        proj.save_with_path(path)
-
-@check_app_state
-def test_save_and_load_project_with_path():
-    def do_save_project(path):
-        proj = Project.create()
-        m = Mocker()
-        doc = m.mock(TextDocumentView)
-        doc.edit_state >> {"path": "xyz"}
-        doc.project = proj
-        with m:
-            proj.append_document_view(doc)
-            proj.save_with_path(path)
-            assert os.path.exists(path), "project not saved: %s" % path
-    def do_load_project(path):
-        import editxt.project as mod
-        m = Mocker()
-        create_document_view_with_state = m.method(Project.create_document_view_with_state)
-        create_document_view_with_state(ANY)
-        with m:
-            proj = Project.create_with_path(path)
-            try:
-                assert proj.path == path
-                assert len(proj.documents) == 1
-            finally:
-                proj.close()
-    path = os.path.join(gettempdir(), "test.edxt")
-    if os.path.exists(path):
-        log.warn("removing test project before running test: %s", path)
-        os.remove(path)
-    try:
-        yield do_save_project, path
-        yield do_load_project, path
-    finally:
-        if os.path.exists(path):
-            os.remove(path)
-
-# def test_save_if_dirty():
-#     def do_test(is_dirty):
-#         proj = Project.create()
-#         proj.is_dirty = is_dirty
-#         m = Mocker()
-#         proj.save = m.method(proj.save)
-#         if is_dirty:
-#             proj.save()
-#         with m:
-#             proj.save_if_dirty()
-#     yield do_test, False
-#     yield do_test, True
-
 def test_create_document_view_with_state():
     proj = Project.create()
     m = Mocker()
     state = m.mock()
     dv_class = m.replace(mod, 'TextDocumentView')
-    dv = m.mock(TextDocumentView)
-    dv_class(proj, state=state) >> dv
-    dv.project = proj
+    dv = dv_class(proj, state=state) >> TextDocumentView(proj, document="fake")
     with m:
         result = proj.create_document_view_with_state(state)
         eq_(result, dv)
+        eq_(result.project, proj)
         assert dv in proj.documents
 
 def test_create_document_view():
@@ -334,7 +272,7 @@ def test_append_document_view():
     proj = Project.create()
     #assert not proj.is_dirty
     m = Mocker()
-    doc = m.mock(TextDocumentView)
+    doc = TextDocumentView(proj, document="fake")
     doc.project = proj
     with m:
         proj.append_document_view(doc)
@@ -369,7 +307,10 @@ def test_dirty_documents():
     yield do_test, "dcd"
 
 def test_append_document_view_already_in_project():
-    class Fake(object): pass
+    class Fake(object):
+        @property
+        def proxy(self):
+            return self
     proj = Project.create()
     dv = Fake()
     proj.append_document_view(dv)
@@ -379,6 +320,9 @@ def test_append_document_view_already_in_project():
 def test_remove_document_view():
     class MockView(object):
         project = None
+        @property
+        def proxy(self):
+            return self
     project = Project.create()
     doc = MockView()
     project.insert_document_view(0, doc)
@@ -417,22 +361,6 @@ def test_find_view_with_document():
     yield test, [DOC]
     yield test, ["doc1", "doc2"]
     yield test, ["doc1", DOC, "doc3"]
-
-# def test_get_set_is_dirty():
-#     from editxt import app
-#     m = Mocker()
-#     item_changed = m.method(app.item_changed)
-#     proj = Project.create()
-#     # first test that item_changed is not called
-#     with m:
-#         assert not proj.is_dirty
-#         proj.is_dirty = False
-#     # now test that item_changed is called when is_dirty changes
-#     item_changed(proj)
-#     with m:
-#         assert not proj.is_dirty
-#         proj.is_dirty = True
-#         assert proj.is_dirty
 
 def test_can_rename():
     proj = Project.create()
@@ -505,16 +433,6 @@ def test_perform_close():
     yield test, c(num_eds=0)
     yield test, c(num_eds=2)
 
-
-# def test_close_with_editor():
-#     proj = Project.create()
-#     m = Mocker()
-#     ed = m.mock(Editor)
-#     ed.discard_and_focus_recent(proj)
-#     m.method(proj.close)()
-#     with m:
-#         proj.close_with_editor(ed)
-
 def test_close():
     proj = Project.create()
     m = Mocker()
@@ -525,12 +443,3 @@ def test_close():
         dv.close()
     with m:
         proj.close()
-
-
-
-#         dc = NSDocumentController.sharedDocumentController()
-#         controllers = dc.window_controllers_with_project(self)
-#         if len(controllers) == 1 and self.path is not None:
-#             # save project
-#             pass
-#         # close the project (remove it from the window_controller, etc.)

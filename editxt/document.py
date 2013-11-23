@@ -40,8 +40,9 @@ from editxt.controls.dualview import DualView, SHOULD_RESIZE
 from editxt.controls.linenumberview import LineNumberView
 from editxt.controls.statscrollview import StatusbarScrollView
 from editxt.controls.textview import TextView
+from editxt.platform.kvo import SelfKVOProxy, KVOList, KVOProxy, KVOLink
 from editxt.syntax import SyntaxCache
-from editxt.util import (KVOList, KVOProxy, KVOLink, untested, refactor,
+from editxt.util import (untested, refactor,
     fetch_icon, filestat, register_undo_callback, WeakProperty)
 
 log = logging.getLogger(__name__)
@@ -65,9 +66,19 @@ def document_property(do):
 
 
 class TextDocumentView(object):
+    """Text document view
+
+    Reference graph:
+        strong:
+            app -> editor -> KVOProxy(project) -> KVOProxy(self)
+        weak:
+            app -> self: KVOProxy(self) # WeakKeyDictionary
+            self -> project -> editor -> app
+    """
 
     id = None # will be overwritten (put here for type api compliance for testing)
     project = WeakProperty()
+    proxy = SelfKVOProxy()
     def is_leaf(self): return True # TODO convert to plain static attribute
 
     def __init__(self, project, *, document=None, path=None, state=None):
@@ -88,7 +99,6 @@ class TextDocumentView(object):
         self.scroll_view = None
         self.command_view = None
         self.dual_view = None
-        self.props = KVOProxy(self)
         if isinstance(document, ak.NSDocument):
             # HACK this should not be conditional (but it is for tests)
             self.kvolink = KVOLink([
@@ -101,6 +111,10 @@ class TextDocumentView(object):
             ])
         if state is not None:
             self.edit_state = state
+
+    def props(self):
+        # TODO remove; use self.proxy
+        return self.proxy
 
     def icon(self):
         return self.document.icon()
@@ -117,7 +131,8 @@ class TextDocumentView(object):
         return self.displayName()
 
     def properties(self):
-        return self.props
+        # TODO remove; use self.proxy
+        return self.proxy
 
     def setProperties_(self, value):
         pass

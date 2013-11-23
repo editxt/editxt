@@ -36,7 +36,6 @@ from editxt.application import Application, DocumentController
 from editxt.editor import Editor, EditorWindowController
 from editxt.document import TextDocument, TextDocumentView
 from editxt.project import Project
-from editxt.util import KVOList
 
 log = logging.getLogger(__name__)
 
@@ -63,7 +62,6 @@ def verify_document_view_interface(dv):
         assert icon is not None
         dv.setDisplayName_("something") # should be a no-op
         assert dv.displayName() == dn
-        eq_(type(dv.properties()).__name__, "TextDocumentView_KVOProxy")
         assert dv.isLeaf()
         #assert not dv.expanded
     else:
@@ -662,44 +660,8 @@ def test_TextDocumentView_textView_doCommandBySelector_():
         return True
     yield test, "cancelOperation:", setup_mocks
 
-@check_app_state
-def test_KVOProxy_create():
-    from editxt.util import KVOProxy
-    def test(class_, factory):
-        m = Mocker()
-        proxy = m.replace(mod, 'KVOProxy', spec=KVOProxy)
-        def cb(value):
-            return isinstance(value, class_)
-        proxy(MATCH(cb)) >> m.mock(KVOProxy)
-        with m:
-            obj = factory(class_)
-            eq_(obj.props, obj.properties())
-    yield test, TextDocumentView, lambda c: c(None, document="doc")
-    yield test, TextDocument, lambda c: c.alloc().init()
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # TextDocument tests
-
-# def mocktest(testfunc):
-#     tests = []
-#     def test_collector(*args, **kw):
-#         test = args[0]
-#         args = args[1:]
-#         config = TestConfig(**kw)
-#         tests.append((test, config, args))
-#     def test():
-#         testfunc(test_collector)
-#         for test, config, args in tests:
-#             yield (test, Mocker()) + args + ((config,) if config else ())
-#     return test
-#
-# @mocktest
-# def test_check_for_external_changes(t):
-#     def test(m, is_xyz):
-#         with m:
-#             assert is_xyz
-#     t(test, True)
-#     t(test, False)
 
 def test_TextDocument_init():
     from editxt.document import doc_id_gen

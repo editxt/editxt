@@ -18,11 +18,12 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 from itertools import count
+from weakref import WeakKeyDictionary
 
 import objc
 import Foundation as fn
 
-from editxt.datatypes import WeakProperty
+from editxt.datatypes import AbstractNamedProperty, WeakProperty
 
 
 def KVOList():
@@ -139,6 +140,35 @@ def KVOProxy(target, weakref=False, _registry={}):
     return proxy_class.alloc().init_(target)
 
 
+class SelfKVOProxy(AbstractNamedProperty):
+    """Workaround for lack of weakrefs to Objective-C objects
+
+    Allows an object to maintain a reference to a proxy of itself
+    without creating reference cycles.
+
+    NOTE: a proxy maintains a strong reference to its target, and
+    this property maintains a strong reference to the proxy, so it
+    may be necessary to break all references to the target to allow
+    the proxy to be garbage collected.
+    """
+    refs = WeakKeyDictionary()
+
+    def __get__(self, obj, type_=None):
+        if obj is None:
+            return self
+        name = self.name(obj)
+        try:
+            return self.refs[obj][name]
+        except KeyError:
+            proxy = self.refs.setdefault(obj, {})[name] = KVOProxy(obj)
+            return proxy
+
+    def __delete__(self, obj):
+        del self.refs[obj][self.name(obj)]
+        if not self.refs[obj]:
+            del self.refs[obj]
+
+
 def proxy_target(proxy):
     """Retrieve the proxied object from a KVOProxy"""
     return proxy._target
@@ -152,6 +182,10 @@ class _KVOProxy(fn.NSObject):
         self = super(_KVOProxy, self).init()
         self.__dict__["_target"] = target
         return self
+
+    def dealloc(self):
+        del self.__dict__["_target"]
+        super().dealloc()
 
     # probably not needed since we have no concrete accessors
     def automaticallyNotifiesObserversForKey_(self, key):
