@@ -1132,8 +1132,8 @@ def test_insert_items():
         def __repr__(self):
             return '<MatchingName %s>' % self.name
         def __eq__(self, other):
-            return other.displayName() == self.name or (
-                other.displayName() == self.name.lower()
+            return other.name == self.name or (
+                other.name == self.name.lower()
                 and
                 self.rmap[self.name.lower()] != other
             )

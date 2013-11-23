@@ -329,8 +329,8 @@
                                                             <connections>
                                                                 <binding destination="272" name="target" keyPath="arrangedObjects" id="277">
                                                                     <dictionary key="options">
-                                                                        <string key="NSSelectorName">attemptClose:</string>
                                                                         <bool key="NSConditionallySetsEnabled" value="NO"/>
+                                                                        <string key="NSSelectorName">attemptClose:</string>
                                                                         <bool key="NSAlwaysPresentsApplicationModalAlerts" value="YES"/>
                                                                     </dictionary>
                                                                 </binding>
@@ -377,7 +377,7 @@
                 <outlet property="initialFirstResponder" destination="312" id="337"/>
             </connections>
         </window>
-        <treeController editable="NO" childrenKeyPath="documents.items" leafKeyPath="isLeaf" id="272" userLabel="ProjectsController">
+        <treeController editable="NO" childrenKeyPath="documents.items" leafKeyPath="is_leaf" id="272" userLabel="ProjectsController">
             <declaredKeys>
                 <string>displayFileName</string>
                 <string>displayName</string>

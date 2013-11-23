@@ -443,27 +443,16 @@ def test_can_rename():
 
 def test_displayName():
     proj = Project.create()
-    eq_(proj.displayName(), const.UNTITLED_PROJECT_NAME)
+    eq_(proj.displayName, const.UNTITLED_PROJECT_NAME)
     proj.setDisplayName_("name")
-    eq_(proj.displayName(), "name")
-    proj.path = path = "/tmp/test.edxt"
-    eq_(proj.displayName(), "test")
+    eq_(proj.displayName, "name")
 
 def test_setDisplayName_():
     proj = Project.create()
     assert proj.path is None
-    #assert not proj.is_dirty
-    eq_(proj.displayName(), const.UNTITLED_PROJECT_NAME)
+    eq_(proj.displayName, const.UNTITLED_PROJECT_NAME)
     proj.setDisplayName_("name")
-    #assert proj.is_dirty
-    eq_(proj.displayName(), "name")
-    #proj.is_dirty = False
-    proj.path = path = "/tmp/test.edxt"
-    eq_(proj.displayName(), "test")
-    #assert not proj.is_dirty
-    proj.setDisplayName_("name")
-    #assert not proj.is_dirty
-    eq_(proj.displayName(), "test")
+    eq_(proj.displayName, "name")
 
 def test_set_main_view_of_window():
     proj = Project.create()

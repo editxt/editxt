@@ -55,10 +55,10 @@ def verify_document_view_interface(dv):
     assert not dv.is_dirty
     assert hasattr(dv, "file_path")
 
-    dn = dv.displayName()
-    assert dn is not None
     icon = dv.icon()
     if isinstance(dv, TextDocumentView):
+        dn = dv.displayName()
+        assert dn is not None
         assert dv.project is None, dv.project
         assert icon is not None
         dv.setDisplayName_("something") # should be a no-op
@@ -67,10 +67,11 @@ def verify_document_view_interface(dv):
         assert dv.isLeaf()
         #assert not dv.expanded
     else:
+        assert dv.displayName is not None
         assert icon is None
         assert not dv.isLeaf()
         assert dv.expanded
-        eq_(dv.properties(), None)
+        #eq_(dv.properties(), None)
 
 #   from editxt.errorlog import ErrorLog
 #   proj = Project.create()

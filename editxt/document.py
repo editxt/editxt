@@ -69,6 +69,8 @@ class TextDocumentView(fn.NSObject):
     id = None # will be overwritten (put here for type api compliance for testing)
     project = WeakProperty()
 
+    def is_leaf(self): return True # TODO convert to plain static attribute
+
     @classmethod
     def create_with_state(cls, state, project):
         dv = cls.create_with_path(state["path"], project)
@@ -116,6 +118,11 @@ class TextDocumentView(fn.NSObject):
 
     def setDisplayName_(self, name):
         pass
+
+    @property
+    def name(self):
+        # TODO remove displayName in favor of this property
+        return self.displayName()
 
     def properties(self):
         return self.props

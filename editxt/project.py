@@ -37,6 +37,7 @@ class Project(object):
 
     id = None # will be overwritten (put here for type api compliance for testing)
     editor = WeakProperty()
+    properties = None
 
     @staticmethod
     def is_project_path(path):
@@ -143,7 +144,9 @@ class Project(object):
     def can_rename(self):
         return self.path is None
 
+    @property
     def displayName(self):
+        return self.name
         if self.path is None:
             return self.name
         return os.path.split(self.path)[1][:-len(const.PROJECT_EXT) - 1]
@@ -152,14 +155,10 @@ class Project(object):
         if self.can_rename():
             self.name = name
 
-    def properties(self):
-        return None
-
-    def setProperties_(self, value):
-        pass
-
     def isLeaf(self):
         return False
+
+    is_leaf = False
 
 #    def isDocumentEdited(self):
 #        return False
