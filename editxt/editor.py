@@ -30,9 +30,10 @@ from PyObjCTools import AppHelper
 import editxt.constants as const
 from editxt.controls.cells import BUTTON_STATE_HOVER, BUTTON_STATE_NORMAL, BUTTON_STATE_PRESSED
 from editxt.document import TextDocumentView
+from editxt.platform.kvo import KVOList
 from editxt.project import Project
 from editxt.textcommand import CommandBar
-from editxt.util import (KVOList, RecentItemStack, load_image, perform_selector,
+from editxt.util import (RecentItemStack, load_image, perform_selector,
     untested, message, representedObject, user_path, WeakProperty)
 
 log = logging.getLogger(__name__)
@@ -53,7 +54,7 @@ class Editor(object):
         self.wc = window_controller
         self.state = state
         self.command = CommandBar(self, app.text_commander)
-        self.projects = KVOList.alloc().init()
+        self.projects = KVOList()
         self.recent = self._suspended_recent = RecentItemStack(20)
         self.window_settings_loaded = False
 

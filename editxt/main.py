@@ -79,7 +79,7 @@ def main(argv=list(sys.argv)):
         if use_pdb:
             argv.remove("--pdb")
 
-        platform.init(use_pdb)
+        platform.init("mac", use_pdb)
 
         if "--test" in argv:
             from editxt.test.runner import TestApplication
@@ -95,7 +95,8 @@ def main(argv=list(sys.argv)):
             app = Application(opts.get('--profile'))
 
         editxt.app = app
-        platform.main.run(app, argv, errlog.unexpected_error, use_pdb)
+        from editxt.platform.main import run
+        run(app, argv, errlog.unexpected_error, use_pdb)
     except Exception as err:
         if not logging.root.handlers:
             logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)

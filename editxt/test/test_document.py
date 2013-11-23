@@ -54,7 +54,6 @@ def verify_document_view_interface(dv):
     assert dv.id is not None
     assert not dv.is_dirty
     assert hasattr(dv, "file_path")
-    assert isinstance(dv.documents(), KVOList)
 
     dn = dv.displayName()
     assert dn is not None

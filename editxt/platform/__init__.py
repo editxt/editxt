@@ -17,9 +17,21 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+import sys
+from importlib import import_module
 
-def init(use_pdb):
-    global main
-    import editxt.platform.mac.main as main
+def init(platform, use_pdb):
+    modules = [
+        "main",
+        "kvo",
+    ]
 
+    import_module("{}.{}".format(__name__, platform))
+    main = import_module("{}.{}.main".format(__name__, platform))
     main.init(use_pdb)
+
+    self = sys.modules[__name__]
+    for name in modules:
+        module = import_module("{}.{}.{}".format(__name__, platform, name))
+        sys.modules[__name__ + "." + name] = module
+        setattr(self, name, module)
