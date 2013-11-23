@@ -30,7 +30,7 @@ from PyObjCTools import AppHelper
 import editxt.constants as const
 from editxt.controls.cells import BUTTON_STATE_HOVER, BUTTON_STATE_NORMAL, BUTTON_STATE_PRESSED
 from editxt.document import TextDocumentView
-from editxt.platform.kvo import KVOList, KVOProxy
+from editxt.platform.kvo import KVOList, KVOProxy, proxy_target
 from editxt.project import Project
 from editxt.textcommand import CommandBar
 from editxt.util import (RecentItemStack, load_image, perform_selector,
@@ -308,10 +308,11 @@ class Editor(object):
             if path is not None:
                 index = path.indexAtPosition_(0)
                 path2 = fn.NSIndexPath.indexPathWithIndex_(index)
-                return docs_controller.objectAtArrangedIndexPath_(path2)
+                proxy = docs_controller.objectAtArrangedIndexPath_(path2)
+                return proxy_target(proxy)
         if create:
             proj = Project.create()
-            self.projects.append(proj)
+            self.projects.append(KVOProxy(proj))
             return proj
         return None
 

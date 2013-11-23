@@ -139,9 +139,9 @@ def KVOProxy(target, weakref=False, _registry={}):
     return proxy_class.alloc().init_(target)
 
 
-#def proxy_target(proxy):
-#    """Retrieve the proxied object from a KVOProxy"""
-#    return proxy._target
+def proxy_target(proxy):
+    """Retrieve the proxied object from a KVOProxy"""
+    return proxy._target
 
 
 class _KVOProxy(fn.NSObject):

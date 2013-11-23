@@ -32,6 +32,7 @@ import editxt.constants as const
 from editxt.application import Application, DocumentController, DocumentSavingDelegate
 from editxt.editor import EditorWindowController, Editor
 from editxt.document import TextDocumentView, TextDocument
+from editxt.platform.kvo import proxy_target
 from editxt.project import Project
 from editxt.test.noseplugins import slow_skip
 from editxt.util import representedObject
@@ -533,10 +534,11 @@ def test_get_current_project():
                 path.indexAtPosition_(0) >> index
                 path2 = m.mock(fn.NSIndexPath)
                 ip_class.indexPathWithIndex_(index) >> path2
-                proj = m.mock(Project)
-                tc.objectAtArrangedIndexPath_(path2) >> proj
+                proxy = m.mock()
+                tc.objectAtArrangedIndexPath_(path2) >> proxy
+                proj = proxy_target(proxy) >> Project()
         if create and proj is None:
-            proj = m.mock(Project)
+            proj = Project()
             proj_class.create() >> proj
         with m:
             result = ed.get_current_project(create=create)
