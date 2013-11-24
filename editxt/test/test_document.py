@@ -54,18 +54,17 @@ def verify_document_view_interface(dv):
     assert not dv.is_dirty
     assert hasattr(dv, "file_path")
 
+    dn = dv.displayName
+    assert dn is not None
     icon = dv.icon()
     if isinstance(dv, TextDocumentView):
-        dn = dv.displayName()
-        assert dn is not None
         assert dv.project is None, dv.project
         assert icon is not None
         dv.setDisplayName_("something") # should be a no-op
-        assert dv.displayName() == dn
+        assert dv.displayName == dn
         assert dv.isLeaf()
         #assert not dv.expanded
     else:
-        assert dv.displayName is not None
         assert icon is None
         assert not dv.isLeaf()
         assert dv.expanded
@@ -280,7 +279,7 @@ def test_TextDocumentView_document_properties():
         repnl = m.replace(mod, 'replace_newlines')
         doc = m.mock(TextDocument)
         dv = TextDocumentView(None, document=doc)
-        dv.props = m.mock() # KVOProxy
+        proxy = m.property(dv, 'proxy')
         with m.order():
             (getattr(doc, c.attr) << c.default).count(2 if c.value != c.default else 3)
             if c.value != c.default:
@@ -324,7 +323,7 @@ def test_TextDocumentView_document_properties():
         def _undo(undoman, undo):
             undo()
         expect(x.regundo(undoman, ANY)).call(_undo)
-        setattr(x.dv.props, c.attr, c.default)
+        setattr(x.dv.proxy, c.attr, c.default)
     c = TestConfig(do=do, attr="newline_mode",
         default=const.NEWLINE_MODE_UNIX, undoing=False, redoing=False)
     yield test, c(value=const.NEWLINE_MODE_UNIX, default=const.NEWLINE_MODE_MAC)
@@ -465,10 +464,9 @@ def test_set_edit_state():
         m = Mocker()
         doc = m.mock(TextDocument)
         dv = TextDocumentView(None, document=doc)
-        #m.property(dv, "soft_wrap")
-        props = dv.props = m.mock(KVOProxy)
+        proxy_prop = m.property(dv, "proxy")
         if state is None:
-            eq_state = state = m.mock()
+            eq_state = state = {}
         else:
             eq_state = dict(state)
             eq_state.setdefault("selection", (0, 0))
@@ -478,7 +476,8 @@ def test_set_edit_state():
             sel = eq_state["selection"]
             dv.text_view = m.mock(ak.NSTextView)
             dv.scroll_view = m.mock(ak.NSScrollView)
-            props.soft_wrap = eq_state["soft_wrap"]
+            proxy = proxy_prop.value >> m.mock(TextDocumentView)
+            proxy.soft_wrap = eq_state["soft_wrap"]
             doc.text_storage.length() >> ts_len
             if ts_len - 1 > 0:
                 dv.text_view.setSelectedRange_(fn.NSRange(ts_len - 1, 0))

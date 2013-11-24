@@ -474,7 +474,7 @@ def test_set_variable():
             with assert_raises(type(attribute), msg=str(attribute)), m:
                 do(command)
         else:
-            setattr(view.props >> m.mock(), attribute, value)
+            setattr(view.proxy >> m.mock(), attribute, value)
             with m:
                 do(command)
     c = TestConfig()
@@ -491,9 +491,9 @@ def test_set_variable():
         m = Mocker()
         tv = m.mock(TextView)
         view = tv.doc_view >> m.mock(TextDocumentView)
-        props = view.props >> m.mock()
-        setattr(props, "indent_size", size)
-        setattr(props, "indent_mode", mode)
+        proxy = view.proxy >> m.mock()
+        setattr(proxy, "indent_size", size)
+        setattr(proxy, "indent_mode", mode)
         do = CommandTester(mod.set_variable, textview=tv)
         with m:
             do(command)

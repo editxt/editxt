@@ -1138,6 +1138,7 @@ def test_insert_items():
             return '<MatchingName %s>' % self.name
         def __eq__(self, other):
             return other.name == self.name or (
+                # lower case -> upper case: new view of document
                 other.name == self.name.lower()
                 and
                 self.rmap[self.name.lower()] != other
@@ -1205,7 +1206,7 @@ def test_insert_items():
         for project in ed.projects:
             final.append(' ' + map.get(project, next_project))
             for view in project.documents:
-                final.append(map.get(view, view.displayName().upper()))
+                final.append(map.get(view, view.displayName.upper()))
         eq_(str(''.join(final)), c.final)
 
     # number = project

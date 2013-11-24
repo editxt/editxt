@@ -612,9 +612,12 @@ class Editor(object):
 
                 if project is None:
                     project = Project.create()
-                    if isinstance(item, TextDocumentView) and is_move:
-                        view = item
-                        item.project.remove_document_view(view)
+                    if isinstance(item, TextDocumentView):
+                        if is_move:
+                            view = item
+                            item.project.remove_document_view(view)
+                        else:
+                            view = TextDocumentView(project, document=item.document)
                     else:
                         view = TextDocumentView(project, document=item)
                     self.projects.insert(proj_index, project.proxy)

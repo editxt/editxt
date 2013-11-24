@@ -72,14 +72,13 @@ class TextDocumentView(object):
         strong:
             app -> editor -> KVOProxy(project) -> KVOProxy(self)
         weak:
-            app -> self: KVOProxy(self) # WeakKeyDictionary
             self -> project -> editor -> app
     """
 
     id = None # will be overwritten (put here for type api compliance for testing)
     project = WeakProperty()
     proxy = SelfKVOProxy()
-    def is_leaf(self): return True # TODO convert to plain static attribute
+    is_leaf = True
 
     def __init__(self, project, *, document=None, path=None, state=None):
         if state is not None:
@@ -102,23 +101,20 @@ class TextDocumentView(object):
         if isinstance(document, ak.NSDocument):
             # HACK this should not be conditional (but it is for tests)
             self.kvolink = KVOLink([
-                (document, "properties.indent_mode", self.props, "indent_mode"),
-                (document, "properties.indent_size", self.props, "indent_size"),
-                (document, "properties.newline_mode", self.props, "newline_mode"),
-                (document, "properties.syntaxdef", self.props, "syntaxdef"),
-                (document, "properties.character_encoding", self.props, "character_encoding"),
-                (document, "properties.highlight_selected_text", self.props, "highlight_selected_text"),
+                (document, "properties.indent_mode", self.proxy, "indent_mode"),
+                (document, "properties.indent_size", self.proxy, "indent_size"),
+                (document, "properties.newline_mode", self.proxy, "newline_mode"),
+                (document, "properties.syntaxdef", self.proxy, "syntaxdef"),
+                (document, "properties.character_encoding", self.proxy, "character_encoding"),
+                (document, "properties.highlight_selected_text", self.proxy, "highlight_selected_text"),
             ])
         if state is not None:
             self.edit_state = state
 
-    def props(self):
-        # TODO remove; use self.proxy
-        return self.proxy
-
     def icon(self):
         return self.document.icon()
 
+    @property
     def displayName(self):
         return self.document.displayName()
 
@@ -128,8 +124,9 @@ class TextDocumentView(object):
     @property
     def name(self):
         # TODO remove displayName in favor of this property
-        return self.displayName()
+        return self.displayName
 
+    @property
     def properties(self):
         # TODO remove; use self.proxy
         return self.proxy
@@ -282,7 +279,7 @@ class TextDocumentView(object):
             replace_newlines(self.text_view, const.EOLS[new])
         self.document.props.newline_mode = new
         def undo():
-            self.props.newline_mode = old
+            self.proxy.newline_mode = old
         register_undo_callback(undoman, undo)
 
     @document_property
@@ -347,7 +344,7 @@ class TextDocumentView(object):
         if self.text_view is not None:
             point = state.get("scrollpoint", [0, 0])
             sel = state.get("selection", [0, 0])
-            self.props.soft_wrap = state.get("soft_wrap", const.WRAP_NONE)
+            self.proxy.soft_wrap = state.get("soft_wrap", const.WRAP_NONE)
             length = self.document.text_storage.length() - 1
             if length > 0:
                 # HACK next line does not seem to work without this
@@ -411,7 +408,7 @@ class TextDocumentView(object):
             self.dual_view = None
 
     def __repr__(self):
-        name = 'N/A' if self.document is None else self.displayName()
+        name = 'N/A' if self.document is None else self.displayName
         return '<%s 0x%x name=%s>' % (type(self).__name__, id(self), name)
 
     # TextView delegate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

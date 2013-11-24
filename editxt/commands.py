@@ -263,12 +263,12 @@ def clear_highlighted_text(textview, sender, args):
 
 
 def set_docview_variable(textview, name, args):
-    setattr(textview.doc_view.props, name, args.value)
+    setattr(textview.doc_view.proxy, name, args.value)
 
 def set_docview_indent_vars(textview, name, args):
-    props = textview.doc_view.props
-    setattr(props, "indent_size", args.size)
-    setattr(props, "indent_mode", args.mode)
+    proxy = textview.doc_view.proxy
+    setattr(proxy, "indent_size", args.size)
+    setattr(proxy, "indent_mode", args.mode)
 
 @command(name="set", arg_parser=CommandParser(SubParser("variable",
     SubArgs("highlight_selected_text",
