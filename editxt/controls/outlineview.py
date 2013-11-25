@@ -25,6 +25,7 @@ import Foundation as fn
 from objc import Category
 
 from editxt.controls.cells import HoverButtonCell
+from editxt.platform.kvo import proxy_target
 from editxt.util import representedObject
 
 log = logging.getLogger(__name__)
@@ -52,7 +53,7 @@ class NSTreeController(Category(ak.NSTreeController)):
         self.setSelectionIndexPaths_(paths)
 
     def objectAtArrangedIndexPath_(self, path):
-        return self.arrangedObjects().objectAtIndexPath_(path)
+        return proxy_target(self.arrangedObjects().objectAtIndexPath_(path))
 
     def nodeAtArrangedIndexPath_(self, path):
         return self.arrangedObjects().nodeAtIndexPath_(path)
@@ -61,9 +62,10 @@ class NSTreeController(Category(ak.NSTreeController)):
         return self.nodeAtArrangedIndexPath_(self.indexPathForObject_(obj))
 
     def indexPathForObject_(self, obj):
-        return self._indexPathFromIndexPath_inChildren_toObject_(None, self.content(), obj)
+        return self._indexPathFromIndexPath_inChildren_toObject_(
+            None, self.content(), obj.proxy)
 
-    def _indexPathFromIndexPath_inChildren_toObject_(self, basePath, children, obj):
+    def _indexPathFromIndexPath_inChildren_toObject_(self, basePath, children, proxy):
         for childIndex, child in enumerate(children):
             lkp = self.leafKeyPath()
             if lkp and child.valueForKeyPath_(lkp):
@@ -76,15 +78,15 @@ class NSTreeController(Category(ak.NSTreeController)):
                     childsChildren = []
                 else:
                     childsChildren = child.valueForKeyPath_(self.childrenKeyPath())
-            if obj is child or childsChildren:
+            if proxy is child or childsChildren:
                 if basePath is None:
                     path = fn.NSIndexPath.indexPathWithIndex_(childIndex)
                 else:
                     path = basePath.indexPathByAddingIndex_(childIndex)
-                if obj is child:
+                if proxy is child:
                     return path
                 if childsChildren:
-                    path = self._indexPathFromIndexPath_inChildren_toObject_(path, childsChildren, obj)
+                    path = self._indexPathFromIndexPath_inChildren_toObject_(path, childsChildren, proxy)
                     if path is not None:
                         return path
         return None

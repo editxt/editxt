@@ -32,6 +32,7 @@ import AppKit as ak
 import Foundation as fn
 
 import editxt.constants as const
+from editxt.platform.kvo import proxy_target
 
 # DEPRECATED
 from editxt.platform.kvo import KVOList, KVOProxy, KVOLink
@@ -185,9 +186,9 @@ def register_undo_callback(undo_manager, callback):
 
 def representedObject(node):
     try:
-        return node.representedObject()
+        return proxy_target(node.representedObject())
     except AttributeError:
-        return node.observedObject()
+        return proxy_target(node.observedObject())
 
 def get_color(value, cache={}):
     if isinstance(value, ak.NSColor):

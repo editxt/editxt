@@ -30,6 +30,7 @@ from nose.tools import *
 import editxt.constants as const
 import editxt.project as mod
 from editxt.application import Application, DocumentController
+from editxt.datatypes import WeakProperty
 from editxt.editor import Editor, EditorWindowController
 from editxt.document import TextDocumentView, TextDocument
 from editxt.project import Project
@@ -101,11 +102,12 @@ def test_init_with_serial():
         proj = Project.init_with_serial("<serial>")
 
 class MockDoc(object):
+    proxy = WeakProperty()
+    _target = WeakProperty()
     def __init__(self, ident):
         self.ident = ident
-    @property
-    def proxy(self):
-        return self
+        self.proxy = self
+        self._target = self
     @property
     def edit_state(self):
         return {"path": "doc_%s" % self.ident}

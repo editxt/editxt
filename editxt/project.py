@@ -190,13 +190,13 @@ class Project(object):
 
     def append_document_view(self, view):
         """Add view to the end of this projects document views"""
-        self.documents.append(view.proxy)
+        self.documents.append(view)
         view.project = self
 
     def insert_document_view(self, index, view):
         """Insert view at index in this projects document views
         """
-        self.documents.insert(index, view.proxy)
+        self.documents.insert(index, view)
         view.project = self
 
     def remove_document_view(self, doc_view):

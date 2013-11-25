@@ -26,8 +26,21 @@ import Foundation as fn
 from editxt.datatypes import AbstractNamedProperty, WeakProperty
 
 
-def KVOList():
-    return _KVOList.alloc().init()
+def KVOList(items=None):
+    """Create a list with Key Value Observing items
+
+    Items inserted into this list must have a ``proxy`` attribute that
+    returns a KVO-compliant version of the item. Proxies of items are
+    exposed through this list's ``items`` property, and un-proxied items
+    (obtained from the proxy with ``proxy_target(item)``) are exposed
+    through the Python list-like interface of this object. It is
+    expected that the ``proxy`` property for any given object always
+    returns the same proxy instance. Hint: use ``SelfKVOProxy``.
+    """
+    value = _KVOList.alloc().init()
+    if items is not None:
+        value.extend(items)
+    return value
 
 
 class _KVOList(fn.NSObject):
@@ -67,56 +80,60 @@ class _KVOList(fn.NSObject):
         return len(self._items)
 
     def __getitem__(self, index):
-        return self._items[index]
+        if isinstance(index, slice):
+            return [self[i] for i in range(*index.indices(len(self)))]
+        return proxy_target(self._items[index])
 
     def __setitem__(self, index, obj):
-        self.mutableArrayValueForKey_("items")[index] = obj
+        if isinstance(index, slice):
+            self.mutableArrayValueForKey_("items")[index] = [
+                item.proxy for item in obj]
+        else:
+            self.mutableArrayValueForKey_("items")[index] = obj.proxy
 
     def __delitem__(self, index):
         del self.mutableArrayValueForKey_("items")[index]
 
-    def __setslice__(self, i, j, value):
-        self.mutableArrayValueForKey_("items")[i:j] = value
-
-    def __delslice__(self, i, j):
-        del self.mutableArrayValueForKey_("items")[i:j]
-
     def __contains__(self, obj):
-        return obj in self._items
+        return obj.proxy in self._items
 
     def __iter__(self):
-        return iter(self._items)
+        return (proxy_target(item) for item in self._items)
 
     def __repr__(self):
-        return '<%s %r>' % (type(self).__name__, list(self))
+        return '%s(%r)' % (KVOList.__name__, list(self))
 
     def append(self, obj):
-        self.mutableArrayValueForKey_("items").append(obj)
+        self.mutableArrayValueForKey_("items").append(obj.proxy)
 
-    def extend(self, objs):
-        self.mutableArrayValueForKey_("items").extend(objs)
+    def extend(self, items):
+        self.mutableArrayValueForKey_("items").extend(
+            item.proxy for item in items)
 
     def index(self, obj):
-        return self._items.index(obj)
+        return self._items.index(obj.proxy)
 
     def insert(self, index, obj):
-        self.mutableArrayValueForKey_("items").insert(index, obj)
+        self.mutableArrayValueForKey_("items").insert(index, obj.proxy)
 
     def remove(self, obj):
-        self.mutableArrayValueForKey_("items").remove(obj)
+        self.mutableArrayValueForKey_("items").remove(obj.proxy)
 
     def pop(self, item=None):
         args = () if item is None else (item,)
-        return self.mutableArrayValueForKey_("items").pop(*args)
+        return proxy_target(self.mutableArrayValueForKey_("items").pop(*args))
 
-    def count(self, item=None):
-        """Count the occurrences of the first argument given or count
-        the total number of items in the list if no args are supplied.
-        """
-        if item is not None:
-            # HACK inefficient, but necessary because NSMutableArray.count() takes no arguments
-            return list(self._items).count(item)
-        return self._items.count()
+    def count(self, item):
+        return list(self).count(item)
+
+#    def count(self, item=None):
+#        """Count the occurrences of the first argument given or count
+#        the total number of items in the list if no args are supplied.
+#        """
+#        if item is not None:
+#            # HACK inefficient, but necessary because NSMutableArray.count() takes no arguments
+#            return list(self._items).count(item)
+#        return self._items.count()
 
 KVOList.alloc = _KVOList.alloc # DEPRECATED
 
@@ -146,10 +163,11 @@ class SelfKVOProxy(AbstractNamedProperty):
     Allows an object to maintain a reference to a proxy of itself
     without creating reference cycles.
 
-    NOTE: a proxy maintains a strong reference to its target, and
-    this property maintains a strong reference to the proxy, so it
-    may be necessary to break all references to the target to allow
-    the proxy to be garbage collected.
+    NOTE: a proxy maintains a strong reference to its target, and this
+    property maintains a strong reference to the proxy, so it may be
+    necessary to break all references to the target, including the
+    proxy's reference to its target, to allow the proxy to be garbage
+    collected.
     """
     refs = WeakKeyDictionary()
 
@@ -174,17 +192,18 @@ def proxy_target(proxy):
     return proxy._target
 
 
-class _KVOProxy(fn.NSObject):
+class _KVOProxy(fn.NSObject): # TODO rename to KVOProxy and implement __new__
+# see http://nullege.com/codes/show/src@p@y@pyobjc-core-2.5.1@PyObjCTest@test_set_proxy.py/34/PyObjCTest.fnd.NSObject
 
     NA = object()
 
     def init_(self, target):
         self = super(_KVOProxy, self).init()
-        self.__dict__["_target"] = target
+        self.__dict__["_target"] = target # TODO rename _target to _KVOProxy__target
         return self
 
     def dealloc(self):
-        del self.__dict__["_target"]
+        self.__dict__.pop("_target", None)
         super().dealloc()
 
     # probably not needed since we have no concrete accessors
@@ -203,6 +222,8 @@ class _KVOProxy(fn.NSObject):
                 self.didChangeValueForKey_(key)
 
     def __getattr__(self, key):
+        if key == "proxy":
+            raise AttributeError("KVOProxy has no attribute 'proxy'")
         return getattr(self._target, key)
 
     def __setattr__(self, key, value):

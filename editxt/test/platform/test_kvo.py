@@ -23,6 +23,7 @@ import Foundation as fn
 from mocker import ANY, expect, Mocker
 
 import editxt.platform.kvo as mod
+from editxt.datatypes import WeakProperty
 from editxt.test.util import assert_raises, eq_, TestConfig
 
 
@@ -37,15 +38,31 @@ def test_kvolist_items():
     eq_(lst.items(), newitems)
 
 def test_kvolist_items():
+    class Proxy(object):
+        target = WeakProperty()
+        def __init__(self, target):
+            self._target = target
+        def __repr__(self):
+            return "Proxy({!r})".format(self._target)
+    class KVObject(object):
+        def __init__(self, name):
+            self.name = name
+            self.proxy = Proxy(self)
+        def __repr__(self):
+            return "ob{}".format(self.name)
     lst = mod.KVOList()
-    obj = object()
-    ob2 = object()
+    ob1 = KVObject(1)
+    ob2 = KVObject(2)
+    ob3 = KVObject(3)
+    ob4 = KVObject(4)
+    ob5 = KVObject(5)
+    ob6 = KVObject(6)
 
     # test KVO methods
     yield do_kvolist_countOfItems, lst, 0
-    yield do_kvolist_insertObject_inItemsAtIndex_, lst, obj, 0
+    yield do_kvolist_insertObject_inItemsAtIndex_, lst, ob1, 0
     yield do_kvolist_countOfItems, lst, 1
-    yield do_kvolist_objectInItemsAtIndex_, lst, obj, 0
+    yield do_kvolist_objectInItemsAtIndex_, lst, ob1, 0
     yield do_kvolist_replaceObjectInItemsAtIndex_withObject_, lst, ob2, 0
     yield do_kvolist_objectInItemsAtIndex_, lst, ob2, 0
     yield do_kvolist_removeObjectFromItemsAtIndex_, lst, 0
@@ -53,33 +70,35 @@ def test_kvolist_items():
 
     # test list convenience methods
     yield do_kvolist_len, lst, 0
-    yield do_kvolist_insert, lst, obj, 0
+    yield do_kvolist_insert, lst, ob1, 0
     yield do_kvolist_len, lst, 1
-    yield do_kvolist_getitem, lst, obj, 0
+    yield do_kvolist_getitem, lst, ob1, 0
     yield do_kvolist_setitem, lst, ob2, 0
-    yield do_kvolist_append, lst, obj
+    yield do_kvolist_append, lst, ob1
     yield do_kvolist_delitem, lst, 1
     yield do_kvolist_contains, lst, ob2
-    yield do_kvolist_not_contains, lst, obj
-    yield do_kvolist_count, lst, obj, 0
+    yield do_kvolist_not_contains, lst, ob1
+    yield do_kvolist_count, lst, ob1, 0
     yield do_kvolist_count, lst, ob2, 1
-    yield do_kvolist_extend, lst, [object(), object()]
+    yield do_kvolist_extend, lst, [ob3, ob4]
     eq_(len(lst), 3)
     yield do_kvolist_index, lst, ob2, 0
     yield do_kvolist_iter, lst
     yield do_kvolist_remove, lst, ob2
-    yield do_kvolist_remove_nonexistent, lst, obj
+    yield do_kvolist_remove_nonexistent, lst, ob1
     yield do_kvolist_pop, lst, 1
+    eq_(list(lst), [ob3])
     yield do_kvolist_pop, lst
+    eq_(list(lst), [])
 
-    lst.setItems_([1, 2, 3, 4])
-    yield do_kvolist_getslice, lst, 1, 3, [2, 3]
+    lst = mod.KVOList([ob1, ob2, ob3, ob4])
+    yield do_kvolist_getslice, lst, 1, 3, [ob2, ob3]
 
-    lst.setItems_([1, 2, 3, 4])
-    yield do_kvolist_setslice, lst, 1, 3, [5, 6], [1, 5, 6, 4]
+    lst = mod.KVOList([ob1, ob2, ob3, ob4])
+    yield do_kvolist_setslice, lst, 1, 3, [ob5, ob6], [ob1, ob5, ob6, ob4]
 
-    lst.setItems_([1, 2, 3, 4])
-    yield do_kvolist_delslice, lst, 1, 3, [1, 4]
+    lst = mod.KVOList([ob1, ob2, ob3, ob4])
+    yield do_kvolist_delslice, lst, 1, 3, [ob1, ob4]
 
 def do_kvolist_countOfItems(lst, num):
     eq_(lst.countOfItems(), num)
@@ -122,7 +141,7 @@ def do_kvolist_not_contains(lst, obj):
 
 def do_kvolist_append(lst, obj):
     lst.append(obj)
-    assert lst[-1] is obj
+    assert lst[-1] is obj, (lst[-1], obj)
 
 def do_kvolist_extend(lst, objs):
     offset = len(lst)
@@ -163,7 +182,7 @@ def do_kvolist_pop(lst, *args):
     else:
         item = lst[-1]
     popped = lst.pop(*args)
-    assert item is popped
+    assert item is popped, (item, popped)
     eq_(len(lst), len_before_pop - 1)
 
 def do_kvolist_count(lst, obj, num):
@@ -211,11 +230,16 @@ def test_KVOProxy():
         value = target.thekey >> "<value>"
         with m:
             proxy.thekey = value
+    def test_proxy_proxy(m, target, proxy):
+        with m, assert_raises(AttributeError,
+                              msg="KVOProxy has no attribute 'proxy'"):
+            proxy.proxy
     yield run, test_get_missing
     yield run, test_set_missing
     yield run, test_get
     yield run, test_set
     yield run, test_set_matching
+    yield run, test_proxy_proxy
 
 
 def test_SelfKVOProxy():

@@ -142,6 +142,9 @@ def test__setstate():
         @property
         def proxy(self):
             return self
+        @property
+        def _target(self):
+            return self
         def __getattr__(self, name):
             try:
                 return self[name]
@@ -480,7 +483,7 @@ def test_find_project_with_document_view():
     dv = TextDocumentView(proj, document=doc)
     proj.append_document_view(dv)
     assert dv.document is doc
-    ed.projects.append(proj.proxy)
+    ed.projects.append(proj)
     eq_(ed.find_project_with_document_view(dv), proj)
     dv = object()
     eq_(ed.find_project_with_document_view(dv), None)
@@ -538,8 +541,7 @@ def test_get_current_project():
                 path2 = m.mock(fn.NSIndexPath)
                 ip_class.indexPathWithIndex_(index) >> path2
                 proxy = m.mock()
-                tc.objectAtArrangedIndexPath_(path2) >> proxy
-                proj = proxy_target(proxy) >> Project()
+                tc.objectAtArrangedIndexPath_(path2) >> proj
         if create and proj is None:
             proj = Project()
             proj_class.create() >> proj
