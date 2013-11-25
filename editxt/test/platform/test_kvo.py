@@ -232,7 +232,7 @@ def test_KVOProxy():
             proxy.thekey = value
     def test_proxy_proxy(m, target, proxy):
         with m, assert_raises(AttributeError,
-                              msg="KVOProxy has no attribute 'proxy'"):
+                msg="{} has no attribute 'proxy'".format(type(proxy).__name__)):
             proxy.proxy
     yield run, test_get_missing
     yield run, test_set_missing

@@ -26,27 +26,26 @@ import Foundation as fn
 from editxt.datatypes import AbstractNamedProperty, WeakProperty
 
 
-def KVOList(items=None):
-    """Create a list with Key Value Observing items
+class KVOList(fn.NSObject):
+    """A list with Key Value Observing items
 
-    Items inserted into this list must have a ``proxy`` attribute that
-    returns a KVO-compliant version of the item. Proxies of items are
-    exposed through this list's ``items`` property, and un-proxied items
-    (obtained from the proxy with ``proxy_target(item)``) are exposed
-    through the Python list-like interface of this object. It is
-    expected that the ``proxy`` property for any given object always
-    returns the same proxy instance. Hint: use ``SelfKVOProxy``.
+    Items inserted into the list must have a ``proxy`` attribute that
+    returns a KVO-compliant version of the item. A list of proxied items
+    is exposed through the ``items`` property, and un-proxied items
+    (obtained with ``proxy_target(proxy)``) are exposed through the
+    Python list-like interface of this object. It is expected that the
+    ``proxy`` property for any given object always returns the same
+    proxy instance (hint: use ``SelfKVOProxy``).
     """
-    value = _KVOList.alloc().init()
-    if items is not None:
-        value.extend(items)
-    return value
 
-
-class _KVOList(fn.NSObject):
+    def __new__(cls, items=None):
+        value = cls.alloc().init()
+        if items is not None:
+            value.extend(items)
+        return value
 
     def init(self):
-        super(_KVOList, self).init()
+        super(KVOList, self).init()
         self._items = fn.NSMutableArray.alloc().init()
         return self
 
@@ -101,7 +100,7 @@ class _KVOList(fn.NSObject):
         return (proxy_target(item) for item in self._items)
 
     def __repr__(self):
-        return '%s(%r)' % (KVOList.__name__, list(self))
+        return '%s(%r)' % (type(self).__name__, list(self))
 
     def append(self, obj):
         self.mutableArrayValueForKey_("items").append(obj.proxy)
@@ -135,26 +134,106 @@ class _KVOList(fn.NSObject):
 #            return list(self._items).count(item)
 #        return self._items.count()
 
-KVOList.alloc = _KVOList.alloc # DEPRECATED
+
+class KVOProxy(fn.NSObject):
+    """Key-value observing proxy for plain Python objects
+
+    http://www.cocoarocket.com/articles/kvodependent.html
+    """
+
+    NA = object()
+
+    def __new__(cls, target, _registry={}):
+        try:
+            proxy_class = _registry[type(target)]
+        except KeyError:
+            dependent_key_paths = getattr(target, "dependent_key_paths", {})
+            def keyPathsForValuesAffectingValueForKey_(cls, key):
+                return fn.NSSet.setWithArray_(dependent_key_paths.get(key, []))
+            name = "{}_{}".format(cls.__name__, type(target).__name__)
+            members = {
+                "keyPathsForValuesAffectingValueForKey_":
+                    classmethod(keyPathsForValuesAffectingValueForKey_),
+            }
+            #type_ = WeakKVOProxy if weakref else KVOProxy
+            proxy_class = type(name, (cls,), members)
+            _registry[type(target)] = proxy_class
+        return proxy_class.alloc().init_(target)
+
+    @staticmethod
+    def target(proxy):
+        """Retrieve the proxied object"""
+        return proxy._target
+
+    def init_(self, target):
+        self = super().init()
+        self.__dict__["_target"] = target
+        return self
+
+    def dealloc(self):
+        self.__dict__.pop("_target", None)
+        super().dealloc()
+
+    # probably not needed since we have no concrete accessors
+    def automaticallyNotifiesObserversForKey_(self, key):
+        return False
+
+    def valueForKey_(self, key):
+        return getattr(self._target, key)
+
+    def setValue_forKey_(self, value, key):
+        if value != getattr(self._target, key, self.NA):
+            self.willChangeValueForKey_(key)
+            try:
+                setattr(self._target, key, value)
+            finally:
+                self.didChangeValueForKey_(key)
+
+    def __getattr__(self, key):
+        if key == "proxy":
+            raise AttributeError(
+                "{} has no attribute 'proxy'".format(type(self).__name__))
+        return getattr(self._target, key)
+
+    def __setattr__(self, key, value):
+        if value != getattr(self._target, key, self.NA):
+            self.willChangeValueForKey_(key)
+            try:
+                setattr(self._target, key, value)
+            finally:
+                self.didChangeValueForKey_(key)
+
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self._target == other._target
+        if isinstance(other, type(self._target)):
+            return other == self._target
+        return False
+
+    def __ne__(self, other):
+        return not (self == other)
+
+    def __hash__(self):
+        return hash(self._target)
+
+    def __iter__(self):
+        return iter(self._target)
+
+    def __repr__(self):
+        return "<{} {!r}>".format(type(self).__name__, self._target)
 
 
-def KVOProxy(target, weakref=False, _registry={}):
-    # http://www.cocoarocket.com/articles/kvodependent.html
-    try:
-        proxy_class = _registry[type(target)]
-    except KeyError:
-        dependent_key_paths = getattr(target, "dependent_key_paths", {})
-        def keyPathsForValuesAffectingValueForKey_(cls, key):
-            return fn.NSSet.setWithArray_(dependent_key_paths.get(key, []))
-        name = "%s_KVOProxy" % type(target).__name__
-        members = {
-            "keyPathsForValuesAffectingValueForKey_":
-                classmethod(keyPathsForValuesAffectingValueForKey_),
-        }
-        type_ = _WeakKVOProxy if weakref else _KVOProxy
-        proxy_class = type(name, (type_,), members)
-        _registry[type(target)] = proxy_class
-    return proxy_class.alloc().init_(target)
+proxy_target = KVOProxy.target
+
+
+#class WeakKVOProxy(KVOProxy):
+#
+#    _target = WeakProperty()
+#
+#    def init_(self, target):
+#        self = super(_KVOProxy, self).init()
+#        type(self)._target.__set__(self, target)
+#        return self
 
 
 class SelfKVOProxy(AbstractNamedProperty):
@@ -185,83 +264,6 @@ class SelfKVOProxy(AbstractNamedProperty):
         del self.refs[obj][self.name(obj)]
         if not self.refs[obj]:
             del self.refs[obj]
-
-
-def proxy_target(proxy):
-    """Retrieve the proxied object from a KVOProxy"""
-    return proxy._target
-
-
-class _KVOProxy(fn.NSObject): # TODO rename to KVOProxy and implement __new__
-# see http://nullege.com/codes/show/src@p@y@pyobjc-core-2.5.1@PyObjCTest@test_set_proxy.py/34/PyObjCTest.fnd.NSObject
-
-    NA = object()
-
-    def init_(self, target):
-        self = super(_KVOProxy, self).init()
-        self.__dict__["_target"] = target # TODO rename _target to _KVOProxy__target
-        return self
-
-    def dealloc(self):
-        self.__dict__.pop("_target", None)
-        super().dealloc()
-
-    # probably not needed since we have no concrete accessors
-    def automaticallyNotifiesObserversForKey_(self, key):
-        return False
-
-    def valueForKey_(self, key):
-        return getattr(self._target, key)
-
-    def setValue_forKey_(self, value, key):
-        if value != getattr(self._target, key, _KVOProxy.NA):
-            self.willChangeValueForKey_(key)
-            try:
-                setattr(self._target, key, value)
-            finally:
-                self.didChangeValueForKey_(key)
-
-    def __getattr__(self, key):
-        if key == "proxy":
-            raise AttributeError("KVOProxy has no attribute 'proxy'")
-        return getattr(self._target, key)
-
-    def __setattr__(self, key, value):
-        if value != getattr(self._target, key, _KVOProxy.NA):
-            self.willChangeValueForKey_(key)
-            try:
-                setattr(self._target, key, value)
-            finally:
-                self.didChangeValueForKey_(key)
-
-    def __eq__(self, other):
-        if isinstance(other, type(self)):
-            return self._target == other._target
-        if isinstance(other, type(self._target)):
-            return other == self._target
-        return False
-
-    def __ne__(self, other):
-        return not (self == other)
-
-    def __hash__(self):
-        return hash(self._target)
-
-    def __iter__(self):
-        return iter(self._target)
-
-    def __repr__(self):
-        return "<{} {!r}>".format(type(self).__name__, self._target)
-
-
-class _WeakKVOProxy(_KVOProxy):
-
-    _target = WeakProperty()
-
-    def init_(self, target):
-        self = super(_KVOProxy, self).init()
-        type(self)._target.__set__(self, target)
-        return self
 
 
 class KVOLink(object):
