@@ -154,13 +154,13 @@ def test__setstate():
         m = Mocker()
         ed = Editor(editxt.app, m.mock(EditorWindowController))
         ed.discard_and_focus_recent = m.method(ed.discard_and_focus_recent)
-        create_with_serial = m.method(Project.create_with_serial)
+        project_class = m.replace(mod, 'Project')
         ed.recent = m.mock(RecentItemStack)
         ws = m.property(ed, 'window_settings')
         projects = []
         if data:
             for serial in data.get("project_serials", []):
-                proj = create_with_serial(serial) >> Item()
+                proj = project_class(ed, serial=serial) >> Item()
                 projects.append(proj)
             for pi, di in data.get("recent_items", []):
                 if pi < 1:
@@ -415,13 +415,13 @@ def test_resume_recent_updates():
 def test_new_project():
     m = Mocker()
     ed = Editor(editxt.app, None)
-    cv = m.property(ed, "current_view")
-    view = m.method(Project.create_document_view)() >> m.mock(TextDocumentView)
-    cv.value = view
+    m.property(ed, "current_view").value = ANY
+    docview = m.method(Project.create_document_view)() >> m.mock()
     with m:
         result = ed.new_project()
         assert result in ed.projects, ed.projects
-        assert not result.documents, result.documents
+        eq_(list(result.documents), [])
+        eq_(result.editor, ed)
 
 def test_toggle_properties_pane():
     from editxt.controls.splitview import ThinSplitView
@@ -479,7 +479,7 @@ def test_toggle_properties_pane():
 def test_find_project_with_document_view():
     ed = Editor(editxt.app, None)
     doc = object()
-    proj = Project.create()
+    proj = Project(ed)
     dv = TextDocumentView(proj, document=doc)
     proj.append_document_view(dv)
     assert dv.document is doc
@@ -543,8 +543,7 @@ def test_get_current_project():
                 proxy = m.mock()
                 tc.objectAtArrangedIndexPath_(path2) >> proj
         if create and proj is None:
-            proj = Project()
-            proj_class.create() >> proj
+            proj = proj_class(ed) >> Project(ed)
         with m:
             result = ed.get_current_project(create=create)
             eq_(result, proj)
@@ -561,7 +560,7 @@ def test_add_document_view():
         doc = TextDocument.alloc().init()
         dv = TextDocumentView(None, document=doc)
         assert dv.project is None, dv.project
-        proj = Project.create()
+        proj = Project(ed)
         if has_view:
             proj.append_document_view(dv)
         m.method(ed.get_current_project)(create=True) >> proj
@@ -1089,7 +1088,6 @@ def test_iter_dropped_paths():
         ed.find_project_with_path = m.method(ed.find_project_with_path)
         app = m.replace(ed, 'app')
         doc_class = m.replace('editxt.document.TextDocument')
-        create_with_path = m.method(Project.create_with_path)
         pb = m.mock(ak.NSPasteboard)
         dc = m.mock(DocumentController)
         result_items = []
@@ -1103,21 +1101,14 @@ def test_iter_dropped_paths():
             pb.propertyListForType_(ak.NSFilenamesPboardType) >> paths
             for it in c.paths:
                 paths.append(it.path)
-                if Project.is_project_path(it.path):
-                    proj = m.mock(Project) if it.found else None
-                    app.find_project_with_path(it.path) >> proj
-                    if not it.found:
-                        proj = create_with_path(it.path) >> m.mock(Project)
-                    result_items.append(proj)
-                else:
-                    doc = doc_class.get_with_path(it.path) >> m.mock(TextDocument)
-                    result_items.append(doc)
+                doc = doc_class.get_with_path(it.path) >> m.mock(TextDocument)
+                result_items.append(doc)
         with m:
             result = list(ed.iter_dropped_paths(pb))
             eq_(result, result_items)
     c = TestConfig(item_is_none=False, has_paths=True)
     doc = "/path/to/doc%s.txt"
-    proj = "/path/to/proj%s." + const.PROJECT_EXT
+#    proj = "/path/to/proj%s." + const.PROJECT_EXT
     def path(tmp, num, found=False, **kw):
         return TestConfig(found=found, path=tmp % num, **kw)
     yield test, c(has_paths=False)
@@ -1126,10 +1117,10 @@ def test_iter_dropped_paths():
     #yield test, c(paths=[path(doc, 1)], item_is_none=True)
     yield test, c(paths=[path(doc, 1)])
     yield test, c(paths=[path(doc, 1), path(doc, 2), path(doc, 3)])
-    #yield test, c(paths=[path(proj, 1, is_open=False)], item_is_none=True)
-    yield test, c(paths=[path(proj, 1)])
-    yield test, c(paths=[path(proj, 1, True)])
-    yield test, c(paths=[path(proj, 1, True), path(doc, 1), path(proj, 2)])
+#    #yield test, c(paths=[path(proj, 1, is_open=False)], item_is_none=True)
+#    yield test, c(paths=[path(proj, 1)])
+#    yield test, c(paths=[path(proj, 1, True)])
+#    yield test, c(paths=[path(proj, 1, True), path(doc, 1), path(proj, 2)])
 
 def test_insert_items():
     class MatchingName(object):
@@ -1170,7 +1161,7 @@ def test_insert_items():
                 dindex = -1
                 continue
             if char in '0123456789':
-                item = project = Project.create()
+                item = project = Project(ed)
                 item.name = char
                 ed.projects.append(item)
                 pindex += 1

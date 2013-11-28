@@ -200,7 +200,7 @@ def test_open_documents_with_paths():
         alog = m.replace(mod, 'log')
         create_editor = m.method(app.create_editor)
         ed = m.mock(Editor)
-        project = ed.get_current_project(create=True) >> Project()
+        project = ed.get_current_project(create=True) >> Project(ed)
         dv_class = m.replace(edoc, 'TextDocumentView')
         m.method(app.current_editor)() >> (ed if c.has_editor else None)
         if not c.has_editor:
@@ -257,7 +257,7 @@ def test_open_error_log():
             m.method(app.current_editor)() >> (ed if c.has_editor else None)
             if not c.has_editor:
                 m.method(app.create_editor)() >> ed
-            project = ed.get_current_project(create=True) >> Project()
+            project = ed.get_current_project(create=True) >> Project(ed)
             dv_class(project, document=err) >> dv
             ed.add_document_view(dv)
             ed.current_view = dv

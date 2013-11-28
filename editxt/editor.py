@@ -96,7 +96,7 @@ class Editor(object):
     def _setstate(self, state):
         if state:
             for serial in state.get("project_serials", []):
-                proj = Project.create_with_serial(serial)
+                proj = Project(self, serial=serial)
                 self.projects.append(proj)
             for proj_index, doc_index in state.get("recent_items", []):
                 if proj_index < len(self.projects):
@@ -249,7 +249,7 @@ class Editor(object):
         return True
 
     def new_project(self):
-        project = Project.create()
+        project = Project(self)
         view = project.create_document_view()
         self.projects.append(project)
         self.current_view = view
@@ -310,7 +310,7 @@ class Editor(object):
                 path2 = fn.NSIndexPath.indexPathWithIndex_(index)
                 return docs_controller.objectAtArrangedIndexPath_(path2)
         if create:
-            proj = Project.create()
+            proj = Project(self)
             self.projects.append(proj)
             return proj
         return None
@@ -543,13 +543,8 @@ class Editor(object):
         if not pasteboard.types().containsObject_(ak.NSFilenamesPboardType):
             raise StopIteration()
         for path in pasteboard.propertyListForType_(ak.NSFilenamesPboardType):
-            if Project.is_project_path(path):
-                proj = self.app.find_project_with_path(path)
-                if proj is None:
-                    proj = Project.create_with_path(path)
-                yield proj
-            else:
-                yield TextDocument.get_with_path(path)
+            # TODO create project for dropped directory
+            yield TextDocument.get_with_path(path)
 
     @untested("untested with non-null project and index < 0")
     def insert_items(self, items, project=None, index=-1, action=None):
@@ -609,7 +604,7 @@ class Editor(object):
                     continue
 
                 if project is None:
-                    project = Project.create()
+                    project = Project(self)
                     if isinstance(item, TextDocumentView):
                         if is_move:
                             view = item

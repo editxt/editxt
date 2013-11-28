@@ -45,7 +45,7 @@ log = logging.getLogger(__name__)
 
 def test_document_view_interface():
     from editxt.test.test_document import verify_document_view_interface
-    view = Project.create()
+    view = Project(None)
     verify_document_view_interface(view)
 
 def test_is_project_path():
@@ -61,45 +61,26 @@ def test_is_project_path():
     ):
         yield test, path, result
 
-def test_create_and_init():
-    proj = Project.create()
+def test__init__():
+    proj = Project(Editor)
     assert proj.path is None
+    eq_(proj.editor, Editor)
     eq_(len(proj.documents), 0)
     eq_(proj.serial_cache, proj.serialize())
 
 @check_app_state
-def test_create_with_path():
-    path = "/temp/non-existent/project.edxt"
-    assert not os.path.exists(path)
-    result = Project.create_with_path(path)
-    try:
-        eq_(result.path, path)
-    finally:
-        result.close()
-
-@check_app_state
-def test_create_with_serial():
+def test__init__serial():
     m = Mocker()
-    serial = {"path": "/temp/non-existent/project.edxt"}
-    assert not os.path.exists(serial["path"])
-    with m:
-        result = Project.create_with_serial(serial)
-        try:
-            eq_(result.path, serial["path"])
-        finally:
-            result.close()
-
-@check_app_state
-def test_init_with_serial():
-    m = Mocker()
+    editor = m.mock(Editor)
     kvo_class = m.replace(mod, 'KVOList')
-    deserialize = m.method(Project.deserialize)
+    deserialize = m.method(Project._deserialize)
     reset_cache = m.method(Project.reset_serial_cache)
     docs = kvo_class() >> []
     deserialize("<serial>")
-    reset_cache(); m.count(2)
+    reset_cache()
     with m:
-        proj = Project.init_with_serial("<serial>")
+        proj = Project(editor, serial="<serial>")
+        eq_(proj.editor, editor)
 
 class MockDoc(object):
     proxy = WeakProperty()
@@ -116,29 +97,6 @@ class MockDoc(object):
         return "<doc %s>" % self.ident
 
 def test_serialize_project():
-    def test(path_is_none):
-        proj = Project.create()
-        m = Mocker()
-        if path_is_none:
-            assert proj.path is None
-            doc_states = []
-            for x in range(3):
-                doc = MockDoc(x)
-                doc_states.append(doc.edit_state)
-                proj.append_document_view(doc)
-            testkey = dict(documents=doc_states, expanded=True)
-            if proj.name != const.UNTITLED_PROJECT_NAME:
-                testkey["name"] = proj.name
-        else:
-            proj.path = "<path>"
-            testkey = {"path": proj.path}
-        with m:
-            result = proj.serialize()
-            eq_(result, testkey)
-    yield test, True
-    yield test, False
-
-def test_serialize_full():
     def test(c):
         def check(flag, key, serial, value=None):
             if flag:
@@ -147,34 +105,31 @@ def test_serialize_full():
                     eq_(serial[key], value)
             else:
                 assert key not in serial, key
-        proj = Project.create()
-        if c.path:
-            proj.path = "<path>"
+        proj = Project(None)
         if c.name:
             proj.name = ak.NSString.alloc().initWithString_("<name>")
             assert isinstance(proj.name, objc.pyobjc_unicode), type(proj.name)
         if c.docs:
             proj.documents = [MockDoc(1)]
         proj.expanded = c.expn
-        serial = proj.serialize_full()
-        check(c.path, "path", serial, proj.path)
+        serial = proj.serialize()
+        check(False, "path", serial, proj.path)
         check(c.name, "name", serial, proj.name)
         check(c.docs, "documents", serial)
         check(True, "expanded", serial, c.expn)
         dump_yaml(serial) # verify that it does not crash
     c = TestConfig()
-    for path in (True, False):
-        for name in (True, False):
-            for docs in (True, False):
-                yield test, c(path=path, name=name, docs=docs, expn=True)
-                yield test, c(path=path, name=name, docs=docs, expn=False)
+    for name in (True, False):
+        for docs in (True, False):
+            yield test, c(name=name, docs=docs, expn=True)
+            yield test, c(name=name, docs=docs, expn=False)
 
 def test_deserialize_project():
     from Foundation import NSData, NSPropertyListSerialization, NSPropertyListImmutable
     from editxt.project import KVOList
     def test(serial):
         m = Mocker()
-        proj = Project.create()
+        proj = Project(None)
         log = m.replace(mod, 'log')
         nsdat = m.replace(fn, 'NSData')
         nspls = m.replace(fn, 'NSPropertyListSerialization')
@@ -200,7 +155,7 @@ def test_deserialize_project():
             create_document_view()
             #proj._is_dirty = True
         with m:
-            proj.deserialize(serial)
+            proj._deserialize(serial)
             if "path" in serial:
                 eq_(proj.path, serial["path"])
                 assert "name" not in serial
@@ -219,14 +174,15 @@ def test_deserialize_project():
 def test_save():
     def test(proj_has_path, is_changed):
         m = Mocker()
-        proj = Project.create()
-        app = m.replace(mod, 'app')
+        editor = m.mock(Editor)
+        proj = Project(editor)
         save_with_path = m.method(proj.save_with_path)
         reset_cache = m.method(proj.reset_serial_cache)
-        m.method(proj.serialize_full)() >> "<serial>"
+        m.method(proj.serialize)() >> "<serial>"
         if proj_has_path:
             proj.path = "test/proj.tmp"
         if is_changed:
+            app = editor.app >> m.mock(Application)
             proj.serial_cache = "<invalid-cache>"
             if proj_has_path:
                 save_with_path(proj.path)
@@ -241,7 +197,7 @@ def test_save():
         yield test, False, is_changed
 
 def test_create_document_view_with_state():
-    proj = Project.create()
+    proj = Project(None)
     m = Mocker()
     state = m.mock()
     dv_class = m.replace(mod, 'TextDocumentView')
@@ -253,7 +209,7 @@ def test_create_document_view_with_state():
         assert dv in proj.documents
 
 def test_create_document_view():
-    proj = Project.create()
+    proj = Project(None)
     m = Mocker()
     nsdc = m.replace(ak, 'NSDocumentController')
     append_document_view = m.method(proj.append_document_view)
@@ -271,7 +227,7 @@ def test_create_document_view():
         eq_(result, dv)
 
 def test_append_document_view():
-    proj = Project.create()
+    proj = Project(None)
     #assert not proj.is_dirty
     m = Mocker()
     doc = TextDocumentView(proj, document="fake")
@@ -283,7 +239,7 @@ def test_append_document_view():
 
 def test_dirty_documents():
     def do_test(template):
-        proj = Project.create()
+        proj = Project(None)
         temp_docs = proj.documents
         try:
             m = Mocker()
@@ -313,7 +269,7 @@ def test_append_document_view_already_in_project():
         @property
         def proxy(self):
             return self
-    proj = Project.create()
+    proj = Project(None)
     dv = Fake()
     proj.append_document_view(dv)
     proj.append_document_view(dv)
@@ -325,7 +281,7 @@ def test_remove_document_view():
         @property
         def proxy(self):
             return self
-    project = Project.create()
+    project = Project(None)
     doc = MockView()
     project.insert_document_view(0, doc)
     assert doc in project.documents
@@ -340,7 +296,7 @@ def test_find_view_with_document():
     DOC = "the document we're looking for"
     def test(config):
         theview = None
-        proj = Project.create()
+        proj = Project(None)
         proj.documents = docs = []
         m = Mocker()
         doc = m.mock(TextDocument)
@@ -365,27 +321,27 @@ def test_find_view_with_document():
     yield test, ["doc1", DOC, "doc3"]
 
 def test_can_rename():
-    proj = Project.create()
+    proj = Project(None)
     eq_(proj.path, None)
     assert proj.can_rename()
     proj.path = "<path>"
     assert not proj.can_rename()
 
 def test_displayName():
-    proj = Project.create()
+    proj = Project(None)
     eq_(proj.displayName, const.UNTITLED_PROJECT_NAME)
     proj.setDisplayName_("name")
     eq_(proj.displayName, "name")
 
 def test_setDisplayName_():
-    proj = Project.create()
+    proj = Project(None)
     assert proj.path is None
     eq_(proj.displayName, const.UNTITLED_PROJECT_NAME)
     proj.setDisplayName_("name")
     eq_(proj.displayName, "name")
 
 def test_set_main_view_of_window():
-    proj = Project.create()
+    proj = Project(None)
     m = Mocker()
     view = m.mock(ak.NSView)
     win = m.mock(ak.NSWindow)
@@ -395,7 +351,7 @@ def test_set_main_view_of_window():
 def test_perform_close():
     import editxt.application as xtapp
     def test(c):
-        proj = Project.create()
+        proj = Project(None)
         m = Mocker()
         dsd_class = m.replace(xtapp, 'DocumentSavingDelegate')
         app = m.replace(mod, 'app')
@@ -436,7 +392,7 @@ def test_perform_close():
     yield test, c(num_eds=2)
 
 def test_close():
-    proj = Project.create()
+    proj = Project(None)
     m = Mocker()
     proj.documents = docs = []
     for i in range(2):

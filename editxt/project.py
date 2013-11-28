@@ -44,44 +44,21 @@ class Project(object):
     def is_project_path(path):
         return path.endswith("." + const.PROJECT_EXT)
 
-    @classmethod
-    def create(cls):
-        return cls()
-
-    @classmethod
-    def create_with_path(cls, path):
-        return cls.create_with_serial({"path": path})
-
-    @classmethod
-    def create_with_serial(cls, serial):
-        return cls.init_with_serial(serial)
-
-    def __init__(self):
+    def __init__(self, editor, *, serial=None):
         self.id = next(doc_id_gen)
+        self.editor = editor
         self.name = const.UNTITLED_PROJECT_NAME
         self.path = None
         self.expanded = True
         self.is_dirty = False
         self.documents = KVOList()
         self.closing = False
+        if serial is not None:
+            self._deserialize(serial)
         self.reset_serial_cache()
-
-    @classmethod
-    def init_with_serial(cls, serial):
-        self = cls()
-        self.deserialize(serial)
-        self.reset_serial_cache()
-        return self
 
     def serialize(self):
-        if self.path is not None:
-            return {"path": self.path}
-        return self.serialize_full()
-
-    def serialize_full(self):
         data = {"expanded": self.expanded}
-        if self.path is not None:
-            data["path"] = self.path
         if self.name != const.UNTITLED_PROJECT_NAME:
             data["name"] = str(self.name) # HACK dump_yaml doesn't like pyobjc_unicode
         states = (d.edit_state for d in self.documents)
@@ -90,7 +67,7 @@ class Project(object):
             data["documents"] = documents
         return data
 
-    def deserialize(self, serial):
+    def _deserialize(self, serial):
         if "path" in serial:
             self.path = serial["path"]
             plistData = fn.NSData.dataWithContentsOfFile_(self.path)
@@ -110,19 +87,19 @@ class Project(object):
             self.create_document_view()
 
     def reset_serial_cache(self):
-        self.serial_cache = self.serialize_full()
+        self.serial_cache = self.serialize()
 
     def save(self):
-        if self.serial_cache != self.serialize_full():
+        if self.serial_cache != self.serialize():
             if self.path is not None:
                 self.save_with_path(self.path)
-            app.save_editor_states()
+            self.editor.app.save_editor_states()
             self.reset_serial_cache()
 
     def save_with_path(self, path):
         raise NotImplementedError
         data = fn.NSMutableDictionary.alloc().init()
-        data.update(self.serialize_full())
+        data.update(self.serialize())
         data.writeToFile_atomically_(path, True)
 
     def dirty_documents(self):
