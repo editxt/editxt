@@ -495,35 +495,34 @@ def test_perform_close():
         proj = m.mock(Project)
         dv = TextDocumentView(proj, document=doc)
         ed = proj.editor >> m.mock(Editor)
-        app = ed.app >> m.mock(Application)
+        app = doc.app >> m.mock(Application)
         app.iter_editors_with_view_of_document(doc) >> (ed for x in range(num_views))
         if num_views == 1:
             ed.current_view = dv
+            info = app.context.put(dv.maybe_close) >> 42
             def doc_should_close(dv, selector, context):
-                assert hasattr(dv, "document_shouldClose_contextInfo_"), \
+                assert hasattr(TextDocument, "document_shouldClose_contextInfo_"), \
                     "missing selector: TextDocumentView document:shouldClose:contextInfo:"
             expect(doc.canCloseDocumentWithDelegate_shouldCloseSelector_contextInfo_(
-                dv, "document:shouldClose:contextInfo:", None)).call(doc_should_close)
+                doc, "document:shouldClose:contextInfo:", info)).call(doc_should_close)
         else:
             ed.discard_and_focus_recent(dv)
         with m:
             dv.perform_close(ed)
+        eq_(TextDocument.document_shouldClose_contextInfo_.signature, b'v@:@ii')
     for num_views in range(3):
         yield test, num_views
 
-def test_document_shouldClose_contextInfo_():
+def test_TextDocumentView_maybe_close():
     def test(should_close):
         m = Mocker()
-        app = m.replace(mod, 'app')
-        doc = m.mock(TextDocument)
         proj = m.mock(Project)
-        dv = TextDocumentView(proj, document=doc)
-        ed = m.mock(Editor)
+        docview = TextDocumentView(proj, document=m.mock(TextDocument))
+        editor = m.mock(Editor)
         if should_close:
-            (proj.editor >> ed).discard_and_focus_recent(dv)
+            (proj.editor >> editor).discard_and_focus_recent(docview)
         with m:
-            dv.document_shouldClose_contextInfo_(doc, should_close, 42)
-        eq_(TextDocumentView.document_shouldClose_contextInfo_.signature, b'v@:@ii')
+            docview.maybe_close(should_close)
     yield test, True
     yield test, False
 

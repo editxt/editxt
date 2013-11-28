@@ -155,7 +155,7 @@ class Editor(object):
                     did = docview.id
                     if ident in (pid, did):
                         recent.discard(did)
-                        project.remove_document_view(docview)
+                        assert docview.project is project, (docview.project, project)
                         docview.close()
                     else:
                         lookup[did] = docview

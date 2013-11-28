@@ -292,17 +292,18 @@ class TextDocumentView(object):
         self.command_view.message(msg, self.text_view, msg_type)
 
     def perform_close(self, editor):
+        app = self.document.app
         editor = self.project.editor
-        views = list(editor.app.iter_editors_with_view_of_document(self.document))
+        views = list(app.iter_editors_with_view_of_document(self.document))
         if views == [editor]:
             editor.current_view = self
+            info = app.context.put(self.maybe_close)
             self.document.canCloseDocumentWithDelegate_shouldCloseSelector_contextInfo_(
-                self, "document:shouldClose:contextInfo:", None)
+                self.document, "document:shouldClose:contextInfo:", info)
         else:
             editor.discard_and_focus_recent(self)
 
-    @objc.typedSelector(b'v@:@ii')
-    def document_shouldClose_contextInfo_(self, doc, should_close, info):
+    def maybe_close(self, should_close):
         if should_close:
             self.project.editor.discard_and_focus_recent(self)
 
@@ -713,6 +714,10 @@ class TextDocument(ak.NSDocument):
 
     def __repr__(self):
         return "<%s 0x%x %s>" % (type(self).__name__, id(self), self.displayName())
+
+    @objc.typedSelector(b'v@:@ii')
+    def document_shouldClose_contextInfo_(self, doc, should_close, info):
+        self.app.context.pop(info)(should_close)
 
     def close(self):
         # remove window controllers here so NSDocument does not close the windows

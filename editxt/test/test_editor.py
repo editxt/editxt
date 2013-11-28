@@ -257,7 +257,7 @@ def test_discard_and_focus_recent():
                 docs.append(dv)
                 if c.id in (p.id, d.id):
                     ed.recent.discard(d.id)
-                    proj.remove_document_view(dv)
+                    dv.project >> proj
                     dv.close()
                 else:
                     lookup[d.id] = dv
