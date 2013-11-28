@@ -27,6 +27,7 @@ import Foundation as fn
 # from NDAlias import NDAlias
 
 import editxt.constants as const
+import editxt.platform.constants as platform_const
 
 from editxt import app
 from editxt.application import doc_id_gen
@@ -35,11 +36,7 @@ from editxt.command.util import (calculate_indent_mode_and_size,
     change_indentation, iterlines, replace_newlines)
 from editxt.constants import TEXT_DOCUMENT, LARGE_NUMBER_FOR_TEXT
 from editxt.controls.alert import Alert
-from editxt.controls.commandview import CommandView
-from editxt.controls.dualview import DualView, SHOULD_RESIZE
-from editxt.controls.linenumberview import LineNumberView
-from editxt.controls.statscrollview import StatusbarScrollView
-from editxt.controls.textview import TextView
+from editxt.platform.document import setup_main_view, teardown_main_view
 from editxt.platform.kvo import SelfKVOProxy, KVOList, KVOProxy, KVOLink
 from editxt.syntax import SyntaxCache
 from editxt.util import (untested, refactor,
@@ -94,10 +91,10 @@ class TextDocumentView(object):
         self.id = next(doc_id_gen)
         self.project = project
         self.document = document
+        self.main_view = None
         self.text_view = None
         self.scroll_view = None
         self.command_view = None
-        self.dual_view = None
         if isinstance(document, ak.NSDocument):
             # HACK this should not be conditional (but it is for tests)
             self.kvolink = KVOLink([
@@ -135,67 +132,15 @@ class TextDocumentView(object):
     def set_main_view_of_window(self, view, window):
         frame = view.bounds()
         if self.scroll_view is None:
-            lm = ak.NSLayoutManager.alloc().init()
-            self.document.text_storage.addLayoutManager_(lm)
-            tc = ak.NSTextContainer.alloc().initWithContainerSize_(frame.size)
-            tc.setLineFragmentPadding_(10) # left margin
-            lm.addTextContainer_(tc)
-
-            self.scroll_view = sv = StatusbarScrollView.alloc().initWithFrame_(frame)
-            sv.setHasHorizontalScroller_(True)
-            sv.setHasVerticalScroller_(True)
-            sv.setAutoresizingMask_(ak.NSViewWidthSizable | ak.NSViewHeightSizable)
-
-            self.text_view = tv = TextView.alloc().initWithFrame_textContainer_(frame, tc)
-            tv.setAllowsUndo_(True)
-            tv.setVerticallyResizable_(True)
-            tv.setMaxSize_(fn.NSMakeSize(LARGE_NUMBER_FOR_TEXT, LARGE_NUMBER_FOR_TEXT))
-            # setTextContainerInset() with height > 0 causes a strange bug with
-            # the movement of the line number ruler (it moves down when
-            # scrolling down near the top of the document)
-            tv.setTextContainerInset_(fn.NSMakeSize(0, 0)) # width/height
-            tv.setDrawsBackground_(False)
-            tv.setSmartInsertDeleteEnabled_(False)
-            tv.setRichText_(False)
-            tv.setUsesFontPanel_(False)
-            tv.setUsesFindPanel_(True)
-            tv.doc_view = self
-            tv.setDelegate_(self)
-#           #NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
-#           #    self, "processEdit:", NSTextStorageDidProcessEditingNotification, store)
-            attrs = self.document.default_text_attributes()
-            tv.setTypingAttributes_(attrs)
-            font = attrs[ak.NSFontAttributeName]
-            tv.setFont_(font)
-            tv.setDefaultParagraphStyle_(attrs[ak.NSParagraphStyleAttributeName])
-
-            sv.setDocumentView_(tv)
-#           sv.setHorizontalLineScroll_(font.advancementForGlyph_(ord(u" ")).width)
-#           sv.setVerticalLineScroll_(tv.layoutManager().defaultLineHeightForFont_(font))
-
-            # setup line number ruler
-            StatusbarScrollView.setRulerViewClass_(LineNumberView)
-            sv.setHasVerticalRuler_(True)
-            #sv.verticalRulerView().invalidateRuleThickness()
-            sv.setRulersVisible_(True)
-
-            self.command_view = CommandView.alloc().initWithFrame_(frame)
-            def doc_height():
-                return sv.contentSize().height
-            def command_height():
-                return self.command_view.preferred_height
-            self.dual_view = DualView.alloc().init(
-                frame, sv, self.command_view, doc_height, command_height, 0.2)
-            ak.NSNotificationCenter.defaultCenter() \
-                .addObserver_selector_name_object_(
-                    self.dual_view, "tile:", SHOULD_RESIZE, self.command_view)
-
+            self.main_view = setup_main_view(self, frame)
+            self.scroll_view = self.main_view.top
+            self.command_view = self.main_view.bottom
+            self.text_view = self.scroll_view.documentView() # HACK deep reach
             self.soft_wrap = self.document.app.config["soft_wrap"]
             self.reset_edit_state()
         else:
-            # reset frame in case the window was resized
-            self.dual_view.setFrame_(frame)
-        view.addSubview_(self.dual_view)
+            self.main_view.setFrame_(frame)
+        view.addSubview_(self.main_view)
         window.makeFirstResponder_(self.text_view)
         self.document.update_syntaxer()
         self.scroll_view.verticalRulerView().invalidateRuleThickness()
@@ -367,23 +312,20 @@ class TextDocumentView(object):
             self.project.remove_document_view(self)
         self.project = None
         if doc is not None:
-            if self.text_view is not None:
-                self.scroll_view.removeFromSuperview()
-                self.scroll_view.verticalRulerView().denotify()
-                if doc.text_storage is not None:
-                    doc.text_storage.removeLayoutManager_(self.text_view.layoutManager())
-                self.text_view.setDelegate_(None)
-                self.text_view = None
-                self.scroll_view = None
+            if doc.text_storage is not None and self.text_view is not None:
+                doc.text_storage.removeLayoutManager_(self.text_view.layoutManager())
             for wc in list(self.document.windowControllers()):
                 if wc.editor.count_views_of_document(doc) == 0:
                     doc.removeWindowController_(wc)
             if doc.app.count_views_of_document(doc) == 0:
                 doc.close()
             self.document = None
-        if self.dual_view is not None:
-            ak.NSNotificationCenter.defaultCenter().removeObserver_(self.dual_view)
-            self.dual_view = None
+        self.text_view = None
+        self.scroll_view = None
+        self.command_view = None
+        if self.main_view is not None:
+            teardown_main_view(self.main_view)
+            self.main_view = None
 
     def __repr__(self):
         name = 'N/A' if self.document is None else self.name
@@ -402,15 +344,13 @@ class TextDocumentView(object):
             )
         return finder
 
-    def textView_doCommandBySelector_(self, textview, selector):
-        if selector == "cancelOperation:": # escape key
+    def on_do_command(self, command):
+        if command == platform_const.ESCAPE:
             self.command_view.dismiss()
             return True
         return False
 
-    @untested
-    def textViewDidChangeSelection_(self, notification):
-        textview = notification.object()
+    def on_selection_changed(self, textview):
         text = textview.string()
         range = textview.selectedRange()
         index = range.location if range.location < text.length() else (text.length() - 1)

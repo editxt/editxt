@@ -63,6 +63,13 @@ class DualView(ak.NSView):
         self.subview_offset_rect = ak.NSZeroRect
         return self
 
+    def dealloc(self):
+        self.top = None
+        self.top_height = None
+        self.bottom = None
+        self.bottom_height = None
+        super().dealloc()
+
     def setHidden_(self, value):
         if not value:
             self.top.setHidden_(not self.top_height())

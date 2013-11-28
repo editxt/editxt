@@ -198,7 +198,7 @@ class Editor(object):
                 self.wc.docsController.selected_objects = [view]
             self.recent.push(view.id)
             if isinstance(view, TextDocumentView): # TODO eliminate isinstance call
-                if view.dual_view not in main_view.subviews():
+                if view.main_view not in main_view.subviews():
                     for subview in main_view.subviews():
                         subview.removeFromSuperview()
                     view.document.addWindowController_(self.wc)

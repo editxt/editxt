@@ -64,6 +64,9 @@ class CommandView(DualView):
         return self
 
     def dealloc(self):
+        self.input = None
+        self.output = None
+        self.command = None
         ak.NSNotificationCenter.defaultCenter().removeObserver_(self)
         super().dealloc()
 

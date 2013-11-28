@@ -24,15 +24,27 @@ import objc
 import AppKit as ak
 import Foundation as fn
 
-from editxt import app
 from editxt.command.find import FindController
+from editxt.datatypes import WeakProperty
 
 log = logging.getLogger(__name__)
 
 
 class TextView(ak.NSTextView):
 
-    doc_view = objc.ivar("doc_view")
+    app = WeakProperty()
+    doc_view = WeakProperty() #objc.ivar("doc_view")
+
+    def __new__(cls, docview, frame, container):
+        self = cls.alloc().initWithFrame_textContainer_(frame, container)
+        self.doc_view = docview
+        self.app = docview.project.editor.app
+        return self
+
+#    def dealloc(self):
+#        self.doc_view = None
+#        self.app = None
+#        super().dealloc()
 
     def goto_line(self, num):
         eol = self.doc_view.document.eol
@@ -61,23 +73,23 @@ class TextView(ak.NSTextView):
         FindController.shared_controller().perform_action(sender)
 
     def performTextCommand_(self, sender):
-        app.text_commander.do_textview_command(self, sender)
+        self.app.text_commander.do_textview_command(self, sender)
 
     def doCommandBySelector_(self, selector):
-        if not app.text_commander.do_textview_command_by_selector(self, selector):
+        if not self.app.text_commander.do_textview_command_by_selector(self, selector):
             super(TextView, self).doCommandBySelector_(selector)
 
     def validateUserInterfaceItem_(self, item):
         if item.action() == "performFindPanelAction:":
             return FindController.shared_controller().validate_action(item.tag())
         elif item.action() == "performTextCommand:":
-            return app.text_commander.is_textview_command_enabled(self, item)
+            return self.app.text_commander.is_textview_command_enabled(self, item)
         return super(TextView, self).validateUserInterfaceItem_(item)
 
     # Drag/drop ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def readSelectionFromPasteboard_type_(self, pasteboard, type_):
-        editor = app.find_editor_with_document_view(self.doc_view)
+        editor = self.app.find_editor_with_document_view(self.doc_view)
         if editor is not None:
             items = editor.iter_dropped_paths(pasteboard)
             parent = editor.find_project_with_document_view(self.doc_view)
@@ -95,15 +107,15 @@ class TextView(ak.NSTextView):
             return self._marginParams
         except AttributeError:
             pass
-        nchars = app.config["right_margin.position"]
+        nchars = self.app.config["right_margin.position"]
         if not nchars:
             self._marginParams = None
             return
         font = self.doc_view.document.default_text_attributes()[ak.NSFontAttributeName]
         charw = font.advancementForGlyph_(ord(" ")).width
         padding = self.textContainer().lineFragmentPadding()
-        color1 = app.config["right_margin.line_color"]
-        color2 = app.config["right_margin.margin_color"]
+        color1 = self.app.config["right_margin.line_color"]
+        color2 = self.app.config["right_margin.margin_color"]
         self._marginParams = mp = (charw * nchars + padding, color1, color2)
         return mp
 

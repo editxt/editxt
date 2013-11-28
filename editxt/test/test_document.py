@@ -33,6 +33,7 @@ import editxt
 import editxt.constants as const
 import editxt.document as mod
 from editxt.constants import TEXT_DOCUMENT
+from editxt.controls.commandview import CommandView
 from editxt.application import Application, DocumentController
 from editxt.editor import Editor, EditorWindowController
 from editxt.document import TextDocument, TextDocumentView
@@ -121,104 +122,40 @@ def test_TextDocumentView_window():
     yield test, False
 
 def test_document_set_main_view_of_window():
-    from editxt.constants import LARGE_NUMBER_FOR_TEXT
-    from editxt.controls.linenumberview import LineNumberView
-
     def test(c):
         m = Mocker()
-
         win = m.mock(ak.NSWindow)
         doc = m.mock(TextDocument)
-        ts = m.mock(ak.NSTextStorage)
-        dv = TextDocumentView(None, document=doc)
-        m.property(dv, "soft_wrap")
-        ewc = m.mock(EditorWindowController)
-        dv.props = props = m.mock(dict)
+        docview = TextDocumentView(None, document=doc)
+        soft_wrap = m.property(docview, "soft_wrap")
         view = m.mock(ak.NSView)
-        tv = m.mock(mod.TextView)
-        sv = m.mock(mod.StatusbarScrollView)
-        lm_class = m.replace(ak, 'NSLayoutManager')
-        tc_class = m.replace(ak, 'NSTextContainer')
-        sv_class = m.replace(mod, 'StatusbarScrollView')
-        cv_class = m.replace(mod, 'CommandView')
-        dv_class = m.replace(mod, 'DualView')
-        tv_class = m.replace(mod, 'TextView')
+        main = m.mock()
+        text = m.mock(ak.NSTextView)
+        scroll = m.mock(ak.NSScrollView)
+        setup_main_view = m.replace(mod, 'setup_main_view')
         frame = view.bounds() >> ak.NSMakeRect(0, 0, 50, 16)
         if c.sv_is_none:
-            lm = m.mock(ak.NSLayoutManager)
-            lm_class.alloc().init() >> lm
-            doc.text_storage >> ts
-            ts.addLayoutManager_(lm)
-            tc = m.mock(ak.NSTextContainer)
-            tc_class.alloc() >> tc
-            tc.initWithContainerSize_(frame.size) >> tc
-            tc.setLineFragmentPadding_(10) # left margin
-            lm.addTextContainer_(tc)
-            #tc.setWidthTracksTextView_(False)
-            #tc.setContainerSize_(NSMakeSize(LARGE_NUMBER_FOR_TEXT, LARGE_NUMBER_FOR_TEXT))
-
-            sv_class.alloc().initWithFrame_(frame) >> sv
-            sv.setHasHorizontalScroller_(True)
-            sv.setHasVerticalScroller_(True)
-            sv.setAutoresizingMask_(ak.NSViewWidthSizable | ak.NSViewHeightSizable)
-
-            tv_class.alloc() >> tv
-            tv.initWithFrame_textContainer_(frame, tc) >> tv
-            #tv.layoutManager().replaceTextStorage_(doc.text_storage)
-            tv.setAllowsUndo_(True)
-            tv.setVerticallyResizable_(True)
-            #tv.setHorizontallyResizable_(True)
-            tv.setMaxSize_(fn.NSMakeSize(LARGE_NUMBER_FOR_TEXT, LARGE_NUMBER_FOR_TEXT))
-            tv.setTextContainerInset_(fn.NSMakeSize(0, 0)) # top (and bottom?) margin
-            tv.setDrawsBackground_(False)
-            tv.setSmartInsertDeleteEnabled_(False)
-            tv.setRichText_(False)
-            tv.setUsesFontPanel_(False)
-            tv.setUsesFindPanel_(True)
-            tv.doc_view = dv
-            tv.setDelegate_(dv)
-            attrs = m.mock()
-            doc.default_text_attributes() >> attrs
-            tv.setTypingAttributes_(attrs)
-            font = m.mock()
-            attrs[ak.NSFontAttributeName] >> font
-            tv.setFont_(font)
-            psan = m.mock()
-            attrs[ak.NSParagraphStyleAttributeName] >> psan
-            tv.setDefaultParagraphStyle_(psan)
-
-            sv.setDocumentView_(tv)
-
-            sv_class.setRulerViewClass_(LineNumberView)
-            sv.setHasVerticalRuler_(True)
-            sv.setRulersVisible_(True)
-
-            cv = m.mock(mod.CommandView)
-            cv_class.alloc() >> cv
-            cv.initWithFrame_(frame) >> cv
-            # Do not check spec. It's broken because of DualView.init namedSelector
-            dual = dv_class.alloc() >> m.mock()
-            dual.init(frame, sv, cv, ANY, ANY, 0.2) >> dual
-
-            dv.soft_wrap = doc.app.config["soft_wrap"] >> const.WRAP_NONE
-            m.method(dv.reset_edit_state)()
-            assert dv.scroll_view is None
-            assert dv.text_view is None
+            eq_(docview.main_view, None)
+            eq_(docview.text_view, None)
+            eq_(docview.scroll_view, None)
+            eq_(docview.command_view, None)
+            setup_main_view(docview, frame) >> main
+            main.top >> scroll
+            main.bottom >> m.mock(CommandView)
+            scroll.documentView() >> text
+            soft_wrap.value = doc.app.config["soft_wrap"] >> c.soft_wrap
         else:
-            dv.text_view = tv
-            dv.scroll_view = sv
-            dv.dual_view = dual = m.mock(mod.DualView)
-            dual.setFrame_(frame)
-        view.addSubview_(dual)
-        win.makeFirstResponder_(tv)
-        sv.verticalRulerView().invalidateRuleThickness()
+            docview.main_view = main
+            docview.text_view = text
+            docview.scroll_view = scroll
+            main.setFrame_(frame)
+        view.addSubview_(main)
+        win.makeFirstResponder_(text)
+        scroll.verticalRulerView().invalidateRuleThickness()
         doc.update_syntaxer()
         doc.check_for_external_changes(win)
-
         with m:
-            dv.set_main_view_of_window(view, win)
-        assert dv.scroll_view is sv
-        assert dv.text_view is tv
+            docview.set_main_view_of_window(view, win)
     c = TestConfig()
     yield test, c(sv_is_none=True, soft_wrap=const.WRAP_NONE)
     yield test, c(sv_is_none=False, soft_wrap=const.WRAP_WORD)
@@ -598,21 +535,20 @@ def test_TextDocumentView_close():
         proj = m.mock(Project)
         dv = TextDocumentView(proj, document=doc)
         app = m.mock(Application)
+        teardown_main_view = m.replace(mod, 'teardown_main_view')
         proj.closing >> False
         proj.remove_document_view(dv)
-        if c.tv_is_none:
-            dv.scroll_view = None
-            dv.text_view = None
+        dv.command_view = m.mock(CommandView)
+        dv.text_view = None if c.tv_is_none else m.mock(ak.NSTextView)
+        if c.main_is_none:
+            dv.main_view = None
         else:
-            dv.scroll_view = sv = m.mock(ak.NSScrollView)
-            dv.text_view = tv = m.mock(ak.NSTextView)
-            sv.removeFromSuperview()
-            sv.verticalRulerView().denotify()
-            doc.text_storage >> None if c.ts_is_none else m.mock(ak.NSTextStorage)
-            if not c.ts_is_none:
-                lm = tv.layoutManager() >> m.mock(ak.NSLayoutManager)
-                doc.text_storage.removeLayoutManager_(lm)
-            tv.setDelegate_(None)
+            dv.main_view = m.mock()
+            teardown_main_view(dv.main_view)
+        doc.text_storage >> (None if c.ts_is_none else m.mock(ak.NSTextStorage))
+        if not (c.ts_is_none or c.tv_is_none):
+            lm = dv.text_view.layoutManager() >> m.mock(ak.NSLayoutManager)
+            doc.text_storage.removeLayoutManager_(lm)
         wcs = []
         doc.windowControllers() >> wcs
         for w in c.wcs:
@@ -628,37 +564,41 @@ def test_TextDocumentView_close():
         assert dv.scroll_view is None
         assert dv.text_view is None
         assert dv.document is None
-    c = TestConfig(app_views=0, wcs=[], tv_is_none=False, ts_is_none=False)
+    c = TestConfig(app_views=0, wcs=[],
+            main_is_none=False,
+            ts_is_none=False,
+            tv_is_none=False,
+        )
     wc = lambda n:TestConfig(num_views=n)
     yield test, c
-    yield test, c(ts_is_none=True)
     yield test, c(tv_is_none=True)
+    yield test, c(ts_is_none=True)
+    yield test, c(main_is_none=True)
     for num_views in (1, 2):
         for num_wcs in (0, 1, 3):
             yield test, c(wcs=[wc(i) for i in range(num_wcs)])
         yield test, c(wcs=[wc(0) for i in range(2)])
     yield test, c(app_views=1)
 
-def test_TextDocumentView_textView_doCommandBySelector_():
-    from editxt.controls.commandview import CommandView
-    def test(selector, setup_mocks):
+def test_TextDocumentView_on_do_command():
+    import editxt.platform.constants as const
+    def test(command, setup_mocks):
         m = Mocker()
         doc = m.mock(TextDocument)
         docview = TextDocumentView(None, document=doc)
-        textview = m.mock(mod.TextView)
+        textview = m.mock(ak.NSTextView)
         expected = setup_mocks(m, docview, textview)
         with m:
-            result = docview.textView_doCommandBySelector_(textview, selector)
+            result = docview.on_do_command(command)
             eq_(result, expected)
 
-    yield test, "bogusOperation:", lambda m, dv, tv: False
+    yield test, "unknown command", lambda m, dv, tv: False
 
     def setup_mocks(m, docview, textview):
-        docview.scroll_view = m.mock(ak.NSScrollView)
         cmd = m.replace(docview, "command_view", spec=CommandView)
         cmd.dismiss()
         return True
-    yield test, "cancelOperation:", setup_mocks
+    yield test, const.ESCAPE, setup_mocks
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # TextDocument tests

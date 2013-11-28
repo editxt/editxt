@@ -52,7 +52,8 @@ def test_TextView_performTextCommand_():
     from editxt.textcommand import TextCommandController
     m = Mocker()
     tv = TextView.alloc().init()
-    tc = m.replace(mod, "app").text_commander >> m.mock(TextCommandController)
+    app = tv.app = m.mock()
+    tc = app.text_commander >> m.mock(TextCommandController)
     sender = m.mock()
     tc.do_textview_command(tv, sender)
     with m:
@@ -62,7 +63,8 @@ def test_TextView_doCommandBySelector_():
     from editxt.textcommand import TextCommandController
     m = Mocker()
     tv = TextView.alloc().init()
-    tc = m.replace(mod, "app").text_commander >> m.mock(TextCommandController)
+    app = tv.app = m.mock()
+    tc = app.text_commander >> m.mock(TextCommandController)
     selector = m.mock()
     tc.do_textview_command_by_selector(tv, selector) >> True # omit super call
     with m:
@@ -75,6 +77,7 @@ def test_TextView_validateUserInterfaceItem_():
         m = Mocker()
         fc = m.replace(mod, "FindController")
         tv = TextView.alloc().init()
+        app = tv.app = m.mock()
         item = m.mock(ak.NSMenuItem)
         expectation = (item.action() << c.action)
         if c.action == "performFindPanelAction:":
@@ -83,7 +86,7 @@ def test_TextView_validateUserInterfaceItem_():
                 validate_action(tag) >> True
         elif c.action == "performTextCommand:":
             expectation.count(2)
-            tc = m.replace(mod, "app").text_commander >> m.mock(TextCommandController)
+            tc = app.text_commander >> m.mock(TextCommandController)
             tc.is_textview_command_enabled(tv, item) >> True
         else:
             raise NotImplementedError # left untested because I don't know how to mock a super call
