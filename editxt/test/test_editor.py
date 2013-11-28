@@ -1199,7 +1199,7 @@ def test_insert_items():
         for project in ed.projects:
             final.append(' ' + map.get(project, next_project))
             for view in project.documents:
-                final.append(map.get(view, view.displayName.upper()))
+                final.append(map.get(view, view.name.upper()))
         eq_(str(''.join(final)), c.final)
 
     # number = project

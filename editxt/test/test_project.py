@@ -327,18 +327,18 @@ def test_can_rename():
     proj.path = "<path>"
     assert not proj.can_rename()
 
-def test_displayName():
+def test_name():
     proj = Project(None)
-    eq_(proj.displayName, const.UNTITLED_PROJECT_NAME)
-    proj.setDisplayName_("name")
-    eq_(proj.displayName, "name")
+    eq_(proj.name, const.UNTITLED_PROJECT_NAME)
+    proj.name = "name"
+    eq_(proj.name, "name")
 
-def test_setDisplayName_():
+def test_set_name():
     proj = Project(None)
     assert proj.path is None
-    eq_(proj.displayName, const.UNTITLED_PROJECT_NAME)
-    proj.setDisplayName_("name")
-    eq_(proj.displayName, "name")
+    eq_(proj.name, const.UNTITLED_PROJECT_NAME)
+    proj.name = "name"
+    eq_(proj.name, "name")
 
 def test_set_main_view_of_window():
     proj = Project(None)

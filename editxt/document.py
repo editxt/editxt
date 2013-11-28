@@ -90,7 +90,7 @@ class TextDocumentView(object):
             # TODO use project to get document
             document = TextDocument.get_with_path(path)
         assert document is not None, (project, path, state)
-        self._documents = KVOList.alloc().init()
+        self.documents = KVOList.alloc().init()
         self.id = next(doc_id_gen)
         self.project = project
         self.document = document
@@ -101,12 +101,12 @@ class TextDocumentView(object):
         if isinstance(document, ak.NSDocument):
             # HACK this should not be conditional (but it is for tests)
             self.kvolink = KVOLink([
-                (document, "properties.indent_mode", self.proxy, "indent_mode"),
-                (document, "properties.indent_size", self.proxy, "indent_size"),
-                (document, "properties.newline_mode", self.proxy, "newline_mode"),
-                (document, "properties.syntaxdef", self.proxy, "syntaxdef"),
-                (document, "properties.character_encoding", self.proxy, "character_encoding"),
-                (document, "properties.highlight_selected_text", self.proxy, "highlight_selected_text"),
+                (document, "indent_mode", self.proxy, "indent_mode"),
+                (document, "indent_size", self.proxy, "indent_size"),
+                (document, "newline_mode", self.proxy, "newline_mode"),
+                (document, "syntaxdef", self.proxy, "syntaxdef"),
+                (document, "character_encoding", self.proxy, "character_encoding"),
+                (document, "highlight_selected_text", self.proxy, "highlight_selected_text"),
             ])
         if state is not None:
             self.edit_state = state
@@ -115,30 +115,8 @@ class TextDocumentView(object):
         return self.document.icon()
 
     @property
-    def displayName(self):
-        return self.document.displayName()
-
-    def setDisplayName_(self, name):
-        pass
-
-    @property
     def name(self):
-        # TODO remove displayName in favor of this property
-        return self.displayName
-
-    @property
-    def properties(self):
-        # TODO remove; use self.proxy
-        return self.proxy
-
-    def setProperties_(self, value):
-        pass
-
-    def isLeaf(self):
-        return True
-
-    def documents(self):
-        return self._documents
+        return self.document.displayName()
 
     def window(self):
         if self.scroll_view is not None:
@@ -408,7 +386,7 @@ class TextDocumentView(object):
             self.dual_view = None
 
     def __repr__(self):
-        name = 'N/A' if self.document is None else self.displayName
+        name = 'N/A' if self.document is None else self.name
         return '<%s 0x%x name=%s>' % (type(self).__name__, id(self), name)
 
     # TextView delegate ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -518,12 +496,6 @@ class TextDocument(ak.NSDocument):
         self.reset_text_attributes(self.indent_size)
         #self.save_hooks = []
         return self
-
-    def properties(self):
-        return self.props
-
-    def setProperties_(self, value):
-        pass
 
     @property
     def text(self):

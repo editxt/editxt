@@ -26,7 +26,8 @@ import AppKit as ak
 import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
-from editxt.test.util import TestConfig, untested, check_app_state, replattr
+from editxt.test.util import (assert_raises, TestConfig, untested,
+    check_app_state, replattr)
 
 import editxt
 import editxt.constants as const
@@ -54,21 +55,21 @@ def verify_document_view_interface(dv):
     assert not dv.is_dirty
     assert hasattr(dv, "file_path")
 
-    dn = dv.displayName
+    dn = dv.name
     assert dn is not None
     icon = dv.icon()
     if isinstance(dv, TextDocumentView):
         assert dv.project is None, dv.project
         assert icon is not None
-        dv.setDisplayName_("something") # should be a no-op
-        assert dv.displayName == dn
-        assert dv.isLeaf()
+        with assert_raises(AttributeError):
+            dv.name = "something"
+        assert dv.name == dn
+        assert dv.is_leaf
         #assert not dv.expanded
     else:
         assert icon is None
-        assert not dv.isLeaf()
+        assert not dv.is_leaf
         assert dv.expanded
-        #eq_(dv.properties(), None)
 
 def test_document_view_interface():
     td = TextDocument.alloc().init()

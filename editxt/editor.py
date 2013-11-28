@@ -208,8 +208,8 @@ class Editor(object):
                         self.add_document_view(view)
                 return
             #else:
-            #    self.wc.window().setTitle_(view.displayName())
-            #    log.debug("self.wc.window().setTitle_(%r)", view.displayName())
+            #    self.wc.window().setTitle_(view.name)
+            #    log.debug("self.wc.window().setTitle_(%r)", view.name)
         for subview in main_view.subviews():
             subview.removeFromSuperview()
         self.wc.setDocument_(None)

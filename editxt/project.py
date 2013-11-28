@@ -38,7 +38,14 @@ class Project(object):
     id = None # will be overwritten (put here for type api compliance for testing)
     editor = WeakProperty()
     proxy = SelfKVOProxy()
-    properties = None
+    document = None
+    soft_wrap = None
+    indent_mode = None
+    indent_size = None
+    newline_mode = None
+    syntaxdef = None
+    character_encoding = None
+    is_leaf = False
 
     @staticmethod
     def is_project_path(path):
@@ -110,22 +117,6 @@ class Project(object):
 
     def can_rename(self):
         return self.path is None
-
-    @property
-    def displayName(self):
-        return self.name
-        if self.path is None:
-            return self.name
-        return os.path.split(self.path)[1][:-len(const.PROJECT_EXT) - 1]
-
-    def setDisplayName_(self, name):
-        if self.can_rename():
-            self.name = name
-
-    def isLeaf(self):
-        return False
-
-    is_leaf = False
 
     @property
     def file_path(self):
