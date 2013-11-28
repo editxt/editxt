@@ -531,45 +531,55 @@ def test_TextDocumentView_close():
     def test(c):
         m = Mocker()
         doc = m.mock(TextDocument)
-        proj = m.mock(Project)
+        proj = None if c.proj_is_none else m.mock(Project)
         dv = TextDocumentView(proj, document=doc)
-        app = m.mock(Application)
-        teardown_main_view = m.replace(mod, 'teardown_main_view')
-        proj.closing >> False
-        proj.remove_document_view(dv)
         dv.command_view = m.mock(CommandView)
         dv.text_view = None if c.tv_is_none else m.mock(ak.NSTextView)
+        app = m.mock(Application)
+        teardown_main_view = m.replace(mod, 'teardown_main_view')
+        if not c.proj_is_none:
+            proj.closing >> False
+            proj.remove_document_view(dv)
+        if c.doc_is_none:
+            dv.document = None
+        else:
+            doc.text_storage >> (None if c.ts_is_none else m.mock(ak.NSTextStorage))
+            if not (c.ts_is_none or c.tv_is_none):
+                lm = dv.text_view.layoutManager() >> m.mock(ak.NSLayoutManager)
+                doc.text_storage.removeLayoutManager_(lm)
+            wcs = []
+            doc.windowControllers() >> wcs
+            for w in c.wcs:
+                wc = m.mock(EditorWindowController)
+                wcs.append(wc)
+                ed = wc.editor >> m.mock(Editor)
+                if (ed.count_views_of_document(doc) >> w.num_views) == 0:
+                    doc.removeWindowController_(wc)
+            if ((doc.app >> app).count_views_of_document(doc) >> c.app_views) < 1:
+                doc.close()
         if c.main_is_none:
             dv.main_view = None
         else:
             dv.main_view = m.mock()
             teardown_main_view(dv.main_view)
-        doc.text_storage >> (None if c.ts_is_none else m.mock(ak.NSTextStorage))
-        if not (c.ts_is_none or c.tv_is_none):
-            lm = dv.text_view.layoutManager() >> m.mock(ak.NSLayoutManager)
-            doc.text_storage.removeLayoutManager_(lm)
-        wcs = []
-        doc.windowControllers() >> wcs
-        for w in c.wcs:
-            wc = m.mock(EditorWindowController)
-            wcs.append(wc)
-            ed = wc.editor >> m.mock(Editor)
-            if (ed.count_views_of_document(doc) >> w.num_views) == 0:
-                doc.removeWindowController_(wc)
-        if ((doc.app >> app).count_views_of_document(doc) >> c.app_views) < 1:
-            doc.close()
         with m:
             dv.close()
+        assert dv.command_view is None
         assert dv.scroll_view is None
         assert dv.text_view is None
         assert dv.document is None
+        assert dv.proxy is None
     c = TestConfig(app_views=0, wcs=[],
-            main_is_none=False,
+            proj_is_none=False,
+            doc_is_none=False,
             ts_is_none=False,
             tv_is_none=False,
+            main_is_none=False,
         )
     wc = lambda n:TestConfig(num_views=n)
     yield test, c
+    yield test, c(proj_is_none=True)
+    yield test, c(doc_is_none=True)
     yield test, c(tv_is_none=True)
     yield test, c(ts_is_none=True)
     yield test, c(main_is_none=True)
@@ -1258,4 +1268,5 @@ def test_TextDocument_close():
     rwc(wc)
     with m:
         doc.close()
-    assert doc.text_storage is None
+    eq_(doc.text_storage, None)
+    eq_(doc.props, None)

@@ -27,7 +27,7 @@ import editxt.constants as const
 from editxt import app
 from editxt.datatypes import WeakProperty
 from editxt.document import TextDocumentView, TextDocument, doc_id_gen
-from editxt.platform.kvo import KVOList, SelfKVOProxy
+from editxt.platform.kvo import KVOList, KVOProxy
 
 
 log = logging.getLogger(__name__)
@@ -37,7 +37,6 @@ class Project(object):
 
     id = None # will be overwritten (put here for type api compliance for testing)
     editor = WeakProperty()
-    proxy = SelfKVOProxy()
     document = None
     soft_wrap = None
     indent_mode = None
@@ -54,6 +53,7 @@ class Project(object):
     def __init__(self, editor, *, serial=None):
         self.id = next(doc_id_gen)
         self.editor = editor
+        self.proxy = KVOProxy(self)
         self.name = const.UNTITLED_PROJECT_NAME
         self.path = None
         self.expanded = True
@@ -212,6 +212,9 @@ class Project(object):
             #self.documents.setItems_([])
         finally:
             self.closing = False
+        self.editor = None
+        self.documents = None
+        self.proxy = None
 
     def __repr__(self):
         return '<%s 0x%x name=%s>' % (type(self).__name__, id(self), self.name)

@@ -392,8 +392,9 @@ def test_perform_close():
     yield test, c(num_eds=2)
 
 def test_close():
-    proj = Project(None)
     m = Mocker()
+    editor = m.mock(name="editor")
+    proj = Project(editor)
     proj.documents = docs = []
     for i in range(2):
         dv = m.mock(TextDocumentView)
@@ -401,3 +402,6 @@ def test_close():
         dv.close()
     with m:
         proj.close()
+    eq_(proj.proxy, None)
+    eq_(proj.editor, None)
+    eq_(proj.documents, None)

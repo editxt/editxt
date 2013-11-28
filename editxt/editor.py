@@ -413,8 +413,8 @@ class Editor(object):
         wc = self.wc
         if wc is not None:
             self.window_settings_loaded = False
-            for proj in self.projects:
-                proj.close()
+            while self.projects:
+                self.projects.pop().close()
             #wc.docsController.setContent_(None)
             #wc.setDocument_(None)
             #self.wc = None

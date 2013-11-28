@@ -35,7 +35,7 @@ class KVOList(fn.NSObject):
     (obtained with ``proxy_target(proxy)``) are exposed through the
     Python list-like interface of this object. It is expected that the
     ``proxy`` property for any given object always returns the same
-    proxy instance (hint: use ``SelfKVOProxy``).
+    proxy instance.
     """
 
     def __new__(cls, items=None):
@@ -48,6 +48,11 @@ class KVOList(fn.NSObject):
         super(KVOList, self).init()
         self._items = fn.NSMutableArray.alloc().init()
         return self
+
+    def dealloc(self):
+        del self._items[:]
+        self._items = None
+        super().dealloc()
 
     def items(self):
         return self._items
@@ -160,11 +165,6 @@ class KVOProxy(fn.NSObject):
             _registry[type(target)] = proxy_class
         return proxy_class.alloc().init_(target)
 
-    @staticmethod
-    def target(proxy):
-        """Retrieve the proxied object"""
-        return proxy._target
-
     def init_(self, target):
         self = super().init()
         self.__dict__["_target"] = target
@@ -223,7 +223,9 @@ class KVOProxy(fn.NSObject):
         return "<{} {!r}>".format(type(self).__name__, self._target)
 
 
-proxy_target = KVOProxy.target
+def proxy_target(proxy):
+    """Retrieve the proxied object"""
+    return proxy._target
 
 
 #class WeakKVOProxy(KVOProxy):
@@ -234,36 +236,6 @@ proxy_target = KVOProxy.target
 #        self = super(_KVOProxy, self).init()
 #        type(self)._target.__set__(self, target)
 #        return self
-
-
-class SelfKVOProxy(AbstractNamedProperty):
-    """Workaround for lack of weakrefs to Objective-C objects
-
-    Allows an object to maintain a reference to a proxy of itself
-    without creating reference cycles.
-
-    NOTE: a proxy maintains a strong reference to its target, and this
-    property maintains a strong reference to the proxy, so it may be
-    necessary to break all references to the target, including the
-    proxy's reference to its target, to allow the proxy to be garbage
-    collected.
-    """
-    refs = WeakKeyDictionary()
-
-    def __get__(self, obj, type_=None):
-        if obj is None:
-            return self
-        name = self.name(obj)
-        try:
-            return self.refs[obj][name]
-        except KeyError:
-            proxy = self.refs.setdefault(obj, {})[name] = KVOProxy(obj)
-            return proxy
-
-    def __delete__(self, obj):
-        del self.refs[obj][self.name(obj)]
-        if not self.refs[obj]:
-            del self.refs[obj]
 
 
 class KVOLink(object):

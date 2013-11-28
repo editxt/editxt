@@ -242,30 +242,6 @@ def test_KVOProxy():
     yield run, test_proxy_proxy
 
 
-def test_SelfKVOProxy():
-    class Object(object):
-        proxy = mod.SelfKVOProxy()
-    foo = Object()
-    proxy_1 = foo.proxy
-    proxy_2 = foo.proxy
-    assert proxy_1 is proxy_2
-    bar = Object()
-    proxy_3 = bar.proxy
-    assert proxy_1 is not proxy_3
-
-    # NOTE depends on CPython garbage collection semantics
-    refs = Object.proxy.refs
-    eq_(len(refs), 2)
-    del foo, proxy_2
-    eq_(len(refs), 2)
-    proxy_1.dealloc() # HACK is this supported?
-    eq_(len(refs), 1, refs)
-
-    assert bar in refs, refs
-    del bar.proxy
-    assert not refs, dict(refs)
-
-
 def test_KVOLink():
     def test(c):
         m = Mocker()

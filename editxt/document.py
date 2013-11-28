@@ -37,7 +37,7 @@ from editxt.command.util import (calculate_indent_mode_and_size,
 from editxt.constants import TEXT_DOCUMENT, LARGE_NUMBER_FOR_TEXT
 from editxt.controls.alert import Alert
 from editxt.platform.document import setup_main_view, teardown_main_view
-from editxt.platform.kvo import SelfKVOProxy, KVOList, KVOProxy, KVOLink
+from editxt.platform.kvo import KVOList, KVOProxy, KVOLink
 from editxt.syntax import SyntaxCache
 from editxt.util import (untested, refactor,
     fetch_icon, filestat, register_undo_callback, WeakProperty)
@@ -74,7 +74,6 @@ class TextDocumentView(object):
 
     id = None # will be overwritten (put here for type api compliance for testing)
     project = WeakProperty()
-    proxy = SelfKVOProxy()
     is_leaf = True
 
     def __init__(self, project, *, document=None, path=None, state=None):
@@ -91,6 +90,7 @@ class TextDocumentView(object):
         self.id = next(doc_id_gen)
         self.project = project
         self.document = document
+        self.proxy = KVOProxy(self)
         self.main_view = None
         self.text_view = None
         self.scroll_view = None
@@ -309,9 +309,8 @@ class TextDocumentView(object):
 
     def close(self):
         doc = self.document
-        if not self.project.closing:
+        if self.project is not None and not self.project.closing:
             self.project.remove_document_view(self)
-        self.project = None
         if doc is not None:
             if doc.text_storage is not None and self.text_view is not None:
                 doc.text_storage.removeLayoutManager_(self.text_view.layoutManager())
@@ -321,12 +320,14 @@ class TextDocumentView(object):
             if doc.app.count_views_of_document(doc) == 0:
                 doc.close()
             self.document = None
-        self.text_view = None
-        self.scroll_view = None
-        self.command_view = None
         if self.main_view is not None:
             teardown_main_view(self.main_view)
             self.main_view = None
+        self.project = None
+        self.text_view = None
+        self.scroll_view = None
+        self.command_view = None
+        self.proxy = None
 
     def __repr__(self):
         name = 'N/A' if self.document is None else self.name
@@ -727,4 +728,5 @@ class TextDocument(ak.NSDocument):
         if ts is not None and ts.delegate() is self:
             ts.setDelegate_(None)
         self.text_storage = None
+        self.props = None
         super(TextDocument, self).close()
