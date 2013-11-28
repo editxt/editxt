@@ -335,10 +335,10 @@ def test_set_current_view():
                         sel = [dv]
                     else:
                         sel = [m.mock()]
-                        wc.docsController.setSelectedObject_(dv)
+                        wc.docsController.selected_objects = [dv]
                 else:
                     sel = []
-                wc.docsController.selectedObjects() >> sel
+                wc.docsController.selected_objects >> sel
                 ed.recent.push(dv.id >> m.mock())
             if c.view_class is TextDocumentView:
                 dv.dual_view >> (sv if c.view_is_main else None)
@@ -368,9 +368,9 @@ def test_set_current_view():
     yield test, c(view_class=None, has_selection=False)
     c = c(view_is_selected=True, has_selection=True)
     yield test, c(view_class=None, view_is_selected=False)
-    for vim in (True, False):
-        for pin in (True, False):
-            yield test, c(view_is_main=vim, proj_is_none=pin)
+    for is_main in (True, False):
+        for no_project in (True, False):
+            yield test, c(view_is_main=is_main, proj_is_none=no_project)
     yield test, c(view_class=Project)
 
 def test_selected_view_changed():
@@ -380,7 +380,7 @@ def test_selected_view_changed():
         ed = Editor(editxt.app, wc)
         cv = m.property(ed, "current_view")
         sel = [m.mock() for x in range(c.numsel)]
-        wc.docsController.selectedObjects() >> sel
+        wc.docsController.selected_objects >> sel
         if sel:
             if c.is_current_selected:
                 cv.value >> sel[0]
@@ -1406,36 +1406,6 @@ def test_outlineViewItemDidExpandCollapse():
     yield c(method="outlineViewItemDidCollapse_", exp=False)
     yield c(method="outlineViewItemDidExpand_", exp=True)
 
-# def test_setDocument_():
-#     wc = EditorWindowController.alloc().init()
-#     proj = wc.new_project()
-#     doc = proj.documents[0].document
-#     m = Mocker()
-#     EditorWindowController.window = m.replace(EditorWindowController.window)
-#     win = m.mock(NSWindow)
-#     wc.window = lambda:win
-#     wc.controller = m.replace(wc.controller, type=Editor)
-#     wc.controller.set_document_main_view_of_window(doc, wc.mainView, wc.window())
-#     with m:
-#         wc.setDocument_(doc)
-
-# def test_active_document_on_window_loaded():
-#     ewc = EditorWindowController.alloc().init()
-#     ewc.window() # load window
-#     assert len(ewc.docsController.selectedObjects()) == 1
-#     doc = ewc.projects()[0].documents[0]
-#     assert doc in ewc.docsController.selectedObjects()
-
-# def test_EditorWindowController_activate_document():
-#     ewc = EditorWindowController.alloc().init()
-#     ewc.window() # HACK load the window controller, create a project, etc.
-#     assert len(ewc.projects()[0].documents) == 1
-#     doc = TextDocument.alloc().init()
-#     assert doc not in ewc.docsController.selectedObjects()
-#     ewc.activate_document(doc)
-#     assert len(ewc.docsController.selectedObjects()) == 1
-#     assert doc in ewc.docsController.selectedObjects()
-
 def test_outlineView_shouldSelectItem_():
     ewc = EditorWindowController.alloc().init()
     m = Mocker()
@@ -1444,17 +1414,6 @@ def test_outlineView_shouldSelectItem_():
     ewc.editor.should_select_item(ov, None)
     with m:
         ewc.outlineView_shouldSelectItem_(ov, None)
-
-# def test_outlineView_shouldExpandItem_():
-#     ewc = EditorWindowController.alloc().init()
-#     m = Mocker()
-#     ov = m.mock(NSOutlineView)
-#     it = m.mock()
-#     obj = m.mock(TextDocument)
-#     representedObject(it) >> obj
-#     obj.isLeaf() >> False
-#     with m:
-#         ewc.outlineView_shouldExpandItem_(ov, it)
 
 def test_outlineView_willDisplayCell_forTableColumn_item_():
     from editxt.controls.cells import ImageAndTextCell
@@ -1511,17 +1470,3 @@ def test_windowShouldClose_():
     with m:
         result = wc.windowShouldClose_(win)
         eq_(result, "<should_close>")
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-#     def tableViewSelectionDidChange_(self, notification):
-#         docs = self.docsController.selectedObjects()
-#         doc = docs[0] if len(docs) == 1 else None
-#         if doc is None:
-#             if self.project is not None:
-#                 self.project.newDocument()
-#             else:
-#                 sdc = NSDocumentController.sharedDocumentController()
-#                 sdc.newDocument_(self)
-#         else:
-#             doc.addWindowController_(self)

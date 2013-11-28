@@ -45,10 +45,12 @@ class NSTreeController(Category(ak.NSTreeController)):
     http://www.cocoabuilder.com/archive/message/cocoa/2008/5/18/207078
     """
 
-    def setSelectedObject_(self, obj):
-        self.setSelectedObjects_([obj])
+    @property
+    def selected_objects(self):
+        return [proxy_target(obj) for obj in self.selectedObjects()]
 
-    def setSelectedObjects_(self, objects):
+    @selected_objects.setter
+    def selected_objects(self, objects):
         paths = [self.indexPathForObject_(obj) for obj in objects]
         self.setSelectionIndexPaths_(paths)
 

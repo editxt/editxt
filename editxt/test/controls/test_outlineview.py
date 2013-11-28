@@ -21,21 +21,6 @@ import os
 
 import AppKit as ak
 
-from mocker import Mocker, expect, ANY
-
-from editxt.controls.outlineview import OutlineView
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# NSTreeController extension tests
-
-def test_nstc_setSelectedObject_():
-    tc = ak.NSTreeController.alloc().init()
-    tc.setSelectedObject_ # test for existence of method (TODO better testing)
-
-def test_nstc_setSelectedObjects_():
-    tc = ak.NSTreeController.alloc().init()
-    tc.setSelectedObjects_ # test for existence of method (TODO better testing)
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # NSOutlineView extension tests
 

@@ -193,12 +193,11 @@ class Editor(object):
         self._current_view = view
         main_view = self.wc.mainView
         if view is not None:
-            sel = self.wc.docsController.selectedObjects()
+            sel = self.wc.docsController.selected_objects
             if not sel or sel[0] is not view:
-                self.wc.docsController.setSelectedObject_(view)
+                self.wc.docsController.selected_objects = [view]
             self.recent.push(view.id)
-            if isinstance(view, TextDocumentView):
-                # FIXME does way too much ?
+            if isinstance(view, TextDocumentView): # TODO eliminate isinstance call
                 if view.dual_view not in main_view.subviews():
                     for subview in main_view.subviews():
                         subview.removeFromSuperview()
@@ -218,7 +217,7 @@ class Editor(object):
     current_view = property(_get_current_view, _set_current_view)
 
     def selected_view_changed(self):
-        selected = self.wc.docsController.selectedObjects()
+        selected = self.wc.docsController.selected_objects
         if selected and selected[0] is not self.current_view:
             self.current_view = selected[0]
 
