@@ -29,7 +29,7 @@ from PyObjCTools import AppHelper
 
 import editxt.constants as const
 from editxt.controls.cells import BUTTON_STATE_HOVER, BUTTON_STATE_NORMAL, BUTTON_STATE_PRESSED
-from editxt.document import TextDocumentView
+from editxt.document import TextDocumentView, TextDocument
 from editxt.platform.kvo import KVOList
 from editxt.project import Project
 from editxt.textcommand import CommandBar
@@ -466,8 +466,7 @@ class Editor(object):
                 else:
                     return ak.NSDragOperationNone
             elif index < 0:
-                nprojs = len(self.projects)
-                outline_view.setDropItem_dropChildIndex_(None, nprojs)
+                outline_view.setDropItem_dropChildIndex_(None, len(self.projects))
         else:
             # text document drag
             if item is not None:
@@ -539,39 +538,48 @@ class Editor(object):
                 yield item
 
     def iter_dropped_paths(self, pasteboard):
-        from editxt.document import TextDocument
         if not pasteboard.types().containsObject_(ak.NSFilenamesPboardType):
             raise StopIteration()
         for path in pasteboard.propertyListForType_(ak.NSFilenamesPboardType):
             # TODO create project for dropped directory
             yield TextDocument.get_with_path(path)
 
-    @untested("untested with non-null project and index < 0")
     def insert_items(self, items, project=None, index=-1, action=None):
         """Insert items into the document tree
 
-        :param items: A sequence of dropped projects and/or documents.
-        :param project: The parent project into which items are being dropped.
+        :param items: A sequence of projects and/or documents.
+        :param project: The parent project into which items are being inserted.
         :param index: The index in the outline view or parent project at which
-            the drop occurred.
-        :param action: The type of drop: None (unspecified), MOVE, or COPY.
+            the item(s) should be inserted.
+        :param action: What to do with items that are already open in
+            this editor:
+
+            - None : insert new item(s), but do not change existing item(s).
+            - MOVE : move existing item(s) to index.
+            - COPY : copy item(s) to index.
+
+            A file is considered to be "existing" if there is a document
+            view with the same path in the project where it is being
+            inserted. A project is considered to be "existing" if there
+            is a project with the same path in the editor where it is
+            being inserted.
         :returns: True if the items were accepted, otherwise False.
         """
         if project is None:
             # a new project will be created if/when needed
             if index < 0:
-                proj_index = 0
+                proj_index = len(self.projects)
             else:
                 proj_index = index
             index = 0
         else:
             proj_index = len(self.projects) # insert projects at end of list
-            assert isinstance(project, Project), project
             if index < 0:
                 index = len(project.documents)
         accepted = False
         focus = None
-        is_move = action is not const.COPY
+        is_move = action == const.MOVE
+        is_copy = action == const.COPY
         self.suspend_recent_updates()
         try:
             for item in items:
@@ -579,9 +587,7 @@ class Editor(object):
                 if isinstance(item, Project):
                     if not is_move:
                         raise NotImplementedError('cannot copy project yet')
-                    editors = self.app.find_editors_with_project(item)
-                    assert len(editors) < 2, editors
-                    if item in self.projects:
+                    if item.editor is self:
                         editor = self
                         pindex = self.projects.index(item)
                         if pindex == proj_index:
@@ -589,7 +595,7 @@ class Editor(object):
                         if pindex - proj_index <= 0:
                             proj_index -= 1
                     else:
-                        editor = editors[0]
+                        editor = item.editor
 
                     # BEGIN HACK crash on remove project with documents
                     pdocs = item.documents
@@ -612,6 +618,7 @@ class Editor(object):
                         else:
                             view = TextDocumentView(project, document=item.document)
                     else:
+                        assert isinstance(item, TextDocument), item
                         view = TextDocumentView(project, document=item)
                     self.projects.insert(proj_index, project)
                     proj_index += 1
@@ -620,17 +627,21 @@ class Editor(object):
                     if isinstance(item, TextDocumentView):
                         view, item = item, item.document
                     else:
+                        assert isinstance(item, TextDocument), item
                         view = project.document_view_for_document(item)
                     if is_move and view is not None:
-                        if view.project == project:
+                        if view.project is project:
                             vindex = project.documents.index(view)
                             if vindex in [index - 1, index]:
                                 continue
                             if vindex - index <= 0:
                                 index -= 1
                         view.project.remove_document_view(view)
-                    else:
+                    elif is_copy or view is None or project is not view.project:
                         view = TextDocumentView(project, document=item)
+                    else:
+                        focus = view
+                        continue
                 project.insert_document_view(index, view)
                 focus = view
                 index += 1

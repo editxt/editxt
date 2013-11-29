@@ -1087,7 +1087,7 @@ def test_iter_dropped_paths():
         ed = Editor(editxt.app, None)
         ed.find_project_with_path = m.method(ed.find_project_with_path)
         app = m.replace(ed, 'app')
-        doc_class = m.replace('editxt.document.TextDocument')
+        doc_class = m.replace('editxt.editor.TextDocument')
         pb = m.mock(ak.NSPasteboard)
         dc = m.mock(DocumentController)
         result_items = []
@@ -1123,6 +1123,8 @@ def test_iter_dropped_paths():
 #    yield test, c(paths=[path(proj, 1, True), path(doc, 1), path(proj, 2)])
 
 def test_insert_items():
+    class FakeApp(object):
+        text_commander = None
     class MatchingName(object):
         def __init__(self, name, rmap):
             self.name = name
@@ -1147,7 +1149,8 @@ def test_insert_items():
             return project, dindex + offset
 
         m = Mocker()
-        ed = Editor(editxt.app, None)
+        app = FakeApp()
+        ed = Editor(app, None)
         current_view = m.property(ed, 'current_view')
         map = {}
         rmap = {}
@@ -1157,7 +1160,8 @@ def test_insert_items():
         for i, char in enumerate(c.init + ' '):
             if char == ' ':
                 if i == c.drop[1]:
-                    parent, index = get_parent_index(c.drop, 1)
+                    offset = 1 if project is not None else 0
+                    parent, index = get_parent_index(c.drop, offset)
                 dindex = -1
                 continue
             if char in '0123456789':
@@ -1183,8 +1187,7 @@ def test_insert_items():
                 drop[char].setFileURL_(fn.NSURL.fileURLWithPath_(char))
         items = [drop[char] for char in c.drop[0]]
 
-        act = None if len(c.drop) == 2 else \
-            ({'move': const.MOVE, 'copy':const.COPY}[c.drop[2]])
+        act = {'move': const.MOVE, 'copy': const.COPY, None: None}[c.action]
 
         if c.result and c.focus:
             current_view.value = MatchingName(c.focus, rmap)
@@ -1215,9 +1218,12 @@ def test_insert_items():
     #   project 2
     #       document d
     #       document e
+    #
+    # drop=(<dropped item(s)>, <drop index in init>)
 
     c = TestConfig(init=' 0abc 1 2de', result=True, focus='')
 
+    c = c(action='move')
     yield test, c(drop=('', 0), final=' 0abc 1 2de', result=False)
     yield test, c(drop=('', 1), final=' 0abc 1 2de', result=False)
     yield test, c(drop=('', 2), final=' 0abc 1 2de', result=False)
@@ -1231,7 +1237,7 @@ def test_insert_items():
     yield test, c(drop=('', 10), final=' 0abc 1 2de', result=False)
     yield test, c(drop=('', 11), final=' 0abc 1 2de', result=False)
 
-    yield test, c(drop=('a', 0), final=' 3a 0bc 1 2de', focus='a')
+    yield test, c(drop=('a', 0), final=' 0bc 1 2de 3a', focus='a')
     yield test, c(drop=('a', 1), final=' 0bca 1 2de', focus='a')
     yield test, c(drop=('a', 2), final=' 0abc 1 2de')
     yield test, c(drop=('a', 3), final=' 0abc 1 2de')
@@ -1244,7 +1250,7 @@ def test_insert_items():
     yield test, c(drop=('a', 10), final=' 0bc 1 2dae', focus='a')
     yield test, c(drop=('a', 11), final=' 0bc 1 2dea', focus='a')
 
-    yield test, c(drop=('f', 0), final=' 3F 0abc 1 2de', focus='F')
+    yield test, c(drop=('f', 0), final=' 0abc 1 2de 3F', focus='F')
     yield test, c(drop=('f', 1), final=' 0abcF 1 2de', focus='F')
     yield test, c(drop=('f', 2), final=' 0Fabc 1 2de', focus='F')
     yield test, c(drop=('f', 3), final=' 0aFbc 1 2de', focus='F')
@@ -1257,7 +1263,7 @@ def test_insert_items():
     yield test, c(drop=('f', 10), final=' 0abc 1 2dFe', focus='F')
     yield test, c(drop=('f', 11), final=' 0abc 1 2deF', focus='F')
 
-    yield test, c(drop=('2', 0), final=' 2de 0abc 1', focus='2')
+    yield test, c(drop=('2', 0), final=' 0abc 1 2de', focus='2')
     yield test, c(drop=('2', 1), final=' 2de 0abc 1', focus='2')
     yield test, c(drop=('2', 2), final=' 2de 0abc 1', focus='2')
     yield test, c(drop=('2', 3), final=' 2de 0abc 1', focus='2')
@@ -1270,31 +1276,86 @@ def test_insert_items():
     yield test, c(drop=('2', 10), final=' 0abc 1 2de', focus='')
     yield test, c(drop=('2', 11), final=' 0abc 1 2de', focus='')
 
-    yield test, c(drop=('', 0, 'copy'), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 1, 'copy'), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 2, 'copy'), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 3, 'copy'), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 4, 'copy'), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 5, 'copy'), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 6, 'copy'), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 7, 'copy'), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 8, 'copy'), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 9, 'copy'), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 10, 'copy'), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 11, 'copy'), final=' 0abc 1 2de', result=False)
+    c = c(action='copy')
+    yield test, c(drop=('', 0), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 1), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 2), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 3), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 4), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 5), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 6), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 7), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 8), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 9), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 10), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 11), final=' 0abc 1 2de', result=False)
 
-    yield test, c(drop=('a', 0, 'copy'), final=' 3A 0abc 1 2de', focus='A')
-    yield test, c(drop=('a', 1, 'copy'), final=' 0abcA 1 2de', focus='A')
-    yield test, c(drop=('a', 2, 'copy'), final=' 0Aabc 1 2de', focus='A')
-    yield test, c(drop=('a', 3, 'copy'), final=' 0aAbc 1 2de', focus='A')
-    yield test, c(drop=('a', 4, 'copy'), final=' 0abAc 1 2de', focus='A')
-    yield test, c(drop=('a', 5, 'copy'), final=' 0abcA 1 2de', focus='A')
-    yield test, c(drop=('a', 6, 'copy'), final=' 0abc 1A 2de', focus='A')
-    yield test, c(drop=('a', 7, 'copy'), final=' 0abc 1A 2de', focus='A')
-    yield test, c(drop=('a', 8, 'copy'), final=' 0abc 1 2deA', focus='A')
-    yield test, c(drop=('a', 9, 'copy'), final=' 0abc 1 2Ade', focus='A')
-    yield test, c(drop=('a', 10, 'copy'), final=' 0abc 1 2dAe', focus='A')
-    yield test, c(drop=('a', 11, 'copy'), final=' 0abc 1 2deA', focus='A')
+    yield test, c(drop=('a', 0), final=' 0abc 1 2de 3A', focus='A')
+    yield test, c(drop=('a', 1), final=' 0abcA 1 2de', focus='A')
+    yield test, c(drop=('a', 2), final=' 0Aabc 1 2de', focus='A')
+    yield test, c(drop=('a', 3), final=' 0aAbc 1 2de', focus='A')
+    yield test, c(drop=('a', 4), final=' 0abAc 1 2de', focus='A')
+    yield test, c(drop=('a', 5), final=' 0abcA 1 2de', focus='A')
+    yield test, c(drop=('a', 6), final=' 0abc 1A 2de', focus='A')
+    yield test, c(drop=('a', 7), final=' 0abc 1A 2de', focus='A')
+    yield test, c(drop=('a', 8), final=' 0abc 1 2deA', focus='A')
+    yield test, c(drop=('a', 9), final=' 0abc 1 2Ade', focus='A')
+    yield test, c(drop=('a', 10), final=' 0abc 1 2dAe', focus='A')
+    yield test, c(drop=('a', 11), final=' 0abc 1 2deA', focus='A')
+
+    c = c(action=None, init=' 0abc 1 2de')
+    yield test, c(drop=('', 0), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 1), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 2), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 3), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 4), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 5), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 6), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 7), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 8), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 9), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 10), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 11), final=' 0abc 1 2de', result=False)
+
+    yield test, c(drop=('a', 0), final=' 0abc 1 2de 3A', focus='A')
+    yield test, c(drop=('a', 1), final=' 0abc 1 2de', focus='a')
+    yield test, c(drop=('a', 2), final=' 0abc 1 2de', focus='a')
+    yield test, c(drop=('a', 3), final=' 0abc 1 2de', focus='a')
+    yield test, c(drop=('a', 4), final=' 0abc 1 2de', focus='a')
+    yield test, c(drop=('a', 5), final=' 0abc 1 2de', focus='a')
+    yield test, c(drop=('a', 6), final=' 0abc 1A 2de', focus='A')
+    yield test, c(drop=('a', 7), final=' 0abc 1A 2de', focus='A')
+    yield test, c(drop=('a', 8), final=' 0abc 1 2deA', focus='A')
+    yield test, c(drop=('a', 9), final=' 0abc 1 2Ade', focus='A')
+    yield test, c(drop=('a', 10), final=' 0abc 1 2dAe', focus='A')
+    yield test, c(drop=('a', 11), final=' 0abc 1 2deA', focus='A')
+
+    yield test, c(drop=('f', 0), final=' 0abc 1 2de 3F', focus='F')
+    yield test, c(drop=('f', 1), final=' 0abcF 1 2de', focus='F')
+    yield test, c(drop=('f', 2), final=' 0Fabc 1 2de', focus='F')
+    yield test, c(drop=('f', 3), final=' 0aFbc 1 2de', focus='F')
+    yield test, c(drop=('f', 4), final=' 0abFc 1 2de', focus='F')
+    yield test, c(drop=('f', 5), final=' 0abcF 1 2de', focus='F')
+    yield test, c(drop=('f', 6), final=' 0abc 1F 2de', focus='F')
+    yield test, c(drop=('f', 7), final=' 0abc 1F 2de', focus='F')
+    yield test, c(drop=('f', 8), final=' 0abc 1 2deF', focus='F')
+    yield test, c(drop=('f', 9), final=' 0abc 1 2Fde', focus='F')
+    yield test, c(drop=('f', 10), final=' 0abc 1 2dFe', focus='F')
+    yield test, c(drop=('f', 11), final=' 0abc 1 2deF', focus='F')
+
+    # cannot copy project yet
+#    yield test, c(drop=('2', 0), final=' 0abc 1 2de', focus='')
+#    yield test, c(drop=('2', 1), final=' 2de 0abc 1', focus='2')
+#    yield test, c(drop=('2', 2), final=' 2de 0abc 1', focus='2')
+#    yield test, c(drop=('2', 3), final=' 2de 0abc 1', focus='2')
+#    yield test, c(drop=('2', 4), final=' 2de 0abc 1', focus='2')
+#    yield test, c(drop=('2', 5), final=' 2de 0abc 1', focus='2')
+#    yield test, c(drop=('2', 6), final=' 0abc 2de 1', focus='2')
+#    yield test, c(drop=('2', 7), final=' 0abc 2de 1', focus='2')
+#    yield test, c(drop=('2', 8), final=' 0abc 1 2de', focus='')
+#    yield test, c(drop=('2', 9), final=' 0abc 1 2de', focus='')
+#    yield test, c(drop=('2', 10), final=' 0abc 1 2de', focus='')
+#    yield test, c(drop=('2', 11), final=' 0abc 1 2de', focus='')
 
 def test_undo_manager():
     def test(c):
