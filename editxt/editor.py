@@ -545,7 +545,7 @@ class Editor(object):
             yield TextDocument.get_with_path(path)
 
     def insert_items(self, items, project=None, index=-1, action=None):
-        """Insert items into the document tree
+        """Insert projects or documents into the document tree
 
         :param items: A sequence of projects and/or documents.
         :param project: The parent project into which items are being inserted.
@@ -565,17 +565,14 @@ class Editor(object):
             being inserted.
         :returns: True if the items were accepted, otherwise False.
         """
+        proj_index = len(self.projects) # insert projects at end of list
         if project is None:
-            # a new project will be created if/when needed
-            if index < 0:
-                proj_index = len(self.projects)
-            else:
+            # a new project will be inserted at index if/when needed
+            if index >= 0 and index <= proj_index:
                 proj_index = index
             index = 0
-        else:
-            proj_index = len(self.projects) # insert projects at end of list
-            if index < 0:
-                index = len(project.documents)
+        elif index < 0:
+            index = len(project.documents)
         accepted = False
         focus = None
         is_move = action == const.MOVE
@@ -585,28 +582,10 @@ class Editor(object):
             for item in items:
                 accepted = True
                 if isinstance(item, Project):
-                    if not is_move:
-                        raise NotImplementedError('cannot copy project yet')
-                    if item.editor is self:
-                        editor = self
-                        pindex = self.projects.index(item)
-                        if pindex == proj_index:
-                            continue
-                        if pindex - proj_index <= 0:
-                            proj_index -= 1
-                    else:
-                        editor = item.editor
-
-                    # BEGIN HACK crash on remove project with documents
-                    pdocs = item.documents
-                    docs, pdocs[:] = list(pdocs), []
-                    editor.projects.remove(item) # this line should be all that's necessary
-                    pdocs.extend(docs)
-                    # END HACK
-
-                    self.projects.insert(proj_index, item)
-                    proj_index += 1
-                    focus = item
+                    set_focus, proj_index = \
+                        self._insert_project(item, proj_index, action)
+                    if set_focus:
+                        focus = item
                     continue
 
                 if project is None:
@@ -650,6 +629,29 @@ class Editor(object):
         if focus is not None:
             self.current_view = focus
         return accepted
+
+    def _insert_project(self, item, index, action):
+        if action != const.MOVE:
+            raise NotImplementedError('cannot copy project yet')
+        if item.editor is self:
+            editor = self
+            pindex = self.projects.index(item)
+            if pindex == index:
+                return False, index
+            if pindex - index <= 0:
+                index -= 1
+        else:
+            editor = item.editor
+
+        # BEGIN HACK crash on remove project with documents
+        pdocs = item.documents
+        docs, pdocs[:] = list(pdocs), []
+        editor.projects.remove(item) # this line should be all that's necessary
+        pdocs.extend(docs)
+        # END HACK
+
+        self.projects.insert(index, item)
+        return True, index + 1
 
     def undo_manager(self):
         doc = self.wc.document()
