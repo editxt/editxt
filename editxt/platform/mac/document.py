@@ -73,9 +73,6 @@ def setup_main_view(docview, frame):
 
     command = CommandView.alloc().initWithFrame_(frame)
 
-    delegate = TextViewDelegate.alloc().init_(docview)
-    text.setDelegate_(delegate)
-
     def doc_height():
         return scroll.contentSize().height
     def command_height():
@@ -85,6 +82,8 @@ def setup_main_view(docview, frame):
     ak.NSNotificationCenter.defaultCenter() \
         .addObserver_selector_name_object_(
             main_view, "tile:", SHOULD_RESIZE, command)
+    main_view._text_delegate = TextViewDelegate.alloc().init_(docview)
+    text.setDelegate_(main_view._text_delegate)
 
     return main_view
 
@@ -92,6 +91,7 @@ def setup_main_view(docview, frame):
 def teardown_main_view(main_view):
     """The opposite of setup_main_view"""
     main_view.removeFromSuperview()
+    main_view._text_delegate = None
     scroll = main_view.top
     scroll.verticalRulerView().denotify()
     text = scroll.documentView()
@@ -104,6 +104,7 @@ class TextViewDelegate(ak.NSObject):
     def init_(self, docview):
         self.on_do_command = docview.on_do_command
         self.on_selection_changed = docview.on_selection_changed
+        return self
 
     def dealloc(self):
         self.on_do_command = None
