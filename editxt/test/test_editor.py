@@ -870,7 +870,8 @@ def test_is_project_drag():
         pb = info.draggingPasteboard() >> m.mock(ak.NSPasteboard)
         pb.availableTypeFromArray_(ed.supported_drag_types) >> c.accepted_type
         if c.accepted_type == const.DOC_ID_LIST_PBOARD_TYPE:
-            ed.iter_dropped_id_list(pb) >> items
+            id_list = pb.propertyListForType_(const.DOC_ID_LIST_PBOARD_TYPE) >> m.mock()
+            ed.iter_dropped_id_list(id_list) >> items
             factories = dict(
                 p=(lambda:m.mock(Project)),
                 d=(lambda:m.mock(TextDocumentView)),
@@ -1031,10 +1032,12 @@ def test_accept_drop():
         pb = info.draggingPasteboard() >> m.mock(ak.NSPasteboard)
         pb.availableTypeFromArray_(ed.supported_drag_types) >> c.accepted_type
         if c.accepted_type == const.DOC_ID_LIST_PBOARD_TYPE:
-            ed.iter_dropped_id_list(pb) >> items
+            id_list = pb.propertyListForType_(const.DOC_ID_LIST_PBOARD_TYPE) >> m.mock()
+            ed.iter_dropped_id_list(id_list) >> items
             act = const.MOVE
         elif c.accepted_type == ak.NSFilenamesPboardType:
-            ed.iter_dropped_paths(pb) >> items
+            paths = pb.propertyListForType_(ak.NSFilenamesPboardType) >> m.mock()
+            items = ed.iter_dropped_paths(paths) >> items
         else:
             items = None
             assert c.accepted_type is None
@@ -1056,20 +1059,19 @@ def test_iter_dropped_id_list():
         m = Mocker()
         ed = Editor(editxt.app, None)
         app = m.replace(ed, 'app')
-        pb = m.mock(ak.NSPasteboard)
         result_items = []
-        pb.types().containsObject_(const.DOC_ID_LIST_PBOARD_TYPE) >> c.has_ids
         if c.has_ids:
             ids = []
-            pb.propertyListForType_(const.DOC_ID_LIST_PBOARD_TYPE) >> ids
             for it in c.ids:
                 ids.append(it.id)
                 item = m.mock()
                 app.find_item_with_id(it.id) >> (item if it.found else None)
                 if it.found:
                     result_items.append(item)
+        else:
+            ids = None
         with m:
-            result = list(ed.iter_dropped_id_list(pb))
+            result = list(ed.iter_dropped_id_list(ids))
             eq_(result, result_items)
     c = TestConfig(has_ids=True)
     ix = lambda id, found=True: TestConfig(id=id, found=found)
@@ -1088,23 +1090,22 @@ def test_iter_dropped_paths():
         ed.find_project_with_path = m.method(ed.find_project_with_path)
         app = m.replace(ed, 'app')
         doc_class = m.replace('editxt.editor.TextDocument')
-        pb = m.mock(ak.NSPasteboard)
         dc = m.mock(DocumentController)
         result_items = []
         #item = None if c.item_is_none else m.mock()
-        pb.types().containsObject_(ak.NSFilenamesPboardType) >> c.has_paths
         if c.has_paths:
             #parent = None if c.item_is_none else m.mock(Project)
             #if not c.item_is_none:
             #    representedObject(item) >> parent
             paths = []
-            pb.propertyListForType_(ak.NSFilenamesPboardType) >> paths
             for it in c.paths:
                 paths.append(it.path)
                 doc = doc_class.get_with_path(it.path) >> m.mock(TextDocument)
                 result_items.append(doc)
+        else:
+            paths = None
         with m:
-            result = list(ed.iter_dropped_paths(pb))
+            result = list(ed.iter_dropped_paths(paths))
             eq_(result, result_items)
     c = TestConfig(item_is_none=False, has_paths=True)
     doc = "/path/to/doc%s.txt"

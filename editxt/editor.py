@@ -426,7 +426,8 @@ class Editor(object):
         pb = info.draggingPasteboard()
         t = pb.availableTypeFromArray_(self.supported_drag_types)
         if t == const.DOC_ID_LIST_PBOARD_TYPE:
-            items = self.iter_dropped_id_list(pb)
+            id_list = pb.propertyListForType_(const.DOC_ID_LIST_PBOARD_TYPE)
+            items = self.iter_dropped_id_list(id_list)
             return all(isinstance(item, Project) for item in items)
         elif t == ak.NSFilenamesPboardType:
             paths = pb.propertyListForType_(ak.NSFilenamesPboardType)
@@ -517,30 +518,31 @@ class Editor(object):
         t = pb.availableTypeFromArray_(self.supported_drag_types)
         action = None
         if t == const.DOC_ID_LIST_PBOARD_TYPE:
-            items = self.iter_dropped_id_list(pb)
+            id_list = pb.propertyListForType_(const.DOC_ID_LIST_PBOARD_TYPE)
+            items = self.iter_dropped_id_list(id_list)
             action = const.MOVE
         elif t == ak.NSFilenamesPboardType:
-            items = self.iter_dropped_paths(pb)
+            paths = pb.propertyListForType_(ak.NSFilenamesPboardType)
+            items = self.iter_dropped_paths(paths)
         else:
             assert t is None, t
             return False
         parent = None if item is None else representedObject(item)
         return self.insert_items(items, parent, index, action)
 
-    def iter_dropped_id_list(self, pasteboard):
+    def iter_dropped_id_list(self, id_list):
         """Iterate TextDocument objects referenced by pasteboard (if any)"""
-        IDLT = const.DOC_ID_LIST_PBOARD_TYPE
-        if not pasteboard.types().containsObject_(IDLT):
-            raise StopIteration()
-        for ident in pasteboard.propertyListForType_(IDLT):
+        if not id_list:
+            return
+        for ident in id_list:
             item = self.app.find_item_with_id(ident)
             if item is not None:
                 yield item
 
-    def iter_dropped_paths(self, pasteboard):
-        if not pasteboard.types().containsObject_(ak.NSFilenamesPboardType):
-            raise StopIteration()
-        for path in pasteboard.propertyListForType_(ak.NSFilenamesPboardType):
+    def iter_dropped_paths(self, paths):
+        if not paths:
+            return
+        for path in paths:
             # TODO create project for dropped directory
             yield TextDocument.get_with_path(path)
 
