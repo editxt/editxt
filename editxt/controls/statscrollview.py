@@ -64,14 +64,17 @@ class StatusbarScrollView(ak.NSScrollView):
             rule_rect, crect = fn.NSDivideRect(crect, None, None, rulew, fn.NSMinXEdge)
         else:
             rulew = 0
-        svwidth = status.tileWithRuleWidth_(rulew)
-
-        # status | scrollers
-        status_rect, hrect = fn.NSDivideRect(arect, None, None, svwidth, fn.NSMinXEdge)
+        status_size = status.tile_with_ruler_width(
+            rulew, uniform=self.can_overlay_scrollers)
 
         if self.can_overlay_scrollers:
-            status.setFrameSize_(status_rect.size)
+            if self.overlay is not None:
+                x = rect.size.width - status_size.width - scrollw
+                status.setFrame_(fn.NSMakeRect(x, 0, *status_size))
         else:
+            # status | scrollers
+            status_rect, hrect = fn.NSDivideRect(
+                arect, None, None, status_size.width, fn.NSMinXEdge)
             vscroll.setFrame_(vscroll_rect)
             if ruler:
                 ruler.setFrame_(rule_rect)
@@ -91,7 +94,7 @@ class StatusbarScrollView(ak.NSScrollView):
             overlay = window.__overlay = OverlayWindow.alloc().initWithView_(self)
         if self.status_view not in overlay.contentView().subviews():
             self.status_view.setAutoresizingMask_(
-                ak.NSViewMaxXMargin | ak.NSViewMaxYMargin)
+                ak.NSViewMinXMargin | ak.NSViewMaxYMargin)
             overlay.contentView().setSubviews_([self.status_view])
         return overlay
 
@@ -128,22 +131,33 @@ class StatusView(ak.NSView):
             setattr(self, fname, field)
         return self
 
-    def tileWithRuleWidth_(self, width):
-        rect = self.bounds()
-        rect.origin.x -= 1
-        rect.origin.y -= 1
-        rect.size.height += 1
-        width = width + 1 if width else 50
-        arect, brect = fn.NSDivideRect(rect, None, None, width, fn.NSMinXEdge)
-        self.linenumView.setFrame_(arect)
-        crect, drect = fn.NSDivideRect(brect, None, None, 50, fn.NSMinXEdge)
-        crect.origin.x -= 1
-        crect.size.width += 1
-        self.columnView.setFrame_(crect)
-        drect.origin.x -= 1
-        drect.size.width = 51
-        self.selectionView.setFrame_(drect)
-        return arect.size.width + crect.size.width + drect.size.width - 2
+    def tile_with_ruler_width(self, width, uniform=False):
+        """Tile subviews with vertical ruler width
+
+        :param width: The width of the line number ruler view.
+        :param uniform: Use uniform widths for all subviews if true.
+        When false, resize line number view with the same width as the
+        ruler.
+        :returns: Size of the tiled status view.
+        """
+        # TODO minimum width based on font size rather than constant 50
+        if uniform:
+            rwidth = max(width, 50)
+            x = 0
+            y = -1
+        else:
+            rwidth = width + 1
+            x = -1
+            y = -1
+        width = max(width, 50)
+        height = ak.NSScroller.scrollerWidth() + 1
+        line_rect = fn.NSMakeRect(x, y, rwidth, height)
+        col_rect = fn.NSMakeRect(x + rwidth - 1, y, width, height)
+        sel_rect = fn.NSMakeRect(x + rwidth + width - 2, y, width, height)
+        self.linenumView.setFrame_(line_rect)
+        self.columnView.setFrame_(col_rect)
+        self.selectionView.setFrame_(sel_rect)
+        return fn.NSMakeSize(rwidth + width * 2 - 2, height - 1)
 
     def updateLine_column_selection_(self, line, col, sel):
         self.linenumView.setIntValue_(line)
