@@ -26,10 +26,11 @@ import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import (TestConfig, untested, check_app_state, replattr,
-    tempdir)
+    temp_app, tempdir)
 
 import editxt
 import editxt.command.base as mod
+from editxt.application import Application
 from editxt.controls.textview import TextView
 from editxt.command.base import CommandController
 from editxt.command.base import SheetController, PanelController
@@ -61,13 +62,6 @@ def setup(controller_class, nib_name="TestController"):
                 del controller_class.NIB_NAME
         return wrapper
     return setup_controller
-
-@contextmanager
-def replace_history():
-    with tempdir() as tmp:
-        history = CommandHistory(tmp)
-        with replattr(editxt.app.text_commander, "history", history):
-            yield history
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # command decorator tests
@@ -114,7 +108,8 @@ def test_command_decorator_names():
 
 def test_load_options():
     def test(argstr=None, value=None):
-        with replace_history() as history:
+        with temp_app() as app:
+            history = app.text_commander.history
             if argstr:
                 history.append(argstr)
             options = mod.load_options(dummy_command, history)
@@ -127,7 +122,8 @@ def test_load_options():
 
 def test_save_options():
     def test(options, hist, command=dummy_command):
-        with replace_history() as history:
+        with temp_app() as app:
+            history = app.text_commander.history
             mod.save_options(options, command, history)
             eq_(next(iter(history), None), hist)
 
@@ -147,17 +143,19 @@ class OtherController(PanelController): pass
 
 @setup(PanelController)
 def test_PanelController_shared_controller():
-    cx = PanelController.shared_controller()
-    c1 = OtherController.shared_controller()
-    assert isinstance(c1, OtherController), c1
-    c2 = OtherController.shared_controller()
-    assert c1 is c2, (c1, c2)
+    with temp_app() as app:
+        cx = PanelController.shared_controller(app)
+        c1 = OtherController.shared_controller(app)
+        assert cx is not c1, c1
+        assert isinstance(c1, OtherController), c1
+        c2 = OtherController.shared_controller(app)
+        assert c1 is c2, (c1, c2)
 
 @setup(CommandController)
 def test_CommandController_options():
-    with replace_history() as history:
-        ctl = FakeController()
-        eq_(ctl.history, history)
+    with temp_app() as app:
+        ctl = FakeController(app)
+        eq_(ctl.history, app.text_commander.history)
         assert ctl.options is ctl.gui.options()
         obj = object()
         ctl.gui.setOptions_(obj)
@@ -169,8 +167,9 @@ class FakeController(CommandController):
 
 def test_CommandController_load_options():
     def test(hist, expect):
-        with replace_history() as history:
-            ctl = FakeController()
+        with temp_app() as app:
+            history = app.text_commander.history
+            ctl = FakeController(app)
             eq_(ctl.history, history)
             if hist:
                 history.append(hist)
@@ -180,9 +179,10 @@ def test_CommandController_load_options():
     yield test, "123", Options(value=123)
 
 def test_CommandController_save_options():
-    with replace_history() as history:
+    with temp_app() as app:
+        history = app.text_commander.history
         eq_(next(iter(history), None), None)
-        slc = FakeController()
+        slc = FakeController(app)
         slc.options = Options(value=42)
         slc.save_options()
         eq_(next(iter(history)), "42")
@@ -193,17 +193,22 @@ def test_CommandController_save_options():
 @setup(SheetController)
 def test_SheetController_begin_sheet():
     from editxt.controls.alert import Caller
-    m = Mocker()
-    tv = m.mock(TextView)
-    slc = SheetController(tv)
-    def cb(callback):
-        return callback.__name__ == "sheet_did_end" and callback.__self__ is slc
-    clr_class = m.replace(mod, "Caller")
-    clr = clr_class.alloc().init(MATCH(cb)) >> m.mock(Caller)
-    win = tv.window() >> m.mock(ak.NSWindow)
-    pnl = m.method(slc.gui.window)() >> m.mock(ak.NSPanel)
-    nsapp = m.replace(ak, 'NSApp', spec=False)
-    nsapp.beginSheet_modalForWindow_modalDelegate_didEndSelector_contextInfo_(
-        pnl, win, clr, "alertDidEnd:returnCode:contextInfo:", 0)
-    with m:
-        slc.begin_sheet(None)
+    class FakeTextView(object): pass
+    with temp_app() as app:
+        m = Mocker()
+        tv = FakeTextView()
+        tv.app = app
+        tv.window = lambda:win
+        win = m.mock(ak.NSWindow)
+        slc = SheetController(tv)
+        def cb(callback):
+            return (callback.__name__ == "sheet_did_end"
+                and callback.__self__ is slc)
+        clr_class = m.replace(mod, "Caller")
+        clr = clr_class.alloc().init(MATCH(cb)) >> m.mock(Caller)
+        pnl = m.method(slc.gui.window)() >> m.mock(ak.NSPanel)
+        nsapp = m.replace(ak, 'NSApp', spec=False)
+        nsapp.beginSheet_modalForWindow_modalDelegate_didEndSelector_contextInfo_(
+            pnl, win, clr, "alertDidEnd:returnCode:contextInfo:", 0)
+        with m:
+            slc.begin_sheet(None)

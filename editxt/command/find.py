@@ -31,7 +31,8 @@ import editxt.constants as const
 from editxt.command.base import command, CommandError, objc_delegate, PanelController
 from editxt.command.parser import Choice, Regex, RegexPattern, CommandParser, Options
 from editxt.command.util import make_command_predicate
-from editxt.util import KVOProxy, KVOLink
+from editxt.datatypes import WeakProperty
+from editxt.platform.kvo import KVOProxy, KVOLink
 
 log = logging.getLogger(__name__)
 
@@ -69,7 +70,7 @@ def find(textview, sender, args):
     assert args is not None, sender
     opts = FindOptions(**args.__dict__)
     save_to_find_pasteboard(opts.find_text)
-    finder = Finder(lambda:textview, opts)
+    finder = Finder(lambda:textview, opts, textview.app)
     return getattr(finder, args.action)(sender)
 
 
@@ -97,6 +98,7 @@ class FindOptions(Options):
         search_type = REGEX,
         wrap_around = True,
     )
+    app = WeakProperty()
 
     dependent_key_paths = {
         "match_entire_word": ["regular_expression", "search_type", "python_replace"],
@@ -172,9 +174,8 @@ class FindOptions(Options):
 
     @property
     def recent_finds(self):
-        # HACK global resource
         predicate = make_command_predicate(find)
-        items = editxt.app.text_commander.history.iter_matching(predicate)
+        items = self.app.text_commander.history.iter_matching(predicate)
         result = []
         for i, item in enumerate(items):
             if i < 10:
@@ -191,9 +192,13 @@ class FindOptions(Options):
 
 class Finder(object):
 
-    def __init__(self, find_target, options):
+    app = WeakProperty()
+
+    def __init__(self, find_target, options, app):
         self.find_target = find_target
         self.options = options
+        self.options.app = app
+        self.app = app
 
     def find_next(self, sender):
         self.find(FORWARD)
@@ -245,7 +250,7 @@ class Finder(object):
         if last_mark[0] == ftext:
             return last_mark[1]
         if color is None:
-            color = editxt.app.config["highlight_selected_text.color"] # HACK global resource
+            color = self.app.config["highlight_selected_text.color"]
         layout = target.layoutManager()
         full_range = fn.NSMakeRange(0, target.textStorage().length())
         layout.removeTemporaryAttribute_forCharacterRange_(
@@ -470,9 +475,9 @@ class FindController(PanelController):
             status_label=objc.IBOutlet(),
         )
 
-    def __init__(self):
-        super(FindController, self).__init__()
-        self.finder = Finder(self.find_target, self.options)
+    def __init__(self, app):
+        super(FindController, self).__init__(app)
+        self.finder = Finder(self.find_target, self.options, app)
         self.action_registry = {
             ak.NSFindPanelActionShowFindPanel: self.show_find_panel,
             ak.NSFindPanelActionNext: self.find_next,
@@ -485,7 +490,6 @@ class FindController(PanelController):
             ACTION_FIND_SELECTED_TEXT: self.find_selected_text,
             ACTION_FIND_SELECTED_TEXT_REVERSE: self.find_selected_text_reverse,
         }
-        self.default_option_keys = [k for k, v in FindOptions()] # TODO remove on history integration
 
     @objc_delegate
     def windowDidLoad(self):
@@ -638,7 +642,7 @@ class FindController(PanelController):
 
     def find_target(self):
         try:
-            editor = next(editxt.app.iter_editors())
+            editor = next(self.app.iter_editors())
         except StopIteration:
             pass
         else:

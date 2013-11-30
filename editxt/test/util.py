@@ -233,6 +233,13 @@ class Regex(object):
         return not self.__eq__(other)
 
 
+@contextmanager
+def temp_app():
+    from editxt.application import Application
+    with tempdir() as tmp:
+        yield Application(tmp)
+
+
 def check_app_state(test):
     def checker(when):
         def check_app_state():
@@ -242,6 +249,7 @@ def check_app_state(test):
                 % (when, test.__name__, dc.documents())
         return check_app_state
     return with_setup(checker("before"), checker("after"))(test)
+
 
 def profile(test, *args):
     import cProfile

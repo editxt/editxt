@@ -342,6 +342,7 @@ class TextDocumentView(object):
             finder = self._finder = Finder(
                 (lambda:self.text_view),
                 FindOptions(ignore_case=False, wrap_around=False),
+                self.document.app,
             )
         return finder
 

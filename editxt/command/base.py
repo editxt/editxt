@@ -28,7 +28,8 @@ import editxt
 from editxt.command.parser import CommandParser, Options, VarArgs
 from editxt.command.util import make_command_predicate
 from editxt.controls.alert import Caller
-from editxt.util import KVOProxy, WeakProperty
+from editxt.datatypes import WeakProperty
+from editxt.platform.kvo import KVOProxy
 
 log = logging.getLogger(__name__)
 
@@ -135,6 +136,8 @@ class CommandController(object):
     #NIB_NAME = "NibFilename"       # Abstract attribute.
     #COMMAND = <command>            # Abstract attribute: command callable
 
+    app = WeakProperty()
+
     @classmethod
     def controller_class(cls, **members):
         try:
@@ -161,15 +164,19 @@ class CommandController(object):
         cls._controller_class = Class
         return Class
 
-    def __init__(self):
+    def __init__(self, app):
         self.gui = self.controller_class().create(self, self.NIB_NAME)
-        self.history = editxt.app.text_commander.history # HACK deep reach into global
+        self.app = app
         if hasattr(self.COMMAND, 'im_func'):
             self.command = self.COMMAND.__func__ # HACK
         else:
             self.command = self.COMMAND
         self.options = KVOProxy(self.OPTIONS_FACTORY())
         self.load_options()
+
+    @property
+    def history(self):
+        return self.app.text_commander.history
 
     def load_options(self):
         for key, value in load_options(self.command, self.history):
@@ -186,7 +193,7 @@ class SheetController(CommandController):
 
     def __init__(self, textview):
         self.textview = textview
-        super(SheetController, self).__init__()
+        super(SheetController, self).__init__(textview.app)
 
     def begin_sheet(self, sender):
         self.caller = Caller.alloc().init(self.sheet_did_end)
@@ -206,11 +213,13 @@ class PanelController(CommandController):
     """abstract window controller for panel-based text command"""
 
     @classmethod
-    def shared_controller(cls):
+    def shared_controller(cls, app):
+        attr = "_{}__shared_controller".format(cls.__name__)
         try:
-            return cls.__dict__["_shared_controller"]
-        except KeyError:
-            cls._shared_controller = ctl = cls()
+            return getattr(app, attr)
+        except AttributeError:
+            ctl = cls(app)
+            setattr(app, attr, ctl)
         return ctl
 
 

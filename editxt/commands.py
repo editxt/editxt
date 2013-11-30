@@ -83,8 +83,7 @@ def load_commands():
 @command(title="Command Bar", hotkey=(";", ak.NSCommandKeyMask))
 def show_command_bar(textview, sender, args):
     """Show the command bar"""
-    from editxt import app
-    editor = app.find_editor_with_document_view(textview.doc_view)
+    editor = textview.doc_view.project.editor
     if editor is None:
         ak.NSBeep()
     else:
@@ -253,8 +252,7 @@ def dedent_lines(textview, sender, args):
 
 @command(title="Reload config")
 def reload_config(textview, sender, args):
-    from editxt import app
-    app.config.reload()
+    textview.app.config.reload()
 
 
 @command(title="Clear highlighted text")

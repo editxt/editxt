@@ -527,7 +527,7 @@ class DocumentSavingDelegate(fn.NSObject):
         # in which case the latter must call save_next_document.
         self.document_called_back = False
         self.sheet_did_end = False
-        editxt.app.set_current_document_view(doc_view) # set current view so we get a sheet
+        doc_view.project.editor.current_view = doc_view # set current view so we get a sheet
         window = doc_view.window()
         document = doc_view.document
         if document.windowControllers()[0].window() != window:

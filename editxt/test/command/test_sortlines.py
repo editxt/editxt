@@ -27,7 +27,7 @@ import AppKit as ak
 import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
-from editxt.test.util import TestConfig, untested, check_app_state
+from editxt.test.util import TestConfig, untested, check_app_state, temp_app
 
 import editxt.command.base as base
 import editxt.command.sortlines as mod
@@ -35,7 +35,6 @@ import editxt.constants as const
 from editxt.command.sortlines import SortLinesController, SortOptions, sortlines
 from editxt.command.parser import RegexPattern
 from editxt.controls.textview import TextView
-from editxt.test.command.test_base import replace_history
 from editxt.test.test_commands import CommandTester
 
 log = logging.getLogger(__name__)
@@ -62,16 +61,18 @@ def test_sort_command():
     yield test, "sort all   match-case", "|0|4dJag|0"
 
 def test_SortLinesController_default_options():
-    with replace_history() as history:
-        ctl = SortLinesController(None)
+    with temp_app() as app:
+        textview = base.Options(app=app)
+        ctl = SortLinesController(textview)
         for name, value in SortOptions.DEFAULTS.items():
             eq_(getattr(ctl.options, name), value, name)
 
 def test_SortLinesController_load_options():
     def test(hist, opts):
-        with replace_history() as history:
-            history.append(hist)
-            ctl = SortLinesController(None)
+        with temp_app() as app:
+            textview = base.Options(app=app)
+            app.text_commander.history.append(hist)
+            ctl = SortLinesController(textview)
             eq_(ctl.options._target, SortOptions(**opts))
 
     yield test, "sort", {}
@@ -91,10 +92,10 @@ def test_SortLinesController_load_options():
 def test_SortLinesController_sort_():
     m = Mocker()
     sort = m.replace(mod, 'sortlines')
-    tv = m.mock(TextView)
-    with replace_history() as history:
-        slc = SortLinesController(tv)
-        sort(tv, slc.options)
+    with temp_app() as app:
+        textview = base.Options(app=app)
+        slc = SortLinesController(textview)
+        sort(textview, slc.options)
         m.method(slc.save_options)()
         m.method(slc.cancel_)(None)
         with m:

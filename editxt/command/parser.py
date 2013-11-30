@@ -929,7 +929,9 @@ class SubArgs(object):
 class Options(object):
     """Parsed argument container
 
-    Options are stored as attributes.
+    Options are stored as attributes. Attribute names containing a double-
+    underscore (__) are considered to be private and are excluded from
+    operations that affect option values.
     """
 
     # DEFAULTS = <dict of defaults> # optional attribute for subclasses
@@ -943,19 +945,16 @@ class Options(object):
             setattr(self, name, value)
 
     def __eq__(self, other):
-        if not issubclass(type(other), type(self)):
-            return False
-        obj = Options().__dict__
-        data = {k: v for k, v in self.__dict__.items() if k not in obj}
-        othr = {k: v for k, v in other.__dict__.items() if k not in obj}
-        return data == othr
+        return issubclass(type(other), Options) and dict(self) == dict(other)
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __iter__(self):
         obj = Options().__dict__
-        return (kv for kv in self.__dict__.items() if kv[0] not in obj)
+        return ((k, v)
+            for k, v in self.__dict__.items()
+            if k not in obj and "__" not in k)
 
     def __len__(self):
         return len(list(self.__iter__()))

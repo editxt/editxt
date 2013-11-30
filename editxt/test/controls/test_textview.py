@@ -42,9 +42,10 @@ def test_TextView_performFindPanelAction_():
     from editxt.command.find import FindController
     m = Mocker()
     tv = TextView.alloc().init()
+    app = tv.app = m.mock("editxt.application.Application")
     fc = m.replace(mod, "FindController")
     sender = m.mock()
-    (fc.shared_controller() >> m.mock(FindController)).perform_action(sender)
+    (fc.shared_controller(app) >> m.mock(FindController)).perform_action(sender)
     with m:
         tv.performFindPanelAction_(sender)
 
@@ -82,7 +83,7 @@ def test_TextView_validateUserInterfaceItem_():
         expectation = (item.action() << c.action)
         if c.action == "performFindPanelAction:":
             tag = item.tag() >> 42
-            (fc.shared_controller() >> m.mock(FindController)). \
+            (fc.shared_controller(app) >> m.mock(FindController)). \
                 validate_action(tag) >> True
         elif c.action == "performTextCommand:":
             expectation.count(2)

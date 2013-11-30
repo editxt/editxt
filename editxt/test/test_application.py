@@ -888,7 +888,6 @@ def test_DocumentSavingDelegate_init():
 def test_save_next_document():
     def do_test(doctype, doc_window_is_front=True):
         m = Mocker()
-        app = m.replace(editxt, 'app')
         docs = []
         dc = m.mock(DocumentController)
         note_ctr = m.replace(fn, 'NSNotificationCenter')
@@ -907,7 +906,7 @@ def test_save_next_document():
                 doc.save()
                 do_stop_routine()
             elif doctype is TextDocumentView:
-                app.set_current_document_view(doc)
+                doc.project.editor.current_view = doc
                 win = m.mock()
                 doc.window() >> win
                 note_ctr.defaultCenter().addObserver_selector_name_object_(

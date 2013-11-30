@@ -26,8 +26,7 @@ import AppKit as ak
 import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
-from editxt.test.util import TestConfig, untested, check_app_state
-from editxt.test.command.test_base import replace_history
+from editxt.test.util import TestConfig, untested, check_app_state, temp_app
 
 import editxt.command.base as base
 import editxt.command.wraplines as mod
@@ -48,23 +47,25 @@ def test_wrap_to_margin_guide():
         mod.wrap_at_margin(tv, None, None)
 
 def test_WrapLinesController_default_options():
-    with replace_history() as history:
-        ctl = WrapLinesController(None)
+    with temp_app() as app:
+        textview = base.Options(app=app)
+        ctl = WrapLinesController(textview)
         eq_(ctl.options._target, mod.Options(
             wrap_column=const.DEFAULT_RIGHT_MARGIN,
             indent=True,
         ))
 
 def test_WrapLinesController_wrap_():
-    m = Mocker()
-    cmd = m.replace(mod, 'wrap_selected_lines')
-    tv = m.mock(TextView)
-    ctl = WrapLinesController(tv)
-    cmd(tv, ctl.options)
-    m.method(ctl.save_options)()
-    m.method(ctl.cancel_)(None)
-    with m:
-        ctl.wrap_(None)
+    with temp_app() as app:
+        textview = base.Options(app=app)
+        m = Mocker()
+        cmd = m.replace(mod, 'wrap_selected_lines')
+        ctl = WrapLinesController(textview)
+        cmd(textview, ctl.options)
+        m.method(ctl.save_options)()
+        m.method(ctl.cancel_)(None)
+        with m:
+            ctl.wrap_(None)
 
 def test_wrap_selected_lines():
     def test(c):

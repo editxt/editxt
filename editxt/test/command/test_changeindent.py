@@ -42,6 +42,7 @@ def test_ChangeIndentationController_load_options():
     dv = tv.doc_view >> m.mock(TextDocumentView)
     mode = dv.indent_mode >> "<indent mode>"
     size = dv.indent_size >> "<indent size>"
+    tv.app >> m.mock("editxt.application.Application")
     with m:
         ctl = ChangeIndentationController(tv) # calls load_options()
         opts = ctl.options
@@ -54,6 +55,7 @@ def test_ChangeIndentationController_save_options():
     m = Mocker()
     tv = m.mock(TextView)
     dv = tv.doc_view >> m.mock(TextDocumentView)
+    tv.app >> m.mock("editxt.application.Application")
     with m.order():
         mode = dv.indent_mode >> "<indent mode>"
         size = dv.indent_size >> "<indent size>"
@@ -69,6 +71,7 @@ def test_ChangeIndentationController_execute_():
     mode = dv.indent_mode >> "m"
     size = dv.indent_size >> "s"
     dv.change_indentation("m", "s", "m", "s", True)
+    tv.app >> m.mock("editxt.application.Application")
     m.method(ChangeIndentationController.save_options)()
     m.method(ChangeIndentationController.cancel_)(None)
     with m:

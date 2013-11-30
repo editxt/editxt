@@ -424,13 +424,12 @@ def test_text_commands():
         yield test, c(input="\n        ", output="\n    ", oldsel=(9+i, 0), newsel=(5+i, 0))
 
 def test_reload_config():
-    from editxt import app
     from editxt.config import Config
     m = Mocker()
-    config = m.mock(Config)
-    config.reload()
     tv = m.mock(ak.NSTextView)
-    with m, replattr(app, "config", config):
+    config = tv.app.config >> m.mock(Config)
+    config.reload()
+    with m:
         mod.reload_config(tv, "<sender>", None)
 
 def test_clear_highlighted_text():
