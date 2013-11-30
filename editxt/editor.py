@@ -489,17 +489,17 @@ class Editor(object):
         #           # allow copy (may need to override outline_view.ignoreModifierKeysWhileDragging)
         return ak.NSDragOperationGeneric
 
-    def accept_drop(self, view, info, item, index):
+    def accept_drop(self, view, pasteboard, parent=const.CURRENT, index=-1):
         """Accept drop operation
 
         :param view: The view on which the drop occurred.
-        :param info: NSDraggingInfo object.
-        :param item: The parent item in the outline view.
+        :param pasteboard: NSPasteboard object.
+        :param parent: The parent item in the outline view.
         :param index: The index in the outline view or parent item at which the
             drop occurred.
         :returns: True if the drop was accepted, otherwise False.
         """
-        pb = info.draggingPasteboard()
+        pb = pasteboard
         t = pb.availableTypeFromArray_(self.supported_drag_types)
         action = None
         if t == const.DOC_ID_LIST_PBOARD_TYPE:
@@ -512,7 +512,6 @@ class Editor(object):
         else:
             assert t is None, t
             return False
-        parent = None if item is None else representedObject(item)
         return bool(self.insert_items(items, parent, index, action))
 
     def iter_dropped_id_list(self, id_list):
@@ -559,7 +558,7 @@ class Editor(object):
         """
         proj_index = len(self.projects) # insert projects at end of list
         if project is const.CURRENT:
-            assert index == -1 and action == None, (index, action)
+            assert index == -1, index
             project = self.get_current_project()
         if project is None:
             # a new project will be inserted at index if/when needed
@@ -765,7 +764,9 @@ class EditorWindowController(ak.NSWindowController):
         return self.editor.write_items_to_pasteboard(view, items, pboard)
 
     def outlineView_acceptDrop_item_childIndex_(self, view, info, item, index):
-        return self.editor.accept_drop(view, info, item, index)
+        parent = None if item is None else representedObject(item)
+        return self.editor.accept_drop(
+            view, info.draggingPasteboard(), parent, index)
 
     def outlineView_validateDrop_proposedItem_proposedChildIndex_(self, view, info, item, index):
         return self.editor.validate_drop(view, info, item, index)

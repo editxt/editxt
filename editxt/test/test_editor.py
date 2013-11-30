@@ -1007,13 +1007,11 @@ def test_accept_drop():
         ed.iter_dropped_paths = m.method(ed.iter_dropped_paths)
         ov = m.mock(ak.NSOutlineView)
         # TODO investigate where NSDraggingInfo went during the upgrade to 10.5
-        info = m.mock() #NSDraggingInfo
-        item = None if c.item_is_none else m.mock()
         parent = None if c.item_is_none else m.mock()
         index = 0
         act = None
         items = m.mock()
-        pb = info.draggingPasteboard() >> m.mock(ak.NSPasteboard)
+        pb = m.mock(ak.NSPasteboard)
         pb.availableTypeFromArray_(ed.supported_drag_types) >> c.accepted_type
         if c.accepted_type == const.DOC_ID_LIST_PBOARD_TYPE:
             id_list = pb.propertyListForType_(const.DOC_ID_LIST_PBOARD_TYPE) >> m.mock()
@@ -1026,11 +1024,9 @@ def test_accept_drop():
             items = None
             assert c.accepted_type is None
         if items is not None:
-            if not c.item_is_none:
-                representedObject(item) >> parent
             ed.insert_items(items, parent, index, act) >> c.result
         with m:
-            result = ed.accept_drop(ov, info, item, index)
+            result = ed.accept_drop(ov, pb, parent, index)
             eq_(result, c.result)
     c = TestConfig(result=True, item_is_none=False)
     yield test, c(accepted_type=const.DOC_ID_LIST_PBOARD_TYPE)
@@ -1427,9 +1423,9 @@ def test_EditorWindowController_passthrough_to_Editor():
     yield test, ("outlineView_writeItems_toPasteboard_", "write_items_to_pasteboard"), \
         ("<ov>", "<items>", "<pasteboard>"), ("<ov>", "<items>", "<pasteboard>"), \
         "<result>"
-    yield test, ("outlineView_acceptDrop_item_childIndex_", "accept_drop"), \
-        ("<ov>", "<drop>", "<item>", "<index>"), ("<ov>", "<drop>", "<item>", "<index>"), \
-        "<drag result>"
+#    yield test, ("outlineView_acceptDrop_item_childIndex_", "accept_drop"), \
+#        ("<ov>", "<drop>", "<item>", "<index>"), ("<ov>", "<drop>", "<item>", "<index>"), \
+#        "<drag result>"
     yield test, ("outlineView_validateDrop_proposedItem_proposedChildIndex_", "validate_drop"), \
         ("<ov>", "<drop>", "<item>", "<index>"), ("<ov>", "<drop>", "<item>", "<index>"), \
         "<drag operation>"

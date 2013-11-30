@@ -91,11 +91,8 @@ class TextView(ak.NSTextView):
     def readSelectionFromPasteboard_type_(self, pasteboard, type_):
         editor = self.app.find_editor_with_document_view(self.doc_view)
         if editor is not None:
-            items = editor.iter_dropped_paths(pasteboard)
-            parent = editor.find_project_with_document_view(self.doc_view)
-            index = len(editor.projects) if parent is None else -1
-            result = editor.insert_items(items, parent, index, None)
-            if result: return True
+            if editor.accept_drop(None, pasteboard):
+                return True
         return super(TextView, self).readSelectionFromPasteboard_type_(pasteboard, type_)
 
     # Right-margin guide ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
