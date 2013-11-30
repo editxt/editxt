@@ -947,59 +947,57 @@ def test_clearChanges():
     with m:
         doc._clearChanges()
 
-def test_get_with_path():
-    with tempdir() as tmp:
-        with open(os.path.join(tmp, "file.txt"), "w") as fh:
+def test_TextDocument_get_with_path():
+    def test(setup):
+        with tempdir() as tmp:
+            dc = ak.NSDocumentController.sharedDocumentController()
+            eq_(len(dc.documents()), 0)
+            path = setup(tmp, dc)
+            doc = TextDocument.get_with_path(path)
+            try:
+                assert isinstance(doc, TextDocument)
+                if os.path.exists(path):
+                    assert os.path.samefile(path, doc.file_path)
+                else:
+                    eq_(path, doc.file_path)
+            finally:
+                doc.close()
+            eq_(len(dc.documents()), 0)
+
+    def plain_file(tmp, dc):
+        path = os.path.join(tmp, "file.txt")
+        with open(path, "w") as fh:
             fh.write("text")
+        return path
+
+    def symlink(tmp, dc):
+        plain = plain_file(tmp, dc)
         path = os.path.join(tmp, "file.sym")
-        os.symlink("file.txt", path)
-        dc = ak.NSDocumentController.sharedDocumentController()
-        eq_(len(dc.documents()), 0)
-        doc = TextDocument.get_with_path(path)
-        try:
-            assert isinstance(doc, TextDocument)
-            assert os.path.samefile(path, doc.file_path)
-        finally:
-            doc.close()
-        eq_(len(dc.documents()), 0)
+        assert plain != path, path
+        os.symlink(os.path.basename(plain), path)
+        return path
 
-class TestTextDocument(MockerTestCase):
-
-    def test_get_with_path_1(self):
-        dc = ak.NSDocumentController.sharedDocumentController()
-        eq_(len(dc.documents()), 0)
-        path = self.makeFile(content="", suffix="txt")
-        doc = TextDocument.get_with_path(path)
-        assert isinstance(doc, TextDocument)
-        assert os.path.samefile(path, doc.fileURL().path())
-        doc.close()
-        eq_(len(dc.documents()), 0)
-
-    def test_get_with_path_2(self):
-        path = self.makeFile(content="", suffix="txt")
+    def document_controller(tmp, dc):
+        path = plain_file(tmp, dc)
         url = fn.NSURL.fileURLWithPath_(path)
-        dc = ak.NSDocumentController.sharedDocumentController()
-        eq_(len(dc.documents()), 0)
         doc1, err = dc.openDocumentWithContentsOfURL_display_error_(url, False, None)
         doc2 = TextDocument.get_with_path(path)
         assert doc1 is doc2
-        doc1.close()
-        eq_(len(dc.documents()), 0)
+        return path
 
-    def test_get_with_path_3(self):
-        from tempfile import mktemp
-        path = path = mktemp(suffix="txt")
-        dc = ak.NSDocumentController.sharedDocumentController()
-        eq_(len(dc.documents()), 0)
-        m = Mocker()
-        factory = m.mock()
-        factory.get_definition(os.path.basename(path)) >> None
-        with replattr(mod.app, 'syntax_factory', factory), m:
-            doc = TextDocument.get_with_path(path)
-            assert not os.path.exists(path), "%s exists (but should not)" % path
-            eq_(doc.fileURL().path(), path)
-            doc.close()
-        eq_(len(dc.documents()), 0)
+    def nonexistent_file(tmp, dc):
+        path = os.path.join(tmp, "file.txt")
+        doc = TextDocument.get_with_path(path)
+        assert not os.path.exists(path), "%s exists (but should not)" % path
+        return path
+
+    yield test, plain_file
+    yield test, symlink
+    yield test, document_controller
+    yield test, nonexistent_file
+
+
+class TestTextDocument(MockerTestCase):
 
     def test_untitled_displayName(self):
         dc = ak.NSDocumentController.sharedDocumentController()
