@@ -34,6 +34,7 @@ LOG_NAME = "EditXT Log"
 DOC_ID_LIST_PBOARD_TYPE = "EditXT document id list"
 MOVE = "move"
 COPY = "copy"
+CURRENT = "current"
 
 HTML = "html"
 INFO = "info"

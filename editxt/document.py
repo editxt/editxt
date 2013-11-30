@@ -122,8 +122,7 @@ class TextDocumentView(object):
 
     @property
     def file_path(self):
-        url = self.document.fileURL()
-        return (url.path() if url else None)
+        return self.document.file_path
 
     @property
     def is_dirty(self):
@@ -440,6 +439,11 @@ class TextDocument(ak.NSDocument):
         return self
 
     @property
+    def file_path(self):
+        url = self.fileURL()
+        return (url.path() if url else None)
+
+    @property
     def text(self):
         return self.text_storage.mutableString()
     @text.setter
@@ -492,11 +496,7 @@ class TextDocument(ak.NSDocument):
         editor = self.app.current_editor()
         if editor is None:
             editor = self.app.create_editor()
-        project = editor.get_current_project(create=True)
-        view = TextDocumentView(project, document=self)
-        editor.add_document_view(view)
-        self.addWindowController_(editor.wc)
-        editor.current_view = view
+        editor.insert_items([self])
 
     def readFromData_ofType_error_(self, data, doctype, error):
         success, err = self.read_data_into_textstorage(data, self.text_storage)

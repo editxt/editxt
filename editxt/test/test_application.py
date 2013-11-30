@@ -196,57 +196,45 @@ def test_open_documents_with_paths():
     def test(c):
         m = Mocker()
         app = Application()
-        exists = lambda path: True
-        alog = m.replace(mod, 'log')
         create_editor = m.method(app.create_editor)
-        ed = m.mock(Editor)
-        project = ed.get_current_project(create=True) >> Project(ed)
-        dv_class = m.replace(edoc, 'TextDocumentView')
-        m.method(app.current_editor)() >> (ed if c.has_editor else None)
+        editor = m.mock(Editor)
+        m.method(app.current_editor)() >> (editor if c.has_editor else None)
         if not c.has_editor:
-            create_editor() >> ed
-        focus = None
-        for p in c.paths:
-            exists(p.path) >> p.exists
-            dv = dv_class(project, path=p.path) >> m.mock(TextDocumentView)
-            focus = ed.add_document_view(dv) >> dv
-        if focus is not None:
-            ed.current_view = dv
-        with replattr(os.path, 'isfile', exists), m:
-            app.open_documents_with_paths([p.path for p in c.paths])
-    c = TestConfig(has_editor=True)
-    p = lambda p, e: TestConfig(path=p, exists=e)
-    yield test, c(has_editor=False, paths=[])
-    yield test, c(paths=[])
-    yield test, c(paths=[p("abc", True)])
-    yield test, c(paths=[p("abc", True), p("def", False)])
-    yield test, c(paths=[p("abc", True), p("def", False), p("ghi", True)])
+            create_editor() >> editor
+        items = editor.iter_dropped_paths("<paths>") >> m.mock()
+        editor.insert_items(items)
+        with m:
+            app.open_documents_with_paths("<paths>")
+    c = TestConfig()
+    yield test, c(has_editor=False)
+    yield test, c(has_editor=True)
 
 def test_open_config_file():
-    def test(file_exists=True):
+    def test(c):
         m = Mocker()
         app = Application()
-        view = m.mock(TextDocumentView)
-        m.method(app.open_documents_with_paths)([app.config.path]) >> [view]
+        get_with_path = m.method(TextDocument.get_with_path)
+        doc = m.mock(TextDocument)
+        m.method(app.open_documents_with_paths)([app.config.path]) >> [doc]
+        (doc.file_path << app.config.path).count(1, None)
         default_config = m.property(app.config, "default_config")
-        m.replace("os.path.exists")(app.config.path) >> file_exists
-        if not file_exists:
-            default_config.value >> "# config"
-            view.document.text = "# config"
+        m.replace("os.path.exists")(app.config.path) >> c.exists
+        if not c.exists:
+            doc.text >> c.text
+            if not c.text:
+                doc.text = default_config.value >> "# config"
         with m:
             app.open_config_file()
-    yield test, True
-    yield test, False
+    c = TestConfig(exists=False)
+    yield test, c(exists=True)
+    yield test, c(text=True)
+    yield test, c(text=False)
 
 def test_open_error_log():
-    import editxt.application as mod
-    import editxt.document as edoc
-    from editxt.errorlog import ErrorLog
     def test(c):
         m = Mocker()
         ed = m.mock(Editor)
         dv = m.mock(TextDocumentView)
-        dv_class = m.replace(edoc, 'TextDocumentView')
         app = Application()
         err = m.property(mod.errlog, "document").value >> m.mock(TextDocument)
         if c.is_open:
@@ -257,10 +245,7 @@ def test_open_error_log():
             m.method(app.current_editor)() >> (ed if c.has_editor else None)
             if not c.has_editor:
                 m.method(app.create_editor)() >> ed
-            project = ed.get_current_project(create=True) >> Project(ed)
-            dv_class(project, document=err) >> dv
-            ed.add_document_view(dv)
-            ed.current_view = dv
+            ed.insert_items([err])
         m.method(app.iter_views_of_document)(err) >> idocs
         with m:
             app.open_error_log()

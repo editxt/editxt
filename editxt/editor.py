@@ -205,7 +205,7 @@ class Editor(object):
                     view.set_main_view_of_window(main_view, self.wc.window())
                     #self.wc.setDocument_(view.document)
                     if self.find_project_with_document_view(view) is None:
-                        self.add_document_view(view)
+                        self.insert_items([view])
                 return
             #else:
             #    self.wc.window().setTitle_(view.name)
@@ -220,21 +220,6 @@ class Editor(object):
         selected = self.wc.docsController.selected_objects
         if selected and selected[0] is not self.current_view:
             self.current_view = selected[0]
-
-    def add_document_view(self, doc_view):
-        """Add document view to current project
-
-        This does nothing if the current project already contains a view of the
-        document encapsulated by doc_view.
-
-        :returns: The document view from the current project.
-        """
-        proj = self.get_current_project(create=True)
-        view = proj.document_view_for_document(doc_view.document)
-        if view is None:
-            view = doc_view
-            proj.append_document_view(doc_view)
-        return view
 
     def iter_views_of_document(self, doc):
         for project in self.projects:
@@ -528,7 +513,7 @@ class Editor(object):
             assert t is None, t
             return False
         parent = None if item is None else representedObject(item)
-        return self.insert_items(items, parent, index, action)
+        return bool(self.insert_items(items, parent, index, action))
 
     def iter_dropped_id_list(self, id_list):
         """Iterate TextDocument objects referenced by pasteboard (if any)"""
@@ -543,14 +528,19 @@ class Editor(object):
         if not paths:
             return
         for path in paths:
-            # TODO create project for dropped directory
-            yield TextDocument.get_with_path(path)
+            if os.path.isfile(path) or not os.path.exists(path):
+                yield TextDocument.get_with_path(path)
+#            elif os.path.isdir(path):
+#                yield Project(self, name=os.path.dirname(path))
+            else:
+                log.info("cannot open path: %s", path)
 
-    def insert_items(self, items, project=None, index=-1, action=None):
+    def insert_items(self, items, project=const.CURRENT, index=-1, action=None):
         """Insert projects or documents into the document tree
 
         :param items: A sequence of projects and/or documents.
         :param project: The parent project into which items are being inserted.
+            Documents will be inserted in the current project if unspecified.
         :param index: The index in the outline view or parent project at which
             the item(s) should be inserted.
         :param action: What to do with items that are already open in
@@ -565,9 +555,12 @@ class Editor(object):
             inserted. A project is considered to be "existing" if there
             is a project with the same path in the editor where it is
             being inserted.
-        :returns: True if the items were accepted, otherwise False.
+        :returns: A list of items that were inserted.
         """
         proj_index = len(self.projects) # insert projects at end of list
+        if project is const.CURRENT:
+            assert index == -1 and action == None, (index, action)
+            project = self.get_current_project()
         if project is None:
             # a new project will be inserted at index if/when needed
             if index >= 0 and index <= proj_index:
@@ -575,14 +568,14 @@ class Editor(object):
             index = 0
         elif index < 0:
             index = len(project.documents)
-        accepted = False
+        inserted = []
         focus = None
         is_move = action == const.MOVE
         is_copy = action == const.COPY
         self.suspend_recent_updates()
         try:
             for item in items:
-                accepted = True
+                inserted.append(item)
                 if isinstance(item, Project):
                     set_focus, proj_index = \
                         self._insert_project(item, proj_index, action)
@@ -630,7 +623,7 @@ class Editor(object):
             self.resume_recent_updates()
         if focus is not None:
             self.current_view = focus
-        return accepted
+        return inserted
 
     def _insert_project(self, item, index, action):
         if action != const.MOVE:

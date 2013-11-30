@@ -20,6 +20,7 @@
 import logging
 import os
 from collections import defaultdict
+from functools import partial
 
 import AppKit as ak
 import Foundation as fn
@@ -37,7 +38,7 @@ from editxt.project import Project
 from editxt.test.noseplugins import slow_skip
 from editxt.util import representedObject
 
-from editxt.test.util import do_method_pass_through, TestConfig, replattr
+from editxt.test.util import do_method_pass_through, TestConfig, replattr, tempdir
 
 import editxt.editor as mod
 
@@ -319,7 +320,7 @@ def test_set_current_view():
         m = Mocker()
         wc = m.mock(EditorWindowController)
         ed = Editor(editxt.app, wc)
-        add_document_view = m.method(ed.add_document_view)
+        insert_items = m.method(ed.insert_items)
         ed.recent = m.mock(RecentItemStack)
         dv = (None if c.view_class is None else m.mock(c.view_class))
         if c.view_is_current:
@@ -354,7 +355,7 @@ def test_set_current_view():
                         m.method(ed.find_project_with_document_view)
                     if c.proj_is_none:
                         find_project_with_document_view(dv) >> None
-                        add_document_view(dv)
+                        insert_items([dv])
                     else:
                         find_project_with_document_view(dv) >> m.mock(Project)
             else:
@@ -552,23 +553,6 @@ def test_get_current_project():
         yield test, False, None, create
     yield test, True, [0]
     yield test, True, [0, 0]
-
-def test_add_document_view():
-    def test(has_view):
-        m = Mocker()
-        ed = Editor(editxt.app, None)
-        doc = TextDocument.alloc().init()
-        dv = TextDocumentView(None, document=doc)
-        assert dv.project is None, dv.project
-        proj = Project(ed)
-        if has_view:
-            proj.append_document_view(dv)
-        m.method(ed.get_current_project)(create=True) >> proj
-        with m:
-            ed.add_document_view(dv)
-        eq_(len(proj.documents), 1, proj.documents)
-    yield test, False
-    yield test, True
 
 def test_Editor_iter_views_of_document():
     DOC = "the document we're looking for"
@@ -1083,45 +1067,54 @@ def test_iter_dropped_id_list():
     yield test, c(ids=[ix(0), ix(1, False)])
 
 def test_iter_dropped_paths():
-    import editxt.document
+    def doc(num, tmp):
+        path = os.path.join(tmp, "doc%s.txt" % num)
+        with open(path, mode="w") as fh:
+            fh.write('doc')
+        return path
+    def sym(num, tmp):
+        path = os.path.join(tmp, "doc%s.sym" % num)
+        os.symlink(path + ".txt", path)
+        return path
+    def proj(num, tmp):
+        path = os.path.join(tmp, "proj_%s" % num)
+        os.mkdir(path)
+        return path
     def test(c):
         m = Mocker()
         ed = Editor(editxt.app, None)
-        ed.find_project_with_path = m.method(ed.find_project_with_path)
         app = m.replace(ed, 'app')
-        doc_class = m.replace('editxt.editor.TextDocument')
+        get_with_path = m.method(TextDocument.get_with_path)
         dc = m.mock(DocumentController)
         result_items = []
-        #item = None if c.item_is_none else m.mock()
-        if c.has_paths:
-            #parent = None if c.item_is_none else m.mock(Project)
-            #if not c.item_is_none:
-            #    representedObject(item) >> parent
-            paths = []
-            for it in c.paths:
-                paths.append(it.path)
-                doc = doc_class.get_with_path(it.path) >> m.mock(TextDocument)
-                result_items.append(doc)
-        else:
-            paths = None
-        with m:
-            result = list(ed.iter_dropped_paths(paths))
-            eq_(result, result_items)
-    c = TestConfig(item_is_none=False, has_paths=True)
-    doc = "/path/to/doc%s.txt"
-#    proj = "/path/to/proj%s." + const.PROJECT_EXT
-    def path(tmp, num, found=False, **kw):
-        return TestConfig(found=found, path=tmp % num, **kw)
+        with tempdir() as tmp:
+            if c.has_paths:
+                paths = []
+                for it in c.paths:
+                    path = it.create(tmp)
+                    paths.append(path)
+                    if it.ignored:
+                        continue
+                    doc = get_with_path(path) >> m.mock(path, spec=TextDocument)
+                    result_items.append(doc)
+            else:
+                paths = None
+            with m:
+                result = list(ed.iter_dropped_paths(paths))
+                eq_(result, result_items)
+    c = TestConfig(has_paths=True)
+    def path(create, ignored=False, num=[0]):
+        num[0] += 1
+        return TestConfig(create=partial(create, num[0]), ignored=ignored)
     yield test, c(has_paths=False)
-    #yield test, c(paths=[], item_is_none=True)
     yield test, c(paths=[])
-    #yield test, c(paths=[path(doc, 1)], item_is_none=True)
-    yield test, c(paths=[path(doc, 1)])
-    yield test, c(paths=[path(doc, 1), path(doc, 2), path(doc, 3)])
-#    #yield test, c(paths=[path(proj, 1, is_open=False)], item_is_none=True)
-#    yield test, c(paths=[path(proj, 1)])
-#    yield test, c(paths=[path(proj, 1, True)])
-#    yield test, c(paths=[path(proj, 1, True), path(doc, 1), path(proj, 2)])
+    yield test, c(paths=[path(doc)])
+    yield test, c(paths=[path(sym)])
+    yield test, c(paths=[path(doc), path(sym), path(doc)])
+    yield test, c(paths=[path(proj, ignored=True)])
+#    yield test, c(paths=[path(proj)])
+#    yield test, c(paths=[path(proj), path(doc), path(proj)])
+    #yield test, c(paths=[path(proj, is_open=False)])
 
 def test_insert_items():
     class FakeApp(object):
@@ -1152,6 +1145,7 @@ def test_insert_items():
         m = Mocker()
         app = FakeApp()
         ed = Editor(app, None)
+        get_current_project = m.method(ed.get_current_project)
         current_view = m.property(ed, 'current_view')
         map = {}
         rmap = {}
@@ -1188,16 +1182,25 @@ def test_insert_items():
                 drop[char].setFileURL_(fn.NSURL.fileURLWithPath_(char))
         items = [drop[char] for char in c.drop[0]]
 
-        act = {'move': const.MOVE, 'copy': const.COPY, None: None}[c.action]
-
         if c.result and c.focus:
             current_view.value = MatchingName(c.focus, rmap)
 
-        print(('drop(%s) %s at %s of %s' % (act, c.drop[0], index, parent)))
-        with m:
-            result = ed.insert_items(items, parent, index, act)
+        if "current_project" in c:
+            args = ()
+            parent = const.CURRENT
+            index = -1
+            if c.current_project is None:
+                get_current_project() >> None
+            else:
+                get_current_project() >> rmap[c.current_project]
+        else:
+            args = (parent, index, c.action)
 
-        eq_(result, c.result)
+        print(('drop(%s) %s at %s of %s' % (c.action, c.drop[0], index, parent)))
+        with m:
+            result = ed.insert_items(items, *args)
+
+        eq_(result, items)
         final = []
         next_project = str(int(max(v for v in c.init if v in '0123456789')) + 1)
         for project in ed.projects:
@@ -1222,9 +1225,9 @@ def test_insert_items():
     #
     # drop=(<dropped item(s)>, <drop index in init>)
 
-    c = TestConfig(init=' 0abc 1 2de', result=True, focus='')
+    config = TestConfig(init=' 0abc 1 2de', result=True, focus='')
 
-    c = c(action='move')
+    c = config(action=const.MOVE)
     yield test, c(drop=('', 0), final=' 0abc 1 2de', result=False)
     yield test, c(drop=('', 1), final=' 0abc 1 2de', result=False)
     yield test, c(drop=('', 2), final=' 0abc 1 2de', result=False)
@@ -1277,7 +1280,7 @@ def test_insert_items():
     yield test, c(drop=('2', 10), final=' 0abc 1 2de', focus='')
     yield test, c(drop=('2', 11), final=' 0abc 1 2de', focus='')
 
-    c = c(action='copy')
+    c = config(action=const.COPY)
     yield test, c(drop=('', 0), final=' 0abc 1 2de', result=False)
     yield test, c(drop=('', 1), final=' 0abc 1 2de', result=False)
     yield test, c(drop=('', 2), final=' 0abc 1 2de', result=False)
@@ -1304,7 +1307,7 @@ def test_insert_items():
     yield test, c(drop=('a', 10), final=' 0abc 1 2dAe', focus='A')
     yield test, c(drop=('a', 11), final=' 0abc 1 2deA', focus='A')
 
-    c = c(action=None, init=' 0abc 1 2de')
+    c = config(action=None)
     yield test, c(drop=('', 0), final=' 0abc 1 2de', result=False)
     yield test, c(drop=('', 1), final=' 0abc 1 2de', result=False)
     yield test, c(drop=('', 2), final=' 0abc 1 2de', result=False)
@@ -1357,6 +1360,34 @@ def test_insert_items():
 #    yield test, c(drop=('2', 9), final=' 0abc 1 2de', focus='')
 #    yield test, c(drop=('2', 10), final=' 0abc 1 2de', focus='')
 #    yield test, c(drop=('2', 11), final=' 0abc 1 2de', focus='')
+
+    c = config(action=None, current_project='2')
+    yield test, c(drop=('a', 0), final=' 0abc 1 2deA', focus='A')
+    yield test, c(drop=('a', 1), final=' 0abc 1 2deA', focus='a')
+    yield test, c(drop=('a', 2), final=' 0abc 1 2deA', focus='a')
+    yield test, c(drop=('a', 3), final=' 0abc 1 2deA', focus='a')
+    yield test, c(drop=('a', 4), final=' 0abc 1 2deA', focus='a')
+    yield test, c(drop=('a', 5), final=' 0abc 1 2deA', focus='a')
+    yield test, c(drop=('a', 6), final=' 0abc 1 2deA', focus='A')
+    yield test, c(drop=('a', 7), final=' 0abc 1 2deA', focus='A')
+    yield test, c(drop=('a', 8), final=' 0abc 1 2deA', focus='A')
+    yield test, c(drop=('a', 9), final=' 0abc 1 2deA', focus='A')
+    yield test, c(drop=('a', 10), final=' 0abc 1 2deA', focus='A')
+    yield test, c(drop=('a', 11), final=' 0abc 1 2deA', focus='A')
+
+    c = config(action=None, current_project=None)
+    yield test, c(drop=('a', 0), final=' 0abc 1 2de 3A', focus='A')
+    yield test, c(drop=('a', 1), final=' 0abc 1 2de 3A', focus='a')
+    yield test, c(drop=('a', 2), final=' 0abc 1 2de 3A', focus='a')
+    yield test, c(drop=('a', 3), final=' 0abc 1 2de 3A', focus='a')
+    yield test, c(drop=('a', 4), final=' 0abc 1 2de 3A', focus='a')
+    yield test, c(drop=('a', 5), final=' 0abc 1 2de 3A', focus='a')
+    yield test, c(drop=('a', 6), final=' 0abc 1 2de 3A', focus='A')
+    yield test, c(drop=('a', 7), final=' 0abc 1 2de 3A', focus='A')
+    yield test, c(drop=('a', 8), final=' 0abc 1 2de 3A', focus='A')
+    yield test, c(drop=('a', 9), final=' 0abc 1 2de 3A', focus='A')
+    yield test, c(drop=('a', 10), final=' 0abc 1 2de 3A', focus='A')
+    yield test, c(drop=('a', 11), final=' 0abc 1 2de 3A', focus='A')
 
 def test_undo_manager():
     def test(c):

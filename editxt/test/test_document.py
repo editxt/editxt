@@ -1127,19 +1127,15 @@ def test_makeWindowControllers():
     def test(ed_is_none):
         doc = TextDocument.alloc().init()
         m = Mocker()
-        app = m.replace('editxt.app'); m.replace(mod, 'app', mock=app)
+        app = m.mock(Application)
+        (m.property(doc, "app").value << app).count(1, 2)
         dv_class = m.replace(mod, 'TextDocumentView')
         dv = m.mock(TextDocumentView)
         ed = m.mock(Editor)
         app.current_editor() >> (None if ed_is_none else ed)
         if ed_is_none:
             app.create_editor() >> ed
-        project = ed.get_current_project(create=True) >> Project(ed)
-        dv_class(project, document=doc) >> dv
-        ed.add_document_view(dv)
-        add_ed = m.method(doc.addWindowController_)
-        add_ed(ed.wc >> m.mock(EditorWindowController)) # simulate function call
-        ed.current_view = dv
+        ed.insert_items([doc])
         with m:
             doc.makeWindowControllers()
     yield test, True

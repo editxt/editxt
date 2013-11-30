@@ -132,25 +132,17 @@ class Application(object):
         editor = self.current_editor()
         if editor is None:
             editor = self.create_editor()
-        project = editor.get_current_project(create=True)
-        focus = None
-        views = []
-        for path in paths:
-            if os.path.isfile(path) or not os.path.exists(path):
-                view = TextDocumentView(project, path=path)
-                focus = editor.add_document_view(view)
-                views.append(view)
-            else:
-                log.info("cannot open path: %s", path)
-        if focus is not None:
-            editor.current_view = focus
-        return views
+        items = editor.iter_dropped_paths(paths)
+        return editor.insert_items(items)
 
     def open_config_file(self):
-        views = self.open_documents_with_paths([self.config.path])
-        if not os.path.exists(self.config.path):
-            assert len(views) == 1, views
-            views[0].document.text = self.config.default_config
+        items = self.open_documents_with_paths([self.config.path])
+        assert len(items) == 1, items
+        document = items[0]
+        assert document.file_path == self.config.path, \
+            (document.file_path, self.config.path)
+        if not (os.path.exists(document.file_path) or document.text):
+            document.text = self.config.default_config
 
     def open_error_log(self, set_current=True):
         from editxt.document import TextDocumentView
@@ -161,11 +153,7 @@ class Application(object):
             editor = self.current_editor()
             if editor is None:
                 editor = self.create_editor()
-            project = editor.get_current_project(create=True)
-            view = TextDocumentView(project, document=doc)
-            editor.add_document_view(view)
-            if set_current:
-                editor.current_view = view
+            editor.insert_items([doc])
         else:
             if set_current:
                 self.set_current_document_view(view)
