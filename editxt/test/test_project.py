@@ -383,7 +383,7 @@ def test_perform_close():
         else:
             ed.discard_and_focus_recent(proj)
         with m:
-            proj.perform_close(ed)
+            proj.perform_close()
     c = TestConfig(num_eds=1)
     for ndv in range(3):
         yield test, c(should_close=True, num_doc_views=ndv)

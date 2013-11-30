@@ -324,7 +324,7 @@ class Editor(object):
         if row < docs_view.numberOfRows():
             item = docs_view.itemAtRow_(row)
             item = docs_view.realItemForOpaqueItem_(item)
-            item.perform_close(self)
+            item.perform_close()
 
     def window_did_become_key(self, window):
         view = self.current_view

@@ -314,7 +314,7 @@ def test_Application_close_current_document():
             view = m.mock(TextDocumentView) if c.has_view else None
             ed.current_view >> view
             if c.has_view:
-                view.perform_close(ed)
+                view.perform_close()
         with m:
             app.close_current_document()
     c = TestConfig(has_editor=True, has_view=True)

@@ -290,7 +290,7 @@ class TextDocumentView(object):
         """Display a message in the command view"""
         self.command_view.message(msg, self.text_view, msg_type)
 
-    def perform_close(self, editor):
+    def perform_close(self):
         app = self.document.app
         editor = self.project.editor
         views = list(app.iter_editors_with_view_of_document(self.document))

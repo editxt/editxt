@@ -507,7 +507,7 @@ def test_perform_close():
         else:
             ed.discard_and_focus_recent(dv)
         with m:
-            dv.perform_close(ed)
+            dv.perform_close()
         eq_(TextDocument.document_shouldClose_contextInfo_.signature, b'v@:@ii')
     for num_views in range(3):
         yield test, num_views

@@ -185,7 +185,7 @@ class Project(object):
     def set_main_view_of_window(self, view, window):
         pass # TODO add project-specific view?
 
-    def perform_close(self, editor):
+    def perform_close(self):
         from editxt.application import DocumentSavingDelegate
         editor = self.editor
         app = editor.app

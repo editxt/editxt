@@ -672,7 +672,7 @@ def test_close_button_clicked():
             dv.itemAtRow_(row) >> item
             item2 = m.mock(doc_class)
             dv.realItemForOpaqueItem_(item) >> item2
-            item2.perform_close(ed)
+            item2.perform_close()
         with m:
             ed.close_button_clicked(row)
     yield test, 0, 0

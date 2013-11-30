@@ -180,7 +180,7 @@ class Application(object):
         if editor is not None:
             view = editor.current_view
             if view is not None:
-                view.perform_close(editor)
+                view.perform_close()
 
     def iter_views_of_document(self, doc):
         for editor in self.iter_editors():
