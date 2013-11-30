@@ -397,6 +397,8 @@ class TextDocument(ak.NSDocument):
         Documents returned by this method have been added to the document
         controllers list of documents.
         """
+        if os.path.islink(path):
+            path = os.path.realpath(path)
         url = fn.NSURL.fileURLWithPath_(path)
         dc = ak.NSDocumentController.sharedDocumentController()
         doc = dc.documentForURL_(url)

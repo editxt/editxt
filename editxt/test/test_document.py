@@ -20,14 +20,13 @@
 import logging
 import os
 from contextlib import closing
-from tempfile import gettempdir
 
 import AppKit as ak
 import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import (assert_raises, TestConfig, untested,
-    check_app_state, replattr)
+    check_app_state, replattr, tempdir)
 
 import editxt
 import editxt.constants as const
@@ -947,6 +946,22 @@ def test_clearChanges():
     m.method(doc.updateChangeCount_)(ak.NSChangeCleared)
     with m:
         doc._clearChanges()
+
+def test_get_with_path():
+    with tempdir() as tmp:
+        with open(os.path.join(tmp, "file.txt"), "w") as fh:
+            fh.write("text")
+        path = os.path.join(tmp, "file.sym")
+        os.symlink("file.txt", path)
+        dc = ak.NSDocumentController.sharedDocumentController()
+        eq_(len(dc.documents()), 0)
+        doc = TextDocument.get_with_path(path)
+        try:
+            assert isinstance(doc, TextDocument)
+            assert os.path.samefile(path, doc.file_path)
+        finally:
+            doc.close()
+        eq_(len(dc.documents()), 0)
 
 class TestTextDocument(MockerTestCase):
 
