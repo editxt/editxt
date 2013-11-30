@@ -71,11 +71,12 @@ class StreamHandler(logging.StreamHandler):
             return super().emit(record)
         finally:
             if record.levelno > logging.WARNING:
-                try:
-                    from editxt import app
-                    app.open_error_log(set_current=False)
-                except Exception:
-                    log.warn("cannot open error log", exc_info=True)
+                from editxt import app
+                if app is not None:
+                    try:
+                            app.open_error_log(set_current=False)
+                    except Exception:
+                        log.warn("cannot open error log", exc_info=True)
 
 
 def create_error_log_document(closefunc):

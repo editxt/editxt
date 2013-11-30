@@ -30,8 +30,12 @@ from editxt.valuetrans import register_value_transformers
 log = logging.getLogger(__name__)
 
 def init(use_pdb):
+
+    # prevent NSLog("PyObjC: Converting exception to Objective-C")
+    # See pyobjc-core/Modules/objc/objc_util.m
+    objc.setVerbose(0)
+
     if use_pdb:
-        objc.setVerbose(1)
         # make PyObjC use our exception handler
         Debugging.installExceptionHandler = install_exception_handler
     else:
@@ -40,7 +44,10 @@ def init(use_pdb):
     fix_PyObjCTools_path()
 
     # HACK monkey-patch pyobc exception handler to use our logger
-    Debugging.NSLog = lambda x, y=None: log.error(x if y is None else y)
+    def log_error(template, message=None):
+        log.error(template if message is None else message)
+    #AppHelper.NSLog = log_error
+    Debugging.NSLog = log_error
 
 
 def run(app, argv, unexpected_error_callback, use_pdb):

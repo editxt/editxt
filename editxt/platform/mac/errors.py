@@ -24,8 +24,8 @@ import traceback
 import objc
 from AppKit import NSObject
 from ExceptionHandling import NSExceptionHandler, NSStackTraceKey
-from PyObjCTools.Debugging import (isPythonException,
-    DEFAULTVERBOSITY, DEFAULTMASK, LOGSTACKTRACE)
+from ExceptionHandling import NSLogAndHandleEveryExceptionMask as DEFAULTMASK
+from PyObjCTools.Debugging import isPythonException, LOGSTACKTRACE
 
 from editxt import log
 

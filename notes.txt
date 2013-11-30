@@ -595,6 +595,13 @@ Log filtering
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Completed tasks
 
+xBug: exception in TextView.readSelectionFromPasteboard_type_ is not reported
+x  in error log when running in production mode.
+x  - Add raise ... statement in the method
+x  - Build app bundle
+x  - Try to paste into main text view
+x  - Note no errors reported in Error Log (see Console.app for messages)
+
 xUse Editor.iter_dropped_paths in Application.open_documents_with_paths
 x  - change Editor.iter_dropped_paths to yield paths instead of objects
 xSupport opening symlinks
