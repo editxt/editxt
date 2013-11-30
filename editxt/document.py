@@ -417,7 +417,6 @@ class TextDocument(ak.NSDocument):
                 doc, err = dc.makeUntitledDocumentOfType_error_(
                     const.TEXT_DOCUMENT, None)
                 doc.setFileURL_(url)
-                doc.update_syntaxer()
         return doc
 
     def init(self):

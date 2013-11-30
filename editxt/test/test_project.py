@@ -351,11 +351,11 @@ def test_set_main_view_of_window():
 def test_perform_close():
     import editxt.application as xtapp
     def test(c):
-        proj = Project(None)
         m = Mocker()
         dsd_class = m.replace(xtapp, 'DocumentSavingDelegate')
-        app = m.replace(mod, 'app')
         ed = m.mock(Editor)
+        proj = Project(ed)
+        app = ed.app >> m.mock(Application)
         app.find_editors_with_project(proj) >> [ed for x in range(c.num_eds)]
         if c.num_eds == 1:
             docs = [m.mock(TextDocumentView)]

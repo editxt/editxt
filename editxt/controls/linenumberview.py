@@ -24,7 +24,6 @@ import objc
 import AppKit as ak
 import Foundation as fn
 
-from editxt import app
 from editxt.util import untested
 
 log = logging.getLogger(__name__)

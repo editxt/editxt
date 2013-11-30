@@ -24,7 +24,6 @@ import AppKit as ak
 import Foundation as fn
 
 import editxt.constants as const
-from editxt import app
 from editxt.datatypes import WeakProperty
 from editxt.document import TextDocumentView, TextDocument, doc_id_gen
 from editxt.platform.kvo import KVOList, KVOProxy
@@ -188,6 +187,8 @@ class Project(object):
 
     def perform_close(self, editor):
         from editxt.application import DocumentSavingDelegate
+        editor = self.editor
+        app = editor.app
         if app.find_editors_with_project(self) == [editor]:
             def dirty_docs():
                 for dv in self.dirty_documents():
