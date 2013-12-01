@@ -26,9 +26,8 @@ import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import (assert_raises, TestConfig, untested,
-    check_app_state, replattr, tempdir)
+    check_app_state, replattr, temp_app, tempdir)
 
-import editxt
 import editxt.constants as const
 import editxt.document as mod
 from editxt.constants import TEXT_DOCUMENT
@@ -93,7 +92,7 @@ def test_TextDocumentView_init():
         doc_class = m.replace(mod, 'TextDocument')
         default_state = m.replace(TextDocumentView, 'edit_state')
         if path is not None:
-            doc = doc_class.get_with_path(path) >> "<document>"
+            doc = proj.editor.app.document_with_path(path) >> "<document>"
         with m:
             result = TextDocumentView(proj, **kw)
             eq_(result.project, proj)
@@ -629,11 +628,13 @@ def test_TextDocument_init():
     #eq_(doc.save_hooks, [])
 
 def property_value_util(c, doc=None):
-    if doc is None:
-        doc = TextDocument.alloc().init()
-    eq_(getattr(doc, c.attr), c.default)
-    setattr(doc, c.attr, c.value)
-    eq_(getattr(doc, c.attr), c.value)
+    with temp_app() as app:
+        if doc is None:
+            doc = TextDocument.alloc().init()
+            doc.app = app
+        eq_(getattr(doc, c.attr), c.default)
+        setattr(doc, c.attr, c.value)
+        eq_(getattr(doc, c.attr), c.value)
 
 def test_TextDocument_properties():
     c = TestConfig(attr="indent_size", default=4)
@@ -728,9 +729,9 @@ def test_TextDocument_default_text_attributes():
 def test_TextDocument_reset_text_attributes():
     INDENT_SIZE = 42
     m = Mocker()
-    app = m.replace(mod, 'app')
     ps_class = m.replace(ak, 'NSParagraphStyle')
     doc = TextDocument.alloc().init()
+    doc.app = app = m.mock(Application)
     ts = doc.text_storage = m.mock(ak.NSTextStorage)
     undoer = m.method(doc.undoManager)
     font = ak.NSFont.fontWithName_size_("Monaco", 10.0)
@@ -872,7 +873,7 @@ def test_reload_document():
             return c.exists
         doc = TextDocument.alloc().init()
         perform_clear_undo = m.method(doc.performSelector_withObject_afterDelay_)
-        app = m.replace(mod, 'app')
+        doc.app = app = m.mock(Application)
         doc_log = m.replace(mod, 'log')
         ts_class = m.replace(ak, 'NSTextStorage')
         fileURL = m.method(doc.fileURL)
@@ -947,55 +948,6 @@ def test_clearChanges():
     with m:
         doc._clearChanges()
 
-def test_TextDocument_get_with_path():
-    def test(setup):
-        with tempdir() as tmp:
-            dc = ak.NSDocumentController.sharedDocumentController()
-            eq_(len(dc.documents()), 0)
-            path = setup(tmp, dc)
-            doc = TextDocument.get_with_path(path)
-            try:
-                assert isinstance(doc, TextDocument)
-                if os.path.exists(path):
-                    assert os.path.samefile(path, doc.file_path)
-                else:
-                    eq_(path, doc.file_path)
-            finally:
-                doc.close()
-            eq_(len(dc.documents()), 0)
-
-    def plain_file(tmp, dc):
-        path = os.path.join(tmp, "file.txt")
-        with open(path, "w") as fh:
-            fh.write("text")
-        return path
-
-    def symlink(tmp, dc):
-        plain = plain_file(tmp, dc)
-        path = os.path.join(tmp, "file.sym")
-        assert plain != path, path
-        os.symlink(os.path.basename(plain), path)
-        return path
-
-    def document_controller(tmp, dc):
-        path = plain_file(tmp, dc)
-        url = fn.NSURL.fileURLWithPath_(path)
-        doc1, err = dc.openDocumentWithContentsOfURL_display_error_(url, False, None)
-        doc2 = TextDocument.get_with_path(path)
-        assert doc1 is doc2
-        return path
-
-    def nonexistent_file(tmp, dc):
-        path = os.path.join(tmp, "file.txt")
-        doc = TextDocument.get_with_path(path)
-        assert not os.path.exists(path), "%s exists (but should not)" % path
-        return path
-
-    yield test, plain_file
-    yield test, symlink
-    yield test, document_controller
-    yield test, nonexistent_file
-
 
 class TestTextDocument(MockerTestCase):
 
@@ -1021,7 +973,7 @@ class TestTextDocument(MockerTestCase):
 
     def test_saveDocument(self):
         m = Mocker()
-        app = m.replace(mod, 'app')
+        app = m.mock(Application)
         dc = ak.NSDocumentController.sharedDocumentController()
         path = self.makeFile(content="", prefix="text", suffix=".txt")
         file = open(path)
@@ -1029,6 +981,7 @@ class TestTextDocument(MockerTestCase):
             assert file.read() == ""
         url = fn.NSURL.fileURLWithPath_(path)
         doc, err = dc.makeDocumentWithContentsOfURL_ofType_error_(url, TEXT_DOCUMENT, None)
+        doc.app = app
         content = "test content"
         m.method(doc.update_syntaxer)()
         doc.text_storage.mutableString().appendString_(content)
@@ -1179,8 +1132,8 @@ def test_update_syntaxer():
     from editxt.syntax import SyntaxCache, SyntaxDefinition
     def test(c):
         m = Mocker()
-        app = m.replace(mod, 'app')
         doc = TextDocument.alloc().init()
+        doc.app = app = m.mock(Application)
         doc.text_storage = ts = m.mock(ak.NSTextStorage)
         m.property(doc, "syntaxdef")
         m.property(doc, "props")
@@ -1228,7 +1181,7 @@ def test_textStorageDidProcessEditing_():
 def test_updateChangeCount_():
     m = Mocker()
     doc = TextDocument.alloc().init()
-    app = m.replace(mod, 'app')
+    doc.app = app = m.mock(Application)
     ctype = 0
     app.item_changed(doc, ctype)
     with m:

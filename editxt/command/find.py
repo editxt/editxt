@@ -26,7 +26,6 @@ import time
 import AppKit as ak
 import Foundation as fn
 
-import editxt
 import editxt.constants as const
 from editxt.command.base import command, CommandError, objc_delegate, PanelController
 from editxt.command.parser import Choice, Regex, RegexPattern, CommandParser, Options

@@ -28,7 +28,6 @@ from nose.tools import *
 from editxt.test.util import (TestConfig, untested, check_app_state, replattr,
     temp_app, tempdir)
 
-import editxt
 import editxt.command.base as mod
 from editxt.application import Application
 from editxt.controls.textview import TextView

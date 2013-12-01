@@ -127,6 +127,43 @@ class Application(object):
         if editor is not None:
             return editor.new_project()
 
+    def document_with_path(self, path):
+        """Get a document with the given path
+
+        Documents returned by this method have been added to the document
+        controllers list of documents.
+        """
+        from editxt.document import TextDocument
+        if os.path.islink(path):
+            path = os.path.realpath(path)
+        url = fn.NSURL.fileURLWithPath_(path)
+        dc = ak.NSDocumentController.sharedDocumentController()
+        doc = dc.documentForURL_(url)
+        if doc is None:
+            if os.path.exists(path):
+                doctype, err = dc.typeForContentsOfURL_error_(url, None)
+                doc, err = dc.makeDocumentWithContentsOfURL_ofType_error_(
+                    url, doctype, None)
+                if err is not None:
+                    raise Error(err.localizedFailureReason())
+                if doc is None:
+                    raise Error("could not open document: %s" % path)
+                dc.addDocument_(doc)
+            else:
+                doc, err = dc.makeUntitledDocumentOfType_error_(
+                    const.TEXT_DOCUMENT, None)
+                doc.setFileURL_(url)
+
+        # TODO figure out how to move this into TextDocument.init
+        doc.app = self
+        doc.indent_mode = self.config["indent.mode"]
+        doc.indent_size = self.config["indent.size"] # should come from syntax definition
+        doc.newline_mode = self.config["newline_mode"]
+        doc.highlight_selected_text = self.config["highlight_selected_text.enabled"]
+        doc.reset_text_attributes(doc.indent_size)
+
+        return doc
+
     def open_documents_with_paths(self, paths):
         from editxt.document import TextDocumentView
         editor = self.current_editor()

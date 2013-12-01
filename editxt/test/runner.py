@@ -25,7 +25,6 @@ import os
 import sys
 from os.path import abspath, dirname
 
-import editxt
 import editxt.test
 import editxt.test.mockerext as mockerext
 from editxt.application import Application

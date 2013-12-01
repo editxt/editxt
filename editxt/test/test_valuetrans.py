@@ -163,7 +163,6 @@ def test_encoding_transformer():
     #yield rtest, trans.reverseTransformedValue_, NSProprietaryStringEncoding
 
 def test_syntaxdef_transformer():
-    from editxt import app
     from editxt.syntax import PLAIN_TEXT
     from editxt.valuetrans import SyntaxDefTransformer
     assert SyntaxDefTransformer.allowsReverseTransformation()

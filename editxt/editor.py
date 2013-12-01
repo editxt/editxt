@@ -528,7 +528,7 @@ class Editor(object):
             return
         for path in paths:
             if os.path.isfile(path) or not os.path.exists(path):
-                yield TextDocument.get_with_path(path)
+                yield self.app.document_with_path(path)
 #            elif os.path.isdir(path):
 #                yield Project(self, name=os.path.dirname(path))
             else:

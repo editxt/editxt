@@ -24,7 +24,6 @@ from functools import wraps
 import AppKit as ak
 import Foundation as fn
 
-import editxt
 from editxt.command.parser import CommandParser, Options, VarArgs
 from editxt.command.util import make_command_predicate
 from editxt.controls.alert import Caller

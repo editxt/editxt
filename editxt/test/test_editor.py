@@ -1080,7 +1080,6 @@ def test_iter_dropped_paths():
         m = Mocker()
         ed = Editor(editxt.app, None)
         app = m.replace(ed, 'app')
-        get_with_path = m.method(TextDocument.get_with_path)
         dc = m.mock(DocumentController)
         result_items = []
         with tempdir() as tmp:
@@ -1091,7 +1090,8 @@ def test_iter_dropped_paths():
                     paths.append(path)
                     if it.ignored:
                         continue
-                    doc = get_with_path(path) >> m.mock(path, spec=TextDocument)
+                    doc = app.document_with_path(path) \
+                        >> m.mock(path, spec=TextDocument)
                     result_items.append(doc)
             else:
                 paths = None

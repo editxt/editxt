@@ -30,7 +30,6 @@ from nose.tools import *
 from editxt.test.util import (assert_raises, TestConfig, untested,
     check_app_state, replattr, temp_app)
 
-import editxt
 import editxt.constants as const
 import editxt.command.find as mod
 from editxt.command.find import (Finder, FindController, FindOptions,
@@ -113,7 +112,7 @@ def test_Finder_mark_occurrences():
         tv._Finder__last_mark >> (None, 0)
         tv._Finder__last_mark = (c.options.find_text, c.count)
         ts = tv.textStorage() >> m.mock(ak.NSTextStorage)
-        app = m.replace(editxt, "app")
+        app = m.mock('editxt.application.Application')
         app.config["highlight_selected_text.color"] >> "<color>"
         full_range = fn.NSMakeRange(0, ts.length() >> len(text))
         layout = tv.layoutManager()

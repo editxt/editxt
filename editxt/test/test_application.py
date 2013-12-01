@@ -37,7 +37,8 @@ from editxt.document import TextDocumentView, TextDocument
 from editxt.project import Project
 from editxt.util import load_yaml
 
-from editxt.test.util import do_method_pass_through, TestConfig, replattr, tempdir
+from editxt.test.util import (do_method_pass_through, TestConfig, replattr,
+    temp_app, tempdir)
 
 log = logging.getLogger(__name__)
 
@@ -191,6 +192,56 @@ def test_new_project():
     yield test, True
     yield test, False
 
+def test_document_with_path():
+    def test(setup):
+        with tempdir() as tmp, temp_app() as app:
+            dc = ak.NSDocumentController.sharedDocumentController()
+            eq_(len(dc.documents()), 0)
+            path = setup(tmp, app, dc)
+            doc = app.document_with_path(path)
+            try:
+                assert isinstance(doc, TextDocument)
+                if os.path.exists(path):
+                    assert os.path.samefile(path, doc.file_path)
+                else:
+                    eq_(path, doc.file_path)
+                eq_(doc.app, app)
+            finally:
+                doc.close()
+            eq_(len(dc.documents()), 0)
+
+    def plain_file(tmp, app, dc):
+        path = os.path.join(tmp, "file.txt")
+        with open(path, "w") as fh:
+            fh.write("text")
+        return path
+
+    def symlink(tmp, app, dc):
+        plain = plain_file(tmp, app, dc)
+        path = os.path.join(tmp, "file.sym")
+        assert plain != path, path
+        os.symlink(os.path.basename(plain), path)
+        return path
+
+    def document_controller(tmp, app, dc):
+        path = plain_file(tmp, app, dc)
+        url = fn.NSURL.fileURLWithPath_(path)
+        doc1, err = dc.openDocumentWithContentsOfURL_display_error_(url, False, None)
+        doc2 = app.document_with_path(path)
+        assert doc1 is doc2
+        return path
+
+    def nonexistent_file(tmp, app, dc):
+        path = os.path.join(tmp, "file.txt")
+        doc = app.document_with_path(path)
+        assert not os.path.exists(path), "%s exists (but should not)" % path
+        return path
+
+    yield test, plain_file
+    yield test, symlink
+    yield test, document_controller
+    yield test, nonexistent_file
+
 def test_open_documents_with_paths():
     import editxt.document as edoc
     def test(c):
@@ -213,7 +264,6 @@ def test_open_config_file():
     def test(c):
         m = Mocker()
         app = Application()
-        get_with_path = m.method(TextDocument.get_with_path)
         doc = m.mock(TextDocument)
         m.method(app.open_documents_with_paths)([app.config.path]) >> [doc]
         (doc.file_path << app.config.path).count(1, None)

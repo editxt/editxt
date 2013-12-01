@@ -29,7 +29,6 @@ import Foundation as fn
 import editxt.constants as const
 import editxt.platform.constants as platform_const
 
-from editxt import app
 from editxt.application import doc_id_gen
 from editxt.command.find import Finder, FindOptions
 from editxt.command.util import (calculate_indent_mode_and_size,
@@ -83,8 +82,7 @@ class TextDocumentView(object):
             path = state["path"]
         if path is not None:
             assert document is None, (path, document)
-            # TODO use project to get document
-            document = TextDocument.get_with_path(path)
+            document = project.editor.app.document_with_path(path)
         assert document is not None, (project, path, state)
         self.documents = KVOList.alloc().init()
         self.id = next(doc_id_gen)
@@ -386,38 +384,7 @@ class UndoManager(fn.NSUndoManager):
 
 class TextDocument(ak.NSDocument):
 
-    @property
-    def app(self):
-        # TODO pass app to constructor; eliminate global
-        return app
-
-    @classmethod
-    def get_with_path(cls, path):
-        """Get a document with the given path
-
-        Documents returned by this method have been added to the document
-        controllers list of documents.
-        """
-        if os.path.islink(path):
-            path = os.path.realpath(path)
-        url = fn.NSURL.fileURLWithPath_(path)
-        dc = ak.NSDocumentController.sharedDocumentController()
-        doc = dc.documentForURL_(url)
-        if doc is None:
-            if os.path.exists(path):
-                doctype, err = dc.typeForContentsOfURL_error_(url, None)
-                doc, err = dc.makeDocumentWithContentsOfURL_ofType_error_(
-                    url, doctype, None)
-                if err is not None:
-                    raise Error(err.localizedFailureReason())
-                if doc is None:
-                    raise Error("could not open document: %s" % path)
-                dc.addDocument_(doc)
-            else:
-                doc, err = dc.makeUntitledDocumentOfType_error_(
-                    const.TEXT_DOCUMENT, None)
-                doc.setFileURL_(url)
-        return doc
+    app = WeakProperty()
 
     def init(self):
         super(TextDocument, self).init()
@@ -432,11 +399,14 @@ class TextDocument(ak.NSDocument):
         self.syntaxer = SyntaxCache()
         self._filestat = None
         self.props = KVOProxy(self)
-        self.indent_mode = self.app.config["indent.mode"]
-        self.indent_size = self.app.config["indent.size"] # should come from syntax definition
-        self.newline_mode = self.app.config["newline_mode"]
-        self.highlight_selected_text = self.app.config["highlight_selected_text.enabled"]
-        self.reset_text_attributes(self.indent_size)
+
+        # FIXME reclaim from Application.document_with_path
+        self.indent_mode = const.INDENT_MODE_SPACE
+        self.indent_size = 4
+        self.newline_mode = const.NEWLINE_MODE_UNIX
+        self.highlight_selected_text = True
+        self.reset_text_attributes(self.indent_size, False)
+
         #self.save_hooks = []
         return self
 
@@ -472,7 +442,7 @@ class TextDocument(ak.NSDocument):
         else:
             self.document_attrs.pop(ak.NSCharacterEncodingDocumentAttribute, None)
 
-    def reset_text_attributes(self, indent_size):
+    def reset_text_attributes(self, indent_size, reset_views=True):
         font = ak.NSFont.fontWithName_size_("Monaco", 10.0)
         spcw = font.screenFontWithRenderingMode_(ak.NSFontDefaultRenderingMode) \
             .advancementForGlyph_(ord(" ")).width
@@ -486,6 +456,8 @@ class TextDocument(ak.NSDocument):
         }
         range = fn.NSMakeRange(0, self.text_storage.length())
         self.text_storage.addAttributes_range_(attrs, range)
+        if not reset_views:
+            return
         for view in self.app.iter_views_of_document(self):
             if view.text_view is not None:
                 view.text_view.setTypingAttributes_(attrs)
