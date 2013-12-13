@@ -38,7 +38,7 @@ class TextView(ak.NSTextView):
     def __new__(cls, docview, frame, container):
         self = cls.alloc().initWithFrame_textContainer_(frame, container)
         self.doc_view = docview
-        self.app = docview.project.editor.app
+        self.app = docview.project.window.app
         return self
 
 #    def dealloc(self):
@@ -90,9 +90,9 @@ class TextView(ak.NSTextView):
     # Drag/drop ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def readSelectionFromPasteboard_type_(self, pasteboard, type_):
-        editor = self.app.find_editor_with_document_view(self.doc_view)
-        if editor is not None:
-            if editor.accept_drop(None, pasteboard):
+        window = self.app.find_window_with_document_view(self.doc_view)
+        if window is not None:
+            if window.accept_drop(None, pasteboard):
                 return True
         return super(TextView, self).readSelectionFromPasteboard_type_(pasteboard, type_)
 

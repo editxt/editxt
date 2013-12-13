@@ -122,7 +122,7 @@ from editxt.controls.cells import (HoverButtonCell, BUTTON_STATE_NORMAL,
 #       return BUTTON_STATE_NORMAL
 
 def test_HBC_buttonImageForFrame_inView_():
-    from editxt.editor import EditorWindowController
+    from editxt.window import WindowController
     def test(c):
         m = Mocker()
         hbc = HoverButtonCell.alloc().init()
@@ -132,7 +132,7 @@ def test_HBC_buttonImageForFrame_inView_():
         if point is not None:
             m.replace(fn, 'NSPointInRect')(point, frame) >> (point == "in")
         row = view.rowAtPoint_(frame.origin >> (1, 1)) >> 2
-        dgt = m.property(hbc, "delegate").value >> m.mock(EditorWindowController)
+        dgt = m.property(hbc, "delegate").value >> m.mock(WindowController)
         image = dgt.hoverButtonCell_imageForState_row_(hbc, c.state, row) >> "<img>"
         with m:
             eq_(hbc.buttonImageForFrame_inView_(frame, view), image)
@@ -158,7 +158,7 @@ def test_HBC_mouseMovePressHandlers():
         eq_(hbc.hover_info, (None, False))
 
 def test_HBC_mouseMoveHandlers():
-    from editxt.editor import EditorWindowController
+    from editxt.window import WindowController
     def test(c):
         m = Mocker()
         hbc = HoverButtonCell.alloc().init()
@@ -173,7 +173,7 @@ def test_HBC_mouseMoveHandlers():
                 and pir(point, frame) >> c.inside[1]:
                 row = (m.method(hbc, "controlView")() >> m.mock(ak.NSOutlineView)) \
                     .rowAtPoint_(point) >> 2
-                (m.property(hbc, "delegate").value >> m.mock(EditorWindowController)) \
+                (m.property(hbc, "delegate").value >> m.mock(WindowController)) \
                     .hoverButton_rowClicked_(hbc, row)
         with m:
             assert getattr(hbc, c.method)(point, frame)

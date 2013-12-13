@@ -547,7 +547,7 @@ class CommandTester(object):
             @staticmethod
             def insertItem_atIndex_(item, tag):
                 pass
-        class editor:
+        class window:
             class current_view:
                 text_view = kw.pop("textview", None)
                 def message(msg, msg_type=const.INFO):
@@ -558,9 +558,9 @@ class CommandTester(object):
             kw.pop("history", []))
         for command in commands:
             commander.add_command(command, None, menu)
-        self.bar = textcommand.CommandBar(kw.pop("editor", editor), commander)
+        self.bar = textcommand.CommandBar(kw.pop("window", window), commander)
         # keep references (CommandBar uses weakref)
-        self.refs = (editor, commander)
+        self.refs = (window, commander)
 
     def __call__(self, command):
         with replattr(ak, "NSBeep", lambda:None): # HACK

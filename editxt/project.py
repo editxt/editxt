@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 class Project(object):
 
     id = None # will be overwritten (put here for type api compliance for testing)
-    editor = WeakProperty()
+    window = WeakProperty()
     document = None
     soft_wrap = None
     indent_mode = None
@@ -49,9 +49,9 @@ class Project(object):
     def is_project_path(path):
         return path.endswith("." + const.PROJECT_EXT)
 
-    def __init__(self, editor, *, serial=None):
+    def __init__(self, window, *, serial=None):
         self.id = next(doc_id_gen)
-        self.editor = editor
+        self.window = window
         self.proxy = KVOProxy(self)
         self.name = const.UNTITLED_PROJECT_NAME
         self.path = None
@@ -99,7 +99,7 @@ class Project(object):
         if self.serial_cache != self.serialize():
             if self.path is not None:
                 self.save_with_path(self.path)
-            self.editor.app.save_editor_states()
+            self.window.app.save_window_states()
             self.reset_serial_cache()
 
     def save_with_path(self, path):
@@ -187,23 +187,23 @@ class Project(object):
 
     def perform_close(self):
         from editxt.application import DocumentSavingDelegate
-        editor = self.editor
-        app = editor.app
-        if app.find_editors_with_project(self) == [editor]:
+        window = self.window
+        app = window.app
+        if app.find_windows_with_project(self) == [window]:
             def dirty_docs():
                 for dv in self.dirty_documents():
-                    itr = app.iter_editors_with_view_of_document(dv.document)
-                    if list(itr) == [editor]:
+                    itr = app.iter_windows_with_view_of_document(dv.document)
+                    if list(itr) == [window]:
                         yield dv
                 yield self
             def callback(should_close):
                 if should_close:
-                    editor.discard_and_focus_recent(self)
+                    window.discard_and_focus_recent(self)
             saver = DocumentSavingDelegate.alloc().\
                 init_callback_(dirty_docs(), callback)
             saver.save_next_document()
         else:
-            editor.discard_and_focus_recent(self)
+            window.discard_and_focus_recent(self)
 
     def close(self):
         self.closing = True
@@ -213,7 +213,7 @@ class Project(object):
             #self.documents.setItems_([])
         finally:
             self.closing = False
-        self.editor = None
+        self.window = None
         self.documents = None
         self.proxy = None
 

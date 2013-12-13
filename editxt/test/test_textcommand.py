@@ -40,15 +40,15 @@ log = logging.getLogger(__name__)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # CommandBar tests
 
-def test_CommandBar_editor():
-    editor = type('Editor', (object,), {})()
+def test_CommandBar_window():
+    window = type('Window', (object,), {})()
     text_commander = type('TextCommandController', (object,), {})()
-    cmd = mod.CommandBar(editor, text_commander)
-    eq_(cmd.editor, editor)
+    cmd = mod.CommandBar(window, text_commander)
+    eq_(cmd.window, window)
     eq_(cmd.text_commander, text_commander)
     # NOTE the following depends on CPython weakref behavior
-    del editor, text_commander
-    eq_(cmd.editor, None)
+    del window, text_commander
+    eq_(cmd.window, None)
     eq_(cmd.text_commander, None)
 
 def test_CommandBar_execute():
@@ -56,17 +56,17 @@ def test_CommandBar_execute():
     from editxt.textcommand import TextCommandController
     def test(c):
         m = Mocker()
-        editor = m.mock()
+        window = m.mock()
         beep = m.replace(ak, 'NSBeep')
         commander = m.mock(TextCommandController)
-        bar = mod.CommandBar(editor, commander)
+        bar = mod.CommandBar(window, commander)
         message = m.replace(bar, "message")
         args = c.text.split()
         if args and not c.current:
-            editor.current_view >> None
+            window.current_view >> None
             beep()
         elif args:
-            view = editor.current_view >> m.mock(TextDocumentView)
+            view = window.current_view >> m.mock(TextDocumentView)
             command = m.mock()
             if c.lookup == 'first':
                 commander.lookup(args[0]) >> command
@@ -229,9 +229,9 @@ def test_CommandBar_get_history():
             history = mod.CommandHistory(tmp)
             for item in reversed("abc"):
                 history.append(item)
-            editor = type("FakeEditor", (object,), {})()
+            window = type("FakeWindow", (object,), {})()
             commander = TextCommandController(history)
-            bar = mod.CommandBar(editor, commander)
+            bar = mod.CommandBar(window, commander)
 
             for input, direction, history in nav:
                 dirchar = "v" if direction else "A"
@@ -295,12 +295,12 @@ def test_CommandBar_get_history_concurrently():
         history = mod.CommandHistory(tmp)
         for item in reversed("abc"):
             history.append(item)
-        editor = type("FakeEditor", (object,), {})()
+        window = type("FakeWindow", (object,), {})()
         commander = TextCommandController(history)
-        bar1 = mod.CommandBar(editor, commander)
-        bar2 = mod.CommandBar(editor, commander)
-        bar3 = mod.CommandBar(editor, commander)
-        bar4 = mod.CommandBar(editor, commander)
+        bar1 = mod.CommandBar(window, commander)
+        bar2 = mod.CommandBar(window, commander)
+        bar3 = mod.CommandBar(window, commander)
+        bar4 = mod.CommandBar(window, commander)
 
         eq_(bar1.get_history("x"), "a")
 
@@ -354,12 +354,12 @@ def test_CommandBar_history_reset_on_execute():
     from editxt.textcommand import CommandHistory, TextCommandController
     with tempdir() as tmp:
         m = Mocker()
-        editor = m.mock()
+        window = m.mock()
         history = CommandHistory(tmp)
         commander = TextCommandController(history)
-        bar = mod.CommandBar(editor, commander)
+        bar = mod.CommandBar(window, commander)
         args = ["cmd"]
-        view = editor.current_view >> m.mock(TextDocumentView)
+        view = window.current_view >> m.mock(TextDocumentView)
         view.text_view >> '<view>'
         @command
         def cmd(textview, sender, args):
@@ -376,12 +376,12 @@ def test_CommandBar_message():
     from editxt.document import TextDocumentView
     def test(c):
         m = Mocker()
-        editor = m.mock()
+        window = m.mock()
         commander = m.mock(TextCommandController)
         sys_exc_info = m.replace(mod.sys, "exc_info")
         format_exc = m.replace(mod.traceback, "format_exception")
-        bar = mod.CommandBar(editor, commander)
-        view = editor.current_view >> m.mock(TextDocumentView)
+        bar = mod.CommandBar(window, commander)
+        view = window.current_view >> m.mock(TextDocumentView)
         kw = {}
         if c.exc_info is not None:
             kw["exc_info"] = c.exc_info
@@ -396,10 +396,10 @@ def test_CommandBar_message():
 
 def test_CommandBar_reset():
     with tempdir() as tmp:
-        editor = type("Editor", (object,), {})()
+        window = type("Window", (object,), {})()
         history = mod.CommandHistory(tmp)
         commander = mod.TextCommandController(history)
-        bar = mod.CommandBar(editor, commander)
+        bar = mod.CommandBar(window, commander)
         eq_(bar.get_history(""), None)
         assert bar.history_view is not None
         assert bar.history_view in history.views

@@ -32,7 +32,7 @@ import editxt.constants as const
 import editxt.application as mod
 from editxt.application import Application, DocumentController, DocumentSavingDelegate
 from editxt.commands import iterlines
-from editxt.editor import EditorWindowController, Editor
+from editxt.window import WindowController, Window
 from editxt.document import TextDocumentView, TextDocument
 from editxt.project import Project
 from editxt.util import load_yaml
@@ -59,7 +59,7 @@ def test_editxt_app():
 def test_application_init():
     from editxt.util import ContextMap
     app = Application()
-    eq_(app.editors, [])
+    eq_(app.windows, [])
     assert isinstance(app.context, ContextMap)
 
 def test_profile_path():
@@ -103,11 +103,11 @@ def test_application_will_finish_launching():
     def test(eds_config):
         app = Application()
         m = Mocker()
-        create_editor = m.method(app.create_editor)
+        create_window = m.method(app.create_window)
         open_error_log = m.method(app.open_error_log)
         nsapp = m.mock(ak.NSApplication)
         ud_class = m.replace(fn, 'NSUserDefaults')
-        m.method(app.iter_saved_editor_states)() >> iter(eds_config)
+        m.method(app.iter_saved_window_states)() >> iter(eds_config)
         tc = m.replace(app, 'text_commander', spec=TextCommandController)
         dc = m.mock(DocumentController)
         menu = dc.textMenu >> m.mock(ak.NSMenu)
@@ -119,11 +119,11 @@ def test_application_will_finish_launching():
                 if isinstance(ed_config, mod.StateLoadFailure):
                     error = True
                 else:
-                    create_editor(ed_config)
+                    create_window(ed_config)
             if error:
                 open_error_log()
         else:
-            create_editor()
+            create_window()
         with m:
             app.application_will_finish_launching(nsapp, dc)
             eq_(app.text_commander, tc)
@@ -133,24 +133,24 @@ def test_application_will_finish_launching():
     yield test, ["project 1", "project 2"]
     yield test, ["project 1", mod.StateLoadFailure("<path>"), "project 2"]
 
-def test_create_editor():
-    import editxt.editor as editor #import Editor
+def test_create_window():
+    import editxt.window as window #import Window
     def test(args):
         ac = Application()
         m = Mocker()
-        ed_class = m.replace(editor, 'Editor')
-        wc_class = m.replace(editor, 'EditorWindowController')
-        wc = wc_class.alloc() >> m.mock(editor.EditorWindowController)
+        ed_class = m.replace(window, 'Window')
+        wc_class = m.replace(window, 'WindowController')
+        wc = wc_class.alloc() >> m.mock(window.WindowController)
         wc.initWithWindowNibName_("EditorWindow") >> wc
-        ed = ed_class(ac, wc, args[0] if args else None) >> m.mock(editor.Editor)
-        wc.editor = ed
-        #ed = wc.controller >> m.mock(Editor)
+        ed = ed_class(ac, wc, args[0] if args else None) >> m.mock(window.Window)
+        wc.window_ = ed
+        #ed = wc.controller >> m.mock(Window)
         #wc_class.create_with_serial_data(args[0] if args else None) >> wc
         with m.order():
-            ac.editors.append(ed)
+            ac.windows.append(ed)
             wc.showWindow_(ac)
         with m:
-            result = ac.create_editor(*args)
+            result = ac.create_window(*args)
             eq_(result, ed)
     yield test, ("<serial data>",)
     yield test, ()
@@ -179,12 +179,12 @@ def test_new_project():
     def test(has_current):
         m = Mocker()
         ac = Application()
-        ac.current_editor = m.method(ac.current_editor)
+        ac.current_window = m.method(ac.current_window)
         if has_current:
-            ed = m.mock(Editor)
-            proj = (ac.current_editor() >> ed).new_project() >> m.mock(Project)
+            ed = m.mock(Window)
+            proj = (ac.current_window() >> ed).new_project() >> m.mock(Project)
         else:
-            ac.current_editor() >> None
+            ac.current_window() >> None
             proj = None
         with m:
             result = ac.new_project()
@@ -247,18 +247,18 @@ def test_open_documents_with_paths():
     def test(c):
         m = Mocker()
         app = Application()
-        create_editor = m.method(app.create_editor)
-        editor = m.mock(Editor)
-        m.method(app.current_editor)() >> (editor if c.has_editor else None)
-        if not c.has_editor:
-            create_editor() >> editor
-        items = editor.iter_dropped_paths("<paths>") >> m.mock()
-        editor.insert_items(items)
+        create_window = m.method(app.create_window)
+        window = m.mock(Window)
+        m.method(app.current_window)() >> (window if c.has_window else None)
+        if not c.has_window:
+            create_window() >> window
+        items = window.iter_dropped_paths("<paths>") >> m.mock()
+        window.insert_items(items)
         with m:
             app.open_documents_with_paths("<paths>")
     c = TestConfig()
-    yield test, c(has_editor=False)
-    yield test, c(has_editor=True)
+    yield test, c(has_window=False)
+    yield test, c(has_window=True)
 
 def test_open_config_file():
     def test(c):
@@ -283,7 +283,7 @@ def test_open_config_file():
 def test_open_error_log():
     def test(c):
         m = Mocker()
-        ed = m.mock(Editor)
+        ed = m.mock(Window)
         dv = m.mock(TextDocumentView)
         app = Application()
         err = m.property(mod.errlog, "document").value >> m.mock(TextDocument)
@@ -292,26 +292,26 @@ def test_open_error_log():
             m.method(app.set_current_document_view)(dv)
         else:
             idocs = iter([])
-            m.method(app.current_editor)() >> (ed if c.has_editor else None)
-            if not c.has_editor:
-                m.method(app.create_editor)() >> ed
+            m.method(app.current_window)() >> (ed if c.has_window else None)
+            if not c.has_window:
+                m.method(app.create_window)() >> ed
             ed.insert_items([err])
         m.method(app.iter_views_of_document)(err) >> idocs
         with m:
             app.open_error_log()
     c = TestConfig(is_open=False)
     yield test, c(is_open=True)
-    yield test, c(has_editor=True)
-    yield test, c(has_editor=False)
+    yield test, c(has_window=True)
+    yield test, c(has_window=False)
 
 def test_iter_dirty_documents():
-    def do_test(editors_template):
+    def do_test(windows_template):
         app = Application()
         m = Mocker()
         seen = set()
         dirty_docs = []
         eds = []
-        for ecfg in editors_template:
+        for ecfg in windows_template:
             projects = []
             for pcfg in ecfg:
                 proj = m.mock(Project)
@@ -329,10 +329,10 @@ def test_iter_dirty_documents():
                 proj.dirty_documents() >> documents
                 if has_dirty:
                     dirty_docs.append(proj)
-            ed = m.mock(Editor)
+            ed = m.mock(Window)
             ed.projects >> projects
             eds.append(ed)
-        m.method(app.iter_editors)() >> eds
+        m.method(app.iter_windows)() >> eds
         with m:
             result = list(app.iter_dirty_documents())
             eq_(result, dirty_docs)
@@ -348,8 +348,8 @@ def test_set_current_document_view():
     ac = Application()
     m = Mocker()
     dv = m.mock(TextDocumentView)
-    ac.find_editor_with_document_view = m.method(ac.find_editor_with_document_view)
-    ed = ac.find_editor_with_document_view(dv) >> m.mock(Editor)
+    ac.find_window_with_document_view = m.method(ac.find_window_with_document_view)
+    ed = ac.find_window_with_document_view(dv) >> m.mock(Window)
     ed.current_view = dv
     with m:
         ac.set_current_document_view(dv)
@@ -358,17 +358,17 @@ def test_Application_close_current_document():
     def test(c):
         app = Application()
         m = Mocker()
-        ed = m.mock(Editor) if c.has_editor else None
-        m.method(app.current_editor)() >> ed
-        if c.has_editor:
+        ed = m.mock(Window) if c.has_window else None
+        m.method(app.current_window)() >> ed
+        if c.has_window:
             view = m.mock(TextDocumentView) if c.has_view else None
             ed.current_view >> view
             if c.has_view:
                 view.perform_close()
         with m:
             app.close_current_document()
-    c = TestConfig(has_editor=True, has_view=True)
-    yield test, c(has_editor=False)
+    c = TestConfig(has_window=True, has_view=True)
+    yield test, c(has_window=False)
     yield test, c(has_view=False)
     yield test, c
 
@@ -379,16 +379,16 @@ def test_Application_iter_views_of_document():
         doc = m.mock(TextDocument)
         views = []
         total_views = 0
-        #ac.editors = eds = []
+        #ac.windows = eds = []
         eds = []
         for view_count in config:
-            ed = m.mock(Editor)
+            ed = m.mock(Window)
             eds.append(ed)
             total_views += view_count
             vws = [m.mock(TextDocumentView) for i in range(view_count)]
             ed.iter_views_of_document(doc) >> vws
             views.extend(vws)
-        m.method(ac.iter_editors)() >> eds
+        m.method(ac.iter_windows)() >> eds
         with m:
             result = list(ac.iter_views_of_document(doc))
             eq_(result, views)
@@ -415,16 +415,16 @@ def test_Application_iter_views_of_document():
 #   yield test, c(has_view=True)
 #   yield test, c(has_view=False)
 
-def test_iter_editors_with_view_of_document():
+def test_iter_windows_with_view_of_document():
     def test(c):
         result = None
         ac = Application()
         m = Mocker()
         doc = m.mock(TextDocument)
         found = []
-        eds = m.method(ac.iter_editors)() >> []
+        eds = m.method(ac.iter_windows)() >> []
         for e in c.eds:
-            ed = m.mock(Editor)
+            ed = m.mock(Window)
             eds.append(ed)
             if e.has_view:
                 views = [m.mock(TextDocumentView)]
@@ -433,7 +433,7 @@ def test_iter_editors_with_view_of_document():
                 views = []
             ed.iter_views_of_document(doc) >> iter(views)
         with m:
-            result = list(ac.iter_editors_with_view_of_document(doc))
+            result = list(ac.iter_windows_with_view_of_document(doc))
             eq_(result, found)
             eq_(len(result), c.count)
     ed = lambda has_view=True: TestConfig(has_view=has_view)
@@ -444,7 +444,7 @@ def test_iter_editors_with_view_of_document():
     yield test, c(eds=[ed(), ed(False)], count=1)
     yield test, c(eds=[ed(), ed(False), ed()], count=2)
 
-def test_find_editor_with_document_view():
+def test_find_window_with_document_view():
     DOC = "the document view we're looking for"
     def test(config):
         """Test argument structure:
@@ -462,10 +462,10 @@ def test_find_editor_with_document_view():
         dv = m.mock(TextDocumentView) # this is the view we're looking for
         document = m.mock(TextDocument)
         (dv.document << document).count(0, None)
-        ac.iter_editors = m.method(ac.iter_editors)
-        eds = ac.iter_editors() >> []
+        ac.iter_windows = m.method(ac.iter_windows)
+        eds = ac.iter_windows() >> []
         for ed_projects in config:
-            ed = m.mock(Editor)
+            ed = m.mock(Window)
             eds.append(ed)
             projects = []
             ed.projects >> projects
@@ -484,7 +484,7 @@ def test_find_editor_with_document_view():
                     else:
                         documents.append(m.mock(TextDocumentView))
         with m:
-            ed = ac.find_editor_with_document_view(dv)
+            ed = ac.find_window_with_document_view(dv)
             eq_(ed, result)
     yield test, []
     yield test, [[]]
@@ -494,24 +494,24 @@ def test_find_editor_with_document_view():
     yield test, [[["doc"]]]
     yield test, [[["doc"]], [[DOC]]]
 
-def test_add_editor():
+def test_add_window():
     ac = Application()
     m = Mocker()
-    ed = m.mock(Editor)
-    assert not ac.editors
+    ed = m.mock(Window)
+    assert not ac.windows
     with m:
-        ac.add_editor(ed)
-    assert ed in ac.editors
+        ac.add_window(ed)
+    assert ed in ac.windows
 
-def test_iter_editors():
+def test_iter_windows():
     def test(config, unordered=0):
         """
         config - represents a list of window controllers in on-screen z-order
             with the front-most window controller first. Key:
-                None - generic NSWindowController (not EditorWindowController)
-                <int> - Editor index in ac.editors
-        unordered - (optional, default 0) number of editors in
-            ac.editors that are not in the on-screen z-order window
+                None - generic NSWindowController (not WindowController)
+                <int> - Window index in ac.windows
+        unordered - (optional, default 0) number of windows in
+            ac.windows that are not in the on-screen z-order window
             list.
         """
         ac = Application()
@@ -525,26 +525,26 @@ def test_iter_editors():
             if item is None:
                 wc = m.mock(ak.NSWindowController)
             else:
-                wc = m.mock(EditorWindowController)
-                ed = m.mock(Editor)
+                wc = m.mock(WindowController)
+                ed = m.mock(Window)
                 print(ed, item)
                 if item != 7:
-                    (wc.editor << ed).count(3)
+                    (wc.window_ << ed).count(3)
                     unordered_eds.append(ed)
                 else:
-                    wc.editor >> ed
+                    wc.window_ >> ed
                 eds[item] = ed
             win = m.mock(ak.NSWindow)
             win.windowController() >> wc
             z_windows.append(win)
         for x in range(unordered):
-            unordered_eds.append(m.mock(Editor))
-        ac.editors = unordered_eds # + [v for k, v in sorted(eds.items())]
+            unordered_eds.append(m.mock(Window))
+        ac.windows = unordered_eds # + [v for k, v in sorted(eds.items())]
         app.orderedWindows() >> z_windows
         sorted_eds = [eds[i] for i in config if i not in (None, 7)]
         sorted_eds.extend(ed for ed in unordered_eds if ed not in sorted_eds)
         with m:
-            result = list(ac.iter_editors())
+            result = list(ac.iter_windows())
         eq_(result, sorted_eds)
     yield test, []
     yield test, [0]
@@ -559,45 +559,45 @@ def test_iter_editors():
     yield test, [1, 0], 2
     yield test, [7, 1, 0], 2
 
-def test_current_editor():
+def test_current_window():
     def test(config):
         ac = Application()
         m = Mocker()
-        ac.iter_editors = iwc = m.method(ac.iter_editors)
+        ac.iter_windows = iwc = m.method(ac.iter_windows)
         iwc() >> iter(config)
         with m:
-            result = ac.current_editor()
+            result = ac.current_window()
             eq_(result, (config[0] if config else None))
     yield test, []
     yield test, [0]
     yield test, [1, 0]
 
-def test_discard_editor():
+def test_discard_window():
     def test(c):
         m = Mocker()
         app = Application()
-        ed = m.mock(Editor)
+        ed = m.mock(Window)
         if c.ed_in_eds:
-            app.editors.append(ed)
+            app.windows.append(ed)
         def verify():
-            assert ed not in app.editors, "ed cannot be in app.editors at this point"
+            assert ed not in app.windows, "ed cannot be in app.windows at this point"
         expect(ed.close()).call(verify)
         with m:
-            app.discard_editor(ed)
+            app.discard_window(ed)
     c = TestConfig(ed_in_eds=True)
     yield test, c(ed_in_eds=False)
     yield test, c
 
-def test_find_editors_with_project():
+def test_find_windows_with_project():
     PROJ = "the project"
     def test(eds_config, num_eds):
         eds_found = []
         ac = Application()
         m = Mocker()
         proj = m.mock(Project)
-        ac.editors = eds = []
+        ac.windows = eds = []
         for i, ed_config in enumerate(eds_config):
-            ed = m.mock(Editor)
+            ed = m.mock(Window)
             eds.append(ed)
             projects = []
             ed.projects >> projects
@@ -612,7 +612,7 @@ def test_find_editors_with_project():
                 projects.append(project)
         with m:
             eq_(len(eds_found), num_eds)
-            result = ac.find_editors_with_project(proj)
+            result = ac.find_windows_with_project(proj)
             eq_(result, eds_found)
     yield test, [], 0
     yield test, [[PROJ]], 1
@@ -624,10 +624,10 @@ def test_find_project_with_path():
     def test(c):
         m = Mocker()
         ac = Application()
-        ac.editors = eds = []
+        ac.windows = eds = []
         found_proj = None
         for it in c.eds:
-            ed = m.mock(Editor)
+            ed = m.mock(Window)
             eds.append(ed)
             if found_proj is None:
                 proj = m.mock(Project) if it.has_path else None
@@ -652,10 +652,10 @@ def test_find_item_with_id():
     def test(c):
         m = Mocker()
         ac = Application()
-        ac.editors = eds = []
+        ac.windows = eds = []
         found_item = None
         for w in c.eds:
-            ed = m.mock(Editor)
+            ed = m.mock(Window)
             eds.append(ed)
             projs = (ed.projects >> [])
             for p in w.projs:
@@ -701,9 +701,9 @@ def test_item_changed():
         ctype = 0
         item = m.mock(TextDocument if c.item_type == "d" else Project)
         for e in range(c.eds):
-            ed = m.mock(Editor)
+            ed = m.mock(Window)
             ed.item_changed(item, ctype)
-            app.add_editor(ed)
+            app.add_window(ed)
         with m:
             app.item_changed(item, ctype)
     c = TestConfig(eds=0, item_type="d")
@@ -749,7 +749,7 @@ def test_setup_profile_at_file():
         eq_(app.setup_profile(), False)
         assert os.path.isfile(path), path
 
-def test_iter_saved_editor_states():
+def test_iter_saved_window_states():
     def test(states, error=None):
         with tempdir() as tmp:
             state_path = os.path.join(tmp, const.STATE_DIR)
@@ -757,12 +757,12 @@ def test_iter_saved_editor_states():
                 # setup previous state
                 m = Mocker()
                 app = Application(tmp)
-                def iter_editors():
+                def iter_windows():
                     for ident in states:
                         yield TestConfig(state=[ident])
-                m.method(app.iter_editors)() >> iter_editors()
+                m.method(app.iter_windows)() >> iter_windows()
                 with m:
-                    app.save_editor_states()
+                    app.save_window_states()
                 assert os.listdir(state_path), state_path
                 if error is not None:
                     fail_path = os.path.join(
@@ -770,29 +770,29 @@ def test_iter_saved_editor_states():
                     with open(fail_path, "w") as fh:
                         fh.write('!!invalid "yaml"')
             app = Application(tmp)
-            result = list(app.iter_saved_editor_states())
+            result = list(app.iter_saved_window_states())
             eq_(result, [[id] if error != i else mod.StateLoadFailure(fail_path)
                          for i, id in enumerate(states)])
     yield test, []
     yield test, [3, 1, 2, 0]
     yield test, [666], 0
 
-def test_save_editor_state():
+def test_save_window_state():
     def test(with_id=True, fail=False):
         with tempdir() as tmp:
             state_path = os.path.join(tmp, const.STATE_DIR)
-            editor = TestConfig(state=[42], id=9)
-            args = (editor.id,) if with_id else ()
+            window = TestConfig(state=[42], id=9)
+            args = (window.id,) if with_id else ()
             app = Application(tmp)
-            state_name = app.save_editor_state(editor, *args)
+            state_name = app.save_window_state(window, *args)
             if fail:
-                editor = editor(state="should not be written")
+                window = window(state="should not be written")
                 def dump_fail(state, fh=None):
                     if fh is not None:
                         fh.write("should not be seen")
                     raise Exception("dump fail!")
                 with replattr(mod, "dump_yaml", dump_fail, sigcheck=False):
-                    state_name = app.save_editor_state(editor, *args)
+                    state_name = app.save_window_state(window, *args)
             assert os.path.isdir(state_path), state_path
             with open(os.path.join(state_path, state_name)) as f:
                 eq_(load_yaml(f), [42])
@@ -800,12 +800,12 @@ def test_save_editor_state():
     yield test, True, True
     #yield test, False not implemented
 
-def test_save_editor_states():
-    def mock_editors(mock_iter_editors, editors):
-        def iter_editors():
-            for ident in editors:
+def test_save_window_states():
+    def mock_windows(mock_iter_windows, windows):
+        def iter_windows():
+            for ident in windows:
                 yield TestConfig(state=[ident])
-        mock_iter_editors() >> iter_editors()
+        mock_iter_windows() >> iter_windows()
     def test(c):
         with tempdir() as tmp:
             state_path = os.path.join(tmp, const.STATE_DIR)
@@ -813,32 +813,32 @@ def test_save_editor_states():
                 # setup previous state
                 m = Mocker()
                 app = Application(tmp)
-                mock_editors(m.method(app.iter_editors), c.previous)
+                mock_windows(m.method(app.iter_windows), c.previous)
                 with m:
-                    app.save_editor_states()
+                    app.save_window_states()
                 assert os.listdir(state_path), state_path
 
             m = Mocker()
             app = Application(tmp)
-            mock_editors(m.method(app.iter_editors), c.editors)
+            mock_windows(m.method(app.iter_windows), c.windows)
             with m:
-                app.save_editor_states()
+                app.save_window_states()
             assert os.path.isdir(state_path), state_path
             states = sorted(os.listdir(state_path))
-            eq_(len(states), len(c.editors), states)
-            for ident, state in zip(c.editors, states):
+            eq_(len(states), len(c.windows), states)
+            for ident, state in zip(c.windows, states):
                 with open(os.path.join(state_path, state)) as f:
                     eq_(load_yaml(f), [ident])
-    c = TestConfig(editors=[], previous=[10, 20, 30])
+    c = TestConfig(windows=[], previous=[10, 20, 30])
     yield test, c
-    yield test, c(editors=[1, 2])
-    yield test, c(editors=[1, 2, 3, 4])
+    yield test, c(windows=[1, 2])
+    yield test, c(windows=[1, 2, 3, 4])
 
 def test_app_will_terminate():
     def test(ed_config):
         app = Application()
         m = Mocker()
-        m.method(app.save_editor_states)() >> None
+        m.method(app.save_window_states)() >> None
         with m:
             ap.app_will_terminate(None)
 
@@ -854,7 +854,7 @@ def test_DocumentController_actions():
         with m:
             getattr(dc, action)(None)
     
-    yield test, "newWindow_", "create_editor"
+    yield test, "newWindow_", "create_window"
     yield test, "newProject_", "new_project"
     yield test, "openConfigFile_", "open_config_file"
     yield test, "openErrorLog_", "open_error_log"
@@ -956,7 +956,7 @@ def test_save_next_document():
                 doc.save()
                 do_stop_routine()
             elif doctype is TextDocumentView:
-                doc.project.editor.current_view = doc
+                doc.project.window.current_view = doc
                 win = m.mock()
                 doc.window() >> win
                 note_ctr.defaultCenter().addObserver_selector_name_object_(

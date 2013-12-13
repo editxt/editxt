@@ -118,27 +118,27 @@ rename
 
 refactor object hierarchy to make it more modular and easier to add features
     app.documents - {id: Document}
-    app.editors - [Editor]
-    ? app.current_editor - Editor
+    app.windows - [Window]
+    ? app.current_window - Window
     app.profile_path
     app.config.right_margin
     app.config.font
     app.config.font_size
     app.syntaxdefs - [SyntaxDefinition]
     ? app.extensions - [Extension]
-    app.history - [...] recently closed editors
+    app.history - [...] recently closed windows
 
-    editor.groups - [Group]
-    editor.current_group - Group
-    editor.config - settings like is_config_pane_visible
-    editor.history - [...] recently closed groups
+    window.groups - [Group]
+    window.current_group - Group
+    window.config - settings like is_config_pane_visible
+    window.history - [...] recently closed groups
 
     group.name
     group.root - path of root directory (default ~)
     group.expanded - bool, is group expanded
-    group.views - [View]
-    group.current_view - View
-    group.history - [...] recently closed views
+    group.editors - [Editor]
+    group.current_editor - Editor
+    group.history - [...] recently closed editors
 
     document.path
     document.newline_style
@@ -148,13 +148,13 @@ refactor object hierarchy to make it more modular and easier to add features
     document.encoding
     document.realpath
     document.id - hash of realpath?
-    ? document.views - [View]
+    ? document.editors - [Editor]
 
-    view.document - Document
-    view.group - Group
-    view.position - position of document in view
-    view.cursor - cursor position
-    view.wrap_lines
+    editor.document - Document
+    editor.group - Group
+    editor.position - position of document in editor
+    editor.cursor - cursor position
+    editor.wrap_lines
 
     syntax.name
     syntax.path

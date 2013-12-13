@@ -66,9 +66,9 @@ class TextDocumentView(object):
 
     Reference graph:
         strong:
-            app -> editor -> KVOProxy(project) -> KVOProxy(self)
+            app -> window -> KVOProxy(project) -> KVOProxy(self)
         weak:
-            self -> project -> editor -> app
+            self -> project -> window -> app
     """
 
     id = None # will be overwritten (put here for type api compliance for testing)
@@ -82,7 +82,7 @@ class TextDocumentView(object):
             path = state["path"]
         if path is not None:
             assert document is None, (path, document)
-            document = project.editor.app.document_with_path(path)
+            document = project.window.app.document_with_path(path)
         assert document is not None, (project, path, state)
         self.documents = KVOList.alloc().init()
         self.id = next(doc_id_gen)
@@ -290,19 +290,19 @@ class TextDocumentView(object):
 
     def perform_close(self):
         app = self.document.app
-        editor = self.project.editor
-        views = list(app.iter_editors_with_view_of_document(self.document))
-        if views == [editor]:
-            editor.current_view = self
+        window = self.project.window
+        views = list(app.iter_windows_with_view_of_document(self.document))
+        if views == [window]:
+            window.current_view = self
             info = app.context.put(self.maybe_close)
             self.document.canCloseDocumentWithDelegate_shouldCloseSelector_contextInfo_(
                 self.document, "document:shouldClose:contextInfo:", info)
         else:
-            editor.discard_and_focus_recent(self)
+            window.discard_and_focus_recent(self)
 
     def maybe_close(self, should_close):
         if should_close:
-            self.project.editor.discard_and_focus_recent(self)
+            self.project.window.discard_and_focus_recent(self)
 
     def close(self):
         doc = self.document
@@ -312,7 +312,7 @@ class TextDocumentView(object):
             if doc.text_storage is not None and self.text_view is not None:
                 doc.text_storage.removeLayoutManager_(self.text_view.layoutManager())
             for wc in list(self.document.windowControllers()):
-                if wc.editor.count_views_of_document(doc) == 0:
+                if wc.window_.count_views_of_document(doc) == 0:
                     doc.removeWindowController_(wc)
             if doc.app.count_views_of_document(doc) == 0:
                 doc.close()
@@ -467,10 +467,10 @@ class TextDocument(ak.NSDocument):
         return self._text_attributes
 
     def makeWindowControllers(self):
-        editor = self.app.current_editor()
-        if editor is None:
-            editor = self.app.create_editor()
-        editor.insert_items([self])
+        window = self.app.current_window()
+        if window is None:
+            window = self.app.create_window()
+        window.insert_items([self])
 
     def readFromData_ofType_error_(self, data, doctype, error):
         success, err = self.read_data_into_textstorage(data, self.text_storage)
@@ -502,7 +502,7 @@ class TextDocument(ak.NSDocument):
         if err is None:
             try:
                 self.update_syntaxer()
-                self.app.save_editor_states()
+                self.app.save_window_states()
             except Exception:
                 log.error("unexpected error", exc_info=True)
 #             if self.project is not None:

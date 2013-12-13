@@ -53,7 +53,7 @@ class Application(object):
         assert os.path.isabs(self.profile_path), \
             'profile path cannot be relative (%s)' % self.profile_path
         self._setup_profile = set()
-        self.editors = []
+        self.windows = []
         self.path_opener = None
         self.config = Config(
             os.path.join(self.profile_path, const.CONFIG_FILENAME))
@@ -91,25 +91,25 @@ class Application(object):
     def application_will_finish_launching(self, app, doc_ctrl):
         self.init_syntax_definitions()
         self.text_commander.load_commands(doc_ctrl.textMenu)
-        states = list(self.iter_saved_editor_states())
+        states = list(self.iter_saved_window_states())
         if states:
             errors = []
             for state in reversed(states):
                 if isinstance(state, StateLoadFailure):
                     errors.append(state)
                 else:
-                    self.create_editor(state)
+                    self.create_window(state)
             if errors:
                 self.open_error_log()
         else:
-            self.create_editor()
+            self.create_window()
 
-    def create_editor(self, state=None):
-        from editxt.editor import EditorWindowController, Editor
-        wc = EditorWindowController.alloc().initWithWindowNibName_("EditorWindow")
-        ed = Editor(self, wc, state)
-        wc.editor = ed
-        self.editors.append(ed)
+    def create_window(self, state=None):
+        from editxt.window import WindowController, Window
+        wc = WindowController.alloc().initWithWindowNibName_("EditorWindow")
+        ed = Window(self, wc, state)
+        wc.window_ = ed
+        self.windows.append(ed)
         wc.showWindow_(self)
         return ed
 
@@ -123,9 +123,9 @@ class Application(object):
         self.path_opener.populateWithClipboard()
 
     def new_project(self):
-        editor = self.current_editor()
-        if editor is not None:
-            return editor.new_project()
+        window = self.current_window()
+        if window is not None:
+            return window.new_project()
 
     def document_with_path(self, path):
         """Get a document with the given path
@@ -166,11 +166,11 @@ class Application(object):
 
     def open_documents_with_paths(self, paths):
         from editxt.document import TextDocumentView
-        editor = self.current_editor()
-        if editor is None:
-            editor = self.create_editor()
-        items = editor.iter_dropped_paths(paths)
-        return editor.insert_items(items)
+        window = self.current_window()
+        if window is None:
+            window = self.create_window()
+        items = window.iter_dropped_paths(paths)
+        return window.insert_items(items)
 
     def open_config_file(self):
         items = self.open_documents_with_paths([self.config.path])
@@ -187,18 +187,18 @@ class Application(object):
         try:
             view = next(self.iter_views_of_document(doc))
         except StopIteration:
-            editor = self.current_editor()
-            if editor is None:
-                editor = self.create_editor()
-            editor.insert_items([doc])
+            window = self.current_window()
+            if window is None:
+                window = self.create_window()
+            window.insert_items([doc])
         else:
             if set_current:
                 self.set_current_document_view(view)
 
     def iter_dirty_documents(self):
         seen = set()
-        for editor in self.iter_editors():
-            for proj in editor.projects:
+        for window in self.iter_windows():
+            for proj in window.projects:
                 dirty = False
                 for view in proj.dirty_documents():
                     if view.document.id not in seen:
@@ -209,19 +209,19 @@ class Application(object):
                     yield proj
 
     def set_current_document_view(self, doc_view):
-        ed = self.find_editor_with_document_view(doc_view)
+        ed = self.find_window_with_document_view(doc_view)
         ed.current_view = doc_view
 
     def close_current_document(self):
-        editor = self.current_editor()
-        if editor is not None:
-            view = editor.current_view
+        window = self.current_window()
+        if window is not None:
+            view = window.current_view
             if view is not None:
                 view.perform_close()
 
     def iter_views_of_document(self, doc):
-        for editor in self.iter_editors():
-            for view in editor.iter_views_of_document(doc):
+        for window in self.iter_windows():
+            for view in window.iter_views_of_document(doc):
                 yield view
 
 #   def find_view_with_document(self, doc):
@@ -238,28 +238,28 @@ class Application(object):
     def count_views_of_document(self, doc):
         return len(list(self.iter_views_of_document(doc)))
 
-    def iter_editors_with_view_of_document(self, document):
-        for editor in self.iter_editors():
+    def iter_windows_with_view_of_document(self, document):
+        for window in self.iter_windows():
             try:
-                next(editor.iter_views_of_document(document))
+                next(window.iter_views_of_document(document))
             except StopIteration:
                 pass
             else:
-                yield editor
+                yield window
 
-    def find_editor_with_document_view(self, doc_view):
-        for editor in self.iter_editors():
-            for proj in editor.projects:
+    def find_window_with_document_view(self, doc_view):
+        for window in self.iter_windows():
+            for proj in window.projects:
                 for dv in proj.documents:
                     if dv is doc_view:
-                        return editor
+                        return window
         return None
 
-    def find_editors_with_project(self, project):
-        return [ed for ed in self.editors if project in ed.projects]
+    def find_windows_with_project(self, project):
+        return [ed for ed in self.windows if project in ed.projects]
 
     def find_project_with_path(self, path):
-        for ed in self.editors:
+        for ed in self.windows:
             proj = ed.find_project_with_path(path)
             if proj is not None:
                 return proj
@@ -267,8 +267,8 @@ class Application(object):
 
     def find_item_with_id(self, ident):
         # HACK slow implementation, violates encapsulation
-        for editor in self.editors:
-            for proj in editor.projects:
+        for window in self.windows:
+            for proj in window.projects:
                 if proj.id == ident:
                     return proj
                 for doc in proj.documents:
@@ -277,42 +277,42 @@ class Application(object):
         return None
 
     def item_changed(self, item, change_type=None):
-        for editor in self.editors:
-            editor.item_changed(item, change_type)
+        for window in self.windows:
+            window.item_changed(item, change_type)
 
-    def iter_editors(self, app=None):
-        """Iterate over editors in on-screen z-order starting with the
-        front-most editor window"""
-        from editxt.editor import EditorWindowController
+    def iter_windows(self, app=None):
+        """Iterate over windows in on-screen z-order starting with the
+        front-most window"""
+        from editxt.window import WindowController
         if app is None:
             app = ak.NSApp()
         z_ordered_eds = set()
         for win in app.orderedWindows():
             wc = win.windowController()
-            if isinstance(wc, EditorWindowController) and wc.editor in self.editors:
-                z_ordered_eds.add(wc.editor)
-                yield wc.editor
-        for ed in self.editors:
+            if isinstance(wc, WindowController) and wc.window_ in self.windows:
+                z_ordered_eds.add(wc.window_)
+                yield wc.window_
+        for ed in self.windows:
             if ed not in z_ordered_eds:
                 yield ed
 
-    def add_editor(self, editor):
-        self.editors.append(editor)
+    def add_window(self, window):
+        self.windows.append(window)
 
-    def current_editor(self):
+    def current_window(self):
         try:
-            return next(self.iter_editors())
+            return next(self.iter_windows())
         except StopIteration:
             return None
 
-    def discard_editor(self, editor):
+    def discard_window(self, window):
         try:
-            self.editors.remove(editor)
+            self.windows.remove(window)
         except ValueError:
             pass
-        editor.close()
+        window.close()
 
-    def setup_profile(self, editors=False):
+    def setup_profile(self, windows=False):
         """Ensure that profile dir exists
 
         This will create the profile directory if it does not exist.
@@ -326,7 +326,7 @@ class Application(object):
                 log.error('cannot create %s', self.profile_path, exc_info=True)
                 return False
             self._setup_profile.add('.')
-        if editors and 'editors' not in self._setup_profile:
+        if windows and 'editors' not in self._setup_profile:
             state_path = os.path.join(self.profile_path, const.STATE_DIR)
             if not os.path.exists(state_path):
                 try:
@@ -337,7 +337,7 @@ class Application(object):
             self._setup_profile.add('editors')
         return True
 
-    def _legacy_editor_states(self):
+    def _legacy_window_states(self):
         # TODO remove once all users have upraded to new state persistence
         def pythonify(value):
             if isinstance(value, (str, int, float, bool)):
@@ -361,13 +361,13 @@ class Application(object):
             except Exception:
                 log.warn('cannot load legacy state: %r', serial, exc_info=True)
 
-    def iter_saved_editor_states(self):
-        """Yield saved editor states"""
+    def iter_saved_window_states(self):
+        """Yield saved window states"""
         state_path = os.path.join(self.profile_path, const.STATE_DIR)
         if not os.path.exists(state_path):
             if self.profile_path == os.path.expanduser(self.default_profile()):
                 # TODO remove once all users have upraded
-                for state in self._legacy_editor_states():
+                for state in self._legacy_window_states():
                     yield state
             return
         state_glob = os.path.join(state_path, const.EDITOR_STATE.format('*'))
@@ -379,24 +379,24 @@ class Application(object):
                 log.error('cannot load %s', path, exc_info=True)
                 yield StateLoadFailure(path)
 
-    def save_editor_state(self, editor, ident=None):
-        """Save a single editor's state
+    def save_window_state(self, window, ident=None):
+        """Save a single window's state
 
-        :param editor: The editor with state to be saved.
-        :param ident: The identifier to use when saving editor state. It
+        :param window: The window with state to be saved.
+        :param ident: The identifier to use when saving window state. It
             is assumed that the profile has been setup when this
-            argument is provided; ``editor.id`` will be used when
+            argument is provided; ``window.id`` will be used when
             not provided.
         :returns: The name of the state file.
         """
         if ident is None:
             raise NotImplementedError
-            ident = editor.id
-        self.setup_profile(editors=True)
+            ident = window.id
+        self.setup_profile(windows=True)
         state_name = const.EDITOR_STATE.format(ident)
         state_file = os.path.join(
             self.profile_path, const.STATE_DIR, state_name)
-        state = editor.state
+        state = window.state
         try:
             with atomicfile(state_file, encoding="utf-8") as fh:
                 dump_yaml(state, fh)
@@ -404,13 +404,13 @@ class Application(object):
             log.error('cannot write %s\n%s\n', state_file, state, exc_info=True)
         return state_name
 
-    def save_editor_states(self):
-        """Save all editors' states"""
+    def save_window_states(self):
+        """Save all windows' states"""
         state_path = os.path.join(self.profile_path, const.STATE_DIR)
         old_glob = os.path.join(state_path, const.EDITOR_STATE.format('*'))
         old = {os.path.basename(name) for name in glob.glob(old_glob)}
-        for i, editor in enumerate(self.iter_editors()):
-            state_name = self.save_editor_state(editor, i)
+        for i, window in enumerate(self.iter_windows()):
+            state_name = self.save_window_state(window, i)
             old.discard(state_name)
         for name in old:
             state_file = os.path.join(state_path, name)
@@ -420,7 +420,7 @@ class Application(object):
                 log.error('cannot remove %s', state_file, exc_info=True)
 
     def app_will_terminate(self, app):
-        self.save_editor_states()
+        self.save_window_states()
 
 
 class DocumentController(ak.NSDocumentController):
@@ -463,7 +463,7 @@ class DocumentController(ak.NSDocumentController):
         self.controller.new_project()
 
     def newWindow_(self, sender):
-        self.controller.create_editor()
+        self.controller.create_window()
 
     def openConfigFile_(self, sender):
         self.controller.open_config_file()
@@ -564,7 +564,7 @@ class DocumentSavingDelegate(fn.NSObject):
         # in which case the latter must call save_next_document.
         self.document_called_back = False
         self.sheet_did_end = False
-        doc_view.project.editor.current_view = doc_view # set current view so we get a sheet
+        doc_view.project.window.current_view = doc_view # set current view so we get a sheet
         window = doc_view.window()
         document = doc_view.document
         if document.windowControllers()[0].window() != window:

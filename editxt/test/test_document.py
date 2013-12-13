@@ -33,9 +33,9 @@ import editxt.document as mod
 from editxt.constants import TEXT_DOCUMENT
 from editxt.controls.commandview import CommandView
 from editxt.application import Application, DocumentController
-from editxt.editor import Editor, EditorWindowController
 from editxt.document import TextDocument, TextDocumentView
 from editxt.project import Project
+from editxt.window import Window, WindowController
 
 log = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ def test_TextDocumentView_init():
         doc_class = m.replace(mod, 'TextDocument')
         default_state = m.replace(TextDocumentView, 'edit_state')
         if path is not None:
-            doc = proj.editor.app.document_with_path(path) >> "<document>"
+            doc = proj.window.app.document_with_path(path) >> "<document>"
         with m:
             result = TextDocumentView(proj, **kw)
             eq_(result.project, proj)
@@ -492,9 +492,9 @@ def test_perform_close():
         doc = m.mock(TextDocument)
         proj = m.mock(Project)
         dv = TextDocumentView(proj, document=doc)
-        ed = proj.editor >> m.mock(Editor)
+        ed = proj.window >> m.mock(Window)
         app = doc.app >> m.mock(Application)
-        app.iter_editors_with_view_of_document(doc) >> (ed for x in range(num_views))
+        app.iter_windows_with_view_of_document(doc) >> (ed for x in range(num_views))
         if num_views == 1:
             ed.current_view = dv
             info = app.context.put(dv.maybe_close) >> 42
@@ -516,16 +516,16 @@ def test_TextDocumentView_maybe_close():
         m = Mocker()
         proj = m.mock(Project)
         docview = TextDocumentView(proj, document=m.mock(TextDocument))
-        editor = m.mock(Editor)
+        window = m.mock(Window)
         if should_close:
-            (proj.editor >> editor).discard_and_focus_recent(docview)
+            (proj.window >> window).discard_and_focus_recent(docview)
         with m:
             docview.maybe_close(should_close)
     yield test, True
     yield test, False
 
 def test_TextDocumentView_close():
-    from editxt.editor import Editor
+    from editxt.window import Window
     def test(c):
         m = Mocker()
         doc = m.mock(TextDocument)
@@ -548,9 +548,9 @@ def test_TextDocumentView_close():
             wcs = []
             doc.windowControllers() >> wcs
             for w in c.wcs:
-                wc = m.mock(EditorWindowController)
+                wc = m.mock(WindowController)
                 wcs.append(wc)
-                ed = wc.editor >> m.mock(Editor)
+                ed = wc.window_ >> m.mock(Window)
                 if (ed.count_views_of_document(doc) >> w.num_views) == 0:
                     doc.removeWindowController_(wc)
             if ((doc.app >> app).count_views_of_document(doc) >> c.app_views) < 1:
@@ -986,7 +986,7 @@ class TestTextDocument(MockerTestCase):
         m.method(doc.update_syntaxer)()
         doc.text_storage.mutableString().appendString_(content)
         app.item_changed(doc, 2)
-        app.save_editor_states()
+        app.save_window_states()
         with m:
             doc.saveDocument_(None)
             with closing(open(path)) as file:
@@ -1097,10 +1097,10 @@ def test_makeWindowControllers():
         (m.property(doc, "app").value << app).count(1, 2)
         dv_class = m.replace(mod, 'TextDocumentView')
         dv = m.mock(TextDocumentView)
-        ed = m.mock(Editor)
-        app.current_editor() >> (None if ed_is_none else ed)
+        ed = m.mock(Window)
+        app.current_window() >> (None if ed_is_none else ed)
         if ed_is_none:
-            app.create_editor() >> ed
+            app.create_window() >> ed
         ed.insert_items([doc])
         with m:
             doc.makeWindowControllers()
@@ -1197,7 +1197,7 @@ def test_updateChangeCount_():
 #     def test(wc_has_doc, sv_in_subviews, doc_in_proj):
 #         doc = TextDocument.alloc().init()
 #         m = Mocker()
-#         wc = m.mock(EditorWindowController)
+#         wc = m.mock(WindowController)
 #         view = m.mock(NSView)
 #         doc.scroll_view = view
 #         wc.document() >> (doc if wc_has_doc else None)
@@ -1225,7 +1225,7 @@ def test_TextDocument_close():
     doc = TextDocument.alloc().init()
     wcs = m.method(doc.windowControllers)
     rwc = m.method(doc.removeWindowController_)
-    wc = m.mock(EditorWindowController)
+    wc = m.mock(WindowController)
     wcs() >> [wc]
     rwc(wc)
     with m:

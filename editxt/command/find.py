@@ -641,11 +641,11 @@ class FindController(PanelController):
 
     def find_target(self):
         try:
-            editor = next(self.app.iter_editors())
+            window = next(self.app.iter_windows())
         except StopIteration:
             pass
         else:
-            docview = editor.current_view
+            docview = window.current_view
             if docview is not None:
                 return docview.text_view
         return None

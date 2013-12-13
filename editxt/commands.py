@@ -83,11 +83,11 @@ def load_commands():
 @command(title="Command Bar", hotkey=(";", ak.NSCommandKeyMask))
 def show_command_bar(textview, sender, args):
     """Show the command bar"""
-    editor = textview.doc_view.project.editor
-    if editor is None:
+    window = textview.doc_view.project.window
+    if window is None:
         ak.NSBeep()
     else:
-        editor.command.activate()
+        window.command.activate()
 
 
 @command(name='goto', title="Goto Line",

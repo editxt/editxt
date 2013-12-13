@@ -591,22 +591,22 @@ def test_FindController_count_occurrences():
     yield test, c(has_tv=False)
 
 def test_FindController_find_target():
-    from editxt.editor import Editor
+    from editxt.window import Window
     from editxt.document import TextDocumentView
     def test(c):
         with test_app() as app:
             m = Mocker()
             fc = FindController(app)
-            iter_editors = m.method(app.iter_editors)
+            iter_windows = m.method(app.iter_windows)
             if c.has_ed:
-                ed = m.mock(Editor)
+                ed = m.mock(Window)
                 x = iter([ed])
                 dv = ed.current_view >> (m.mock(TextDocumentView) if c.has_dv else None)
                 if c.has_dv:
                     dv.text_view >> (m.mock(TextView) if c.has_tv else None)
             else:
                 x = iter([])
-            iter_editors() >> x
+            iter_windows() >> x
             assert fc.app is not None
             with m:
                 result = fc.find_target()

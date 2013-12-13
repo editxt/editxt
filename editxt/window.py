@@ -43,7 +43,7 @@ class Error(Exception): pass
 BUTTON_STATE_SELECTED = object()
 
 
-class Editor(object):
+class Window(object):
 
     supported_drag_types = [const.DOC_ID_LIST_PBOARD_TYPE, ak.NSFilenamesPboardType]
     app = WeakProperty()
@@ -70,7 +70,7 @@ class Editor(object):
 
         fn.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
             wc, "windowDidBecomeKey:", ak.NSWindowDidBecomeKeyNotification, wc.window())
-        assert hasattr(EditorWindowController, "windowDidBecomeKey_")
+        assert hasattr(WindowController, "windowDidBecomeKey_")
 
         wc.cleanImages = {
             BUTTON_STATE_HOVER: load_image(const.CLOSE_CLEAN_HOVER),
@@ -346,12 +346,12 @@ class Editor(object):
         def iter_dirty_docs():
             app = self.app
             for proj in self.projects:
-                eds = app.find_editors_with_project(proj)
-                if eds == [self]:
+                wins = app.find_windows_with_project(proj)
+                if wins == [self]:
                     for dv in proj.dirty_documents():
                         doc = dv.document
-                        editors = app.iter_editors_with_view_of_document(doc)
-                        if list(editors) == [self]:
+                        windows = app.iter_windows_with_view_of_document(doc)
+                        if list(windows) == [self]:
                             yield dv
                     yield proj
         def callback(should_close):
@@ -363,7 +363,7 @@ class Editor(object):
         return False
 
     def window_will_close(self):
-        self.app.discard_editor(self)
+        self.app.discard_window(self)
 
     def _get_window_settings(self):
         return dict(
@@ -483,7 +483,7 @@ class Editor(object):
         #   # internal drag
         #   if src is not outline_view:
         #       delegate = getattr(src, "delegate", lambda:None)()
-        #       if isinstance(delegate, EditorWindowController) and \
+        #       if isinstance(delegate, WindowController) and \
         #           delegate is not self.wc:
         #           # drag from some other window controller
         #           # allow copy (may need to override outline_view.ignoreModifierKeysWhileDragging)
@@ -543,7 +543,7 @@ class Editor(object):
         :param index: The index in the outline view or parent project at which
             the item(s) should be inserted.
         :param action: What to do with items that are already open in
-            this editor:
+            this window:
 
             - None : insert new item(s), but do not change existing item(s).
             - MOVE : move existing item(s) to index.
@@ -552,7 +552,7 @@ class Editor(object):
             A file is considered to be "existing" if there is a document
             view with the same path in the project where it is being
             inserted. A project is considered to be "existing" if there
-            is a project with the same path in the editor where it is
+            is a project with the same path in the window where it is
             being inserted.
         :returns: A list of items that were inserted.
         """
@@ -627,20 +627,20 @@ class Editor(object):
     def _insert_project(self, item, index, action):
         if action != const.MOVE:
             raise NotImplementedError('cannot copy project yet')
-        if item.editor is self:
-            editor = self
+        if item.window is self:
+            window = self
             pindex = self.projects.index(item)
             if pindex == index:
                 return False, index
             if pindex - index <= 0:
                 index -= 1
         else:
-            editor = item.editor
+            window = item.window
 
         # BEGIN HACK crash on remove project with documents
         pdocs = item.documents
         docs, pdocs[:] = list(pdocs), []
-        editor.projects.remove(item) # this line should be all that's necessary
+        window.projects.remove(item) # this line should be all that's necessary
         pdocs.extend(docs)
         # END HACK
 
@@ -654,14 +654,14 @@ class Editor(object):
         return doc.undoManager()
 
 
-class EditorWindowController(ak.NSWindowController):
+class WindowController(ak.NSWindowController):
 
     # 2013-11-23 08:56:28.994 EditXTDev[47194:707] An instance 0x10675fc30 of
     # class _KVOList was deallocated while key value observers were still
     # registered with it. Observation info was leaked, and may even become
     # mistakenly attached to some other object. Set a breakpoint on
     # NSKVODeallocateBreak to stop here in the debugger.
-    #editor = WeakProperty()
+    #window_ = WeakProperty()
 
     docsController = objc.IBOutlet()
     docsScrollview = objc.IBOutlet()
@@ -679,7 +679,7 @@ class EditorWindowController(ak.NSWindowController):
     #propWrapLines = objc.IBOutlet()
 
     def windowDidLoad(self):
-        self.editor.window_did_load()
+        self.window_.window_did_load()
 
     def characterEncodings(self):
         return fn.NSValueTransformer.valueTransformerForName_("CharacterEncodingTransformer").names
@@ -689,22 +689,22 @@ class EditorWindowController(ak.NSWindowController):
         pass
 
     def syntaxDefNames(self):
-        return [d.name for d in self.editor.app.syntaxdefs]
+        return [d.name for d in self.window_.app.syntaxdefs]
 
     def setSyntaxDefNames_(self, value):
         pass
 
     def projects(self):
-        return self.editor.projects
+        return self.window_.projects
 
     def newProject_(self, sender):
-        self.editor.new_project()
+        self.window_.new_project()
 
     def togglePropertiesPane_(self, sender):
-        self.editor.toggle_properties_pane()
+        self.window_.toggle_properties_pane()
 
     def outlineViewSelectionDidChange_(self, notification):
-        self.editor.selected_view_changed()
+        self.window_.selected_view_changed()
 
     def outlineViewItemDidCollapse_(self, notification):
         representedObject(notification.userInfo()["NSObject"]).expanded = False
@@ -713,21 +713,21 @@ class EditorWindowController(ak.NSWindowController):
         representedObject(notification.userInfo()["NSObject"]).expanded = True
 
     def outlineView_shouldSelectItem_(self, outlineview, item):
-        return self.editor.should_select_item(outlineview, item)
+        return self.window_.should_select_item(outlineview, item)
 
     def outlineView_willDisplayCell_forTableColumn_item_(self, view, cell, col, item):
         if col.identifier() == "name":
             cell.setImage_(representedObject(item).icon())
 
     def outlineView_shouldEditTableColumn_item_(self, view, col, item):
-        return self.editor.should_edit_item(col, item)
+        return self.window_.should_edit_item(col, item)
 
     def outlineView_toolTipForCell_rect_tableColumn_item_mouseLocation_(
         self, view, cell, rect, col, item, mouseloc):
-        return self.editor.tooltip_for_item(view, item), rect
+        return self.window_.tooltip_for_item(view, item), rect
 
     def hoverButton_rowClicked_(self, cell, row):
-        self.editor.close_button_clicked(row)
+        self.window_.close_button_clicked(row)
 
     @untested
     def hoverButtonCell_imageForState_row_(self, cell, state, row):
@@ -741,35 +741,35 @@ class EditorWindowController(ak.NSWindowController):
         return self.cleanImages[state]
 
     def undo_manager(self):
-        return self.editor.undo_manager()
+        return self.window_.undo_manager()
 
     def windowTitleForDocumentDisplayName_(self, name):
-        view = self.editor.current_view
+        view = self.window_.current_view
         if view is not None and view.file_path is not None:
             return user_path(view.file_path)
         return name
 
     def windowDidBecomeKey_(self, notification):
-        self.editor.window_did_become_key(notification.object())
+        self.window_.window_did_become_key(notification.object())
 
     def windowShouldClose_(self, window):
-        return self.editor.window_should_close(window)
+        return self.window_.window_should_close(window)
 
     def windowWillClose_(self, notification):
-        self.editor.window_will_close()
+        self.window_.window_will_close()
 
     # outlineview datasource methods ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def outlineView_writeItems_toPasteboard_(self, view, items, pboard):
-        return self.editor.write_items_to_pasteboard(view, items, pboard)
+        return self.window_.write_items_to_pasteboard(view, items, pboard)
 
     def outlineView_acceptDrop_item_childIndex_(self, view, info, item, index):
         parent = None if item is None else representedObject(item)
-        return self.editor.accept_drop(
+        return self.window_.accept_drop(
             view, info.draggingPasteboard(), parent, index)
 
     def outlineView_validateDrop_proposedItem_proposedChildIndex_(self, view, info, item, index):
-        return self.editor.validate_drop(view, info, item, index)
+        return self.window_.validate_drop(view, info, item, index)
 
     # def outlineView_namesOfPromisedFilesDroppedAtDestination_forDraggedItems_(
     #   self, view, names, items):

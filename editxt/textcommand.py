@@ -38,17 +38,17 @@ log = logging.getLogger(__name__)
 
 class CommandBar(object):
 
-    editor = WeakProperty()
+    window = WeakProperty()
     text_commander = WeakProperty()
 
-    def __init__(self, editor, text_commander):
-        self.editor = editor
+    def __init__(self, window, text_commander):
+        self.window = window
         self.text_commander = text_commander
         self.history_view = None
 
     def activate(self):
         # abstract to a PyObjC-specific subclass when implementing other frontend
-        view = self.editor.current_view
+        view = self.window.current_view
         if view is None:
             ak.NSBeep()
             return
@@ -59,7 +59,7 @@ class CommandBar(object):
         if not text.strip():
             return
         cmdstr, space, argstr = text.lstrip(" ").partition(" ")
-        doc_view = self.editor.current_view
+        doc_view = self.window.current_view
         if doc_view is None:
             ak.NSBeep()
             return
@@ -158,7 +158,7 @@ class CommandBar(object):
         else:
             exc = ""
         msg = "{}{}".format(text, exc)
-        view = self.editor.current_view
+        view = self.window.current_view
         if view is None:
             log.info(text, exc_info=exc_info)
             if msg_type == const.ERROR:

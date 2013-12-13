@@ -31,10 +31,10 @@ import editxt.constants as const
 import editxt.project as mod
 from editxt.application import Application, DocumentController
 from editxt.datatypes import WeakProperty
-from editxt.editor import Editor, EditorWindowController
 from editxt.document import TextDocumentView, TextDocument
 from editxt.project import Project
 from editxt.util import dump_yaml
+from editxt.window import Window, WindowController
 
 from editxt.test.util import TestConfig, check_app_state
 
@@ -62,16 +62,16 @@ def test_is_project_path():
         yield test, path, result
 
 def test__init__():
-    proj = Project(Editor)
+    proj = Project(Window)
     assert proj.path is None
-    eq_(proj.editor, Editor)
+    eq_(proj.window, Window)
     eq_(len(proj.documents), 0)
     eq_(proj.serial_cache, proj.serialize())
 
 @check_app_state
 def test__init__serial():
     m = Mocker()
-    editor = m.mock(Editor)
+    window = m.mock(Window)
     kvo_class = m.replace(mod, 'KVOList')
     deserialize = m.method(Project._deserialize)
     reset_cache = m.method(Project.reset_serial_cache)
@@ -79,8 +79,8 @@ def test__init__serial():
     deserialize("<serial>")
     reset_cache()
     with m:
-        proj = Project(editor, serial="<serial>")
-        eq_(proj.editor, editor)
+        proj = Project(window, serial="<serial>")
+        eq_(proj.window, window)
 
 class MockDoc(object):
     proxy = WeakProperty()
@@ -174,19 +174,19 @@ def test_deserialize_project():
 def test_save():
     def test(proj_has_path, is_changed):
         m = Mocker()
-        editor = m.mock(Editor)
-        proj = Project(editor)
+        window = m.mock(Window)
+        proj = Project(window)
         save_with_path = m.method(proj.save_with_path)
         reset_cache = m.method(proj.reset_serial_cache)
         m.method(proj.serialize)() >> "<serial>"
         if proj_has_path:
             proj.path = "test/proj.tmp"
         if is_changed:
-            app = editor.app >> m.mock(Application)
+            app = window.app >> m.mock(Application)
             proj.serial_cache = "<invalid-cache>"
             if proj_has_path:
                 save_with_path(proj.path)
-            app.save_editor_states()
+            app.save_window_states()
             reset_cache()
         else:
             proj.serial_cache = "<serial>"
@@ -353,14 +353,14 @@ def test_perform_close():
     def test(c):
         m = Mocker()
         dsd_class = m.replace(xtapp, 'DocumentSavingDelegate')
-        ed = m.mock(Editor)
+        ed = m.mock(Window)
         proj = Project(ed)
         app = ed.app >> m.mock(Application)
-        app.find_editors_with_project(proj) >> [ed for x in range(c.num_eds)]
+        app.find_windows_with_project(proj) >> [ed for x in range(c.num_eds)]
         if c.num_eds == 1:
             docs = [m.mock(TextDocumentView)]
             doc = docs[0].document >> m.mock(TextDocument)
-            app.iter_editors_with_view_of_document(doc) >> \
+            app.iter_windows_with_view_of_document(doc) >> \
                 (ed for x in range(c.num_doc_views))
             dirty_documents = m.method(proj.dirty_documents)
             dirty_documents() >> docs
@@ -393,8 +393,8 @@ def test_perform_close():
 
 def test_close():
     m = Mocker()
-    editor = m.mock(name="editor")
-    proj = Project(editor)
+    window = m.mock(name="window")
+    proj = Project(window)
     proj.documents = docs = []
     for i in range(2):
         dv = m.mock(TextDocumentView)
@@ -403,5 +403,5 @@ def test_close():
     with m:
         proj.close()
     eq_(proj.proxy, None)
-    eq_(proj.editor, None)
+    eq_(proj.window, None)
     eq_(proj.documents, None)
