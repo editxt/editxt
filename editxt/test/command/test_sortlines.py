@@ -27,7 +27,7 @@ import AppKit as ak
 import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
-from editxt.test.util import TestConfig, untested, check_app_state, temp_app
+from editxt.test.util import TestConfig, untested, check_app_state, test_app
 
 import editxt.command.base as base
 import editxt.command.sortlines as mod
@@ -61,7 +61,7 @@ def test_sort_command():
     yield test, "sort all   match-case", "|0|4dJag|0"
 
 def test_SortLinesController_default_options():
-    with temp_app() as app:
+    with test_app() as app:
         textview = base.Options(app=app)
         ctl = SortLinesController(textview)
         for name, value in SortOptions.DEFAULTS.items():
@@ -69,7 +69,7 @@ def test_SortLinesController_default_options():
 
 def test_SortLinesController_load_options():
     def test(hist, opts):
-        with temp_app() as app:
+        with test_app() as app:
             textview = base.Options(app=app)
             app.text_commander.history.append(hist)
             ctl = SortLinesController(textview)
@@ -92,7 +92,7 @@ def test_SortLinesController_load_options():
 def test_SortLinesController_sort_():
     m = Mocker()
     sort = m.replace(mod, 'sortlines')
-    with temp_app() as app:
+    with test_app() as app:
         textview = base.Options(app=app)
         slc = SortLinesController(textview)
         sort(textview, slc.options)

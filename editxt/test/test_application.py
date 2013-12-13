@@ -38,7 +38,7 @@ from editxt.project import Project
 from editxt.util import load_yaml
 
 from editxt.test.util import (do_method_pass_through, TestConfig, replattr,
-    temp_app, tempdir)
+    test_app, tempdir)
 
 log = logging.getLogger(__name__)
 
@@ -194,7 +194,7 @@ def test_new_project():
 
 def test_document_with_path():
     def test(setup):
-        with tempdir() as tmp, temp_app() as app:
+        with tempdir() as tmp, test_app() as app:
             dc = ak.NSDocumentController.sharedDocumentController()
             eq_(len(dc.documents()), 0)
             path = setup(tmp, app, dc)

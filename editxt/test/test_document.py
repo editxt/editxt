@@ -26,7 +26,7 @@ import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import (assert_raises, TestConfig, untested,
-    check_app_state, replattr, temp_app, tempdir)
+    check_app_state, replattr, test_app, tempdir)
 
 import editxt.constants as const
 import editxt.document as mod
@@ -628,7 +628,7 @@ def test_TextDocument_init():
     #eq_(doc.save_hooks, [])
 
 def property_value_util(c, doc=None):
-    with temp_app() as app:
+    with test_app() as app:
         if doc is None:
             doc = TextDocument.alloc().init()
             doc.app = app

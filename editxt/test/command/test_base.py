@@ -26,7 +26,7 @@ import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import (TestConfig, untested, check_app_state, replattr,
-    temp_app, tempdir)
+    test_app, tempdir)
 
 import editxt.command.base as mod
 from editxt.application import Application
@@ -107,7 +107,7 @@ def test_command_decorator_names():
 
 def test_load_options():
     def test(argstr=None, value=None):
-        with temp_app() as app:
+        with test_app() as app:
             history = app.text_commander.history
             if argstr:
                 history.append(argstr)
@@ -121,7 +121,7 @@ def test_load_options():
 
 def test_save_options():
     def test(options, hist, command=dummy_command):
-        with temp_app() as app:
+        with test_app() as app:
             history = app.text_commander.history
             mod.save_options(options, command, history)
             eq_(next(iter(history), None), hist)
@@ -142,7 +142,7 @@ class OtherController(PanelController): pass
 
 @setup(PanelController)
 def test_PanelController_shared_controller():
-    with temp_app() as app:
+    with test_app() as app:
         cx = PanelController.shared_controller(app)
         c1 = OtherController.shared_controller(app)
         assert cx is not c1, c1
@@ -152,7 +152,7 @@ def test_PanelController_shared_controller():
 
 @setup(CommandController)
 def test_CommandController_options():
-    with temp_app() as app:
+    with test_app() as app:
         ctl = FakeController(app)
         eq_(ctl.history, app.text_commander.history)
         assert ctl.options is ctl.gui.options()
@@ -166,7 +166,7 @@ class FakeController(CommandController):
 
 def test_CommandController_load_options():
     def test(hist, expect):
-        with temp_app() as app:
+        with test_app() as app:
             history = app.text_commander.history
             ctl = FakeController(app)
             eq_(ctl.history, history)
@@ -178,7 +178,7 @@ def test_CommandController_load_options():
     yield test, "123", Options(value=123)
 
 def test_CommandController_save_options():
-    with temp_app() as app:
+    with test_app() as app:
         history = app.text_commander.history
         eq_(next(iter(history), None), None)
         slc = FakeController(app)
@@ -193,7 +193,7 @@ def test_CommandController_save_options():
 def test_SheetController_begin_sheet():
     from editxt.controls.alert import Caller
     class FakeTextView(object): pass
-    with temp_app() as app:
+    with test_app() as app:
         m = Mocker()
         tv = FakeTextView()
         tv.app = app

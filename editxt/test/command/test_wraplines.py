@@ -26,7 +26,7 @@ import AppKit as ak
 import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
-from editxt.test.util import TestConfig, untested, check_app_state, temp_app
+from editxt.test.util import TestConfig, untested, check_app_state, test_app
 
 import editxt.command.base as base
 import editxt.command.wraplines as mod
@@ -47,7 +47,7 @@ def test_wrap_to_margin_guide():
         mod.wrap_at_margin(tv, None, None)
 
 def test_WrapLinesController_default_options():
-    with temp_app() as app:
+    with test_app() as app:
         textview = base.Options(app=app)
         ctl = WrapLinesController(textview)
         eq_(ctl.options._target, mod.Options(
@@ -56,7 +56,7 @@ def test_WrapLinesController_default_options():
         ))
 
 def test_WrapLinesController_wrap_():
-    with temp_app() as app:
+    with test_app() as app:
         textview = base.Options(app=app)
         m = Mocker()
         cmd = m.replace(mod, 'wrap_selected_lines')

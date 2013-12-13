@@ -28,7 +28,7 @@ import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import (assert_raises, TestConfig, untested,
-    check_app_state, replattr, temp_app)
+    check_app_state, replattr, test_app)
 
 import editxt.constants as const
 import editxt.command.find as mod
@@ -193,7 +193,7 @@ def test_Finder_python_replace():
             "unexpected EOF while parsing (<string>, line 2)"))
 
 def test_FindController_shared_controller():
-    with temp_app() as app:
+    with test_app() as app:
         fc = FindController.shared_controller(app)
         assert isinstance(fc, FindController), fc
         f2 = FindController.shared_controller(app)
@@ -201,7 +201,7 @@ def test_FindController_shared_controller():
 
 def test_FindController_validate_action():
     def test(c):
-        with temp_app() as app:
+        with test_app() as app:
             m = Mocker()
             fc = FindController(app)
             if c.tag in fc.action_registry:
@@ -238,7 +238,7 @@ def test_FindController_validate_action():
     
 def test_FindController_perform_action():
     def test(c):
-        with temp_app() as app:
+        with test_app() as app:
             m = Mocker()
             fc = FindController(app)
             flog = m.replace("editxt.command.find.log")
@@ -272,7 +272,7 @@ def test_FindController_perform_action():
         yield test, c(tag=tag)
 
 def test_FindController_show_find_panel():
-    with temp_app() as app:
+    with test_app() as app:
         m = Mocker()
         fc = FindController(app)
         sender = m.mock()
@@ -288,7 +288,7 @@ def test_FindController_show_find_panel():
 
 def test_FindController_actions():
     def test(c):
-        with temp_app() as app:
+        with test_app() as app:
             m = Mocker()
             fc = FindController(app)
             sender = m.mock()
@@ -399,7 +399,7 @@ def test_FindController_recentFindSelected_():
         nspb = m.replace(ak, 'NSPasteboard')
         pboard = nspb.pasteboardWithName_(ak.NSFindPboard)
         pboard.availableTypeFromArray_([ak.NSStringPboardType]) >> None
-        with m, temp_app() as app:
+        with m, test_app() as app:
             fc = FindController(app)
             sender = Config(selectedItem=lambda:Config(title=lambda:command))
             fc.recentFindSelected_(sender)
@@ -418,7 +418,7 @@ def test_FindController_recentFindSelected_():
 
 def test_FindController_finder_find():
     def test(c):
-        with temp_app() as app:
+        with test_app() as app:
             m = Mocker()
             fc = FindController(app)
             beep = m.replace(ak, 'NSBeep')
@@ -446,7 +446,7 @@ def test_FindController_finder_find():
 
 def test_FindController__find():
     def test(c):
-        with temp_app() as app:
+        with test_app() as app:
             m = Mocker()
             fc = FindController(app)
             tv = m.mock(TextView)
@@ -497,7 +497,7 @@ def test_FindController__find():
 
 def test_FindController__replace_all():
     def test(c):
-        with temp_app() as app:
+        with test_app() as app:
             m = Mocker()
             fc = FindController(app)
             beep = m.replace(ak, 'NSBeep')
@@ -566,7 +566,7 @@ def test_FindController__replace_all():
 
 def test_FindController_count_occurrences():
     def test(c):
-        with temp_app() as app:
+        with test_app() as app:
             m = Mocker()
             beep = m.replace(ak, 'NSBeep')
             fc = FindController(app)
@@ -594,7 +594,7 @@ def test_FindController_find_target():
     from editxt.editor import Editor
     from editxt.document import TextDocumentView
     def test(c):
-        with temp_app() as app:
+        with test_app() as app:
             m = Mocker()
             fc = FindController(app)
             iter_editors = m.method(app.iter_editors)
@@ -699,7 +699,7 @@ def test_FindController_load_options():
         pboard.availableTypeFromArray_([ak.NSStringPboardType]) >> (c.ftext is not None)
         if c.ftext is not None:
             pboard.stringForType_(ak.NSStringPboardType) >> c.ftext
-        with temp_app() as app:
+        with test_app() as app:
             history = app.text_commander.history
             if c.hist is not None:
                 history.append(c.hist)
@@ -727,7 +727,7 @@ def test_FindController_load_options():
 def test_FindController_save_options():
     def test(c):
         m = Mocker()
-        with temp_app() as app:
+        with test_app() as app:
             history = app.text_commander.history
             fc = FindController(app) # calls load_options()
             fc.options.find_text = "" # clear value from real pasteboard

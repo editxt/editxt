@@ -233,8 +233,9 @@ class Regex(object):
         return not self.__eq__(other)
 
 
+@nose.tools.nottest
 @contextmanager
-def temp_app():
+def test_app():
     from editxt.application import Application
     with tempdir() as tmp:
         yield Application(tmp)
