@@ -38,10 +38,13 @@ def main(args):
     if filenames and os.fork() != 0:
         # HACK send stdout to /dev/null to suppress "missing value" message
         with open('/dev/null', 'w') as devnull:
-            call(['osascript', '-e', script], stdout=devnull)
-
-    # HACK activate app without bringing all windows to front
-    call(['open', '-a', app_name + '.app'])
+            try:
+                call(['osascript', '-e', script], stdout=devnull)
+            except KeyboardInterrupt:
+                pass
+    else:
+        # HACK activate app without bringing all windows to front
+        call(['open', '-a', app_name + '.app'])
 
 def as_string(value):
     return '"%s"' % value.replace('"', '\\"')

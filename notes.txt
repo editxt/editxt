@@ -75,6 +75,13 @@ Build/package EditXT.app::
 Top priority
 
 Eliminate editxt.app global/singleton
+  - remaining places
+    - DocumentController: this thing is a pain (when does it get created?)
+x    - TextDocument: cannot pass app when instantiated by DocumentController
+x      - look into setting in get_with_path
+    - editxt.errorlog.StreamHandler: is a global object, hard to improve
+    - tests... there are way too many
+Project drag/drop bugs
 Combine and write pythonic wrapper for outline view and NSTreeController
 
 Open directory as project
@@ -104,6 +111,10 @@ Command bar enhancements:
 Convert commands with gui to work with command bar
     open file(s)
     change indentation
+
+rename
+  - Editor -> Window
+  - TextDocumentView -> Editor
 
 refactor object hierarchy to make it more modular and easier to add features
     app.documents - {id: Document}
@@ -165,6 +176,23 @@ find/replace text processors
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Bugs
+
+Bug: drag/drop results in errors
+  focus document
+  drag same document from one window to another
+  drag same document back to original window
+  try to edit text in other window (errors in console)
+
+Bug in Version 1.4.0-pre (20131130.68db8d4)
+  - drag a project with at least one document from window1 to window2
+  - move (on the filesystem) a document (that is not in focus) of the project
+  - focus the document (notice path has changed to where it was moved)
+  - make a change, save
+  - notice sheet pops up on window1
+  - sheet should be on window2
+Similar to above Bug in Version 1.4.0-pre (20131130.68db8d4)
+  - command bar for documents whose project was dragged new new window
+    appears in the (original) wrong window on press COMMAND+;
 
 Bug: memory leak
     TODO track it down and fix it
