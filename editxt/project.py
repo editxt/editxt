@@ -25,7 +25,7 @@ import Foundation as fn
 
 import editxt.constants as const
 from editxt.datatypes import WeakProperty
-from editxt.document import TextDocumentView, TextDocument, doc_id_gen
+from editxt.document import Editor, TextDocument, doc_id_gen
 from editxt.platform.kvo import KVOList, KVOProxy
 
 
@@ -57,7 +57,7 @@ class Project(object):
         self.path = None
         self.expanded = True
         self.is_dirty = False
-        self.documents = KVOList()
+        self.editors = KVOList()
         self.closing = False
         if serial is not None:
             self._deserialize(serial)
@@ -67,7 +67,7 @@ class Project(object):
         data = {"expanded": self.expanded}
         if self.name != const.UNTITLED_PROJECT_NAME:
             data["name"] = str(self.name) # HACK dump_yaml doesn't like pyobjc_unicode
-        states = (d.edit_state for d in self.documents)
+        states = (d.edit_state for d in self.editors)
         documents = [s for s in states if "path" in s]
         if documents:
             data["documents"] = documents
@@ -85,12 +85,12 @@ class Project(object):
                 self.name = serial["name"]
             for doc_state in serial.get("documents", []):
                 try:
-                    self.create_document_view_with_state(doc_state)
+                    self.create_editor_with_state(doc_state)
                 except Exception:
                     log.warn("cannot open document: %r" % (doc_state,))
             self.expanded = serial.get("expanded", True)
-        if not self.documents:
-            self.create_document_view()
+        if not self.editors:
+            self.create_editor()
 
     def reset_serial_cache(self):
         self.serial_cache = self.serialize()
@@ -108,8 +108,8 @@ class Project(object):
         data.update(self.serialize())
         data.writeToFile_atomically_(path, True)
 
-    def dirty_documents(self):
-        return (doc for doc in self.documents if doc.is_dirty)
+    def dirty_editors(self):
+        return (e for e in self.editors if e.is_dirty)
 
     def icon(self):
         return None
@@ -121,65 +121,53 @@ class Project(object):
     def file_path(self):
         return self.path
 
-    def document_view_for_path(self, path):
-        """Get the document view for the given path
+    def editor_for_path(self, path):
+        """Get the editor for the given path
 
-        Returns None if this project does not have a document with path
+        Returns None if this project does not have a editor with path
         """
         raise NotImplementedError
 
-    def document_view_for_document(self, doc): # is this needed?
-        """Get the document view for the given document
-
-        Returns None if this project does not have a view of doc.
-        """
-        # TODO test
-        if doc is not None:
-            for dv in self.documents:
-                if dv.document is doc:
-                    return dv
-        return None
-
-    def create_document_view(self):
+    def create_editor(self):
         dc = ak.NSDocumentController.sharedDocumentController()
         doc, err = dc.makeUntitledDocumentOfType_error_(const.TEXT_DOCUMENT, None)
         if err:
             raise Exception(err)
         dc.addDocument_(doc)
-        dv = TextDocumentView(self, document=doc)
-        self.append_document_view(dv)
-        return dv
+        editor = Editor(self, document=doc)
+        self.append_editor(editor)
+        return editor
 
-    def create_document_view_with_state(self, state):
-        dv = TextDocumentView(self, state=state)
-        self.append_document_view(dv)
-        return dv
+    def create_editor_with_state(self, state):
+        editor = Editor(self, state=state)
+        self.append_editor(editor)
+        return editor
 
-    def append_document_view(self, view):
-        """Add view to the end of this projects document views"""
-        self.documents.append(view)
-        view.project = self
+    def append_editor(self, editor):
+        """Add editor to the end of this projects editors"""
+        self.editors.append(editor)
+        editor.project = self
 
-    def insert_document_view(self, index, view):
-        """Insert view at index in this projects document views
+    def insert_editor(self, index, editor):
+        """Insert editor at index in this projects editors
         """
-        self.documents.insert(index, view)
-        view.project = self
+        self.editors.insert(index, editor)
+        editor.project = self
 
-    def remove_document_view(self, doc_view):
-        """Remove view from this projects document views
+    def remove_editor(self, editor):
+        """Remove editor from this projects editors
 
-        Does nothing if the view does not belong to this project.
+        Does nothing if the editor does not belong to this project.
         """
-        if doc_view in self.documents:
-            self.documents.remove(doc_view)
-            doc_view.project = None
+        if editor in self.editors:
+            self.editors.remove(editor)
+            editor.project = None
             #self.is_dirty = True
 
-    def find_view_with_document(self, doc):
-        for view in self.documents:
-            if view.document is doc:
-                return view
+    def find_editor_with_document(self, doc):
+        for editor in self.editors:
+            if editor.document is doc:
+                return editor
         return None
 
     def set_main_view_of_window(self, view, window):
@@ -191,10 +179,10 @@ class Project(object):
         app = window.app
         if app.find_windows_with_project(self) == [window]:
             def dirty_docs():
-                for dv in self.dirty_documents():
-                    itr = app.iter_windows_with_view_of_document(dv.document)
+                for editor in self.dirty_editors():
+                    itr = app.iter_windows_with_editor_of_document(editor.document)
                     if list(itr) == [window]:
-                        yield dv
+                        yield editor
                 yield self
             def callback(should_close):
                 if should_close:
@@ -208,13 +196,13 @@ class Project(object):
     def close(self):
         self.closing = True
         try:
-            for dv in list(self.documents):
-                dv.close()
-            #self.documents.setItems_([])
+            for editor in list(self.editors):
+                editor.close()
+            #self.editors.setItems_([])
         finally:
             self.closing = False
         self.window = None
-        self.documents = None
+        self.editors = None
         self.proxy = None
 
     def __repr__(self):

@@ -33,7 +33,7 @@ from editxt.controls.textview import TextView
 log = logging.getLogger(__name__)
 
 # log.debug("""TODO
-#     implement TextDocumentView.pasteboard_data()
+#     implement Editor.pasteboard_data()
 # """)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -65,7 +65,7 @@ def test_change_indentation():
             rng = NSMakeRange(0, len(c.input))
             tv.shouldChangeTextInRange_replacementString_(rng, c.output) >> True
             if reset:
-                doc = tv.doc_view.document >> m.mock(TextDocument)
+                doc = tv.editor.document >> m.mock(TextDocument)
                 doc.reset_text_attributes(c.size)
             if c.input != c.output:
                 sel = tv.selectedRange() >> NSRange(*c.sel)

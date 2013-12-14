@@ -165,7 +165,6 @@ class Application(object):
         return doc
 
     def open_documents_with_paths(self, paths):
-        from editxt.document import TextDocumentView
         window = self.current_window()
         if window is None:
             window = self.create_window()
@@ -182,10 +181,9 @@ class Application(object):
             document.text = self.config.default_config
 
     def open_error_log(self, set_current=True):
-        from editxt.document import TextDocumentView
         doc = errlog.document
         try:
-            view = next(self.iter_views_of_document(doc))
+            editor = next(self.iter_editors_of_document(doc))
         except StopIteration:
             window = self.current_window()
             if window is None:
@@ -193,65 +191,65 @@ class Application(object):
             window.insert_items([doc])
         else:
             if set_current:
-                self.set_current_document_view(view)
+                self.set_current_editor(editor)
 
-    def iter_dirty_documents(self):
+    def iter_dirty_editors(self):
         seen = set()
         for window in self.iter_windows():
             for proj in window.projects:
                 dirty = False
-                for view in proj.dirty_documents():
-                    if view.document.id not in seen:
-                        seen.add(view.document.id)
-                        yield view
+                for editor in proj.dirty_editors():
+                    if editor.document.id not in seen:
+                        seen.add(editor.document.id)
+                        yield editor
                         dirty = True
                 if dirty:
                     yield proj
 
-    def set_current_document_view(self, doc_view):
-        ed = self.find_window_with_document_view(doc_view)
-        ed.current_view = doc_view
+    def set_current_editor(self, editor):
+        window = self.find_window_with_editor(editor)
+        window.current_editor = editor
 
     def close_current_document(self):
         window = self.current_window()
         if window is not None:
-            view = window.current_view
-            if view is not None:
-                view.perform_close()
+            editor = window.current_editor
+            if editor is not None:
+                editor.perform_close()
 
-    def iter_views_of_document(self, doc):
+    def iter_editors_of_document(self, doc):
         for window in self.iter_windows():
-            for view in window.iter_views_of_document(doc):
-                yield view
+            for editor in window.iter_editors_of_document(doc):
+                yield editor
 
-#   def find_view_with_document(self, doc):
-#       """find a view of the given document
+#   def find_editor_with_document(self, doc):
+#       """find a editor of the given document
 # 
-#       Returns a view in the topmost window with the given document, or None
-#       if there are no views of this document.
+#       Returns a editor in the topmost window with the given document, or None
+#       if there are no editors of this document.
 #       """
 #       try:
-#           return next(self.iter_views_of_document(doc))
+#           return next(self.iter_editors_of_document(doc))
 #       except StopIteration:
 #           return None
 
-    def count_views_of_document(self, doc):
-        return len(list(self.iter_views_of_document(doc)))
+    def count_editors_of_document(self, doc):
+        return len(list(self.iter_editors_of_document(doc)))
 
-    def iter_windows_with_view_of_document(self, document):
+    def iter_windows_with_editor_of_document(self, document):
         for window in self.iter_windows():
             try:
-                next(window.iter_views_of_document(document))
+                next(window.iter_editors_of_document(document))
             except StopIteration:
                 pass
             else:
                 yield window
 
-    def find_window_with_document_view(self, doc_view):
+    def find_window_with_editor(self, editor):
         for window in self.iter_windows():
             for proj in window.projects:
-                for dv in proj.documents:
-                    if dv is doc_view:
+                for ed in proj.editors:
+                    if ed is editor:
                         return window
         return None
 
@@ -271,7 +269,7 @@ class Application(object):
             for proj in window.projects:
                 if proj.id == ident:
                     return proj
-                for doc in proj.documents:
+                for doc in proj.editors:
                     if doc.id == ident:
                         return doc
         return None
@@ -488,7 +486,7 @@ class DocumentController(ak.NSDocumentController):
             #log.debug("%s.%s(%s, %s, %s)", delegate, selector, self, result, context)
             perform_selector(delegate, selector, self, result, context)
         saver = DocumentSavingDelegate.alloc().init_callback_(
-            self.controller.iter_dirty_documents(), callback)
+            self.controller.iter_dirty_editors(), callback)
         saver.save_next_document()
 
     def applicationWillTerminate_(self, notification):
@@ -533,26 +531,26 @@ class DocumentSavingDelegate(fn.NSObject):
 
     registry = {}
 
-    def init_callback_(self, docs, callback):
+    def init_callback_(self, editors, callback):
         self = super(DocumentSavingDelegate, self).init()
         self.registry[id(self)] = self # prevent garbage collection
-        self.documents = docs
+        self.editors = editors
         self.callback = callback
         self.should_close = True
         return self
 
     def save_next_document(self):
         try:
-            doc_view = next(self.documents)
+            editor = next(self.editors)
         except StopIteration:
-            self.documents = None # release references to documents (if there are any)
+            self.editors = None # release references to editors (if there are any)
             self.callback(self.should_close)
             self.registry.pop(id(self))
             return
 
         from editxt.project import Project
-        if isinstance(doc_view, Project):
-            doc_view.save()
+        if isinstance(editor, Project):
+            editor.save()
             self.save_next_document()
             return
 
@@ -564,9 +562,9 @@ class DocumentSavingDelegate(fn.NSObject):
         # in which case the latter must call save_next_document.
         self.document_called_back = False
         self.sheet_did_end = False
-        doc_view.project.window.current_view = doc_view # set current view so we get a sheet
-        window = doc_view.window()
-        document = doc_view.document
+        editor.project.window.current_editor = editor # set current editor so we get a sheet
+        window = editor.window()
+        document = editor.document
         if document.windowControllers()[0].window() != window:
             # HACK rearrange document window controllers to make the sheet appear on our window
             document.windowControllers().sort(key=lambda wc: -abs(wc.window() is window))
@@ -580,7 +578,7 @@ class DocumentSavingDelegate(fn.NSObject):
         self.document_called_back = True
         if not should_close:
             self.should_close = False
-            self.documents = iter([]) # cancel iteration
+            self.editors = iter([]) # cancel iteration
         if self.sheet_did_end:
             self.save_next_document()
 

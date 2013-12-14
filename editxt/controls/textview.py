@@ -33,21 +33,21 @@ log = logging.getLogger(__name__)
 class TextView(ak.NSTextView):
 
     app = WeakProperty()
-    doc_view = WeakProperty() #objc.ivar("doc_view")
+    editor = WeakProperty() #objc.ivar("editor")
 
-    def __new__(cls, docview, frame, container):
+    def __new__(cls, editor, frame, container):
         self = cls.alloc().initWithFrame_textContainer_(frame, container)
-        self.doc_view = docview
-        self.app = docview.project.window.app
+        self.editor = editor
+        self.app = editor.project.window.app
         return self
 
 #    def dealloc(self):
-#        self.doc_view = None
+#        self.editor = None
 #        self.app = None
 #        super().dealloc()
 
     def goto_line(self, num):
-        eol = self.doc_view.document.eol
+        eol = self.editor.document.eol
         assert len(eol) > 0, repr(eol)
         text = self.string()
         line = 1
@@ -90,7 +90,7 @@ class TextView(ak.NSTextView):
     # Drag/drop ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def readSelectionFromPasteboard_type_(self, pasteboard, type_):
-        window = self.app.find_window_with_document_view(self.doc_view)
+        window = self.app.find_window_with_editor(self.editor)
         if window is not None:
             if window.accept_drop(None, pasteboard):
                 return True
@@ -109,7 +109,7 @@ class TextView(ak.NSTextView):
         if not nchars:
             self._marginParams = None
             return
-        font = self.doc_view.document.default_text_attributes()[ak.NSFontAttributeName]
+        font = self.editor.document.default_text_attributes()[ak.NSFontAttributeName]
         charw = font.advancementForGlyph_(ord(" ")).width
         padding = self.textContainer().lineFragmentPadding()
         color1 = self.app.config["right_margin.line_color"]

@@ -31,11 +31,11 @@ from editxt.controls.statscrollview import StatusbarScrollView
 from editxt.controls.textview import TextView
 
 
-def setup_main_view(docview, frame):
+def setup_main_view(editor, frame):
     """Setup main text view with command view for document
     """
     layout = ak.NSLayoutManager.alloc().init()
-    docview.document.text_storage.addLayoutManager_(layout)
+    editor.document.text_storage.addLayoutManager_(layout)
     container = ak.NSTextContainer.alloc().initWithContainerSize_(frame.size)
     container.setLineFragmentPadding_(10) # left margin
     layout.addTextContainer_(container)
@@ -45,7 +45,7 @@ def setup_main_view(docview, frame):
     scroll.setHasVerticalScroller_(True)
     scroll.setAutoresizingMask_(ak.NSViewWidthSizable | ak.NSViewHeightSizable)
 
-    text = TextView(docview, frame, container)
+    text = TextView(editor, frame, container)
     text.setAllowsUndo_(True)
     text.setVerticallyResizable_(True)
     text.setMaxSize_(fn.NSMakeSize(LARGE_NUMBER_FOR_TEXT, LARGE_NUMBER_FOR_TEXT))
@@ -58,7 +58,7 @@ def setup_main_view(docview, frame):
     text.setRichText_(False)
     text.setUsesFontPanel_(False)
     text.setUsesFindPanel_(True)
-    attrs = docview.document.default_text_attributes()
+    attrs = editor.document.default_text_attributes()
     text.setTypingAttributes_(attrs)
     font = attrs[ak.NSFontAttributeName]
     text.setFont_(font)
@@ -82,7 +82,7 @@ def setup_main_view(docview, frame):
     ak.NSNotificationCenter.defaultCenter() \
         .addObserver_selector_name_object_(
             main_view, "tile:", SHOULD_RESIZE, command)
-    main_view._text_delegate = TextViewDelegate.alloc().init_(docview)
+    main_view._text_delegate = TextViewDelegate.alloc().init_(editor)
     text.setDelegate_(main_view._text_delegate)
 
     return main_view
@@ -101,9 +101,9 @@ def teardown_main_view(main_view):
 
 class TextViewDelegate(ak.NSObject):
 
-    def init_(self, docview):
-        self.on_do_command = docview.on_do_command
-        self.on_selection_changed = docview.on_selection_changed
+    def init_(self, editor):
+        self.on_do_command = editor.on_do_command
+        self.on_selection_changed = editor.on_selection_changed
         return self
 
     def dealloc(self):

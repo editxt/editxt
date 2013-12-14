@@ -45,21 +45,21 @@ class ChangeIndentationController(SheetController):
     def load_options(self):
         """load current indent mode from textview"""
         opts = self.options
-        view = self.textview.doc_view
-        opts.from_mode = opts.to_mode = view.indent_mode
-        opts.from_size = opts.to_size = view.indent_size
+        editor = self.textview.editor
+        opts.from_mode = opts.to_mode = editor.indent_mode
+        opts.from_size = opts.to_size = editor.indent_size
 
     def save_options(self):
         """no-op override"""
 #       opts = self.options
-#       view = self.textview.doc_view
-#       view.indent_mode = opts.to_mode
-#       view.indent_size = opts.to_size
+#       editor = self.textview.editor
+#       editor.indent_mode = opts.to_mode
+#       editor.indent_size = opts.to_size
 
     @objc_delegate
     def execute_(self, sender):
         opts = self.options
-        self.textview.doc_view.change_indentation(
+        self.textview.editor.change_indentation(
             opts.from_mode,
             opts.from_size,
             opts.to_mode,

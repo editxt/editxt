@@ -240,9 +240,9 @@ def test_text_commands():
         default = False
         m = Mocker()
         tv = m.mock(ak.NSTextView)
-        (tv.doc_view.document.indent_mode << c.mode).count(0, None)
-        (tv.doc_view.document.indent_size << c.size).count(0, None)
-        (tv.doc_view.document.eol << c.eol).count(0, None)
+        (tv.editor.document.indent_mode << c.mode).count(0, None)
+        (tv.editor.document.indent_size << c.size).count(0, None)
+        (tv.editor.document.eol << c.eol).count(0, None)
         sel = fn.NSMakeRange(*c.oldsel); (tv.selectedRange() << sel).count(0, None)
         (tv.string() << fn.NSString.stringWithString_(c.input)).count(0, None)
         (tv.shouldChangeTextInRange_replacementString_(ANY, ANY) << True).count(0, None)
@@ -436,13 +436,13 @@ def test_clear_highlighted_text():
     from editxt.controls.textview import TextView
     m = Mocker()
     tv = m.mock(TextView)
-    view = tv.doc_view.finder.mark_occurrences("")
+    view = tv.editor.finder.mark_occurrences("")
     do = CommandTester(mod.clear_highlighted_text, textview=tv)
     with m:
         do("clear_highlighted_text")
 
 def test_set_variable():
-    from editxt.document import TextDocumentView
+    from editxt.document import Editor
     from editxt.controls.textview import TextView
 
     def test(command, completions, placeholder):
@@ -467,13 +467,13 @@ def test_set_variable():
     def test(command, attribute, value=None):
         m = Mocker()
         tv = m.mock(TextView)
-        view = tv.doc_view >> m.mock(TextDocumentView)
+        editor = tv.editor >> m.mock(Editor)
         do = CommandTester(mod.set_variable, textview=tv)
         if isinstance(attribute, Exception):
             with assert_raises(type(attribute), msg=str(attribute)), m:
                 do(command)
         else:
-            setattr(view.proxy >> m.mock(), attribute, value)
+            setattr(editor.proxy >> m.mock(), attribute, value)
             with m:
                 do(command)
     c = TestConfig()
@@ -489,8 +489,8 @@ def test_set_variable():
     def test(command, size, mode):
         m = Mocker()
         tv = m.mock(TextView)
-        view = tv.doc_view >> m.mock(TextDocumentView)
-        proxy = view.proxy >> m.mock()
+        editor = tv.editor >> m.mock(Editor)
+        proxy = editor.proxy >> m.mock()
         setattr(proxy, "indent_size", size)
         setattr(proxy, "indent_mode", mode)
         do = CommandTester(mod.set_variable, textview=tv)
@@ -548,7 +548,7 @@ class CommandTester(object):
             def insertItem_atIndex_(item, tag):
                 pass
         class window:
-            class current_view:
+            class current_editor:
                 text_view = kw.pop("textview", None)
                 def message(msg, msg_type=const.INFO):
                     if isinstance(msg, Exception):

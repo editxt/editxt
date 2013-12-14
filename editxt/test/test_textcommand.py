@@ -52,7 +52,7 @@ def test_CommandBar_window():
     eq_(cmd.text_commander, None)
 
 def test_CommandBar_execute():
-    from editxt.document import TextDocumentView
+    from editxt.document import Editor
     from editxt.textcommand import TextCommandController
     def test(c):
         m = Mocker()
@@ -63,10 +63,10 @@ def test_CommandBar_execute():
         message = m.replace(bar, "message")
         args = c.text.split()
         if args and not c.current:
-            window.current_view >> None
+            window.current_editor >> None
             beep()
         elif args:
-            view = window.current_view >> m.mock(TextDocumentView)
+            editor = window.current_editor >> m.mock(Editor)
             command = m.mock()
             if c.lookup == 'first':
                 commander.lookup(args[0]) >> command
@@ -89,7 +89,7 @@ def test_CommandBar_execute():
                     kw = {}
                 message(c.msg, **kw)
             else:
-                view.text_view >> '<view>'
+                editor.text_view >> '<view>'
                 res = command('<view>', bar, '<args>')
                 if c.error:
                     expect(res).throw(Exception('bang!'))
@@ -350,7 +350,7 @@ def test_CommandBar_get_history_concurrently():
         eq_(bar4.get_history("A", True), None)
 
 def test_CommandBar_history_reset_on_execute():
-    from editxt.document import TextDocumentView
+    from editxt.document import Editor
     from editxt.textcommand import CommandHistory, TextCommandController
     with tempdir() as tmp:
         m = Mocker()
@@ -359,8 +359,8 @@ def test_CommandBar_history_reset_on_execute():
         commander = TextCommandController(history)
         bar = mod.CommandBar(window, commander)
         args = ["cmd"]
-        view = window.current_view >> m.mock(TextDocumentView)
-        view.text_view >> '<view>'
+        editor = window.current_editor >> m.mock(Editor)
+        editor.text_view >> '<view>'
         @command
         def cmd(textview, sender, args):
             pass
@@ -373,7 +373,7 @@ def test_CommandBar_history_reset_on_execute():
 
 def test_CommandBar_message():
     from editxt.controls.commandview import CommandView
-    from editxt.document import TextDocumentView
+    from editxt.document import Editor
     def test(c):
         m = Mocker()
         window = m.mock()
@@ -381,13 +381,13 @@ def test_CommandBar_message():
         sys_exc_info = m.replace(mod.sys, "exc_info")
         format_exc = m.replace(mod.traceback, "format_exception")
         bar = mod.CommandBar(window, commander)
-        view = window.current_view >> m.mock(TextDocumentView)
+        editor = window.current_editor >> m.mock(Editor)
         kw = {}
         if c.exc_info is not None:
             kw["exc_info"] = c.exc_info
             exc_info = sys_exc_info() >> ("<type>", "<exc>", "<tb>")
             format_exc(*exc_info) >> ["Traceback", "...", "Error!"]
-        view.message(c.msg, msg_type=const.ERROR)
+        editor.message(c.msg, msg_type=const.ERROR)
         with m:
             bar.message(c.text, **kw)
     c = TestConfig(text="command error", exc_info=None)

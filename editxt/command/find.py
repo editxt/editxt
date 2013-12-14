@@ -495,7 +495,7 @@ class FindController(PanelController):
         self.gui.window().setLevel_(ak.NSFloatingWindowLevel)
         target = self.find_target()
         if target is not None:
-            font = target.doc_view.document.default_text_attributes()[ak.NSFontAttributeName]
+            font = target.editor.document.default_text_attributes()[ak.NSFontAttributeName]
             self.gui.find_text.setFont_(font)
             self.gui.replace_text.setFont_(font)
 
@@ -645,9 +645,9 @@ class FindController(PanelController):
         except StopIteration:
             pass
         else:
-            docview = window.current_view
-            if docview is not None:
-                return docview.text_view
+            editor = window.current_editor
+            if editor is not None:
+                return editor.text_view
         return None
 
     def count_occurrences(self, ftext, regex):

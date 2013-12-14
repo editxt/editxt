@@ -31,7 +31,7 @@ import editxt.constants as const
 import editxt.project as mod
 from editxt.application import Application, DocumentController
 from editxt.datatypes import WeakProperty
-from editxt.document import TextDocumentView, TextDocument
+from editxt.document import Editor, TextDocument
 from editxt.project import Project
 from editxt.util import dump_yaml
 from editxt.window import Window, WindowController
@@ -43,10 +43,10 @@ log = logging.getLogger(__name__)
 #     Project.is_dirty - should be True after a document is dragged within the project
 # """)
 
-def test_document_view_interface():
-    from editxt.test.test_document import verify_document_view_interface
-    view = Project(None)
-    verify_document_view_interface(view)
+def test_editor_interface():
+    from editxt.test.test_document import verify_editor_interface
+    editor = Project(None)
+    verify_editor_interface(editor)
 
 def test_is_project_path():
     def test(path, expected):
@@ -65,7 +65,7 @@ def test__init__():
     proj = Project(Window)
     assert proj.path is None
     eq_(proj.window, Window)
-    eq_(len(proj.documents), 0)
+    eq_(len(proj.editors), 0)
     eq_(proj.serial_cache, proj.serialize())
 
 @check_app_state
@@ -100,7 +100,7 @@ def test_serialize_project():
     def test(c):
         def check(flag, key, serial, value=None):
             if flag:
-                assert key in serial, key
+                assert key in serial, (key, serial)
                 if value is not None:
                     eq_(serial[key], value)
             else:
@@ -110,7 +110,7 @@ def test_serialize_project():
             proj.name = ak.NSString.alloc().initWithString_("<name>")
             assert isinstance(proj.name, objc.pyobjc_unicode), type(proj.name)
         if c.docs:
-            proj.documents = [MockDoc(1)]
+            proj.editors = [MockDoc(1)]
         proj.expanded = c.expn
         serial = proj.serialize()
         check(False, "path", serial, proj.path)
@@ -133,9 +133,9 @@ def test_deserialize_project():
         log = m.replace(mod, 'log')
         nsdat = m.replace(fn, 'NSData')
         nspls = m.replace(fn, 'NSPropertyListSerialization')
-        create_document_view_with_state = m.method(Project.create_document_view_with_state)
-        create_document_view = m.method(Project.create_document_view)
-        proj.documents = docs = m.mock(KVOList)
+        create_editor_with_state = m.method(Project.create_editor_with_state)
+        create_editor = m.method(Project.create_editor)
+        proj.editors = docs = m.mock(KVOList)
         if "path" in serial:
             data = nsdat.dataWithContentsOfFile_(serial["path"]) >> m.mock()
             serial_, format, error = nspls. \
@@ -145,14 +145,14 @@ def test_deserialize_project():
             serial_ = serial
         docs_ = serial_.get("documents", [])
         for item in docs_:
-            create_document_view_with_state(item)
+            create_editor_with_state(item)
             if item == "doc_not_found":
                 m.throw(Exception("document not found"))
                 log.warn("cannot open document: %r" % item)
             #proj._is_dirty = True
         bool(docs); m.result(bool(docs_))
         if not docs_:
-            create_document_view()
+            create_editor()
             #proj._is_dirty = True
         with m:
             proj._deserialize(serial)
@@ -196,86 +196,86 @@ def test_save():
         yield test, True, is_changed
         yield test, False, is_changed
 
-def test_create_document_view_with_state():
+def test_create_editor_with_state():
     proj = Project(None)
     m = Mocker()
     state = m.mock()
-    dv_class = m.replace(mod, 'TextDocumentView')
-    dv = dv_class(proj, state=state) >> TextDocumentView(proj, document="fake")
+    dv_class = m.replace(mod, 'Editor')
+    dv = dv_class(proj, state=state) >> Editor(proj, document="fake")
     with m:
-        result = proj.create_document_view_with_state(state)
+        result = proj.create_editor_with_state(state)
         eq_(result, dv)
         eq_(result.project, proj)
-        assert dv in proj.documents
+        assert dv in proj.editors
 
-def test_create_document_view():
+def test_create_editor():
     proj = Project(None)
     m = Mocker()
     nsdc = m.replace(ak, 'NSDocumentController')
-    append_document_view = m.method(proj.append_document_view)
+    append_editor = m.method(proj.append_editor)
     dc = m.mock(ak.NSDocumentController)
     doc = m.mock(TextDocument)
-    dv_class = m.replace(mod, 'TextDocumentView')
-    dv = m.mock(TextDocumentView)
+    dv_class = m.replace(mod, 'Editor')
+    dv = m.mock(Editor)
     nsdc.sharedDocumentController() >> dc
     dc.makeUntitledDocumentOfType_error_(const.TEXT_DOCUMENT, None) >> (doc, None)
     dc.addDocument_(doc)
     dv_class(proj, document=doc) >> dv
-    append_document_view(dv) >> dv
+    append_editor(dv) >> dv
     with m:
-        result = proj.create_document_view()
+        result = proj.create_editor()
         eq_(result, dv)
 
-def test_append_document_view():
+def test_append_editor():
     proj = Project(None)
     #assert not proj.is_dirty
     m = Mocker()
-    doc = TextDocumentView(proj, document="fake")
+    doc = Editor(proj, document="fake")
     doc.project = proj
     with m:
-        proj.append_document_view(doc)
-    assert doc in proj.documents
+        proj.append_editor(doc)
+    assert doc in proj.editors
     #assert proj.is_dirty
 
-def test_dirty_documents():
+def test_dirty_editors():
     def do_test(template):
         proj = Project(None)
-        temp_docs = proj.documents
+        temp_docs = proj.editors
         try:
             m = Mocker()
             all_docs = []
             dirty_docs = []
             for item in template:
-                doc = m.mock(TextDocumentView)
+                doc = m.mock(Editor)
                 all_docs.append(doc)
                 doc.is_dirty >> (item == "d")
                 if item == "d":
                     dirty_docs.append(doc)
-            proj.documents = all_docs
+            proj.editors = all_docs
             with m:
-                result = list(proj.dirty_documents())
+                result = list(proj.dirty_editors())
                 assert len(dirty_docs) == template.count("d")
                 assert dirty_docs == result, "%r != %r" % (dirty_docs, result)
         finally:
-            proj.documents = temp_docs
+            proj.editors = temp_docs
     yield do_test, ""
     yield do_test, "c"
     yield do_test, "d"
     yield do_test, "dd"
     yield do_test, "dcd"
 
-def test_append_document_view_already_in_project():
+def test_append_editor_already_in_project():
     class Fake(object):
         @property
         def proxy(self):
             return self
     proj = Project(None)
     dv = Fake()
-    proj.append_document_view(dv)
-    proj.append_document_view(dv)
-    assert len(proj.documents) == 2, proj.documents
+    proj.append_editor(dv)
+    proj.append_editor(dv)
+    assert len(proj.editors) == 2, proj.editors
 
-def test_remove_document_view():
+def test_remove_editor():
     class MockView(object):
         project = None
         @property
@@ -283,38 +283,38 @@ def test_remove_document_view():
             return self
     project = Project(None)
     doc = MockView()
-    project.insert_document_view(0, doc)
-    assert doc in project.documents
+    project.insert_editor(0, doc)
+    assert doc in project.editors
     eq_(doc.project, project)
     #project.is_dirty = False
-    project.remove_document_view(doc)
+    project.remove_editor(doc)
     #assert project.is_dirty
-    assert doc not in project.documents
+    assert doc not in project.editors
     eq_(doc.project, None)
 
-def test_find_view_with_document():
+def test_find_editor_with_document():
     DOC = "the document we're looking for"
     def test(config):
-        theview = None
+        theeditor = None
         proj = Project(None)
-        proj.documents = docs = []
+        proj.editors = docs = []
         m = Mocker()
         doc = m.mock(TextDocument)
         found = False
         for item in config:
-            view = m.mock(TextDocumentView)
-            docs.append(view)
-            view.name >> item
+            editor = m.mock(Editor)
+            docs.append(editor)
+            editor.name >> item
             if not found:
                 adoc = m.mock(TextDocument)
-                view.document >> (doc if item is DOC else adoc)
+                editor.document >> (doc if item is DOC else adoc)
                 if item is DOC:
-                    theview = view
+                    theeditor = editor
                     found = True
         with m:
-            eq_(config, [view.name for view in docs])
-            result = proj.find_view_with_document(doc)
-            eq_(result, theview)
+            eq_(config, [editor.name for editor in docs])
+            result = proj.find_editor_with_document(doc)
+            eq_(result, theeditor)
     yield test, []
     yield test, [DOC]
     yield test, ["doc1", "doc2"]
@@ -358,14 +358,14 @@ def test_perform_close():
         app = ed.app >> m.mock(Application)
         app.find_windows_with_project(proj) >> [ed for x in range(c.num_eds)]
         if c.num_eds == 1:
-            docs = [m.mock(TextDocumentView)]
+            docs = [m.mock(Editor)]
             doc = docs[0].document >> m.mock(TextDocument)
-            app.iter_windows_with_view_of_document(doc) >> \
-                (ed for x in range(c.num_doc_views))
-            dirty_documents = m.method(proj.dirty_documents)
-            dirty_documents() >> docs
+            app.iter_windows_with_editor_of_document(doc) >> \
+                (ed for x in range(c.num_editors))
+            dirty_editors = m.method(proj.dirty_editors)
+            dirty_editors() >> docs
             def check_docs(_docs):
-                d = docs if c.num_doc_views == 1 else []
+                d = docs if c.num_editors == 1 else []
                 eq_(list(_docs), d + [proj])
                 return True
             callback = []
@@ -386,8 +386,8 @@ def test_perform_close():
             proj.perform_close()
     c = TestConfig(num_eds=1)
     for ndv in range(3):
-        yield test, c(should_close=True, num_doc_views=ndv)
-        yield test, c(should_close=False, num_doc_views=ndv)
+        yield test, c(should_close=True, num_editors=ndv)
+        yield test, c(should_close=False, num_editors=ndv)
     yield test, c(num_eds=0)
     yield test, c(num_eds=2)
 
@@ -395,13 +395,13 @@ def test_close():
     m = Mocker()
     window = m.mock(name="window")
     proj = Project(window)
-    proj.documents = docs = []
+    proj.editors = docs = []
     for i in range(2):
-        dv = m.mock(TextDocumentView)
+        dv = m.mock(Editor)
         docs.append(dv)
         dv.close()
     with m:
         proj.close()
     eq_(proj.proxy, None)
     eq_(proj.window, None)
-    eq_(proj.documents, None)
+    eq_(proj.editors, None)

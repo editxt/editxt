@@ -85,9 +85,9 @@ class CommandView(DualView):
             #self.performSelector_withObject_afterDelay_("selectText:", self, 0)
             # possibly use setSelectedRange
             # http://jeenaparadies.net/weblog/2009/apr/focus-a-nstextfield
-            view = command.window.current_view
-            if view is not None:
-                self.input.setFont_(view.text_view.font())
+            editor = command.window.current_editor
+            if editor is not None:
+                self.input.setFont_(editor.text_view.font())
             self.output.setString_("")
         if new_activation or initial_text:
             self.input.setString_(initial_text)
@@ -97,9 +97,9 @@ class CommandView(DualView):
     def deactivate(self):
         if self.command is not None:
             self.command, command = None, self.command
-            view = command.window.current_view
-            if view is not None:
-                self.window().makeFirstResponder_(view.text_view)
+            editor = command.window.current_editor
+            if editor is not None:
+                self.window().makeFirstResponder_(editor.text_view)
             command.reset()
         self.should_resize()
 

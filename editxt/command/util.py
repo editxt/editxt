@@ -96,7 +96,7 @@ def change_indentation(textview, old_indent, new_indent, size):
         range = (0, len(text))
         if textview.shouldChangeTextInRange_replacementString_(range, next):
             if attr_change:
-                textview.doc_view.document.reset_text_attributes(size)
+                textview.editor.document.reset_text_attributes(size)
             if text_change and text != next:
                 sel = textview.selectedRange()
                 textview.textStorage().replaceCharactersInRange_withString_(range, next)

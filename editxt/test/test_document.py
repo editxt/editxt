@@ -33,52 +33,52 @@ import editxt.document as mod
 from editxt.constants import TEXT_DOCUMENT
 from editxt.controls.commandview import CommandView
 from editxt.application import Application, DocumentController
-from editxt.document import TextDocument, TextDocumentView
+from editxt.document import TextDocument, Editor
 from editxt.project import Project
 from editxt.window import Window, WindowController
 
 log = logging.getLogger(__name__)
 
 # log.debug("""TODO
-#     implement TextDocumentView.pasteboard_data()
+#     implement Editor.pasteboard_data()
 # """)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# TextDocumentView tests
+# Editor tests
 
 
-def verify_document_view_interface(dv):
+def verify_editor_interface(editor):
     from editxt.util import KVOProxy
 
-    assert dv.id is not None
-    assert not dv.is_dirty
-    assert hasattr(dv, "file_path")
+    assert editor.id is not None
+    assert not editor.is_dirty
+    assert hasattr(editor, "file_path")
 
-    dn = dv.name
+    dn = editor.name
     assert dn is not None
-    icon = dv.icon()
-    if isinstance(dv, TextDocumentView):
-        assert dv.project is None, dv.project
+    icon = editor.icon()
+    if isinstance(editor, Editor):
+        assert editor.project is None, editor.project
         assert icon is not None
         with assert_raises(AttributeError):
-            dv.name = "something"
-        assert dv.name == dn
-        assert dv.is_leaf
-        #assert not dv.expanded
+            editor.name = "something"
+        assert editor.name == dn
+        assert editor.is_leaf
+        #assert not editor.expanded
     else:
         assert icon is None
-        assert not dv.is_leaf
-        assert dv.expanded
+        assert not editor.is_leaf
+        assert editor.expanded
 
-def test_document_view_interface():
+def test_editor_interface():
     td = TextDocument.alloc().init()
     try:
-        view = TextDocumentView(None, document=td)
-        verify_document_view_interface(view)
+        editor = Editor(None, document=td)
+        verify_editor_interface(editor)
     finally:
         td.close()
 
-def test_TextDocumentView_init():
+def test_Editor_init():
     def test(kw):
         if "state" in kw:
             path = kw["state"]["path"]
@@ -90,11 +90,11 @@ def test_TextDocumentView_init():
         m = Mocker()
         proj = m.mock(Project)
         doc_class = m.replace(mod, 'TextDocument')
-        default_state = m.replace(TextDocumentView, 'edit_state')
+        default_state = m.replace(Editor, 'edit_state')
         if path is not None:
             doc = proj.window.app.document_with_path(path) >> "<document>"
         with m:
-            result = TextDocumentView(proj, **kw)
+            result = Editor(proj, **kw)
             eq_(result.project, proj)
             eq_(result.document, doc)
             eq_(result.edit_state, kw.get("state", default_state))
@@ -102,12 +102,12 @@ def test_TextDocumentView_init():
     yield test, {"state": {"path": "<document path>"}}
     yield test, {"document": "<document>"}
 
-def test_TextDocumentView_window():
+def test_Editor_window():
     def test(has_scroll_view):
         m = Mocker()
         win = m.mock(ak.NSWindow)
         doc = m.mock(TextDocument)
-        dv = TextDocumentView(None, document=doc)
+        dv = Editor(None, document=doc)
         if has_scroll_view:
             dv.scroll_view = sv = m.mock(ak.NSScrollView)
             sv.window() >> win
@@ -124,8 +124,8 @@ def test_document_set_main_view_of_window():
         m = Mocker()
         win = m.mock(ak.NSWindow)
         doc = m.mock(TextDocument)
-        docview = TextDocumentView(None, document=doc)
-        soft_wrap = m.property(docview, "soft_wrap")
+        editor = Editor(None, document=doc)
+        soft_wrap = m.property(editor, "soft_wrap")
         view = m.mock(ak.NSView)
         main = m.mock()
         text = m.mock(ak.NSTextView)
@@ -133,19 +133,19 @@ def test_document_set_main_view_of_window():
         setup_main_view = m.replace(mod, 'setup_main_view')
         frame = view.bounds() >> ak.NSMakeRect(0, 0, 50, 16)
         if c.sv_is_none:
-            eq_(docview.main_view, None)
-            eq_(docview.text_view, None)
-            eq_(docview.scroll_view, None)
-            eq_(docview.command_view, None)
-            setup_main_view(docview, frame) >> main
+            eq_(editor.main_view, None)
+            eq_(editor.text_view, None)
+            eq_(editor.scroll_view, None)
+            eq_(editor.command_view, None)
+            setup_main_view(editor, frame) >> main
             main.top >> scroll
             main.bottom >> m.mock(CommandView)
             scroll.documentView() >> text
             soft_wrap.value = doc.app.config["soft_wrap"] >> c.soft_wrap
         else:
-            docview.main_view = main
-            docview.text_view = text
-            docview.scroll_view = scroll
+            editor.main_view = main
+            editor.text_view = text
+            editor.scroll_view = scroll
             main.setFrame_(frame)
         view.addSubview_(main)
         win.makeFirstResponder_(text)
@@ -153,7 +153,7 @@ def test_document_set_main_view_of_window():
         doc.update_syntaxer()
         doc.check_for_external_changes(win)
         with m:
-            docview.set_main_view_of_window(view, win)
+            editor.set_main_view_of_window(view, win)
     c = TestConfig()
     yield test, c(sv_is_none=True, soft_wrap=const.WRAP_NONE)
     yield test, c(sv_is_none=False, soft_wrap=const.WRAP_WORD)
@@ -162,7 +162,7 @@ def test_get_soft_wrap():
     def test(c):
         m = Mocker()
         doc = m.mock(TextDocument)
-        dv = TextDocumentView(None, document=doc)
+        dv = Editor(None, document=doc)
         if c.tv_is_none:
             dv.text_view = None
         else:
@@ -186,7 +186,7 @@ def test_set_soft_wrap():
         m = Mocker()
         doc = m.mock(TextDocument)
         wrap = (c.mode != const.WRAP_NONE)
-        dv = TextDocumentView(None, document=doc)
+        dv = Editor(None, document=doc)
         sv = dv.scroll_view = m.mock(ak.NSScrollView)
         tv = dv.text_view = m.mock(ak.NSTextView)
         tc = tv.textContainer() >> m.mock(ak.NSTextContainer)
@@ -208,13 +208,13 @@ def test_set_soft_wrap():
     yield test, c
     yield test, c(mode=const.WRAP_WORD)
 
-def test_TextDocumentView_document_properties():
+def test_Editor_document_properties():
     def test(c):
         m = Mocker()
         regundo = m.replace(mod, 'register_undo_callback')
         repnl = m.replace(mod, 'replace_newlines')
         doc = m.mock(TextDocument)
-        dv = TextDocumentView(None, document=doc)
+        dv = Editor(None, document=doc)
         proxy = m.property(dv, 'proxy')
         with m.order():
             (getattr(doc, c.attr) << c.default).count(2 if c.value != c.default else 3)
@@ -270,14 +270,14 @@ def test_TextDocumentView_document_properties():
     yield test, c(value=const.NEWLINE_MODE_MAC, undoing=True)
     yield test, c(value=const.NEWLINE_MODE_MAC, redoing=True)
 
-def test_TextDocumentView_prompt():
+def test_Editor_prompt():
     from editxt.controls.alert import Alert
     eq_(ak.NSAlertSecondButtonReturn - ak.NSAlertFirstButtonReturn, 1)
     eq_(ak.NSAlertThirdButtonReturn - ak.NSAlertFirstButtonReturn, 2)
     def test(c):
         m = Mocker()
         doc = m.mock(TextDocument)
-        dv = TextDocumentView(None, document=doc)
+        dv = Editor(None, document=doc)
         dv_window = m.method(dv.window)
         alert_class = m.replace(mod, 'Alert')
         callback = m.mock(name="callback")
@@ -312,7 +312,7 @@ def test_TextDocumentView_prompt():
     yield test, c(buttons=3, has_window=False, response=2)
     # TODO test with zero buttons - should raise error
 
-def test_TextDocumentView_change_indentation():
+def test_Editor_change_indentation():
     TAB = const.INDENT_MODE_TAB
     SPC = const.INDENT_MODE_SPACE
     def test(c):
@@ -320,7 +320,7 @@ def test_TextDocumentView_change_indentation():
         regundo = m.replace(mod, 'register_undo_callback')
         convert = m.replace(mod, 'change_indentation')
         doc = m.mock(TextDocument)
-        dv = TextDocumentView(None, document=doc)
+        dv = Editor(None, document=doc)
         tv = dv.text_view = m.mock(ak.NSTextView)
         if c.convert:
             old_indent = "\t" if c.oldm is TAB else (" " * c.olds)
@@ -354,7 +354,7 @@ def test_get_edit_state():
     def test(c):
         m = Mocker()
         doc = m.mock(TextDocument)
-        dv = TextDocumentView(None, document=doc)
+        dv = Editor(None, document=doc)
         m.property(dv, "soft_wrap")
         m.property(dv, "file_path")
         if c.tv_is_none:
@@ -399,7 +399,7 @@ def test_set_edit_state():
     def test(state=None, ts_len=0):
         m = Mocker()
         doc = m.mock(TextDocument)
-        dv = TextDocumentView(None, document=doc)
+        dv = Editor(None, document=doc)
         proxy_prop = m.property(dv, "proxy")
         if state is None:
             eq_state = state = {}
@@ -412,7 +412,7 @@ def test_set_edit_state():
             sel = eq_state["selection"]
             dv.text_view = m.mock(ak.NSTextView)
             dv.scroll_view = m.mock(ak.NSScrollView)
-            proxy = proxy_prop.value >> m.mock(TextDocumentView)
+            proxy = proxy_prop.value >> m.mock(Editor)
             proxy.soft_wrap = eq_state["soft_wrap"]
             doc.text_storage.length() >> ts_len
             if ts_len - 1 > 0:
@@ -441,7 +441,7 @@ def test_reset_edit_state():
     def test(_state_exists):
         m = Mocker()
         doc = m.mock(TextDocument)
-        dv = TextDocumentView(None, document=doc)
+        dv = Editor(None, document=doc)
         m.property(dv, "edit_state")
         _state = m.mock(name="state")
         if _state_exists:
@@ -460,16 +460,16 @@ def test_reset_edit_state():
 #         m = Mocker()
 #         doc = m.mock(TextDocument)
 #         path_exists = m.replace("os.path.exists", passthrough=False)
-#         dv = TextDocumentView(None, document=doc)
-#         _file_path_property = TextDocumentView.file_path
+#         dv = Editor(None, document=doc)
+#         _file_path_property = Editor.file_path
 #         try:
-#             TextDocumentView.file_path = c.path
+#             Editor.file_path = c.path
 #             path_exists(c.path) >> c.path_exists
 #             with m:
 #                 result = list(dv.pasteboard_data())
 #                 eq_(result, c.result)
 #         finally:
-#             TextDocumentView.file_path = _file_path_property
+#             Editor.file_path = _file_path_property
 #     c = TestConfig(path="/path/to/document.txt", index_path="<index path>", path_exists=True)
 #     yield test, c(path_exists=False, result=[(const.INDEX_PATH_PBOARD_TYPE, c.index_path)])
 #     yield test, c(result=[
@@ -487,20 +487,20 @@ def test_reset_edit_state():
 
 
 def test_perform_close():
-    def test(num_views):
+    def test(num_editors):
         m = Mocker()
         doc = m.mock(TextDocument)
         proj = m.mock(Project)
-        dv = TextDocumentView(proj, document=doc)
+        dv = Editor(proj, document=doc)
         ed = proj.window >> m.mock(Window)
         app = doc.app >> m.mock(Application)
-        app.iter_windows_with_view_of_document(doc) >> (ed for x in range(num_views))
-        if num_views == 1:
-            ed.current_view = dv
+        app.iter_windows_with_editor_of_document(doc) >> (ed for x in range(num_editors))
+        if num_editors == 1:
+            ed.current_editor = dv
             info = app.context.put(dv.maybe_close) >> 42
             def doc_should_close(dv, selector, context):
                 assert hasattr(TextDocument, "document_shouldClose_contextInfo_"), \
-                    "missing selector: TextDocumentView document:shouldClose:contextInfo:"
+                    "missing selector: Editor document:shouldClose:contextInfo:"
             expect(doc.canCloseDocumentWithDelegate_shouldCloseSelector_contextInfo_(
                 doc, "document:shouldClose:contextInfo:", info)).call(doc_should_close)
         else:
@@ -508,36 +508,36 @@ def test_perform_close():
         with m:
             dv.perform_close()
         eq_(TextDocument.document_shouldClose_contextInfo_.signature, b'v@:@ii')
-    for num_views in range(3):
-        yield test, num_views
+    for num_editors in range(3):
+        yield test, num_editors
 
-def test_TextDocumentView_maybe_close():
+def test_Editor_maybe_close():
     def test(should_close):
         m = Mocker()
         proj = m.mock(Project)
-        docview = TextDocumentView(proj, document=m.mock(TextDocument))
+        editor = Editor(proj, document=m.mock(TextDocument))
         window = m.mock(Window)
         if should_close:
-            (proj.window >> window).discard_and_focus_recent(docview)
+            (proj.window >> window).discard_and_focus_recent(editor)
         with m:
-            docview.maybe_close(should_close)
+            editor.maybe_close(should_close)
     yield test, True
     yield test, False
 
-def test_TextDocumentView_close():
+def test_Editor_close():
     from editxt.window import Window
     def test(c):
         m = Mocker()
         doc = m.mock(TextDocument)
         proj = None if c.proj_is_none else m.mock(Project)
-        dv = TextDocumentView(proj, document=doc)
+        dv = Editor(proj, document=doc)
         dv.command_view = m.mock(CommandView)
         dv.text_view = None if c.tv_is_none else m.mock(ak.NSTextView)
         app = m.mock(Application)
         teardown_main_view = m.replace(mod, 'teardown_main_view')
         if not c.proj_is_none:
             proj.closing >> False
-            proj.remove_document_view(dv)
+            proj.remove_editor(dv)
         if c.doc_is_none:
             dv.document = None
         else:
@@ -551,9 +551,9 @@ def test_TextDocumentView_close():
                 wc = m.mock(WindowController)
                 wcs.append(wc)
                 ed = wc.window_ >> m.mock(Window)
-                if (ed.count_views_of_document(doc) >> w.num_views) == 0:
+                if (ed.count_editors_of_document(doc) >> w.num_editors) == 0:
                     doc.removeWindowController_(wc)
-            if ((doc.app >> app).count_views_of_document(doc) >> c.app_views) < 1:
+            if ((doc.app >> app).count_editors_of_document(doc) >> c.app_views) < 1:
                 doc.close()
         if c.main_is_none:
             dv.main_view = None
@@ -574,35 +574,35 @@ def test_TextDocumentView_close():
             tv_is_none=False,
             main_is_none=False,
         )
-    wc = lambda n:TestConfig(num_views=n)
+    wc = lambda n:TestConfig(num_editors=n)
     yield test, c
     yield test, c(proj_is_none=True)
     yield test, c(doc_is_none=True)
     yield test, c(tv_is_none=True)
     yield test, c(ts_is_none=True)
     yield test, c(main_is_none=True)
-    for num_views in (1, 2):
+    for num_editors in (1, 2):
         for num_wcs in (0, 1, 3):
             yield test, c(wcs=[wc(i) for i in range(num_wcs)])
         yield test, c(wcs=[wc(0) for i in range(2)])
     yield test, c(app_views=1)
 
-def test_TextDocumentView_on_do_command():
+def test_Editor_on_do_command():
     import editxt.platform.constants as const
     def test(command, setup_mocks):
         m = Mocker()
         doc = m.mock(TextDocument)
-        docview = TextDocumentView(None, document=doc)
+        editor = Editor(None, document=doc)
         textview = m.mock(ak.NSTextView)
-        expected = setup_mocks(m, docview, textview)
+        expected = setup_mocks(m, editor, textview)
         with m:
-            result = docview.on_do_command(command)
+            result = editor.on_do_command(command)
             eq_(result, expected)
 
     yield test, "unknown command", lambda m, dv, tv: False
 
-    def setup_mocks(m, docview, textview):
-        cmd = m.replace(docview, "command_view", spec=CommandView)
+    def setup_mocks(m, editor, textview):
+        cmd = m.replace(editor, "command_view", spec=CommandView)
         cmd.dismiss()
         return True
     yield test, const.ESCAPE, setup_mocks
@@ -743,12 +743,12 @@ def test_TextDocument_reset_text_attributes():
     real_ps = ps.copy() >> "<paragraph style>"
     attrs = {ak.NSFontAttributeName: font, ak.NSParagraphStyleAttributeName: real_ps}
     ts.addAttributes_range_(attrs, fn.NSMakeRange(0, ts.length() >> 20))
-    views = [
-        (m.mock(TextDocumentView), m.mock(ak.NSTextView)),
-        (m.mock(TextDocumentView), None),
+    editors = [
+        (m.mock(Editor), m.mock(ak.NSTextView)),
+        (m.mock(Editor), None),
     ]
-    app.iter_views_of_document(doc) >> (dv for dv, tv in views)
-    for dv, tv in views:
+    app.iter_editors_of_document(doc) >> (dv for dv, tv in editors)
+    for dv, tv in editors:
         (dv.text_view << tv).count(1 if tv is None else 3)
         if tv is not None:
             tv.setTypingAttributes_(attrs)
@@ -897,14 +897,14 @@ def test_reload_document():
             doc_log.error(ANY, "<err>")
             return end()
         tv = m.mock(ak.NSTextView)
-        def views():
+        def editors():
             for text_view_exists in c.view_state:
-                view = m.mock(TextDocumentView)
-                view.text_view >> (tv if text_view_exists else None)
-                yield view
-        views = list(views()) # why on earth is the intermediate var necessary?
+                editor = m.mock(Editor)
+                editor.text_view >> (tv if text_view_exists else None)
+                yield editor
+        editors = list(editors()) # why on earth is the intermediate var necessary?
         # I don't know, but it turns to None if we don't do it!! ???
-        app.iter_views_of_document(doc) >> views
+        app.iter_editors_of_document(doc) >> editors
         text = ts.string() >> "<string>"
         range = fn.NSRange(0, doc_ts.length() >> 10)
         if not any(c.view_state):
@@ -1095,8 +1095,8 @@ def test_makeWindowControllers():
         m = Mocker()
         app = m.mock(Application)
         (m.property(doc, "app").value << app).count(1, 2)
-        dv_class = m.replace(mod, 'TextDocumentView')
-        dv = m.mock(TextDocumentView)
+        dv_class = m.replace(mod, 'Editor')
+        dv = m.mock(Editor)
         ed = m.mock(Window)
         app.current_window() >> (None if ed_is_none else ed)
         if ed_is_none:

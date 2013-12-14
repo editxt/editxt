@@ -78,7 +78,7 @@ def test_wrap_selected_lines():
         text = tv.string() >> fn.NSString.stringWithString_(c.text)
         sel = (0, len(text)) if c.sel is None else c.sel
         sel = text.lineRangeForRange_(tv.selectedRange() >> sel)
-        eol = tv.doc_view.document.eol >> m.mock()
+        eol = tv.editor.document.eol >> m.mock()
         lines = iterlines(text, sel) >> "<lines>"
         eol.join(wrap(lines, opts, tv) >> [c.result]) >> c.result
         tv.shouldChangeTextInRange_replacementString_(sel, c.result) >> True
@@ -101,7 +101,7 @@ def test_wraplines():
         m = Mocker()
         tv = m.mock(TextView)
         if c.ind:
-            tv.doc_view.document.comment_token >> c.comment
+            tv.editor.document.comment_token >> c.comment
         opts = TestConfig(wrap_column=c.wid, indent=c.ind)
         text = fn.NSString.stringWithString_(c.text)
         sel = (0, len(c.text))

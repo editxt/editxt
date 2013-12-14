@@ -31,7 +31,7 @@ from editxt.test.util import TestConfig, untested, check_app_state
 import editxt.constants as const
 from editxt.command.changeindent import ChangeIndentationController
 from editxt.controls.textview import TextView
-from editxt.document import TextDocumentView
+from editxt.document import Editor
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ log = logging.getLogger(__name__)
 def test_ChangeIndentationController_load_options():
     m = Mocker()
     tv = m.mock(TextView)
-    dv = tv.doc_view >> m.mock(TextDocumentView)
+    dv = tv.editor >> m.mock(Editor)
     mode = dv.indent_mode >> "<indent mode>"
     size = dv.indent_size >> "<indent size>"
     tv.app >> m.mock("editxt.application.Application")
@@ -54,7 +54,7 @@ def test_ChangeIndentationController_load_options():
 def test_ChangeIndentationController_save_options():
     m = Mocker()
     tv = m.mock(TextView)
-    dv = tv.doc_view >> m.mock(TextDocumentView)
+    dv = tv.editor >> m.mock(Editor)
     tv.app >> m.mock("editxt.application.Application")
     with m.order():
         mode = dv.indent_mode >> "<indent mode>"
@@ -66,8 +66,8 @@ def test_ChangeIndentationController_save_options():
 def test_ChangeIndentationController_execute_():
     m = Mocker()
     tv = m.mock(TextView)
-    dv = m.mock(TextDocumentView)
-    (tv.doc_view << dv).count(2)
+    dv = m.mock(Editor)
+    (tv.editor << dv).count(2)
     mode = dv.indent_mode >> "m"
     size = dv.indent_size >> "s"
     dv.change_indentation("m", "s", "m", "s", True)

@@ -33,7 +33,7 @@ import editxt.application as mod
 from editxt.application import Application, DocumentController, DocumentSavingDelegate
 from editxt.commands import iterlines
 from editxt.window import WindowController, Window
-from editxt.document import TextDocumentView, TextDocument
+from editxt.document import Editor, TextDocument
 from editxt.project import Project
 from editxt.util import load_yaml
 
@@ -284,19 +284,19 @@ def test_open_error_log():
     def test(c):
         m = Mocker()
         ed = m.mock(Window)
-        dv = m.mock(TextDocumentView)
+        editor = m.mock(Editor)
         app = Application()
         err = m.property(mod.errlog, "document").value >> m.mock(TextDocument)
         if c.is_open:
-            idocs = iter([dv])
-            m.method(app.set_current_document_view)(dv)
+            idocs = iter([editor])
+            m.method(app.set_current_editor)(editor)
         else:
             idocs = iter([])
             m.method(app.current_window)() >> (ed if c.has_window else None)
             if not c.has_window:
                 m.method(app.create_window)() >> ed
             ed.insert_items([err])
-        m.method(app.iter_views_of_document)(err) >> idocs
+        m.method(app.iter_editors_of_document)(err) >> idocs
         with m:
             app.open_error_log()
     c = TestConfig(is_open=False)
@@ -304,7 +304,7 @@ def test_open_error_log():
     yield test, c(has_window=True)
     yield test, c(has_window=False)
 
-def test_iter_dirty_documents():
+def test_iter_dirty_editors():
     def do_test(windows_template):
         app = Application()
         m = Mocker()
@@ -316,17 +316,17 @@ def test_iter_dirty_documents():
             for pcfg in ecfg:
                 proj = m.mock(Project)
                 projects.append(proj)
-                documents = []
+                editors = []
                 has_dirty = False
                 for doc_id in pcfg:
-                    dv = m.mock(TextDocumentView)
-                    documents.append(dv)
-                    (dv.document.id << doc_id).count(1, 2)
+                    editor = m.mock(Editor)
+                    editors.append(editor)
+                    (editor.document.id << doc_id).count(1, 2)
                     if doc_id not in seen:
                         seen.add(doc_id)
-                        dirty_docs.append(dv)
+                        dirty_docs.append(editor)
                         has_dirty = True
-                proj.dirty_documents() >> documents
+                proj.dirty_editors() >> editors
                 if has_dirty:
                     dirty_docs.append(proj)
             ed = m.mock(Window)
@@ -334,7 +334,7 @@ def test_iter_dirty_documents():
             eds.append(ed)
         m.method(app.iter_windows)() >> eds
         with m:
-            result = list(app.iter_dirty_documents())
+            result = list(app.iter_dirty_editors())
             eq_(result, dirty_docs)
     yield do_test, []
     yield do_test, [""]
@@ -344,15 +344,15 @@ def test_iter_dirty_documents():
     yield do_test, ["0", "0"]
     yield do_test, ["0", "10"]
 
-def test_set_current_document_view():
+def test_set_current_editor():
     ac = Application()
     m = Mocker()
-    dv = m.mock(TextDocumentView)
-    ac.find_window_with_document_view = m.method(ac.find_window_with_document_view)
-    ed = ac.find_window_with_document_view(dv) >> m.mock(Window)
-    ed.current_view = dv
+    editor = m.mock(Editor)
+    ac.find_window_with_editor = m.method(ac.find_window_with_editor)
+    ed = ac.find_window_with_editor(editor) >> m.mock(Window)
+    ed.current_editor = editor
     with m:
-        ac.set_current_document_view(dv)
+        ac.set_current_editor(editor)
 
 def test_Application_close_current_document():
     def test(c):
@@ -361,61 +361,60 @@ def test_Application_close_current_document():
         ed = m.mock(Window) if c.has_window else None
         m.method(app.current_window)() >> ed
         if c.has_window:
-            view = m.mock(TextDocumentView) if c.has_view else None
-            ed.current_view >> view
-            if c.has_view:
-                view.perform_close()
+            editor = m.mock(Editor) if c.has_editor else None
+            ed.current_editor >> editor
+            if c.has_editor:
+                editor.perform_close()
         with m:
             app.close_current_document()
-    c = TestConfig(has_window=True, has_view=True)
+    c = TestConfig(has_window=True, has_editor=True)
     yield test, c(has_window=False)
-    yield test, c(has_view=False)
+    yield test, c(has_editor=False)
     yield test, c
 
-def test_Application_iter_views_of_document():
+def test_Application_iter_editors_of_document():
     def test(config):
         ac = Application()
         m = Mocker()
         doc = m.mock(TextDocument)
-        views = []
-        total_views = 0
-        #ac.windows = eds = []
-        eds = []
-        for view_count in config:
-            ed = m.mock(Window)
-            eds.append(ed)
-            total_views += view_count
-            vws = [m.mock(TextDocumentView) for i in range(view_count)]
-            ed.iter_views_of_document(doc) >> vws
-            views.extend(vws)
-        m.method(ac.iter_windows)() >> eds
+        editors = []
+        total_editors = 0
+        windows = []
+        for editor_count in config:
+            window = m.mock(Window)
+            windows.append(window)
+            total_editors += editor_count
+            eds = [m.mock(Editor) for i in range(editor_count)]
+            window.iter_editors_of_document(doc) >> eds
+            editors.extend(eds)
+        m.method(ac.iter_windows)() >> windows
         with m:
-            result = list(ac.iter_views_of_document(doc))
-            eq_(result, views)
-            eq_(len(result), total_views)
+            result = list(ac.iter_editors_of_document(doc))
+            eq_(result, editors)
+            eq_(len(result), total_editors)
     yield test, [0]
     yield test, [1]
     yield test, [2, 3, 4]
 
-# def test_find_view_with_document():
+# def test_find_editor_with_document():
 #   def test(c):
 #       ac = Application()
 #       m = Mocker()
-#       vw = m.mock(TextDocumentView) if c.has_view else None
+#       editor = m.mock(Editor) if c.has_editor else None
 #       doc = m.mock(TextDocument)
-#       vws = m.method(ac.iter_views_of_document)(doc) >> m.mock()
-#       if c.has_view:
-#           next(vws) >> vw
+#       editors = m.method(ac.iter_editors_of_document)(doc) >> m.mock()
+#       if c.has_editor:
+#           next(editors) >> editor
 #       else:
-#           expect(next(vws)).throw(StopIteration)
+#           expect(next(editors)).throw(StopIteration)
 #       with m:
-#           result = ac.find_view_with_document(doc)
-#           eq_(result, vw)
+#           result = ac.find_editor_with_document(doc)
+#           eq_(result, editor)
 #   c = TestConfig()
-#   yield test, c(has_view=True)
-#   yield test, c(has_view=False)
+#   yield test, c(has_editor=True)
+#   yield test, c(has_editor=False)
 
-def test_iter_windows_with_view_of_document():
+def test_iter_windows_with_editor_of_document():
     def test(c):
         result = None
         ac = Application()
@@ -426,17 +425,17 @@ def test_iter_windows_with_view_of_document():
         for e in c.eds:
             ed = m.mock(Window)
             eds.append(ed)
-            if e.has_view:
-                views = [m.mock(TextDocumentView)]
+            if e.has_editor:
+                editors = [m.mock(Editor)]
                 found.append(ed)
             else:
-                views = []
-            ed.iter_views_of_document(doc) >> iter(views)
+                editors = []
+            ed.iter_editors_of_document(doc) >> iter(editors)
         with m:
-            result = list(ac.iter_windows_with_view_of_document(doc))
+            result = list(ac.iter_windows_with_editor_of_document(doc))
             eq_(result, found)
             eq_(len(result), c.count)
-    ed = lambda has_view=True: TestConfig(has_view=has_view)
+    ed = lambda has_editor=True: TestConfig(has_editor=has_editor)
     c = TestConfig(eds=[], id=1, count=0)
     yield test, c
     yield test, c(eds=[ed(False)])
@@ -444,13 +443,13 @@ def test_iter_windows_with_view_of_document():
     yield test, c(eds=[ed(), ed(False)], count=1)
     yield test, c(eds=[ed(), ed(False), ed()], count=2)
 
-def test_find_window_with_document_view():
-    DOC = "the document view we're looking for"
+def test_find_window_with_editor():
+    DOC = "the editor we're looking for"
     def test(config):
         """Test argument structure:
         [ # collection of window controllers
             [ # window controller / collection of projects
-                ["doc1", "doc2", "doc3", ...], # project / collection of documents
+                ["doc1", "doc2", "doc3", ...], # project / collection of editors
                 ...
             ]
             ...
@@ -459,9 +458,9 @@ def test_find_window_with_document_view():
         result = None
         ac = Application()
         m = Mocker()
-        dv = m.mock(TextDocumentView) # this is the view we're looking for
+        editor = m.mock(Editor) # this is the editor we're looking for
         document = m.mock(TextDocument)
-        (dv.document << document).count(0, None)
+        (editor.document << document).count(0, None)
         ac.iter_windows = m.method(ac.iter_windows)
         eds = ac.iter_windows() >> []
         for ed_projects in config:
@@ -470,21 +469,21 @@ def test_find_window_with_document_view():
             projects = []
             ed.projects >> projects
             found = False
-            for project_documents in ed_projects:
+            for project_editors in ed_projects:
                 project = m.mock(Project)
                 projects.append(project)
-                documents = []
+                editors = []
                 if not found:
-                    project.documents >> documents
-                for doc_name in project_documents:
+                    project.editors >> editors
+                for doc_name in project_editors:
                     if doc_name == DOC:
-                        documents.append(dv)
+                        editors.append(editor)
                         result = ed
                         found = True
                     else:
-                        documents.append(m.mock(TextDocumentView))
+                        editors.append(m.mock(Editor))
         with m:
-            ed = ac.find_window_with_document_view(dv)
+            ed = ac.find_window_with_editor(editor)
             eq_(ed, result)
     yield test, []
     yield test, [[]]
@@ -667,9 +666,9 @@ def test_find_item_with_id():
                     if p.id == c.id:
                         found_item = proj
                     else:
-                        proj.documents >> docs
+                        proj.editors >> docs
                 for d in p.docs:
-                    doc = m.mock(TextDocumentView)
+                    doc = m.mock(Editor)
                     docs.append(doc)
                     if found_item is None:
                         doc.id >> d.id
@@ -906,7 +905,7 @@ def test_closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_():
         should_term(*args)
     dsd_class = m.replace(mod, 'DocumentSavingDelegate', spec=False)
     docs = m.mock()
-    app.iter_dirty_documents() >> docs
+    app.iter_dirty_editors() >> docs
     selector = "_docController:shouldTerminate:context:"
     delegate = m.mock()
     def test_callback(callback):
@@ -931,7 +930,7 @@ def test_DocumentSavingDelegate_init():
     cbck = object()
     saver = DocumentSavingDelegate.alloc().init_callback_(docs, cbck)
     assert saver is DocumentSavingDelegate.registry[id(saver)]
-    assert saver.documents is docs
+    assert saver.editors is docs
     assert saver.callback is cbck
     assert saver.should_close
 
@@ -955,8 +954,8 @@ def test_save_next_document():
             if doctype is Project:
                 doc.save()
                 do_stop_routine()
-            elif doctype is TextDocumentView:
-                doc.project.window.current_view = doc
+            elif doctype is Editor:
+                doc.project.window.current_editor = doc
                 win = m.mock()
                 doc.window() >> win
                 note_ctr.defaultCenter().addObserver_selector_name_object_(
@@ -971,14 +970,14 @@ def test_save_next_document():
                     saver, "document:shouldClose:contextInfo:", context)
         with m:
             saver.save_next_document()
-        if doctype is TextDocumentView:
+        if doctype is Editor:
             assert not saver.document_called_back
             assert not saver.sheet_did_end
         else:
-            eq_(saver.documents, None)
+            eq_(saver.editors, None)
             assert id(saver) not in saver.registry
-    yield do_test, TextDocumentView
-    yield do_test, TextDocumentView, False
+    yield do_test, Editor
+    yield do_test, Editor, False
     yield do_test, Project
     yield do_test, None
 
@@ -999,8 +998,8 @@ def test_document_shouldClose_contextInfo_():
         if not should_close:
             assert not saver.should_close
             try:
-                next(saver.documents)
-                raise AssertionError("next(saver.documents) should raise StopIteration")
+                next(saver.editors)
+                raise AssertionError("next(saver.editors) should raise StopIteration")
             except StopIteration:
                 pass
         else:

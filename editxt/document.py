@@ -61,8 +61,8 @@ def document_property(do):
     return property(fget, fset)
 
 
-class TextDocumentView(object):
-    """Text document view
+class Editor(object):
+    """Editor
 
     Reference graph:
         strong:
@@ -84,7 +84,7 @@ class TextDocumentView(object):
             assert document is None, (path, document)
             document = project.window.app.document_with_path(path)
         assert document is not None, (project, path, state)
-        self.documents = KVOList.alloc().init()
+        self.editors = KVOList.alloc().init()
         self.id = next(doc_id_gen)
         self.project = project
         self.document = document
@@ -114,6 +114,7 @@ class TextDocumentView(object):
         return self.document.displayName()
 
     def window(self):
+        """Return the native window of this view (NOT a editxt.window.Window)"""
         if self.scroll_view is not None:
             return self.scroll_view.window()
         return None
@@ -291,9 +292,9 @@ class TextDocumentView(object):
     def perform_close(self):
         app = self.document.app
         window = self.project.window
-        views = list(app.iter_windows_with_view_of_document(self.document))
-        if views == [window]:
-            window.current_view = self
+        windows = list(app.iter_windows_with_editor_of_document(self.document))
+        if windows == [window]:
+            window.current_editor = self
             info = app.context.put(self.maybe_close)
             self.document.canCloseDocumentWithDelegate_shouldCloseSelector_contextInfo_(
                 self.document, "document:shouldClose:contextInfo:", info)
@@ -307,14 +308,14 @@ class TextDocumentView(object):
     def close(self):
         doc = self.document
         if self.project is not None and not self.project.closing:
-            self.project.remove_document_view(self)
+            self.project.remove_editor(self)
         if doc is not None:
             if doc.text_storage is not None and self.text_view is not None:
                 doc.text_storage.removeLayoutManager_(self.text_view.layoutManager())
             for wc in list(self.document.windowControllers()):
-                if wc.window_.count_views_of_document(doc) == 0:
+                if wc.window_.count_editors_of_document(doc) == 0:
                     doc.removeWindowController_(wc)
-            if doc.app.count_views_of_document(doc) == 0:
+            if doc.app.count_editors_of_document(doc) == 0:
                 doc.close()
             self.document = None
         if self.main_view is not None:
@@ -458,10 +459,10 @@ class TextDocument(ak.NSDocument):
         self.text_storage.addAttributes_range_(attrs, range)
         if not reset_views:
             return
-        for view in self.app.iter_views_of_document(self):
-            if view.text_view is not None:
-                view.text_view.setTypingAttributes_(attrs)
-                view.text_view.setDefaultParagraphStyle_(ps)
+        for editor in self.app.iter_editors_of_document(self):
+            if editor.text_view is not None:
+                editor.text_view.setTypingAttributes_(attrs)
+                editor.text_view.setDefaultParagraphStyle_(ps)
 
     def default_text_attributes(self):
         return self._text_attributes
@@ -588,8 +589,8 @@ class TextDocument(ak.NSDocument):
             log.error("could not reload document: %s", err)
             return # TODO report err
         textview = None
-        for view in self.app.iter_views_of_document(self):
-            textview = view.text_view
+        for editor in self.app.iter_editors_of_document(self):
+            textview = editor.text_view
             if textview is not None:
                 break
         text = tempstore.string()

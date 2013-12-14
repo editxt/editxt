@@ -59,8 +59,8 @@ class CommandBar(object):
         if not text.strip():
             return
         cmdstr, space, argstr = text.lstrip(" ").partition(" ")
-        doc_view = self.window.current_view
-        if doc_view is None:
+        editor = self.window.current_editor
+        if editor is None:
             ak.NSBeep()
             return
         command = self.text_commander.lookup(cmdstr)
@@ -81,7 +81,7 @@ class CommandBar(object):
             self.message('invalid command arguments: {}'.format(argstr))
             return
         try:
-            message = command(doc_view.text_view, self, args)
+            message = command(editor.text_view, self, args)
         except CommandError as err:
             self.message(err)
         except Exception:
@@ -158,13 +158,13 @@ class CommandBar(object):
         else:
             exc = ""
         msg = "{}{}".format(text, exc)
-        view = self.window.current_view
-        if view is None:
+        editor = self.window.current_editor
+        if editor is None:
             log.info(text, exc_info=exc_info)
             if msg_type == const.ERROR:
                 ak.NSBeep()
         else:
-            view.message(msg, msg_type=msg_type)
+            editor.message(msg, msg_type=msg_type)
 
     def reset(self):
         view, self.history_view = self.history_view, None

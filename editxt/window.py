@@ -29,7 +29,7 @@ from PyObjCTools import AppHelper
 
 import editxt.constants as const
 from editxt.controls.cells import BUTTON_STATE_HOVER, BUTTON_STATE_NORMAL, BUTTON_STATE_PRESSED
-from editxt.document import TextDocumentView, TextDocument
+from editxt.document import Editor, TextDocument
 from editxt.platform.kvo import KVOList
 from editxt.project import Project
 from editxt.textcommand import CommandBar
@@ -50,7 +50,7 @@ class Window(object):
 
     def __init__(self, app, window_controller, state=None):
         self.app = app
-        self._current_view = None
+        self._current_editor = None
         self.wc = window_controller
         self.state = state
         self.command = CommandBar(self, app.text_commander)
@@ -103,8 +103,8 @@ class Window(object):
                     proj = self.projects[proj_index]
                     if doc_index == "<project>":
                         self.recent.push(proj.id)
-                    elif doc_index < len(proj.documents):
-                        doc = proj.documents[doc_index]
+                    elif doc_index < len(proj.editors):
+                        doc = proj.editors[doc_index]
                         self.recent.push(doc.id)
             if 'window_settings' in state:
                 self.window_settings = state['window_settings']
@@ -122,7 +122,7 @@ class Window(object):
                     serials.append(serial)
                 indexes[project.id] = [i, "<project>"]
                 offset = 0
-                for j, doc in enumerate(project.documents):
+                for j, doc in enumerate(project.editors):
                     if doc.file_path and os.path.exists(doc.file_path):
                         indexes[doc.id] = [i, j - offset]
                     else:
@@ -151,14 +151,14 @@ class Window(object):
         try:
             for project in list(self.projects):
                 pid = project.id
-                for docview in list(project.documents):
-                    did = docview.id
+                for editor in list(project.editors):
+                    did = editor.id
                     if ident in (pid, did):
                         recent.discard(did)
-                        assert docview.project is project, (docview.project, project)
-                        docview.close()
+                        assert editor.project is project, (editor.project, project)
+                        editor.close()
                     else:
-                        lookup[did] = docview
+                        lookup[did] = editor
                 if ident == pid:
                     recent.discard(pid)
                     self.projects.remove(project)
@@ -173,10 +173,10 @@ class Window(object):
                 break
             item = lookup.get(ident)
             if item is not None:
-                self.current_view = item
+                self.current_editor = item
                 break
-        if not recent and self.current_view is not None:
-            recent.push(self.current_view.id)
+        if not recent and self.current_editor is not None:
+            recent.push(self.current_editor.id)
 
     def suspend_recent_updates(self):
         self.recent = RecentItemStack(20)
@@ -184,60 +184,60 @@ class Window(object):
     def resume_recent_updates(self):
         self.recent = self._suspended_recent
 
-    def _get_current_view(self):
-        return self._current_view
+    def _get_current_editor(self):
+        return self._current_editor
 
-    def _set_current_view(self, view):
-        if view is self._current_view:
+    def _set_current_editor(self, editor):
+        if editor is self._current_editor:
             return
-        self._current_view = view
+        self._current_editor = editor
         main_view = self.wc.mainView
-        if view is not None:
+        if editor is not None:
             sel = self.wc.docsController.selected_objects
-            if not sel or sel[0] is not view:
-                self.wc.docsController.selected_objects = [view]
-            self.recent.push(view.id)
-            if isinstance(view, TextDocumentView): # TODO eliminate isinstance call
-                if view.main_view not in main_view.subviews():
+            if not sel or sel[0] is not editor:
+                self.wc.docsController.selected_objects = [editor]
+            self.recent.push(editor.id)
+            if isinstance(editor, Editor): # TODO eliminate isinstance call
+                if editor.main_view not in main_view.subviews():
                     for subview in main_view.subviews():
                         subview.removeFromSuperview()
-                    view.document.addWindowController_(self.wc)
-                    view.set_main_view_of_window(main_view, self.wc.window())
-                    #self.wc.setDocument_(view.document)
-                    if self.find_project_with_document_view(view) is None:
-                        self.insert_items([view])
+                    editor.document.addWindowController_(self.wc)
+                    editor.set_main_view_of_window(main_view, self.wc.window())
+                    #self.wc.setDocument_(editor.document)
+                    if self.find_project_with_editor(editor) is None:
+                        self.insert_items([editor])
                 return
             #else:
-            #    self.wc.window().setTitle_(view.name)
-            #    log.debug("self.wc.window().setTitle_(%r)", view.name)
+            #    self.wc.window().setTitle_(editor.name)
+            #    log.debug("self.wc.window().setTitle_(%r)", editor.name)
         for subview in main_view.subviews():
             subview.removeFromSuperview()
         self.wc.setDocument_(None)
 
-    current_view = property(_get_current_view, _set_current_view)
+    current_editor = property(_get_current_editor, _set_current_editor)
 
-    def selected_view_changed(self):
+    def selected_editor_changed(self):
         selected = self.wc.docsController.selected_objects
-        if selected and selected[0] is not self.current_view:
-            self.current_view = selected[0]
+        if selected and selected[0] is not self.current_editor:
+            self.current_editor = selected[0]
 
-    def iter_views_of_document(self, doc):
+    def iter_editors_of_document(self, doc):
         for project in self.projects:
-            view = project.find_view_with_document(doc)
-            if view is not None:
-                yield view
+            editor = project.find_editor_with_document(doc)
+            if editor is not None:
+                yield editor
 
-    def count_views_of_document(self, doc):
-        return len(list(self.iter_views_of_document(doc)))
+    def count_editors_of_document(self, doc):
+        return len(list(self.iter_editors_of_document(doc)))
 
     def should_select_item(self, outlineview, item):
         return True
 
     def new_project(self):
         project = Project(self)
-        view = project.create_document_view()
+        editor = project.create_editor()
         self.projects.append(project)
-        self.current_view = view
+        self.current_editor = editor
         return project
 
     def toggle_properties_pane(self):
@@ -272,10 +272,10 @@ class Window(object):
         animation.setDuration_(0.25)
         animation.startAnimation()
 
-    def find_project_with_document_view(self, doc):
+    def find_project_with_editor(self, editor):
         for proj in self.projects:
-            for d in proj.documents:
-                if doc is d:
+            for e in proj.editors:
+                if editor is e:
                     return proj
         return None
 
@@ -327,10 +327,10 @@ class Window(object):
             item.perform_close()
 
     def window_did_become_key(self, window):
-        view = self.current_view
-        if isinstance(view, TextDocumentView):
-            # TODO refactor TextDocumentView to support check_for_external_changes()
-            view.document.check_for_external_changes(window)
+        editor = self.current_editor
+        if isinstance(editor, Editor):
+            # TODO refactor Editor to support check_for_external_changes()
+            editor.document.check_for_external_changes(window)
 
     def window_should_close(self, window):
         from editxt.application import DocumentSavingDelegate
@@ -343,22 +343,22 @@ class Window(object):
         # prompting to save the current document when the window's close button
         # is clicked. UPDATE: the window controller seems to only prompt to save
         # the current document if the document is new (untitled).
-        def iter_dirty_docs():
+        def iter_dirty_editors():
             app = self.app
             for proj in self.projects:
                 wins = app.find_windows_with_project(proj)
                 if wins == [self]:
-                    for dv in proj.dirty_documents():
-                        doc = dv.document
-                        windows = app.iter_windows_with_view_of_document(doc)
+                    for editor in proj.dirty_editors():
+                        doc = editor.document
+                        windows = app.iter_windows_with_editor_of_document(doc)
                         if list(windows) == [self]:
-                            yield dv
+                            yield editor
                     yield proj
         def callback(should_close):
             if should_close:
                 window.close()
         saver = DocumentSavingDelegate.alloc(). \
-            init_callback_(iter_dirty_docs(), callback)
+            init_callback_(iter_dirty_editors(), callback)
         saver.save_next_document()
         return False
 
@@ -461,7 +461,7 @@ class Window(object):
                     if index < 0:
                         #outline_view.setDropItem_dropChildIndex_(item, 0)
                         # the following might be more correct, but is too confusing
-                        outline_view.setDropItem_dropChildIndex_(item, len(obj.documents))
+                        outline_view.setDropItem_dropChildIndex_(item, len(obj.editors))
                 else:
                     return ak.NSDragOperationNone # document view cannot have children
             else:
@@ -473,7 +473,7 @@ class Window(object):
                         path = fn.NSIndexPath.indexPathWithIndex_(last_proj_index)
                         node = self.wc.docsController.nodeAtArrangedIndexPath_(path)
                         proj = representedObject(node)
-                        outline_view.setDropItem_dropChildIndex_(node, len(proj.documents))
+                        outline_view.setDropItem_dropChildIndex_(node, len(proj.editors))
                     else:
                         outline_view.setDropItem_dropChildIndex_(None, -1)
                 elif index == 0:
@@ -549,8 +549,8 @@ class Window(object):
             - MOVE : move existing item(s) to index.
             - COPY : copy item(s) to index.
 
-            A file is considered to be "existing" if there is a document
-            view with the same path in the project where it is being
+            A file is considered to be "existing" if there is a editor
+            with the same path in the project where it is being
             inserted. A project is considered to be "existing" if there
             is a project with the same path in the window where it is
             being inserted.
@@ -566,7 +566,7 @@ class Window(object):
                 proj_index = index
             index = 0
         elif index < 0:
-            index = len(project.documents)
+            index = len(project.editors)
         inserted = []
         focus = None
         is_move = action == const.MOVE
@@ -584,44 +584,44 @@ class Window(object):
 
                 if project is None:
                     project = Project(self)
-                    if isinstance(item, TextDocumentView):
+                    if isinstance(item, Editor):
                         if is_move:
-                            view = item
-                            item.project.remove_document_view(view)
+                            editor = item
+                            item.project.remove_editor(editor)
                         else:
-                            view = TextDocumentView(project, document=item.document)
+                            editor = Editor(project, document=item.document)
                     else:
                         assert isinstance(item, TextDocument), item
-                        view = TextDocumentView(project, document=item)
+                        editor = Editor(project, document=item)
                     self.projects.insert(proj_index, project)
                     proj_index += 1
                     index = 0
                 else:
-                    if isinstance(item, TextDocumentView):
-                        view, item = item, item.document
+                    if isinstance(item, Editor):
+                        editor, item = item, item.document
                     else:
                         assert isinstance(item, TextDocument), item
-                        view = project.document_view_for_document(item)
-                    if is_move and view is not None:
-                        if view.project is project:
-                            vindex = project.documents.index(view)
+                        editor = project.find_editor_with_document(item)
+                    if is_move and editor is not None:
+                        if editor.project is project:
+                            vindex = project.editors.index(editor)
                             if vindex in [index - 1, index]:
                                 continue
                             if vindex - index <= 0:
                                 index -= 1
-                        view.project.remove_document_view(view)
-                    elif is_copy or view is None or project is not view.project:
-                        view = TextDocumentView(project, document=item)
+                        editor.project.remove_editor(editor)
+                    elif is_copy or editor is None or project is not editor.project:
+                        editor = Editor(project, document=item)
                     else:
-                        focus = view
+                        focus = editor
                         continue
-                project.insert_document_view(index, view)
-                focus = view
+                project.insert_editor(index, editor)
+                focus = editor
                 index += 1
         finally:
             self.resume_recent_updates()
         if focus is not None:
-            self.current_view = focus
+            self.current_editor = focus
         return inserted
 
     def _insert_project(self, item, index, action):
@@ -637,11 +637,11 @@ class Window(object):
         else:
             window = item.window
 
-        # BEGIN HACK crash on remove project with documents
-        pdocs = item.documents
-        docs, pdocs[:] = list(pdocs), []
+        # BEGIN HACK crash on remove project with editors
+        editors = item.editors
+        tmp, editors[:] = list(editors), []
         window.projects.remove(item) # this line should be all that's necessary
-        pdocs.extend(docs)
+        editors.extend(tmp)
         # END HACK
 
         self.projects.insert(index, item)
@@ -704,7 +704,7 @@ class WindowController(ak.NSWindowController):
         self.window_.toggle_properties_pane()
 
     def outlineViewSelectionDidChange_(self, notification):
-        self.window_.selected_view_changed()
+        self.window_.selected_editor_changed()
 
     def outlineViewItemDidCollapse_(self, notification):
         representedObject(notification.userInfo()["NSObject"]).expanded = False
@@ -744,9 +744,9 @@ class WindowController(ak.NSWindowController):
         return self.window_.undo_manager()
 
     def windowTitleForDocumentDisplayName_(self, name):
-        view = self.window_.current_view
-        if view is not None and view.file_path is not None:
-            return user_path(view.file_path)
+        editor = self.window_.current_editor
+        if editor is not None and editor.file_path is not None:
+            return user_path(editor.file_path)
         return name
 
     def windowDidBecomeKey_(self, notification):

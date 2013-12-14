@@ -83,7 +83,7 @@ def load_commands():
 @command(title="Command Bar", hotkey=(";", ak.NSCommandKeyMask))
 def show_command_bar(textview, sender, args):
     """Show the command bar"""
-    window = textview.doc_view.project.window
+    window = textview.editor.project.window
     if window is None:
         ak.NSBeep()
     else:
@@ -128,15 +128,15 @@ def pad_comment_text(textview, sender, args):
 def _comment_text(textview, sender, args, pad):
     text = textview.string()
     sel = text.lineRangeForRange_(textview.selectedRange())
-    comment_token = textview.doc_view.document.comment_token
+    comment_token = textview.editor.document.comment_token
     if is_comment_range(text, sel, comment_token):
         func = uncomment_line
     else:
         func = comment_line
     args = (
         comment_token,
-        textview.doc_view.document.indent_mode,
-        textview.doc_view.document.indent_size,
+        textview.editor.document.indent_mode,
+        textview.editor.document.indent_size,
         pad,
     )
     seltext = "".join(func(line, *args) for line in iterlines(text, sel))
@@ -193,11 +193,11 @@ def uncomment_line(text, token, indent_mode, indent_size, pad=False):
     hotkey=("]", ak.NSCommandKeyMask),
     is_enabled=has_selection)
 def indent_lines(textview, sender, args):
-    indent_mode = textview.doc_view.document.indent_mode
+    indent_mode = textview.editor.document.indent_mode
     if indent_mode == const.INDENT_MODE_TAB:
         istr = "\t"
     else:
-        istr = " " * textview.doc_view.document.indent_size
+        istr = " " * textview.editor.document.indent_size
     sel = textview.selectedRange()
     text = textview.string()
     if sel.length == 0:
@@ -227,7 +227,7 @@ def indent_lines(textview, sender, args):
 
 @command(title="Un-indent Selected Lines", hotkey=("[", ak.NSCommandKeyMask))
 def dedent_lines(textview, sender, args):
-    def dedent(line, spt=textview.doc_view.document.indent_size):
+    def dedent(line, spt=textview.editor.document.indent_size):
         if not line.strip():
             return line.lstrip(" \t")
         if line.startswith("\t"):
@@ -257,14 +257,14 @@ def reload_config(textview, sender, args):
 
 @command(title="Clear highlighted text")
 def clear_highlighted_text(textview, sender, args):
-    textview.doc_view.finder.mark_occurrences("")
+    textview.editor.finder.mark_occurrences("")
 
 
-def set_docview_variable(textview, name, args):
-    setattr(textview.doc_view.proxy, name, args.value)
+def set_editor_variable(textview, name, args):
+    setattr(textview.editor.proxy, name, args.value)
 
-def set_docview_indent_vars(textview, name, args):
-    proxy = textview.doc_view.proxy
+def set_editor_indent_vars(textview, name, args):
+    proxy = textview.editor.proxy
     setattr(proxy, "indent_size", args.size)
     setattr(proxy, "indent_mode", args.mode)
 
@@ -275,16 +275,16 @@ def set_docview_indent_vars(textview, name, args):
             ("no", False),
             name="value",
         ),
-        setter=set_docview_variable),
+        setter=set_editor_variable),
     SubArgs("indent",
         Int("size", default=4), #lambda textview: app.config["indent_size"]),
         Choice(
             ("space", const.INDENT_MODE_SPACE),
             ("tab", const.INDENT_MODE_TAB),
             name="mode",
-            #default=lambda textview: textview.doc_view.document.indent_mode)
+            #default=lambda textview: textview.editor.document.indent_mode)
         ),
-        setter=set_docview_indent_vars),
+        setter=set_editor_indent_vars),
     SubArgs("newline_mode",
         Choice(
             ("Unix unix LF lf \\n", const.NEWLINE_MODE_UNIX),
@@ -292,18 +292,18 @@ def set_docview_indent_vars(textview, name, args):
             ("Windows windows", const.NEWLINE_MODE_WINDOWS),
             ("Unicode unicode", const.NEWLINE_MODE_UNICODE),
             name="value",
-            #default=lambda textview: textview.doc_view.newline_mode)
+            #default=lambda textview: textview.editor.newline_mode)
         ),
-        setter=set_docview_variable,
+        setter=set_editor_variable,
     ),
     SubArgs("soft_wrap",
         Choice(
             ("yes on", const.WRAP_WORD),
             ("no off", const.WRAP_NONE),
             name="value",
-            #default=lambda textview: textview.doc_view.wrap_mode
+            #default=lambda textview: textview.editor.wrap_mode
         ),
-        setter=set_docview_variable),
+        setter=set_editor_variable),
 )))
 def set_variable(textview, sender, args):
     if args.variable is None:
@@ -316,7 +316,7 @@ def set_variable(textview, sender, args):
 _ws = re.compile(r"([\t ]+)", re.UNICODE | re.MULTILINE)
 
 def insert_newline(textview, sender, args):
-    eol = textview.doc_view.document.eol
+    eol = textview.editor.document.eol
     sel = textview.selectedRange()
     text = textview.string()
     if sel.location > 0:
@@ -335,7 +335,7 @@ def insert_newline(textview, sender, args):
         textview.scrollRangeToVisible_((sel[0] + len(eol), 0))
 
 def move_to_beginning_of_line(textview, sender, args):
-    eol = textview.doc_view.document.eol
+    eol = textview.editor.document.eol
     sel = textview.selectedRange()
     text = textview.string()
     if sel[0] > 0:
@@ -355,7 +355,7 @@ def move_to_beginning_of_line(textview, sender, args):
 #def move_to_beginning_of_line_and_modify_selection(textview, sender, args):
 
 def delete_backward(textview, sender, args):
-    if textview.doc_view.document.indent_mode == const.INDENT_MODE_TAB:
+    if textview.editor.document.indent_mode == const.INDENT_MODE_TAB:
         textview.deleteBackward_(sender)
         return
     sel = textview.selectedRange()
@@ -371,7 +371,7 @@ def delete_backward(textview, sender, args):
             delete = 1
         elif delete > 1:
             i = text.lineRangeForRange_((i, 0))[0]
-            size = textview.doc_view.document.indent_size
+            size = textview.editor.document.indent_size
             maxdel = (sel[0] - i) % size
             if maxdel == 0:
                 maxdel = size

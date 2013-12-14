@@ -83,7 +83,7 @@ class WrapLinesController(SheetController):
 def wrap_selected_lines(textview, options):
     text = textview.string()
     sel = text.lineRangeForRange_(textview.selectedRange())
-    eol = textview.doc_view.document.eol
+    eol = textview.editor.document.eol
     lines = iterlines(text, sel)
     output = eol.join(wraplines(lines, options, textview))
     if textview.shouldChangeTextInRange_replacementString_(sel, output):
@@ -95,7 +95,7 @@ def wraplines(lines, options, textview):
     width = options.wrap_column
     regexp = WHITESPACE
     if options.indent:
-        token = re.escape(textview.doc_view.document.comment_token)
+        token = re.escape(textview.editor.document.comment_token)
         if token:
             regexp = re.compile(r"^[ \t]*(?:%s *)?" % token)
     for frag in lines:

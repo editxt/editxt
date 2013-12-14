@@ -112,10 +112,6 @@ Convert commands with gui to work with command bar
     open file(s)
     change indentation
 
-rename
-  - Editor -> Window
-  - TextDocumentView -> Editor
-
 refactor object hierarchy to make it more modular and easier to add features
     app.documents - {id: Document}
     app.windows - [Window]
@@ -622,6 +618,10 @@ Log filtering
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Completed tasks
+
+xrename
+x  - Editor -> Window
+x  - TextDocumentView -> Editor
 
 xBug: exception in TextView.readSelectionFromPasteboard_type_ is not reported
 x  in error log when running in production mode.

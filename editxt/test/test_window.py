@@ -32,7 +32,7 @@ import editxt
 import editxt.constants as const
 from editxt.application import Application, DocumentController, DocumentSavingDelegate
 from editxt.window import WindowController, Window
-from editxt.document import TextDocumentView, TextDocument
+from editxt.document import Editor, TextDocument
 from editxt.platform.kvo import proxy_target
 from editxt.project import Project
 from editxt.test.noseplugins import slow_skip
@@ -167,7 +167,7 @@ def test__setstate():
                 if pi < 1:
                     while len(ed.projects) <= pi:
                         docs = []
-                        proj = Item(documents=docs)
+                        proj = Item(editors=docs)
                         projects.append(proj)
                         ed.projects.append(proj)
                     proj = ed.projects[pi]
@@ -175,8 +175,8 @@ def test__setstate():
                         ed.recent.push(proj.id)
                     else:
                         if di < 2:
-                            while len(proj.documents) <= di:
-                                proj.documents.append(Item())
+                            while len(proj.editors) <= di:
+                                proj.editors.append(Item())
                             ed.recent.push(docs[di].id)
             ed.discard_and_focus_recent(None)
             if 'window_settings' in data:
@@ -209,19 +209,19 @@ def test_state():
             # setup for recent items
             proj.id >> p.id
             items[p.id] = [i, "<project>"]
-            docs = proj.documents >> []
+            docs = proj.editors >> []
             offset = 0
             for j, d in enumerate(p.docs):
-                dv = m.mock(TextDocumentView)
-                docs.append(dv)
+                editor = m.mock(Editor)
+                docs.append(editor)
                 if d > 0:
                     path = "/path/do/file%s.txt" % d
-                    (dv.file_path << path).count(2)
-                    dv.id >> d
+                    (editor.file_path << path).count(2)
+                    editor.id >> d
                     items[d] = [i, j - offset]
                 else:
                     offset += 1
-                    dv.file_path >> None
+                    editor.file_path >> None
         rits = [items[ri] for ri in c.recent if ri in items]
         data = {'window_settings': '<settings>'}
         if psets:
@@ -245,15 +245,15 @@ def test_discard_and_focus_recent():
         ed.projects = projs = []
         ed.recent = m.mock(RecentItemStack)
         app = m.replace(ed, 'app')
-        new_current_view = None
-        cv = m.property(ed, "current_view")
+        new_current_editor = None
+        cv = m.property(ed, "current_editor")
         lookup = {}
         for p in c.hier:
             proj = m.mock(Project)
             proj.id >> p.id
             docs = []
             for d in p.docs:
-                dv = m.mock(TextDocumentView)
+                dv = m.mock(Editor)
                 dv.id >> d.id
                 docs.append(dv)
                 if c.id in (p.id, d.id):
@@ -262,7 +262,7 @@ def test_discard_and_focus_recent():
                     dv.close()
                 else:
                     lookup[d.id] = dv
-            proj.documents >> docs
+            proj.editors >> docs
             if p.id == c.id:
                 ed.recent.discard(p.id)
                 proj.close()
@@ -276,20 +276,20 @@ def test_discard_and_focus_recent():
                 break
             item = lookup.get(ident)
             if item is not None:
-                cv.value = new_current_view = item
+                cv.value = new_current_editor = item
                 if not recent:
                     current_ident = ident
                 recent.append(ident)
                 break
         bool(ed.recent); m.result(bool(recent))
         if not recent:
-            if c.hier and new_current_view is not None:
-                ed.recent.push(new_current_view.id >> c.hier[0].id)
+            if c.hier and new_current_editor is not None:
+                ed.recent.push(new_current_editor.id >> c.hier[0].id)
             else:
-                if new_current_view is None:
-                    ed.current_view >> None
+                if new_current_editor is None:
+                    ed.current_editor >> None
                 else:
-                    ed.recent.push(new_current_view.id >> current_ident)
+                    ed.recent.push(new_current_editor.id >> current_ident)
         item = m.mock()
         item.id >> c.id
         with m:
@@ -309,12 +309,12 @@ def test_discard_and_focus_recent():
     yield test, c(recent=[2, 20])
     yield test, c(id=0, recent=[0, 10, 2, 1, 3, 5, 7])
 
-def test_get_current_view():
+def test_get_current_editor():
     ed = Window(editxt.app, None)
-    ed._current_view = obj = object()
-    eq_(ed.current_view, obj)
+    ed._current_editor = obj = object()
+    eq_(ed.current_editor, obj)
 
-def test_set_current_view():
+def test_set_current_editor():
     from editxt.util import RecentItemStack
     def test(c):
         m = Mocker()
@@ -322,17 +322,17 @@ def test_set_current_view():
         ed = Window(editxt.app, wc)
         insert_items = m.method(ed.insert_items)
         ed.recent = m.mock(RecentItemStack)
-        dv = (None if c.view_class is None else m.mock(c.view_class))
-        if c.view_is_current:
-            ed._current_view = dv
+        dv = (None if c.editor_class is None else m.mock(c.editor_class))
+        if c.editor_is_current:
+            ed._current_editor = dv
         else:
-            ed._current_view = m.mock(ak.NSView)
+            ed._current_editor = m.mock(ak.NSView)
             mv = wc.mainView >> m.mock(ak.NSView)
             sv = m.mock(ak.NSView)
             (mv.subviews() << [sv]).count(1, 2)
-            if c.view_class is not None:
+            if c.editor_class is not None:
                 if c.has_selection:
-                    if c.view_is_selected:
+                    if c.editor_is_selected:
                         sel = [dv]
                     else:
                         sel = [m.mock()]
@@ -341,7 +341,7 @@ def test_set_current_view():
                     sel = []
                 wc.docsController.selected_objects >> sel
                 ed.recent.push(dv.id >> m.mock())
-            if c.view_class is TextDocumentView:
+            if c.editor_class is Editor:
                 dv.main_view >> (sv if c.view_is_main else None)
                 if not c.view_is_main:
                     sv.removeFromSuperview()
@@ -351,35 +351,35 @@ def test_set_current_view():
                     with m.order():
                         doc.addWindowController_(wc)
                         dv.set_main_view_of_window(mv, win)
-                    find_project_with_document_view = \
-                        m.method(ed.find_project_with_document_view)
+                    find_project_with_editor = \
+                        m.method(ed.find_project_with_editor)
                     if c.proj_is_none:
-                        find_project_with_document_view(dv) >> None
+                        find_project_with_editor(dv) >> None
                         insert_items([dv])
                     else:
-                        find_project_with_document_view(dv) >> m.mock(Project)
+                        find_project_with_editor(dv) >> m.mock(Project)
             else:
                 sv.removeFromSuperview()
                 wc.setDocument_(None)
         with m:
-            ed.current_view = dv
-        assert ed._current_view is dv
-    c = TestConfig(view_is_current=False, view_class=TextDocumentView)
-    yield test, c(view_is_current=True)
-    yield test, c(view_class=None, has_selection=False)
-    c = c(view_is_selected=True, has_selection=True)
-    yield test, c(view_class=None, view_is_selected=False)
+            ed.current_editor = dv
+        assert ed._current_editor is dv
+    c = TestConfig(editor_is_current=False, editor_class=Editor)
+    yield test, c(editor_is_current=True)
+    yield test, c(editor_class=None, has_selection=False)
+    c = c(editor_is_selected=True, has_selection=True)
+    yield test, c(editor_class=None, editor_is_selected=False)
     for is_main in (True, False):
         for no_project in (True, False):
             yield test, c(view_is_main=is_main, proj_is_none=no_project)
-    yield test, c(view_class=Project)
+    yield test, c(editor_class=Project)
 
-def test_selected_view_changed():
+def test_selected_editor_changed():
     def test(c):
         m = Mocker()
         wc = m.mock(WindowController)
         ed = Window(editxt.app, wc)
-        cv = m.property(ed, "current_view")
+        cv = m.property(ed, "current_editor")
         sel = [m.mock() for x in range(c.numsel)]
         wc.docsController.selected_objects >> sel
         if sel:
@@ -389,7 +389,7 @@ def test_selected_view_changed():
                 cv.value >> m.mock()
                 cv.value = sel[0]
         with m:
-            ed.selected_view_changed()
+            ed.selected_editor_changed()
     c = TestConfig(numsel=0)
     yield test, c
     for ics in (True, False):
@@ -416,12 +416,12 @@ def test_resume_recent_updates():
 def test_new_project():
     m = Mocker()
     ed = Window(editxt.app, None)
-    m.property(ed, "current_view").value = ANY
-    docview = m.method(Project.create_document_view)() >> m.mock()
+    m.property(ed, "current_editor").value = ANY
+    m.method(Project.create_editor)() >> m.mock()
     with m:
         result = ed.new_project()
         assert result in ed.projects, ed.projects
-        eq_(list(result.documents), [])
+        eq_(list(result.editors), [])
         eq_(result.window, ed)
 
 def test_toggle_properties_pane():
@@ -477,17 +477,17 @@ def test_toggle_properties_pane():
     yield test, c(is_on=False, mid_resize=True)
     yield test, c(is_on=False, mid_resize=False)
 
-def test_find_project_with_document_view():
+def test_find_project_with_editor():
     ed = Window(editxt.app, None)
     doc = object()
     proj = Project(ed)
-    dv = TextDocumentView(proj, document=doc)
-    proj.append_document_view(dv)
+    dv = Editor(proj, document=doc)
+    proj.append_editor(dv)
     assert dv.document is doc
     ed.projects.append(proj)
-    eq_(ed.find_project_with_document_view(dv), proj)
+    eq_(ed.find_project_with_editor(dv), proj)
     dv = object()
-    eq_(ed.find_project_with_document_view(dv), None)
+    eq_(ed.find_project_with_editor(dv), None)
 
 def test_find_project_with_path():
     def test(c):
@@ -554,25 +554,25 @@ def test_get_current_project():
     yield test, True, [0]
     yield test, True, [0, 0]
 
-def test_Window_iter_views_of_document():
+def test_Window_iter_editors_of_document():
     DOC = "the document we're looking for"
-    def test(config, total_views):
+    def test(config, total_editors):
         ed = Window(editxt.app, None)
         m = Mocker()
-        views = []
+        editors = []
         doc = m.mock(TextDocument)
         ed.projects = projs = []
-        for proj_has_view in config:
+        for proj_has_editor in config:
             proj = m.mock(Project)
             projs.append(proj)
-            dv = (m.mock(TextDocumentView) if proj_has_view else None)
-            proj.find_view_with_document(doc) >> dv
+            dv = (m.mock(Editor) if proj_has_editor else None)
+            proj.find_editor_with_document(doc) >> dv
             if dv is not None:
-                views.append(dv)
+                editors.append(dv)
         with m:
-            result = list(ed.iter_views_of_document(doc))
-            eq_(result, views)
-            eq_(len(result), total_views)
+            result = list(ed.iter_editors_of_document(doc))
+            eq_(result, editors)
+            eq_(len(result), total_editors)
     yield test, [], 0
     yield test, [False], 0
     yield test, [True], 1
@@ -596,7 +596,7 @@ def test_item_changed():
                         else:
                             obj.document >> None
                 elif otype.lower() == "d":
-                    obj = m.mock(name="docview%i" % row)
+                    obj = m.mock(name="editor%i" % row)
                     if not found:
                         doc = obj.document >> m.mock(name="<%socument%i>" % (otype, row))
                         if otype == "D":
@@ -647,7 +647,7 @@ def test_should_edit_item():
         item = m.mock()
         col = m.mock(ak.NSTableColumn)
         if (col.isEditable() >> c.col_is_editable):
-            obj = m.mock(Project if c.item_is_project else TextDocumentView)
+            obj = m.mock(Project if c.item_is_project else Editor)
             if c.item_is_project:
                 obj.can_rename() >> c.can_rename
             representedObject(item) >> obj
@@ -677,7 +677,7 @@ def test_close_button_clicked():
             ed.close_button_clicked(row)
     yield test, 0, 0
     yield test, 1, 0
-    for doc_class in (Project, TextDocumentView):
+    for doc_class in (Project, Editor):
         yield test, 0, 1, doc_class
 
 def test_window_did_become_key():
@@ -685,16 +685,16 @@ def test_window_did_become_key():
         m = Mocker()
         ed = Window(editxt.app, None)
         win = m.mock(ak.NSWindowController)
-        cv = m.property(ed, "current_view")
-        dv = cv.value >> (m.mock(c.view_type) if c.has_current else None)
-        if c.has_current and c.view_type is TextDocumentView:
+        cv = m.property(ed, "current_editor")
+        dv = cv.value >> (m.mock(c.editor_type) if c.has_current else None)
+        if c.has_current and c.editor_type is Editor:
             dv.document.check_for_external_changes(win)
         with m:
             ed.window_did_become_key(win)
-    c = TestConfig(has_current=False, view_type=TextDocumentView)
+    c = TestConfig(has_current=False, editor_type=Editor)
     yield test, c
     yield test, c(has_current=True)
-    yield test, c(has_current=True, view_type=Project)
+    yield test, c(has_current=True, editor_type=Project)
 
 def test_window_should_close():
     import editxt.application
@@ -713,12 +713,12 @@ def test_window_should_close():
             eds = app.find_windows_with_project(proj) >> []
             if p.num_eds == 1:
                 eds.append(window)
-                docs = proj.dirty_documents() >> []
+                docs = proj.dirty_editors() >> []
                 for i in range(p.num_dirty_docs):
-                    dv = m.mock(TextDocumentView)
+                    dv = m.mock(Editor)
                     doc = dv.document >> m.mock(TextDocument)
                     docs.append(dv)
-                    app.iter_windows_with_view_of_document(doc) >> \
+                    app.iter_windows_with_editor_of_document(doc) >> \
                         (window for x in range(p.app_views))
                     if p.app_views == 1:
                         dirty_docs.append(dv)
@@ -858,7 +858,7 @@ def test_is_project_drag():
             ed.iter_dropped_id_list(id_list) >> items
             factories = dict(
                 p=(lambda:m.mock(Project)),
-                d=(lambda:m.mock(TextDocumentView)),
+                d=(lambda:m.mock(Editor)),
             )
         elif c.accepted_type == ak.NSFilenamesPboardType:
             pb.propertyListForType_(ak.NSFilenamesPboardType) >> items
@@ -915,7 +915,7 @@ def test_write_items_to_pasteboard():
             eq_(result, c.result)
     c = TestConfig(result=True)
     yield test, c(items=[], result=False)
-    item = TestConfig(type=TextDocumentView, path="/path/to/file")
+    item = TestConfig(type=Editor, path="/path/to/file")
     yield test, c(items=[item])
     yield test, c(items=[item(type=Project)])
     yield test, c(items=[item(type=Project), item])
@@ -956,10 +956,10 @@ def test_validate_drop():
                     index = config.index
                     obj = m.mock(type=Project)
                     if index < 0:
-                        obj.documents >> (["<doc>"] * config.proj_docs)
+                        obj.editors >> (["<doc>"] * config.proj_docs)
                         ov.setDropItem_dropChildIndex_(item, config.proj_docs)
                 else:
-                    obj = m.mock(type=TextDocumentView)
+                    obj = m.mock(type=Editor)
                 representedObject(item) >> obj
             else:
                 item = None
@@ -972,7 +972,7 @@ def test_validate_drop():
                         node = m.mock()
                         ed.wc.docsController.nodeAtArrangedIndexPath_(path) >> node
                         representedObject(node) >> proj
-                        proj.documents >> (["<doc>"] * config.proj_docs)
+                        proj.editors >> (["<doc>"] * config.proj_docs)
                         ov.setDropItem_dropChildIndex_(node, config.proj_docs)
                     else:
                         ov.setDropItem_dropChildIndex_(None, -1)
@@ -1123,7 +1123,7 @@ def test_insert_items():
             return '<MatchingName %s>' % self.name
         def __eq__(self, other):
             return other.name == self.name or (
-                # lower case -> upper case: new view of document
+                # lower case -> upper case: new editor of document
                 other.name == self.name.lower()
                 and
                 self.rmap[self.name.lower()] != other
@@ -1142,7 +1142,7 @@ def test_insert_items():
         app = FakeApp()
         ed = Window(app, None)
         get_current_project = m.method(ed.get_current_project)
-        current_view = m.property(ed, 'current_view')
+        current_editor = m.property(ed, 'current_editor')
         map = {}
         rmap = {}
         drop = {}
@@ -1163,8 +1163,8 @@ def test_insert_items():
             else:
                 doc = TextDocument.alloc().init()
                 doc.setFileURL_(fn.NSURL.fileURLWithPath_(char))
-                item = TextDocumentView(project, document=doc)
-                project.append_document_view(item)
+                item = Editor(project, document=doc)
+                project.append_editor(item)
                 dindex += 1
             map[item] = char
             rmap[char] = item
@@ -1179,7 +1179,7 @@ def test_insert_items():
         items = [drop[char] for char in c.drop[0]]
 
         if c.result and c.focus:
-            current_view.value = MatchingName(c.focus, rmap)
+            current_editor.value = MatchingName(c.focus, rmap)
 
         if "current_project" in c:
             args = ()
@@ -1201,13 +1201,13 @@ def test_insert_items():
         next_project = str(int(max(v for v in c.init if v in '0123456789')) + 1)
         for project in ed.projects:
             final.append(' ' + map.get(project, next_project))
-            for view in project.documents:
-                final.append(map.get(view, view.name.upper()))
+            for editor in project.editors:
+                final.append(map.get(editor, editor.name.upper()))
         eq_(str(''.join(final)), c.final)
 
     # number = project
     # letter = document
-    # capital letter = new view of document
+    # capital letter = new editor of document
     # space before project allows drop on project (insert at end)
     # so ' 0abc 1 2de' is...
     #   project 0
@@ -1467,7 +1467,7 @@ def test_outlineViewSelectionDidChange_():
     ewc = WindowController.alloc().init()
     m = Mocker()
     ewc.window_ = m.mock(Window)
-    ewc.window_.selected_view_changed()
+    ewc.window_.selected_editor_changed()
     with m:
         ewc.outlineViewSelectionDidChange_(None)
 

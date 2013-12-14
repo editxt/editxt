@@ -41,7 +41,7 @@ from editxt.controls.textview import TextView
 log = logging.getLogger(__name__)
 
 # log.debug("""TODO
-#     implement TextDocumentView.pasteboard_data()
+#     implement Editor.pasteboard_data()
 # """)
 
 def make_options(config):
@@ -592,7 +592,7 @@ def test_FindController_count_occurrences():
 
 def test_FindController_find_target():
     from editxt.window import Window
-    from editxt.document import TextDocumentView
+    from editxt.document import Editor
     def test(c):
         with test_app() as app:
             m = Mocker()
@@ -601,9 +601,9 @@ def test_FindController_find_target():
             if c.has_ed:
                 ed = m.mock(Window)
                 x = iter([ed])
-                dv = ed.current_view >> (m.mock(TextDocumentView) if c.has_dv else None)
-                if c.has_dv:
-                    dv.text_view >> (m.mock(TextView) if c.has_tv else None)
+                editor = ed.current_editor >> (m.mock(Editor) if c.has_editor else None)
+                if c.has_editor:
+                    editor.text_view >> (m.mock(TextView) if c.has_tv else None)
             else:
                 x = iter([])
             iter_windows() >> x
@@ -614,11 +614,11 @@ def test_FindController_find_target():
                     assert result is not None
                 else:
                     eq_(result, None)
-    c = TestConfig(has_ed=False, has_dv=False, has_tv=False)
+    c = TestConfig(has_ed=False, has_editor=False, has_tv=False)
     yield test, c
     yield test, c(has_ed=True)
-    yield test, c(has_ed=True, has_dv=True)
-    yield test, c(has_ed=True, has_dv=True, has_tv=True)
+    yield test, c(has_ed=True, has_editor=True)
+    yield test, c(has_ed=True, has_editor=True, has_tv=True)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Test FindOptions
