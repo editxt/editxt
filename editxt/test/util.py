@@ -235,10 +235,120 @@ class Regex(object):
 
 @nose.tools.nottest
 @contextmanager
-def test_app():
-    from editxt.application import Application
+def test_app(config=None):
+    """Create an Application object for testing purposes
+
+    :param config: A string with details about the app configuration.
+    The string is a space-delimited list of the following names:
+
+        window project editor
+
+    These names can be used to pre-configure the application with
+    windows, projects, and editors to minimize the amount of setup
+    needed in the test. Editors can be suffixed with parens containing a
+    name to configure multiple views of the same document. For example:
+
+        window
+            project
+                editor(doc1)
+                editor
+            project
+                editor(doc1)
+
+    In this case the first and third editor are editing the same
+    document. By default each unnamed editor will contain a new,
+    untitled document.
+
+    A window or project omitted from the config is implied since it is
+    not possible to have an editor without a project or a project
+    without a window. For example, the following two configs result in
+    identical configurations:
+
+        window project editor
+
+        editor
+
+    """
+    from editxt.application import Application, DocumentController
+    from editxt.document import Editor
+    from editxt.project import Project
+    from editxt.window import Window
+    def setup(app, config):
+        app._test_app__documents = documents = {}
+        if config is None:
+            return
+        window = project = None
+        for item in config.split():
+            if item == "window" or window is None:
+                window = Window(app, None)
+                project = None
+                app.windows.append(window)
+                if item == "window":
+                    continue
+            if item == "project" or project is None:
+                project = Project(window)
+                window.projects.append(project)
+                if item == "project":
+                    continue
+            match = test_app.editor_re.match(item)
+            assert match, "unknown config item: {}".format(item)
+            name = match.group(1)[1:-1]
+            if name:
+                assert isinstance(name, str), name
+                document = documents.get(name)
+                if document is None:
+                    document = app.document_with_path(None)
+                    documents[name] = document
+            else:
+                document = app.document_with_path(None)
+                assert isinstance(document.id, int), document.id
+                documents[document.id] = document
+            editor = Editor(project, document=document)
+            project.editors.append(editor)
     with tempdir() as tmp:
-        yield Application(tmp)
+        app = Application(tmp)
+        try:
+            setup(app, config)
+            yield app
+        finally:
+            # TODO cleanup
+            controller = DocumentController.sharedDocumentController()
+            for document in controller.documents():
+                document.close()
+            assert not controller.documents(), controller.documents()
+
+test_app.editor_re = re.compile("editor((?:\([a-z0-9-]+)\)?)$")
+
+def _test_app_config(app):
+    from editxt.application import DocumentController
+    def iter_items(app):
+        rev_map = {v: k for k, v in app._test_app__documents.items()}
+        seen = set()
+        for window in app.windows:
+            yield "window"
+            for project in window.projects:
+                yield "project"
+                for editor in project.editors:
+                    name = rev_map.get(editor.document)
+                    if name is None:
+                        yield "editor(<unknown>)"
+                    elif isinstance(name, str):
+                        yield "editor({})".format(name)
+                    else:
+                        yield "editor"
+                    seen.add(editor.document)
+        controller = DocumentController.sharedDocumentController()
+        documents = set(controller.documents()) - seen
+        if documents:
+            yield "|"
+            for document in documents:
+                name = rev_map.get(document, document.id)
+                if isinstance(name, str):
+                    yield name
+                else:
+                    yield "<{}>".format(name)
+    return " ".join(iter_items(app))
+test_app.config = _test_app_config
 
 
 def check_app_state(test):

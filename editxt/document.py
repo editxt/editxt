@@ -306,18 +306,18 @@ class Editor(object):
             self.project.window.discard_and_focus_recent(self)
 
     def close(self):
+        project = self.project
+        if project is not None and not project.closing:
+            project.remove_editor(self)
         doc = self.document
-        if self.project is not None and not self.project.closing:
-            self.project.remove_editor(self)
-        if doc is not None:
-            if doc.text_storage is not None and self.text_view is not None:
-                doc.text_storage.removeLayoutManager_(self.text_view.layoutManager())
-            for wc in list(self.document.windowControllers()):
-                if wc.window_.count_editors_of_document(doc) == 0:
-                    doc.removeWindowController_(wc)
-            if doc.app.count_editors_of_document(doc) == 0:
-                doc.close()
-            self.document = None
+        if self.text_view is not None:
+            doc.text_storage.removeLayoutManager_(self.text_view.layoutManager())
+        if next(doc.app.iter_editors_of_document(doc), None) is None:
+            doc.close()
+        elif (project is not None and
+              next(project.window.iter_editors_of_document(doc), None) is None):
+            doc.removeWindowController_(project.window.wc)
+        self.document = None
         if self.main_view is not None:
             teardown_main_view(self.main_view)
             self.main_view = None

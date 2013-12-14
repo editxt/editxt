@@ -525,67 +525,56 @@ def test_Editor_maybe_close():
     yield test, False
 
 def test_Editor_close():
-    from editxt.window import Window
     def test(c):
-        m = Mocker()
-        doc = m.mock(TextDocument)
-        proj = None if c.proj_is_none else m.mock(Project)
-        dv = Editor(proj, document=doc)
-        dv.command_view = m.mock(CommandView)
-        dv.text_view = None if c.tv_is_none else m.mock(ak.NSTextView)
-        app = m.mock(Application)
-        teardown_main_view = m.replace(mod, 'teardown_main_view')
-        if not c.proj_is_none:
-            proj.closing >> False
-            proj.remove_editor(dv)
-        if c.doc_is_none:
-            dv.document = None
-        else:
-            doc.text_storage >> (None if c.ts_is_none else m.mock(ak.NSTextStorage))
-            if not (c.ts_is_none or c.tv_is_none):
-                lm = dv.text_view.layoutManager() >> m.mock(ak.NSLayoutManager)
-                doc.text_storage.removeLayoutManager_(lm)
-            wcs = []
-            doc.windowControllers() >> wcs
-            for w in c.wcs:
-                wc = m.mock(WindowController)
-                wcs.append(wc)
-                ed = wc.window_ >> m.mock(Window)
-                if (ed.count_editors_of_document(doc) >> w.num_editors) == 0:
-                    doc.removeWindowController_(wc)
-            if ((doc.app >> app).count_editors_of_document(doc) >> c.app_views) < 1:
-                doc.close()
-        if c.main_is_none:
-            dv.main_view = None
-        else:
-            dv.main_view = m.mock()
-            teardown_main_view(dv.main_view)
-        with m:
-            dv.close()
-        assert dv.command_view is None
-        assert dv.scroll_view is None
-        assert dv.text_view is None
-        assert dv.document is None
-        assert dv.proxy is None
-    c = TestConfig(app_views=0, wcs=[],
-            proj_is_none=False,
-            doc_is_none=False,
-            ts_is_none=False,
-            tv_is_none=False,
-            main_is_none=False,
-        )
-    wc = lambda n:TestConfig(num_editors=n)
+        with test_app(c.app) as app:
+            m = Mocker()
+            teardown_main_view = m.replace(mod, 'teardown_main_view')
+            editor = app.windows[0].projects[0].editors[0]
+            editor.text_view = None if c.tv_is_none else m.mock(ak.NSTextView)
+            doc = editor.document
+            text_storage = doc.text_storage
+            text_storage.setDelegate_(doc)
+            remove_layout = m.method(text_storage.removeLayoutManager_)
+            remove_window = m.method(doc.removeWindowController_)
+            wc = editor.project.window.wc = m.mock(WindowController)
+            if not c.tv_is_none:
+                lm = editor.text_view.layoutManager() >> m.mock(ak.NSLayoutManager)
+                remove_layout(lm)
+            if c.remove_window and not c.close_doc:
+                remove_window(wc)
+            if c.main_is_none:
+                editor.main_view = None
+            else:
+                editor.main_view = m.mock()
+                teardown_main_view(editor.main_view)
+            with m:
+                editor.close()
+            eq_(editor.command_view, None)
+            eq_(editor.scroll_view, None)
+            eq_(editor.text_view, None)
+            eq_(editor.document, None)
+            eq_(editor.proxy, None)
+            if c.close_doc:
+                eq_(doc.text_storage, None)
+                eq_(text_storage.delegate(), None)
+            eq_(test_app.config(app), c.end)
+
+    c = TestConfig(app="editor(a)",
+        tv_is_none=False,
+        main_is_none=False,
+        remove_window=True,
+        close_doc=True,
+        end="window project",
+    )
     yield test, c
-    yield test, c(proj_is_none=True)
-    yield test, c(doc_is_none=True)
     yield test, c(tv_is_none=True)
-    yield test, c(ts_is_none=True)
     yield test, c(main_is_none=True)
-    for num_editors in (1, 2):
-        for num_wcs in (0, 1, 3):
-            yield test, c(wcs=[wc(i) for i in range(num_wcs)])
-        yield test, c(wcs=[wc(0) for i in range(2)])
-    yield test, c(app_views=1)
+    yield test, c(app="editor(a) editor(b)", end="window project editor(b)")
+    yield test, c(app="editor(a) editor(a)", end="window project editor(a)",
+                  close_doc=False, remove_window=False)
+    yield test, c(app="editor(a) window editor(a)",
+                  end="window project window project editor(a)",
+                  close_doc=False, remove_window=True)
 
 def test_Editor_on_do_command():
     import editxt.platform.constants as const

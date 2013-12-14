@@ -134,13 +134,16 @@ class Application(object):
         controllers list of documents.
         """
         from editxt.document import TextDocument
-        if os.path.islink(path):
-            path = os.path.realpath(path)
-        url = fn.NSURL.fileURLWithPath_(path)
         dc = ak.NSDocumentController.sharedDocumentController()
-        doc = dc.documentForURL_(url)
+        if path is None:
+            doc = None
+        else:
+            if os.path.islink(path):
+                path = os.path.realpath(path)
+            url = fn.NSURL.fileURLWithPath_(path)
+            doc = dc.documentForURL_(url)
         if doc is None:
-            if os.path.exists(path):
+            if path is not None and os.path.exists(path):
                 doctype, err = dc.typeForContentsOfURL_error_(url, None)
                 doc, err = dc.makeDocumentWithContentsOfURL_ofType_error_(
                     url, doctype, None)
@@ -152,7 +155,8 @@ class Application(object):
             else:
                 doc, err = dc.makeUntitledDocumentOfType_error_(
                     const.TEXT_DOCUMENT, None)
-                doc.setFileURL_(url)
+                if path is not None:
+                    doc.setFileURL_(url)
 
         # TODO figure out how to move this into TextDocument.init
         doc.app = self
@@ -221,20 +225,6 @@ class Application(object):
         for window in self.iter_windows():
             for editor in window.iter_editors_of_document(doc):
                 yield editor
-
-#   def find_editor_with_document(self, doc):
-#       """find a editor of the given document
-# 
-#       Returns a editor in the topmost window with the given document, or None
-#       if there are no editors of this document.
-#       """
-#       try:
-#           return next(self.iter_editors_of_document(doc))
-#       except StopIteration:
-#           return None
-
-    def count_editors_of_document(self, doc):
-        return len(list(self.iter_editors_of_document(doc)))
 
     def iter_windows_with_editor_of_document(self, document):
         for window in self.iter_windows():

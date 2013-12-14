@@ -227,9 +227,6 @@ class Window(object):
             if editor is not None:
                 yield editor
 
-    def count_editors_of_document(self, doc):
-        return len(list(self.iter_editors_of_document(doc)))
-
     def should_select_item(self, outlineview, item):
         return True
 
