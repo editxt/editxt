@@ -36,7 +36,7 @@ from editxt.project import Project
 from editxt.util import dump_yaml
 from editxt.window import Window, WindowController
 
-from editxt.test.util import TestConfig, check_app_state
+from editxt.test.util import TestConfig, check_app_state, test_app
 
 log = logging.getLogger(__name__)
 # log.debug("""TODO
@@ -209,22 +209,12 @@ def test_create_editor_with_state():
         assert dv in proj.editors
 
 def test_create_editor():
-    proj = Project(None)
-    m = Mocker()
-    nsdc = m.replace(ak, 'NSDocumentController')
-    append_editor = m.method(proj.append_editor)
-    dc = m.mock(ak.NSDocumentController)
-    doc = m.mock(TextDocument)
-    dv_class = m.replace(mod, 'Editor')
-    dv = m.mock(Editor)
-    nsdc.sharedDocumentController() >> dc
-    dc.makeUntitledDocumentOfType_error_(const.TEXT_DOCUMENT, None) >> (doc, None)
-    dc.addDocument_(doc)
-    dv_class(proj, document=doc) >> dv
-    append_editor(dv) >> dv
-    with m:
-        result = proj.create_editor()
-        eq_(result, dv)
+    with test_app("project") as app:
+        project = app.windows[0].projects[0]
+        eq_(len(project.editors), 0)
+        project.create_editor()
+        eq_(len(project.editors), 1)
+        eq_(test_app.config(app), "window project editor(<new0>)")
 
 def test_append_editor():
     proj = Project(None)

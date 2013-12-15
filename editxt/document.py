@@ -43,8 +43,6 @@ from editxt.util import (untested, refactor,
 
 log = logging.getLogger(__name__)
 
-class Error(Exception): pass
-
 EOLREF = dict((ch, m) for m, ch in const.EOLS.items())
 
 

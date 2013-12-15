@@ -129,12 +129,8 @@ class Project(object):
         raise NotImplementedError
 
     def create_editor(self):
-        dc = ak.NSDocumentController.sharedDocumentController()
-        doc, err = dc.makeUntitledDocumentOfType_error_(const.TEXT_DOCUMENT, None)
-        if err:
-            raise Exception(err)
-        dc.addDocument_(doc)
-        editor = Editor(self, document=doc)
+        document = self.window.app.document_with_path(None)
+        editor = Editor(self, document=document)
         self.append_editor(editor)
         return editor
 

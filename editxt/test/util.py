@@ -275,6 +275,7 @@ def test_app(config=None):
     from editxt.window import Window
     def setup(app, config):
         app._test_app__documents = documents = {}
+        app._test_app__news = 0
         if config is None:
             return
         window = project = None
@@ -331,7 +332,11 @@ def _test_app_config(app):
                 for editor in project.editors:
                     name = rev_map.get(editor.document)
                     if name is None:
-                        yield "editor(<unknown>)"
+                        name = "<new{}>".format(app._test_app__news)
+                        app._test_app__news += 1
+                        app._test_app__documents[name] = editor.document
+                        rev_map[editor.document] = name
+                        yield "editor({})".format(name)
                     elif isinstance(name, str):
                         yield "editor({})".format(name)
                     else:

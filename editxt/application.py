@@ -42,6 +42,8 @@ from editxt.util import (ContextMap, perform_selector,
 log = logging.getLogger(__name__)
 
 
+class Error(Exception): pass
+
 doc_id_gen = count()
 
 class Application(object):
@@ -155,6 +157,8 @@ class Application(object):
             else:
                 doc, err = dc.makeUntitledDocumentOfType_error_(
                     const.TEXT_DOCUMENT, None)
+                if err is not None:
+                    raise RuntimeError(err)
                 if path is not None:
                     doc.setFileURL_(url)
 
