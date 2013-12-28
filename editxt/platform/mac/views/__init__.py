@@ -17,13 +17,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-import os
 
-import AppKit as ak
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# NSOutlineView extension tests
-
-def test_nsov_realItemForOpaqueItem_():
-    tc = ak.NSOutlineView.alloc().init()
-    tc.realItemForOpaqueItem_ # test for existence of method (TODO better testing)
+from .treeview import (
+    OutlineView,
+    HoverButtonCell,
+    BUTTON_STATE_HOVER,
+    BUTTON_STATE_NORMAL,
+    BUTTON_STATE_PRESSED,
+)

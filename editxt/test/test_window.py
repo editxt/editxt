@@ -70,7 +70,7 @@ def test_WindowConroller__init__():
 
 def test_window_did_load():
     def test(state):
-        import editxt.controls.cells as cells
+        import editxt.platform.views as cells
         from editxt.window import BUTTON_STATE_SELECTED
         from editxt.util import load_image
         m = Mocker()

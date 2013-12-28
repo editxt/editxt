@@ -25,7 +25,6 @@ from editxt import log as root_log
 
 log = logging.getLogger(__name__)
 
-_log = None
 
 class ErrorLog(object):
     """Error log controller

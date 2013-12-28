@@ -28,9 +28,9 @@ import Foundation as fn
 from PyObjCTools import AppHelper
 
 import editxt.constants as const
-from editxt.controls.cells import BUTTON_STATE_HOVER, BUTTON_STATE_NORMAL, BUTTON_STATE_PRESSED
 from editxt.document import Editor, TextDocument
 from editxt.platform.kvo import KVOList
+from editxt.platform.views import BUTTON_STATE_HOVER, BUTTON_STATE_NORMAL, BUTTON_STATE_PRESSED
 from editxt.project import Project
 from editxt.textcommand import CommandBar
 from editxt.util import (RecentItemStack, load_image, perform_selector,

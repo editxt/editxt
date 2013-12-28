@@ -54,7 +54,6 @@ def run(app, argv, unexpected_error_callback, use_pdb):
     # initialize class definitions
     import editxt.controls.cells
     import editxt.controls.linenumberview
-    import editxt.controls.outlineview
     import editxt.controls.splitview
     import editxt.controls.textview
     import editxt.controls.window

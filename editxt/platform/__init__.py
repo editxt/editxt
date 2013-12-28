@@ -27,6 +27,7 @@ def init(platform, use_pdb):
         "kvo",
 
         "document",
+        "views",
     ]
 
     import_module("{}.{}".format(__name__, platform))
