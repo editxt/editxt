@@ -59,6 +59,7 @@ def load_commands():
             clear_highlighted_text,
             reload_config,
             set_variable,
+            debug,
         ],
 
         # A dict of of NSResponder selectors mapped to callbacks
@@ -311,6 +312,42 @@ def set_variable(textview, sender, args):
     else:
         sub, opts = args.variable
         sub.data["setter"](textview, sub.name, opts)
+
+
+@command(name='debug',
+    arg_parser=CommandParser(Choice(
+        "mem-profile",
+        "error",
+        "unhandled-error",
+        name="action"
+    )))
+def debug(textview, sender, opts):
+    """Various debugging helpers"""
+    if opts.action == "mem-profile":
+        textview.editor.document.app.open_error_log(set_current=True)
+        mem_profile()
+    elif opts.action == "error":
+        raise Exception("raised by debug command")
+    elif opts.action == "unhandled-error":
+        class DebugError(BaseException): pass
+        raise DebugError("raised by debug command")
+
+def mem_profile():
+    import gc
+    from collections import defaultdict
+    from datetime import datetime
+    def rep(obj, count):
+        return '%-30s %10s    %s' % (obj.__name__, count, obj)
+    objs = defaultdict(lambda:0)
+    for obj in gc.get_objects():
+        objs[type(obj)] += 1
+    ones = sum(1 for o in objs.items() if o[1] == 1)
+    objs = (o for o in objs.items() if o[1] > 1)
+    objs = sorted(objs, key=lambda v:(-v[1], v[0].__name__))
+    names = (rep(*o) for o in objs)
+    log.info('%s gc objects:\n%s\nsingletons                     %10s',
+        datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        '\n'.join(names), ones)
 
 
 _ws = re.compile(r"([\t ]+)", re.UNICODE | re.MULTILINE)

@@ -48,6 +48,7 @@ def test_load_commands():
         mod.clear_highlighted_text,
         mod.reload_config,
         mod.set_variable,
+        mod.debug,
     ])
     eq_(set(cmds["input_handlers"]), set([
         "insertTab:",
