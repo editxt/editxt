@@ -74,27 +74,17 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Get ./xt working again
-  AttributeError: 'ErrorLogDocument' object has no attribute '_WeakProperty__app'
-  - Eliminate global app reference
-    editxt.errorlog.ErrorLog.write -> self._document.updateChangeCount_
-    - Use KVO to make HoverButtonCell observe item.is_dirty
-    - ?? Formalize pythonic KVO observe/callback
-    - ?? Refactor OutlineView+NSTreeController+HoverButtonCell
-      -> editxt.platform.mac.views.DocumentTreeView
-  - Fix error (Project.documents renamed to Project.editors)
-    ...
-      File "/Users/dmiller/code/EditXT/editxt/controls/outlineview.py", line 54, in selected_objects
-        paths = [self.indexPathForObject_(obj) for obj in objects]
-      File "/Users/dmiller/code/EditXT/editxt/controls/outlineview.py", line 54, in <listcomp>
-        paths = [self.indexPathForObject_(obj) for obj in objects]
-      File "/Users/dmiller/code/EditXT/editxt/controls/outlineview.py", line 68, in indexPathForObject_
-        None, self.content(), obj.proxy)
-      File "/Users/dmiller/code/EditXT/editxt/controls/outlineview.py", line 82, in _indexPathFromIndexPath_inChildren_toObject_
-        childsChildren = child.valueForKeyPath_(self.childrenKeyPath())
-      File "/Users/dmiller/code/EditXT/editxt/platform/mac/kvo.py", line 182, in valueForKey_
-        return getattr(self._target, key)
-    AttributeError: 'Project' object has no attribute 'documents'
+Fix ErrorLog
+x  - config file is logged too early
+x  - log format is not correct
+  - errors not showing in Console.app
+
+Fix bug in commandview.should_resize on execute "debug error"
+  command view does not resize to show full error message
+
+Refactor OutlineView+NSTreeController+HoverButtonCell
+  -> editxt.platform.mac.views.DocumentTreeView
+  - ?? Formalize pythonic KVO observe/callback
 
 Eliminate editxt.app global/singleton
   - remaining places

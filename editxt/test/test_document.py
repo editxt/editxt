@@ -532,12 +532,15 @@ def test_Editor_close():
             editor = app.windows[0].projects[0].editors[0]
             editor.text_view = None if c.tv_is_none else m.mock(ak.NSTextView)
             doc = editor.document
-            text_storage = doc.text_storage
-            text_storage.setDelegate_(doc)
-            remove_layout = m.method(text_storage.removeLayoutManager_)
+            if c.ts_is_none:
+                doc.text_storage = None
+            else:
+                text_storage = doc.text_storage
+                text_storage.setDelegate_(doc)
+                remove_layout = m.method(text_storage.removeLayoutManager_)
             remove_window = m.method(doc.removeWindowController_)
             wc = editor.project.window.wc = m.mock(WindowController)
-            if not c.tv_is_none:
+            if not (c.tv_is_none or c.ts_is_none):
                 lm = editor.text_view.layoutManager() >> m.mock(ak.NSLayoutManager)
                 remove_layout(lm)
             if c.remove_window and not c.close_doc:
@@ -556,10 +559,12 @@ def test_Editor_close():
             eq_(editor.proxy, None)
             if c.close_doc:
                 eq_(doc.text_storage, None)
-                eq_(text_storage.delegate(), None)
+                if not c.ts_is_none:
+                    eq_(text_storage.delegate(), None)
             eq_(test_app.config(app), c.end)
 
     c = TestConfig(app="editor(a)",
+        ts_is_none=False,
         tv_is_none=False,
         main_is_none=False,
         remove_window=True,
@@ -567,7 +572,9 @@ def test_Editor_close():
         end="window project",
     )
     yield test, c
+    yield test, c(ts_is_none=True)
     yield test, c(tv_is_none=True)
+    yield test, c(ts_is_none=True, tv_is_none=True)
     yield test, c(main_is_none=True)
     yield test, c(app="editor(a) editor(b)", end="window project editor(b)")
     yield test, c(app="editor(a) editor(a)", end="window project editor(a)",

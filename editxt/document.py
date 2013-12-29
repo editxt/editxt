@@ -317,7 +317,7 @@ class Editor(object):
         if project is not None and not project.closing:
             project.remove_editor(self)
         doc = self.document
-        if self.text_view is not None:
+        if self.text_view is not None and doc.text_storage is not None:
             doc.text_storage.removeLayoutManager_(self.text_view.layoutManager())
         if next(doc.app.iter_editors_of_document(doc), None) is None:
             doc.close()
