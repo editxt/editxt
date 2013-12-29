@@ -20,6 +20,7 @@
 import glob
 import logging
 import os
+from contextlib import contextmanager
 from itertools import chain, repeat, count
 
 import objc
@@ -30,7 +31,7 @@ import editxt
 import editxt.constants as const
 from editxt.commands import iterlines
 from editxt.config import Config
-from editxt.errorlog import errlog
+from editxt.errorlog import ErrorLog, LogViewHandler
 from editxt.textcommand import CommandHistory, TextCommandController
 from editxt.util import (ContextMap, perform_selector,
     atomicfile, dump_yaml, load_yaml, WeakProperty)
@@ -76,6 +77,22 @@ class Application(object):
     @classmethod
     def default_profile(cls):
         return '~/.' + cls.name().lower()
+
+    def logger(self, level=logging.INFO):
+        @contextmanager
+        def logger():
+            self.errlog = ErrorLog(self)
+            self.errlog_handler = LogViewHandler(self)
+            self.errlog_handler.setLevel(level)
+            root = logging.getLogger()
+            root.addHandler(self.errlog_handler)
+            try:
+                yield self.errlog
+            finally:
+                root.removeHandler(self.errlog_handler)
+                self.errlog = None
+                self.errlog_handler = None
+        return logger()
 
     def init_syntax_definitions(self):
         from editxt.syntax import SyntaxFactory
@@ -189,7 +206,12 @@ class Application(object):
             document.text = self.config.default_config
 
     def open_error_log(self, set_current=True):
-        doc = errlog.document
+        """Open the error log document
+
+        This method should only be called while this application's
+        ``logger`` context manager is active.
+        """
+        doc = self.errlog.document
         try:
             editor = next(self.iter_editors_of_document(doc))
         except StopIteration:

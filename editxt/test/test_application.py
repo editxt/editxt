@@ -62,6 +62,17 @@ def test_application_init():
     eq_(app.windows, [])
     assert isinstance(app.context, ContextMap)
 
+def test_Application_logger():
+    app = Application()
+    root = logging.getLogger()
+    assert not hasattr(app, "errlog"), app.errlog
+    with app.logger() as errlog:
+        handler = app.errlog_handler
+        assert handler in root.handlers, root.handlers
+    assert handler not in root.handlers, root.handlers
+    eq_(app.errlog, None)
+    eq_(app.errlog_handler, None)
+
 def test_profile_path():
     def test(profile, profile_path):
         app = Application(profile)
@@ -286,19 +297,20 @@ def test_open_error_log():
         ed = m.mock(Window)
         editor = m.mock(Editor)
         app = Application()
-        err = m.property(mod.errlog, "document").value >> m.mock(TextDocument)
-        if c.is_open:
-            idocs = iter([editor])
-            m.method(app.set_current_editor)(editor)
-        else:
-            idocs = iter([])
-            m.method(app.current_window)() >> (ed if c.has_window else None)
-            if not c.has_window:
-                m.method(app.create_window)() >> ed
-            ed.insert_items([err])
-        m.method(app.iter_editors_of_document)(err) >> idocs
-        with m:
-            app.open_error_log()
+        with app.logger() as errlog:
+            err = m.property(app.errlog, "document").value >> m.mock(TextDocument)
+            if c.is_open:
+                idocs = iter([editor])
+                m.method(app.set_current_editor)(editor)
+            else:
+                idocs = iter([])
+                m.method(app.current_window)() >> (ed if c.has_window else None)
+                if not c.has_window:
+                    m.method(app.create_window)() >> ed
+                ed.insert_items([err])
+            m.method(app.iter_editors_of_document)(err) >> idocs
+            with m:
+                app.open_error_log()
     c = TestConfig(is_open=False)
     yield test, c(is_open=True)
     yield test, c(has_window=True)

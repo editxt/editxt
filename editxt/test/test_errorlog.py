@@ -46,19 +46,23 @@ log = logging.getLogger(__name__)
 #    assert ErrorLog.log() is el
 
 def test_ErrorLog_init():
-    el = ErrorLog()
+    app = type("App", (), {})()
+    el = ErrorLog(app)
     assert isinstance(el.text, ak.NSTextStorage), repr(el.text)
     eq_(el._document, None)
+    eq_(el.app, app)
 
 def test_ErrorLog_document():
+    from editxt.application import Application
+    from editxt.document import TextDocument
     def test(c):
-        from editxt.document import TextDocument
         m = Mocker()
-        el = ErrorLog()
+        app = m.mock(Application)
+        el = ErrorLog(app)
         doc_factory = m.replace(mod, "create_error_log_document")
         doc = m.mock(TextDocument)
         if not c.created:
-            doc_factory(ANY) >> doc
+            doc_factory(app, ANY) >> doc
             doc.text_storage = el.text
             doc.setLastComponentOfFileName_(const.LOG_NAME)
             doc.setHasUndoManager_(False)
@@ -71,11 +75,13 @@ def test_ErrorLog_document():
     yield test, c(created=True)
 
 def test_ErrorLog_write():
+    from editxt.application import Application
     from editxt.document import TextDocument
     def test(c):
         m = Mocker()
         value = "some text"
-        el = ErrorLog()
+        app = m.mock(Application)
+        el = ErrorLog(app)
         el.text = ts = m.mock(ak.NSTextStorage)
         ts.length() >> 42
         range = fn.NSRange(42, 0)
@@ -90,14 +96,13 @@ def test_ErrorLog_write():
     yield test, c(has_doc=True)
 
 def test_ErrorLog_flush():
-    el = ErrorLog()
+    el = ErrorLog(None)
     el.flush() # no op
 
 def test_ErrorLog_unexpected_error():
     def test(c):
         m = Mocker()
-        el = ErrorLog()
-        app = m.replace('editxt.app')
+        el = ErrorLog(None)
         log = m.replace(mod, 'root_log')
         log.error("unexpected error", exc_info=True)
 #        open_error = app.open_error_log(set_current=False)
@@ -112,14 +117,17 @@ def test_ErrorLog_unexpected_error():
 
 def test_create_error_log_document():
     from editxt.document import TextDocument
-    doc = create_error_log_document(lambda:None)
+    app = type("App", (), {})()
+    doc = create_error_log_document(app, lambda:None)
     try:
         eq_(type(doc).__name__, "ErrorLogDocument")
+        eq_(doc.app, app)
         assert isinstance(doc, TextDocument)
-        doc2 = create_error_log_document(lambda:None)
+        doc2 = create_error_log_document(app, lambda:None)
         try:
             assert doc is not doc2
             assert type(doc) is type(doc2)
+            eq_(doc2.app, app)
         finally:
             doc2.close()
     finally:

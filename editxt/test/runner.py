@@ -118,6 +118,9 @@ class TestApplication(Application):
             from AppKit import NSApp
             NSApp().terminate_(NSApp())
 
+    def open_error_log(self, *args, **kw):
+        pass
+
     def app_will_terminate(self, app):
         pass # do not call super, which saves document settings
 

@@ -22,6 +22,7 @@ from AppKit import NSTextStorage, NSDocument, NSChangeDone, NSChangeCleared
 
 import editxt.constants as const
 from editxt import log as root_log
+from editxt.util import WeakProperty
 
 log = logging.getLogger(__name__)
 
@@ -29,10 +30,15 @@ log = logging.getLogger(__name__)
 class ErrorLog(object):
     """Error log controller
     
-    implements the portion of the file protocol needed by logging.StreamHandler
+    Implements the portion of the file protocol needed by
+    ``logging.StreamHandler``. Manages a document that can
+    be opened by the application.
     """
 
-    def __init__(self):
+    app = WeakProperty()
+
+    def __init__(self, app):
+        self.app = app
         self.text = NSTextStorage.alloc().initWithString_attributes_("", {})
         self._document = None
     
@@ -41,7 +47,7 @@ class ErrorLog(object):
         if self._document is None:
             def close():
                 self._document = None
-            self._document = doc = create_error_log_document(close)
+            self._document = doc = create_error_log_document(self.app, close)
             doc.text_storage = self.text
             doc.setLastComponentOfFileName_(const.LOG_NAME)
             doc.setHasUndoManager_(False)
@@ -63,22 +69,28 @@ class ErrorLog(object):
         return True
 
 
-class StreamHandler(logging.StreamHandler):
+class LogViewHandler(logging.StreamHandler):
+    """A logging handler that opens the error log in its app on error
+    """
+
+    app = WeakProperty()
+
+    def __init__(self, app, **kw):
+        super().__init__(stream=app.errlog, **kw)
+        self.app = app
 
     def emit(self, record):
         try:
             return super().emit(record)
         finally:
             if record.levelno > logging.WARNING:
-                from editxt import app
-                if app is not None:
-                    try:
-                            app.open_error_log(set_current=False)
-                    except Exception:
-                        log.warn("cannot open error log", exc_info=True)
+                try:
+                    self.app.open_error_log(set_current=False)
+                except Exception:
+                    log.warn("cannot open error log", exc_info=True)
 
 
-def create_error_log_document(closefunc):
+def create_error_log_document(app, closefunc):
     """create an error document
     
     This must be called after editxt.app is installed so editxt.document can be
@@ -86,7 +98,7 @@ def create_error_log_document(closefunc):
     """
     from editxt.document import TextDocument
     if "ErrorLogDocument" not in globals():
-        global ErrorLogDocument
+        global ErrorLogDocument # HACK TODO create app-specific class
         class ErrorLogDocument(TextDocument):
             def addWindowController_(self, value):
                 self.updateChangeCount_(NSChangeCleared)
@@ -94,6 +106,6 @@ def create_error_log_document(closefunc):
             def close(self):
                 closefunc()
                 super(ErrorLogDocument, self).close()
-    return ErrorLogDocument.alloc().init()
-
-errlog = ErrorLog()
+    document = ErrorLogDocument.alloc().init()
+    document.app = app
+    return document

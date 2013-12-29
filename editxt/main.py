@@ -38,7 +38,6 @@ import docopt
 
 import editxt
 import editxt.platform as platform
-from editxt.errorlog import errlog
 
 log = logging.getLogger(__name__)
 
@@ -53,19 +52,13 @@ DEFAULT_LOGGING_CONFIG = {
             'level': 'ERROR',
             'formatter': 'brief',
         },
-        'logview': {
-            'class': 'editxt.errorlog.StreamHandler',
-            'level': 'INFO',
-            'formatter': 'brief',
-            'stream': 'ext://editxt.errorlog.errlog',
-        },
     },
     'loggers': {
         'editxt': {'level': 'DEBUG'},
         'editxt.test': {'level': 'DEBUG'},
         'editxt.util': {'level': 'INFO'},
     },
-    'root': {'handlers': ['console', 'logview']},
+    'root': {'handlers': ['console']},
     'disable_existing_loggers': False,
 }
 
@@ -94,9 +87,10 @@ def main(argv=list(sys.argv)):
             opts = docopt.docopt(doc, argv, version=editxt.__version__)
             app = Application(opts.get('--profile'))
 
-        editxt.app = app
-        from editxt.platform.main import run
-        run(app, argv, errlog.unexpected_error, use_pdb)
+        with app.logger() as errlog:
+            editxt.app = app
+            from editxt.platform.main import run
+            run(app, argv, errlog.unexpected_error, use_pdb)
     except Exception as err:
         if not logging.root.handlers:
             logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)

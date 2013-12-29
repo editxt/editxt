@@ -332,7 +332,7 @@ def _test_app_config(app):
                 for editor in project.editors:
                     name = rev_map.get(editor.document)
                     if name is None:
-                        name = "<new{}>".format(app._test_app__news)
+                        name = "<{} {}>".format(editor.name, app._test_app__news)
                         app._test_app__news += 1
                         app._test_app__documents[name] = editor.document
                         rev_map[editor.document] = name
