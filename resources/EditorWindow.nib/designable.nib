@@ -135,19 +135,19 @@
                                                 </popUpButtonCell>
                                                 <connections>
                                                     <binding destination="-2" name="contentValues" keyPath="characterEncodings" id="452"/>
+                                                    <binding destination="272" name="selectedValue" keyPath="selection.character_encoding" previousBinding="452" id="uVh-cu-G6F">
+                                                        <dictionary key="options">
+                                                            <bool key="NSRaisesForNotApplicableKeys" value="NO"/>
+                                                            <bool key="NSConditionallySetsEnabled" value="NO"/>
+                                                            <string key="NSValueTransformerName">CharacterEncodingTransformer</string>
+                                                        </dictionary>
+                                                    </binding>
                                                     <binding destination="272" name="enabled" keyPath="selection.document" id="x8k-Nx-xYT">
                                                         <dictionary key="options">
                                                             <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNoSelectionPlaceholder" value="0"/>
                                                             <integer key="NSNullPlaceholder" value="0"/>
                                                             <string key="NSValueTransformerName">NSIsNotNil</string>
-                                                        </dictionary>
-                                                    </binding>
-                                                    <binding destination="272" name="selectedValue" keyPath="selection.character_encoding" previousBinding="452" id="uVh-cu-G6F">
-                                                        <dictionary key="options">
-                                                            <bool key="NSRaisesForNotApplicableKeys" value="NO"/>
-                                                            <bool key="NSConditionallySetsEnabled" value="NO"/>
-                                                            <string key="NSValueTransformerName">CharacterEncodingTransformer</string>
                                                         </dictionary>
                                                     </binding>
                                                     <outlet property="nextKeyView" destination="266" id="490"/>
@@ -327,9 +327,8 @@
                                                                 </connections>
                                                             </buttonCell>
                                                             <connections>
-                                                                <binding destination="272" name="target" keyPath="arrangedObjects" id="277">
+                                                                <binding destination="272" name="target" keyPath="arrangedObjects.summary_info" id="XSx-QJ-Bdz">
                                                                     <dictionary key="options">
-                                                                        <string key="NSSelectorName">attemptClose:</string>
                                                                         <bool key="NSConditionallySetsEnabled" value="NO"/>
                                                                         <bool key="NSAlwaysPresentsApplicationModalAlerts" value="YES"/>
                                                                     </dictionary>
@@ -377,7 +376,7 @@
                 <outlet property="initialFirstResponder" destination="312" id="337"/>
             </connections>
         </window>
-        <treeController editable="NO" childrenKeyPath="documents.items" leafKeyPath="is_leaf" id="272" userLabel="ProjectsController">
+        <treeController editable="NO" childrenKeyPath="editors.items" leafKeyPath="is_leaf" id="272" userLabel="ProjectsController">
             <declaredKeys>
                 <string>name</string>
                 <string>file_path</string>

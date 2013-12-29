@@ -94,6 +94,10 @@ class Editor(object):
         if isinstance(document, ak.NSDocument):
             # HACK this should not be conditional (but it is for tests)
             self.kvolink = KVOLink([
+                (document, "isDocumentEdited", self.proxy, "is_dirty"),
+                (self.proxy, "icon", self.proxy, "summary_info"),
+                (self.proxy, "name", self.proxy, "summary_info"),
+                (self.proxy, "is_dirty", self.proxy, "summary_info"),
                 (document, "indent_mode", self.proxy, "indent_mode"),
                 (document, "indent_size", self.proxy, "indent_size"),
                 (document, "newline_mode", self.proxy, "newline_mode"),
@@ -110,6 +114,11 @@ class Editor(object):
     @property
     def name(self):
         return self.document.displayName()
+
+    @property
+    def summary_info(self):
+        """Returns a 4-tuple: ``icon, name, is_dirty, self``"""
+        return (self.icon, self.name, self.is_dirty, self)
 
     def window(self):
         """Return the native window of this view (NOT a editxt.window.Window)"""
@@ -674,8 +683,18 @@ class TextDocument(ak.NSDocument):
         self.syntaxer.color_text(self.text_storage, range)
 
     def updateChangeCount_(self, ctype):
-        super(TextDocument, self).updateChangeCount_(ctype)
-        self.app.item_changed(self, ctype)
+        # This makes isDocumentEdited KVO compliant, but it will not work if
+        # there are private (inside Cocoa) updates to the change count.
+        # http://prod.lists.apple.com/archives/cocoa-dev/2013/Oct/msg00459.html
+        self.willChangeValueForKey_("isDocumentEdited")
+        super().updateChangeCount_(ctype)
+        self.didChangeValueForKey_("isDocumentEdited")
+
+    def updateChangeCountWithToken_forSaveOperation_(self, token, operation):
+        # http://prod.lists.apple.com/archives/cocoa-dev/2013/Oct/msg00462.html
+        self.willChangeValueForKey_("isDocumentEdited")
+        super().updateChangeCountWithToken_forSaveOperation_(token, operation)
+        self.didChangeValueForKey_("isDocumentEdited")
 
 #     def set_primary_window_controller(self, wc):
 #         if wc.document() is self:

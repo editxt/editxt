@@ -578,48 +578,6 @@ def test_Window_iter_editors_of_document():
     yield test, [True], 1
     yield test, [False, True, True, False, True], 3
 
-def test_item_changed():
-    def test(c):
-        m = Mocker()
-        ed = Window(editxt.app, m.mock(WindowController))
-        vw = ed.wc.docsView >> (None if c.view_is_none else m.mock(ak.NSOutlineView))
-        item = None
-        if not (c.view_is_none or c.item_is_none):
-            objs = []
-            found = None
-            for row, otype in enumerate(c.objs):
-                if otype.lower() == "p":
-                    obj = m.mock(name="<%sroject%i>" % (otype, row))
-                    if not found:
-                        if otype == "P":
-                            found = (row, obj)
-                        else:
-                            obj.document >> None
-                elif otype.lower() == "d":
-                    obj = m.mock(name="editor%i" % row)
-                    if not found:
-                        doc = obj.document >> m.mock(name="<%socument%i>" % (otype, row))
-                        if otype == "D":
-                            found = (row, doc)
-                objs.append((row, obj))
-            if found:
-                row, item = found
-                eq_(c.row, row)
-                vw.setNeedsDisplayInRect_(vw.rectOfRow_(row) >> m.mock(fn.NSRect))
-            else:
-                eq_(c.row, None)
-                item = m.mock(name="<unknown>")
-            vw.iterVisibleObjects() >> objs
-        with m:
-            ed.item_changed(item, 0)
-    c = TestConfig(view_is_none=False, item_is_none=False)
-    yield test, c(view_is_none=True, item_is_none=True)
-    yield test, c(view_is_none=True)
-    yield test, c(item_is_none=True)
-    yield test, c(objs=["p", "d", "d"], row=None)
-    yield test, c(objs=["P", "d", "d", "P"], row=0)
-    yield test, c(objs=["p", "d", "D", "P"], row=2)
-
 def test_tool_tip_for_item():
     def test(doctype, null_path):
         m = Mocker()

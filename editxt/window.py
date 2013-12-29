@@ -297,14 +297,6 @@ class Window(object):
             return proj
         return None
 
-    def item_changed(self, item, change_type):
-        view = self.wc.docsView
-        if item is not None and view is not None:
-            for row, obj in view.iterVisibleObjects():
-                if obj is item or getattr(obj, "document", None) is item:
-                    view.setNeedsDisplayInRect_(view.rectOfRow_(row))
-                    break
-
     def tooltip_for_item(self, view, item):
         it = view.realItemForOpaqueItem_(item)
         null = it is None or it.file_path is None

@@ -974,7 +974,6 @@ class TestTextDocument(MockerTestCase):
         content = "test content"
         m.method(doc.update_syntaxer)()
         doc.text_storage.mutableString().appendString_(content)
-        app.item_changed(doc, 2)
         app.save_window_states()
         with m:
             doc.saveDocument_(None)
@@ -1166,21 +1165,6 @@ def test_textStorageDidProcessEditing_():
     syn.color_text(ts, range)
     with m:
         doc.textStorageDidProcessEditing_(None)
-
-def test_updateChangeCount_():
-    m = Mocker()
-    doc = TextDocument.alloc().init()
-    doc.app = app = m.mock(Application)
-    ctype = 0
-    app.item_changed(doc, ctype)
-    with m:
-        doc.updateChangeCount_(ctype)
-
-#     def updateChangeCount_(self, changeType, flag=[]):
-#         super(TextDocument, self).updateChangeCount_(changeType)
-#         proj = self.project
-#         if proj:
-#             proj.documentChanged_(self)
 
 # def test_document_set_primary_window_controller():
 #     def test(wc_has_doc, sv_in_subviews, doc_in_proj):

@@ -268,10 +268,6 @@ class Application(object):
                         return doc
         return None
 
-    def item_changed(self, item, change_type=None):
-        for window in self.windows:
-            window.item_changed(item, change_type)
-
     def iter_windows(self, app=None):
         """Iterate over windows in on-screen z-order starting with the
         front-most window"""

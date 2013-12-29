@@ -693,24 +693,6 @@ def test_find_item_with_id():
     yield test, c(eds=[ed([pj(0, [dc(2)])])])
     yield test, c(eds=[ed([pj(1, [dc(2)])]), ed([pj(3, [dc(0)])])])
 
-def test_item_changed():
-    def test(c):
-        m = Mocker()
-        app = Application()
-        ctype = 0
-        item = m.mock(TextDocument if c.item_type == "d" else Project)
-        for e in range(c.eds):
-            ed = m.mock(Window)
-            ed.item_changed(item, ctype)
-            app.add_window(ed)
-        with m:
-            app.item_changed(item, ctype)
-    c = TestConfig(eds=0, item_type="d")
-    yield test, c
-    yield test, c(eds=1)
-    yield test, c(eds=3)
-    yield test, c(eds=1, item_type="p")
-
 class MockUserDefaults(object):
     def __init__(self):
         self.synced = False

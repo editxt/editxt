@@ -78,8 +78,9 @@ Get ./xt working again
   AttributeError: 'ErrorLogDocument' object has no attribute '_WeakProperty__app'
   - Eliminate global app reference
     editxt.errorlog.ErrorLog.write -> self._document.updateChangeCount_
-    - Formalize pythonic KVO observe/callback
-    - Refactor OutlineView+NSTreeController+HoverButtonCell
+    - Use KVO to make HoverButtonCell observe item.is_dirty
+    - ?? Formalize pythonic KVO observe/callback
+    - ?? Refactor OutlineView+NSTreeController+HoverButtonCell
       -> editxt.platform.mac.views.DocumentTreeView
   - Fix error (Project.documents renamed to Project.editors)
     ...
