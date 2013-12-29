@@ -48,11 +48,11 @@ class CommandBar(object):
 
     def activate(self):
         # abstract to a PyObjC-specific subclass when implementing other frontend
-        view = self.window.current_view
-        if view is None:
+        editor = self.window.current_editor
+        if editor is None:
             ak.NSBeep()
             return
-        view.command_view.activate(self)
+        editor.command_view.activate(self)
 
     def execute(self, text):
         self.reset()
