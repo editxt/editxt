@@ -63,15 +63,15 @@ def test_application_init():
     assert isinstance(app.context, ContextMap)
 
 def test_Application_logger():
-    app = Application()
     root = logging.getLogger()
-    assert not hasattr(app, "errlog"), app.errlog
+    app = Application()
+    handler = app.errlog_handler
+    assert hasattr(app, "errlog"), app.errlog
+    assert handler not in root.handlers, root.handlers
     with app.logger() as errlog:
         handler = app.errlog_handler
         assert handler in root.handlers, root.handlers
     assert handler not in root.handlers, root.handlers
-    eq_(app.errlog, None)
-    eq_(app.errlog_handler, None)
 
 def test_profile_path():
     def test(profile, profile_path):

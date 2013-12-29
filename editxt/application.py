@@ -36,10 +36,6 @@ from editxt.textcommand import CommandHistory, TextCommandController
 from editxt.util import (ContextMap, perform_selector,
     atomicfile, dump_yaml, load_yaml, WeakProperty)
 
-#from editxt.test.util import todo_remove # NOTE: this import causes error on start app:
-# DistutilsPlatformError: invalid Python installation: unable to open ...
-# .../Editxt.app/Contents/Resources/include/python2.5/pyconfig.h (No such file or directory)
-
 log = logging.getLogger(__name__)
 
 
@@ -55,16 +51,22 @@ class Application(object):
         self.profile_path = os.path.expanduser(profile)
         assert os.path.isabs(self.profile_path), \
             'profile path cannot be relative (%s)' % self.profile_path
-        self._setup_profile = set()
-        self.windows = []
-        self.path_opener = None
-        self.config = Config(
-            os.path.join(self.profile_path, const.CONFIG_FILENAME))
-        self.context = ContextMap()
-        self.syntax_factory = None
-        state_dir = os.path.join(self.profile_path, const.STATE_DIR)
-        command_history = CommandHistory(state_dir)
-        self.text_commander = TextCommandController(command_history)
+        self.errlog = ErrorLog(self)
+        self.errlog_handler = LogViewHandler(self)
+        self.errlog_handler.setLevel(logging.INFO)
+        self.errlog_handler.setFormatter(
+            logging.Formatter("%(levelname).7s %(name)s - %(message)s"))
+        with self.logger():
+            self._setup_profile = set()
+            self.windows = []
+            self.path_opener = None
+            self.config = Config(
+                os.path.join(self.profile_path, const.CONFIG_FILENAME))
+            self.context = ContextMap()
+            self.syntax_factory = None
+            state_dir = os.path.join(self.profile_path, const.STATE_DIR)
+            command_history = CommandHistory(state_dir)
+            self.text_commander = TextCommandController(command_history)
 
     @classmethod
     def name(cls):
@@ -78,21 +80,14 @@ class Application(object):
     def default_profile(cls):
         return '~/.' + cls.name().lower()
 
-    def logger(self, level=logging.INFO):
-        @contextmanager
-        def logger():
-            self.errlog = ErrorLog(self)
-            self.errlog_handler = LogViewHandler(self)
-            self.errlog_handler.setLevel(level)
-            root = logging.getLogger()
-            root.addHandler(self.errlog_handler)
-            try:
-                yield self.errlog
-            finally:
-                root.removeHandler(self.errlog_handler)
-                self.errlog = None
-                self.errlog_handler = None
-        return logger()
+    @contextmanager
+    def logger(self):
+        root = logging.getLogger()
+        root.addHandler(self.errlog_handler)
+        try:
+            yield self.errlog
+        finally:
+            root.removeHandler(self.errlog_handler)
 
     def init_syntax_definitions(self):
         from editxt.syntax import SyntaxFactory
