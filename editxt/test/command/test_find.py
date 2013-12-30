@@ -444,6 +444,38 @@ def test_FindController_finder_find():
     yield test, c(found=False)
     yield test, c(found=True)
 
+def test_FindController_validate_expression():
+    def test(c):
+        with test_app() as app:
+            m = Mocker()
+            fc = FindController(app)
+            fc.options = make_options(c)
+            beep = m.replace(ak, "NSBeep")
+            sheet = m.replace(ak, "NSBeginAlertSheet")
+            gui = m.replace(fc, "gui")
+            ftext = m.mock(ak.NSTextField)
+            if c.search != mod.LITERAL:
+                if c.ftext is None:
+                    gui.find_text >> None
+                else:
+                    (gui.find_text << ftext).count(1, None)
+                    ftext.stringValue() >> c.ftext
+                if not c.expect:
+                    beep()
+                    sheet(
+                        ANY,
+                        "OK", None, None,
+                        gui.window() >> "<window>", None, None, None, 0,
+                        ANY,
+                    );
+            with m:
+                result = fc.validate_expression()
+                eq_(result, c.expect)
+    c = TestConfig(search=mod.REGEX, expect=True)
+    yield test, c(ftext=None)
+    yield test, c(ftext="(", search=mod.LITERAL)
+    yield test, c(ftext="(", expect=False)
+
 def test_FindController__find():
     def test(c):
         with test_app() as app:

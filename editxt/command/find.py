@@ -695,7 +695,7 @@ class FindController(PanelController):
             except InvalidPythonExpression as err:
                 title = "Cannot Compile Python Expression"
                 error = err
-            if error:
+            if error is not None:
                 ak.NSBeep()
                 # Note: if the find dialog type is NSPanel (instead of NSWindow)
                 # the focus will switch back to the main document window rather
@@ -705,7 +705,7 @@ class FindController(PanelController):
                     title,
                     "OK", None, None,
                     self.gui.window(), None, None, None, 0,
-                    str(err),
+                    str(error),
                 );
                 return False
         return True
