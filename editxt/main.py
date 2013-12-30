@@ -33,6 +33,7 @@ Options:
 import logging.config
 import os
 import sys
+from copy import deepcopy
 
 import docopt
 
@@ -48,7 +49,7 @@ DEFAULT_LOGGING_CONFIG = {
     },
     'handlers': {
         'console': {
-            'class': 'logging.StreamHandler',
+            'class': 'editxt.platform.console_log_handler',
             'level': 'ERROR',
             'formatter': 'brief',
         },
@@ -64,9 +65,10 @@ DEFAULT_LOGGING_CONFIG = {
 
 
 def main(argv=list(sys.argv)):
+    logging_config = deepcopy(DEFAULT_LOGGING_CONFIG)
     try:
         if "--test" in argv or "--pdb" in argv:
-            DEFAULT_LOGGING_CONFIG['handlers']['console']['level'] = 'DEBUG'
+            logging_config['handlers']['console']['level'] = 'DEBUG'
 
         use_pdb = "--pdb" in argv
         if use_pdb:
@@ -78,7 +80,7 @@ def main(argv=list(sys.argv)):
             from editxt.test.runner import TestApplication
             app = TestApplication(argv)
         else:
-            logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
+            logging.config.dictConfig(logging_config)
             from editxt.application import Application
             argv = argv[1:] # drop program name
             doc = __doc__.replace('Profile directory.',
@@ -92,7 +94,8 @@ def main(argv=list(sys.argv)):
             from editxt.platform.main import run
             run(app, argv, errlog.unexpected_error, use_pdb)
     except Exception as err:
+        exc_info = sys.exc_info()
         if not logging.root.handlers:
-            logging.config.dictConfig(DEFAULT_LOGGING_CONFIG)
-        log.error('unhandled error', exc_info=True)
+            logging.config.dictConfig(logging_config)
+        log.error('unhandled error', exc_info=exc_info)
         sys.exit(1)

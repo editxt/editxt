@@ -17,31 +17,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-import sys
-from importlib import import_module
-from logging import StreamHandler as console_log_handler
+import logging
+
+from AppKit import NSLog
 
 
-def init(platform, use_pdb):
-    modules = [
-        "constants",
-        "logging",
-        "main",
-        "kvo",
+class PlatformLogHandler(logging.Handler):
+    """A logging handler that sends messages to the Mac OS console log"""
 
-        "document",
-        "views",
-    ]
-
-    import_module("{}.{}".format(__name__, platform))
-    main = import_module("{}.{}.main".format(__name__, platform))
-    main.init(use_pdb)
-
-    self = sys.modules[__name__]
-    for name in modules:
-        module = import_module("{}.{}.{}".format(__name__, platform, name))
-        sys.modules[__name__ + "." + name] = module
-        setattr(self, name, module)
-
-    if not sys.stderr.isatty():
-        self.console_log_handler = self.logging.PlatformLogHandler
+    def emit(self, record):
+        NSLog(self.format(record))
