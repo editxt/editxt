@@ -429,8 +429,8 @@ class Finder(object):
         try:
             regex = re.compile(ftext, flags)
         except re.error as err:
-            ak.NSBeep()
-            log.error("cannot compile regex %r : %s", ftext, err)
+            raise CommandError(
+                "cannot compile regex {!r} : {}".format(ftext, err))
         else:
             FoundRange = make_found_range_factory(options)
             backward = (direction == BACKWARD)
@@ -516,7 +516,15 @@ class FindController(PanelController):
 
     def perform_action(self, sender):
         default = lambda s: log.info("unknown action: %s", s.tag())
-        self.action_registry.get(sender.tag(), default)(sender)
+        try:
+            self.action_registry.get(sender.tag(), default)(sender)
+        except CommandError as err:
+            ak.NSBeep()
+            target = self.find_target()
+            if target is not None:
+                target.editor.message(str(err), msg_type=const.ERROR)
+            else:
+                log.warn(err)
 
     def show_find_panel(self, sender):
         self.options.willChangeValueForKey_("recent_finds") # HACK

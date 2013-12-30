@@ -191,6 +191,10 @@ def test_Finder_python_replace():
             "def repy(match, range_):\n"
             "    return match(",
             "unexpected EOF while parsing (<string>, line 2)"))
+    yield test, c(
+        find="(", replace="match[0].lower()",
+        action="replace_all",
+        expect=mod.CommandError("cannot compile regex '(' : unbalanced parenthesis"))
 
 def test_FindController_shared_controller():
     with test_app() as app:
@@ -242,6 +246,8 @@ def test_FindController_perform_action():
             m = Mocker()
             fc = FindController(app)
             flog = m.replace("editxt.command.find.log")
+            beep = m.replace(ak, "NSBeep")
+            find_target = m.method(fc.find_target)
             sender = m.mock()
             (sender.tag() << c.tag).count(1, 2)
             func = None
@@ -252,11 +258,20 @@ def test_FindController_perform_action():
             if c.fail:
                 flog.info(ANY, c.tag)
             else:
-                func(sender)
+                if c.error:
+                    err = mod.CommandError("error!")
+                    expect(func(sender)).throw(err)
+                    beep()
+                    target = find_target() >> (m.mock() if c.target else None)
+                    if c.target:
+                        target.editor.message("error!", msg_type=const.ERROR)
+                    else:
+                        flog.warn(err)
+                else:
+                    func(sender)
             with m:
                 fc.perform_action(sender)
-    c = TestConfig(fail=False)
-    yield test, c(tag=mod.ACTION_FIND_SELECTED_TEXT_REVERSE + 1, fail=True)
+    c = TestConfig(fail=False, error=False)
     for tag in [
         ak.NSFindPanelActionShowFindPanel,
         ak.NSFindPanelActionNext,
@@ -270,6 +285,9 @@ def test_FindController_perform_action():
         mod.ACTION_FIND_SELECTED_TEXT_REVERSE,
     ]:
         yield test, c(tag=tag)
+    yield test, c(tag=mod.ACTION_FIND_SELECTED_TEXT_REVERSE + 1, fail=True)
+    yield test, c(tag=ak.NSFindPanelActionNext, error=True, target=True)
+    yield test, c(tag=ak.NSFindPanelActionNext, error=True, target=False)
 
 def test_FindController_show_find_panel():
     with test_app() as app:
