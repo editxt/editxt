@@ -91,11 +91,7 @@ class LogViewHandler(logging.StreamHandler):
 
 
 def create_error_log_document(app, closefunc):
-    """create an error document
-    
-    This must be called after editxt.app is installed so editxt.document can be
-    imported (editxt.document imports app from editxt).
-    """
+    """create an error document"""
     from editxt.document import TextDocument
     if "ErrorLogDocument" not in globals():
         global ErrorLogDocument # HACK TODO create app-specific class
