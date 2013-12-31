@@ -74,24 +74,6 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Fix bug in commandview.should_resize on execute "debug error"
-  command view does not resize to show full error message
-
-Find dialog and command bugs
-x  - validate_expression remove or fix bug:
-x    UnboundLocalError: local variable 'err' referenced before assignment
-  - command "/(" ->
-    ERROR editxt.command.find - cannot compile regex '(' : unbalanced parenthesis
-    should appear in error window and not dismiss command view
-  - ERROR editxt - *** Python exception discarded!
-    Traceback (most recent call last):
-      File "/Users/dmiller/code/EditXT/editxt/controls/commandview.py", line 154, in textView_doCommandBySelector_
-        self.deactivate()
-      File "/Users/dmiller/code/EditXT/editxt/controls/commandview.py", line 102, in deactivate
-        self.window().makeFirstResponder_(editor.text_view)
-    AttributeError: 'NoneType' object has no attribute 'makeFirstResponder_'
-
-
 Refactor OutlineView+NSTreeController+HoverButtonCell
   -> editxt.platform.mac.views.DocumentTreeView
   - ?? Formalize pythonic KVO observe/callback

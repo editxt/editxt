@@ -304,9 +304,6 @@ class ContentSizedTextView(ak.NSTextView):
     def setFont_(self, value):
         super(ContentSizedTextView, self).setFont_(value)
         self.placeholder_attrs.setObject_forKey_(value, ak.NSFontAttributeName)
-        if self._placeholder:
-            range = (0, len(self._h4w_text))
-            self._h4w_text.setAttributes_range_(self.placeholder_attrs, range)
         self.textDidChange_(None)
 
     def setString_(self, value):
@@ -322,6 +319,10 @@ class ContentSizedTextView(ak.NSTextView):
         self.textDidChange_(None)
 
     def textDidChange_(self, notification):
+        if self._placeholder:
+            self.placeholder = self._placeholder
+        elif self._h4w_text != self.textStorage():
+            self._h4w_text.setAttributedString_(self.textStorage())
         self.text_did_change_handler(self)
         self.reset_preferred_height()
         if self.preferred_height != self.scroller.frame().size.height:
