@@ -81,9 +81,6 @@ Refactor OutlineView+NSTreeController+HoverButtonCell
 Eliminate editxt.app global/singleton
   - remaining places
     - DocumentController: this thing is a pain (when does it get created?)
-x    - TextDocument: cannot pass app when instantiated by DocumentController
-x      - look into setting in get_with_path
-    - editxt.errorlog.StreamHandler: is a global object, hard to improve
     - tests... there are way too many
 Project drag/drop bugs
 Combine and write pythonic wrapper for outline view and NSTreeController
