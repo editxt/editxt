@@ -849,6 +849,7 @@ def test_DocumentController_actions():
     
     yield test, "newWindow_", "create_window"
     yield test, "newProject_", "new_project"
+    yield test, "newDocument_", "new_document"
     yield test, "openConfigFile_", "open_config_file"
     yield test, "openErrorLog_", "open_error_log"
     yield test, "openPath_", "open_path_dialog"

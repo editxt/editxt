@@ -1060,9 +1060,12 @@ def test_iter_dropped_paths():
     c = TestConfig(has_paths=True)
     def path(create, ignored=False, num=[0]):
         num[0] += 1
+        if create is None:
+            return TestConfig(create=(lambda tmp: None), ignored=ignored)
         return TestConfig(create=partial(create, num[0]), ignored=ignored)
     yield test, c(has_paths=False)
     yield test, c(paths=[])
+    yield test, c(paths=[path(None)])
     yield test, c(paths=[path(doc)])
     yield test, c(paths=[path(sym)])
     yield test, c(paths=[path(doc), path(sym), path(doc)])

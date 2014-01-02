@@ -136,6 +136,9 @@ class Application(object):
            self.path_opener.window().makeKeyAndOrderFront_(self)
         self.path_opener.populateWithClipboard()
 
+    def new_document(self):
+        self.open_documents_with_paths([None])
+
     def new_project(self):
         window = self.current_window()
         if window is not None:
@@ -448,6 +451,9 @@ class DocumentController(ak.NSDocumentController):
 
     def saveProjectAs_(self, sender):
         raise NotImplementedError()
+
+    def newDocument_(self, sender):
+        self.controller.new_document()
 
     def newProject_(self, sender):
         self.controller.new_project()

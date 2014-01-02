@@ -517,7 +517,7 @@ class Window(object):
         if not paths:
             return
         for path in paths:
-            if os.path.isfile(path) or not os.path.exists(path):
+            if path is None or os.path.isfile(path) or not os.path.exists(path):
                 yield self.app.document_with_path(path)
 #            elif os.path.isdir(path):
 #                yield Project(self, name=os.path.dirname(path))
