@@ -38,7 +38,8 @@ from editxt.project import Project
 from editxt.test.noseplugins import slow_skip
 from editxt.util import representedObject
 
-from editxt.test.util import do_method_pass_through, TestConfig, replattr, tempdir
+from editxt.test.util import (do_method_pass_through, TestConfig, Regex,
+    replattr, tempdir, test_app)
 
 import editxt.window as mod
 
@@ -1071,8 +1072,6 @@ def test_iter_dropped_paths():
     #yield test, c(paths=[path(proj, is_open=False)])
 
 def test_insert_items():
-    class FakeApp(object):
-        text_commander = None
     class MatchingName(object):
         def __init__(self, name, rmap):
             self.name = name
@@ -1095,105 +1094,166 @@ def test_insert_items():
                 assert all(v in '0123456789' for v in drop[0]), drop
                 return None, pindex
             return project, dindex + offset
+        def namechar(item, seen=set()):
+            name = test_app.name(item, app)
+            assert name.startswith(("(", "[", "<")), name
+            assert name.endswith((")", "]", ">")), name
+            name = name[1:-1]
+            assert name not in seen, (item, name)
+            seen.add(name)
+            return name
 
-        m = Mocker()
-        app = FakeApp()
-        ed = Window(app, None)
-        get_current_project = m.method(ed.get_current_project)
-        current_editor = m.property(ed, 'current_editor')
-        map = {}
-        rmap = {}
-        drop = {}
+        config = []
         pindex = dindex = -1
         project = None
         for i, char in enumerate(c.init + ' '):
+            if char == "|":
+                config.append("window")
+                pindex = dindex = -1
+                continue
             if char == ' ':
                 if i == c.drop[1]:
                     offset = 1 if project is not None else 0
                     parent, index = get_parent_index(c.drop, offset)
                 dindex = -1
                 continue
+            name = "({})".format(char)
             if char in '0123456789':
-                item = project = Project(ed)
-                item.name = char
-                ed.projects.append(item)
+                item = project = "project" + name
                 pindex += 1
             else:
-                doc = TextDocument.alloc().init()
-                doc.setFileURL_(fn.NSURL.fileURLWithPath_(char))
-                item = Editor(project, document=doc)
-                project.append_editor(item)
+                item = "editor" + name
                 dindex += 1
-            map[item] = char
-            rmap[char] = item
+            config.append(item)
             if i == c.drop[1]:
                 parent, index = get_parent_index(c.drop)
-            if char in c.drop[0]:
-                drop[char] = item
-        for char in c.drop[0]:
-            if char not in rmap and char not in '0123456789':
-                drop[char] = rmap[char] = TextDocument.alloc().init()
-                drop[char].setFileURL_(fn.NSURL.fileURLWithPath_(char))
-        items = [drop[char] for char in c.drop[0]]
 
-        if c.result and c.focus:
-            current_editor.value = MatchingName(c.focus, rmap)
+        config = " ".join(config)
+        print(config)
+        with test_app(config) as app:
+            name_to_item = {}
+            for window in app.windows:
+                for project in window.projects:
+                    char = namechar(project)
+                    project.name = char
+                    name_to_item[char] = project
+                    for editor in project.editors:
+                        char = namechar(editor)
+                        editor.document.setFileURL_(fn.NSURL.fileURLWithPath_(char))
+                        name_to_item[char] = editor
 
-        if "current_project" in c:
-            args = ()
-            parent = const.CURRENT
-            index = -1
-            if c.current_project is None:
-                get_current_project() >> None
+            for char in c.drop[0]:
+                if char not in name_to_item and char not in '0123456789':
+                    name_to_item[char] = TextDocument.alloc().init()
+                    name_to_item[char].setFileURL_(fn.NSURL.fileURLWithPath_(char))
+
+            items = [name_to_item[char] for char in c.drop[0]] if c.focus else []
+
+            m = Mocker()
+            window = app.windows[0]
+            get_current_project = m.method(window.get_current_project)
+            current_editor = m.property(window, 'current_editor')
+            if c.focus:
+                current_editor.value = MatchingName(c.focus, name_to_item)
+
+            if "current_project" in c:
+                args = ()
+                parent = const.CURRENT
+                index = -1
+                if c.current_project is None:
+                    def callback(**kw):
+                        proj = Project(window)
+                        window.projects.append(proj)
+                        return proj
+                else:
+                    callback = lambda **k:name_to_item[c.current_project]
+                expect(get_current_project(create=True)).call(callback)
             else:
-                get_current_project() >> rmap[c.current_project]
-        else:
-            args = (parent, index, c.action)
+                if parent is None:
+                    if c.drop[0] and not c.drop[0][0].isdigit():
+                        def callback(**kw):
+                            proj = Project(window)
+                            window.projects.append(proj)
+                            return proj
+                        expect(get_current_project(create=True)).call(callback)
+                else:
+                    parent = name_to_item[parent[8:-1]]
+                args = (parent, index, c.action)
 
-        print(('drop(%s) %s at %s of %s' % (c.action, c.drop[0], index, parent)))
-        with m:
-            result = ed.insert_items(items, *args)
+            print('drop(%s) %s at %s of %s' % (c.action, c.drop[0], index, parent))
+            with m:
+                result = window.insert_items(items, *args)
 
-        eq_(result, items)
-        final = []
-        next_project = str(int(max(v for v in c.init if v in '0123456789')) + 1)
-        for project in ed.projects:
-            final.append(' ' + map.get(project, next_project))
-            for editor in project.editors:
-                final.append(map.get(editor, editor.name.upper()))
-        eq_(str(''.join(final)), c.final)
+            eq_(result, items)
+
+            final = ["window"]
+            for char in c.final:
+                if char == " ":
+                    continue
+                if char == "|":
+                    final.append("window")
+                    continue
+                name = r"\({}\)".format(char)
+                if char in "0123456789":
+                    if char not in c.init:
+                        name = r"\[.\]"
+                    final.append("project" + name)
+                    continue
+                if char.isupper():
+                    name = "\[{} .\]".format(char.lower())
+                final.append("editor" + name)
+            final = "^" + " ".join(final) + "$"
+            eq_(test_app.config(app), Regex(final, repr=final.replace("\\", "")))
+
+            def eq(a, b):
+                msg = lambda:"{} != {}".format(
+                    test_app.name(a, app),
+                    test_app.name(b, app),
+                )
+                eq_(a, b, msg)
+            for window in app.windows:
+                for project in window.projects:
+                    eq(project.window, window)
+                    for editor in project.editors:
+                        eq(editor.project, project)
 
     # number = project
-    # letter = document
-    # capital letter = new editor of document
+    # letter in range a-f = document
+    # letter in rnage A-F = new editor of document
     # space before project allows drop on project (insert at end)
-    # so ' 0abc 1 2de' is...
-    #   project 0
-    #       document a
-    #       document b
-    #       document c
-    #   project 1
-    #   project 2
-    #       document d
-    #       document e
+    # pipe (|) delimits windows
+    # so ' 0abc 1 2de| 3fa' is...
+    #   window
+    #       project 0
+    #           document a
+    #           document b
+    #           document c
+    #       project 1
+    #       project 2
+    #           document d
+    #           document e
+    #   window
+    #       project 3
+    #           document f
+    #           document a
     #
     # drop=(<dropped item(s)>, <drop index in init>)
 
-    config = TestConfig(init=' 0abc 1 2de', result=True, focus='')
+    config = TestConfig(init=' 0abc 1 2de', focus='')
 
     c = config(action=const.MOVE)
-    yield test, c(drop=('', 0), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 1), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 2), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 3), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 4), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 5), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 6), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 7), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 8), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 9), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 10), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 11), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 0), final=' 0abc 1 2de')
+    yield test, c(drop=('', 1), final=' 0abc 1 2de')
+    yield test, c(drop=('', 2), final=' 0abc 1 2de')
+    yield test, c(drop=('', 3), final=' 0abc 1 2de')
+    yield test, c(drop=('', 4), final=' 0abc 1 2de')
+    yield test, c(drop=('', 5), final=' 0abc 1 2de')
+    yield test, c(drop=('', 6), final=' 0abc 1 2de')
+    yield test, c(drop=('', 7), final=' 0abc 1 2de')
+    yield test, c(drop=('', 8), final=' 0abc 1 2de')
+    yield test, c(drop=('', 9), final=' 0abc 1 2de')
+    yield test, c(drop=('', 10), final=' 0abc 1 2de')
+    yield test, c(drop=('', 11), final=' 0abc 1 2de')
 
     yield test, c(drop=('a', 0), final=' 0bc 1 2de 3a', focus='a')
     yield test, c(drop=('a', 1), final=' 0bca 1 2de', focus='a')
@@ -1229,24 +1289,24 @@ def test_insert_items():
     yield test, c(drop=('2', 5), final=' 2de 0abc 1', focus='2')
     yield test, c(drop=('2', 6), final=' 0abc 2de 1', focus='2')
     yield test, c(drop=('2', 7), final=' 0abc 2de 1', focus='2')
-    yield test, c(drop=('2', 8), final=' 0abc 1 2de', focus='')
-    yield test, c(drop=('2', 9), final=' 0abc 1 2de', focus='')
-    yield test, c(drop=('2', 10), final=' 0abc 1 2de', focus='')
-    yield test, c(drop=('2', 11), final=' 0abc 1 2de', focus='')
+    yield test, c(drop=('2', 8), final=' 0abc 1 2de')
+    yield test, c(drop=('2', 9), final=' 0abc 1 2de')
+    yield test, c(drop=('2', 10), final=' 0abc 1 2de')
+    yield test, c(drop=('2', 11), final=' 0abc 1 2de')
 
     c = config(action=const.COPY)
-    yield test, c(drop=('', 0), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 1), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 2), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 3), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 4), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 5), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 6), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 7), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 8), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 9), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 10), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 11), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 0), final=' 0abc 1 2de')
+    yield test, c(drop=('', 1), final=' 0abc 1 2de')
+    yield test, c(drop=('', 2), final=' 0abc 1 2de')
+    yield test, c(drop=('', 3), final=' 0abc 1 2de')
+    yield test, c(drop=('', 4), final=' 0abc 1 2de')
+    yield test, c(drop=('', 5), final=' 0abc 1 2de')
+    yield test, c(drop=('', 6), final=' 0abc 1 2de')
+    yield test, c(drop=('', 7), final=' 0abc 1 2de')
+    yield test, c(drop=('', 8), final=' 0abc 1 2de')
+    yield test, c(drop=('', 9), final=' 0abc 1 2de')
+    yield test, c(drop=('', 10), final=' 0abc 1 2de')
+    yield test, c(drop=('', 11), final=' 0abc 1 2de')
 
     yield test, c(drop=('a', 0), final=' 0abc 1 2de 3A', focus='A')
     yield test, c(drop=('a', 1), final=' 0abcA 1 2de', focus='A')
@@ -1262,18 +1322,18 @@ def test_insert_items():
     yield test, c(drop=('a', 11), final=' 0abc 1 2deA', focus='A')
 
     c = config(action=None)
-    yield test, c(drop=('', 0), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 1), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 2), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 3), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 4), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 5), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 6), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 7), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 8), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 9), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 10), final=' 0abc 1 2de', result=False)
-    yield test, c(drop=('', 11), final=' 0abc 1 2de', result=False)
+    yield test, c(drop=('', 0), final=' 0abc 1 2de')
+    yield test, c(drop=('', 1), final=' 0abc 1 2de')
+    yield test, c(drop=('', 2), final=' 0abc 1 2de')
+    yield test, c(drop=('', 3), final=' 0abc 1 2de')
+    yield test, c(drop=('', 4), final=' 0abc 1 2de')
+    yield test, c(drop=('', 5), final=' 0abc 1 2de')
+    yield test, c(drop=('', 6), final=' 0abc 1 2de')
+    yield test, c(drop=('', 7), final=' 0abc 1 2de')
+    yield test, c(drop=('', 8), final=' 0abc 1 2de')
+    yield test, c(drop=('', 9), final=' 0abc 1 2de')
+    yield test, c(drop=('', 10), final=' 0abc 1 2de')
+    yield test, c(drop=('', 11), final=' 0abc 1 2de')
 
     yield test, c(drop=('a', 0), final=' 0abc 1 2de 3A', focus='A')
     yield test, c(drop=('a', 1), final=' 0abc 1 2de', focus='a')
@@ -1302,7 +1362,7 @@ def test_insert_items():
     yield test, c(drop=('f', 11), final=' 0abc 1 2deF', focus='F')
 
     # cannot copy project yet
-#    yield test, c(drop=('2', 0), final=' 0abc 1 2de', focus='')
+#    yield test, c(drop=('2', 0), final=' 0abc 1 2de')
 #    yield test, c(drop=('2', 1), final=' 2de 0abc 1', focus='2')
 #    yield test, c(drop=('2', 2), final=' 2de 0abc 1', focus='2')
 #    yield test, c(drop=('2', 3), final=' 2de 0abc 1', focus='2')
@@ -1310,10 +1370,10 @@ def test_insert_items():
 #    yield test, c(drop=('2', 5), final=' 2de 0abc 1', focus='2')
 #    yield test, c(drop=('2', 6), final=' 0abc 2de 1', focus='2')
 #    yield test, c(drop=('2', 7), final=' 0abc 2de 1', focus='2')
-#    yield test, c(drop=('2', 8), final=' 0abc 1 2de', focus='')
-#    yield test, c(drop=('2', 9), final=' 0abc 1 2de', focus='')
-#    yield test, c(drop=('2', 10), final=' 0abc 1 2de', focus='')
-#    yield test, c(drop=('2', 11), final=' 0abc 1 2de', focus='')
+#    yield test, c(drop=('2', 8), final=' 0abc 1 2de')
+#    yield test, c(drop=('2', 9), final=' 0abc 1 2de')
+#    yield test, c(drop=('2', 10), final=' 0abc 1 2de')
+#    yield test, c(drop=('2', 11), final=' 0abc 1 2de')
 
     c = config(action=None, current_project='2')
     yield test, c(drop=('a', 0), final=' 0abc 1 2deA', focus='A')
@@ -1342,6 +1402,15 @@ def test_insert_items():
     yield test, c(drop=('a', 9), final=' 0abc 1 2de 3A', focus='A')
     yield test, c(drop=('a', 10), final=' 0abc 1 2de 3A', focus='A')
     yield test, c(drop=('a', 11), final=' 0abc 1 2de 3A', focus='A')
+
+    c = config(init=' 0a | 1bc', action=const.MOVE)
+    yield test, c(drop=('b', 1), final=' 0ab | 1c', focus='b')
+    yield test, c(drop=('b', 2), final=' 0ba | 1c', focus='b')
+
+    yield test, c(drop=('1', 0), final=' 0a 1bc |', focus='1')
+    yield test, c(drop=('1', 1), final=' 1bc 0a |', focus='1')
+
+    yield test, c(drop=('a', 6), final=' 0 | 1bca', focus='a') # should fail (item inserted in wrong window)
 
 def test_undo_manager():
     def test(c):

@@ -21,6 +21,7 @@ import logging
 import objc
 import os
 from collections import defaultdict
+from itertools import groupby
 
 import objc
 import AppKit as ak
@@ -524,9 +525,9 @@ class Window(object):
                 log.info("cannot open path: %s", path)
 
     def insert_items(self, items, project=const.CURRENT, index=-1, action=None):
-        """Insert projects or documents into the document tree
+        """Insert items into the document tree
 
-        :param items: A sequence of projects and/or documents.
+        :param items: An iterable of projects, editors, and/or documents.
         :param project: The parent project into which items are being inserted.
             Documents will be inserted in the current project if unspecified.
         :param index: The index in the outline view or parent project at which
@@ -545,73 +546,40 @@ class Window(object):
             being inserted.
         :returns: A list of items that were inserted.
         """
-        proj_index = len(self.projects) # insert projects at end of list
-        if project is const.CURRENT:
-            assert index == -1, index
-            project = self.get_current_project()
-        if project is None:
-            # a new project will be inserted at index if/when needed
-            if index >= 0 and index <= proj_index:
-                proj_index = index
-            index = 0
-        elif index < 0:
-            index = len(project.editors)
         inserted = []
         focus = None
-        is_move = action == const.MOVE
-        is_copy = action == const.COPY
         self.suspend_recent_updates()
         try:
-            for item in items:
-                inserted.append(item)
-                if isinstance(item, Project):
-                    set_focus, proj_index = \
-                        self._insert_project(item, proj_index, action)
-                    if set_focus:
-                        focus = item
-                    continue
-
-                if project is None:
-                    project = Project(self)
-                    if isinstance(item, Editor):
-                        if is_move:
-                            editor = item
-                            item.project.remove_editor(editor)
-                        else:
-                            editor = Editor(project, document=item.document)
-                    else:
-                        assert isinstance(item, TextDocument), item
-                        editor = Editor(project, document=item)
-                    self.projects.insert(proj_index, project)
-                    proj_index += 1
-                    index = 0
+            pindex = index
+            if pindex < 0:
+                pindex = len(self.projects)
+            for is_project_group, group in groupby(items, self.is_project):
+                if is_project_group:
+                    for item in group:
+                        project, pindex = self._insert_project(item, pindex, action)
+                        if project is not None:
+                            inserted.append(project)
+                            focus = project
+                    # Reset index since the project into which non-project
+                    # items will be inserted has changed.
+                    index = -1
                 else:
-                    if isinstance(item, Editor):
-                        editor, item = item, item.document
-                    else:
-                        assert isinstance(item, TextDocument), item
-                        editor = project.find_editor_with_document(item)
-                    if is_move and editor is not None:
-                        if editor.project is project:
-                            vindex = project.editors.index(editor)
-                            if vindex in [index - 1, index]:
-                                continue
-                            if vindex - index <= 0:
-                                index -= 1
-                        editor.project.remove_editor(editor)
-                    elif is_copy or editor is None or project is not editor.project:
-                        editor = Editor(project, document=item)
-                    else:
-                        focus = editor
-                        continue
-                project.insert_editor(index, editor)
-                focus = editor
-                index += 1
+                    if project == const.CURRENT or project is None:
+                        if index >= 0:
+                            raise NotImplementedError
+                        project = self.get_current_project(create=True)
+                    inserts, focus = project.insert_items(group, index, action)
+                    inserted.extend(inserts)
         finally:
             self.resume_recent_updates()
         if focus is not None:
             self.current_editor = focus
         return inserted
+
+    def is_project(self, item):
+        """Return true if item can be inserted as a project"""
+        # TODO return true if item is a directory path
+        return isinstance(item, Project)
 
     def _insert_project(self, item, index, action):
         if action != const.MOVE:
@@ -620,7 +588,7 @@ class Window(object):
             window = self
             pindex = self.projects.index(item)
             if pindex == index:
-                return False, index
+                return None, index
             if pindex - index <= 0:
                 index -= 1
         else:
@@ -633,8 +601,9 @@ class Window(object):
         editors.extend(tmp)
         # END HACK
 
+        item.window = self
         self.projects.insert(index, item)
-        return True, index + 1
+        return item, index + 1
 
     def undo_manager(self):
         doc = self.wc.document()

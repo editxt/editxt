@@ -74,16 +74,72 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Refactor OutlineView+NSTreeController+HoverButtonCell
-  -> editxt.platform.mac.views.DocumentTreeView
-  - ?? Formalize pythonic KVO observe/callback
+Project drag/drop bugs
+  - Combine and write pythonic wrapper for outline view and NSTreeController
+    -> editxt.platform.mac.views.DocumentTreeView
+    - ?? Formalize pythonic KVO observe/callback
+
+  - Drag project to other window, then back to window. Focus document.
+    ERROR editxt - *** Python exception discarded!
+    Traceback (most recent call last):
+      File "/Users/dmiller/code/EditXT/editxt/controls/overlaywindow.py", line 69, in updateSize
+        screen_rect = self.parent.window().convertRectToScreen_(window_rect)
+    AttributeError: 'NoneType' object has no attribute 'convertRectToScreen_'
+
+    ERROR editxt - *** Python exception discarded!
+    Traceback (most recent call last):
+      File "/Users/dmiller/code/EditXT/editxt/controls/dualview.py", line 144, in resizeSubviewsWithOldSize_
+        self.tile()
+      File "/Users/dmiller/code/EditXT/editxt/controls/dualview.py", line 103, in tile
+        self.top.setFrame_(rect)
+      File "/Users/dmiller/code/EditXT/editxt/controls/overlaywindow.py", line 69, in updateSize
+        screen_rect = self.parent.window().convertRectToScreen_(window_rect)
+    AttributeError: 'NoneType' object has no attribute 'convertRectToScreen_'
+
+    ERROR editxt - *** Python exception discarded!
+    Traceback (most recent call last):
+      File "/Users/dmiller/code/EditXT/editxt/window.py", line 697, in outlineViewSelectionDidChange_
+        self.window_.selected_editor_changed()
+      File "/Users/dmiller/code/EditXT/editxt/window.py", line 222, in selected_editor_changed
+        self.current_editor = selected[0]
+      File "/Users/dmiller/code/EditXT/editxt/window.py", line 205, in _set_current_editor
+        editor.set_main_view_of_window(main_view, self.wc.window())
+      File "/Users/dmiller/code/EditXT/editxt/document.py", line 147, in set_main_view_of_window
+        self.main_view.setFrame_(frame)
+      File "/Users/dmiller/code/EditXT/editxt/controls/dualview.py", line 144, in resizeSubviewsWithOldSize_
+        self.tile()
+      File "/Users/dmiller/code/EditXT/editxt/controls/dualview.py", line 103, in tile
+        self.top.setFrame_(rect)
+      File "/Users/dmiller/code/EditXT/editxt/controls/overlaywindow.py", line 69, in updateSize
+        screen_rect = self.parent.window().convertRectToScreen_(window_rect)
+    AttributeError: 'NoneType' object has no attribute 'convertRectToScreen_'
+
+    ERROR editxt - *** Python exception discarded!
+    Traceback (most recent call last):
+      File "/Users/dmiller/code/EditXT/editxt/platform/mac/views/treeview.py", line 287, in mouseDown_
+        if cevent is event: super(OutlineView, self).mouseDown_(event)
+      File "/Users/dmiller/code/EditXT/editxt/window.py", line 697, in outlineViewSelectionDidChange_
+        self.window_.selected_editor_changed()
+      File "/Users/dmiller/code/EditXT/editxt/window.py", line 222, in selected_editor_changed
+        self.current_editor = selected[0]
+      File "/Users/dmiller/code/EditXT/editxt/window.py", line 205, in _set_current_editor
+        editor.set_main_view_of_window(main_view, self.wc.window())
+      File "/Users/dmiller/code/EditXT/editxt/document.py", line 147, in set_main_view_of_window
+        self.main_view.setFrame_(frame)
+      File "/Users/dmiller/code/EditXT/editxt/controls/dualview.py", line 144, in resizeSubviewsWithOldSize_
+        self.tile()
+      File "/Users/dmiller/code/EditXT/editxt/controls/dualview.py", line 103, in tile
+        self.top.setFrame_(rect)
+      File "/Users/dmiller/code/EditXT/editxt/controls/overlaywindow.py", line 69, in updateSize
+        screen_rect = self.parent.window().convertRectToScreen_(window_rect)
+    AttributeError: 'NoneType' object has no attribute 'convertRectToScreen_'
+
+
 
 Eliminate editxt.app global/singleton
   - remaining places
     - DocumentController: this thing is a pain (when does it get created?)
     - tests... there are way too many
-Project drag/drop bugs
-Combine and write pythonic wrapper for outline view and NSTreeController
 
 Open directory as project
 

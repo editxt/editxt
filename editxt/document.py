@@ -419,6 +419,10 @@ class TextDocument(ak.NSDocument):
         return self
 
     @property
+    def name(self):
+        return self.displayName()
+
+    @property
     def file_path(self):
         url = self.fileURL()
         return (url.path() if url else None)

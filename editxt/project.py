@@ -144,6 +144,56 @@ class Project(object):
         self.append_editor(editor)
         return editor
 
+    def insert_items(self, items, index=-1, action=None):
+        """Insert items into project, creating editors as necessary
+
+        :param items: An iterable yielding editors and/or documents.
+        :param index: The index in this project's list of editors at
+            which items should be inserted.
+        :param action: What to do with items that already exist in this
+            project:
+
+            - None : insert new item(s), ignore existing item(s).
+            - MOVE : move existing item(s) to index.
+            - COPY : copy item(s) to index.
+
+            An item is considered to be "existing" if there is another
+            editor with the same path.
+        :returns: A tuple: list of editors for the items that were
+        inserted and the editor that should receive focus.
+        """
+        if index < 0:
+            index = len(self.editors)
+        is_move = action == const.MOVE
+        is_copy = action == const.COPY
+        focus = None
+        inserted = []
+        for item in items:
+            inserted.append(item)
+            if isinstance(item, Editor):
+                editor, item = item, item.document
+            else:
+                if not isinstance(item, TextDocument):
+                    raise ValueError("invalid item: {!r}".format(item))
+                editor = self.find_editor_with_document(item)
+            if is_move and editor is not None:
+                if editor.project is self:
+                    vindex = self.editors.index(editor)
+                    if vindex in [index - 1, index]:
+                        continue
+                    if vindex - index <= 0:
+                        index -= 1
+                editor.project.remove_editor(editor)
+            elif is_copy or editor is None or editor.project is not self:
+                editor = Editor(self, document=item)
+            else:
+                focus = editor
+                continue
+            self.insert_editor(index, editor)
+            focus = editor
+            index += 1
+        return inserted, focus
+
     def append_editor(self, editor):
         """Add editor to the end of this projects editors"""
         self.editors.append(editor)
