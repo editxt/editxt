@@ -192,16 +192,11 @@ class Project(object):
                     index += 1
                 focus = editor
                 continue
-            self.insert_editor(index, editor)
+            self.editors.insert(index, editor)
+            editor.project = self
             focus = editor
             index += 1
         return inserted, focus
-
-    def insert_editor(self, index, editor):
-        """Insert editor at index in this projects editors
-        """
-        self.editors.insert(index, editor)
-        editor.project = self
 
     def remove_editor(self, editor):
         """Remove editor from this projects editors
@@ -211,7 +206,6 @@ class Project(object):
         if editor in self.editors:
             self.editors.remove(editor)
             editor.project = None
-            #self.is_dirty = True
 
     def find_editor_with_document(self, doc):
         for editor in self.editors:
