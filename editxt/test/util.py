@@ -57,7 +57,9 @@ def unittest_print_first_failures_last():
 
 def eq_(a, b, text=None):
     if a != b:
-        if isinstance(a, basestring):
+        if callable(text):
+            text = text()
+        if isinstance(a, basestring) or len(repr(a)) > 20:
             if text is None:
                 text = "not equal"
             err = "%s\n%r\n%r" % (text, a, b)
@@ -217,10 +219,13 @@ class CaptureLog(object):
 class Regex(object):
 
     def __init__(self, expression, *args, **kw):
+        self.repr = kw.pop("repr", None)
         self.expr = re.compile(expression, *args, **kw)
         self.expression = expression
 
     def __repr__(self):
+        if self.repr is not None:
+            return self.repr
         return "Regex({!r})".format(self.expression)
 
     def __str__(self):
@@ -274,37 +279,42 @@ def test_app(config=None):
     from editxt.project import Project
     from editxt.window import Window
     def setup(app, config):
-        app._test_app__documents = documents = {}
+        docs_by_name = {}
+        app._test_app__items = items = {}
         app._test_app__news = 0
         if config is None:
             return
         window = project = None
-        for item in config.split():
+        for i, item in enumerate(config.split()):
+            match = test_app.editor_re.match(item)
+            assert match, "unknown config item: {}".format(item)
+            item, name = match.groups()
+            if not name:
+                name = "<{}>".format(i)
             if item == "window" or window is None:
                 window = Window(app, None)
                 project = None
                 app.windows.append(window)
                 if item == "window":
+                    items[window] = name
                     continue
+                else:
+                    items[window] = "<{}>".format(i)
             if item == "project" or project is None:
                 project = Project(window)
                 window.projects.append(project)
                 if item == "project":
+                    items[project] = name
                     continue
-            match = test_app.editor_re.match(item)
-            assert match, "unknown config item: {}".format(item)
-            name = match.group(1)[1:-1]
-            if name:
-                assert isinstance(name, str), name
-                document = documents.get(name)
-                if document is None:
-                    document = app.document_with_path(None)
-                    documents[name] = document
-            else:
+                else:
+                    items[project] = "<{}>".format(i)
+            document = docs_by_name.get(name)
+            if document is None:
                 document = app.document_with_path(None)
-                assert isinstance(document.id, int), document.id
-                documents[document.id] = document
+                docs_by_name[name] = document
             editor = Editor(project, document=document)
+            items[editor] = name
+            items[document] = name
             project.editors.append(editor)
     with tempdir() as tmp:
         app = Application(tmp)
@@ -312,49 +322,68 @@ def test_app(config=None):
             setup(app, config)
             yield app
         finally:
-            # TODO cleanup
             controller = DocumentController.sharedDocumentController()
             for document in controller.documents():
                 document.close()
             assert not controller.documents(), controller.documents()
 
-test_app.editor_re = re.compile("editor((?:\([a-z0-9-]+)\)?)$")
+test_app.editor_re = re.compile("(window|project|editor)((?:\([a-z0-9-]+\))?)$")
 
 def _test_app_config(app):
+    """Get a string representing the app window/project/editor/document config
+
+    Documents that were created after the app was initialized are
+    delimited with square brackets rather than parens. For example:
+
+        window project editor[Untitled 0]
+
+    Documents not associated with any window (this is a bug) are listed
+    at the end of the config string after a pipe (|) character. Example:
+
+        window project editor | editor[Untitled 0]
+    """
     from editxt.application import DocumentController
     def iter_items(app):
-        rev_map = {v: k for k, v in app._test_app__documents.items()}
+        def name(item, item_type):
+            name = _test_app_item_name(item, app)
+            if name.startswith("<"):
+                return item_type
+            return "{}{}".format(item_type, name)
         seen = set()
         for window in app.windows:
-            yield "window"
+            yield name(window, "window")
             for project in window.projects:
-                yield "project"
+                yield name(project, "project")
                 for editor in project.editors:
-                    name = rev_map.get(editor.document)
-                    if name is None:
-                        name = "<{} {}>".format(editor.name, app._test_app__news)
-                        app._test_app__news += 1
-                        app._test_app__documents[name] = editor.document
-                        rev_map[editor.document] = name
-                        yield "editor({})".format(name)
-                    elif isinstance(name, str):
-                        yield "editor({})".format(name)
-                    else:
-                        yield "editor"
+                    yield name(editor, "editor")
                     seen.add(editor.document)
         controller = DocumentController.sharedDocumentController()
         documents = set(controller.documents()) - seen
         if documents:
+            # documents not associated with any window (should not get here)
             yield "|"
             for document in documents:
-                name = rev_map.get(document, document.id)
-                if isinstance(name, str):
-                    yield name
-                else:
-                    yield "<{}>".format(name)
+                yield "document{}".format(_test_app_item_name(document, app))
     return " ".join(iter_items(app))
 test_app.config = _test_app_config
 
+def _test_app_item_name(item, app):
+    """Get the name of a window, project, or editor/document"""
+    from editxt.document import Editor
+    from editxt.project import Project
+    from editxt.window import Window
+    name = app._test_app__items.get(item)
+    if name is None:
+        if isinstance(item, (Window, Project)):
+            name = "[{}]".format(app._test_app__news)
+        else:
+            name = "[{} {}]".format(item.name, app._test_app__news)
+        app._test_app__news += 1
+        app._test_app__items[item] = name
+        if isinstance(item, Editor):
+            app._test_app__items[item.document] = name
+    return name
+test_app.name = _test_app_item_name
 
 def check_app_state(test):
     def checker(when):
