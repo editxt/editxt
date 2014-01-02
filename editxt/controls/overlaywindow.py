@@ -65,6 +65,8 @@ class OverlayWindow(ak.NSWindow):
         self.close()
 
     def updateSize(self):
+        if self.parent.window() is None:
+            return
         window_rect = self.parent.convertRect_toView_(self.parent.bounds(), None)
         screen_rect = self.parent.window().convertRectToScreen_(window_rect)
         if self.frame() != screen_rect:
