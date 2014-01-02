@@ -136,12 +136,12 @@ class Project(object):
     def create_editor(self):
         document = self.window.app.document_with_path(None)
         editor = Editor(self, document=document)
-        self.append_editor(editor)
+        self.insert_items([editor])
         return editor
 
     def create_editor_with_state(self, state):
         editor = Editor(self, state=state)
-        self.append_editor(editor)
+        self.insert_items([editor])
         return editor
 
     def insert_items(self, items, index=-1, action=None):
@@ -187,17 +187,15 @@ class Project(object):
             elif is_copy or editor is None or editor.project is not self:
                 editor = Editor(self, document=item)
             else:
+                if editor not in self.editors:
+                    self.editors.insert(index, editor)
+                    index += 1
                 focus = editor
                 continue
             self.insert_editor(index, editor)
             focus = editor
             index += 1
         return inserted, focus
-
-    def append_editor(self, editor):
-        """Add editor to the end of this projects editors"""
-        self.editors.append(editor)
-        editor.project = self
 
     def insert_editor(self, index, editor):
         """Insert editor at index in this projects editors

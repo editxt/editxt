@@ -483,7 +483,7 @@ def test_find_project_with_editor():
     doc = object()
     proj = Project(ed)
     dv = Editor(proj, document=doc)
-    proj.append_editor(dv)
+    proj.insert_items([dv])
     assert dv.document is doc
     ed.projects.append(proj)
     eq_(ed.find_project_with_editor(dv), proj)

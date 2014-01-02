@@ -197,16 +197,13 @@ def test_save():
         yield test, False, is_changed
 
 def test_create_editor_with_state():
-    proj = Project(None)
-    m = Mocker()
-    state = m.mock()
-    dv_class = m.replace(mod, 'Editor')
-    dv = dv_class(proj, state=state) >> Editor(proj, document="fake")
-    with m:
-        result = proj.create_editor_with_state(state)
-        eq_(result, dv)
-        eq_(result.project, proj)
-        assert dv in proj.editors
+    with test_app() as app:
+        window = TestConfig(app=app)
+        project = Project(window)
+        state = {"path": "Untitled"}
+        result = project.create_editor_with_state(state)
+        eq_(result.project, project)
+        assert result in project.editors, project.editors
 
 def test_create_editor():
     with test_app("project") as app:
@@ -216,16 +213,12 @@ def test_create_editor():
         eq_(len(project.editors), 1)
         eq_(test_app.config(app), "window project editor[Untitled 0]")
 
-def test_append_editor():
+def test_insert_items():
     proj = Project(None)
-    #assert not proj.is_dirty
-    m = Mocker()
     doc = Editor(proj, document="fake")
     doc.project = proj
-    with m:
-        proj.append_editor(doc)
+    proj.insert_items([doc])
     assert doc in proj.editors
-    #assert proj.is_dirty
 
 def test_dirty_editors():
     def do_test(template):
@@ -254,16 +247,15 @@ def test_dirty_editors():
     yield do_test, "dd"
     yield do_test, "dcd"
 
-def test_append_editor_already_in_project():
+def test_insert_items_already_in_project():
     class Fake(object):
-        @property
-        def proxy(self):
-            return self
+        def displayName(self):
+            return "fake"
     proj = Project(None)
-    dv = Fake()
-    proj.append_editor(dv)
-    proj.append_editor(dv)
-    assert len(proj.editors) == 2, proj.editors
+    editor = Editor(proj, document=Fake())
+    proj.insert_items([editor])
+    proj.insert_items([editor], action=const.COPY)
+    eq_(len(proj.editors), 2, proj.editors)
 
 def test_remove_editor():
     class MockView(object):
