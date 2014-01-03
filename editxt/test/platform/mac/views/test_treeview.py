@@ -25,6 +25,7 @@ import Foundation as fn
 from mocker import Mocker
 from nose.tools import eq_
 from editxt.test.util import TestConfig
+from editxt.platform.mac.window import WindowController
 
 import editxt.platform.mac.views.treeview as mod
 
@@ -67,7 +68,6 @@ def test_HoverButtonCell_init():
 #       return mod.BUTTON_STATE_NORMAL
 
 def test_HBC_buttonImageForFrame_inView_():
-    from editxt.window import WindowController
     def test(c):
         m = Mocker()
         hbc = mod.HoverButtonCell.alloc().init()
@@ -103,7 +103,6 @@ def test_HBC_mouseMovePressHandlers():
         eq_(hbc.hover_info, (None, False))
 
 def test_HBC_mouseMoveHandlers():
-    from editxt.window import WindowController
     def test(c):
         m = Mocker()
         hbc = mod.HoverButtonCell.alloc().init()

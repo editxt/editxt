@@ -74,7 +74,8 @@ def main(argv=list(sys.argv)):
         if use_pdb:
             argv.remove("--pdb")
 
-        platform.init("mac", use_pdb)
+        platform_ = "test" if "--test" in argv else "mac"
+        platform.init(platform_, use_pdb)
 
         if "--test" in argv:
             from editxt.test.runner import TestApplication
