@@ -150,16 +150,10 @@ def test_create_window():
         ac = Application()
         m = Mocker()
         ed_class = m.replace(window, 'Window')
-        wc_class = m.replace(window, 'WindowController')
-        wc = wc_class.alloc() >> m.mock(window.WindowController)
-        wc.initWithWindowNibName_("EditorWindow") >> wc
-        ed = ed_class(ac, wc, args[0] if args else None) >> m.mock(window.Window)
-        wc.window_ = ed
-        #ed = wc.controller >> m.mock(Window)
-        #wc_class.create_with_serial_data(args[0] if args else None) >> wc
+        ed = ed_class(ac, args[0] if args else None) >> m.mock(window.Window)
         with m.order():
             ac.windows.append(ed)
-            wc.showWindow_(ac)
+            ed.show(ac)
         with m:
             result = ac.create_window(*args)
             eq_(result, ed)

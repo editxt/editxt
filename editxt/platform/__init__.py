@@ -31,6 +31,7 @@ def init(platform, use_pdb):
 
         "document",
         "views",
+        "window",
     ]
 
     import_module("{}.{}".format(__name__, platform))

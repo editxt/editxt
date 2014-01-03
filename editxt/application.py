@@ -119,13 +119,11 @@ class Application(object):
             self.create_window()
 
     def create_window(self, state=None):
-        from editxt.window import WindowController, Window
-        wc = WindowController.alloc().initWithWindowNibName_("EditorWindow")
-        ed = Window(self, wc, state)
-        wc.window_ = ed
-        self.windows.append(ed)
-        wc.showWindow_(self)
-        return ed
+        from editxt.window import Window
+        window = Window(self, state)
+        self.windows.append(window)
+        window.show(self)
+        return window
 
     def open_path_dialog(self):
         if self.path_opener is None:

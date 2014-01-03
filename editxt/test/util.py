@@ -292,7 +292,7 @@ def test_app(config=None):
             if not name:
                 name = "<{}>".format(i)
             if item == "window" or window is None:
-                window = Window(app, None)
+                window = Window(app)
                 project = None
                 app.windows.append(window)
                 if item == "window":
