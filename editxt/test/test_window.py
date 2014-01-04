@@ -324,53 +324,26 @@ def test_set_current_editor():
         wc = ed.wc = m.mock(WindowController)
         insert_items = m.method(ed.insert_items)
         ed.recent = m.mock(RecentItemStack)
+        find_project_with_editor = m.method(ed.find_project_with_editor)
         dv = (None if c.editor_class is None else m.mock(c.editor_class))
         if c.editor_is_current:
             ed._current_editor = dv
-        else:
-            ed._current_editor = m.mock(ak.NSView)
-            mv = wc.mainView >> m.mock(ak.NSView)
-            sv = m.mock(ak.NSView)
-            (mv.subviews() << [sv]).count(1, 2)
-            if c.editor_class is not None:
-                if c.has_selection:
-                    if c.editor_is_selected:
-                        sel = [dv]
-                    else:
-                        sel = [m.mock()]
-                        wc.docsController.selected_objects = [dv]
+        elif c.editor_class is not None:
+            ed.recent.push(dv.id >> m.mock())
+            setup = c.editor_class is Editor and not c.view_is_main
+            wc.setup_current_editor(dv) >> setup
+            if setup:
+                if c.proj_is_none:
+                    find_project_with_editor(dv) >> None
+                    insert_items([dv])
                 else:
-                    sel = []
-                wc.docsController.selected_objects >> sel
-                ed.recent.push(dv.id >> m.mock())
-            if c.editor_class is Editor:
-                dv.main_view >> (sv if c.view_is_main else None)
-                if not c.view_is_main:
-                    sv.removeFromSuperview()
-                    doc = dv.document >> m.mock(TextDocument)
-                    win = m.mock(ak.NSWindow)
-                    wc.window() >> win
-                    with m.order():
-                        doc.addWindowController_(wc)
-                        dv.set_main_view_of_window(mv, win)
-                    find_project_with_editor = \
-                        m.method(ed.find_project_with_editor)
-                    if c.proj_is_none:
-                        find_project_with_editor(dv) >> None
-                        insert_items([dv])
-                    else:
-                        find_project_with_editor(dv) >> m.mock(Project)
-            else:
-                sv.removeFromSuperview()
-                wc.setDocument_(None)
+                    find_project_with_editor(dv) >> m.mock(Project)
         with m:
             ed.current_editor = dv
         assert ed._current_editor is dv
     c = TestConfig(editor_is_current=False, editor_class=Editor)
     yield test, c(editor_is_current=True)
-    yield test, c(editor_class=None, has_selection=False)
-    c = c(editor_is_selected=True, has_selection=True)
-    yield test, c(editor_class=None, editor_is_selected=False)
+    yield test, c(editor_class=None)
     for is_main in (True, False):
         for no_project in (True, False):
             yield test, c(view_is_main=is_main, proj_is_none=no_project)
