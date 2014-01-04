@@ -20,6 +20,7 @@
 import logging
 import os
 from collections import defaultdict
+from contextlib import contextmanager
 from itertools import groupby
 
 import AppKit as ak
@@ -54,7 +55,7 @@ class Window(object):
         self.state = state
         self.command = CommandBar(self, app.text_commander)
         self.projects = KVOList()
-        self.recent = self._suspended_recent = RecentItemStack(20)
+        self.recent = self._suspended_recent = RecentItemStack(100)
         self.window_settings_loaded = False
 
     def window_did_load(self):
@@ -146,8 +147,7 @@ class Window(object):
         ident = None if item is None else item.id
         lookup = {}
         recent = self.recent
-        self.suspend_recent_updates()
-        try:
+        with self.suspend_recent_updates():
             for project in list(self.projects):
                 pid = project.id
                 for editor in list(project.editors):
@@ -164,24 +164,39 @@ class Window(object):
                     project.close()
                 else:
                     lookup[pid] = project
+
+    @contextmanager
+    def suspend_recent_updates(self, update_current=True):
+        self.recent = RecentItemStack(1)
+        try:
+            yield
         finally:
-            self.resume_recent_updates()
+            self.recent = recent = self._suspended_recent
+        if not update_current:
+            return
+        lookup = {}
+        for project in self.projects:
+            lookup[project.id] = project
+            lookup.update((e.id, e) for e in project.editors)
+        current = self.current_editor
+        current_id = None if current is None else current.id
+        if current_id in lookup and recent and current_id == recent[-1]:
+            return
         while True:
             ident = recent.pop()
             if ident is None:
+                if self.projects:
+                    for project in self.projects:
+                        if project.expanded and project.editors:
+                            self.current_editor = project.editors[0]
+                            break
+                    else:
+                        self.current_editor = self.projects[0]
                 break
             item = lookup.get(ident)
             if item is not None:
                 self.current_editor = item
                 break
-        if not recent and self.current_editor is not None:
-            recent.push(self.current_editor.id)
-
-    def suspend_recent_updates(self):
-        self.recent = RecentItemStack(20)
-
-    def resume_recent_updates(self):
-        self.recent = self._suspended_recent
 
     def _get_current_editor(self):
         return self._current_editor
@@ -190,28 +205,12 @@ class Window(object):
         if editor is self._current_editor:
             return
         self._current_editor = editor
-        main_view = self.wc.mainView
         if editor is not None:
-            sel = self.wc.docsController.selected_objects
-            if not sel or sel[0] is not editor:
-                self.wc.docsController.selected_objects = [editor]
             self.recent.push(editor.id)
-            if isinstance(editor, Editor): # TODO eliminate isinstance call
-                if editor.main_view not in main_view.subviews():
-                    for subview in main_view.subviews():
-                        subview.removeFromSuperview()
-                    editor.document.addWindowController_(self.wc)
-                    editor.set_main_view_of_window(main_view, self.wc.window())
-                    #self.wc.setDocument_(editor.document)
-                    if self.find_project_with_editor(editor) is None:
-                        self.insert_items([editor])
-                return
-            #else:
-            #    self.wc.window().setTitle_(editor.name)
-            #    log.debug("self.wc.window().setTitle_(%r)", editor.name)
-        for subview in main_view.subviews():
-            subview.removeFromSuperview()
-        self.wc.setDocument_(None)
+        if self.wc.setup_current_editor(editor):
+            assert isinstance(editor, Editor), editor
+            if self.find_project_with_editor(editor) is None:
+                self.insert_items([editor])
 
     current_editor = property(_get_current_editor, _set_current_editor)
 
@@ -546,8 +545,7 @@ class Window(object):
         """
         inserted = []
         focus = None
-        self.suspend_recent_updates()
-        try:
+        with self.suspend_recent_updates(update_current=False):
             pindex = index
             if pindex < 0:
                 pindex = len(self.projects)
@@ -568,8 +566,6 @@ class Window(object):
                         project = self.get_current_project(create=True)
                     inserts, focus = project.insert_items(group, index, action)
                     inserted.extend(inserts)
-        finally:
-            self.resume_recent_updates()
         if focus is not None:
             self.current_editor = focus
         return inserted

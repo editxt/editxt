@@ -70,7 +70,7 @@ class Editor(object):
     """
 
     id = None # will be overwritten (put here for type api compliance for testing)
-    project = WeakProperty()
+    _project = WeakProperty()
     is_leaf = True
 
     def __init__(self, project, *, document=None, path=None, state=None):
@@ -84,7 +84,7 @@ class Editor(object):
         assert document is not None, (project, path, state)
         self.editors = KVOList.alloc().init()
         self.id = next(doc_id_gen)
-        self.project = project
+        self._project = project
         self.document = document
         self.proxy = KVOProxy(self)
         self.main_view = None
@@ -110,6 +110,23 @@ class Editor(object):
 
     def icon(self):
         return self.document.icon()
+
+    @property
+    def project(self):
+        """Get/set this editor's project
+
+        The setter will remove this editor from it's previous project's
+        editors if it is found there.
+        """
+        return self._project
+    @project.setter
+    def project(self, new):
+        old = getattr(self, "_project", None)
+        if old is not None and not old.closing and self in old.editors:
+            with old.window.suspend_recent_updates():
+                old.editors.remove(self)
+                assert self not in old.editors, (self, old.editors)
+        self._project = new
 
     @property
     def name(self):
@@ -314,9 +331,8 @@ class Editor(object):
 
     def close(self):
         project = self.project
-        if project is not None and not project.closing:
-            project.remove_editor(self)
         doc = self.document
+        self.project = None
         if self.text_view is not None and doc.text_storage is not None:
             doc.text_storage.removeLayoutManager_(self.text_view.layoutManager())
         if next(doc.app.iter_editors_of_document(doc), None) is None:
@@ -328,7 +344,6 @@ class Editor(object):
         if self.main_view is not None:
             teardown_main_view(self.main_view)
             self.main_view = None
-        self.project = None
         self.text_view = None
         self.scroll_view = None
         self.command_view = None

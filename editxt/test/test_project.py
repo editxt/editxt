@@ -257,21 +257,6 @@ def test_insert_items_already_in_project():
     proj.insert_items([editor], action=const.COPY)
     eq_(len(proj.editors), 2, proj.editors)
 
-def test_remove_editor():
-    class Fake(object):
-        def displayName(self):
-            return "fake"
-    project = Project(None)
-    editor = Editor(project, document=Fake())
-    project.insert_items([editor])
-    assert editor in project.editors
-    eq_(editor.project, project)
-    #project.is_dirty = False
-    project.remove_editor(editor)
-    #assert project.is_dirty
-    assert editor not in project.editors
-    eq_(editor.project, None)
-
 def test_find_editor_with_document():
     DOC = "the document we're looking for"
     def test(config):

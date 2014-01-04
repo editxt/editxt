@@ -183,29 +183,25 @@ class Project(object):
                         continue
                     if vindex - index <= 0:
                         index -= 1
-                editor.project.remove_editor(editor)
+                    del self.editors[vindex]
+                else:
+                    # this is done by Editor.project setter
+                    # TODO remove this and update test_window.test_insert_items
+                    if editor in editor.project.editors:
+                        editor.project.editors.remove(editor)
+                    editor.project = self
             elif is_copy or editor is None or editor.project is not self:
                 editor = Editor(self, document=item)
             else:
-                if editor not in self.editors:
-                    self.editors.insert(index, editor)
-                    index += 1
-                focus = editor
-                continue
+                assert editor.project is self, (editor, editor.project)
+                if editor in self.editors:
+                    focus = editor
+                    continue
+            assert editor.project is self, (editor, editor.project, self)
             self.editors.insert(index, editor)
-            editor.project = self
             focus = editor
             index += 1
         return inserted, focus
-
-    def remove_editor(self, editor):
-        """Remove editor from this projects editors
-
-        Does nothing if the editor does not belong to this project.
-        """
-        if editor in self.editors:
-            self.editors.remove(editor)
-            editor.project = None
 
     def find_editor_with_document(self, doc):
         for editor in self.editors:

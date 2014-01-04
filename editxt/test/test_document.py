@@ -102,6 +102,25 @@ def test_Editor_init():
     yield test, {"state": {"path": "<document path>"}}
     yield test, {"document": "<document>"}
 
+def test_Editor_project():
+    with test_app("""
+            window(A)
+                project(0)
+                    editor(a)*
+                    editor(b)
+            window(B)
+                project(1)*
+        """) as app:
+        print(test_app.config(app))
+        win_A, win_B = app.windows
+        proj_0, = win_A.projects
+        proj_1, = win_B.projects
+        editor_a, editor_b = proj_0.editors
+        editor_a.project = proj_1
+        eq_(editor_a.project, proj_1)
+        eq_(test_app.config(app),
+            "window(A) project(0) editor(b)* window(B) project(1)*")
+
 def test_Editor_window():
     def test(has_scroll_view):
         m = Mocker()
@@ -550,6 +569,7 @@ def test_Editor_close():
             else:
                 editor.main_view = m.mock()
                 teardown_main_view(editor.main_view)
+            wc.setup_current_editor(ANY)
             with m:
                 editor.close()
             eq_(editor.command_view, None)
@@ -569,18 +589,18 @@ def test_Editor_close():
         main_is_none=False,
         remove_window=True,
         close_doc=True,
-        end="window project",
+        end="window project*",
     )
     yield test, c
     yield test, c(ts_is_none=True)
     yield test, c(tv_is_none=True)
     yield test, c(ts_is_none=True, tv_is_none=True)
     yield test, c(main_is_none=True)
-    yield test, c(app="editor(a) editor(b)", end="window project editor(b)")
-    yield test, c(app="editor(a) editor(a)", end="window project editor(a)",
+    yield test, c(app="editor(a) editor(b)", end="window project editor(b)*")
+    yield test, c(app="editor(a) editor(a)", end="window project editor(a)*",
                   close_doc=False, remove_window=False)
     yield test, c(app="editor(a) window editor(a)",
-                  end="window project window project editor(a)",
+                  end="window project* window project editor(a)",
                   close_doc=False, remove_window=True)
 
 def test_Editor_on_do_command():

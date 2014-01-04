@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+import re
 from collections import defaultdict
 from functools import partial
 
@@ -249,6 +250,10 @@ def test_discard_and_focus_recent():
         app = m.replace(ed, 'app')
         new_current_editor = None
         cv = m.property(ed, "current_editor")
+        @mod.contextmanager
+        def suspend():
+            yield
+        m.method(ed.suspend_recent_updates)() >> suspend()
         lookup = {}
         for p in c.hier:
             proj = m.mock(Project)
@@ -271,27 +276,6 @@ def test_discard_and_focus_recent():
             else:
                 lookup[p.id] = proj
             projs.append(proj)
-        recent = list(reversed(c.recent))
-        while True:
-            ident = ed.recent.pop() >> (recent.pop() if recent else None)
-            if ident is None:
-                break
-            item = lookup.get(ident)
-            if item is not None:
-                cv.value = new_current_editor = item
-                if not recent:
-                    current_ident = ident
-                recent.append(ident)
-                break
-        bool(ed.recent); m.result(bool(recent))
-        if not recent:
-            if c.hier and new_current_editor is not None:
-                ed.recent.push(new_current_editor.id >> c.hier[0].id)
-            else:
-                if new_current_editor is None:
-                    ed.current_editor >> None
-                else:
-                    ed.recent.push(new_current_editor.id >> current_ident)
         item = m.mock()
         item.id >> c.id
         with m:
@@ -372,21 +356,32 @@ def test_selected_editor_changed():
         yield test, c(numsel=5, is_current_selected=ics)
 
 def test_suspend_recent_updates():
-    from editxt.util import RecentItemStack
-    ed = Window(editxt.app)
-    real = ed.recent
-    assert real is not None
-    ed.suspend_recent_updates()
-    assert ed.recent is not real
-    assert isinstance(ed.recent, RecentItemStack)
-
-def test_resume_recent_updates():
-    from editxt.util import RecentItemStack
-    ed = Window(editxt.app)
-    real = ed.recent
-    ed.suspend_recent_updates()
-    ed.resume_recent_updates()
-    eq_(ed.recent, real)
+    def test(c):
+        with test_app(c.init) as app:
+            window = app.windows[0]
+            editor = window.current_editor
+            real = window.recent
+            assert real is not None
+            with window.suspend_recent_updates():
+                assert window.recent is not real
+                window.recent.push(editor.id + 42)
+                if c.remove:
+                    item = test_app.get(c.remove, app)
+                    if isinstance(item, Editor):
+                        item.project.editors.remove(item)
+                    else:
+                        item.window.projects.remove(item)
+            eq_(test_app.config(app), c.final)
+    c = TestConfig(remove=None)
+    yield test, c(init="editor*", final="window project editor*")
+    yield test, c(init="editor(1)* editor(2)",
+                  final="window project editor(1)* editor(2)")
+    yield test, c(init="editor(1)* editor(2)", remove="editor(1)",
+                  final="window project editor(2)*")
+    yield test, c(init="editor(1)* editor(2)", remove="editor(2)",
+                  final="window project editor(1)*")
+    yield test, c(init="project(a) editor(1)* project(b) editor(2)",
+                  final="window project(b) editor(2)*", remove="project(a)")
 
 def test_new_project():
     m = Mocker()
@@ -1080,6 +1075,7 @@ def test_insert_items():
             return project, dindex + offset
         def namechar(item, seen=set()):
             name = test_app.name(item, app)
+            name = name[len(type(item).__name__):]
             assert name.startswith(("(", "[", "<")), name
             assert name.endswith((")", "]", ">")), name
             name = name[1:-1]

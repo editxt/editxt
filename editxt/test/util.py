@@ -288,7 +288,7 @@ def test_app(config=None):
         for i, item in enumerate(config.split()):
             match = test_app.editor_re.match(item)
             assert match, "unknown config item: {}".format(item)
-            item, name = match.groups()
+            item, name, current = match.groups()
             if not name:
                 name = "<{}>".format(i)
             if item == "window" or window is None:
@@ -296,26 +296,30 @@ def test_app(config=None):
                 project = None
                 app.windows.append(window)
                 if item == "window":
-                    items[window] = name
+                    items[window] = "window" + name
                     continue
                 else:
-                    items[window] = "<{}>".format(i)
+                    items[window] = "window<{}>".format(i)
             if item == "project" or project is None:
                 project = Project(window)
                 window.projects.append(project)
                 if item == "project":
-                    items[project] = name
+                    items[project] = "project" + name
+                    if current:
+                        window.current_editor = project
                     continue
                 else:
-                    items[project] = "<{}>".format(i)
+                    items[project] = "project<{}>".format(i)
             document = docs_by_name.get(name)
             if document is None:
                 document = app.document_with_path(None)
                 docs_by_name[name] = document
             editor = Editor(project, document=document)
-            items[editor] = name
-            items[document] = name
+            items[editor] = "editor" + name
+            items[document] = "document" + name
             project.editors.append(editor)
+            if current:
+                window.current_editor = editor
     with tempdir() as tmp:
         app = Application(tmp)
         try:
@@ -327,7 +331,7 @@ def test_app(config=None):
                 document.close()
             assert not controller.documents(), controller.documents()
 
-test_app.editor_re = re.compile("(window|project|editor)((?:\([a-z0-9-]+\))?)$")
+test_app.editor_re = re.compile("(window|project|editor)((?:\([a-zA-Z0-9-]+\))?)(\*?)$")
 
 def _test_app_config(app):
     """Get a string representing the app window/project/editor/document config
@@ -343,19 +347,22 @@ def _test_app_config(app):
         window project editor | editor[Untitled 0]
     """
     from editxt.application import DocumentController
+    name_re = re.compile("(window|project|editor)<")
     def iter_items(app):
-        def name(item, item_type):
+        def name(item):
             name = _test_app_item_name(item, app)
-            if name.startswith("<"):
-                return item_type
-            return "{}{}".format(item_type, name)
+            match = name_re.match(name)
+            return match.group(1) if match else name
         seen = set()
         for window in app.windows:
-            yield name(window, "window")
+            yield name(window)
+            current = window.current_editor
             for project in window.projects:
-                yield name(project, "project")
+                star = "*" if project is current else ""
+                yield name(project) + star
                 for editor in project.editors:
-                    yield name(editor, "editor")
+                    star = "*" if editor is current else ""
+                    yield name(editor) + star
                     seen.add(editor.document)
         controller = DocumentController.sharedDocumentController()
         documents = set(controller.documents()) - seen
@@ -363,13 +370,13 @@ def _test_app_config(app):
             # documents not associated with any window (should not get here)
             yield "|"
             for document in documents:
-                yield "document{}".format(_test_app_item_name(document, app))
+                yield _test_app_item_name(document, app)
     return " ".join(iter_items(app))
 test_app.config = _test_app_config
 
 def _test_app_item_name(item, app):
     """Get the name of a window, project, or editor/document"""
-    from editxt.document import Editor
+    from editxt.document import Editor, TextDocument
     from editxt.project import Project
     from editxt.window import Window
     name = app._test_app__items.get(item)
@@ -378,12 +385,26 @@ def _test_app_item_name(item, app):
             name = "[{}]".format(app._test_app__news)
         else:
             name = "[{} {}]".format(item.name, app._test_app__news)
+        ident = name
+        prefix = "document" if isinstance(item, TextDocument) \
+                            else type(item).__name__.lower()
+        name = prefix + name
         app._test_app__news += 1
         app._test_app__items[item] = name
         if isinstance(item, Editor):
-            app._test_app__items[item.document] = name
+            app._test_app__items[item.document] = "document" + ident
     return name
 test_app.name = _test_app_item_name
+
+def _test_app_get_item(name, app):
+    """Get the item for the given name
+
+    :param name: The name of the item to get. Example: ``"editor(1)"``
+    """
+    items_by_name = {v: k for k, v in app._test_app__items.items()}
+    print(items_by_name)
+    return items_by_name[name]
+test_app.get = _test_app_get_item
 
 def check_app_state(test):
     def checker(when):
