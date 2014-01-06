@@ -185,10 +185,6 @@ class Project(object):
                         index -= 1
                     del self.editors[vindex]
                 else:
-                    # this is done by Editor.project setter
-                    # TODO remove this and update test_window.test_insert_items
-                    if editor in editor.project.editors:
-                        editor.project.editors.remove(editor)
                     editor.project = self
             elif is_copy or editor is None or editor.project is not self:
                 editor = Editor(self, document=item)

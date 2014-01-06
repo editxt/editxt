@@ -282,13 +282,11 @@ class Window(object):
         return None
 
     def get_current_project(self, create=False):
-        docs_controller = self.wc.docsController
-        if docs_controller is not None:
-            path = docs_controller.selectionIndexPath()
-            if path is not None:
-                index = path.indexAtPosition_(0)
-                path2 = fn.NSIndexPath.indexPathWithIndex_(index)
-                return docs_controller.objectAtArrangedIndexPath_(path2)
+        item = self.current_editor
+        if item is not None:
+            return item if isinstance(item, Project) else item.project
+        if self.projects:
+            return self.projects[0]
         if create:
             proj = Project(self)
             self.projects.append(proj)
@@ -543,6 +541,10 @@ class Window(object):
             being inserted.
         :returns: A list of items that were inserted.
         """
+        if (project is not None and
+            project != const.CURRENT and
+            project.window is not self):
+            raise ValueError("project does not belong to this window")
         inserted = []
         focus = None
         with self.suspend_recent_updates(update_current=False):
