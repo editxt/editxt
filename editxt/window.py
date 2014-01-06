@@ -529,7 +529,7 @@ class Window(object):
         :param project: The parent project into which items are being inserted.
             Documents will be inserted in the current project if unspecified.
         :param index: The index in the outline view or parent project at which
-            the item(s) should be inserted.
+            the item(s) should be inserted. Append if < 0 (the default).
         :param action: What to do with items that are already open in
             this window:
 
@@ -537,7 +537,7 @@ class Window(object):
             - MOVE : move existing item(s) to index.
             - COPY : copy item(s) to index.
 
-            A file is considered to be "existing" if there is a editor
+            A file is considered to be "existing" if there is an editor
             with the same path in the project where it is being
             inserted. A project is considered to be "existing" if there
             is a project with the same path in the window where it is
