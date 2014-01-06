@@ -128,25 +128,24 @@ class WindowController(ak.NSWindowController):
         :returns: True if the editor was setup, otherwise False.
         """
         main_view = self.mainView
-        if editor is None:
-            for subview in main_view.subviews():
-                subview.removeFromSuperview()
-            self.setDocument_(None)
-            return False
-        sel = self.docsController.selected_objects
-        if not sel or sel[0] is not editor:
-            self.docsController.selected_objects = [editor]
-        if isinstance(editor, Editor): # TODO eliminate isinstance call
-            if editor.main_view not in main_view.subviews():
-                for subview in main_view.subviews():
-                    subview.removeFromSuperview()
-                editor.document.addWindowController_(self)
-                editor.set_main_view_of_window(main_view, self.window())
-                #self.setDocument_(editor.document)
-                return True
+        if editor is not None:
+            sel = self.docsController.selected_objects
+            if not sel or sel[0] is not editor:
+                self.docsController.selected_objects = [editor]
+            if isinstance(editor, Editor): # TODO eliminate isinstance call
+                if editor.main_view not in main_view.subviews():
+                    for subview in main_view.subviews():
+                        subview.removeFromSuperview()
+                    editor.document.addWindowController_(self)
+                    editor.set_main_view_of_window(main_view, self.window())
+                    #self.setDocument_(editor.document)
+                    return True
         #else:
         #    self.window().setTitle_(editor.name)
         #    log.debug("self.window().setTitle_(%r)", editor.name)
+        for subview in main_view.subviews():
+            subview.removeFromSuperview()
+        self.setDocument_(None)
         return False
 
     def undo_manager(self):
