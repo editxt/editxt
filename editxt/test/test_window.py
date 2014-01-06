@@ -510,8 +510,10 @@ def test_get_current_project():
     yield test, "window project", 0
     yield test, "window project* project", 0
     yield test, "window project project*", 1
+    yield test, "window project -project*", 1
     yield test, "window project project editor*", 1
     yield test, "window project editor project editor", 0
+    yield test, "window -project editor project editor", 1
 
 def test_Window_iter_editors_of_document():
     DOC = "the document we're looking for"

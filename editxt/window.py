@@ -286,6 +286,9 @@ class Window(object):
         if item is not None:
             return item if isinstance(item, Project) else item.project
         if self.projects:
+            for project in self.projects:
+                if project.expanded:
+                    return project
             return self.projects[0]
         if create:
             proj = Project(self)

@@ -287,8 +287,10 @@ def test_app(config=None):
         window = project = None
         for i, item in enumerate(config.split()):
             match = test_app.editor_re.match(item)
-            assert match, "unknown config item: {}".format(item)
-            item, name, current = match.groups()
+            assert match and (
+                    match.group(2) == "project" or not match.group(1)
+                ), "unknown config item: {}".format(item)
+            collapsed, item, name, current = match.groups()
             if not name:
                 name = "<{}>".format(i)
             if item == "window" or window is None:
@@ -302,6 +304,8 @@ def test_app(config=None):
                     items[window] = "window<{}>".format(i)
             if item == "project" or project is None:
                 project = Project(window)
+                if collapsed:
+                    project.expanded = False
                 window.projects.append(project)
                 if item == "project":
                     items[project] = "project" + name
@@ -331,7 +335,7 @@ def test_app(config=None):
                 document.close()
             assert not controller.documents(), controller.documents()
 
-test_app.editor_re = re.compile("(window|project|editor)((?:\([a-zA-Z0-9-]+\))?)(\*?)$")
+test_app.editor_re = re.compile("(-?)(window|project|editor)((?:\([a-zA-Z0-9-]+\))?)(\*?)$")
 
 def _test_app_config(app):
     """Get a string representing the app window/project/editor/document config
@@ -359,7 +363,8 @@ def _test_app_config(app):
             current = window.current_editor
             for project in window.projects:
                 star = "*" if project is current else ""
-                yield name(project) + star
+                collapsed = "" if project.expanded else "-"
+                yield collapsed + name(project) + star
                 for editor in project.editors:
                     star = "*" if editor is current else ""
                     yield name(editor) + star
