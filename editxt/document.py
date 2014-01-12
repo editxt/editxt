@@ -112,6 +112,10 @@ class Editor(object):
         return self.document.icon()
 
     @property
+    def app(self):
+        return self.project.window.app
+
+    @property
     def project(self):
         """Get/set this editor's project
 
@@ -146,6 +150,9 @@ class Editor(object):
     @property
     def file_path(self):
         return self.document.file_path
+    @file_path.setter
+    def file_path(self, value):
+        self.document.file_path = value
 
     @property
     def is_dirty(self):
@@ -441,6 +448,9 @@ class TextDocument(ak.NSDocument):
     def file_path(self):
         url = self.fileURL()
         return (url.path() if url else None)
+    @file_path.setter
+    def file_path(self, value):
+        self.setFileURL_(fn.NSURL.fileURLWithPath_(value))
 
     @property
     def text(self):
