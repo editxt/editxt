@@ -82,7 +82,10 @@ def command(func=None, name=None, title=None, hotkey=None,
         func.is_text_command = True
         func.name = name[0] if name else func.__name__
         func.names = name or [func.__name__]
-        func.title = title
+        if title is None and func.__doc__:
+            func.title = func.__doc__.strip().splitlines()[0].strip()
+        else:
+            func.title = title
         func.hotkey = hotkey
         func.is_enabled = is_enabled or (lambda textview, sender: True)
         func.arg_parser = arg_parser or CommandParser(VarArgs("args"))
