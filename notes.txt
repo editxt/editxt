@@ -74,37 +74,49 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Project drag/drop bugs
-  - Focus editor. Drag to new window. Focus other editor in original window (should not have to do this).
-    ERROR editxt - ObjC exception NSInternalInconsistencyException (reason: NSWindow: -_newFirstResponderAfterResigining is not a valid message outside of a responder's implementation of -resignFirstResponder.) discarded
-    Stack trace (most recent call last):
-      0x109b71ef0
-      ffi_call_unix64 (in _objc.so) + 79
-      -[NSWindow makeFirstResponder:] (in AppKit) + 430
-      -[NSTextView(NSSharing) resignFirstResponder] (in AppKit) + 53
-      -[NSWindow _newFirstResponderAfterResigning] (in AppKit) + 117
-      +[NSException raise:format:] (in CoreFoundation) + 204
-      objc_exception_throw (in libobjc.A.dylib) + 43
-      NSExceptionHandlerExceptionRaiser (in ExceptionHandling) + 174
-  - Current editor should be focused in new window when its project is dragged to new window
-  - Combine and write pythonic wrapper for outline view and NSTreeController
-    -> editxt.platform.mac.views.DocumentTreeView
-    - ?? Formalize pythonic KVO observe/callback
+Bug: edit document (do not save), Quit, Don't Save
+    ERROR editxt - *** Python exception discarded!
+    Traceback (most recent call last):
+      File "/Users/dmiller/code/EditXT/editxt/application.py", line 540, in save_next_document
+        editor = next(self.editors)
+    StopIteration
+
+    During handling of the above exception, another exception occurred:
+
+    Traceback (most recent call last):
+      File "/Users/dmiller/code/EditXT/editxt/application.py", line 579, in document_shouldClose_contextInfo_
+        self.save_next_document()
+      File "/Users/dmiller/code/EditXT/editxt/application.py", line 550, in save_next_document
+        self.save_next_document()
+      File "/Users/dmiller/code/EditXT/editxt/application.py", line 543, in save_next_document
+        self.callback(self.should_close)
+      File "/Users/dmiller/code/EditXT/editxt/application.py", line 483, in callback
+        perform_selector(delegate, selector, self, result, context)
+      File "/Users/dmiller/code/EditXT/editxt/util.py", line 166, in perform_selector
+        getattr(delegate, selector)(*args)
+    TypeError: Argument 4 is a block, but no signature available
+
+    2014-01-11 20:08:16.491 EditXTDev[7169:707] <class 'TypeError'>: Argument 4 is a block, but no signature available    
+
+Diff doc with other file
+Use something like Sparkle to auto-update http://sparkle.andymatuschak.org/
+open command
+    - Open directory as project
+File tree as main project view
+grep command (for finding/printing lines in file)
+Persistent unsaved docs
+Embed file type icons in app (also provide support for user icon sets)
 
 Eliminate editxt.app global/singleton
   - remaining places
     - DocumentController: this thing is a pain (when does it get created?)
     - tests... there are way too many
 
-Open directory as project
-
-Use something like Sparkle to auto-update http://sparkle.andymatuschak.org/
-File tree as main project view
-open command
-grep command (for finding/printing lines in file)
-Persistent unsaved docs
-Embed file type icons in app (also provide support for user icon sets)
-Diff doc with file on disk (or other file)
+Project drag/drop bugs
+  - Current editor should be focused in new window when its project is dragged to new window
+  - Combine and write pythonic wrapper for outline view and NSTreeController
+    -> editxt.platform.mac.views.DocumentTreeView
+    - ?? Formalize pythonic KVO observe/callback
 
 Display errors and open config files that cannot be loaded automatically
   - Do not overwrite files on save/close

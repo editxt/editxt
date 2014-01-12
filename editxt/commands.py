@@ -30,6 +30,7 @@ from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
 from editxt.command.util import has_selection, iterlines
 
 from editxt.command.changeindent import reindent
+from editxt.command.diff import diff
 from editxt.command.find import find
 from editxt.command.sortlines import sort_lines
 from editxt.command.wraplines import wrap_at_margin, wrap_lines
@@ -56,6 +57,7 @@ def load_commands():
             sort_lines,
             reindent,
             find,
+            diff,
             clear_highlighted_text,
             reload_config,
             set_variable,

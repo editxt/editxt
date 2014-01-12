@@ -138,6 +138,9 @@ def test_Config_schema():
         "soft_wrap", const.WRAP_NONE, \
         {"error": ["soft_wrap: expected one of (none|word), got 'xyz'"]}
 
+    yield test, {}, "diff_program", "opendiff"
+    yield test, {"diff_program": "gdiff -u"}, "diff_program", "gdiff -u"
+
 def test_Config_default_config():
     schema = {
         "group": {
