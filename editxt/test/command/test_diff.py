@@ -39,26 +39,37 @@ def test_diff_title():
 
 
 def test_diff():
-    diffed = []
-    def diff_stub(filepath, text, name, diff_program):
-        eq_(filepath, path)
-        eq_(text, "def")
-        eq_(name, "file.txt")
-        eq_(diff_program, "opendiff")
-        diffed.append(1)
-    with tempdir() as tmp, test_app("editor") as app, \
-            replattr(mod, "external_diff", diff_stub):
-        editor = app.windows[0].projects[0].editors[0]
-        editor.file_path = path = join(tmp, "file.txt")
-        with open(path, mode="w", encoding="utf8") as fh:
-            fh.write("abc")
-        m = Mocker()
-        text_view = editor.text_view = m.mock(TextView)
-        text_view.editor >> editor
-        text_view.string() >> "def"
-        with m:
-            mod.diff(text_view, None, None)
-            assert diffed
+    def test(original):
+        diffed = []
+        def diff_stub(filepath, text, name, diff_program):
+            eq_(filepath, path)
+            eq_(text, "def")
+            eq_(name, "file.txt")
+            eq_(diff_program, "opendiff")
+            diffed.append(1)
+        with tempdir() as tmp, test_app("editor") as app, \
+                replattr(mod, "external_diff", diff_stub):
+            editor = app.windows[0].projects[0].editors[0]
+            path = editor.file_path = join(tmp, "file.txt")
+            with open(path, mode="w", encoding="utf8") as fh:
+                fh.write("abc")
+            if original:
+                args = None
+            else:
+                path = join(tmp, "other.txt")
+                with open(path, mode="w", encoding="utf8") as fh:
+                    fh.write("other")
+                assert " " not in path, path
+                args = mod.diff.arg_parser.parse(path)
+            m = Mocker()
+            text_view = editor.text_view = m.mock(TextView)
+            text_view.editor >> editor
+            text_view.string() >> "def"
+            with m:
+                mod.diff(text_view, None, args)
+                assert diffed
+    yield test, True
+    yield test, False
 
 def test_diff_missing_file():
     def test(msg, has_path=False):

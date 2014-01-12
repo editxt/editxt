@@ -23,6 +23,7 @@ This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
 ????-??-?? - 1.4.0
+  - Add diff command to compare with file on disk.
   - Improve error handling for find commands.
   - Improve error logging.
   - Suppress traceback on break xt script.

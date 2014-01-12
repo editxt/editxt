@@ -24,23 +24,25 @@ from subprocess import Popen, list2cmdline
 
 import editxt.constants as const
 from editxt.command.base import command, CommandError
-from editxt.command.parser import Choice, Regex, RegexPattern, CommandParser, Options
+from editxt.command.parser import CommandParser, String
 
 log = logging.getLogger(__name__)
 
 
-@command
+@command(arg_parser=CommandParser(String("file")))
 def diff(textview, sender, args):
     """Diff with original"""
-    # TODO accept (optional) path of file to diff with (instead of original file)
     editor = textview.editor
-    file_path = editor.file_path
+    if args and args.file:
+        file_path = os.path.expanduser(args.file)
+    else:
+        file_path = editor.file_path
     if file_path is None:
         raise CommandError("file has not been saved")
     elif not os.path.exists(file_path):
         raise CommandError("file not found: {}".format(file_path))
     else:
-        name = os.path.basename(file_path)
+        name = os.path.basename(editor.file_path)
         diff_program = editor.app.config["diff_program"]
         external_diff(file_path, textview.string(), name, diff_program)
 
