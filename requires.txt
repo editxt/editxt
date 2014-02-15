@@ -34,4 +34,4 @@ pyyaml==3.10
 # for testing
 mocker>=1.1.1 # not python3 compatible yet, patch manually
 nose>=1.3.0
-
+testil>=1.0

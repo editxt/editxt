@@ -44,29 +44,19 @@ def todo_remove(obj):
     log.debug("TODO remove %r", obj)
     return obj
 
-def unittest_print_first_failures_last():
-    """monkeypatch unittest to print errors in reverse order
-    which is more convenient for viewing in the console
-    """
-    import unittest
-    old_printErrorList = unittest._TextTestResult.printErrorList
-    def printErrorList(self, flavor, errors):
-        return old_printErrorList(self, flavor, reversed(errors))
-    unittest._TextTestResult.printErrorList = printErrorList
+from testil import (
+    unittest_print_first_failures_last,
+    eq_,
+    Config as TestConfig,
+    replattr,
+    assert_raises,
+    CaptureLogging as CaptureLog,
+    Regex,
+    tempdir,
+    patch_nose_tools,
+)
 
-
-def eq_(a, b, text=None):
-    if a != b:
-        if callable(text):
-            text = text()
-        if isinstance(a, basestring) or len(repr(a)) > 20:
-            if text is None:
-                text = "not equal"
-            err = "%s\n%r\n%r" % (text, a, b)
-        else:
-            text = (str(text) + " : ") if text is not None else ""
-            err = "%s%r != %r" % (text, a, b)
-        raise AssertionError(err)
+patch_nose_tools()
 
 
 def do_method_pass_through(attr, inner_obj_class, outer_obj, token, method,
@@ -88,154 +78,6 @@ def do_method_pass_through(attr, inner_obj_class, outer_obj, token, method,
     with m:
         rval = getattr(outer_obj, outer_method)(*ext_args)
         eq_(rval, returns)
-
-class TestConfig(object):
-    def __init__(self, *args, **kw):
-        self.__dict__.update(*args, **kw)
-    def __iter__(self):
-        return iter(self.__dict__.items())
-    def __call__(self, **kw):
-        return TestConfig(self.__dict__, **kw)
-    def __contains__(self, name):
-        return name in self.__dict__
-    def __getitem__(self, name):
-        return self.__dict__[name]
-    def _get(self, name, default):
-        return getattr(self, name, default)
-    def __len__(self):
-        return len(self.__dict__)
-    def __repr__(self):
-        val = ", ".join("%s=%r" % kv for kv in sorted(self.__dict__.items()))
-        return "(%s)" % val
-
-@contextmanager
-def replattr(*args, **kw):
-    sigchk = kw.pop('sigcheck', True)
-    dict_replace = kw.pop('dict', False)
-    if kw:
-        raise ValueError('unrecognized keyword arguments: %s' % ', '.join(kw))
-    if len(args) == 3 and isinstance(args[1], basestring):
-        args = [args]
-    errors = []
-    temps = []
-    for obj, attr, value in args:
-        try:
-            temp = obj[attr] if dict_replace else getattr(obj, attr)
-            if sigchk and (inspect.isfunction(temp) or inspect.ismethod(temp)):
-                as0 = inspect.getargspec(temp)
-                as1 = inspect.getargspec(value)
-                if as0 != as1:
-                    errors.append("%s%s != %s%s" % (
-                        temp.__name__, inspect.formatargspec(*as0),
-                        value.__name__, inspect.formatargspec(*as1),
-                    ))
-            temps.append(temp)
-            if dict_replace:
-                obj[attr] = value
-            else:
-                setattr(obj, attr, value)
-        except Exception as ex:
-            rtype = 'key' if dict_replace else 'attribute'
-            log.error("cannot replace %s: %s", rtype, attr, exc_info=True)
-            errors.append(str(ex))
-    try:
-        yield
-    finally:
-        for (obj, attr, value), temp in zip(args, temps):
-            if dict_replace:
-                obj[attr] = temp
-                if obj[attr] is not temp:
-                    errors.append("%r is not %r" % (obj[attr], temp))
-            else:
-                setattr(obj, attr, temp)
-                if getattr(obj, attr) is not temp:
-                    errors.append("%r is not %r" % (getattr(obj, attr), temp))
-    assert not errors, "\n".join(errors)
-
-
-def assert_raises(*args, **kw):
-    if len(args) == 1:
-        msg = kw.pop('msg', None)
-        if kw:
-            raise AssertionError('invalid kwargs: {!r}'.format(kwargs))
-        @contextmanager
-        def raises():
-            if args[0] is None:
-                yield
-                return
-            try:
-                yield
-                raise AssertionError('{} not raised'.format(args[0]))
-            except args[0] as err:
-                if isinstance(msg, basestring):
-                    eq_(str(err), msg)
-                elif isinstance(msg, BaseException):
-                    eq_(err, msg)
-                elif hasattr(msg, 'search'):
-                    assert msg.search(str(err)), \
-                        '{!r} does not match {!r}'.foramt(msg.pattern, str(err))
-                elif msg is not None:
-                    msg(err)
-            except Exception as err:
-                log.error("unexpected error", exc_info=True)
-                raise AssertionError("{} != {}".format(
-                    type(err).__name__, args[0].__name__))
-        return raises()
-    else:
-        nose_assert_raises(*args, **kw)
-
-nose_assert_raises = nose.tools.assert_raises
-
-
-class CaptureLog(object):
-
-    def __init__(self, module):
-        self.log = module.log
-        self.module = module
-        self.data = defaultdict(list)
-
-    def __getattr__(self, name):
-        def log(message, *args, **kw):
-            getattr(self.log, name)(message, *args, **kw)
-            exc_info = kw.pop("exc_info", None)
-            assert not kw, "unrecognized keyword args: {}".format(kw)
-            if args:
-                message = message % args
-            if exc_info is not None:
-                message += "\nexc_info = {!r}".format(exc_info)
-            self.data[name].append(message)
-        log.__name__ = name
-        return log
-
-    def __enter__(self):
-        self.context = replattr(self.module, "log", self)
-        self.context.__enter__()
-        return self
-
-    def __exit__(self, *args):
-        self.context.__exit__(*args)
-
-
-class Regex(object):
-
-    def __init__(self, expression, *args, **kw):
-        self.repr = kw.pop("repr", None)
-        self.expr = re.compile(expression, *args, **kw)
-        self.expression = expression
-
-    def __repr__(self):
-        if self.repr is not None:
-            return self.repr
-        return "Regex({!r})".format(self.expression)
-
-    def __str__(self):
-        return self.expression
-
-    def __eq__(self, other):
-        return self.expr.search(other)
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
 
 @nose.tools.nottest
@@ -434,29 +276,3 @@ def profile(test, *args):
         finally:
             sys.stdout = stdout
     return (prof_test, test, args)
-
-
-@contextmanager
-def tempdir(*args, **kw):
-    delete = kw.pop("delete", True)
-    path = tempfile.mkdtemp(*args, **kw)
-    try:
-        yield path
-    finally:
-        if delete and os.path.exists(path):
-            shutil.rmtree(path)
-
-
-def patch_nose_tools():
-    nose.tools.eq_ = eq_
-    nose.tools.assert_raises = assert_raises
-
-    import pdb
-    import sys
-    def set_trace():
-        """nose-compatible trace function
-
-        uses default stdout, which is not consumed by nose
-        """
-        pdb.Pdb(stdout=sys.__stdout__).set_trace(sys._getframe().f_back)
-    pdb.set_trace = set_trace
