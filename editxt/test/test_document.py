@@ -1105,11 +1105,11 @@ def test_analyze_content():
     yield test, c(text="  x\n     x", imode=SPC, isize=2, eol=const.NEWLINE_MODE_UNIX)
 
 def test_makeWindowControllers():
+    import editxt
     def test(ed_is_none):
         doc = TextDocument.alloc().init()
         m = Mocker()
         app = m.mock(Application)
-        (m.property(doc, "app").value << app).count(1, 2)
         dv_class = m.replace(mod, 'Editor')
         dv = m.mock(Editor)
         ed = m.mock(Window)
@@ -1117,8 +1117,9 @@ def test_makeWindowControllers():
         if ed_is_none:
             app.create_window() >> ed
         ed.insert_items([doc])
-        with m:
+        with m, replattr(editxt, "app", app): # HACK replace global
             doc.makeWindowControllers()
+            eq_(doc.app, app)
     yield test, True
     yield test, False
 

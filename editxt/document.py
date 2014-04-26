@@ -504,6 +504,11 @@ class TextDocument(ak.NSDocument):
         return self._text_attributes
 
     def makeWindowControllers(self):
+
+        # HACK use global because self.app is not yet set
+        from editxt import app
+        self.app = app
+
         window = self.app.current_window()
         if window is None:
             window = self.app.create_window()
