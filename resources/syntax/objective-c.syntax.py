@@ -19,7 +19,7 @@
 
 
 name = "Objective C"
-filepatterns = ["*.h", "*.m"]
+filepatterns = ["*.h", "*.m", "*.mm"]
 comment_token = "//"
 word_groups = [
     # --------------------------------------------------------------------------
