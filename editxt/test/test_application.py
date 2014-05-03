@@ -48,8 +48,7 @@ log = logging.getLogger(__name__)
 
 def test_editxt_app():
     import editxt
-    dc = DocumentController.sharedDocumentController()
-    assert editxt.app is dc.controller
+    assert not hasattr(editxt, 'app'), editxt.app
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Application tests
@@ -829,87 +828,6 @@ def test_app_will_terminate():
         m.method(app.save_window_states)() >> None
         with m:
             ap.app_will_terminate(None)
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# DocumentController tests
-
-def test_DocumentController_actions():
-    def test(action, app_method):
-        dc = DocumentController.sharedDocumentController()
-        m = Mocker()
-        app = m.replace(editxt, 'app')
-        getattr(app, app_method)()
-        with m:
-            getattr(dc, action)(None)
-    
-    yield test, "newWindow_", "create_window"
-    yield test, "newProject_", "new_project"
-    yield test, "newDocument_", "new_document"
-    yield test, "openConfigFile_", "open_config_file"
-    yield test, "openErrorLog_", "open_error_log"
-    yield test, "openPath_", "open_path_dialog"
-    yield test, "closeCurrentDocument_", "close_current_document"
-
-    #yield test, "closeCurrentProject_", "close_current_project"
-    #yield test, "saveProjectAs_", "save_project_as"
-    #yield test, "togglePropertiesPane_", "close_current_document"
-
-def test_get_document_controller():
-    dc = DocumentController.sharedDocumentController()
-    assert isinstance(dc, DocumentController)
-
-def test_document_controller_has_app_controller():
-    dc = ak.NSDocumentController.sharedDocumentController()
-    assert dc.controller is not None
-
-def test_applicationShouldOpenUntitledFile_():
-    dc = DocumentController.sharedDocumentController()
-    assert not dc.applicationShouldOpenUntitledFile_(None)
-
-def test_applicationWillFinishLaunching_():
-    dc = DocumentController.sharedDocumentController()
-    m = Mocker()
-    app = m.replace(editxt, 'app')
-    nsapp = m.mock(ak.NSApplication)
-    app.application_will_finish_launching(nsapp, dc)
-    with m:
-        dc.applicationWillFinishLaunching_(nsapp)
-
-def test_applicationWillTerminate():
-    dc = ak.NSDocumentController.sharedDocumentController()
-    m = Mocker()
-    app = m.replace(editxt, 'app')
-    notif = m.mock() # ak.NSApplicationWillTerminateNotification
-    nsapp = m.mock(ak.NSApplication)
-    app.app_will_terminate(notif.object() >> nsapp)
-    with m:
-        dc.applicationWillTerminate_(notif)
-
-def test_closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_():
-    import editxt.util as util
-    context = 42
-    dc = ak.NSDocumentController.sharedDocumentController()
-    m = Mocker()
-    app = m.replace(editxt, 'app')
-    def perf_sel(delegate, selector, *args):
-        should_term(*args)
-    dsd_class = m.replace(mod, 'DocumentSavingDelegate', spec=False)
-    docs = m.mock()
-    app.iter_dirty_editors() >> docs
-    selector = "_docController:shouldTerminate:context:"
-    delegate = m.mock()
-    def test_callback(callback):
-        callback("<result>")
-        return True
-    should_term = delegate._docController_shouldTerminate_context_
-    should_term(dc, "<result>", context)
-    saver = m.mock(DocumentSavingDelegate)
-    dsd_class.alloc() >> saver
-    saver.init_callback_(docs, MATCH(test_callback)) >> saver
-    saver.save_next_document()
-    with replattr(mod, 'perform_selector', perf_sel), m:
-        dc.closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_(
-            delegate, selector, context)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # DocumentSavingDelegate tests

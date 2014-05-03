@@ -11,7 +11,11 @@
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
-        <customObject id="-3" userLabel="Application"/>
+        <customObject id="-3" userLabel="Application">
+            <connections>
+                <outlet property="delegate" destination="213" id="vha-yy-kri"/>
+            </connections>
+        </customObject>
         <menu title="MainMenu" systemMenu="main" id="29" userLabel="MainMenu">
             <items>
                 <menuItem title="EditXT" id="56">
@@ -348,7 +352,7 @@
                 </menuItem>
             </items>
         </menu>
-        <customObject id="213" userLabel="DocumentController" customClass="DocumentController">
+        <customObject id="213" userLabel="AppDelegate" customClass="AppDelegate">
             <connections>
                 <outlet property="textEditCommandsMenu" destination="287" id="289"/>
                 <outlet property="textMenu" destination="261" id="268"/>

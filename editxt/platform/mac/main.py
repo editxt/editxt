@@ -23,6 +23,7 @@ import os
 import objc
 from PyObjCTools import AppHelper, Debugging
 
+from editxt.platform.mac.app import AppDelegate
 from editxt.platform.mac.errors import install_exception_handler
 # TODO move Cocoa specific part of valuetrans (all of it?) into platform.mac
 from editxt.valuetrans import register_value_transformers
@@ -59,6 +60,7 @@ def run(app, argv, unexpected_error_callback, use_pdb):
     import editxt.controls.window
 
     register_value_transformers()
+    AppDelegate.app = app # HACK global. Would prefer to set an instance variable
 
     AppHelper.runEventLoop(argv, unexpected_error_callback, pdb=use_pdb)
 

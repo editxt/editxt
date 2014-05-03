@@ -27,6 +27,7 @@ import shutil
 import tempfile
 from collections import defaultdict
 from contextlib import contextmanager
+from functools import wraps
 from nose import with_setup
 import nose.tools
 
@@ -116,7 +117,7 @@ def test_app(config=None):
         editor
 
     """
-    from editxt.application import Application, DocumentController
+    from editxt.application import Application
     from editxt.editor import Editor
     from editxt.project import Project
     from editxt.window import Window
@@ -172,12 +173,30 @@ def test_app(config=None):
             setup(app, config)
             yield app
         finally:
-            controller = DocumentController.sharedDocumentController()
-            for document in controller.documents():
+            for document in app.documents:
                 document.close()
-            assert not controller.documents(), controller.documents()
+            assert not app.documents, list(app.documents)
 
 test_app.editor_re = re.compile("(-?)(window|project|editor)((?:\([a-zA-Z0-9-]+\))?)(\*?)$")
+
+def _test_app_decorator(func):
+    """A decorator to be used with tests that need an app
+
+    Usage:
+
+        @test_app.decorator
+        def test(app, other, args):
+            ...
+        test("other", "args")
+
+    """
+    @wraps(func)
+    def decorator(*args, **kw):
+        with test_app() as app:
+            return func(app, *args, **kw)
+    return decorator
+
+test_app.decorator = _test_app_decorator
 
 def _test_app_config(app):
     """Get a string representing the app window/project/editor/document config
@@ -192,7 +211,6 @@ def _test_app_config(app):
 
         window project editor | editor[Untitled 0]
     """
-    from editxt.application import DocumentController
     name_re = re.compile("(window|project|editor)<")
     def iter_items(app):
         def name(item):
@@ -211,8 +229,7 @@ def _test_app_config(app):
                     star = "*" if editor is current else ""
                     yield name(editor) + star
                     seen.add(editor.document)
-        controller = DocumentController.sharedDocumentController()
-        documents = set(controller.documents()) - seen
+        documents = set(app.documents) - seen
         if documents:
             # documents not associated with any window (should not get here)
             yield "|"
@@ -257,10 +274,8 @@ test_app.get = _test_app_get_item
 def check_app_state(test):
     def checker(when):
         def check_app_state():
-            from editxt.application import DocumentController
-            dc = DocumentController.sharedDocumentController()
-            assert not dc.documents(), "app state was dirty %s %s: %r" \
-                % (when, test.__name__, dc.documents())
+            import editxt
+            assert not hasattr(editxt, "app"), editxt.app
         return check_app_state
     return with_setup(checker("before"), checker("after"))(test)
 

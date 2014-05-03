@@ -20,6 +20,7 @@
 import logging
 import objc
 import os
+from itertools import count
 
 import AppKit as ak
 import Foundation as fn
@@ -28,7 +29,6 @@ import Foundation as fn
 import editxt.constants as const
 import editxt.platform.constants as platform_const
 
-from editxt.application import doc_id_gen
 from editxt.command.util import calculate_indent_mode_and_size
 from editxt.controls.alert import Alert
 from editxt.platform.kvo import KVOProxy
@@ -41,6 +41,23 @@ log = logging.getLogger(__name__)
 EOLREF = dict((ch, m) for m, ch in const.EOLS.items())
 
 
+class DocumentController(object):
+    """A document controller maintains a set of open documents
+
+    The purpose of a document controller is to make sure that it has
+    a single document object for a given path at all times.
+    """
+
+    id_gen = count()
+
+    def __init__(self):
+        self.documents = {}
+
+    def __len__(self):
+        return len(self.documents)
+
+    def __iter__(self):
+        return iter(self.documents.values())
 
 
 class UndoManager(fn.NSUndoManager):
@@ -62,7 +79,7 @@ class TextDocument(ak.NSDocument):
     def init(self):
         super(TextDocument, self).init()
         self.setUndoManager_(UndoManager.alloc().init())
-        self.id = next(doc_id_gen)
+        self.id = next(DocumentController.id_gen)
         self.icon_cache = (None, None)
         self.document_attrs = {
             ak.NSDocumentTypeDocumentAttribute: ak.NSPlainTextDocumentType,
@@ -147,11 +164,7 @@ class TextDocument(ak.NSDocument):
         return self._text_attributes
 
     def makeWindowControllers(self):
-
-        # HACK use global because self.app is not yet set
-        from editxt import app
-        self.app = app
-
+        # TODO remove this method?
         window = self.app.current_window()
         if window is None:
             window = self.app.create_window()

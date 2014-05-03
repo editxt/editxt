@@ -41,8 +41,7 @@ log = logging.getLogger(__name__)
 # TextDocument tests
 
 def test_TextDocument_init():
-    from editxt.document import doc_id_gen
-    ident = next(doc_id_gen) + 1
+    ident = next(DocumentController.id_gen) + 1
     doc = TextDocument.alloc().init()
     eq_(doc.id, ident)
     eq_(doc.icon_cache, (None, None))
@@ -519,24 +518,25 @@ def test_analyze_content():
     yield test, c(text="  x\n     x", imode=SPC, isize=2, eol=const.NEWLINE_MODE_UNIX)
 
 def test_makeWindowControllers():
-    import editxt
-    import editxt.editor
-    def test(ed_is_none):
-        doc = TextDocument.alloc().init()
-        m = Mocker()
-        app = m.mock(Application)
-        dv_class = m.replace(editxt.editor, 'Editor')
-        dv = m.mock(Editor)
-        ed = m.mock(Window)
-        app.current_window() >> (None if ed_is_none else ed)
-        if ed_is_none:
-            app.create_window() >> ed
-        ed.insert_items([doc])
-        with m, replattr(editxt, "app", app): # HACK replace global
-            doc.makeWindowControllers()
-            eq_(doc.app, app)
-    yield test, True
-    yield test, False
+    "TODO where to move this method?"
+#    import editxt
+#    import editxt.editor
+#    def test(ed_is_none):
+#        doc = TextDocument.alloc().init()
+#        m = Mocker()
+#        app = m.mock(Application)
+#        dv_class = m.replace(editxt.editor, 'Editor')
+#        dv = m.mock(Editor)
+#        ed = m.mock(Window)
+#        app.current_window() >> (None if ed_is_none else ed)
+#        if ed_is_none:
+#            app.create_window() >> ed
+#        ed.insert_items([doc])
+#        with m, replattr(editxt, "app", app): # HACK replace global
+#            doc.makeWindowControllers()
+#            eq_(doc.app, app)
+#    yield test, True
+#    yield test, False
 
 def test_get_syntaxdef():
     from editxt.syntax import SyntaxCache, SyntaxDefinition

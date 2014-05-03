@@ -26,7 +26,7 @@ import Foundation as fn
 import editxt.constants as const
 from editxt.datatypes import WeakProperty
 from editxt.editor import Editor
-from editxt.document import TextDocument, doc_id_gen
+from editxt.document import DocumentController, TextDocument
 from editxt.platform.kvo import KVOList, KVOProxy
 
 
@@ -51,7 +51,7 @@ class Project(object):
         return path.endswith("." + const.PROJECT_EXT)
 
     def __init__(self, window, *, serial=None):
-        self.id = next(doc_id_gen)
+        self.id = next(DocumentController.id_gen)
         self.window = window
         self.proxy = KVOProxy(self)
         self.name = const.UNTITLED_PROJECT_NAME

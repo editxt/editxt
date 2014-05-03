@@ -29,6 +29,7 @@ def init(platform, use_pdb):
         "main",
         "kvo",
 
+        "app",
         "document",
         "views",
         "window",

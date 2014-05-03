@@ -29,7 +29,6 @@ import Foundation as fn
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import *
 
-import editxt
 import editxt.constants as const
 from editxt.application import Application, DocumentController, DocumentSavingDelegate
 from editxt.window import WindowController, Window
@@ -58,8 +57,9 @@ log = logging.getLogger(__name__)
 # """)
 
 def test_WindowConroller__init__():
-    def test(args):
-        ed = Window(editxt.app, **args)
+    @test_app.decorator
+    def test(app, args):
+        ed = Window(app, **args)
         assert len(ed.projects) == 0
         assert len(ed.recent) == 0
         assert ed.wc is not None
@@ -71,12 +71,13 @@ def test_WindowConroller__init__():
     yield test, {"state": "<state data>"}
 
 def test_window_did_load():
-    def test(state):
+    @test_app.decorator
+    def test(app, state):
         import editxt.platform.views as cells
         from editxt.window import BUTTON_STATE_SELECTED
         from editxt.util import load_image
         m = Mocker()
-        ed = Window(editxt.app, state)
+        ed = Window(app, state)
         wc = ed.wc = m.mock(WindowController)
         _setstate = m.method(ed._setstate)
         new_project = m.method(ed.new_project)
@@ -153,9 +154,10 @@ def test__setstate():
                 return self[name]
             except KeyError:
                 raise AttributeError(name)
-    def test(data):
+    @test_app.decorator
+    def test(app, data):
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         ed.wc = m.mock(WindowController)
         ed.discard_and_focus_recent = m.method(ed.discard_and_focus_recent)
         project_class = m.replace(mod, 'Project')
@@ -194,11 +196,12 @@ def test__setstate():
     yield test, dict(window_settings="<window_settings>")
 
 def test_state():
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
         def exists(path):
             return True
-        ed = Window(editxt.app)
+        ed = Window(app)
         ed.projects = projs = []
         ed.recent = c.recent
         m.property(ed, 'window_settings').value >> '<settings>'
@@ -242,9 +245,10 @@ def test_state():
 
 def test_discard_and_focus_recent():
     from editxt.util import RecentItemStack
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         ed.wc = m.mock(WindowController)
         ed.projects = projs = []
         ed.recent = m.mock(RecentItemStack)
@@ -297,15 +301,17 @@ def test_discard_and_focus_recent():
     yield test, c(id=0, recent=[0, 10, 2, 1, 3, 5, 7])
 
 def test_get_current_editor():
-    ed = Window(editxt.app)
-    ed._current_editor = obj = object()
-    eq_(ed.current_editor, obj)
+    with test_app() as app:
+        ed = Window(app)
+        ed._current_editor = obj = object()
+        eq_(ed.current_editor, obj)
 
 def test_set_current_editor():
     from editxt.util import RecentItemStack
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         wc = ed.wc = m.mock(WindowController)
         insert_items = m.method(ed.insert_items)
         ed.recent = m.mock(RecentItemStack)
@@ -335,9 +341,10 @@ def test_set_current_editor():
     yield test, c(editor_class=Project)
 
 def test_selected_editor_changed():
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         ed.wc = wc = m.mock(WindowController)
         cv = m.property(ed, "current_editor")
         sel = [m.mock() for x in range(c.numsel)]
@@ -385,26 +392,28 @@ def test_suspend_recent_updates():
                   final="window project(b) editor(2)*", remove="project(a)")
 
 def test_new_project():
-    m = Mocker()
-    ed = Window(editxt.app)
-    m.property(ed, "current_editor").value = ANY
-    m.method(Project.create_editor)() >> m.mock()
-    with m:
-        result = ed.new_project()
-        assert result in ed.projects, ed.projects
-        eq_(list(result.editors), [])
-        eq_(result.window, ed)
+    with test_app() as app:
+        m = Mocker()
+        ed = Window(app)
+        m.property(ed, "current_editor").value = ANY
+        m.method(Project.create_editor)() >> m.mock()
+        with m:
+            result = ed.new_project()
+            assert result in ed.projects, ed.projects
+            eq_(list(result.editors), [])
+            eq_(result.window, ed)
 
 def test_toggle_properties_pane():
     from editxt.controls.splitview import ThinSplitView
     slow_skip()
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
         nsanim = m.replace(ak, 'NSViewAnimation')
         nsdict = m.replace(fn, 'NSDictionary')
         nsval = m.replace(fn, 'NSValue')
         nsarr = m.replace(fn, 'NSArray')
-        ed = Window(editxt.app)
+        ed = Window(app)
         ed.wc = wc = m.mock(WindowController)
         tree_view = m.mock(ak.NSScrollView); (wc.docsScrollview << tree_view).count(2)
         prop_view = m.mock(ak.NSView); (wc.propsView << prop_view).count(2, 3)
@@ -449,26 +458,28 @@ def test_toggle_properties_pane():
     yield test, c(is_on=False, mid_resize=False)
 
 def test_find_project_with_editor():
-    ed = Window(editxt.app)
-    doc = object()
-    proj = Project(ed)
-    dv = Editor(proj, document=doc)
-    proj.insert_items([dv])
-    assert dv.document is doc
-    ed.projects.append(proj)
-    eq_(ed.find_project_with_editor(dv), proj)
-    dv = object()
-    eq_(ed.find_project_with_editor(dv), None)
+    with test_app() as app:
+        ed = Window(app)
+        doc = object()
+        proj = Project(ed)
+        dv = Editor(proj, document=doc)
+        proj.insert_items([dv])
+        assert dv.document is doc
+        ed.projects.append(proj)
+        eq_(ed.find_project_with_editor(dv), proj)
+        dv = object()
+        eq_(ed.find_project_with_editor(dv), None)
 
 def test_find_project_with_path():
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
         def exists(path):
             return True
         def samefile(f1, f2):
             eq_(f2, c.path)
             return f1 == f2
-        ed = Window(editxt.app)
+        ed = Window(app)
         ed.projects = projects = []
         found_proj = None
         for path in c.paths:
@@ -518,8 +529,9 @@ def test_get_current_project():
 
 def test_Window_iter_editors_of_document():
     DOC = "the document we're looking for"
-    def test(config, total_editors):
-        ed = Window(editxt.app)
+    @test_app.decorator
+    def test(app, config, total_editors):
+        ed = Window(app)
         m = Mocker()
         editors = []
         doc = m.mock(TextDocument)
@@ -552,8 +564,8 @@ def test_tool_tip_for_item():
             tip = doc = None
         item = m.mock()
         view.realItemForOpaqueItem_(item) >> doc
-        with m:
-            ed = Window(editxt.app)
+        with m, test_app() as app:
+            ed = Window(app)
             result_tip = ed.tooltip_for_item(view, item)
             eq_(result_tip, (None if null_path else tip))
     for doctype in (TextDocument, Project, None):
@@ -561,9 +573,10 @@ def test_tool_tip_for_item():
         yield test, doctype, False
 
 def test_should_edit_item():
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         item = m.mock()
         col = m.mock(ak.NSTableColumn)
         if (col.isEditable() >> c.col_is_editable):
@@ -581,9 +594,10 @@ def test_should_edit_item():
     yield test, c(can_rename=True, result=True)
 
 def test_close_button_clicked():
-    def test(row, num_rows, doc_class=None):
+    @test_app.decorator
+    def test(app, row, num_rows, doc_class=None):
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         ed.wc = m.mock(WindowController)
         ed.recent = m.mock()
         dv = ed.wc.docsView >> m.mock(ak.NSOutlineView)
@@ -602,9 +616,10 @@ def test_close_button_clicked():
         yield test, 0, 1, doc_class
 
 def test_window_did_become_key():
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         win = m.mock(ak.NSWindowController)
         cv = m.property(ed, "current_editor")
         dv = cv.value >> (m.mock(c.editor_type) if c.has_current else None)
@@ -619,11 +634,12 @@ def test_window_did_become_key():
 
 def test_window_should_close():
     import editxt.application
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
         win = m.mock(ak.NSWindow)
         dsd_class = m.replace('editxt.application.DocumentSavingDelegate')
-        window = Window(editxt.app)
+        window = Window(app)
         window.wc = m.mock(WindowController)
         app = m.replace(window, 'app')
         dsd = m.mock(DocumentSavingDelegate)
@@ -672,9 +688,10 @@ def test_window_should_close():
     yield test, c(projs=[p(1, 1), p(1, 2)])
 
 def test_window_will_close():
-    def test(window_settings_loaded, num_projects):
+    @test_app.decorator
+    def test(app, window_settings_loaded, num_projects):
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         ed.window_settings_loaded = window_settings_loaded
         app = m.replace(ed, 'app')
         with m.order():
@@ -687,14 +704,15 @@ def test_window_will_close():
     yield test, False, 3
 
 def test_get_window_settings():
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         settings = dict(
             frame_string="<frame string>",
             splitter_pos="<splitter_pos>",
             properties_hidden=c.props_hidden,
         )
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         ed.wc = m.mock(WindowController)
         ed.wc.window().stringWithSavedFrame() >> settings["frame_string"]
         ed.wc.splitView.fixedSideThickness() >> settings["splitter_pos"]
@@ -707,42 +725,45 @@ def test_get_window_settings():
     yield test, c(props_hidden=False)
 
 def test_set_window_settings_with_null_settings():
-    ed = Window(editxt.app)
-    m = Mocker()
-    settings = m.mock(dict)
-    settings.get("frame_string") >> None
-    settings.get("splitter_pos") >> None
-    settings.get("properties_hidden", False) >> False
-    with m:
-        ed.window_settings = settings
+    with test_app() as app:
+        ed = Window(app)
+        m = Mocker()
+        settings = m.mock(dict)
+        settings.get("frame_string") >> None
+        settings.get("splitter_pos") >> None
+        settings.get("properties_hidden", False) >> False
+        with m:
+            ed.window_settings = settings
 
 def test_set_window_settings():
     from editxt.controls.splitview import ThinSplitView
-    m = Mocker()
-    ed = Window(editxt.app)
-    ed.wc = m.mock(WindowController)
-    fs = "<test frame string>"
-    sp = "<test splitter position>"
-    (ed.wc.window() >> m.mock(ak.NSWindow)).setFrameFromString_(fs)
-    ed.wc.setShouldCascadeWindows_(False)
-    (ed.wc.splitView >> m.mock(ThinSplitView)).setFixedSideThickness_(sp)
-    ed.wc.propsViewButton.setState_(ak.NSOnState)
-    prop_view = ed.wc.propsView >> m.mock(ak.NSView)
-    prop_rect = prop_view.frame() >> m.mock(fn.NSRect)
-    tree_view = ed.wc.docsScrollview >> m.mock(ak.NSScrollView)
-    tree_rect = tree_view.frame() >> m.mock(fn.NSRect)
-    tree_rect.size.height = (tree_rect.size.height >> 50) + (prop_rect.size.height >> 50) - 1
-    tree_rect.origin.y = prop_rect.origin.y >> 20
-    tree_view.setFrame_(tree_rect)
-    prop_rect.size.height = 0.0
-    prop_view.setFrame_(prop_rect)
-    with m:
-        ed.window_settings = dict(frame_string=fs, splitter_pos=sp, properties_hidden=True)
+    with test_app() as app:
+        m = Mocker()
+        ed = Window(app)
+        ed.wc = m.mock(WindowController)
+        fs = "<test frame string>"
+        sp = "<test splitter position>"
+        (ed.wc.window() >> m.mock(ak.NSWindow)).setFrameFromString_(fs)
+        ed.wc.setShouldCascadeWindows_(False)
+        (ed.wc.splitView >> m.mock(ThinSplitView)).setFixedSideThickness_(sp)
+        ed.wc.propsViewButton.setState_(ak.NSOnState)
+        prop_view = ed.wc.propsView >> m.mock(ak.NSView)
+        prop_rect = prop_view.frame() >> m.mock(fn.NSRect)
+        tree_view = ed.wc.docsScrollview >> m.mock(ak.NSScrollView)
+        tree_rect = tree_view.frame() >> m.mock(fn.NSRect)
+        tree_rect.size.height = (tree_rect.size.height >> 50) + (prop_rect.size.height >> 50) - 1
+        tree_rect.origin.y = prop_rect.origin.y >> 20
+        tree_view.setFrame_(tree_rect)
+        prop_rect.size.height = 0.0
+        prop_view.setFrame_(prop_rect)
+        with m:
+            ed.window_settings = dict(frame_string=fs, splitter_pos=sp, properties_hidden=True)
 
 def test_close():
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         ed.wc = wc = m.mock(WindowController)
         ed.projects = []
         ed.window_settings_loaded = c.ws_loaded
@@ -767,9 +788,10 @@ def test_close():
 # drag/drop tests ~~~~~~~~~~~~~~~~~~~~~~~
 
 def test_is_project_drag():
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         ed.iter_dropped_id_list = m.method(ed.iter_dropped_id_list)
         pb = m.mock(ak.NSPasteboard)
         result_items = []
@@ -806,9 +828,10 @@ def test_is_project_drag():
             yield test, c(items=items, accepted_type=atype, result=result)
 
 def test_write_items_to_pasteboard():
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         ov = m.mock(ak.NSOutlineView)
         pb = m.mock(ak.NSPasteboard)
         def path_exists(path):
@@ -847,9 +870,10 @@ def test_write_items_to_pasteboard():
     yield test, c(items=[item(type=Project, path=None)])
 
 def test_validate_drop():
-    def test(config):
+    @test_app.decorator
+    def test(app, config):
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         ed.wc = m.mock(WindowController)
         ov = m.mock(ak.NSOutlineView)
         # TODO investigate where NSDraggingInfo went during the upgrade to 10.5
@@ -924,9 +948,10 @@ def test_validate_drop():
     yield test, cfg(index=2)
 
 def test_accept_drop():
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         ed.wc = m.mock(WindowController)
         ed.insert_items = m.method(ed.insert_items)
         ed.iter_dropped_id_list = m.method(ed.iter_dropped_id_list)
@@ -961,9 +986,10 @@ def test_accept_drop():
     yield test, c(accepted_type=None, result=False)
 
 def test_iter_dropped_id_list():
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
-        ed = Window(editxt.app, None)
+        ed = Window(app, None)
         app = m.replace(ed, 'app')
         result_items = []
         if c.has_ids:
@@ -1002,9 +1028,10 @@ def test_iter_dropped_paths():
         path = os.path.join(tmp, "proj_%s" % num)
         os.mkdir(path)
         return path
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         app = m.replace(ed, 'app')
         dc = m.mock(DocumentController)
         result_items = []
@@ -1359,9 +1386,10 @@ def test_insert_items():
     #yield test, c(drop=('a', 6), final=' 0 | 1bca*') # should fail (item inserted in wrong window)
 
 def test_undo_manager():
-    def test(c):
+    @test_app.decorator
+    def test(app, c):
         m = Mocker()
-        ed = Window(editxt.app)
+        ed = Window(app)
         wc = ed.wc = m.mock(WindowController)
         if not c.has_doc:
             doc = None

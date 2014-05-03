@@ -21,7 +21,7 @@ import glob
 import logging
 import os
 from contextlib import contextmanager
-from itertools import chain, repeat, count
+from itertools import chain, repeat
 
 import objc
 import AppKit as ak
@@ -31,6 +31,7 @@ import editxt
 import editxt.constants as const
 from editxt.commands import iterlines
 from editxt.config import Config
+from editxt.document import DocumentController
 from editxt.errorlog import ErrorLog, LogViewHandler
 from editxt.textcommand import CommandHistory, TextCommandController
 from editxt.util import (ContextMap, perform_selector,
@@ -41,8 +42,6 @@ log = logging.getLogger(__name__)
 
 class Error(Exception): pass
 
-doc_id_gen = count()
-
 class Application(object):
 
     def __init__(self, profile=None):
@@ -51,6 +50,7 @@ class Application(object):
         self.profile_path = os.path.expanduser(profile)
         assert os.path.isabs(self.profile_path), \
             'profile path cannot be relative (%s)' % self.profile_path
+        self.documents = DocumentController()
         self.errlog = ErrorLog(self)
         self.errlog_handler = LogViewHandler(self)
         self.errlog_handler.setLevel(logging.INFO)
@@ -429,66 +429,6 @@ class Application(object):
         self.save_window_states()
 
 
-class DocumentController(ak.NSDocumentController):
-
-    textMenu = objc.IBOutlet()
-    textEditCommandsMenu = objc.IBOutlet()
-
-    @property
-    def controller(self):
-        return editxt.app
-
-    def openPath_(self, sender):
-        self.controller.open_path_dialog()
-
-    def closeCurrentDocument_(self, sender):
-        self.controller.close_current_document()
-
-    def closeCurrentProject_(self, sender):
-        raise NotImplementedError()
-
-    def saveProjectAs_(self, sender):
-        raise NotImplementedError()
-
-    def newDocument_(self, sender):
-        self.controller.new_document()
-
-    def newProject_(self, sender):
-        self.controller.new_project()
-
-    def newWindow_(self, sender):
-        self.controller.create_window()
-
-    def openConfigFile_(self, sender):
-        self.controller.open_config_file()
-
-    def openErrorLog_(self, sender):
-        self.controller.open_error_log()
-
-    def application_openFiles_(self, app, filenames):
-        self.controller.open_documents_with_paths(filenames)
-        app.replyToOpenOrPrint_(0) # success
-
-    def applicationShouldOpenUntitledFile_(self, app):
-        return False
-
-    def applicationWillFinishLaunching_(self, app):
-        self.controller.application_will_finish_launching(app, self)
-
-    def closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_(
-        self, delegate, selector, context):
-        #perform_selector(delegate, selector, self, 1, context)
-        def callback(result):
-            #log.debug("%s.%s(%s, %s, %s)", delegate, selector, self, result, context)
-            perform_selector(delegate, selector, self, result, context)
-        saver = DocumentSavingDelegate.alloc().init_callback_(
-            self.controller.iter_dirty_editors(), callback)
-        saver.save_next_document()
-
-    def applicationWillTerminate_(self, notification):
-        self.controller.app_will_terminate(notification.object())
-
-
 class StateLoadFailure(object):
 
     def __init__(self, path):
@@ -511,9 +451,9 @@ class StateLoadFailure(object):
 #     http://permalink.gmane.org/gmane.comp.python.pyobjc.cvs/2763
 # Re: Crash when closing all documents
 #     http://permalink.gmane.org/gmane.comp.python.pyobjc.devel/5563
-objc.registerMetaDataForSelector(b'NSDocumentController',
-    b'_documentController:shouldTerminate:context:',
-    {'arguments': {4: {'type': b'^v'}}})
+#objc.registerMetaDataForSelector(b'NSDocumentController',
+#    b'_documentController:shouldTerminate:context:',
+#    {'arguments': {4: {'type': b'^v'}}})
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Document saving helper

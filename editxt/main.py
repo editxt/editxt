@@ -91,7 +91,6 @@ def main(argv=list(sys.argv)):
             app = Application(opts.get('--profile'))
 
         with app.logger() as errlog:
-            editxt.app = app
             from editxt.platform.main import run
             run(app, argv, errlog.unexpected_error, use_pdb)
     except Exception as err:

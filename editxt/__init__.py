@@ -23,5 +23,4 @@ import logging
 
 __version__ = "1.4.0"
 
-app = None # will be the singleton instance of editxt.application.Application
 log = logging.getLogger(__name__) # for logging unhandled errors

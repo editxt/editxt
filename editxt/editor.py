@@ -26,11 +26,11 @@ import Foundation as fn
 import editxt.constants as const
 import editxt.platform.constants as platform_const
 
-from editxt.application import doc_id_gen
 from editxt.command.find import Finder, FindOptions
 from editxt.command.util import change_indentation, replace_newlines
 from editxt.constants import LARGE_NUMBER_FOR_TEXT
 from editxt.controls.alert import Alert
+from editxt.document import DocumentController
 from editxt.platform.document import setup_main_view, teardown_main_view
 from editxt.platform.kvo import KVOList, KVOProxy, KVOLink
 from editxt.util import register_undo_callback, WeakProperty
@@ -75,7 +75,7 @@ class Editor(object):
             document = project.window.app.document_with_path(path)
         assert document is not None, (project, path, state)
         self.editors = KVOList.alloc().init()
-        self.id = next(doc_id_gen)
+        self.id = next(DocumentController.id_gen)
         self._project = project
         self.document = document
         self.proxy = KVOProxy(self)
