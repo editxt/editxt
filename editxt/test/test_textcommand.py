@@ -52,7 +52,7 @@ def test_CommandBar_window():
     eq_(cmd.text_commander, None)
 
 def test_CommandBar_execute():
-    from editxt.document import Editor
+    from editxt.editor import Editor
     from editxt.textcommand import TextCommandController
     def test(c):
         m = Mocker()
@@ -350,7 +350,7 @@ def test_CommandBar_get_history_concurrently():
         eq_(bar4.get_history("A", True), None)
 
 def test_CommandBar_history_reset_on_execute():
-    from editxt.document import Editor
+    from editxt.editor import Editor
     from editxt.textcommand import CommandHistory, TextCommandController
     with tempdir() as tmp:
         m = Mocker()
@@ -373,7 +373,7 @@ def test_CommandBar_history_reset_on_execute():
 
 def test_CommandBar_message():
     from editxt.controls.commandview import CommandView
-    from editxt.document import Editor
+    from editxt.editor import Editor
     def test(c):
         m = Mocker()
         window = m.mock()

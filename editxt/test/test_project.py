@@ -31,7 +31,8 @@ import editxt.constants as const
 import editxt.project as mod
 from editxt.application import Application, DocumentController
 from editxt.datatypes import WeakProperty
-from editxt.document import Editor, TextDocument
+from editxt.document import TextDocument
+from editxt.editor import Editor
 from editxt.project import Project
 from editxt.util import dump_yaml
 from editxt.window import Window, WindowController
@@ -44,7 +45,7 @@ log = logging.getLogger(__name__)
 # """)
 
 def test_editor_interface():
-    from editxt.test.test_document import verify_editor_interface
+    from editxt.test.test_editor import verify_editor_interface
     editor = Project(None)
     verify_editor_interface(editor)
 

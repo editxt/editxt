@@ -25,7 +25,8 @@ import Foundation as fn
 
 import editxt.constants as const
 from editxt.datatypes import WeakProperty
-from editxt.document import Editor, TextDocument, doc_id_gen
+from editxt.editor import Editor
+from editxt.document import TextDocument, doc_id_gen
 from editxt.platform.kvo import KVOList, KVOProxy
 
 

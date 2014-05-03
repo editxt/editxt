@@ -33,7 +33,8 @@ import editxt
 import editxt.constants as const
 from editxt.application import Application, DocumentController, DocumentSavingDelegate
 from editxt.window import WindowController, Window
-from editxt.document import Editor, TextDocument
+from editxt.document import TextDocument
+from editxt.editor import Editor
 from editxt.platform.kvo import proxy_target
 from editxt.project import Project
 from editxt.test.noseplugins import slow_skip
@@ -1346,6 +1347,14 @@ def test_insert_items():
 
     yield test, c(drop=('1', 0), final=' 0a 1*bc |')
     yield test, c(drop=('1', 1), final=' 1*bc 0a |')
+
+    # TODO implement move
+#    c = config(init=' 0a* | 1b*c', action=const.MOVE)
+#    yield test, c(drop=('b', 1), final=' 0ab* | 1c*')
+#    yield test, c(drop=('b', 2), final=' 0b*a | 1c*')
+#
+#    yield test, c(drop=('1', 0), final=' 0a 1b*c |')
+#    yield test, c(drop=('1', 1), final=' 1b*c 0a |')
 
     #yield test, c(drop=('a', 6), final=' 0 | 1bca*') # should fail (item inserted in wrong window)
 

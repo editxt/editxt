@@ -27,7 +27,8 @@ import AppKit as ak
 import Foundation as fn
 
 import editxt.constants as const
-from editxt.document import Editor, TextDocument
+from editxt.document import TextDocument
+from editxt.editor import Editor
 from editxt.platform.kvo import KVOList
 from editxt.platform.views import BUTTON_STATE_HOVER, BUTTON_STATE_NORMAL, BUTTON_STATE_PRESSED
 from editxt.platform.window import WindowController

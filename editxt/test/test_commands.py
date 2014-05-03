@@ -444,7 +444,7 @@ def test_clear_highlighted_text():
         do("clear_highlighted_text")
 
 def test_set_variable():
-    from editxt.document import Editor
+    from editxt.editor import Editor
     from editxt.controls.textview import TextView
 
     def test(command, completions, placeholder):

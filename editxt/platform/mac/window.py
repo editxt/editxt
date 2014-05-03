@@ -24,7 +24,7 @@ import AppKit as ak
 import Foundation as fn
 from PyObjCTools import AppHelper
 
-from editxt.document import Editor
+from editxt.editor import Editor
 from editxt.platform.views import BUTTON_STATE_NORMAL
 from editxt.util import untested, representedObject, user_path, WeakProperty
 

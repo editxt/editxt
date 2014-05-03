@@ -642,7 +642,7 @@ def test_FindController_count_occurrences():
 
 def test_FindController_find_target():
     from editxt.window import Window
-    from editxt.document import Editor
+    from editxt.editor import Editor
     def test(c):
         with test_app() as app:
             m = Mocker()

@@ -117,7 +117,7 @@ def test_app(config=None):
 
     """
     from editxt.application import Application, DocumentController
-    from editxt.document import Editor
+    from editxt.editor import Editor
     from editxt.project import Project
     from editxt.window import Window
     def setup(app, config):
@@ -223,7 +223,8 @@ test_app.config = _test_app_config
 
 def _test_app_item_name(item, app):
     """Get the name of a window, project, or editor/document"""
-    from editxt.document import Editor, TextDocument
+    from editxt.document import TextDocument
+    from editxt.editor import Editor
     from editxt.project import Project
     from editxt.window import Window
     name = app._test_app__items.get(item)

@@ -33,7 +33,8 @@ import editxt.application as mod
 from editxt.application import Application, DocumentController, DocumentSavingDelegate
 from editxt.commands import iterlines
 from editxt.window import WindowController, Window
-from editxt.document import Editor, TextDocument
+from editxt.document import TextDocument
+from editxt.editor import Editor
 from editxt.project import Project
 from editxt.util import load_yaml
 

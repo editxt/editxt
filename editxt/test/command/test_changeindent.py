@@ -31,7 +31,7 @@ from editxt.test.util import TestConfig, untested, check_app_state
 import editxt.constants as const
 from editxt.command.changeindent import ChangeIndentationController
 from editxt.controls.textview import TextView
-from editxt.document import Editor
+from editxt.editor import Editor
 
 log = logging.getLogger(__name__)
 
