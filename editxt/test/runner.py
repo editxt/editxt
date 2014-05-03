@@ -33,6 +33,10 @@ from editxt.test.util import unittest_print_first_failures_last, \
 
 log = logging.getLogger(__name__)
 
+# HACK install mocker patched for Python 3
+from editxt.test import mocker as _mocker
+sys.modules["mocker"] = _mocker
+
 
 def run(argv=None):
     """run tests using nose
