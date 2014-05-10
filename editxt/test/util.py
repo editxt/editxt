@@ -85,15 +85,15 @@ def do_method_pass_through(attr, inner_obj_class, outer_obj, token, method,
 class test_app(object):
     """A context manager that creates an Application object for testing purposes
 
-    :param config: A string with details about the app configuration.
+    :param state: A string with details about the app initial state.
     The string is a space-delimited list of the following names:
 
         window project editor
 
-    These names can be used to pre-configure the application with
-    windows, projects, and editors to minimize the amount of setup
-    needed in the test. Editors can be suffixed with parens containing a
-    name to configure multiple views of the same document. For example:
+    These names can be used to initialize the application with windows,
+    projects, and editors to minimize the amount of setup needed in the
+    test. Editors can be suffixed with parens containing a name to
+    setup multiple views of the same document. For example:
 
         window
             project
@@ -106,10 +106,10 @@ class test_app(object):
     document. By default each unnamed editor will contain a new,
     untitled document.
 
-    A window or project omitted from the config is implied since it is
+    A window or project omitted from the state is implied since it is
     not possible to have an editor without a project or a project
-    without a window. For example, the following two configs result in
-    identical configurations:
+    without a window. For example, the following two state strings
+    result in identical setup:
 
         window project editor
 
@@ -119,28 +119,29 @@ class test_app(object):
 
         with test_app("window project editor") as app:
             ...
-            eq_(test_app.config(app), "<expected config>")
+            eq_(test_app.state(app), "<expected state>")
 
     Alternate usage:
 
         @test_app
         def test(app, other, args):
             ...
+            eq_(test_app.state(app), "<expected state>")
         test("other", "args")
 
     """
 
     editor_re = re.compile("(-?)(window|project|editor)((?:\([a-zA-Z0-9-]+\))?)(\*?)$")
 
-    def __new__(cls, config=None):
+    def __new__(cls, state=None):
         self = super(test_app, cls).__new__(cls)
-        if callable(config):
+        if callable(state):
             self.__init__()
-            return self(config)
+            return self(state)
         return self
 
-    def __init__(self, config=None):
-        self.config = config
+    def __init__(self, state=None):
+        self.state = state
 
     def __call__(self, func):
         @wraps(func)
@@ -175,17 +176,17 @@ class test_app(object):
         from editxt.editor import Editor
         from editxt.project import Project
         from editxt.window import Window
-        config = self.config
+        state = self.state
         docs_by_name = {}
         items = self.items
-        if config is None:
+        if state is None:
             return
         window = project = None
-        for i, item in enumerate(config.split()):
+        for i, item in enumerate(state.split()):
             match = self.editor_re.match(item)
             assert match and (
                     match.group(2) == "project" or not match.group(1)
-                ), "unknown config item: {}".format(item)
+                ), "unknown state item: {}".format(item)
             collapsed, item, name, current = match.groups()
             if not name:
                 name = "<{}>".format(i)
@@ -222,8 +223,8 @@ class test_app(object):
                 window.current_editor = editor
 
     @classmethod
-    def config(cls, app):
-        """Get a string representing the app window/project/editor/document config
+    def state(cls, app):
+        """Get a string representing the app window/project/editor/document state
 
         Documents that were created after the app was initialized are
         delimited with square brackets rather than parens. For example:
@@ -231,7 +232,7 @@ class test_app(object):
             window project editor[Untitled 0]
 
         Documents not associated with any window (this is a bug) are listed
-        at the end of the config string after a pipe (|) character. Example:
+        at the end of the state string after a pipe (|) character. Example:
 
             window project editor | editor[Untitled 0]
         """
@@ -260,6 +261,8 @@ class test_app(object):
                 for document in documents:
                     yield cls.name(document, app)
         return " ".join(iter_items(app))
+
+    config = state # DEPRECATED
 
     @classmethod
     def name(cls, item, app):
