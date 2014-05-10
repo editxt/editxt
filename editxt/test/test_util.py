@@ -159,3 +159,41 @@ def test_register_undo():
     und.registerUndoWithTarget_selector_object_(inv_class, "invoke:", inv)
     with m:
         register_undo_callback(und, cb)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# editxt.test.util tests
+from editxt.test.util import test_app
+
+
+def test_test_app_context_manager():
+    from editxt.window import Window
+    with test_app("editor(1)") as app:
+        assert app is not None
+        window = Window(app)
+        app.windows.append(window)
+    eq_(test_app.config(app), "window project editor(1) window[0]")
+
+
+def test_test_app_decorator():
+    from editxt.window import Window
+    called = set()
+
+    @test_app
+    def test(app):
+        called.add(1)
+        assert app is not None
+        window = Window(app)
+        app.windows.append(window)
+        eq_(test_app.config(app), "window[0]")
+    yield test,
+
+    @test_app("editor(2)")
+    def test(app):
+        called.add(2)
+        assert app is not None
+        window = Window(app)
+        app.windows.append(window)
+        eq_(test_app.config(app), "window project editor(2) window[0]")
+    yield test,
+
+    eq_(called, {1, 2})

@@ -82,9 +82,8 @@ def do_method_pass_through(attr, inner_obj_class, outer_obj, token, method,
 
 
 @nose.tools.nottest
-@contextmanager
-def test_app(config=None):
-    """Create an Application object for testing purposes
+class test_app(object):
+    """A context manager that creates an Application object for testing purposes
 
     :param config: A string with details about the app configuration.
     The string is a space-delimited list of the following names:
@@ -116,20 +115,74 @@ def test_app(config=None):
 
         editor
 
+    Usage:
+
+        with test_app("window project editor") as app:
+            ...
+            eq_(test_app.config(app), "<expected config>")
+
+    Alternate usage:
+
+        @test_app
+        def test(app, other, args):
+            ...
+        test("other", "args")
+
     """
-    from editxt.application import Application
-    from editxt.editor import Editor
-    from editxt.project import Project
-    from editxt.window import Window
-    def setup(app, config):
+
+    editor_re = re.compile("(-?)(window|project|editor)((?:\([a-zA-Z0-9-]+\))?)(\*?)$")
+
+    def __new__(cls, config=None):
+        self = super(test_app, cls).__new__(cls)
+        if callable(config):
+            self.__init__()
+            return self(config)
+        return self
+
+    def __init__(self, config=None):
+        self.config = config
+
+    def __call__(self, func):
+        @wraps(func)
+        def decorator(*args, **kw):
+            with self as app:
+                return func(app, *args, **kw)
+        return decorator
+
+    def __enter__(self):
+        from editxt.application import Application
+        self.tempdir = tempdir()
+        app = Application(self.tempdir.__enter__())
+        self.items = {}
+        self.news = 0
+        self._setup(app)
+        app.__test_app = self
+        self.app = app
+        return app
+
+    def __exit__(self, exc_type, exc_value, tb):
+        self.tempdir.__exit__(exc_type, exc_value, tb)
+        for document in self.app.documents:
+            document.close()
+        assert not self.app.documents, list(self.app.documents)
+        del self.app
+
+    @classmethod
+    def self(cls, app):
+        return app.__test_app
+
+    def _setup(self, app):
+        from editxt.editor import Editor
+        from editxt.project import Project
+        from editxt.window import Window
+        config = self.config
         docs_by_name = {}
-        app._test_app__items = items = {}
-        app._test_app__news = 0
+        items = self.items
         if config is None:
             return
         window = project = None
         for i, item in enumerate(config.split()):
-            match = test_app.editor_re.match(item)
+            match = self.editor_re.match(item)
             assert match and (
                     match.group(2) == "project" or not match.group(1)
                 ), "unknown config item: {}".format(item)
@@ -167,109 +220,82 @@ def test_app(config=None):
             project.editors.append(editor)
             if current:
                 window.current_editor = editor
-    with tempdir() as tmp:
-        app = Application(tmp)
-        try:
-            setup(app, config)
-            yield app
-        finally:
-            for document in app.documents:
-                document.close()
-            assert not app.documents, list(app.documents)
 
-test_app.editor_re = re.compile("(-?)(window|project|editor)((?:\([a-zA-Z0-9-]+\))?)(\*?)$")
+    @classmethod
+    def config(cls, app):
+        """Get a string representing the app window/project/editor/document config
 
-def _test_app_decorator(func):
-    """A decorator to be used with tests that need an app
+        Documents that were created after the app was initialized are
+        delimited with square brackets rather than parens. For example:
 
-    Usage:
+            window project editor[Untitled 0]
 
-        @test_app.decorator
-        def test(app, other, args):
-            ...
-        test("other", "args")
+        Documents not associated with any window (this is a bug) are listed
+        at the end of the config string after a pipe (|) character. Example:
 
-    """
-    @wraps(func)
-    def decorator(*args, **kw):
-        with test_app() as app:
-            return func(app, *args, **kw)
-    return decorator
+            window project editor | editor[Untitled 0]
+        """
+        name_re = re.compile("(window|project|editor)<")
+        def iter_items(app):
+            def name(item):
+                name = cls.name(item, app)
+                match = name_re.match(name)
+                return match.group(1) if match else name
+            seen = set()
+            for window in app.windows:
+                yield name(window)
+                current = window.current_editor
+                for project in window.projects:
+                    star = "*" if project is current else ""
+                    collapsed = "" if project.expanded else "-"
+                    yield collapsed + name(project) + star
+                    for editor in project.editors:
+                        star = "*" if editor is current else ""
+                        yield name(editor) + star
+                        seen.add(editor.document)
+            documents = set(app.documents) - seen
+            if documents:
+                # documents not associated with any window (should not get here)
+                yield "|"
+                for document in documents:
+                    yield cls.name(document, app)
+        return " ".join(iter_items(app))
 
-test_app.decorator = _test_app_decorator
+    @classmethod
+    def name(cls, item, app):
+        """Get the name of a window, project, or editor/document"""
+        from editxt.document import TextDocument
+        from editxt.editor import Editor
+        from editxt.project import Project
+        from editxt.window import Window
+        self = cls.self(app)
+        name = self.items.get(item)
+        if name is None:
+            if isinstance(item, (Window, Project)):
+                name = "[{}]".format(self.news)
+            else:
+                name = "[{} {}]".format(item.name, self.news)
+            ident = name
+            prefix = "document" if isinstance(item, TextDocument) \
+                                else type(item).__name__.lower()
+            name = prefix + name
+            self.news += 1
+            self.items[item] = name
+            if isinstance(item, Editor):
+                self.items[item.document] = "document" + ident
+        return name
 
-def _test_app_config(app):
-    """Get a string representing the app window/project/editor/document config
+    @classmethod
+    def get(cls, name, app):
+        """Get the item for the given name
 
-    Documents that were created after the app was initialized are
-    delimited with square brackets rather than parens. For example:
+        :param name: The name of the item to get. Example: ``"editor(1)"``
+        """
+        self = cls.self(app)
+        items_by_name = {v: k for k, v in self.items.items()}
+        print(items_by_name)
+        return items_by_name[name]
 
-        window project editor[Untitled 0]
-
-    Documents not associated with any window (this is a bug) are listed
-    at the end of the config string after a pipe (|) character. Example:
-
-        window project editor | editor[Untitled 0]
-    """
-    name_re = re.compile("(window|project|editor)<")
-    def iter_items(app):
-        def name(item):
-            name = _test_app_item_name(item, app)
-            match = name_re.match(name)
-            return match.group(1) if match else name
-        seen = set()
-        for window in app.windows:
-            yield name(window)
-            current = window.current_editor
-            for project in window.projects:
-                star = "*" if project is current else ""
-                collapsed = "" if project.expanded else "-"
-                yield collapsed + name(project) + star
-                for editor in project.editors:
-                    star = "*" if editor is current else ""
-                    yield name(editor) + star
-                    seen.add(editor.document)
-        documents = set(app.documents) - seen
-        if documents:
-            # documents not associated with any window (should not get here)
-            yield "|"
-            for document in documents:
-                yield _test_app_item_name(document, app)
-    return " ".join(iter_items(app))
-test_app.config = _test_app_config
-
-def _test_app_item_name(item, app):
-    """Get the name of a window, project, or editor/document"""
-    from editxt.document import TextDocument
-    from editxt.editor import Editor
-    from editxt.project import Project
-    from editxt.window import Window
-    name = app._test_app__items.get(item)
-    if name is None:
-        if isinstance(item, (Window, Project)):
-            name = "[{}]".format(app._test_app__news)
-        else:
-            name = "[{} {}]".format(item.name, app._test_app__news)
-        ident = name
-        prefix = "document" if isinstance(item, TextDocument) \
-                            else type(item).__name__.lower()
-        name = prefix + name
-        app._test_app__news += 1
-        app._test_app__items[item] = name
-        if isinstance(item, Editor):
-            app._test_app__items[item.document] = "document" + ident
-    return name
-test_app.name = _test_app_item_name
-
-def _test_app_get_item(name, app):
-    """Get the item for the given name
-
-    :param name: The name of the item to get. Example: ``"editor(1)"``
-    """
-    items_by_name = {v: k for k, v in app._test_app__items.items()}
-    print(items_by_name)
-    return items_by_name[name]
-test_app.get = _test_app_get_item
 
 def check_app_state(test):
     def checker(when):
