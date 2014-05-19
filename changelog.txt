@@ -22,7 +22,7 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
-????-??-?? - 1.4.0
+2014-05-18 - 1.4.0
   - Add *.mm to Objective-C syntax definition file patterns.
   - Fix bug that preventing opening document via File > Open dialog.
   - Add diff command to compare with file on disk.

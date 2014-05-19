@@ -21,7 +21,7 @@
 # TODO make __version__ more specific (include date and git revision)
 import logging
 
-__version__ = "1.4.0-pre"
+__version__ = "1.4.0"
 
 app = None # will be the singleton instance of editxt.application.Application
 log = logging.getLogger(__name__) # for logging unhandled errors
