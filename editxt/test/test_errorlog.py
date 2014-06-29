@@ -26,7 +26,7 @@ import AppKit as ak
 import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
-from editxt.test.util import TestConfig, untested, check_app_state
+from editxt.test.util import TestConfig, untested, check_app_state, test_app
 
 import editxt.constants as const
 import editxt.errorlog as mod
@@ -117,18 +117,18 @@ def test_ErrorLog_unexpected_error():
 
 def test_create_error_log_document():
     from editxt.document import TextDocument
-    app = type("App", (), {})()
-    doc = create_error_log_document(app, lambda:None)
-    try:
-        eq_(type(doc).__name__, "ErrorLogDocument")
-        eq_(doc.app, app)
-        assert isinstance(doc, TextDocument)
-        doc2 = create_error_log_document(app, lambda:None)
+    with test_app() as app:
+        doc = create_error_log_document(app, lambda:None)
         try:
-            assert doc is not doc2
-            assert type(doc) is type(doc2)
-            eq_(doc2.app, app)
+            eq_(type(doc).__name__, "ErrorLogDocument")
+            eq_(doc.app, app)
+            assert isinstance(doc, TextDocument)
+            doc2 = create_error_log_document(app, lambda:None)
+            try:
+                assert doc is not doc2
+                assert type(doc) is type(doc2)
+                eq_(doc2.app, app)
+            finally:
+                doc2.close()
         finally:
-            doc2.close()
-    finally:
-        doc.close()
+            doc.close()

@@ -74,7 +74,7 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Bug: edit document (do not save), Quit, Don't Save
+Bug: edit document (do not save), Quit, Cancel -> crash!
     ERROR editxt - *** Python exception discarded!
     Traceback (most recent call last):
       File "/Users/dmiller/code/EditXT/editxt/application.py", line 540, in save_next_document
@@ -98,7 +98,20 @@ Bug: edit document (do not save), Quit, Don't Save
 
     2014-01-11 20:08:16.491 EditXTDev[7169:707] <class 'TypeError'>: Argument 4 is a block, but no signature available    
 
-Diff doc with other file
+Cafe Fresco (center city)
+215 N Second St
+7 PM reservation
+
+
+Replace NSDocumentController
+  - Maintain list of open documents
+  - Check unsaved documents on close application
+  - Recent documents menu (move recent documents feature into project?)
+  - Draggable icon/menu in title bar ...don't really care as long as can
+    drag document out of sidebar into terminal/text widget -> insert path
+  - Dock menu integration (windows and recent documents)
+  - Automatic file move detection
+
 Use something like Sparkle to auto-update http://sparkle.andymatuschak.org/
 open command
     - Open directory as project

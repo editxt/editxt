@@ -20,6 +20,7 @@
 import Foundation
 
 CONFIG_FILENAME = "config.yaml"
+UNTITLED_DOCUMENT_NAME = "untitled"
 UNTITLED_PROJECT_NAME = "untitled project"
 # DEFAULT_PROJECT_NAME = u"default.edxt"
 PROJECT_EXT = "edxt"

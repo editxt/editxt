@@ -200,9 +200,9 @@ def test_new_project():
 def test_document_with_path():
     def test(setup):
         with tempdir() as tmp, test_app() as app:
-            dc = ak.NSDocumentController.sharedDocumentController()
-            eq_(len(dc.documents()), 0)
-            path = setup(tmp, app, dc)
+            docs = app.documents
+            eq_(len(docs), 0)
+            path = setup(tmp, app, docs)
             doc = app.document_with_path(path)
             try:
                 assert isinstance(doc, TextDocument)
@@ -213,30 +213,30 @@ def test_document_with_path():
                 eq_(doc.app, app)
             finally:
                 doc.close()
-            eq_(len(dc.documents()), 0)
+            eq_(len(docs), 0)
 
-    def plain_file(tmp, app, dc):
+    def plain_file(tmp, app, docs):
         path = os.path.join(tmp, "file.txt")
         with open(path, "w") as fh:
             fh.write("text")
         return path
 
-    def symlink(tmp, app, dc):
-        plain = plain_file(tmp, app, dc)
+    def symlink(tmp, app, docs):
+        plain = plain_file(tmp, app, docs)
         path = os.path.join(tmp, "file.sym")
         assert plain != path, path
         os.symlink(os.path.basename(plain), path)
         return path
 
-    def document_controller(tmp, app, dc):
-        path = plain_file(tmp, app, dc)
+    def document_controller(tmp, app, docs):
+        path = plain_file(tmp, app, docs)
         url = fn.NSURL.fileURLWithPath_(path)
-        doc1, err = dc.openDocumentWithContentsOfURL_display_error_(url, False, None)
+        doc1 = docs.get_document(path)
         doc2 = app.document_with_path(path)
-        assert doc1 is doc2
+        assert doc1 is doc2, "%r is not %r" % (doc1, doc2)
         return path
 
-    def nonexistent_file(tmp, app, dc):
+    def nonexistent_file(tmp, app, docs):
         path = os.path.join(tmp, "file.txt")
         doc = app.document_with_path(path)
         assert not os.path.exists(path), "%s exists (but should not)" % path
@@ -832,113 +832,113 @@ def test_app_will_terminate():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # DocumentSavingDelegate tests
 
-def test_DocumentSavingDelegate_init():
-    docs = object()
-    ctrl = object()
-    cbck = object()
-    saver = DocumentSavingDelegate.alloc().init_callback_(docs, cbck)
-    assert saver is DocumentSavingDelegate.registry[id(saver)]
-    assert saver.editors is docs
-    assert saver.callback is cbck
-    assert saver.should_close
-
-def test_save_next_document():
-    def do_test(doctype, doc_window_is_front=True):
-        m = Mocker()
-        docs = []
-        dc = m.mock(DocumentController)
-        note_ctr = m.replace(fn, 'NSNotificationCenter')
-        controller = m.mock()
-        callback = m.mock()
-        context = 0
-        saver = DocumentSavingDelegate.alloc().init_callback_(iter(docs), callback)
-        def do_stop_routine():
-            callback(saver.should_close)
-        if doctype is None:
-            do_stop_routine()
-        else:
-            doc = m.mock(doctype)
-            docs.append(doc)
-            if doctype is Project:
-                doc.save()
-                do_stop_routine()
-            elif doctype is Editor:
-                doc.project.window.current_editor = doc
-                win = m.mock()
-                doc.window() >> win
-                note_ctr.defaultCenter().addObserver_selector_name_object_(
-                    saver, "windowDidEndSheet:", ak.NSWindowDidEndSheetNotification, win)
-                document = doc.document >> m.mock(TextDocument)
-                wcs = m.mock(list)
-                (document.windowControllers() << wcs).count(1, 2)
-                wcs[0].window() >> (win if doc_window_is_front else m.mock())
-                if not doc_window_is_front:
-                    wcs.sort(key=ANY)
-                document.canCloseDocumentWithDelegate_shouldCloseSelector_contextInfo_(
-                    saver, "document:shouldClose:contextInfo:", context)
-        with m:
-            saver.save_next_document()
-        if doctype is Editor:
-            assert not saver.document_called_back
-            assert not saver.sheet_did_end
-        else:
-            eq_(saver.editors, None)
-            assert id(saver) not in saver.registry
-    yield do_test, Editor
-    yield do_test, Editor, False
-    yield do_test, Project
-    yield do_test, None
-
-def test_document_shouldClose_contextInfo_():
-    assert DocumentSavingDelegate.document_shouldClose_contextInfo_.signature == b'v@:@ci'
-    def do_test(should_close, sheet_did_end):
-        context = 0
-        m = Mocker()
-        saver = DocumentSavingDelegate.alloc().init_callback_(m.mock(), m.mock())
-        save_next_document = m.method(saver.save_next_document)
-        saver.sheet_did_end = sheet_did_end
-        if sheet_did_end:
-            save_next_document()
-        doc = m.mock(TextDocument)
-        with m:
-            saver.document_shouldClose_contextInfo_(doc, should_close, context)
-        assert saver.document_called_back
-        if not should_close:
-            assert not saver.should_close
-            try:
-                next(saver.editors)
-                raise AssertionError("next(saver.editors) should raise StopIteration")
-            except StopIteration:
-                pass
-        else:
-            assert saver.should_close
-    yield do_test, True, True
-    yield do_test, True, False
-    yield do_test, False, True
-    yield do_test, False, False
-
-def test_windowDidEndSheet_signature():
-    assert DocumentSavingDelegate.windowDidEndSheet_.signature == b'v@:@'
-
-def test_windowDidEndSheet_():
-    def do_test(called_back):
-        m = Mocker()
-        saver = DocumentSavingDelegate.alloc().init_callback_(m.mock(), m.mock())
-        saver.document_called_back = called_back
-        notif = m.mock(fn.NSNotification)
-        win = m.mock(ak.NSWindow)
-        notif.object() >> win
-        note_ctr = m.replace(fn, 'NSNotificationCenter')
-        note_ctr.defaultCenter().removeObserver_name_object_(
-            saver, ak.NSWindowDidEndSheetNotification, win)
-        save_next_document = m.method(saver.save_next_document)
-        if called_back:
-            save_next_document()
-        with m:
-            saver.windowDidEndSheet_(notif)
-            assert saver.sheet_did_end
-    yield do_test, True
-    yield do_test, False
+#def test_DocumentSavingDelegate_init():
+#    docs = object()
+#    ctrl = object()
+#    cbck = object()
+#    saver = DocumentSavingDelegate.alloc().init_callback_(docs, cbck)
+#    assert saver is DocumentSavingDelegate.registry[id(saver)]
+#    assert saver.editors is docs
+#    assert saver.callback is cbck
+#    assert saver.should_close
+#
+#def test_save_next_document():
+#    def do_test(doctype, doc_window_is_front=True):
+#        m = Mocker()
+#        docs = []
+#        dc = m.mock(DocumentController)
+#        note_ctr = m.replace(fn, 'NSNotificationCenter')
+#        controller = m.mock()
+#        callback = m.mock()
+#        context = 0
+#        saver = DocumentSavingDelegate.alloc().init_callback_(iter(docs), callback)
+#        def do_stop_routine():
+#            callback(saver.should_close)
+#        if doctype is None:
+#            do_stop_routine()
+#        else:
+#            doc = m.mock(doctype)
+#            docs.append(doc)
+#            if doctype is Project:
+#                doc.save()
+#                do_stop_routine()
+#            elif doctype is Editor:
+#                doc.project.window.current_editor = doc
+#                win = m.mock()
+#                doc.window() >> win
+#                note_ctr.defaultCenter().addObserver_selector_name_object_(
+#                    saver, "windowDidEndSheet:", ak.NSWindowDidEndSheetNotification, win)
+#                document = doc.document >> m.mock(TextDocument)
+#                wcs = m.mock(list)
+#                (document.windowControllers() << wcs).count(1, 2)
+#                wcs[0].window() >> (win if doc_window_is_front else m.mock())
+#                if not doc_window_is_front:
+#                    wcs.sort(key=ANY)
+#                document.canCloseDocumentWithDelegate_shouldCloseSelector_contextInfo_(
+#                    saver, "document:shouldClose:contextInfo:", context)
+#        with m:
+#            saver.save_next_document()
+#        if doctype is Editor:
+#            assert not saver.document_called_back
+#            assert not saver.sheet_did_end
+#        else:
+#            eq_(saver.editors, None)
+#            assert id(saver) not in saver.registry
+#    yield do_test, Editor
+#    yield do_test, Editor, False
+#    yield do_test, Project
+#    yield do_test, None
+#
+#def test_document_shouldClose_contextInfo_():
+#    assert DocumentSavingDelegate.document_shouldClose_contextInfo_.signature == b'v@:@ci'
+#    def do_test(should_close, sheet_did_end):
+#        context = 0
+#        m = Mocker()
+#        saver = DocumentSavingDelegate.alloc().init_callback_(m.mock(), m.mock())
+#        save_next_document = m.method(saver.save_next_document)
+#        saver.sheet_did_end = sheet_did_end
+#        if sheet_did_end:
+#            save_next_document()
+#        doc = m.mock(TextDocument)
+#        with m:
+#            saver.document_shouldClose_contextInfo_(doc, should_close, context)
+#        assert saver.document_called_back
+#        if not should_close:
+#            assert not saver.should_close
+#            try:
+#                next(saver.editors)
+#                raise AssertionError("next(saver.editors) should raise StopIteration")
+#            except StopIteration:
+#                pass
+#        else:
+#            assert saver.should_close
+#    yield do_test, True, True
+#    yield do_test, True, False
+#    yield do_test, False, True
+#    yield do_test, False, False
+#
+#def test_windowDidEndSheet_signature():
+#    assert DocumentSavingDelegate.windowDidEndSheet_.signature == b'v@:@'
+#
+#def test_windowDidEndSheet_():
+#    def do_test(called_back):
+#        m = Mocker()
+#        saver = DocumentSavingDelegate.alloc().init_callback_(m.mock(), m.mock())
+#        saver.document_called_back = called_back
+#        notif = m.mock(fn.NSNotification)
+#        win = m.mock(ak.NSWindow)
+#        notif.object() >> win
+#        note_ctr = m.replace(fn, 'NSNotificationCenter')
+#        note_ctr.defaultCenter().removeObserver_name_object_(
+#            saver, ak.NSWindowDidEndSheetNotification, win)
+#        save_next_document = m.method(saver.save_next_document)
+#        if called_back:
+#            save_next_document()
+#        with m:
+#            saver.windowDidEndSheet_(notif)
+#            assert saver.sheet_did_end
+#    yield do_test, True
+#    yield do_test, False
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # OpenPathController tests

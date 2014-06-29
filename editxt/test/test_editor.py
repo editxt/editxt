@@ -55,7 +55,7 @@ def verify_editor_interface(editor):
     assert dn is not None
     icon = editor.icon()
     if isinstance(editor, Editor):
-        assert editor.project is None, editor.project
+        assert editor.project is not None, editor.project
         assert icon is not None
         with assert_raises(AttributeError):
             editor.name = "something"
@@ -68,12 +68,9 @@ def verify_editor_interface(editor):
         assert editor.expanded
 
 def test_editor_interface():
-    td = TextDocument.alloc().init()
-    try:
-        editor = Editor(None, document=td)
+    with test_app("editor") as app:
+        editor = app.windows[0].projects[0].editors[0]
         verify_editor_interface(editor)
-    finally:
-        td.close()
 
 def test_Editor_init():
     import editxt.document
@@ -555,13 +552,10 @@ def test_Editor_close():
                 text_storage = doc.text_storage
                 text_storage.setDelegate_(doc)
                 remove_layout = m.method(text_storage.removeLayoutManager_)
-            remove_window = m.method(doc.removeWindowController_)
             wc = editor.project.window.wc = m.mock(WindowController)
             if not (c.tv_is_none or c.ts_is_none):
                 lm = editor.text_view.layoutManager() >> m.mock(ak.NSLayoutManager)
                 remove_layout(lm)
-            if c.remove_window and not c.close_doc:
-                remove_window(wc)
             if c.main_is_none:
                 editor.main_view = None
             else:
@@ -596,10 +590,10 @@ def test_Editor_close():
     yield test, c(main_is_none=True)
     yield test, c(app="editor(a) editor(b)", end="window project editor(b)*")
     yield test, c(app="editor(a) editor(a)", end="window project editor(a)*",
-                  close_doc=False, remove_window=False)
+                  close_doc=False)
     yield test, c(app="editor(a) window editor(a)",
                   end="window project* window project editor(a)",
-                  close_doc=False, remove_window=True)
+                  close_doc=False)
 
 def test_Editor_on_do_command():
     import editxt.platform.constants as const

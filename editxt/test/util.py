@@ -163,7 +163,7 @@ class test_app(object):
 
     def __exit__(self, exc_type, exc_value, tb):
         self.tempdir.__exit__(exc_type, exc_value, tb)
-        for document in self.app.documents:
+        for document in list(self.app.documents):
             document.close()
         assert not self.app.documents, list(self.app.documents)
         del self.app
@@ -321,3 +321,12 @@ def profile(test, *args):
         finally:
             sys.stdout = stdout
     return (prof_test, test, args)
+
+
+@contextmanager
+def make_file(name="file.txt", content="text"):
+    with tempdir() as tmp:
+        path = os.path.join(tmp, name)
+        with open(path, "w", encoding="utf-8") as file:
+            file.write(content)
+        yield path

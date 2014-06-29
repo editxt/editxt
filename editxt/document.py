@@ -31,6 +31,7 @@ import editxt.platform.constants as platform_const
 
 from editxt.command.util import calculate_indent_mode_and_size
 from editxt.controls.alert import Alert
+from editxt.platform.events import call_later
 from editxt.platform.kvo import KVOProxy
 from editxt.syntax import SyntaxCache
 from editxt.util import (untested, refactor,
@@ -50,7 +51,8 @@ class DocumentController(object):
 
     id_gen = count()
 
-    def __init__(self):
+    def __init__(self, app):
+        self.app = app
         self.documents = {}
 
     def __len__(self):
@@ -58,6 +60,48 @@ class DocumentController(object):
 
     def __iter__(self):
         return iter(self.documents.values())
+
+#    def new_document(self):
+#        """Create a new untitled document
+#        """
+#        return TextDocument(self.app)
+
+    def get_document(self, path):
+        """Get a document object for the given path
+
+        :returns: A new or existing document.
+        """
+        try:
+            document = self.documents[path]
+        except KeyError:
+            document = self.documents[path] = TextDocument(self.app, path)
+        return document
+
+    def change_document_path(self, old_path, document):
+        """Change a document's path
+
+        :param old_path: The old path of the document
+        :param document: The document, which has been moved, and which has a
+        file_path attribute pointing to its new location on disk.
+        """
+        assert os.path.isabs(document.file_path), document
+        self.documents.pop(old_path, None)
+        self.documents[document.file_path] = document
+
+#    def close_document(self, document):
+#        """Close document
+#
+#        Discard document from the set of open documents.
+#        """
+
+#    # TODO is this method needed?
+#    def is_document_open(self, path):
+#        """Return true if a document is open for the given path
+#        """
+
+    def discard(self, document):
+        """Remove document from controller"""
+        self.documents.pop(document.file_path, None)
 
 
 class UndoManager(fn.NSUndoManager):
@@ -72,22 +116,22 @@ class UndoManager(fn.NSUndoManager):
             super(UndoManager, self).removeAllActions()
 
 
-class TextDocument(ak.NSDocument):
+class TextDocument(object):
 
     app = WeakProperty()
 
-    def init(self):
-        super(TextDocument, self).init()
-        self.setUndoManager_(UndoManager.alloc().init())
+    def __init__(self, app, path=None):
+        #self.setUndoManager_(UndoManager.alloc().init())
+        self.app = app
+        self.file_path = path or const.UNTITLED_DOCUMENT_NAME
         self.id = next(DocumentController.id_gen)
         self.icon_cache = (None, None)
         self.document_attrs = {
             ak.NSDocumentTypeDocumentAttribute: ak.NSPlainTextDocumentType,
             ak.NSCharacterEncodingDocumentAttribute: fn.NSUTF8StringEncoding,
         }
-        self.text_storage = ak.NSTextStorage.alloc().initWithString_attributes_("", {})
+        self.undo_manager = UndoManager.alloc().init();
         self.syntaxer = SyntaxCache()
-        self._filestat = None
         self.props = KVOProxy(self)
 
         # FIXME reclaim from Application.document_with_path
@@ -95,22 +139,40 @@ class TextDocument(ak.NSDocument):
         self.indent_size = 4
         self.newline_mode = const.NEWLINE_MODE_UNIX
         self.highlight_selected_text = True
-        self.reset_text_attributes(self.indent_size, False)
 
         #self.save_hooks = []
-        return self
 
     @property
     def name(self):
-        return self.displayName()
+        return os.path.basename(self.file_path)
 
     @property
     def file_path(self):
-        url = self.fileURL()
-        return (url.path() if url else None)
+        return self._filepath
     @file_path.setter
     def file_path(self, value):
-        self.setFileURL_(fn.NSURL.fileURLWithPath_(value))
+        old_path = getattr(self, "_filepath", None)
+        self._filepath = value
+        self._refresh_file_mtime() # TODO should this (always) happen here?
+        if hasattr(self, "_filepath") and os.path.isabs(self._filepath):
+            self.app.documents.change_document_path(old_path, self)
+
+    @property
+    def file_mtime(self):
+        return self._filestat.st_mtime if self._filestat else None
+
+    @property
+    def text_storage(self):
+        try:
+            return self._text_storage
+        except AttributeError:
+            self._text_storage = \
+                ak.NSTextStorage.alloc().initWithString_attributes_("", {})
+        self._load()
+        return self._text_storage
+    @text_storage.setter
+    def text_storage(self, value):
+        self._text_storage = value
 
     @property
     def text(self):
@@ -140,17 +202,8 @@ class TextDocument(ak.NSDocument):
             self.document_attrs.pop(ak.NSCharacterEncodingDocumentAttribute, None)
 
     def reset_text_attributes(self, indent_size, reset_views=True):
-        font = ak.NSFont.fontWithName_size_("Monaco", 10.0)
-        spcw = font.screenFontWithRenderingMode_(ak.NSFontDefaultRenderingMode) \
-            .advancementForGlyph_(ord(" ")).width
-        ps = ak.NSParagraphStyle.defaultParagraphStyle().mutableCopy()
-        ps.setTabStops_([])
-        ps.setDefaultTabInterval_(spcw * indent_size)
-        ps = ps.copy()
-        self._text_attributes = attrs = {
-            ak.NSFontAttributeName: font,
-            ak.NSParagraphStyleAttributeName: ps,
-        }
+        attrs = self.default_text_attributes(indent_size)
+        ps = attrs[ak.NSParagraphStyleAttributeName]
         range = fn.NSMakeRange(0, self.text_storage.length())
         self.text_storage.addAttributes_range_(attrs, range)
         if not reset_views:
@@ -160,8 +213,24 @@ class TextDocument(ak.NSDocument):
                 editor.text_view.setTypingAttributes_(attrs)
                 editor.text_view.setDefaultParagraphStyle_(ps)
 
-    def default_text_attributes(self):
-        return self._text_attributes
+    def default_text_attributes(self, indent_size=None):
+        if indent_size is None:
+            try:
+                return self._text_attributes
+            except AttributeError:
+                indent_size = self.indent_size
+        font = ak.NSFont.fontWithName_size_("Monaco", 10.0)
+        spcw = font.screenFontWithRenderingMode_(ak.NSFontDefaultRenderingMode) \
+            .advancementForGlyph_(ord("8")).width
+        ps = ak.NSParagraphStyle.defaultParagraphStyle().mutableCopy()
+        ps.setTabStops_([])
+        ps.setDefaultTabInterval_(spcw * indent_size)
+        ps = ps.copy()
+        self._text_attributes = attrs = {
+            ak.NSFontAttributeName: font,
+            ak.NSParagraphStyleAttributeName: ps,
+        }
+        return attrs
 
     def makeWindowControllers(self):
         # TODO remove this method?
@@ -170,21 +239,31 @@ class TextDocument(ak.NSDocument):
             window = self.app.create_window()
         window.insert_items([self])
 
-    def readFromData_ofType_error_(self, data, doctype, error):
-        success, err = self.read_data_into_textstorage(data, self.text_storage)
-        if success:
-            self.analyze_content()
-        return (success, err)
+    def _load(self):
+        """Load the document's file contents from disk
 
-    def read_data_into_textstorage(self, data, text_storage):
+        :returns: True if the file was loaded from disk, otherwise False.
+        """
+        if self.file_exists():
+            data = ak.NSData.dataWithContentsOfFile_(self.file_path)
+            success, err = self.read_from_data(data)
+            log.error(err) # TODO display error in progress bar
+            if success:
+                self.analyze_content()
+            return success
+        return False
+
+    def read_from_data(self, data):
         options = {ak.NSDefaultAttributesDocumentOption: self.default_text_attributes()}
         options.update(self.document_attrs)
         while True:
-            success, attrs, err = text_storage \
+            success, attrs, err = self._text_storage \
                 .readFromData_options_documentAttributes_error_(
                     data, options, None, None)
             if success or ak.NSCharacterEncodingDocumentAttribute not in options:
                 if success:
+                    # TODO this might fix the intermittent font bug
+                    #self.reset_text_attributes(self.indent_size, False)
                     self.document_attrs = attrs
                 break
             if err:
@@ -192,7 +271,18 @@ class TextDocument(ak.NSDocument):
             options.pop(ak.NSCharacterEncodingDocumentAttribute, None)
         return success, err
 
-    def dataOfType_error_(self, doctype, error):
+    def save(self, path=None):
+        if not os.path.isabs(self.file_path):
+            raise NotImplementedError("TODO set path")
+            assert os.path.isabs(path)
+        data, err = self.data()
+        if data is None:
+            log.error(err)
+            return
+        data.writeToFile_atomically_(self.file_path, True)
+        self._refresh_file_mtime()
+
+    def data(self):
         range = fn.NSMakeRange(0, self.text_storage.length())
         attrs = self.document_attrs
         data, err = self.text_storage \
@@ -211,10 +301,6 @@ class TextDocument(ak.NSDocument):
 #                 self.text_view.breakUndoCoalescing()
         return (data, err)
 
-    def setFileModificationDate_(self, date):
-        super(TextDocument, self).setFileModificationDate_(date)
-        self._filestat = None
-
     def analyze_content(self):
         text = self.text_storage.string()
         start, end, cend = text.getLineStart_end_contentsEnd_forRange_(
@@ -228,14 +314,27 @@ class TextDocument(ak.NSDocument):
         if mode is not None:
             self.indent_mode = mode
 
+    def file_exists(self):
+        """Return True if this file has no absolute path on disk"""
+        path = self.file_path
+        return os.path.isabs(path) and os.path.exists(path)
+
+    def _refresh_file_mtime(self):
+        if self.file_exists():
+            self._filestat = filestat(self.file_path)
+            return
+        self._filestat = None
+
     def is_externally_modified(self):
-        """check if this document has been modified by another program"""
-        url = self.fileURL()
-        if url is not None and os.path.exists(url.path()):
-            ok, mdate, err = url.getResourceValue_forKey_error_(
-                None, fn.NSURLContentModificationDateKey, None)
-            if ok:
-                return self.fileModificationDate() != mdate
+        """check if this document has been modified by another program
+
+        :returns: True if the file has been modified by another program,
+        otherwise False, and None if the file cannot be accessed.
+        """
+        if self.file_exists():
+            stat = filestat(self.file_path)
+            if stat is not None:
+                return self._filestat != stat
         return None
 
     def check_for_external_changes(self, window):
@@ -244,15 +343,15 @@ class TextDocument(ak.NSDocument):
         if self.isDocumentEdited():
             if window is None:
                 return # ignore change (no gui for alert)
-            stat = filestat(self.fileURL().path())
-            if self._filestat == stat:
+            stat = filestat(self.file_path)
+            if self._filestat == stat: # TODO is this check necessary?
                 return
             self._filestat = stat
             def callback(code):
                 if code == ak.NSAlertFirstButtonReturn:
                     self.reload_document()
             alert = Alert.alloc().init()
-            alert.setMessageText_("“%s” source document changed" % self.displayName())
+            alert.setMessageText_("“%s” source document changed" % self.name)
             alert.setInformativeText_("Discard changes and reload?")
             alert.addButtonWithTitle_("Reload")
             alert.addButtonWithTitle_("Cancel")
@@ -268,23 +367,21 @@ class TextDocument(ak.NSDocument):
         down-side is that it may use a lot of memory if the document is very
         large.
         """
-        url = self.fileURL()
-        if url is None or not os.path.exists(url.path()):
+        path = self.file_path
+        if not self.file_exists():
             return
-        undo = self.undoManager()
+        undo = self.undo_manager
         undo.should_remove = False
-        textstore = self.text_storage
-        self.text_storage = ak.NSTextStorage.alloc().init()
+        textstore = self._text_storage
+        self._text_storage = ak.NSTextStorage.alloc().init()
         try:
-            ok, err = self.revertToContentsOfURL_ofType_error_(
-                url, self.fileType(), None)
+            ok = self._load()
         finally:
-            tempstore = self.text_storage
-            self.text_storage = textstore
+            tempstore = self._text_storage
+            self._text_storage = textstore
             undo.should_remove = True
         if not ok:
-            log.error("could not reload document: %s", err)
-            return # TODO report err
+            return
         textview = None
         for editor in self.app.iter_editors_of_document(self):
             textview = editor.text_view
@@ -303,7 +400,7 @@ class TextDocument(ak.NSDocument):
             textview.breakUndoCoalescing()
             # HACK use timed invocation to allow didChangeText notification
             # to update change count before _clearUndo is invoked
-            self.performSelector_withObject_afterDelay_("_clearChanges", self, 0)
+            call_later(0, self._clearChanges)
             textview.setSelectedRange_(fn.NSRange(0, 0))
             self.update_syntaxer()
 
@@ -338,8 +435,8 @@ class TextDocument(ak.NSDocument):
         self.updateChangeCount_(ak.NSChangeCleared)
 
     def icon(self):
-        url = self.fileURL()
-        key = "" if url is None else url.path()
+        path = self.file_path
+        key = "" if path is None else path
         old_key, data = self.icon_cache
         if old_key is None or old_key != key:
             data = fetch_icon(key)
@@ -360,7 +457,7 @@ class TextDocument(ak.NSDocument):
     def update_syntaxer(self):
         if self.text_storage.delegate() is not self:
             self.text_storage.setDelegate_(self)
-        filename = self.lastComponentOfFileName()
+        filename = os.path.basename(self.file_path)
         if filename != self.syntaxer.filename:
             self.syntaxer.filename = filename
             syntaxdef = self.app.syntax_factory.get_definition(filename)
@@ -396,7 +493,7 @@ class TextDocument(ak.NSDocument):
 #             wc.add_document(self)
 
     def __repr__(self):
-        return "<%s 0x%x %s>" % (type(self).__name__, id(self), self.displayName())
+        return "<%s 0x%x %s>" % (type(self).__name__, id(self), self.name)
 
     @objc.typedSelector(b'v@:@ii')
     def document_shouldClose_contextInfo_(self, doc, should_close, info):
@@ -404,11 +501,37 @@ class TextDocument(ak.NSDocument):
 
     def close(self):
         # remove window controllers here so NSDocument does not close the windows
-        for wc in list(self.windowControllers()):
-            self.removeWindowController_(wc)
         ts = self.text_storage
         if ts is not None and ts.delegate() is self:
             ts.setDelegate_(None)
         self.text_storage = None
         self.props = None
-        super(TextDocument, self).close()
+        self.app.document_closed(self)
+
+    # -- TODO refactor NSDocument compat --------------------------------------
+
+    def displayName(self):
+        return self.name
+
+    def isDocumentEdited(self):
+        # TODO write tests. Make this work with undo beyond save
+        return self.undo_manager.canUndo()
+
+    def undoManager(self):
+        return self.undo_manager
+
+    def setHasUndoManager_(self, value):
+        if not value:
+            self.undo_manager = None
+        # TODO tell thing that uses undo manager that it should ignore it
+
+    def canCloseDocumentWithDelegate_shouldCloseSelector_contextInfo_(
+            self, delegate, should_close, info):
+        raise NotImplementedError
+
+    def setLastComponentOfFileName_(self, name):
+        path, trash = os.path.split(self.file_path)
+        if path:
+            self.file_path = os.path.join(path, name)
+        else:
+            self.file_path = name

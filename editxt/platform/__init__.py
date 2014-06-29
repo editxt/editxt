@@ -31,6 +31,7 @@ def init(platform, use_pdb):
 
         "app",
         "document",
+        "events",
         "views",
         "window",
     ]

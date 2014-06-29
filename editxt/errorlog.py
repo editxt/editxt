@@ -102,6 +102,5 @@ def create_error_log_document(app, closefunc):
             def close(self):
                 closefunc()
                 super(ErrorLogDocument, self).close()
-    document = ErrorLogDocument.alloc().init()
-    document.app = app
+    document = ErrorLogDocument(app)
     return document

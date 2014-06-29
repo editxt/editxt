@@ -212,7 +212,7 @@ def test_create_editor():
         eq_(len(project.editors), 0)
         project.create_editor()
         eq_(len(project.editors), 1)
-        eq_(test_app.config(app), "window project editor[Untitled 0]")
+        eq_(test_app.config(app), "window project editor[untitled 0]")
 
 def test_insert_items():
     proj = Project(None)

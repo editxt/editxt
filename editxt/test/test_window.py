@@ -1126,13 +1126,12 @@ def test_insert_items():
                     name_to_item[char] = project
                     for editor in project.editors:
                         char = namechar(editor)
-                        editor.document.setFileURL_(fn.NSURL.fileURLWithPath_(char))
+                        editor.document.file_path = char
                         name_to_item[char] = editor
 
             for char in c.drop[0]:
                 if char not in name_to_item and char not in '0123456789':
-                    name_to_item[char] = TextDocument.alloc().init()
-                    name_to_item[char].setFileURL_(fn.NSURL.fileURLWithPath_(char))
+                    name_to_item[char] = TextDocument(app, char)
 
             items = [name_to_item[char] for char in c.drop[0]] \
                     if "*" in c.final and c.init != c.final else []

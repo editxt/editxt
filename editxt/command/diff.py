@@ -37,14 +37,13 @@ def diff(textview, sender, args):
         file_path = os.path.expanduser(args.file)
     else:
         file_path = editor.file_path
-    if file_path is None:
+    if file_path is None or not os.path.isabs(file_path):
         raise CommandError("file has not been saved")
-    elif not os.path.exists(file_path):
+    if not os.path.exists(file_path):
         raise CommandError("file not found: {}".format(file_path))
-    else:
-        name = os.path.basename(editor.file_path)
-        diff_program = editor.app.config["diff_program"]
-        external_diff(file_path, textview.string(), name, diff_program)
+    name = os.path.basename(editor.file_path)
+    diff_program = editor.app.config["diff_program"]
+    external_diff(file_path, textview.string(), name, diff_program)
 
 
 def external_diff(filepath, text, name, diff_program):

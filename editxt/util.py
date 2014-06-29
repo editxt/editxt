@@ -24,6 +24,7 @@ import re
 import string
 import sys
 import types
+from collections import namedtuple
 from contextlib import contextmanager
 
 import objc
@@ -137,6 +138,8 @@ def load_image(name):
         images[name] = image
         return image
 
+_Stat = namedtuple("_Stat", ["st_size", "st_mtime"])
+
 def filestat(path):
     """Returns a tuple (<st_size>, <st_mtime>) as taken from os.stat
 
@@ -145,10 +148,11 @@ def filestat(path):
 
     This is useful for checking for file modifications.
     """
-    if os.path.exists(path):
+    try:
         value = os.stat(path)
-        return value[6], value[8]
-    return None
+        return _Stat(value[6], value[8])
+    except OSError:
+        return None
 
 
 def user_path(path):

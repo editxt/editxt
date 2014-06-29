@@ -25,7 +25,7 @@ import AppKit as ak
 import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
-from editxt.test.util import assert_raises, TestConfig, replattr, test_app
+from editxt.test.util import assert_raises, TestConfig, replattr, test_app, make_file
 
 import editxt.constants as const
 import editxt.document as mod
@@ -33,6 +33,7 @@ from editxt.constants import TEXT_DOCUMENT
 from editxt.application import Application, DocumentController
 from editxt.document import TextDocument
 from editxt.editor import Editor
+from editxt.util import filestat
 from editxt.window import Window, WindowController
 
 log = logging.getLogger(__name__)
@@ -42,14 +43,14 @@ log = logging.getLogger(__name__)
 
 def test_TextDocument_init():
     ident = next(DocumentController.id_gen) + 1
-    doc = TextDocument.alloc().init()
+    doc = TextDocument(None)
     eq_(doc.id, ident)
     eq_(doc.icon_cache, (None, None))
     eq_(doc.document_attrs, {
         ak.NSDocumentTypeDocumentAttribute: ak.NSPlainTextDocumentType,
         ak.NSCharacterEncodingDocumentAttribute: fn.NSUTF8StringEncoding,
     })
-    assert doc.text_storage is not None
+    #assert doc.text_storage is not None
     assert doc.syntaxer is not None
     eq_(doc._filestat, None)
     eq_(doc.indent_size, 4)
@@ -59,8 +60,7 @@ def test_TextDocument_init():
 def property_value_util(c, doc=None):
     with test_app() as app:
         if doc is None:
-            doc = TextDocument.alloc().init()
-            doc.app = app
+            doc = TextDocument(app)
         eq_(getattr(doc, c.attr), c.default)
         setattr(doc, c.attr, c.value)
         eq_(getattr(doc, c.attr), c.value)
@@ -89,7 +89,7 @@ def test_TextDocument_properties():
     for encoding in const.CHARACTER_ENCODINGS:
         yield property_value_util, c(value=encoding)
     def test():
-        doc = TextDocument.alloc().init()
+        doc = TextDocument(None)
         doc.character_encoding = 42
         eq_(doc.document_attrs[ak.NSCharacterEncodingDocumentAttribute], 42)
         doc.character_encoding = None
@@ -98,7 +98,7 @@ def test_TextDocument_properties():
 
 def test_TextDocument_eol():
     def test(c):
-        doc = TextDocument.alloc().init()
+        doc = TextDocument(None)
         doc.newline_mode = c.mode
         eq_(doc.eol, const.EOLS[c.mode])
     c = TestConfig()
@@ -111,7 +111,7 @@ def test_TextDocument_eol():
 #     def test(c):
 #         m = Mocker()
 #         regundo = m.replace("editxt.util.register_undo_callback", passthrough=False)
-#         doc = TextDocument.alloc().init()
+#         doc = TextDocument(None)
 #         #undoer = m.method(doc.undoManager)
 #         reset = m.method(doc.reset_text_attributes)
 #         callback = []
@@ -133,7 +133,7 @@ def test_TextDocument_eol():
 #                 eq_(len(callback), 2)
 #
 #     def fail(c, exc):
-#         doc = TextDocument.alloc().init()
+#         doc = TextDocument(None)
 #         try:
 #             doc.indent_size = c.size
 #         except Exception as ex:
@@ -149,7 +149,7 @@ def test_TextDocument_eol():
 #     yield fail, c(size=NSDecimalNumber.decimalNumberWithString_("5")), TypeError
 
 def test_TextDocument_default_text_attributes():
-    doc = TextDocument.alloc().init()
+    doc = TextDocument(None)
     attrs = doc.default_text_attributes()
     assert ak.NSFontAttributeName in attrs
     assert ak.NSParagraphStyleAttributeName in attrs
@@ -159,8 +159,8 @@ def test_TextDocument_reset_text_attributes():
     INDENT_SIZE = 42
     m = Mocker()
     ps_class = m.replace(ak, 'NSParagraphStyle')
-    doc = TextDocument.alloc().init()
-    doc.app = app = m.mock(Application)
+    app = m.mock(Application)
+    doc = TextDocument(app)
     ts = doc.text_storage = m.mock(ak.NSTextStorage)
     undoer = m.method(doc.undoManager)
     font = ak.NSFont.fontWithName_size_("Monaco", 10.0)
@@ -186,52 +186,44 @@ def test_TextDocument_reset_text_attributes():
         doc.reset_text_attributes(INDENT_SIZE)
         eq_(doc.default_text_attributes(), attrs)
 
-def test_setFileModificationDate_():
+def test__refresh_file_mtime():
     from datetime import datetime
     dt = fn.NSDate.date()
-    doc = TextDocument.alloc().init()
-    eq_(doc.fileModificationDate(), None)
+    doc = TextDocument(None)
+    eq_(doc.file_mtime, None)
     eq_(doc._filestat, None)
     doc._filestat = "<checked>"
-    doc.setFileModificationDate_(dt)
+    doc._refresh_file_mtime()
     eq_(doc._filestat, None)
-    eq_(doc.fileModificationDate(), dt)
 
 def test_is_externally_modified():
     def test(c):
         """check if this document has been externally modified
 
         is_externally_modified returns True, False or None. If a file exists at the
-        path of this document then return (True if the document has been modified by
-        another program else False). However, if there is no file at the path of
+        path of this document then return True if the document has been modified by
+        another program else False. However, if there is no file at the path of
         this document this function will return None.
         """
-        m = Mocker()
-        doc = TextDocument.alloc().init()
-        def exists(path):
-            return c.exists
-        fileURL = m.method(doc.fileURL)
-        modDate = m.method(doc.fileModificationDate)
-        url = fileURL() >> (None if c.url_is_none else m.mock(fn.NSURL))
-        path = "<path>"
-        if not c.url_is_none:
-            url.path() >> path
+        with make_file() as path, test_app() as app:
+            if not c.exists:
+                path += "-not-found"
+            doc = TextDocument(app, (None if c.url_is_none else path))
             if c.exists:
-                url.getResourceValue_forKey_error_(
-                    None, fn.NSURLContentModificationDateKey, None) \
-                    >> (c.date_ok, c.loc_stat, None)
-                if c.date_ok:
-                    modDate() >> c.ext_stat
-        with replattr(os.path, 'exists', exists), m:
+                if c.change == "modify":
+                    stat = filestat(path)
+                    with open(path, "a", encoding="utf-8") as file:
+                        file.write("more data")
+                    assert stat != filestat(path)
+                elif c.change == "remove":
+                    os.remove(path)
             eq_(doc.is_externally_modified(), c.rval)
-    c = TestConfig(url_is_none=False, exists=True)
+    c = TestConfig(url_is_none=False, exists=True, change=None)
     yield test, c(url_is_none=True, rval=None)
     yield test, c(exists=False, rval=None)
-    yield test, c(ext_stat=1, loc_stat=None, date_ok=False, rval=None)
-    yield test, c(ext_stat=1, loc_stat=None, date_ok=True, rval=True)
-    yield test, c(ext_stat=1, loc_stat=1, date_ok=True, rval=False)
-    yield test, c(ext_stat=1, loc_stat=0, date_ok=True, rval=True)
-    yield test, c(ext_stat=1, loc_stat=2, date_ok=True, rval=True)
+    yield test, c(change="remove", rval=None) # this also no access for other reasons (permission denied, etc.)
+    yield test, c(change="modify", rval=True)
+    yield test, c(rval=False)
 
 def test_check_for_external_changes():
     from editxt.controls.alert import Alert
@@ -245,11 +237,10 @@ def test_check_for_external_changes():
                 eq_(doc._filestat,
                     (c.prestat if not c.extmod or c.win_is_none else c.modstat))
         m = Mocker()
-        doc = TextDocument.alloc().init()
+        doc = TextDocument(None, "test.txt")
         win = None
         nsa_class = m.replace(mod, 'Alert')
         alert = m.mock(Alert)
-        displayName = m.method(doc.displayName)
         isdirty = m.method(doc.isDocumentEdited)
         reload = m.method(doc.reload_document)
         m.method(doc.is_externally_modified)() >> c.extmod
@@ -261,12 +252,11 @@ def test_check_for_external_changes():
             win = m.mock(ak.NSWindow)
             if c.prestat is not None:
                 doc._filestat = c.prestat
-            path = (m.method(doc.fileURL)() >> m.mock(fn.NSURL)).path() >> "<path>"
+            path = doc.file_path
             #filestat(path) >> c.modstat
             if c.prestat == c.modstat:
                 return end()
             (nsa_class.alloc() >> alert).init() >> alert
-            displayName() >> "test.txt"
             alert.setMessageText_("“test.txt” source document changed")
             alert.setInformativeText_("Discard changes and reload?")
             alert.addButtonWithTitle_("Reload")
@@ -294,76 +284,65 @@ def test_check_for_external_changes():
 def test_reload_document():
     def test(c):
         def end():
-            with replattr(os.path, 'exists', exists), m:
+            with m:
                 doc.reload_document()
-                eq_(doc.text_storage, doc_ts)
-        m = Mocker()
-        def exists(path):
-            return c.exists
-        doc = TextDocument.alloc().init()
-        perform_clear_undo = m.method(doc.performSelector_withObject_afterDelay_)
-        doc.app = app = m.mock(Application)
-        doc_log = m.replace(mod, 'log')
-        ts_class = m.replace(ak, 'NSTextStorage')
-        fileURL = m.method(doc.fileURL)
-        fw = m.mock(ak.NSFileWrapper)
-        ts = m.mock(ak.NSTextStorage)
-        doc_ts = doc.text_storage = m.mock(ak.NSTextStorage)
-        url = fileURL() >> (None if c.url_is_none else m.mock(fn.NSURL))
-        if c.url_is_none:
-            return end()
-        path = url.path() >> "<path>"
-        if not c.exists:
-            return end()
-        undo = m.method(doc.undoManager)() >> m.mock(fn.NSUndoManager)
-        undo.should_remove = False
-        (ts_class.alloc() >> ts).init() >> ts
-        m.method(doc.revertToContentsOfURL_ofType_error_)(
-            url, m.method(doc.fileType)() >> "<type>", None) \
-            >> (c.read2_success, "<err>")
-        undo.should_remove = True
-        if not c.read2_success:
-            doc_log.error(ANY, "<err>")
-            return end()
-        tv = m.mock(ak.NSTextView)
-        def editors():
-            for text_view_exists in c.view_state:
-                editor = m.mock(Editor)
-                editor.text_view >> (tv if text_view_exists else None)
-                yield editor
-        editors = list(editors()) # why on earth is the intermediate var necessary?
-        # I don't know, but it turns to None if we don't do it!! ???
-        app.iter_editors_of_document(doc) >> editors
-        text = ts.string() >> "<string>"
-        range = fn.NSRange(0, doc_ts.length() >> 10)
-        if not any(c.view_state):
-            # TODO reload without undo
-            doc_ts.replaceCharactersInRange_withString_(range, text)
-            undo.removeAllActions()
-            return end()
-        if tv.shouldChangeTextInRange_replacementString_(range, text) >> True:
-            # TODO get edit_state of each document view
-            # TODO diff the two text blocks and change chunks of text
-            # throughout the document (in a single undo group if possible)
-            # also adjust edit states if possible
-            # see http://www.python.org/doc/2.5.2/lib/module-difflib.html
-            doc_ts.replaceCharactersInRange_withString_(range, text)
-            tv.didChangeText()
-            tv.breakUndoCoalescing()
-            # TODO restore edit states
-            # HACK use timed invocation to allow didChangeText notification
-            # to update change count before _clearUndo is invoked
-            perform_clear_undo("_clearChanges", doc, 0)
-            tv.setSelectedRange_(fn.NSRange(0, 0)) # TODO remove
-            m.method(doc.update_syntaxer)()
-        end()
+                eq_(doc.text, text)
+        text = "edit"
+        config = " ".join("project" for x in c.view_state)
+        with make_file(content="disk") as path, test_app(config) as app:
+            if c.url_is_none:
+                path = "not-saved"
+            elif not c.exists:
+                path += "-not-found"
+            m = Mocker()
+            call_later = m.replace(mod, "call_later")
+            doc = TextDocument(app, path)
+            doc.text = text
+            if c.url_is_none or not c.exists:
+                return end()
+            undo = doc.undo_manager = m.mock(fn.NSUndoManager)
+            with m.order():
+                undo.should_remove = False
+                undo.should_remove = True
+            if not c.read2_success:
+                os.remove(path)
+                os.mkdir(path)
+                return end()
+            text = "disk"
+            tv = m.mock(ak.NSTextView)
+            for i, text_view_exists in enumerate(c.view_state):
+                project = app.windows[0].projects[i]
+                editor = Editor(project, document=doc)
+                editor.text_view = (tv if text_view_exists else None)
+                project.editors.append(editor)
+            if not any(c.view_state):
+                # TODO reload without undo
+                #doc_ts.replaceCharactersInRange_withString_(range, text)
+                undo.removeAllActions()
+                return end()
+            range = fn.NSRange(0, 4)
+            if tv.shouldChangeTextInRange_replacementString_(range, text) >> True:
+                # TODO get edit_state of each document view
+                # TODO diff the two text blocks and change chunks of text
+                # throughout the document (in a single undo group if possible)
+                # also adjust edit states if possible
+                # see http://www.python.org/doc/2.5.2/lib/module-difflib.html
+                #doc_ts.replaceCharactersInRange_withString_(range, text)
+                tv.didChangeText()
+                tv.breakUndoCoalescing()
+                # TODO restore edit states
+                # HACK use timed invocation to allow didChangeText notification
+                # to update change count before _clearUndo is invoked
+                call_later(0, doc._clearChanges)
+                tv.setSelectedRange_(fn.NSRange(0, 0)) # TODO remove
+                m.method(doc.update_syntaxer)()
+            end()
     from editxt.test.util import profile
-    c = TestConfig(url_is_none=False, exists=True, is_reg_file=True,
+    c = TestConfig(url_is_none=False, exists=True,
         read2_success=True, view_state=[True])
     # view_state is a list of flags: text_view_exists
     yield test, c(url_is_none=True)
     yield test, c(exists=False)
-    yield test, c(is_reg_file=False)
     yield test, c(view_state=[])
     yield test, c(view_state=[False])
     yield test, c(view_state=[False, True])
@@ -372,101 +351,96 @@ def test_reload_document():
 
 def test_clearChanges():
     m = Mocker()
-    doc = TextDocument.alloc().init()
+    doc = TextDocument(None)
     m.method(doc.updateChangeCount_)(ak.NSChangeCleared)
     with m:
         doc._clearChanges()
 
-
-class TestTextDocument(MockerTestCase):
-
-    def test_untitled_displayName(self):
-        dc = ak.NSDocumentController.sharedDocumentController()
-        doc, err = dc.makeUntitledDocumentOfType_error_(TEXT_DOCUMENT, None)
-        assert doc.displayName() == "Untitled"
-
-    def test_titled_displayName(self):
-        dc = ak.NSDocumentController.sharedDocumentController()
-        path = self.makeFile(content="", prefix="text", suffix="txt")
-        url = fn.NSURL.fileURLWithPath_(path)
-        doc, err = dc.makeDocumentWithContentsOfURL_ofType_error_(url, TEXT_DOCUMENT, None)
-        assert doc.displayName() == os.path.split(path)[1]
-
-    def test_readData_ofType(self):
-        dc = ak.NSDocumentController.sharedDocumentController()
+def test_TextDocument__load():
+    def test(path_type):
+        # rules:
+        # - relative path means new file, not yet saved (do not read, start with blank file)
+        # - absolute path means file should be read from disk
+        #   - if file exists, attempt to read it
+        #   - if not exists, start with empty file
         content = "test content"
-        path = self.makeFile(content=content, prefix="text", suffix=".txt")
-        url = fn.NSURL.fileURLWithPath_(path)
-        doc, err = dc.makeDocumentWithContentsOfURL_ofType_error_(url, TEXT_DOCUMENT, None)
-        assert doc.text_storage.string() == content
+        with make_file(content=content) as path, test_app() as app:
+            if path_type == "relative":
+                path = None
+            elif path_type == "abs-missing":
+                os.remove(path)
+            else:
+                eq_(path_type, "abs-exists")
+            doc = app.document_with_path(path)
+            if path_type != "abs-exists":
+                content = ""
+            eq_(doc.text, content) # triggers doc._load()
+    yield test, "relative"
+    yield test, "abs-missing"
+    yield test, "abs-exists"
 
-    def test_saveDocument(self):
-        m = Mocker()
-        app = m.mock(Application)
-        dc = ak.NSDocumentController.sharedDocumentController()
-        path = self.makeFile(content="", prefix="text", suffix=".txt")
+def test_TextDocument_save():
+    # TODO implement prompt for location, overwrite modified, etc. somewhere
+    # NOTE some of these rules may not apply here since they involve UI elements
+    # rules:
+    # - if relative, prompt for location (with last part of filename as suggested filename) and save
+    # - if absolute, attempt to save
+    #   - are there other states we need to account for?
+    #     - should prompt for overwrite if file was not loaded from its path?
+    with make_file(content="") as path, test_app() as app:
         file = open(path)
         with closing(open(path)) as file:
             assert file.read() == ""
-        url = fn.NSURL.fileURLWithPath_(path)
-        doc, err = dc.makeDocumentWithContentsOfURL_ofType_error_(url, TEXT_DOCUMENT, None)
-        doc.app = app
+        doc = app.document_with_path(path)
         content = "test content"
+        m = Mocker()
         m.method(doc.update_syntaxer)()
-        doc.text_storage.mutableString().appendString_(content)
-        app.save_window_states()
+        doc.text = content
         with m:
-            doc.saveDocument_(None)
+            doc.save()
             with closing(open(path)) as file:
                 saved_content = file.read()
             assert saved_content == content, "got %r" % saved_content
 
-    def test_icon_cache(self):
-        dc = ak.NSDocumentController.sharedDocumentController()
-        doc, err = dc.makeUntitledDocumentOfType_error_(TEXT_DOCUMENT, None)
-        eq_(doc.icon_cache, (None, None))
-        icon = doc.icon()
-        assert isinstance(icon, ak.NSImage)
-        eq_(doc.icon_cache, ("", icon))
+def test_TextDocument_displayName():
+    def test(title):
+        with test_app() as app, make_file(title or "not used") as path:
+            doc = app.document_with_path(path if title else None)
+            eq_(doc.displayName(), title or "untitled")
+    yield test, None
+    yield test, "file.txt"
 
-def test_readFromData_ofType_error_():
-    def test(c):
-        m = Mocker()
-        data = "<data>"
-        typ = m.mock()
-        doc = TextDocument.alloc().init()
-        doc.text_storage = ts = m.mock(ak.NSTextStorage)
-        m.method(doc.read_data_into_textstorage)(data, ts) >> (c.success, None)
-        analyze = m.method(doc.analyze_content)
-        if c.success:
-            analyze()
-        with m:
-            result = doc.readFromData_ofType_error_(data, typ, None)
-            eq_(result, (c.success, None))
-    c = TestConfig(success=True)
-    yield test, c
-    yield test, c(success=False)
+def test_TextDocument_isDocumentEdited():
+    # TODO more tests needed
+    doc = TextDocument(None)
+    eq_(doc.isDocumentEdited(), False)
+
+def test_TextDocument_icon_cache():
+    doc = TextDocument(None)
+    eq_(doc.icon_cache, (None, None))
+    icon = doc.icon()
+    assert isinstance(icon, ak.NSImage)
+    eq_(doc.icon_cache, ("untitled", icon))
 
 def test_read_data_into_textstorage():
-    def test(c):
+    def test(success):
         m = Mocker()
         data = "<data>"
         typ = m.mock()
-        doc = TextDocument.alloc().init()
+        doc = TextDocument(None)
         doc.document_attrs = INIT_ATTRS = {"attr": 0,
             ak.NSCharacterEncodingDocumentAttribute: "<encoding>"}
-        ts = m.mock(ak.NSTextStorage)
+        ts = doc.text_storage = m.mock(ak.NSTextStorage)
         analyze = m.method(doc.analyze_content)
         m.method(doc.default_text_attributes)() >> "<text attributes>"
         (ts.readFromData_options_documentAttributes_error_(data, ANY, None, None)
-            << (c.success, "<attrs>", None)).count(1 if c.success else 2)
+            << (success, "<attrs>", None)).count(1 if success else 2)
         with m:
-            result = doc.read_data_into_textstorage(data, ts)
-            eq_(result, (c.success, None))
-            eq_(doc.document_attrs, ("<attrs>" if c.success else INIT_ATTRS))
-    c = TestConfig(success=True)
-    yield test, c
-    yield test, c(success=False)
+            result = doc.read_from_data(data)
+            eq_(result, (success, None))
+            eq_(doc.document_attrs, ("<attrs>" if success else INIT_ATTRS))
+    yield test, True
+    yield test, False
 
 # options = {NSDefaultAttributesDocumentOption: self.default_text_attributes()}
 # options.update(self.document_attrs)
@@ -479,7 +453,7 @@ def test_analyze_content():
         if c.eol_char != "\n":
             c.text = c.text.replace("\n", eol_char)
         m = Mocker()
-        doc = TextDocument.alloc().init()
+        doc = TextDocument(None)
         m.property(doc, "newline_mode")
         m.property(doc, "indent_mode")
         m.property(doc, "indent_size")
@@ -522,7 +496,7 @@ def test_makeWindowControllers():
 #    import editxt
 #    import editxt.editor
 #    def test(ed_is_none):
-#        doc = TextDocument.alloc().init()
+#        doc = TextDocument(None)
 #        m = Mocker()
 #        app = m.mock(Application)
 #        dv_class = m.replace(editxt.editor, 'Editor')
@@ -541,30 +515,28 @@ def test_makeWindowControllers():
 def test_get_syntaxdef():
     from editxt.syntax import SyntaxCache, SyntaxDefinition
     m = Mocker()
-    doc = TextDocument.alloc().init()
+    doc = TextDocument(None)
     syn = doc.syntaxer = m.mock(SyntaxCache)
     sd = syn.syntaxdef >> m.mock(SyntaxDefinition)
     with m:
         eq_(doc.syntaxdef, sd)
 
 def test_set_syntaxdef():
-    from editxt.syntax import SyntaxCache, SyntaxDefinition
+    from editxt.syntax import SyntaxDefinition
     m = Mocker()
     sd = m.mock(SyntaxDefinition)
-    doc = TextDocument.alloc().init()
-    syn = doc.syntaxer = m.mock(SyntaxCache)
-    with m.order():
-        syn.syntaxdef = sd
-        syn.color_text(doc.text_storage)
+    doc = TextDocument(None)
+    m.method(doc.syntaxer.color_text)(doc.text_storage)
     with m:
         doc.syntaxdef = sd
+        eq_(doc.syntaxer.syntaxdef, sd)
 
 def test_update_syntaxer():
     from editxt.syntax import SyntaxCache, SyntaxDefinition
     def test(c):
         m = Mocker()
-        doc = TextDocument.alloc().init()
-        doc.app = app = m.mock(Application)
+        app = m.mock(Application)
+        doc = TextDocument(app)
         doc.text_storage = ts = m.mock(ak.NSTextStorage)
         m.property(doc, "syntaxdef")
         m.property(doc, "props")
@@ -573,7 +545,7 @@ def test_update_syntaxer():
         if not c.delset:
             ts.setDelegate_(doc)
         syn.filename >> "<filename %s>" % ("0" if c.namechange else "1")
-        new = m.method(doc.lastComponentOfFileName)() >> "<filename 1>"
+        new = doc.file_path = "<filename 1>"
         if c.namechange:
             syn.filename = new
             sdef = app.syntax_factory.get_definition(new) >> m.mock(SyntaxDefinition)
@@ -592,7 +564,7 @@ def test_update_syntaxer():
 def test_TextDocument_comment_token():
     from editxt.syntax import SyntaxCache, SyntaxDefinition
     m = Mocker()
-    doc = TextDocument.alloc().init()
+    doc = TextDocument(None)
     syn = doc.syntaxer = m.mock(SyntaxCache)
     syn.syntaxdef.comment_token >> "#"
     with m:
@@ -601,7 +573,7 @@ def test_TextDocument_comment_token():
 def test_textStorageDidProcessEditing_():
     from editxt.syntax import SyntaxCache
     m = Mocker()
-    doc = TextDocument.alloc().init()
+    doc = TextDocument(None)
     ts = doc.text_storage = m.mock(ak.NSTextStorage)
     syn = doc.syntaxer = m.mock(SyntaxCache)
     range = ts.editedRange() >> m.mock(fn.NSRange)
@@ -611,7 +583,7 @@ def test_textStorageDidProcessEditing_():
 
 # def test_document_set_primary_window_controller():
 #     def test(wc_has_doc, sv_in_subviews, doc_in_proj):
-#         doc = TextDocument.alloc().init()
+#         doc = TextDocument(None)
 #         m = Mocker()
 #         wc = m.mock(WindowController)
 #         view = m.mock(NSView)
@@ -637,14 +609,8 @@ def test_textStorageDidProcessEditing_():
 #     yield test, False, False, False
 
 def test_TextDocument_close():
-    m = Mocker()
-    doc = TextDocument.alloc().init()
-    wcs = m.method(doc.windowControllers)
-    rwc = m.method(doc.removeWindowController_)
-    wc = m.mock(WindowController)
-    wcs() >> [wc]
-    rwc(wc)
-    with m:
+    with test_app() as app:
+        doc = TextDocument(app)
         doc.close()
-    eq_(doc.text_storage, None)
-    eq_(doc.props, None)
+        eq_(doc.text_storage, None)
+        eq_(doc.props, None)

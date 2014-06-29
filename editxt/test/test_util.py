@@ -28,7 +28,7 @@ import Foundation as fn
 
 import editxt.constants as const
 import editxt.util as mod
-from editxt.test.util import assert_raises, eq_, tempdir, TestConfig
+from editxt.test.util import assert_raises, eq_, make_file, tempdir, TestConfig
 
 log = logging.getLogger(__name__)
 
@@ -112,19 +112,14 @@ def test_load_image():
 def test_filestat():
     from editxt.util import filestat
     def test(f_exists):
-        m = Mocker()
-        exists = m.replace("os.path.exists")
-        stat = m.replace("os.stat")
-        path = "<path>"
-        exists(path) >> f_exists
-        if f_exists:
-            stat(path) >> (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
-            res = (6, 8)
-        else:
-            res = None
-        with m:
-            result = filestat(path)
-            eq_(result, res)
+        with make_file() as path:
+            if f_exists:
+                stat = os.stat(path)
+                res = (stat.st_size, stat.st_mtime)
+            else:
+                path += "-not-found"
+                res = None
+            eq_(filestat(path), res)
     yield test, True
     yield test, False
 
@@ -196,4 +191,5 @@ def test_test_app_decorator():
         eq_(test_app.config(app), "window project editor(2) window[0]")
     yield test,
 
-    eq_(called, {1, 2})
+    if called != {1, 2}:
+        raise Exception("@test_app decorator test not executed")

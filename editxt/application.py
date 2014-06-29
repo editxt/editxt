@@ -50,7 +50,7 @@ class Application(object):
         self.profile_path = os.path.expanduser(profile)
         assert os.path.isabs(self.profile_path), \
             'profile path cannot be relative (%s)' % self.profile_path
-        self.documents = DocumentController()
+        self.documents = DocumentController(self)
         self.errlog = ErrorLog(self)
         self.errlog_handler = LogViewHandler(self)
         self.errlog_handler.setLevel(logging.INFO)
@@ -102,9 +102,9 @@ class Application(object):
     def syntaxdefs(self):
         return self.syntax_factory.definitions
 
-    def application_will_finish_launching(self, app, doc_ctrl):
+    def application_will_finish_launching(self, app, delegate):
         self.init_syntax_definitions()
-        self.text_commander.load_commands(doc_ctrl.textMenu)
+        self.text_commander.load_commands(delegate.textMenu)
         states = list(self.iter_saved_window_states())
         if states:
             errors = []
@@ -143,40 +143,22 @@ class Application(object):
             return window.new_project()
 
     def document_with_path(self, path):
-        """Get a document with the given path
+        """Get a text document with the given path
 
         Documents returned by this method have been added to the document
         controllers list of documents.
         """
         from editxt.document import TextDocument
-        dc = ak.NSDocumentController.sharedDocumentController()
+        docs = self.documents
         if path is None:
-            doc = None
+            # untitled document will get associated with DocumentController on save
+            doc = TextDocument(self)
         else:
             if os.path.islink(path):
                 path = os.path.realpath(path)
-            url = fn.NSURL.fileURLWithPath_(path)
-            doc = dc.documentForURL_(url)
-        if doc is None:
-            if path is not None and os.path.exists(path):
-                doctype, err = dc.typeForContentsOfURL_error_(url, None)
-                doc, err = dc.makeDocumentWithContentsOfURL_ofType_error_(
-                    url, doctype, None)
-                if err is not None:
-                    raise Error(err.localizedFailureReason())
-                if doc is None:
-                    raise Error("could not open document: %s" % path)
-                dc.addDocument_(doc)
-            else:
-                doc, err = dc.makeUntitledDocumentOfType_error_(
-                    const.TEXT_DOCUMENT, None)
-                if err is not None:
-                    raise RuntimeError(err)
-                if path is not None:
-                    doc.setFileURL_(url)
+            doc = docs.get_document(path)
 
-        # TODO figure out how to move this into TextDocument.init
-        doc.app = self
+        # TODO move into TextDocument.__init__ ?
         doc.indent_mode = self.config["indent.mode"]
         doc.indent_size = self.config["indent.size"] # should come from syntax definition
         doc.newline_mode = self.config["newline_mode"]
@@ -242,6 +224,10 @@ class Application(object):
             editor = window.current_editor
             if editor is not None:
                 editor.perform_close()
+
+    def document_closed(self, document):
+        """Remove document from the list of open documents"""
+        self.documents.discard(document)
 
     def iter_editors_of_document(self, doc):
         for window in self.iter_windows():

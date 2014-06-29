@@ -336,9 +336,6 @@ class Editor(object):
             doc.text_storage.removeLayoutManager_(self.text_view.layoutManager())
         if next(doc.app.iter_editors_of_document(doc), None) is None:
             doc.close()
-        elif (project is not None and
-              next(project.window.iter_editors_of_document(doc), None) is None):
-            doc.removeWindowController_(project.window.wc)
         self.document = None
         if self.main_view is not None:
             teardown_main_view(self.main_view)
