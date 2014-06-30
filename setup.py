@@ -107,7 +107,7 @@ setup(
             CFBundleGetInfoString = "%s %s.%s" % (version, revision, gitrev),
             CFBundleShortVersionString = version,
             CFBundleVersion = revision + "." + gitrev,
-            NSHumanReadableCopyright = '© 2012 Daniel Miller',
+            NSHumanReadableCopyright = '© Daniel Miller',
             CFBundleIdentifier = "org.editxt." + appname,
             CFBundleIconFile = "PythonApplet.icns",
             CFBundleDocumentTypes = [

@@ -17,7 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
-setuptools>=1.1.6
+# NOTE this is due to a bug in setuptools, some newer versions may work, but 5.2 does not
+setuptools==1.1.6
     distribute>=0.7.3
 
 docopt==0.6.1
@@ -29,7 +30,7 @@ pyobjc-core==2.5.1
 pyobjc-framework-Cocoa==2.5.1
 pyobjc-framework-Quartz==2.5.1
 pyobjc-framework-ExceptionHandling==2.5.1
-pyyaml==3.10
+pyyaml==3.11
 
 # for testing
 #mocker>=1.1.1 # not python3 compatible yet, patch manually
