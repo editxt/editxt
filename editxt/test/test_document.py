@@ -225,6 +225,14 @@ def test_is_externally_modified():
     yield test, c(change="modify", rval=True)
     yield test, c(rval=False)
 
+def test_TextDocument_has_real_path():
+    def test(path, result):
+        with test_app() as app:
+            doc = TextDocument(app, path)
+            eq_(doc.has_real_path(), result)
+    yield test, "no", False
+    yield test, "/yes", True
+
 def test_check_for_external_changes():
     from editxt.controls.alert import Alert
     def test(c):

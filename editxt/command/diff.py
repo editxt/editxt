@@ -35,9 +35,9 @@ def diff(textview, sender, args):
     editor = textview.editor
     if args and args.file:
         file_path = os.path.expanduser(args.file)
-    else:
+    elif editor.document.has_real_path():
         file_path = editor.file_path
-    if file_path is None or not os.path.isabs(file_path):
+    else:
         raise CommandError("file has not been saved")
     if not os.path.exists(file_path):
         raise CommandError("file not found: {}".format(file_path))

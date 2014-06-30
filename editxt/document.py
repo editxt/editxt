@@ -84,7 +84,7 @@ class DocumentController(object):
         :param document: The document, which has been moved, and which has a
         file_path attribute pointing to its new location on disk.
         """
-        assert os.path.isabs(document.file_path), document
+        assert document.has_real_path(), document
         self.documents.pop(old_path, None)
         self.documents[document.file_path] = document
 
@@ -154,7 +154,7 @@ class TextDocument(object):
         old_path = getattr(self, "_filepath", None)
         self._filepath = value
         self._refresh_file_mtime() # TODO should this (always) happen here?
-        if hasattr(self, "_filepath") and os.path.isabs(self._filepath):
+        if hasattr(self, "_filepath") and self.has_real_path():
             self.app.documents.change_document_path(old_path, self)
 
     @property
@@ -272,9 +272,9 @@ class TextDocument(object):
         return success, err
 
     def save(self, path=None):
-        if not os.path.isabs(self.file_path):
+        if not self.has_real_path():
             raise NotImplementedError("TODO set path")
-            assert os.path.isabs(path)
+            assert self.has_real_path()
         data, err = self.data()
         if data is None:
             log.error(err)
@@ -314,10 +314,12 @@ class TextDocument(object):
         if mode is not None:
             self.indent_mode = mode
 
+    def has_real_path(self):
+        return os.path.isabs(self.file_path)
+
     def file_exists(self):
         """Return True if this file has no absolute path on disk"""
-        path = self.file_path
-        return os.path.isabs(path) and os.path.exists(path)
+        return self.has_real_path() and os.path.exists(self.file_path)
 
     def _refresh_file_mtime(self):
         if self.file_exists():
