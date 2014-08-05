@@ -111,6 +111,11 @@ Replace NSDocumentController
     drag document out of sidebar into terminal/text widget -> insert path
   - Dock menu integration (windows and recent documents)
   - Automatic file move detection
+  - Replace NSDocument architecture
+    - undo manager
+      - add support for isDocumentEdited
+        put a memento on the undo stack that signifies that the document has been saved
+      - secondary: would like to serialize undo/redo stack
 
 Use something like Sparkle to auto-update http://sparkle.andymatuschak.org/
 open command

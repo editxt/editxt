@@ -419,9 +419,9 @@ def test_TextDocument_displayName():
     yield test, "file.txt"
 
 def test_TextDocument_isDocumentEdited():
-    # TODO more tests needed
     doc = TextDocument(None)
     eq_(doc.isDocumentEdited(), False)
+    # TODO more tests for isDocumentEdited?
 
 def test_TextDocument_icon_cache():
     doc = TextDocument(None)

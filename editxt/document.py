@@ -34,6 +34,7 @@ from editxt.controls.alert import Alert
 from editxt.platform.events import call_later
 from editxt.platform.kvo import KVOProxy
 from editxt.syntax import SyntaxCache
+from editxt.undo import UndoManager
 from editxt.util import (untested, refactor,
     fetch_icon, filestat, WeakProperty)
 
@@ -102,18 +103,6 @@ class DocumentController(object):
     def discard(self, document):
         """Remove document from controller"""
         self.documents.pop(document.file_path, None)
-
-
-class UndoManager(fn.NSUndoManager):
-    """HACK custom undo manager that can prevent actions from being removed"""
-
-    def init(self):
-        self.should_remove = True
-        return super(UndoManager, self).init()
-
-    def removeAllActions(self):
-        if self.should_remove:
-            super(UndoManager, self).removeAllActions()
 
 
 class TextDocument(object):
@@ -517,7 +506,7 @@ class TextDocument(object):
 
     def isDocumentEdited(self):
         # TODO write tests. Make this work with undo beyond save
-        return self.undo_manager.canUndo()
+        return self.undo_manager.has_unsaved_actions()
 
     def undoManager(self):
         return self.undo_manager

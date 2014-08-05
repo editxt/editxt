@@ -1,0 +1,137 @@
+# -*- coding: utf-8 -*-
+# EditXT
+# Copyright 2007-2014 Daniel Miller <millerdev@gmail.com>
+#
+# This file is part of EditXT, a programmer's text editor for Mac OS X,
+# which can be found at http://editxt.org/.
+#
+# EditXT is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# EditXT is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+import Foundation as fn
+from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
+
+import editxt.undo as mod
+from editxt.test.util import assert_raises, eq_, TestConfig, replattr, test_app, make_file
+
+def test_UndoManager_has_unsaved_actions():
+    seen = set()
+    dups = []
+    def test(actions, result, state):
+        if actions in seen:
+            dups.append(actions)
+        seen.add(actions)
+
+        undo = mod.UndoManager.alloc().init()
+        stack = Stack.alloc().init_(undo)
+        for action in actions:
+            if action == "1":
+                stack.push_(1)
+            elif action == "2":
+                undo.endUndoGrouping()
+                undo.beginUndoGrouping()
+                stack.push_(2)
+            elif action == "s":
+                undo.savepoint()
+                print("savepoint")
+            elif action == "b":
+                undo.beginUndoGrouping()
+            elif action == "e":
+                undo.endUndoGrouping()
+            elif action == "u":
+                print("undo")
+                undo.undo()
+            else:
+                print("redo")
+                eq_(action, "r")
+                undo.redo()
+        print("has unsaved actions:", undo.has_unsaved_actions())
+        eq_(stack.state, state)
+        eq_(undo.has_unsaved_actions(), result)
+
+    # action key
+    # 1 - plain edit
+    # 2 - end+begin undo grouping and edit
+    # s - save
+    # u - undo
+    # r - redo
+    # b - begin undo grouping
+    # e - end undo grouping
+
+    yield test, "", False, []
+    yield test, "1", True, [1]
+    yield test, "1s", False, [1]
+    yield test, "1su", True, []
+    yield test, "1u", False, []
+    yield test, "1uru", False, []
+
+    yield test, "11s", False, [1, 1]
+    yield test, "11su", True, []
+    yield test, "11sur", False, [1, 1]
+    yield test, "11su1", True, [1]
+    yield test, "11su1ur", True, [1]
+    yield test, "11s1u", False, [1, 1]
+    yield test, "11s1ur", True, [1, 1, 1]
+
+    yield test, "12s", False, [1, 2]
+    yield test, "12su", True, [1]
+    yield test, "12sur", False, [1, 2]
+    yield test, "12su1", True, [1, 1]
+    yield test, "12su1ur", True, [1, 1]
+    yield test, "12su11ur", True, [1, 1, 1]
+    yield test, "12su12ur", True, [1, 1, 2]
+
+    yield test, "1se", False, [1] # WARNING unbalanced endUndoGrouping
+    yield test, "1sbee", False, [1] # WARNING unbalanced endUndoGrouping
+    yield test, "1sb1eu", False, [1]
+    yield test, "1sb1eu1", True, [1, 1]
+    yield test, "1sb1euu", True, []
+    yield test, "1sb1eur", True, [1, 1]
+    yield test, "1sb1eus", False, [1]
+    yield test, "1sb1eurs", False, [1, 1]
+    yield test, "1sb1eurs1", True, [1, 1, 1]
+
+    yield test, "1ssu", True, []
+    yield test, "1ssur", False, [1]
+    yield test, "1ssu1", True, [1]
+    yield test, "1ssur1", True, [1, 1]
+
+    yield test, "1susr", True, [1]
+    yield test, "1susrs", False, [1]
+    yield test, "1b1esu", True, []
+    yield test, "1b1esusr", True, [1, 1]
+    yield test, "1b1esusrs", False, [1, 1]
+
+    assert not dups, "duplicate tests: %r" % dups
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# test helpers
+
+class Stack(fn.NSObject):
+
+    def init_(self, undo):
+        self.undo = undo
+        self.state = []
+        return self
+
+    def push_(self, value):
+        self.undo.prepareWithInvocationTarget_(self).pop()
+        self.undo.setActionName_("Push")
+        self.state.append(value)
+        print("push", self.state, "level=%s" % self.undo.groupingLevel())
+
+    def pop(self):
+        value = self.state.pop()
+        self.undo.registerUndoWithTarget_selector_object_(self, b"push:", value)
+        self.undo.setActionName_("Pop")
+        print("pop ", self.state, "level=%s" % self.undo.groupingLevel())
+        return value
