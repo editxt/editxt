@@ -60,6 +60,41 @@ from testil import (
 patch_nose_tools()
 
 
+class KeywordArgs(object):
+    def __init__(self, kw):
+        self.kw = kw
+    def __repr__(self):
+        return ", ".join("%s=%r" % kv for kv in sorted(self.kw.items()))
+
+def gentest(test):
+    """A decorator for nose generator tests
+
+    Usage:
+
+        def generator_test():
+            @gentest
+            def test(a, b=None, c=4):
+                ...
+            yield test(1)
+            yield test(1, 2)
+            yield test(1, c=3)
+
+    WARNING do not use this to decorate test functions outside of a generator
+    test. It will cause the test to appear to pass without actually running it.
+    """
+    def run_test_with(*args):
+        if args and isinstance(args[-1], KeywordArgs):
+            args, kw = args[:-1], args[-1].kw
+        else:
+            kw = {}
+        test(*args, **kw)
+    def assemble_test_args(*args, **kw):
+        if kw:
+            args += (KeywordArgs(kw),)
+        return (run_test_with,) + args
+    return assemble_test_args
+
+
 def do_method_pass_through(attr, inner_obj_class, outer_obj, token, method,
         ext_args=(), int_args=None, returns=None):
     from mocker import Mocker # late import so mockerext is installed

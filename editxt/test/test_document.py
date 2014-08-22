@@ -19,13 +19,13 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
-from contextlib import closing
 
 import AppKit as ak
 import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
-from editxt.test.util import assert_raises, TestConfig, replattr, test_app, make_file
+from editxt.test.util import (assert_raises, gentest, TestConfig, replattr,
+    tempdir, test_app, make_file, CaptureLog)
 
 import editxt.constants as const
 import editxt.document as mod
@@ -387,28 +387,78 @@ def test_TextDocument__load():
     yield test, "abs-missing"
     yield test, "abs-exists"
 
+
+def setup_path(tmp, path):
+    if path is not None:
+        if os.path.isabs(path):
+            result = os.path.join(tmp, os.path.basename(path))
+            if "existing" in path:
+                with open(result, "w") as file:
+                    file.write("initial")
+        else:
+            result = path
+    else:
+        result = None
+    return result, get_content(result)
+
+def get_content(path):
+    if path is not None and os.path.isabs(path) and os.path.exists(path):
+        with open(path) as file:
+            return file.read()
+    return None
+
 def test_TextDocument_save():
-    # TODO implement prompt for location, overwrite modified, etc. somewhere
-    # NOTE some of these rules may not apply here since they involve UI elements
-    # rules:
-    # - if relative, prompt for location (with last part of filename as suggested filename) and save
-    # - if absolute, attempt to save
-    #   - are there other states we need to account for?
-    #     - should prompt for overwrite if file was not loaded from its path?
-    with make_file(content="") as path, test_app() as app:
-        file = open(path)
-        with closing(open(path)) as file:
-            assert file.read() == ""
-        doc = app.document_with_path(path)
-        content = "test content"
-        m = Mocker()
-        m.method(doc.update_syntaxer)()
-        doc.text = content
-        with m:
-            doc.save()
-            with closing(open(path)) as file:
-                saved_content = file.read()
-            assert saved_content == content, "got %r" % saved_content
+    @gentest
+    def test(path, saved=True):
+        with tempdir() as tmp, test_app() as app:
+            path, begin_content = setup_path(tmp, path)
+            doc = app.document_with_path(path)
+            end_content = "modified"
+            m = Mocker()
+            undo = doc.undo_manager = m.mock(mod.UndoManager)
+            if saved:
+                m.method(doc.update_syntaxer)()
+                undo.savepoint()
+            doc.text = end_content
+            with m:
+                if saved:
+                    doc.save()
+                    eq_(get_content(doc.file_path), end_content)
+                else:
+                    with assert_raises(mod.Error):
+                        doc.save()
+                    eq_(get_content(doc.file_path), begin_content)
+
+    yield test("/existing-doc")
+    yield test("/doc")
+    yield test("doc", saved=False)
+    yield test(path=None, saved=False)
+
+def test_TextDocument_write_to_path():
+    @gentest
+    def test(path, error=None):
+        with tempdir() as tmp, test_app() as app:
+            doc_path = os.path.join(tmp, "other")
+            path, begin_content = setup_path(tmp, path)
+            doc = app.document_with_path(doc_path)
+            end_content = "modified"
+            doc.text = end_content
+            with CaptureLog(mod) as log:
+                result = doc.write_to_file(path)
+                if not error:
+                    eq_(get_content(path), end_content)
+                    eq_(log.data, {})
+                    assert result, "write_to_file returned False"
+                else:
+                    eq_(get_content(path), begin_content)
+                    eq_(log.data, {"error": [error]})
+                    assert not result, "write_to_file returned True with error"
+            eq_(doc.file_path, doc_path)
+            assert not os.path.exists(doc_path), doc_path
+
+    yield test("/file")
+    yield test("file", error="cannot write to relative file path: file")
+
 
 def test_TextDocument_displayName():
     def test(title):

@@ -28,7 +28,8 @@ import Foundation as fn
 
 import editxt.constants as const
 import editxt.util as mod
-from editxt.test.util import assert_raises, eq_, make_file, tempdir, TestConfig
+from editxt.test.util import (assert_raises, eq_, gentest, make_file, tempdir,
+    TestConfig)
 
 log = logging.getLogger(__name__)
 
@@ -158,6 +159,32 @@ def test_register_undo():
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # editxt.test.util tests
 from editxt.test.util import test_app
+
+
+def test_gentest():
+    class Args(object):
+        def __init__(self, *args, **kw):
+            self.args = args
+            self.kw = kw
+        def __repr__(self):
+            return "%s %s" % (self.args, self.kw)
+    def test(args, rep, result):
+        called = []
+        @gentest
+        def test(a, b=2, c=3):
+            called.append((a, b, c))
+
+        eq_(called, [])
+        args = test(*args.args, **args.kw)
+        run, args = args[0], args[1:]
+        eq_(called, [])
+        eq_(repr(args), rep)
+        run(*args)
+        eq_(called, [result])
+
+    yield test, Args(1), "(1,)", (1, 2, 3)
+    yield test, Args(1, c=0), "(1, c=0)", (1, 2, 0)
+    yield test, Args(a=2, b=4), "(a=2, b=4,)", (2, 4, 3)
 
 
 def test_test_app_context_manager():

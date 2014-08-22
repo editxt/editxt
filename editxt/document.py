@@ -260,34 +260,45 @@ class TextDocument(object):
             options.pop(ak.NSCharacterEncodingDocumentAttribute, None)
         return success, err
 
-    def save(self, path=None):
+    def save(self):
+        """Save the document to disk
+
+        :raises: Error if the document does not have a real path.
+        """
         if not self.has_real_path():
-            raise NotImplementedError("TODO set path")
-            assert self.has_real_path()
-        data, err = self.data()
-        if data is None:
+            raise Error("document path is not set")
+        if self.write_to_file(self.file_path):
+            for action in [
+                self._refresh_file_mtime,
+                self.undo_manager.savepoint,
+                self.app.save_window_states,
+                self.update_syntaxer,
+            ]:
+                try:
+                    action()
+                except Exception:
+                    log.error("unexpected error", exc_info=True)
+
+    def write_to_file(self, path):
+        """Write the document's content to the given file path
+
+        The given file path must be an absolute path.
+        """
+        if os.path.isabs(path):
+            data, err = self.data()
+        else:
+            err = "cannot write to relative file path: %s" % path
+        if err is not None:
             log.error(err)
-            return
-        data.writeToFile_atomically_(self.file_path, True)
-        self._refresh_file_mtime()
+            return False
+        data.writeToFile_atomically_(path, True)
+        return True
 
     def data(self):
         range = fn.NSMakeRange(0, self.text_storage.length())
         attrs = self.document_attrs
         data, err = self.text_storage \
             .dataFromRange_documentAttributes_error_(range, attrs, None)
-        if err is None:
-            try:
-                self.update_syntaxer()
-                self.app.save_window_states()
-            except Exception:
-                log.error("unexpected error", exc_info=True)
-#             if self.project is not None:
-#                 self.project.save()
-#                 self.updateSyntaxer()
-#             if self.text_view is not None:
-#                 # make the undo manager recognize edits after save
-#                 self.text_view.breakUndoCoalescing()
         return (data, err)
 
     def analyze_content(self):
@@ -526,3 +537,7 @@ class TextDocument(object):
             self.file_path = os.path.join(path, name)
         else:
             self.file_path = name
+
+
+class Error(Exception):
+    """Document error"""
