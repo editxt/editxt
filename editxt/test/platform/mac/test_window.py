@@ -57,6 +57,8 @@ def test_WindowController_passthrough_to_Window():
         "<drag operation>"
     yield test, ("outlineView_shouldEditTableColumn_item_", "should_edit_item"), \
         ("<ov>", "<col>", "<item>"), ("<col>", "<item>"), "<should ediit>"
+    yield test, ("save_", "save"), ("<sender>",), ()
+    yield test, ("saveAs_", "save_as"), ("<sender>",), ()
     yield test, ("newProject_", "new_project"), ("<sender>",), ()
     yield test, ("togglePropertiesPane_", "toggle_properties_pane"), ("sender",), ()
 

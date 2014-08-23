@@ -391,6 +391,52 @@ def test_suspend_recent_updates():
     yield test, c(init="project(a) editor(1)* project(b) editor(2)",
                   final="window project(b) editor(2)*", remove="project(a)")
 
+def test_save_methods():
+    def test(cfg, save, prompt=False):
+        with test_app(cfg) as app:
+            m = Mocker()
+            window = app.windows[0]
+            current = window.current_editor
+            if save is not None:
+                method = m.method(current.save)
+                if save:
+                    method(prompt=prompt)
+            with m:
+                (window.save_as if prompt else window.save)()
+
+    yield test, "window", None
+    yield test, "project*", False
+    yield test, "project* editor", False
+    yield test, "editor*", True
+    yield test, "editor*", True, True
+
+def test_save_document_as():
+    assert hasattr(Window, "save_document_as")
+
+def test_prompt_to_overwrite():
+    assert hasattr(Window, "prompt_to_overwrite")
+
+def test__directory_and_filename():
+    def test(path, directory, name, mkdir=False):
+        if os.path.isabs(path):
+            path = path.lstrip(os.path.sep)
+            assert not os.path.isabs(path), path
+            with tempdir() as tmp:
+                path = os.path.join(tmp, path)
+                if mkdir:
+                    assert not os.path.exists(os.path.dirname(path)), path
+                    os.mkdir(os.path.dirname(path))
+                result = Window._directory_and_filename(path)
+                result = (result[0][len(tmp):] or "/"), result[1]
+        else:
+            result = Window._directory_and_filename(path)
+        eq_(result, (directory, name))
+    yield test, "file.txt", None, "file.txt"
+    yield test, "/file.txt", "/", "file.txt"
+    yield test, "somedir/file.txt", None, "file.txt"
+    yield test, "/somedir/file.txt", "/", "file.txt"
+    yield test, "/somedir/file.txt", "/somedir", "file.txt", True
+
 def test_new_project():
     with test_app() as app:
         m = Mocker()

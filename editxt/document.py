@@ -113,6 +113,7 @@ class TextDocument(object):
         #self.setUndoManager_(UndoManager.alloc().init())
         self.app = app
         self.file_path = path or const.UNTITLED_DOCUMENT_NAME
+        self.persistent_path = None
         self.id = next(DocumentController.id_gen)
         self.icon_cache = (None, None)
         self.document_attrs = {
@@ -233,12 +234,14 @@ class TextDocument(object):
 
         :returns: True if the file was loaded from disk, otherwise False.
         """
+        self.persistent_path = self.file_path
         if self.file_exists():
             data = ak.NSData.dataWithContentsOfFile_(self.file_path)
             success, err = self.read_from_data(data)
-            log.error(err) # TODO display error in progress bar
             if success:
                 self.analyze_content()
+            else:
+                log.error(err) # TODO display error in progress bar
             return success
         return False
 
@@ -266,8 +269,12 @@ class TextDocument(object):
         :raises: Error if the document does not have a real path.
         """
         if not self.has_real_path():
-            raise Error("document path is not set")
+            if os.path.isabs(self.file_path):
+                raise Error("parent directory is missing: {}".format(self.file_path))
+            else:
+                raise Error("file path is not set")
         if self.write_to_file(self.file_path):
+            self.persistent_path = self.file_path
             for action in [
                 self._refresh_file_mtime,
                 self.undo_manager.savepoint,
@@ -286,13 +293,14 @@ class TextDocument(object):
         """
         if os.path.isabs(path):
             data, err = self.data()
+            if err is None:
+                ok, err = data.writeToFile_options_error_(path, 1, None)
         else:
-            err = "cannot write to relative file path: %s" % path
+            err = "cannot write to relative path: %s" % path
         if err is not None:
             log.error(err)
             return False
-        data.writeToFile_atomically_(path, True)
-        return True
+        return ok
 
     def data(self):
         range = fn.NSMakeRange(0, self.text_storage.length())
@@ -315,7 +323,15 @@ class TextDocument(object):
             self.indent_mode = mode
 
     def has_real_path(self):
-        return os.path.isabs(self.file_path)
+        """Return true if this docuemnt has an absolute path where it could
+           possibly be saved; otherwise false
+
+        Note that this is not a garantee that the file can be saved at its
+        currently assigned file_path. For example, this will not detect if
+        file system permissions would prevent writing.
+        """
+        return os.path.isabs(self.file_path) and \
+               os.path.exists(os.path.dirname(self.file_path))
 
     def file_exists(self):
         """Return True if this file has no absolute path on disk"""
@@ -339,6 +355,16 @@ class TextDocument(object):
                 return self._filestat != stat
         return None
 
+    def file_changed_since_save(self):
+        """Check if the file on disk has changed since the last save
+
+        :returns: True if the file on disk has been edited or moved by an
+        external program, False if the file exists but has not changed, and
+        None if the file does not exist.
+        """
+        return self.persistent_path != self.file_path \
+               or self.is_externally_modified()
+
     def check_for_external_changes(self, window):
         if not self.is_externally_modified():
             return
@@ -352,6 +378,7 @@ class TextDocument(object):
             def callback(code):
                 if code == ak.NSAlertFirstButtonReturn:
                     self.reload_document()
+                # should self.file_changed_since_save() -> True on cancel here?
             alert = Alert.alloc().init()
             alert.setMessageText_("“%s” source document changed" % self.name)
             alert.setInformativeText_("Discard changes and reload?")

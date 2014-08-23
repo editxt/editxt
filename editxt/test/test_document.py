@@ -233,6 +233,38 @@ def test_TextDocument_has_real_path():
     yield test, "no", False
     yield test, "/yes", True
 
+def test_TextDocument_file_changed_since_save():
+    @gentest
+    @test_app
+    def test(app, expected, actions=(), create=True):
+        with make_file(content="" if create else None) as path:
+            m = Mocker()
+            doc = app.document_with_path(path)
+            for action in actions:
+                if action == "move":
+                    new_path = path + ".moved"
+                    os.rename(path, new_path)
+                    path = doc.file_path = new_path
+                elif action == "save":
+                    doc.save()
+                else:
+                    assert action == "modify", action
+                    with open(path, "a") as file:
+                        file.write("modified")
+            result = doc.file_changed_since_save()
+            eq_(result, expected)
+    yield test(False)
+    yield test(True, ["move"])
+    yield test(True, ["save", "move"])
+    yield test(True, ["modify"])
+    yield test(True, ["save", "modify"])
+    yield test(True, ["modify", "move"])
+    yield test(True, ["move", "save", "modify"])
+    yield test(False, ["move", "save"])
+    yield test(False, ["modify", "save"])
+    yield test(False, ["modify", "move", "save"])
+    yield test(None, create=False)
+
 def test_check_for_external_changes():
     from editxt.controls.alert import Alert
     def test(c):
@@ -391,7 +423,9 @@ def test_TextDocument__load():
 def setup_path(tmp, path):
     if path is not None:
         if os.path.isabs(path):
-            result = os.path.join(tmp, os.path.basename(path))
+            path = path.lstrip(os.path.sep)
+            assert not os.path.isabs(path), path
+            result = os.path.join(tmp, path)
             if "existing" in path:
                 with open(result, "w") as file:
                     file.write("initial")
@@ -429,9 +463,10 @@ def test_TextDocument_save():
                         doc.save()
                     eq_(get_content(doc.file_path), begin_content)
 
-    yield test("/existing-doc")
-    yield test("/doc")
-    yield test("doc", saved=False)
+    yield test("/existing-file.txt")
+    yield test("/file.txt")
+    yield test("/nodir/file.txt", saved=False)
+    yield test("file.txt", saved=False)
     yield test(path=None, saved=False)
 
 def test_TextDocument_write_to_path():
@@ -457,7 +492,7 @@ def test_TextDocument_write_to_path():
             assert not os.path.exists(doc_path), doc_path
 
     yield test("/file")
-    yield test("file", error="cannot write to relative file path: file")
+    yield test("file", error="cannot write to relative path: file")
 
 
 def test_TextDocument_displayName():

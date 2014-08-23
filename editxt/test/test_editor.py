@@ -25,8 +25,9 @@ import AppKit as ak
 import Foundation as fn
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import *
-from editxt.test.test_document import property_value_util
-from editxt.test.util import assert_raises, TestConfig, replattr, test_app
+from editxt.test.test_document import property_value_util, get_content
+from editxt.test.util import (assert_raises, gentest, make_file, TestConfig,
+    replattr, tempdir, test_app)
 
 import editxt.constants as const
 import editxt.editor as mod
@@ -132,6 +133,55 @@ def test_Editor_window():
             eq_(result, win)
     yield test, True
     yield test, False
+
+def test_Editor_save():
+    @gentest
+    @test_app("editor")
+    def test(app, path, prompt=False):
+        prompt = (True,) if prompt else ()
+        initial_content = None if "missing" in path else "initial"
+        with make_file(path, content=initial_content) as real_path:
+            m = Mocker()
+            window = app.windows[0]
+            editor = window.projects[0].editors[0]
+            document = editor.document
+            save_document_as = m.method(window.save_document_as)
+            prompt_to_overwrite = m.method(window.prompt_to_overwrite)
+            has_path_changed = m.method(document.file_changed_since_save)
+            if os.path.isabs(path):
+                document.file_path = path = real_path
+            elif path:
+                document.file_path = path
+            document.text = "saved text"
+            def save_prompt(document, callback):
+                if "nodir" in path:
+                    os.mkdir(os.path.dirname(real_path))
+                print("saving as", real_path)
+                callback(real_path)
+            if prompt or path != real_path or "nodir" in path:
+                expect(save_document_as(editor, ANY)).call(save_prompt)
+            elif has_path_changed() >> ("moved" in path):
+                expect(prompt_to_overwrite(editor, ANY)).call(save_prompt)
+            called = []
+            def callback():
+                called.append(1)
+            with m:
+                editor.save(*prompt, callback=callback)
+                eq_(get_content(real_path), "saved text")
+                assert called, "callback not called"
+
+    # prompt or no real path
+    yield test("/existing.txt", prompt=True)
+    yield test("missing.txt")
+    yield test("/nodir/missing.txt")
+    yield test("/moved.txt", prompt=True)
+
+    # path changed, file exists
+    yield test("/moved.txt")
+
+    # else
+    yield test("/existing.txt")
+    yield test("/missing.txt")
 
 def test_document_set_main_view_of_window():
     def test(c):

@@ -76,7 +76,7 @@ def test_diff_missing_file():
         with test_app("editor") as app:
             editor = app.windows[0].projects[0].editors[0]
             if has_path:
-                path = editor.file_path = "/file/that/does/not/exist.not"
+                path = editor.file_path = "/file-that-does-not-exist.not"
                 msg = msg.format(path)
             if editor.file_path and os.path.exists(editor.file_path):
                 raise RuntimeError("cannot run test because file exists: {}"

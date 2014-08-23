@@ -229,6 +229,59 @@ class Window(object):
     def should_select_item(self, outlineview, item):
         return True
 
+    def save_as(self):
+        self.save(prompt=True)
+
+    def save(self, prompt=False):
+        editor = self.current_editor
+        if isinstance(editor, Editor):
+            editor.save(prompt=prompt)
+
+    def save_document_as(self, editor, save_with_path):
+        """Prompt for path to save document
+
+        :param editor: The editor of the document to be saved.
+        :param save_with_path: A callback accepting a sinlge parameter, the
+        chosen file path, that does the work of actually saving the file.
+        """
+        directory, filename = self._directory_and_filename(editor.file_path)
+        self.wc.save_document_as(directory, filename, save_with_path)
+
+    def prompt_to_overwrite(self, editor, save_with_path):
+        """Prompt to overwrite the given editor's document's file path
+
+        :param editor: The editor of the document to be saved.
+        :param save_with_path: A callback accepting a sinlge parameter, the
+        chosen file path, that does the work of actually saving the file.
+        """
+        def save_as():
+            self.save_document_as(editor, save_with_path)
+        if editor.text_view is None:
+            diff_with_original = None
+        else:
+            def diff_with_original():
+                from editxt.command.diff import diff
+                diff(editor.text_view, self, None)
+        self.wc.prompt_to_overwrite(
+            editor.file_path, save_with_path, save_as, diff_with_original)
+
+    @staticmethod
+    def _directory_and_filename(path):
+        from os.path import basename, dirname, isabs, isdir, sep, split
+        if isabs(path):
+            directory, filename = split(path)
+            while directory and directory != sep and not isdir(directory):
+                directory = dirname(directory)
+        else:
+            directory = None
+            filename = basename(path)
+        assert filename, path
+        if not directory:
+            # TODO editor.project.path or path of most recent document
+            # None -> directory used in the previous invocation of the panel
+            directory = None
+        return directory, filename
+
     def new_project(self):
         project = Project(self)
         editor = project.create_editor()

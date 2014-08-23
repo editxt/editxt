@@ -112,10 +112,29 @@ Replace NSDocumentController
   - Dock menu integration (windows and recent documents)
   - Automatic file move detection
   - Replace NSDocument architecture
-    - undo manager
-      - add support for isDocumentEdited
-        put a memento on the undo stack that signifies that the document has been saved
-      - secondary: would like to serialize undo/redo stack
+    Editor.save() path rules
+    - if relative, prompt for location (with last part of filename as suggested filename) and save
+    - if absolute, attempt to save
+      - are there other states we need to account for?
+        - should prompt for overwrite if file was not loaded from its path?
+    - NSDocument prompts (button) [default button]:
+      - rename or delete file on disk while editing, save
+        The location of the document “file.txt” cannot be determined.
+        (Cancel) [Save As...]
+      - open file with open dialog, move with finder, save
+        The document “file.txt” has been moved.
+        It will be saved to the “bin” folder, or you can specify another location.
+        (Save As...)   (Cancel) [Save]
+        - click Save As..., select existing file (normal Save As... workflow)
+          “file.txt” already exists. Do you want to replace it?
+          A file or folder with the same name already exists in the folder bin.
+          Replacing it will overwrite its current contents.
+          (Cancel) [Replace]
+
+      - open file, edit, change with another program, focus EditXT
+        “file.txt” source document changed
+        Discard changes and reload?
+        (Cancel) [Reload]
 
 Use something like Sparkle to auto-update http://sparkle.andymatuschak.org/
 open command

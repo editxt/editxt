@@ -24,6 +24,7 @@ import AppKit as ak
 import Foundation as fn
 from PyObjCTools import AppHelper
 
+from editxt.controls.alert import Alert
 from editxt.editor import Editor
 from editxt.platform.views import BUTTON_STATE_NORMAL
 from editxt.util import untested, representedObject, user_path, WeakProperty
@@ -58,6 +59,7 @@ class WindowController(ak.NSWindowController):
     def __new__(cls, window):
         wc = cls.alloc().initWithWindowNibName_("EditorWindow")
         wc.window_ = window
+        wc.save_as_caller = None
         return wc
 
     def windowDidLoad(self):
@@ -77,6 +79,12 @@ class WindowController(ak.NSWindowController):
 
     def projects(self):
         return self.window_.projects
+
+    def save_(self, sender):
+        self.window_.save()
+
+    def saveAs_(self, sender):
+        self.window_.save_as()
 
     def newProject_(self, sender):
         self.window_.new_project()
@@ -166,6 +174,47 @@ class WindowController(ak.NSWindowController):
     def windowWillClose_(self, notification):
         self.window_.window_will_close()
 
+    def save_document_as(self, directory, filename, save_with_path):
+        panel = NSSavePanel.alloc().init()
+        panel.setShowsHiddenFiles_(True)
+        panel.setExtensionHidden_(False)
+        panel.setTreatsFilePackagesAsDirectories_(True)
+        assert self.save_as_caller == None, "window cannot save two files at once"
+        def callback(sheet, code):
+            if code == ak.NSOKButton:
+                path = sheet.URL().fileSystemRepresentation()
+                save_with_path(path)
+            self.save_as_caller = None
+        self.save_as_caller = SaveAsCaller.alloc().init(callback)
+        panel.beginSheetForDirectory_file_modalForWindow_modalDelegate_didEndSelector_contextInfo_(
+            directory, filename, window,
+            self.save_as_caller, "savePanelDidEnd:returnCode:contextInfo:", 0)
+
+    def prompt_to_overwrite(self, file_path, save_with_path, save_as, diff_with_original):
+        self.alert = alert = Alert.alloc().init()
+        alert.setAlertStyle_(ak.NSInformationalAlertStyle)
+        message = ("Replace “{}”?").format(file_path)
+        alert.setMessageText_("The file has been modified by another program.")
+        alert.setInformativeText_(infotext)
+        alert.addButtonWithTitle_("Save As...")
+        alert.addButtonWithTitle_("Replace")
+        # may need to use .objectAtIndex_(1) instead of [1]
+        # http://stackoverflow.com/questions/16627894/how-to-make-the-nsalerts-2nd-button-the-return-button
+        alert.buttons()[1].setKeyEquivalent_(" ") # space bar -> replace
+        diff = diff_with_original is not None
+        if diff:
+            alert.addButtonWithTitle_("Diff")
+            alert.buttons()[2].setKeyEquivalent_("d")
+        alert.addButtonWithTitle_("Cancel")
+        def respond(response):
+            if response == ak.NSAlertFirstButtonReturn:
+                save_as()
+            elif response == ak.NSAlertSecondButtonReturn:
+                save_with_path(file_path)
+            elif diff and response == ak.NSAlertThirdButtonReturn:
+                diff_with_original()
+        alert.beginSheetModalForWindow_withCallback_(window, respond)
+
     # outlineview datasource methods ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def outlineView_writeItems_toPasteboard_(self, view, items, pboard):
@@ -199,3 +248,16 @@ class WindowController(ak.NSWindowController):
 
     def outlineView_objectValueForTableColumn_byItem_(self, view, col, item):
         return None
+
+
+class SaveAsCaller(fn.NSObject):
+
+    @objc.namedSelector(b"init:")
+    def init(self, callback):
+        self = super(SaveAsCaller, self).init()
+        self.callback = callback
+        return self
+
+    @objc.typedSelector(b'v@:@ii')
+    def savePanelDidEnd_returnCode_contextInfo_(self, sheet, code, context):
+        self.callback(sheet, code)

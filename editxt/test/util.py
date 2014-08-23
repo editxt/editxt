@@ -87,7 +87,8 @@ def gentest(test):
             args, kw = args[:-1], args[-1].kw
         else:
             kw = {}
-        test(*args, **kw)
+        rval = test(*args, **kw)
+        assert rval is None, "test returned unexpected value: %r" % (value,)
     def assemble_test_args(*args, **kw):
         if kw:
             args += (KeywordArgs(kw),)
@@ -360,8 +361,12 @@ def profile(test, *args):
 
 @contextmanager
 def make_file(name="file.txt", content="text"):
+    if os.path.isabs(name):
+        name = name.lstrip(os.path.sep)
+        assert name and not os.path.isabs(name), name
     with tempdir() as tmp:
         path = os.path.join(tmp, name)
-        with open(path, "w", encoding="utf-8") as file:
-            file.write(content)
+        if content is not None:
+            with open(path, "w", encoding="utf-8") as file:
+                file.write(content)
         yield path

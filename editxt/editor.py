@@ -150,6 +150,34 @@ class Editor(object):
     def is_dirty(self):
         return self.document.isDocumentEdited()
 
+    def save(self, prompt=False, callback=(lambda:None)):
+        """Save the document to disk
+
+        Possible UI interactions:
+        - get file path if the file has not been saved.
+        - ask to overwrite existing file if file has not been opened from or
+          saved to its current file_path before.
+        - ask to overwrite if the file has changed on disk and there has been
+          no subsequent prompt to reload.
+
+        :param prompt: Optional boolean argument, defaults to False.
+        Unconditionally prompt for new save location if True.
+        :param callback: Optional callback to be called on successful save.
+        """
+        document = self.document
+        window = self.project.window
+        def save_with_path(path):
+            if document.file_path != path:
+                document.file_path = path
+            document.save()
+            callback()
+        if prompt or not document.has_real_path():
+            window.save_document_as(self, save_with_path)
+        elif document.file_changed_since_save():
+            window.prompt_to_overwrite(self, save_with_path)
+        else:
+            save_with_path(document.file_path)
+
     def set_main_view_of_window(self, view, window):
         frame = view.bounds()
         if self.scroll_view is None:
