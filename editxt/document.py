@@ -120,7 +120,7 @@ class TextDocument(object):
             ak.NSDocumentTypeDocumentAttribute: ak.NSPlainTextDocumentType,
             ak.NSCharacterEncodingDocumentAttribute: fn.NSUTF8StringEncoding,
         }
-        self.undo_manager = UndoManager.alloc().init();
+        self.undo_manager = UndoManager.alloc().init(); # TODO hook up with text system
         self.syntaxer = SyntaxCache()
         self.props = KVOProxy(self)
 
@@ -144,7 +144,7 @@ class TextDocument(object):
         old_path = getattr(self, "_filepath", None)
         self._filepath = value
         self._refresh_file_mtime() # TODO should this (always) happen here?
-        if hasattr(self, "_filepath") and self.has_real_path():
+        if self.has_real_path():
             self.app.documents.change_document_path(old_path, self)
 
     @property
@@ -277,7 +277,7 @@ class TextDocument(object):
             self.persistent_path = self.file_path
             for action in [
                 self._refresh_file_mtime,
-                self.undo_manager.savepoint,
+                self.clear_dirty,
                 self.app.save_window_states,
                 self.update_syntaxer,
             ]:
@@ -429,7 +429,7 @@ class TextDocument(object):
             textview.breakUndoCoalescing()
             # HACK use timed invocation to allow didChangeText notification
             # to update change count before _clearUndo is invoked
-            call_later(0, self._clearChanges)
+            call_later(0, self.clear_dirty)
             textview.setSelectedRange_(fn.NSRange(0, 0))
             self.update_syntaxer()
 
@@ -460,8 +460,9 @@ class TextDocument(object):
             log.error("cannot prepare save panel...", exc_info=True)
         return True
 
-    def _clearChanges(self):
-        self.updateChangeCount_(ak.NSChangeCleared)
+    def clear_dirty(self):
+        # TODO notify isDocumentEdited changed
+        self.undo_manager.savepoint()
 
     def icon(self):
         path = self.file_path
@@ -498,29 +499,6 @@ class TextDocument(object):
         range = self.text_storage.editedRange()
         self.syntaxer.color_text(self.text_storage, range)
 
-    def updateChangeCount_(self, ctype):
-        # This makes isDocumentEdited KVO compliant, but it will not work if
-        # there are private (inside Cocoa) updates to the change count.
-        # http://prod.lists.apple.com/archives/cocoa-dev/2013/Oct/msg00459.html
-        self.willChangeValueForKey_("isDocumentEdited")
-        super().updateChangeCount_(ctype)
-        self.didChangeValueForKey_("isDocumentEdited")
-
-    def updateChangeCountWithToken_forSaveOperation_(self, token, operation):
-        # http://prod.lists.apple.com/archives/cocoa-dev/2013/Oct/msg00462.html
-        self.willChangeValueForKey_("isDocumentEdited")
-        super().updateChangeCountWithToken_forSaveOperation_(token, operation)
-        self.didChangeValueForKey_("isDocumentEdited")
-
-#     def set_primary_window_controller(self, wc):
-#         if wc.document() is self:
-#             if self.scroll_view not in wc.mainView.subviews():
-#                 wc.setDocument_(self)
-#         else:
-#             self.addWindowController_(wc)
-#         if wc.controller.find_project_with_document(self) is None:
-#             wc.add_document(self)
-
     def __repr__(self):
         return "<%s 0x%x %s>" % (type(self).__name__, id(self), self.name)
 
@@ -549,21 +527,9 @@ class TextDocument(object):
     def undoManager(self):
         return self.undo_manager
 
-    def setHasUndoManager_(self, value):
-        if not value:
-            self.undo_manager = None
-        # TODO tell thing that uses undo manager that it should ignore it
-
     def canCloseDocumentWithDelegate_shouldCloseSelector_contextInfo_(
             self, delegate, should_close, info):
         raise NotImplementedError
-
-    def setLastComponentOfFileName_(self, name):
-        path, trash = os.path.split(self.file_path)
-        if path:
-            self.file_path = os.path.join(path, name)
-        else:
-            self.file_path = name
 
 
 class Error(Exception):

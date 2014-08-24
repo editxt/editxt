@@ -144,7 +144,6 @@ class WindowController(ak.NSWindowController):
                 if editor.main_view not in main_view.subviews():
                     for subview in main_view.subviews():
                         subview.removeFromSuperview()
-                    editor.document.addWindowController_(self)
                     editor.set_main_view_of_window(main_view, self.window())
                     #self.setDocument_(editor.document)
                     return True

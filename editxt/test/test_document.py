@@ -373,7 +373,7 @@ def test_reload_document():
                 # TODO restore edit states
                 # HACK use timed invocation to allow didChangeText notification
                 # to update change count before _clearUndo is invoked
-                call_later(0, doc._clearChanges)
+                call_later(0, doc.clear_dirty)
                 tv.setSelectedRange_(fn.NSRange(0, 0)) # TODO remove
                 m.method(doc.update_syntaxer)()
             end()
@@ -389,12 +389,12 @@ def test_reload_document():
     yield test, c(read2_success=False)
     yield test, c
 
-def test_clearChanges():
+def test_clear_dirty():
     m = Mocker()
     doc = TextDocument(None)
-    m.method(doc.updateChangeCount_)(ak.NSChangeCleared)
+    m.method(doc.undo_manager.savepoint)()
     with m:
-        doc._clearChanges()
+        doc.clear_dirty()
 
 def test_TextDocument__load():
     def test(path_type):
@@ -673,33 +673,6 @@ def test_textStorageDidProcessEditing_():
     syn.color_text(ts, range)
     with m:
         doc.textStorageDidProcessEditing_(None)
-
-# def test_document_set_primary_window_controller():
-#     def test(wc_has_doc, sv_in_subviews, doc_in_proj):
-#         doc = TextDocument(None)
-#         m = Mocker()
-#         wc = m.mock(WindowController)
-#         view = m.mock(NSView)
-#         doc.scroll_view = view
-#         wc.document() >> (doc if wc_has_doc else None)
-#         if wc_has_doc:
-#             wc.mainView.subviews() >> ([view] if sv_in_subviews else [])
-#             if not sv_in_subviews:
-#                 wc.setDocument_(doc)
-#         else:
-#             doc.addWindowController_ = add_wc = m.mock()
-#             add_wc(wc) # simulate function call
-#         wc.controller.find_project_with_document(doc) >> (1 if doc_in_proj else None)
-#         if not doc_in_proj:
-#             wc.add_document(doc)
-#         with m:
-#             doc.set_primary_window_controller(wc)
-#     yield test, True, True, True
-#     yield test, True, False, True
-#     yield test, True, True, False
-#     yield test, True, False, False
-#     yield test, False, False, True
-#     yield test, False, False, False
 
 def test_TextDocument_close():
     with test_app() as app:

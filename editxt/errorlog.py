@@ -49,15 +49,14 @@ class ErrorLog(object):
                 self._document = None
             self._document = doc = create_error_log_document(self.app, close)
             doc.text_storage = self.text
-            doc.setLastComponentOfFileName_(const.LOG_NAME)
-            doc.setHasUndoManager_(False)
+            doc.file_path = const.LOG_NAME
         return self._document
     
     def write(self, value):
         range = (self.text.length(), 0)
         self.text.replaceCharactersInRange_withString_(range, value)
         if self._document is not None:
-            self._document.updateChangeCount_(NSChangeDone)
+            self._document.clear_dirty()
 
     def flush(self):
         pass
@@ -96,9 +95,8 @@ def create_error_log_document(app, closefunc):
     if "ErrorLogDocument" not in globals():
         global ErrorLogDocument # HACK TODO create app-specific class
         class ErrorLogDocument(TextDocument):
-            def addWindowController_(self, value):
-                self.updateChangeCount_(NSChangeCleared)
-                super(ErrorLogDocument, self).addWindowController_(value)
+            def check_for_external_changes(self, window):
+                self.clear_dirty()
             def close(self):
                 closefunc()
                 super(ErrorLogDocument, self).close()

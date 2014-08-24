@@ -64,8 +64,7 @@ def test_ErrorLog_document():
         if not c.created:
             doc_factory(app, ANY) >> doc
             doc.text_storage = el.text
-            doc.setLastComponentOfFileName_(const.LOG_NAME)
-            doc.setHasUndoManager_(False)
+            doc.file_path = const.LOG_NAME
         else:
             el._document = doc
         with m:
@@ -88,7 +87,7 @@ def test_ErrorLog_write():
         ts.replaceCharactersInRange_withString_(range, value)
         if c.has_doc:
             el._document = doc = m.mock(TextDocument)
-            doc.updateChangeCount_(ak.NSChangeDone)
+            doc.clear_dirty()
         with m:
             el.write(value)
     c = TestConfig(has_doc=False)
