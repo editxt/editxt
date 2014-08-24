@@ -31,6 +31,7 @@ import editxt.platform.constants as platform_const
 
 from editxt.command.util import calculate_indent_mode_and_size
 from editxt.controls.alert import Alert
+from editxt.platform.document import text_storage_edit_connector
 from editxt.platform.events import call_later
 from editxt.platform.kvo import KVOProxy
 from editxt.syntax import SyntaxCache
@@ -156,12 +157,15 @@ class TextDocument(object):
         try:
             return self._text_storage
         except AttributeError:
-            self._text_storage = \
+            self.text_storage = \
                 ak.NSTextStorage.alloc().initWithString_attributes_("", {})
-        self._load()
+            self._load()
         return self._text_storage
     @text_storage.setter
     def text_storage(self, value):
+        if value is not None:
+            self._text_storage_edit_connector = \
+                text_storage_edit_connector(value, self.on_text_edit)
         self._text_storage = value
 
     @property
@@ -499,8 +503,7 @@ class TextDocument(object):
                 self.props.syntaxdef = syntaxdef
                 self.syntaxer.color_text(self.text_storage)
 
-    def textStorageDidProcessEditing_(self, notification):
-        range = self.text_storage.editedRange()
+    def on_text_edit(self, range):
         self.syntaxer.color_text(self.text_storage, range)
 
     def __repr__(self):

@@ -663,16 +663,16 @@ def test_TextDocument_comment_token():
     with m:
         eq_(doc.comment_token, "#")
 
-def test_textStorageDidProcessEditing_():
+def test_TextDocument_on_text_edit():
     from editxt.syntax import SyntaxCache
     m = Mocker()
     doc = TextDocument(None)
     ts = doc.text_storage = m.mock(ak.NSTextStorage)
     syn = doc.syntaxer = m.mock(SyntaxCache)
-    range = ts.editedRange() >> m.mock(fn.NSRange)
+    range = (0, 20)
     syn.color_text(ts, range)
     with m:
-        doc.textStorageDidProcessEditing_(None)
+        doc.on_text_edit(range)
 
 def test_TextDocument_close():
     with test_app() as app:
