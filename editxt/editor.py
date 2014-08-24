@@ -86,7 +86,7 @@ class Editor(object):
         if isinstance(document, ak.NSDocument):
             # HACK this should not be conditional (but it is for tests)
             self.kvolink = KVOLink([
-                (document, "isDocumentEdited", self.proxy, "is_dirty"),
+                (document, "is_dirty", self.proxy, "is_dirty"),
                 (self.proxy, "icon", self.proxy, "summary_info"),
                 (self.proxy, "name", self.proxy, "summary_info"),
                 (self.proxy, "is_dirty", self.proxy, "summary_info"),
@@ -148,7 +148,7 @@ class Editor(object):
 
     @property
     def is_dirty(self):
-        return self.document.isDocumentEdited()
+        return self.document.is_dirty()
 
     def save(self, prompt=False, callback=(lambda:None)):
         """Save the document to disk

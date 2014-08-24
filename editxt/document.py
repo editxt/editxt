@@ -368,7 +368,7 @@ class TextDocument(object):
     def check_for_external_changes(self, window):
         if not self.is_externally_modified():
             return
-        if self.isDocumentEdited():
+        if self.is_dirty():
             if window is None:
                 return # ignore change (no gui for alert)
             stat = filestat(self.file_path)
@@ -460,8 +460,12 @@ class TextDocument(object):
             log.error("cannot prepare save panel...", exc_info=True)
         return True
 
+    def is_dirty(self):
+        # TODO make KVO compliant
+        return self.undo_manager.has_unsaved_actions()
+
     def clear_dirty(self):
-        # TODO notify isDocumentEdited changed
+        # TODO notify is_dirty changed
         self.undo_manager.savepoint()
 
     def icon(self):
@@ -519,10 +523,6 @@ class TextDocument(object):
 
     def displayName(self):
         return self.name
-
-    def isDocumentEdited(self):
-        # TODO write tests. Make this work with undo beyond save
-        return self.undo_manager.has_unsaved_actions()
 
     def undoManager(self):
         return self.undo_manager

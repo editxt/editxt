@@ -281,7 +281,7 @@ def test_check_for_external_changes():
         win = None
         nsa_class = m.replace(mod, 'Alert')
         alert = m.mock(Alert)
-        isdirty = m.method(doc.isDocumentEdited)
+        isdirty = m.method(doc.is_dirty)
         reload = m.method(doc.reload_document)
         m.method(doc.is_externally_modified)() >> c.extmod
         if not c.extmod:
@@ -503,10 +503,10 @@ def test_TextDocument_displayName():
     yield test, None
     yield test, "file.txt"
 
-def test_TextDocument_isDocumentEdited():
+def test_TextDocument_is_dirty():
     doc = TextDocument(None)
-    eq_(doc.isDocumentEdited(), False)
-    # TODO more tests for isDocumentEdited?
+    eq_(doc.is_dirty(), False)
+    # TODO more tests for is_dirty?
 
 def test_TextDocument_icon_cache():
     doc = TextDocument(None)
