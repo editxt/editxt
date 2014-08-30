@@ -18,16 +18,52 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import Foundation as fn
+from weakref import WeakSet
+
+
+class WeakCallbackSet(object):
+
+    def __init__(self):
+        self.items = WeakSet()
+
+    def add(self, callback):
+        self.items.add(callback)
+
+    def call(self, *args, **kw):
+        for callback in self.items:
+            callback(*args, **kw)
 
 
 class UndoManager(fn.NSUndoManager):
     """Undo manager that uese "savepoints" to facilitate undo beyond save"""
 
     def init(self):
-        self.actions_since_save = 0
+        self._actions_since_save = 0
         self.allow_clear = True
         self.level_before_save = 0
+        self.callbacks = WeakCallbackSet()
         return super(UndoManager, self).init()
+
+    def on_has_unsaved_actions_changed(self, callback):
+        """Register a callback to be called when the value of
+        `has_unsaved_actions()` changes.
+
+        This object keeps a weak reference to the callback.
+
+        :param callback: A function accepting a single boolean parameter, the
+        value that would be returned if `has_unsaved_actions()` were called.
+        """
+        self.callbacks.add(callback)
+
+    @property
+    def actions_since_save(self):
+        return self._actions_since_save
+    @actions_since_save.setter
+    def actions_since_save(self, value):
+        old = self._actions_since_save
+        self._actions_since_save = value
+        if (old != 0 and value == 0) or (old == 0 and value != 0):
+            self.callbacks.call(value != 0)
 
     def removeAllActions(self):
         if self.allow_clear:

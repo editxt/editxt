@@ -31,41 +31,9 @@ def test_UndoManager_has_unsaved_actions():
             dups.append(actions)
         seen.add(actions)
 
-        undo = mod.UndoManager.alloc().init()
-        stack = Stack.alloc().init_(undo)
-        for action in actions:
-            if action == "1":
-                stack.push_(1)
-            elif action == "2":
-                undo.endUndoGrouping()
-                undo.beginUndoGrouping()
-                stack.push_(2)
-            elif action == "s":
-                undo.savepoint()
-                print("savepoint")
-            elif action == "b":
-                undo.beginUndoGrouping()
-            elif action == "e":
-                undo.endUndoGrouping()
-            elif action == "u":
-                print("undo")
-                undo.undo()
-            else:
-                print("redo")
-                eq_(action, "r")
-                undo.redo()
-        print("has unsaved actions:", undo.has_unsaved_actions())
+        undo, stack = simulate(actions)
         eq_(stack.state, state)
         eq_(undo.has_unsaved_actions(), result)
-
-    # action key
-    # 1 - plain edit
-    # 2 - end+begin undo grouping and edit
-    # s - save
-    # u - undo
-    # r - redo
-    # b - begin undo grouping
-    # e - end undo grouping
 
     yield test, "", False, []
     yield test, "1", True, [1]
@@ -113,8 +81,84 @@ def test_UndoManager_has_unsaved_actions():
 
     assert not dups, "duplicate tests: %r" % dups
 
+def test_UndoManager_on_has_unsaved_actions_changed():
+    def make_callback():
+        calls = []
+        def callback(value):
+            calls.append(value)
+        def callstr():
+            return "".join(str(v)[0].lower() for v in calls)
+        callback.callstr = callstr
+        return callback
+
+    def test(actions, changes, state):
+        cb1 = make_callback()
+        cb2 = make_callback()
+        cb3 = make_callback()
+        undo = mod.UndoManager.alloc().init()
+        undo.on_has_unsaved_actions_changed(cb1)
+        undo.on_has_unsaved_actions_changed(cb2)
+        undo.on_has_unsaved_actions_changed(cb3)
+        cb3_callstr = cb3.callstr
+        del cb3
+        undo, stack = simulate(actions, undo)
+        eq_(cb1.callstr(), changes)
+        eq_(cb2.callstr(), changes)
+        eq_(cb3_callstr(), "") # depends on CPython refcouting
+        eq_(stack.state, state)
+        eq_(undo.has_unsaved_actions(), (changes[-1] == "t" if changes else False))
+
+    yield test, "1", "t", [1]
+    yield test, "11", "t", [1, 1]
+    yield test, "12", "t", [1, 2]
+    yield test, "12u", "t", [1]
+    yield test, "12uu", "tf", []
+    yield test, "12us", "tf", [1]
+    yield test, "12uur", "tft", [1]
+    yield test, "12su1", "tft", [1, 1]
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # test helpers
+
+def simulate(actions, undo=None):
+    """Undo simulator
+
+    action key
+    1 - plain edit
+    2 - end+begin undo grouping and edit
+    s - save
+    u - undo
+    r - redo
+    b - begin undo grouping
+    e - end undo grouping
+    """
+    if undo is None:
+        undo = mod.UndoManager.alloc().init()
+    stack = Stack.alloc().init_(undo)
+    for action in actions:
+        if action == "1":
+            stack.push_(1)
+        elif action == "2":
+            undo.endUndoGrouping()
+            undo.beginUndoGrouping()
+            stack.push_(2)
+        elif action == "s":
+            undo.savepoint()
+            print("savepoint")
+        elif action == "b":
+            undo.beginUndoGrouping()
+        elif action == "e":
+            undo.endUndoGrouping()
+        elif action == "u":
+            print("undo")
+            undo.undo()
+        else:
+            print("redo")
+            eq_(action, "r")
+            undo.redo()
+    print("has unsaved actions:", undo.has_unsaved_actions())
+    return undo, stack
+
 
 class Stack(fn.NSObject):
 
