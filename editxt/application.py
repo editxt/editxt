@@ -157,14 +157,6 @@ class Application(object):
             if os.path.islink(path):
                 path = os.path.realpath(path)
             doc = docs.get_document(path)
-
-        # TODO move into TextDocument.__init__ ?
-        doc.indent_mode = self.config["indent.mode"]
-        doc.indent_size = self.config["indent.size"] # should come from syntax definition
-        doc.newline_mode = self.config["newline_mode"]
-        doc.highlight_selected_text = self.config["highlight_selected_text.enabled"]
-        doc.reset_text_attributes(doc.indent_size)
-
         return doc
 
     def open_documents_with_paths(self, paths):

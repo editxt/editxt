@@ -114,7 +114,7 @@ class TextDocument(object):
         #self.setUndoManager_(UndoManager.alloc().init())
         self.app = app
         self.file_path = path or const.UNTITLED_DOCUMENT_NAME
-        self.persistent_path = None
+        self.persistent_path = path
         self.id = next(DocumentController.id_gen)
         self.icon_cache = (None, None)
         self.document_attrs = {
@@ -124,12 +124,10 @@ class TextDocument(object):
         self.undo_manager = UndoManager.alloc().init(); # TODO hook up with text system
         self.syntaxer = SyntaxCache()
         self.props = KVOProxy(self)
-
-        # FIXME reclaim from Application.document_with_path
-        self.indent_mode = const.INDENT_MODE_SPACE
-        self.indent_size = 4
-        self.newline_mode = const.NEWLINE_MODE_UNIX
-        self.highlight_selected_text = True
+        self.indent_mode = app.config["indent.mode"]
+        self.indent_size = app.config["indent.size"] # should come from syntax definition
+        self.newline_mode = app.config["newline_mode"]
+        self.highlight_selected_text = app.config["highlight_selected_text.enabled"]
 
         #self.save_hooks = []
 
@@ -243,10 +241,12 @@ class TextDocument(object):
             data = ak.NSData.dataWithContentsOfFile_(self.file_path)
             success, err = self.read_from_data(data)
             if success:
+                self.reset_text_attributes(self.indent_size, False)
                 self.analyze_content()
             else:
                 log.error(err) # TODO display error in progress bar
             return success
+        self.reset_text_attributes(self.indent_size, False)
         return False
 
     def read_from_data(self, data):
@@ -258,8 +258,6 @@ class TextDocument(object):
                     data, options, None, None)
             if success or ak.NSCharacterEncodingDocumentAttribute not in options:
                 if success:
-                    # TODO this might fix the intermittent font bug
-                    #self.reset_text_attributes(self.indent_size, False)
                     self.document_attrs = attrs
                 break
             if err:

@@ -41,9 +41,10 @@ log = logging.getLogger(__name__)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # TextDocument tests
 
-def test_TextDocument_init():
+@test_app
+def test_TextDocument_init(app):
     ident = next(DocumentController.id_gen) + 1
-    doc = TextDocument(None)
+    doc = TextDocument(app)
     eq_(doc.id, ident)
     eq_(doc.icon_cache, (None, None))
     eq_(doc.document_attrs, {
@@ -88,8 +89,9 @@ def test_TextDocument_properties():
     c = TestConfig(attr="character_encoding", default=fn.NSUTF8StringEncoding)
     for encoding in const.CHARACTER_ENCODINGS:
         yield property_value_util, c(value=encoding)
-    def test():
-        doc = TextDocument(None)
+    @test_app
+    def test(app):
+        doc = TextDocument(app)
         doc.character_encoding = 42
         eq_(doc.document_attrs[ak.NSCharacterEncodingDocumentAttribute], 42)
         doc.character_encoding = None
@@ -97,8 +99,9 @@ def test_TextDocument_properties():
     yield test,
 
 def test_TextDocument_eol():
-    def test(c):
-        doc = TextDocument(None)
+    @test_app
+    def test(app, c):
+        doc = TextDocument(app)
         doc.newline_mode = c.mode
         eq_(doc.eol, const.EOLS[c.mode])
     c = TestConfig()
@@ -148,18 +151,19 @@ def test_TextDocument_eol():
 #     yield test, c(size=7)
 #     yield fail, c(size=NSDecimalNumber.decimalNumberWithString_("5")), TypeError
 
-def test_TextDocument_default_text_attributes():
-    doc = TextDocument(None)
+@test_app
+def test_TextDocument_default_text_attributes(app):
+    doc = TextDocument(app)
     attrs = doc.default_text_attributes()
     assert ak.NSFontAttributeName in attrs
     assert ak.NSParagraphStyleAttributeName in attrs
     assert attrs is doc.default_text_attributes()
 
-def test_TextDocument_reset_text_attributes():
+@test_app
+def test_TextDocument_reset_text_attributes(app):
     INDENT_SIZE = 42
     m = Mocker()
     ps_class = m.replace(ak, 'NSParagraphStyle')
-    app = m.mock(Application)
     doc = TextDocument(app)
     ts = doc.text_storage = m.mock(ak.NSTextStorage)
     undoer = m.method(doc.undoManager)
@@ -176,7 +180,7 @@ def test_TextDocument_reset_text_attributes():
         (m.mock(Editor), m.mock(ak.NSTextView)),
         (m.mock(Editor), None),
     ]
-    app.iter_editors_of_document(doc) >> (dv for dv, tv in editors)
+    m.method(app.iter_editors_of_document)(doc) >> (dv for dv, tv in editors)
     for dv, tv in editors:
         (dv.text_view << tv).count(1 if tv is None else 3)
         if tv is not None:
@@ -186,10 +190,11 @@ def test_TextDocument_reset_text_attributes():
         doc.reset_text_attributes(INDENT_SIZE)
         eq_(doc.default_text_attributes(), attrs)
 
-def test__refresh_file_mtime():
+@test_app
+def test__refresh_file_mtime(app):
     from datetime import datetime
     dt = fn.NSDate.date()
-    doc = TextDocument(None)
+    doc = TextDocument(app)
     eq_(doc.file_mtime, None)
     eq_(doc._filestat, None)
     doc._filestat = "<checked>"
@@ -267,7 +272,8 @@ def test_TextDocument_file_changed_since_save():
 
 def test_check_for_external_changes():
     from editxt.controls.alert import Alert
-    def test(c):
+    @test_app
+    def test(app, c):
         def filestat(path):
             return c.modstat
         def end(): # this allows us to return early (reducing nested if's)
@@ -277,7 +283,7 @@ def test_check_for_external_changes():
                 eq_(doc._filestat,
                     (c.prestat if not c.extmod or c.win_is_none else c.modstat))
         m = Mocker()
-        doc = TextDocument(None, "test.txt")
+        doc = TextDocument(app, "test.txt")
         win = None
         nsa_class = m.replace(mod, 'Alert')
         alert = m.mock(Alert)
@@ -389,9 +395,10 @@ def test_reload_document():
     yield test, c(read2_success=False)
     yield test, c
 
-def test_clear_dirty():
+@test_app
+def test_clear_dirty(app):
     m = Mocker()
-    doc = TextDocument(None)
+    doc = TextDocument(app)
     m.method(doc.undo_manager.savepoint)()
     with m:
         doc.clear_dirty()
@@ -503,24 +510,26 @@ def test_TextDocument_displayName():
     yield test, None
     yield test, "file.txt"
 
-def test_TextDocument_is_dirty():
-    doc = TextDocument(None)
+@test_app
+def test_TextDocument_is_dirty(app):
+    doc = TextDocument(app)
     eq_(doc.is_dirty(), False)
     # TODO more tests for is_dirty?
 
-def test_TextDocument_icon_cache():
-    doc = TextDocument(None)
+@test_app
+def test_TextDocument_icon_cache(app):
+    doc = TextDocument(app)
     eq_(doc.icon_cache, (None, None))
     icon = doc.icon()
     assert isinstance(icon, ak.NSImage)
     eq_(doc.icon_cache, ("untitled", icon))
 
 def test_read_data_into_textstorage():
-    def test(success):
+    @test_app
+    def test(app, success):
         m = Mocker()
         data = "<data>"
-        typ = m.mock()
-        doc = TextDocument(None)
+        doc = TextDocument(app)
         doc.document_attrs = INIT_ATTRS = {"attr": 0,
             ak.NSCharacterEncodingDocumentAttribute: "<encoding>"}
         ts = doc.text_storage = m.mock(ak.NSTextStorage)
@@ -542,11 +551,12 @@ def test_read_data_into_textstorage():
 # return (success, None)
 
 def test_analyze_content():
-    def test(c):
+    @test_app
+    def test(app, c):
         if c.eol_char != "\n":
             c.text = c.text.replace("\n", eol_char)
         m = Mocker()
-        doc = TextDocument(None)
+        doc = TextDocument(app)
         m.property(doc, "newline_mode")
         m.property(doc, "indent_mode")
         m.property(doc, "indent_size")
@@ -605,32 +615,35 @@ def test_makeWindowControllers():
 #    yield test, True
 #    yield test, False
 
-def test_get_syntaxdef():
+@test_app
+def test_get_syntaxdef(app):
     from editxt.syntax import SyntaxCache, SyntaxDefinition
     m = Mocker()
-    doc = TextDocument(None)
+    doc = TextDocument(app)
     syn = doc.syntaxer = m.mock(SyntaxCache)
     sd = syn.syntaxdef >> m.mock(SyntaxDefinition)
     with m:
         eq_(doc.syntaxdef, sd)
 
-def test_set_syntaxdef():
+@test_app
+def test_set_syntaxdef(app):
     from editxt.syntax import SyntaxDefinition
     m = Mocker()
     sd = m.mock(SyntaxDefinition)
-    doc = TextDocument(None)
+    doc = TextDocument(app)
     m.method(doc.syntaxer.color_text)(doc.text_storage)
     with m:
         doc.syntaxdef = sd
         eq_(doc.syntaxer.syntaxdef, sd)
 
 def test_update_syntaxer():
-    from editxt.syntax import SyntaxCache, SyntaxDefinition
-    def test(c):
+    from editxt.syntax import SyntaxCache, SyntaxDefinition, SyntaxFactory
+    @test_app
+    def test(app, c):
         m = Mocker()
-        app = m.mock(Application)
         doc = TextDocument(app)
         doc.text_storage = ts = m.mock(ak.NSTextStorage)
+        app.syntax_factory = m.mock(SyntaxFactory)
         m.property(doc, "syntaxdef")
         m.property(doc, "props")
         syn = doc.syntaxer = m.mock(SyntaxCache)
@@ -654,19 +667,21 @@ def test_update_syntaxer():
     yield test, c(namechange=True, newdef=False)
     yield test, c(namechange=True, newdef=True)
 
-def test_TextDocument_comment_token():
+@test_app
+def test_TextDocument_comment_token(app):
     from editxt.syntax import SyntaxCache, SyntaxDefinition
     m = Mocker()
-    doc = TextDocument(None)
+    doc = TextDocument(app)
     syn = doc.syntaxer = m.mock(SyntaxCache)
     syn.syntaxdef.comment_token >> "#"
     with m:
         eq_(doc.comment_token, "#")
 
-def test_TextDocument_on_text_edit():
+@test_app
+def test_TextDocument_on_text_edit(app):
     from editxt.syntax import SyntaxCache
     m = Mocker()
-    doc = TextDocument(None)
+    doc = TextDocument(app)
     ts = doc.text_storage = m.mock(ak.NSTextStorage)
     syn = doc.syntaxer = m.mock(SyntaxCache)
     range = (0, 20)
