@@ -22,6 +22,7 @@ import logging
 import sys
 import types
 import weakref
+from contextlib import contextmanager
 from editxt.test.util import replattr
 from importlib import import_module
 
@@ -157,6 +158,52 @@ class DeferredRepr(object):
 
 class MockerExt(mocker.Mocker):
     """Enhanced Mocker class"""
+
+    def off_the_record(self, mock=None):
+        """Ignore mocked actions
+
+        This method may be used in two ways:
+
+        As a context manager
+
+            with mocker.off_the_record():
+                # all mocked actions are ignored
+            # resume recording of mocked actions
+
+        On a mock object, causing all actions on that mock to be ignored
+
+            obj = mocker.mock()
+            mocker.off_the_record(obj.attr) # ignore all actions on obj.attr
+
+        """
+        assert not hasattr(self, "_is_off_the_record"), "nested off-the-record?"
+        if mock is None:
+            @contextmanager
+            def off_the_record():
+                self._is_off_the_record = True
+                try:
+                    yield
+                finally:
+                    del self._is_off_the_record
+            return off_the_record()
+        if not hasattr(self, '_off_the_record_paths'):
+            self._off_the_record_paths = []
+        self._off_the_record_paths.append(mock.__mocker_path__)
+
+    def act(self, path):
+        if getattr(self, "_is_off_the_record", False):
+            return MockExt(self, path)
+        elif hasattr(self, "_off_the_record_paths"):
+            parent = path.parent_path
+            for otr_path in self._off_the_record_paths:
+                if path == otr_path:
+                    super().act(path)
+                    return MockExt(self, path)
+                elif parent == otr_path:
+                    print("ignored", path)
+                    self._off_the_record_paths.append(path)
+                    return MockExt(self, path)
+        return super().act(path)
 
     def method(self, *method_spec, **kw):
         """Create a mock, and replace the original method with the mock.

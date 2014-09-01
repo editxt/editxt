@@ -467,7 +467,6 @@ class TextDocument(object):
         return self.undo_manager.has_unsaved_actions()
 
     def clear_dirty(self):
-        # TODO notify is_dirty changed
         self.undo_manager.savepoint()
 
     def icon(self):

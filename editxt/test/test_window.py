@@ -506,7 +506,7 @@ def test_toggle_properties_pane():
 def test_find_project_with_editor():
     with test_app() as app:
         ed = Window(app)
-        doc = object()
+        doc = app.document_with_path(None)
         proj = Project(ed)
         dv = Editor(proj, document=doc)
         proj.insert_items([dv])

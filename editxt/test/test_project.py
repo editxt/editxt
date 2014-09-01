@@ -214,9 +214,10 @@ def test_create_editor():
         eq_(len(project.editors), 1)
         eq_(test_app.config(app), "window project editor[untitled 0]")
 
-def test_insert_items():
+@test_app
+def test_insert_items(app):
     proj = Project(None)
-    doc = Editor(proj, document="fake")
+    doc = Editor(proj, document=app.document_with_path(None))
     doc.project = proj
     proj.insert_items([doc])
     assert doc in proj.editors
@@ -248,12 +249,10 @@ def test_dirty_editors():
     yield do_test, "dd"
     yield do_test, "dcd"
 
-def test_insert_items_already_in_project():
-    class Fake(object):
-        def displayName(self):
-            return "fake"
+@test_app
+def test_insert_items_already_in_project(app):
     proj = Project(None)
-    editor = Editor(proj, document=Fake())
+    editor = Editor(proj, document=app.document_with_path(None))
     proj.insert_items([editor])
     proj.insert_items([editor], action=const.COPY)
     eq_(len(proj.editors), 2, proj.editors)

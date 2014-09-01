@@ -83,20 +83,19 @@ class Editor(object):
         self.text_view = None
         self.scroll_view = None
         self.command_view = None
-        if isinstance(document, ak.NSDocument):
-            # HACK this should not be conditional (but it is for tests)
-            self.kvolink = KVOLink([
-                (document, "is_dirty", self.proxy, "is_dirty"),
-                (self.proxy, "icon", self.proxy, "summary_info"),
-                (self.proxy, "name", self.proxy, "summary_info"),
-                (self.proxy, "is_dirty", self.proxy, "summary_info"),
-                (document, "indent_mode", self.proxy, "indent_mode"),
-                (document, "indent_size", self.proxy, "indent_size"),
-                (document, "newline_mode", self.proxy, "newline_mode"),
-                (document, "syntaxdef", self.proxy, "syntaxdef"),
-                (document, "character_encoding", self.proxy, "character_encoding"),
-                (document, "highlight_selected_text", self.proxy, "highlight_selected_text"),
-            ])
+        props = document.props
+        self.kvolink = KVOLink([
+            (self.proxy, "icon", self.proxy, "summary_info"),
+            (self.proxy, "name", self.proxy, "summary_info"),
+            (self.proxy, "is_dirty", self.proxy, "summary_info"),
+            (props, "is_dirty", self.proxy, "is_dirty"),
+            (props, "indent_mode", self.proxy, "indent_mode"),
+            (props, "indent_size", self.proxy, "indent_size"),
+            (props, "newline_mode", self.proxy, "newline_mode"),
+            (props, "syntaxdef", self.proxy, "syntaxdef"),
+            (props, "character_encoding", self.proxy, "character_encoding"),
+            (props, "highlight_selected_text", self.proxy, "highlight_selected_text"),
+        ])
         if state is not None:
             self.edit_state = state
 
