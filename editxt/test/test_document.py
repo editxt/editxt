@@ -165,7 +165,8 @@ def test_TextDocument_reset_text_attributes(app):
     m = Mocker()
     ps_class = m.replace(ak, 'NSParagraphStyle')
     doc = TextDocument(app)
-    ts = doc.text_storage = m.mock(ak.NSTextStorage)
+    with m.off_the_record():
+        ts = doc.text_storage = m.mock(ak.NSTextStorage)
     undoer = m.method(doc.undoManager)
     font = ak.NSFont.fontWithName_size_("Monaco", 10.0)
     spcw = font.screenFontWithRenderingMode_(ak.NSFontDefaultRenderingMode) \
@@ -532,7 +533,8 @@ def test_read_data_into_textstorage():
         doc = TextDocument(app)
         doc.document_attrs = INIT_ATTRS = {"attr": 0,
             ak.NSCharacterEncodingDocumentAttribute: "<encoding>"}
-        ts = doc.text_storage = m.mock(ak.NSTextStorage)
+        with m.off_the_record():
+            ts = doc.text_storage = m.mock(ak.NSTextStorage)
         analyze = m.method(doc.analyze_content)
         m.method(doc.default_text_attributes)() >> "<text attributes>"
         (ts.readFromData_options_documentAttributes_error_(data, ANY, None, None)
@@ -560,7 +562,8 @@ def test_analyze_content():
         m.property(doc, "newline_mode")
         m.property(doc, "indent_mode")
         m.property(doc, "indent_size")
-        doc.text_storage = ts = m.mock(ak.NSTextStorage)
+        with m.off_the_record():
+            doc.text_storage = ts = m.mock(ak.NSTextStorage)
         ts.string() >> fn.NSString.stringWithString_(c.text)
         if "eol" in c:
             doc.newline_mode = c.eol
@@ -642,14 +645,12 @@ def test_update_syntaxer():
     def test(app, c):
         m = Mocker()
         doc = TextDocument(app)
-        doc.text_storage = ts = m.mock(ak.NSTextStorage)
+        with m.off_the_record():
+            doc.text_storage = ts = m.mock(ak.NSTextStorage)
         app.syntax_factory = m.mock(SyntaxFactory)
         m.property(doc, "syntaxdef")
         m.property(doc, "props")
         syn = doc.syntaxer = m.mock(SyntaxCache)
-        ts.delegate() >> (doc if c.delset else None)
-        if not c.delset:
-            ts.setDelegate_(doc)
         syn.filename >> "<filename %s>" % ("0" if c.namechange else "1")
         new = doc.file_path = "<filename 1>"
         if c.namechange:
@@ -661,9 +662,8 @@ def test_update_syntaxer():
                 syn.color_text(ts)
         with m:
             doc.update_syntaxer()
-    c = TestConfig(delset=False, namechange=False)
+    c = TestConfig(namechange=False)
     yield test, c
-    yield test, c(delset=True)
     yield test, c(namechange=True, newdef=False)
     yield test, c(namechange=True, newdef=True)
 
@@ -682,7 +682,8 @@ def test_TextDocument_on_text_edit(app):
     from editxt.syntax import SyntaxCache
     m = Mocker()
     doc = TextDocument(app)
-    ts = doc.text_storage = m.mock(ak.NSTextStorage)
+    with m.off_the_record():
+        ts = doc.text_storage = m.mock(ak.NSTextStorage)
     syn = doc.syntaxer = m.mock(SyntaxCache)
     range = (0, 20)
     syn.color_text(ts, range)
@@ -692,6 +693,10 @@ def test_TextDocument_on_text_edit(app):
 def test_TextDocument_close():
     with test_app() as app:
         doc = TextDocument(app)
+        ts = doc.text_storage
+        assert ts is not None
+        assert doc._text_storage_edit_connector is not None
         doc.close()
         eq_(doc.text_storage, None)
+        assert not hasattr(doc, "_text_storage_edit_connector")
         eq_(doc.props, None)

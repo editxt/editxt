@@ -39,15 +39,22 @@ def text_storage_edit_connector(text_storage, on_text_edit):
     processes editing. The function must accept a single argument: the range of
     text that was edited.
     """
-    return TextStorageDelegate.alloc().init_(on_text_edit)
+    return TextStorageDelegate.alloc().init_callback_(text_storage, on_text_edit)
 
 class TextStorageDelegate(ak.NSObject):
 
-    def init_(self, on_text_edit):
+    def init_callback_(self, target, on_text_edit):
+        target.setDelegate_(self)
+        self.target = target
         self.on_text_edit = on_text_edit
         return self
 
+    def disconnect(self):
+        self.target.setDelegate_(None)
+        self.target = None
+
     def dealloc(self):
+        self.target = None
         self.on_text_edit = None
         super().dealloc()
 

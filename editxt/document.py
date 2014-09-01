@@ -161,6 +161,9 @@ class TextDocument(object):
         return self._text_storage
     @text_storage.setter
     def text_storage(self, value):
+        if hasattr(self, "_text_storage_edit_connector"):
+            self._text_storage_edit_connector.disconnect()
+            del self._text_storage_edit_connector
         if value is not None:
             self._text_storage_edit_connector = \
                 text_storage_edit_connector(value, self.on_text_edit)
@@ -490,8 +493,6 @@ class TextDocument(object):
     syntaxdef = property(_get_syntaxdef, _set_syntaxdef)
 
     def update_syntaxer(self):
-        if self.text_storage.delegate() is not self:
-            self.text_storage.setDelegate_(self)
         filename = os.path.basename(self.file_path)
         if filename != self.syntaxer.filename:
             self.syntaxer.filename = filename
@@ -511,10 +512,6 @@ class TextDocument(object):
         self.app.context.pop(info)(should_close)
 
     def close(self):
-        # remove window controllers here so NSDocument does not close the windows
-        ts = self.text_storage
-        if ts is not None and ts.delegate() is self:
-            ts.setDelegate_(None)
         self.text_storage = None
         self.props = None
         self.app.document_closed(self)

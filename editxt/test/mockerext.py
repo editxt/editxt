@@ -192,6 +192,8 @@ class MockerExt(mocker.Mocker):
 
     def act(self, path):
         if getattr(self, "_is_off_the_record", False):
+            if not self.is_recording():
+                print("ignored", path)
             return MockExt(self, path)
         elif hasattr(self, "_off_the_record_paths"):
             parent = path.parent_path
