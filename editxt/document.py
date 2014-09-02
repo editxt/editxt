@@ -33,7 +33,7 @@ from editxt.command.util import calculate_indent_mode_and_size
 from editxt.controls.alert import Alert
 from editxt.platform.document import text_storage_edit_connector
 from editxt.platform.events import call_later
-from editxt.platform.kvo import KVOProxy
+from editxt.platform.kvo import KVOLink, KVOProxy
 from editxt.syntax import SyntaxCache
 from editxt.undo import UndoManager
 from editxt.util import (untested, refactor,
@@ -111,7 +111,6 @@ class TextDocument(object):
     app = WeakProperty()
 
     def __init__(self, app, path=None):
-        #self.setUndoManager_(UndoManager.alloc().init())
         self.app = app
         self.file_path = path or const.UNTITLED_DOCUMENT_NAME
         self.persistent_path = path
@@ -121,9 +120,12 @@ class TextDocument(object):
             ak.NSDocumentTypeDocumentAttribute: ak.NSPlainTextDocumentType,
             ak.NSCharacterEncodingDocumentAttribute: fn.NSUTF8StringEncoding,
         }
-        self.undo_manager = UndoManager.alloc().init(); # TODO hook up with text system
+        self.undo_manager = UndoManager()
         self.syntaxer = SyntaxCache()
         self.props = KVOProxy(self)
+        self._kvo = KVOLink([
+            (self.undo_manager, "has_unsaved_actions", self.props, "is_dirty"),
+        ])
         self.indent_mode = app.config["indent.mode"]
         self.indent_size = app.config["indent.size"] # should come from syntax definition
         self.newline_mode = app.config["newline_mode"]
@@ -466,7 +468,6 @@ class TextDocument(object):
         return True
 
     def is_dirty(self):
-        # TODO make KVO compliant
         return self.undo_manager.has_unsaved_actions()
 
     def clear_dirty(self):

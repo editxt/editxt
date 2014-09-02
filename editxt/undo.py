@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import Foundation as fn
 from weakref import WeakSet
+from editxt.platform.kvo import kvo_change
 
 
 class WeakCallbackSet(object):
@@ -36,6 +37,9 @@ class WeakCallbackSet(object):
 
 class UndoManager(fn.NSUndoManager):
     """Undo manager that uese "savepoints" to facilitate undo beyond save"""
+
+    def __new__(cls):
+        return cls.alloc().init()
 
     def init(self):
         self._actions_since_save = 0
@@ -61,9 +65,12 @@ class UndoManager(fn.NSUndoManager):
     @actions_since_save.setter
     def actions_since_save(self, value):
         old = self._actions_since_save
-        self._actions_since_save = value
         if (old != 0 and value == 0) or (old == 0 and value != 0):
+            with kvo_change(self, "has_unsaved_actions"):
+                self._actions_since_save = value
             self.callbacks.call(value != 0)
+        else:
+            self._actions_since_save = value
 
     def removeAllActions(self):
         if self.allow_clear:

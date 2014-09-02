@@ -17,6 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+from contextlib import contextmanager
 from itertools import count
 from weakref import WeakKeyDictionary
 
@@ -183,11 +184,8 @@ class KVOProxy(fn.NSObject):
 
     def setValue_forKey_(self, value, key):
         if value != getattr(self._target, key, self.NA):
-            self.willChangeValueForKey_(key)
-            try:
+            with kvo_change(self, key):
                 setattr(self._target, key, value)
-            finally:
-                self.didChangeValueForKey_(key)
 
     def __getattr__(self, key):
         if key == "proxy":
@@ -197,11 +195,8 @@ class KVOProxy(fn.NSObject):
 
     def __setattr__(self, key, value):
         if value != getattr(self._target, key, self.NA):
-            self.willChangeValueForKey_(key)
-            try:
+            with kvo_change(self, key):
                 setattr(self._target, key, value)
-            finally:
-                self.didChangeValueForKey_(key)
 
     def __eq__(self, other):
         if isinstance(other, type(self)):
@@ -236,6 +231,15 @@ def proxy_target(proxy):
 #        self = super(_KVOProxy, self).init()
 #        type(self)._target.__set__(self, target)
 #        return self
+
+
+@contextmanager
+def kvo_change(obj, key):
+    obj.willChangeValueForKey_(key)
+    try:
+        yield
+    finally:
+        obj.didChangeValueForKey_(key)
 
 
 class KVOLink(object):

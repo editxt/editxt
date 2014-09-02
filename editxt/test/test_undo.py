@@ -95,7 +95,7 @@ def test_UndoManager_on_has_unsaved_actions_changed():
         cb1 = make_callback()
         cb2 = make_callback()
         cb3 = make_callback()
-        undo = mod.UndoManager.alloc().init()
+        undo = mod.UndoManager()
         undo.on_has_unsaved_actions_changed(cb1)
         undo.on_has_unsaved_actions_changed(cb2)
         undo.on_has_unsaved_actions_changed(cb3)
@@ -133,7 +133,7 @@ def simulate(actions, undo=None):
     e - end undo grouping
     """
     if undo is None:
-        undo = mod.UndoManager.alloc().init()
+        undo = mod.UndoManager()
     stack = Stack.alloc().init_(undo)
     for action in actions:
         if action == "1":
