@@ -39,7 +39,7 @@ from editxt.project import Project
 from editxt.test.noseplugins import slow_skip
 from editxt.util import representedObject
 
-from editxt.test.util import (do_method_pass_through, TestConfig, Regex,
+from editxt.test.util import (do_method_pass_through, gentest, TestConfig, Regex,
     replattr, tempdir, test_app)
 
 import editxt.window as mod
@@ -92,7 +92,6 @@ def test_window_did_load():
                 _load_image(name) >> img
             return img
 
-        wc.setShouldCloseDocument_(False)
         wc.docsView.setRefusesFirstResponder_(True)
         wc.plusButton.setRefusesFirstResponder_(True)
         wc.plusButton.setImage_(load_image(const.PLUS_BUTTON_IMAGE))
@@ -1431,23 +1430,19 @@ def test_insert_items():
     #yield test, c(drop=('a', 6), final=' 0 | 1bca*') # should fail (item inserted in wrong window)
 
 def test_undo_manager():
-    @test_app
-    def test(app, c):
-        m = Mocker()
-        ed = Window(app)
-        wc = ed.wc = m.mock(WindowController)
-        if not c.has_doc:
-            doc = None
-        else:
-            doc = m.mock(ak.NSDocument)
-            doc.undoManager() >> "<undo_manager>"
-        wc.document() >> doc
-        with m:
-            result = ed.undo_manager()
-            if c.has_doc:
-                eq_(result, "<undo_manager>")
+    @gentest
+    def test(config, has_doc=True, check_editor=True):
+        with test_app(config) as app:
+            window = app.windows[0]
+            result = window.undo_manager
+            if has_doc:
+                eq_(result, window.current_editor.undo_manager)
             else:
-                assert isinstance(result, fn.NSUndoManager), result
-    c = TestConfig(has_doc=True)
-    yield test, c
-    yield test, c(has_doc=False)
+                eq_(result, None)
+                if check_editor:
+                    eq_(window.current_editor, None)
+    yield test("window", has_doc=False)
+    yield test("window project", has_doc=False)
+    yield test("window project* editor", has_doc=False, check_editor=False)
+    yield test("window project editor* editor")
+    yield test("window project editor editor*")

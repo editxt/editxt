@@ -58,6 +58,7 @@ class Project(object):
         self.path = None
         self.expanded = True
         self.is_dirty = False
+        self.undo_manager = None
         self.editors = KVOList()
         self.closing = False
         if serial is not None:

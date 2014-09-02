@@ -45,7 +45,7 @@ def test_WindowController_passthrough_to_Window():
         wc = WindowController(None)
         do_method_pass_through("window_", Window, wc, WC, *args)
     yield test, ("hoverButton_rowClicked_", "close_button_clicked"), (None, "<row>"), ("<row>",)
-    yield test, ("windowWillClose_", "window_will_close"), ("<window>",), ()
+    #yield test, ("windowWillClose_", "window_will_close"), ("<window>",), ()
     yield test, ("outlineView_writeItems_toPasteboard_", "write_items_to_pasteboard"), \
         ("<ov>", "<items>", "<pasteboard>"), ("<ov>", "<items>", "<pasteboard>"), \
         "<result>"
@@ -66,7 +66,9 @@ def test_windowDidLoad():
     m = Mocker()
     window = m.mock(Window)
     wc = WindowController(window)
+    native = m.method(wc.window)() >> m.mock(ak.NSWindow)
     window.window_did_load()
+    native.setDelegate_(wc)
     with m:
         wc.windowDidLoad()
 
@@ -150,14 +152,14 @@ def test_outlineView_toolTipForCell_rect_tableColumn_item_mouseLocation_():
         assert result[0] == "test tip"
         assert result[1] is rect
 
-def test_WindowController_undo_manager():
+def test_WindowController_windowWillReturnUndoManager_():
     m = Mocker()
     win = m.mock(ak.NSWindow)
     window = m.mock(Window)
     wc = WindowController(window)
-    wc.window_.undo_manager() >> "<undo_manager>"
+    wc.window_.undo_manager >> "<undo_manager>"
     with m:
-        result = wc.undo_manager()
+        result = wc.windowWillReturnUndoManager_(window)
         eq_(result, "<undo_manager>")
 
 def test_windowDidBecomeKey_():

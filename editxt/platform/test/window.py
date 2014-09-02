@@ -49,13 +49,7 @@ class WindowController(object):
     # XXX the following are still Objective-C-ish
     # TODO create Pythonic API for these functions
 
-    def setDocument_(self, document):
-        pass
-
     def setShouldCascadeWindows_(self, value):
-        pass
-
-    def setShouldCloseDocument_(self, value):
         pass
 
     def windowDidBecomeKey_(self, window):

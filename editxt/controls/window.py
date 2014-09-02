@@ -52,7 +52,3 @@ class EditorWindow(ak.NSWindow):
         for responder in self.mouse_moved_responders:
             if responder is not self.firstResponder():
                 responder.mouseMoved_(event)
-
-    def undoManager(self):
-        return self.windowController().undo_manager()
-

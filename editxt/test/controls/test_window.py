@@ -62,14 +62,3 @@ def test_EditorWindow_accepts_mouse_move_events():
     eq_(window.acceptsMouseMovedEvents(), True)
     window.remove_mouse_moved_responder(obj2)
     eq_(window.acceptsMouseMovedEvents(), False)
-
-def test_undo_manager():
-    from editxt.window import WindowController
-    m = Mocker()
-    ew = EditorWindow.alloc().init()
-    wc = m.method(ew.windowController)() >> m.mock(WindowController)
-    wc.undo_manager() >> "<undo_manager>"
-    with m:
-        result = ew.undoManager()
-        eq_(result, "<undo_manager>")
-

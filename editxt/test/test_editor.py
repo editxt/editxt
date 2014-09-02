@@ -319,7 +319,7 @@ def test_Editor_document_properties():
 
     def do(x):
         c, m = x.c, x.m
-        undoman = x.doc.undoManager() >> x.m.mock(fn.NSUndoManager)
+        undoman = x.doc.undo_manager >> x.m.mock(fn.NSUndoManager)
         undoman.isUndoing() >> c.undoing
         if not c.undoing:
             undoman.isRedoing() >> c.redoing
@@ -407,7 +407,7 @@ def test_Editor_change_indentation():
             def _undo(undoman, undo):
                 dv.change_indentation = undo_change
                 undo()
-            undoman = doc.undoManager() >> m.mock(fn.NSUndoManager)
+            undoman = doc.undo_manager >> m.mock(fn.NSUndoManager)
             expect(regundo(undoman, ANY)).call(_undo)
         with m:
             dv.change_indentation(c.oldm, c.olds, c.newm, c.news, c.convert)

@@ -132,6 +132,10 @@ class Editor(object):
         """Returns a 4-tuple: ``icon, name, is_dirty, self``"""
         return (self.icon, self.name, self.is_dirty, self)
 
+    @property
+    def undo_manager(self):
+        return self.document.undo_manager
+
     def window(self):
         """Return the native window of this view (NOT a editxt.window.Window)"""
         if self.scroll_view is not None:
@@ -245,7 +249,7 @@ class Editor(object):
 
     @document_property
     def newline_mode(self, new, old):
-        undoman = self.document.undoManager()
+        undoman = self.undo_manager
         if not (undoman.isUndoing() or undoman.isRedoing()):
             replace_newlines(self.text_view, const.EOLS[new])
         self.document.props.newline_mode = new
@@ -295,7 +299,7 @@ class Editor(object):
         if convert_text or convert_text is None:
             def undo():
                 self.change_indentation(new_mode, new_size, old_mode, old_size, None)
-            register_undo_callback(self.document.undoManager(), undo)
+            register_undo_callback(self.undo_manager, undo)
 
     def _get_edit_state(self):
         if self.text_view is not None:

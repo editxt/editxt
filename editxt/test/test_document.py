@@ -167,7 +167,6 @@ def test_TextDocument_reset_text_attributes(app):
     doc = TextDocument(app)
     with m.off_the_record():
         ts = doc.text_storage = m.mock(ak.NSTextStorage)
-    undoer = m.method(doc.undoManager)
     font = ak.NSFont.fontWithName_size_("Monaco", 10.0)
     spcw = font.screenFontWithRenderingMode_(ak.NSFontDefaultRenderingMode) \
         .advancementForGlyph_(ord(" ")).width

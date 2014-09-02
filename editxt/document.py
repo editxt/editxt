@@ -521,9 +521,6 @@ class TextDocument(object):
     def displayName(self):
         return self.name
 
-    def undoManager(self):
-        return self.undo_manager
-
     def canCloseDocumentWithDelegate_shouldCloseSelector_contextInfo_(
             self, delegate, should_close, info):
         raise NotImplementedError

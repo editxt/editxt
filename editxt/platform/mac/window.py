@@ -62,8 +62,12 @@ class WindowController(ak.NSWindowController):
         wc.save_as_caller = None
         return wc
 
+    def setDocument_(self, value):
+        raise NotImplementedError("should never be called")
+
     def windowDidLoad(self):
         self.window_.window_did_load()
+        self.window().setDelegate_(self)
 
     def characterEncodings(self):
         return fn.NSValueTransformer.valueTransformerForName_("CharacterEncodingTransformer").names
@@ -145,24 +149,22 @@ class WindowController(ak.NSWindowController):
                     for subview in main_view.subviews():
                         subview.removeFromSuperview()
                     editor.set_main_view_of_window(main_view, self.window())
-                    #self.setDocument_(editor.document)
                     return True
         #else:
         #    self.window().setTitle_(editor.name)
         #    log.debug("self.window().setTitle_(%r)", editor.name)
         for subview in main_view.subviews():
             subview.removeFromSuperview()
-        self.setDocument_(None)
         return False
-
-    def undo_manager(self):
-        return self.window_.undo_manager()
 
     def windowTitleForDocumentDisplayName_(self, name):
         editor = self.window_.current_editor
         if editor is not None and editor.file_path is not None:
             return user_path(editor.file_path)
         return name
+
+    def windowWillReturnUndoManager_(self, window):
+        return self.window_.undo_manager
 
     def windowDidBecomeKey_(self, notification):
         self.window_.window_did_become_key(notification.object())
@@ -172,6 +174,7 @@ class WindowController(ak.NSWindowController):
 
     def windowWillClose_(self, notification):
         self.window_.window_will_close()
+        self.window().setDelegate_(None)
 
     def save_document_as(self, directory, filename, save_with_path):
         panel = NSSavePanel.alloc().init()

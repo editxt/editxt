@@ -61,7 +61,6 @@ class Window(object):
 
     def window_did_load(self):
         wc = self.wc
-        wc.setShouldCloseDocument_(False)
         wc.docsView.setRefusesFirstResponder_(True)
         wc.plusButton.setRefusesFirstResponder_(True)
         wc.plusButton.setImage_(load_image(const.PLUS_BUTTON_IMAGE))
@@ -443,7 +442,6 @@ class Window(object):
             while self.projects:
                 self.projects.pop().close()
             #wc.docsController.setContent_(None)
-            #wc.setDocument_(None)
             #self.wc = None
 
     # drag/drop logic ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -661,8 +659,9 @@ class Window(object):
     def show(self, sender):
         self.wc.showWindow_(sender)
 
+    @property
     def undo_manager(self):
-        doc = self.wc.document()
-        if doc is None:
-            return fn.NSUndoManager.alloc().init()
-        return doc.undoManager()
+        editor = self.current_editor
+        if editor is None:
+            return None
+        return editor.undo_manager

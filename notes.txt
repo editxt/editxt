@@ -99,8 +99,12 @@ Bug: edit document (do not save), Quit, Cancel -> crash!
     2014-01-11 20:08:16.491 EditXTDev[7169:707] <class 'TypeError'>: Argument 4 is a block, but no signature available    
 
 Replace NSDocumentController
-x  - Maintain list of open documents
-  - Check unsaved documents on close application
+x  - Maintain list of open documents (DocumentController)
+x  - Undo/redo (menu items)
+  - Fix document edited indicator
+  - Check/prompt for unsaved documents on close application
+  - Fix open document
+  - Fix save menu items
   - Recent documents menu (move recent documents feature into project?)
   - Draggable icon/menu in title bar ...don't really care as long as can
     drag document out of sidebar into terminal/text widget -> insert path
