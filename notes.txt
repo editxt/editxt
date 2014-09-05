@@ -101,10 +101,10 @@ Bug: edit document (do not save), Quit, Cancel -> crash!
 Replace NSDocumentController
 x  - Maintain list of open documents (DocumentController)
 x  - Undo/redo (menu items)
-  - Fix document edited indicator
+x  - Fix document edited indicator
   - Check/prompt for unsaved documents on close application
   - Fix open document
-  - Fix save menu items
+  - Fix open/save menu items
   - Recent documents menu (move recent documents feature into project?)
   - Draggable icon/menu in title bar ...don't really care as long as can
     drag document out of sidebar into terminal/text widget -> insert path

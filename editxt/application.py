@@ -127,7 +127,7 @@ class Application(object):
 
     def open_path_dialog(self):
         if self.path_opener is None:
-            opc = OpenPathController.create(self)
+            opc = OpenPathController(self)
             opc.showWindow_(self)
             self.path_opener = opc
         else:
@@ -528,8 +528,7 @@ class OpenPathController(ak.NSWindowController):
     paths = objc.IBOutlet()
     app = WeakProperty()
 
-    @classmethod
-    def create(cls, app):
+    def __new__(cls, app):
         opener = cls.alloc().initWithWindowNibName_("OpenPath")
         opener.app = app
         return opener

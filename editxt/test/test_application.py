@@ -170,7 +170,7 @@ def test_open_path_dialog():
         if c.exists:
             app.path_opener.window().makeKeyAndOrderFront_(app)
         else:
-            opc_class.create(app) >> opc
+            opc_class(app) >> opc
             app.path_opener = opc
             opc.showWindow_(app)
         app.path_opener.populateWithClipboard()
@@ -945,11 +945,12 @@ def test_app_will_terminate():
 from editxt.application import OpenPathController
 
 def test_OpenPathController_init():
-    opc = OpenPathController.alloc().init()
+    opc = OpenPathController(None)
 
 def test_OpenPathController_windowDidLoad():
     m = Mocker()
-    opc = OpenPathController.alloc().init()
+    app = m.mock()
+    opc = OpenPathController(app)
     tv = m.property(opc, "paths").value >> m.mock(ak.NSTextView)
     tc = tv.textContainer() >> m.mock(ak.NSTextContainer)
     tc.setContainerSize_(fn.NSMakeSize(const.LARGE_NUMBER_FOR_TEXT, const.LARGE_NUMBER_FOR_TEXT))
@@ -960,12 +961,13 @@ def test_OpenPathController_windowDidLoad():
     tv.setFont_(ANY)
     with m:
         opc.windowDidLoad()
+        eq_(opc.app, app)
 
 def test_OpenPathController_populateWithClipboard():
     # initialize main text field with clipboard content (if its text)
     def test(c):
         m = Mocker()
-        opc = OpenPathController.alloc().init()
+        opc = OpenPathController(None)
         paths = m.property(opc, "paths").value >> m.mock(ak.NSTextView)
         with m.order():
             ts = paths.textStorage() >> m.mock(ak.NSTextStorage)
@@ -983,7 +985,7 @@ def test_OpenPathController_textView_doCommandBySelector_():
     def test(c):
         m = Mocker()
         nsapp = m.replace(ak, 'NSApp', spec=False)
-        opc = OpenPathController.alloc().init()
+        opc = OpenPathController(None)
         tv = m.mock(ak.NSTextView)
         if c.sel == "insertNewline:":
             nsapp().currentEvent().modifierFlags() >> c.mod
@@ -1007,7 +1009,7 @@ def test_OpenPathController_open_():
     def test(c):
         m = Mocker()
         app = m.mock(Application)
-        opc = OpenPathController.create(app)
+        opc = OpenPathController(app)
         paths = m.property(opc, "paths").value >> m.mock(ak.NSTextView)
         paths.textStorage().string() >> c.text
         def check_paths(paths):
