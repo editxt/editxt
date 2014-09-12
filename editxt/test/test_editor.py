@@ -164,13 +164,13 @@ def test_Editor_save():
                 expect(save_document_as(editor, ANY)).call(save_prompt)
             elif has_path_changed() >> ("moved" in path):
                 expect(prompt_to_overwrite(editor, ANY)).call(save_prompt)
-            called = []
-            def callback():
-                called.append(1)
+            calls = []
+            def callback(saved):
+                calls.append(saved)
             with m:
                 editor.save(*prompt, callback=callback)
                 eq_(get_content(real_path), "saved text")
-                assert called, "callback not called"
+                eq_(calls, [True])
 
     # prompt or no real path
     yield test("/existing.txt", prompt=True)

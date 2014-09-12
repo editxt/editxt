@@ -759,9 +759,9 @@ def test_get_window_settings():
         m = Mocker()
         ed = Window(app)
         ed.wc = m.mock(WindowController)
-        ed.wc.window().stringWithSavedFrame() >> settings["frame_string"]
-        ed.wc.splitView.fixedSideThickness() >> settings["splitter_pos"]
-        ed.wc.propsViewButton.state() >> (ak.NSOnState if c.props_hidden else ak.NSOffState)
+        ed.wc.frame_string >> settings["frame_string"]
+        ed.wc.splitter_pos >> settings["splitter_pos"]
+        ed.wc.properties_hidden >> (ak.NSOnState if c.props_hidden else ak.NSOffState)
         with m:
             result = ed.window_settings
             eq_(result, settings)
@@ -788,19 +788,9 @@ def test_set_window_settings():
         ed.wc = m.mock(WindowController)
         fs = "<test frame string>"
         sp = "<test splitter position>"
-        (ed.wc.window() >> m.mock(ak.NSWindow)).setFrameFromString_(fs)
-        ed.wc.setShouldCascadeWindows_(False)
-        (ed.wc.splitView >> m.mock(ThinSplitView)).setFixedSideThickness_(sp)
-        ed.wc.propsViewButton.setState_(ak.NSOnState)
-        prop_view = ed.wc.propsView >> m.mock(ak.NSView)
-        prop_rect = prop_view.frame() >> m.mock(fn.NSRect)
-        tree_view = ed.wc.docsScrollview >> m.mock(ak.NSScrollView)
-        tree_rect = tree_view.frame() >> m.mock(fn.NSRect)
-        tree_rect.size.height = (tree_rect.size.height >> 50) + (prop_rect.size.height >> 50) - 1
-        tree_rect.origin.y = prop_rect.origin.y >> 20
-        tree_view.setFrame_(tree_rect)
-        prop_rect.size.height = 0.0
-        prop_view.setFrame_(prop_rect)
+        ed.wc.frame_string = fs
+        ed.wc.splitter_pos = sp
+        ed.wc.properties_hidden = True
         with m:
             ed.window_settings = dict(frame_string=fs, splitter_pos=sp, properties_hidden=True)
 

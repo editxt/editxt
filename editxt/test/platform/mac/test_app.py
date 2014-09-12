@@ -70,7 +70,6 @@ def test_applicationWillTerminate():
     m = Mocker()
     delegate.app = app = m.mock(Application)
     notif = m.mock() # ak.NSApplicationWillTerminateNotification
-    nsapp = m.mock(ak.NSApplication)
-    app.app_will_terminate(notif.object() >> nsapp)
+    app.will_terminate()
     with m:
         delegate.applicationWillTerminate_(notif)

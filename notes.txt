@@ -103,6 +103,14 @@ x  - Maintain list of open documents (DocumentController)
 x  - Undo/redo (menu items)
 x  - Fix document edited indicator
   - Check/prompt for unsaved documents on close application
+    - close document with path
+      Do you want to save the changes made to the document “window.py”?
+      Your changes will be lost if you don’t save them.
+      (Don't Save)  (Cancel) [Save]
+    - close unsaved document
+      Do you want to save the changes made to the document “Untitled”?
+      Your changes will be lost if you don’t save them.
+      (Don't Save)  (Cancel) [Save...]
   - Fix open document
   - Fix open/save menu items
   - Recent documents menu (move recent documents feature into project?)

@@ -125,7 +125,10 @@ class TestApplication(Application):
     def open_error_log(self, *args, **kw):
         pass
 
-    def app_will_terminate(self, app):
+    def should_terminate(self, callback):
+        return True
+
+    def will_terminate(self):
         pass # do not call super, which saves document settings
 
 

@@ -63,7 +63,7 @@ class Application(object):
             self.config = Config(
                 os.path.join(self.profile_path, const.CONFIG_FILENAME))
             self.context = ContextMap()
-            self.syntax_factory = None
+            self.init_syntax_definitions()
             state_dir = os.path.join(self.profile_path, const.STATE_DIR)
             command_history = CommandHistory(state_dir)
             self.text_commander = TextCommandController(command_history)
@@ -103,7 +103,6 @@ class Application(object):
         return self.syntax_factory.definitions
 
     def application_will_finish_launching(self, app, delegate):
-        self.init_syntax_definitions()
         self.text_commander.load_commands(delegate.textMenu)
         states = list(self.iter_saved_window_states())
         if states:
@@ -403,7 +402,58 @@ class Application(object):
             except Exception:
                 log.error('cannot remove %s', state_file, exc_info=True)
 
-    def app_will_terminate(self, app):
+    def should_terminate(self, callback):
+        """Check if application can terminate
+
+        :param callback: A callback to be used as the return value to signal
+        a delayed termination. If this object is returned it must be called with
+        a single boolean argument at some point in the future when it is known
+        if the application should terminate or not.
+        :returns: ``True``, ``False`` or ``callback``. ``True`` means the
+        application should terminate immediately. ``False`` means the
+        application should not terminate, and ``callback`` means the application
+        will perform an extended check to determine if it should terminate
+        before calling ``callback`` with either ``True`` or ``False``.
+        """
+        if next(self.iter_dirty_editors(), None) is not None:
+            self._async_should_terminate(callback)
+            return callback
+        return True
+
+    def _async_should_terminate(self, should_terminate):
+        """Visit each dirty document and prompt for close
+
+        Calls ``should_terminate(False)`` if any unsaved document cancels the
+        close operation. Otherwise calls ``should_terminate(True)``.
+        """
+        class RecursiveCall(Exception): pass
+
+        def close_next_editor():
+            def callback(ok_to_close):
+                if not ok_to_close:
+                    should_terminate(False)
+                    return
+                if recursive_call:
+                    raise RecursiveCall()
+                close_next_editor()
+            recursive_call = True
+            for editor in dirty_editors:
+                try:
+                    editor.should_close(callback)
+                except RecursiveCall as call:
+                    continue
+                except Exception:
+                    log.exception("termination sequence failed")
+                    should_terminate(False)
+                    return
+                recursive_call = False
+                return
+            should_terminate(True)
+
+        dirty_editors = self.iter_dirty_editors()
+        close_next_editor()
+
+    def will_terminate(self):
         self.save_window_states()
 
 

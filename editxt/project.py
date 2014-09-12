@@ -115,6 +115,10 @@ class Project(object):
         data.update(self.serialize())
         data.writeToFile_atomically_(path, True)
 
+    def should_close(self, callback):
+        self.save()
+        callback(True)
+
     def dirty_editors(self):
         return (e for e in self.editors if e.is_dirty)
 

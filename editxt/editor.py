@@ -30,7 +30,7 @@ from editxt.command.find import Finder, FindOptions
 from editxt.command.util import change_indentation, replace_newlines
 from editxt.constants import LARGE_NUMBER_FOR_TEXT
 from editxt.controls.alert import Alert
-from editxt.document import DocumentController
+from editxt.document import DocumentController, Error as DocumentError
 from editxt.platform.document import setup_main_view, teardown_main_view
 from editxt.platform.kvo import KVOList, KVOProxy, KVOLink
 from editxt.util import register_undo_callback, WeakProperty
@@ -153,7 +153,7 @@ class Editor(object):
     def is_dirty(self):
         return self.document.is_dirty()
 
-    def save(self, prompt=False, callback=(lambda:None)):
+    def save(self, prompt=False, callback=(lambda saved:None)):
         """Save the document to disk
 
         Possible UI interactions:
@@ -165,21 +165,56 @@ class Editor(object):
 
         :param prompt: Optional boolean argument, defaults to False.
         Unconditionally prompt for new save location if True.
-        :param callback: Optional callback to be called on successful save.
+        :param callback: Optional callback to be called with the save result
+        of the save operation (True if successful else False).
         """
         document = self.document
         window = self.project.window
         def save_with_path(path):
-            if document.file_path != path:
-                document.file_path = path
-            document.save()
-            callback()
+            saved = False
+            try:
+                if path is not None:
+                    if document.file_path != path:
+                        document.file_path = path
+                    document.save()
+                    saved = True
+            except DocumentError as err:
+                log.error(err)
+            except Exception:
+                log.exception("cannot save %s", path)
+            finally:
+                callback(saved)
         if prompt or not document.has_real_path():
             window.save_document_as(self, save_with_path)
         elif document.file_changed_since_save():
             window.prompt_to_overwrite(self, save_with_path)
         else:
             save_with_path(document.file_path)
+
+    def should_close(self, callback):
+        """Check if the document can be closed
+
+        Prompt for save, discard, or cancel if the document is dirty and call
+        ``callback(<should close>)`` once the appropriate action has been
+        performed. Otherwise call ``callback(True)``. The callback may raise an
+        exception; if it does it must be allowed to propagate to continue the
+        termination sequence.
+        """
+        if not self.is_dirty:
+            callback(True)
+            return
+        def save_discard_or_cancel(save):
+            """Save, discard, or cancel the current operation
+
+            :param save: True => save, False => discard, None => cancel
+            """
+            if save:
+                self.save(callback=callback)
+            else:
+                callback(save is not None)
+        document = self.document
+        save_as = not document.has_real_path()
+        self.project.window.prompt_to_close(self, save_discard_or_cancel, save_as)
 
     def set_main_view_of_window(self, view, window):
         frame = view.bounds()

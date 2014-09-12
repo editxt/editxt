@@ -38,8 +38,8 @@ from editxt.editor import Editor
 from editxt.project import Project
 from editxt.util import load_yaml
 
-from editxt.test.util import (do_method_pass_through, TestConfig, replattr,
-    test_app, tempdir)
+from editxt.test.util import (do_method_pass_through, gentest, TestConfig,
+    replattr, test_app, tempdir)
 
 log = logging.getLogger(__name__)
 
@@ -61,6 +61,7 @@ def test_application_init():
     app = Application()
     eq_(app.windows, [])
     assert isinstance(app.context, ContextMap)
+    assert app.syntax_factory is not None
 
 def test_Application_logger():
     root = logging.getLogger()
@@ -122,7 +123,6 @@ def test_application_will_finish_launching():
         tc = m.replace(app, 'text_commander', spec=TextCommandController)
         dc = m.mock(DocumentController)
         menu = dc.textMenu >> m.mock(ak.NSMenu)
-        m.method(app.init_syntax_definitions)()
         tc.load_commands(menu)
         if eds_config:
             error = False
@@ -821,13 +821,40 @@ def test_save_window_states():
     yield test, c(windows=[1, 2])
     yield test, c(windows=[1, 2, 3, 4])
 
-def test_app_will_terminate():
-    def test(ed_config):
-        app = Application()
-        m = Mocker()
-        m.method(app.save_window_states)() >> None
-        with m:
-            ap.app_will_terminate(None)
+def test_should_terminate():
+    @gentest
+    def test(config, expected_calls=[]):
+        with test_app(config) as app:
+            m = Mocker()
+            for item in config.split():
+                if "(" in item:
+                    editor = test_app.get(item, app)
+                    is_dirty = m.replace(editor.document, "is_dirty")
+                    (is_dirty() << True).count(0, 3)
+            calls = []
+            def callback(ok):
+                calls.append(ok)
+            with m:
+                answer = app.should_terminate(callback)
+                eq_(answer, (callback if calls else True))
+                eq_(calls, expected_calls)
+    # convention: editor(...) means that editor has unsaved changes
+    yield test("")
+    yield test("project")
+    yield test("project editor editor project editor")
+    yield test("editor(doc.save)", [False]) # no directory -> cancel save
+    yield test("editor(/doc.save)", [True])
+    yield test("editor(doc.dont_save)", [True])
+    yield test("editor(cancel)", [False])
+    yield test("editor(doc.dont_save) editor(cancel) editor(/doc.save)", [False])
+    yield test("editor editor(doc.dont_save) project editor(/doc.save)", [True])
+
+def test_will_terminate():
+    app = Application()
+    m = Mocker()
+    m.method(app.save_window_states)() >> None
+    with m:
+        app.will_terminate()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # DocumentSavingDelegate tests

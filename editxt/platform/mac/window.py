@@ -62,6 +62,39 @@ class WindowController(ak.NSWindowController):
         wc.save_as_caller = None
         return wc
 
+    @property
+    def frame_string(self):
+        return self.window().stringWithSavedFrame()
+    @frame_string.setter
+    def frame_string(self, value):
+        self.window().setFrameFromString_(value)
+        self.setShouldCascadeWindows_(False)
+
+    @property
+    def splitter_pos(self):
+        return self.splitView.fixedSideThickness()
+    @splitter_pos.setter
+    def splitter_pos(self, value):
+        self.splitView.setFixedSideThickness_(value)
+
+    @property
+    def properties_hidden(self):
+        return (self.propsViewButton.state() == ak.NSOnState)
+    @properties_hidden.setter
+    def properties_hidden(self, value):
+        if value:
+            # REFACTOR eliminate boilerplate here (similar to toggle_properties_pane)
+            self.propsViewButton.setState_(ak.NSOnState)
+            tree_view = self.docsScrollview
+            prop_view = self.propsView
+            tree_rect = tree_view.frame()
+            prop_rect = prop_view.frame()
+            tree_rect.size.height += prop_rect.size.height - 1.0
+            tree_rect.origin.y = prop_rect.origin.y
+            tree_view.setFrame_(tree_rect)
+            prop_rect.size.height = 0.0
+            prop_view.setFrame_(prop_rect)
+
     def setDocument_(self, value):
         raise NotImplementedError("should never be called")
 
@@ -195,9 +228,8 @@ class WindowController(ak.NSWindowController):
     def prompt_to_overwrite(self, file_path, save_with_path, save_as, diff_with_original):
         self.alert = alert = Alert.alloc().init()
         alert.setAlertStyle_(ak.NSInformationalAlertStyle)
-        message = ("Replace “{}”?").format(file_path)
-        alert.setMessageText_("The file has been modified by another program.")
-        alert.setInformativeText_(infotext)
+        alert.setMessageText_("Replace “{}”?".format(file_path))
+        alert.setInformativeText_("The file has been modified by another program.")
         alert.addButtonWithTitle_("Save As...")
         alert.addButtonWithTitle_("Replace")
         # may need to use .objectAtIndex_(1) instead of [1]
@@ -215,7 +247,31 @@ class WindowController(ak.NSWindowController):
                 save_with_path(file_path)
             elif diff and response == ak.NSAlertThirdButtonReturn:
                 diff_with_original()
-        alert.beginSheetModalForWindow_withCallback_(window, respond)
+            else:
+                save_with_path(None)
+        alert.beginSheetModalForWindow_withCallback_(self.window(), respond)
+
+    def prompt_to_close(self, file_path, save_discard_or_cancel, save_as):
+        self.alert = alert = Alert.alloc().init()
+        alert.setAlertStyle_(ak.NSInformationalAlertStyle)
+        message = "Do you want to save the changes made to the document “{}”?" \
+                  .format(os.path.basename(file_path))
+        alert.setMessageText_(message)
+        alert.setInformativeText_("Your changes will be lost if you don’t save them.")
+        alert.addButtonWithTitle_("Save" + ("..." if save_as else ""))
+        alert.addButtonWithTitle_("Cancel")
+        alert.addButtonWithTitle_("Don't Save")
+        # may need to use .objectAtIndex_(2) instead of [2]
+        # http://stackoverflow.com/questions/16627894/how-to-make-the-nsalerts-2nd-button-the-return-button
+        alert.buttons()[2].setKeyEquivalent_(" ") # space bar -> don't save
+        def respond(response):
+            if response == ak.NSAlertFirstButtonReturn:
+                save_discard_or_cancel(True) # save
+            elif response == ak.NSAlertThirdButtonReturn:
+                save_discard_or_cancel(None) # discard
+            else:
+                save_discard_or_cancel(False) # cancel
+        alert.beginSheetModalForWindow_withCallback_(self.window(), respond)
 
     # outlineview datasource methods ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

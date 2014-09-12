@@ -65,15 +65,11 @@ class AppDelegate(ak.NSObject):
     def applicationShouldOpenUntitledFile_(self, app):
         return False
 
-#    def closeAllDocumentsWithDelegate_didCloseAllSelector_contextInfo_(
-#        self, delegate, selector, context):
-#        #perform_selector(delegate, selector, self, 1, context)
-#        def callback(result):
-#            #log.debug("%s.%s(%s, %s, %s)", delegate, selector, self, result, context)
-#            perform_selector(delegate, selector, self, result, context)
-#        saver = DocumentSavingDelegate.alloc().init_callback_(
-#            self.app.iter_dirty_editors(), callback)
-#        saver.save_next_document()
+    def applicationShouldTerminate_(self, app):
+        def callback(answer):
+            app.replyToApplicationShouldTerminate_(answer)
+        answer = self.app.should_terminate(callback)
+        return ak.NSTerminateLater if answer is callback else answer
 
     def applicationWillTerminate_(self, notification):
-        self.app.app_will_terminate(notification.object())
+        self.app.will_terminate()

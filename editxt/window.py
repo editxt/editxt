@@ -240,8 +240,9 @@ class Window(object):
         """Prompt for path to save document
 
         :param editor: The editor of the document to be saved.
-        :param save_with_path: A callback accepting a sinlge parameter, the
-        chosen file path, that does the work of actually saving the file.
+        :param save_with_path: A callback accepting a sinlge parameter (the
+        chosen file path) that does the work of actually saving the file.
+        Call with ``None`` to cancel the save operation.
         """
         directory, filename = self._directory_and_filename(editor.file_path)
         self.wc.save_document_as(directory, filename, save_with_path)
@@ -250,8 +251,9 @@ class Window(object):
         """Prompt to overwrite the given editor's document's file path
 
         :param editor: The editor of the document to be saved.
-        :param save_with_path: A callback accepting a sinlge parameter, the
-        chosen file path, that does the work of actually saving the file.
+        :param save_with_path: A callback accepting a sinlge parameter (the
+        chosen file path) that does the work of actually saving the file.
+        Call with ``None`` to cancel the save operation.
         """
         def save_as():
             self.save_document_as(editor, save_with_path)
@@ -260,9 +262,21 @@ class Window(object):
         else:
             def diff_with_original():
                 from editxt.command.diff import diff
+                save_with_path(None) # cancel save operation
                 diff(editor.text_view, self, None)
         self.wc.prompt_to_overwrite(
             editor.file_path, save_with_path, save_as, diff_with_original)
+
+    def prompt_to_close(self, editor, save_discard_or_cancel, save_as=True):
+        """Prompt to see if the document can be closed
+
+        :param editor: The editor of the document to be closed.
+        :param save_discard_or_cancel: A callback to be called with the outcome
+        of the prompt: save (True), discard (False), or cancel (None).
+        :param save_as: Boolean, if true prompt to "save as" (with dialog),
+        otherwise prompt to save (without dialog).
+        """
+        self.wc.prompt_to_close(editor.file_path, save_discard_or_cancel, save_as)
 
     @staticmethod
     def _directory_and_filename(path):
@@ -408,30 +422,18 @@ class Window(object):
 
     def _get_window_settings(self):
         return dict(
-            frame_string=str(self.wc.window().stringWithSavedFrame()),
-            splitter_pos=self.wc.splitView.fixedSideThickness(),
-            properties_hidden=(self.wc.propsViewButton.state() == ak.NSOnState),
+            frame_string=str(self.wc.frame_string),
+            splitter_pos=self.wc.splitter_pos,
+            properties_hidden=self.wc.properties_hidden,
         )
     def _set_window_settings(self, settings):
         fs = settings.get("frame_string")
         if fs is not None:
-            self.wc.window().setFrameFromString_(fs)
-            self.wc.setShouldCascadeWindows_(False)
+            self.wc.frame_string = fs
         sp = settings.get("splitter_pos")
         if sp is not None:
-            self.wc.splitView.setFixedSideThickness_(sp)
-        if settings.get("properties_hidden", False):
-            # REFACTOR eliminate boilerplate here (similar to toggle_properties_pane)
-            self.wc.propsViewButton.setState_(ak.NSOnState)
-            tree_view = self.wc.docsScrollview
-            prop_view = self.wc.propsView
-            tree_rect = tree_view.frame()
-            prop_rect = prop_view.frame()
-            tree_rect.size.height += prop_rect.size.height - 1.0
-            tree_rect.origin.y = prop_rect.origin.y
-            tree_view.setFrame_(tree_rect)
-            prop_rect.size.height = 0.0
-            prop_view.setFrame_(prop_rect)
+            self.wc.splitter_pos = sp
+        self.wc.properties_hidden = settings.get("properties_hidden", False)
         self.window_settings_loaded = True
     window_settings = property(_get_window_settings, _set_window_settings)
 

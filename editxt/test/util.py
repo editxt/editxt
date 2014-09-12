@@ -167,7 +167,12 @@ class test_app(object):
 
     """
 
-    editor_re = re.compile("(-?)(window|project|editor)((?:\([a-zA-Z0-9-]+\))?)(\*?)$")
+    editor_re = re.compile(
+        r"(-?)"
+        r"(window|project|editor)"
+        r"((?:\([._/a-zA-Z0-9-]+\))?)"
+        r"(\*?)$"
+    )
 
     def __new__(cls, state=None):
         self = super(test_app, cls).__new__(cls)
@@ -181,15 +186,17 @@ class test_app(object):
 
     def __call__(self, func):
         @wraps(func)
-        def decorator(*args, **kw):
+        def test_app(*args, **kw):
             with self as app:
                 return func(app, *args, **kw)
-        return decorator
+        return test_app
 
     def __enter__(self):
         from editxt.application import Application
         self.tempdir = tempdir()
-        app = Application(self.tempdir.__enter__())
+        self.tmp = self.tempdir.__enter__()
+        profile_path = os.path.join(self.tmp, ".profile")
+        app = Application(profile_path)
         self.items = {}
         self.news = 0
         self._setup(app)
@@ -218,12 +225,12 @@ class test_app(object):
         if state is None:
             return
         window = project = None
-        for i, item in enumerate(state.split()):
-            match = self.editor_re.match(item)
-            assert match and (
-                    match.group(2) == "project" or not match.group(1)
-                ), "unknown state item: {}".format(item)
+        for i, state_item in enumerate(state.split()):
+            match = self.editor_re.match(state_item)
+            assert match, "unknown state item: {}".format(state_item)
             collapsed, item, name, current = match.groups()
+            assert item == "project" or not collapsed, \
+                "unknown state item: {}".format(state_item)
             if not name:
                 name = "<{}>".format(i)
             if item == "window" or window is None:
@@ -249,7 +256,11 @@ class test_app(object):
                     items[project] = "project<{}>".format(i)
             document = docs_by_name.get(name)
             if document is None:
-                document = app.document_with_path(None)
+                path = name[1:-1]
+                if "/" in path:
+                    assert path.lstrip("/")[0] not in "\\:", path.lstrip("/")
+                    path = os.path.join(self.tmp, path.lstrip("/"))
+                document = app.document_with_path(path)
                 docs_by_name[name] = document
             editor = Editor(project, document=document)
             items[editor] = "editor" + name
@@ -331,9 +342,7 @@ class test_app(object):
         :param name: The name of the item to get. Example: ``"editor(1)"``
         """
         self = cls.self(app)
-        items_by_name = {v: k for k, v in self.items.items()}
-        print(items_by_name)
-        return items_by_name[name]
+        return {v: k for k, v in self.items.items()}[name]
 
 
 def check_app_state(test):

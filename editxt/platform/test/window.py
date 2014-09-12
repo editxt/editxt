@@ -29,6 +29,9 @@ log = logging.getLogger(__name__)
 class WindowController(object):
 
     window_ = WeakProperty()
+    frame_string = ""
+    splitter_pos = 0
+    properties_hidden = False
 
     def __init__(self, window):
         self.window_ = window
@@ -45,6 +48,27 @@ class WindowController(object):
 
     def undo_manager(self):
         return self.window_.undo_manager()
+
+    def save_document_as(self, directory, filename, save_with_path):
+        if directory is not None and filename.endswith(".save"):
+            log.info("save '%s' to %s", filename, directory)
+        else:
+            log.info("save '%s' canceled", filename)
+            directory = None
+        save_with_path(directory)
+
+    def prompt_to_close(self, file_path, save_discard_or_cancel, save_as):
+        if file_path.endswith(".save"):
+            action = "save" + ("..." if save_as else "")
+            response = True
+        elif file_path.endswith(".dont_save"):
+            action = "don't save"
+            response = False
+        else:
+            action = "cancel"
+            response = None
+        log.info("prompt to close %s -> %s", file_path, action)
+        save_discard_or_cancel(response)
 
     # XXX the following are still Objective-C-ish
     # TODO create Pythonic API for these functions

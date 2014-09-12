@@ -485,16 +485,16 @@ def test_TextDocument_write_to_path():
             doc = app.document_with_path(doc_path)
             end_content = "modified"
             doc.text = end_content
-            with CaptureLog(mod) as log:
-                result = doc.write_to_file(path)
+            try:
+                doc.write_to_file(path)
+            except Exception as err:
                 if not error:
-                    eq_(get_content(path), end_content)
-                    eq_(log.data, {})
-                    assert result, "write_to_file returned False"
-                else:
-                    eq_(get_content(path), begin_content)
-                    eq_(log.data, {"error": [error]})
-                    assert not result, "write_to_file returned True with error"
+                    raise
+                eq_(get_content(path), begin_content)
+                eq_(str(err), error)
+            else:
+                assert not error, "expected error: %s" % error
+                eq_(get_content(path), end_content)
             eq_(doc.file_path, doc_path)
             assert not os.path.exists(doc_path), doc_path
 

@@ -48,7 +48,7 @@ class DocumentController(object):
     """A document controller maintains a set of open documents
 
     The purpose of a document controller is to make sure that it has
-    a single document object for a given path at all times.
+    a single document object for a given "real" path at all times.
     """
 
     id_gen = count()
@@ -63,20 +63,19 @@ class DocumentController(object):
     def __iter__(self):
         return iter(self.documents.values())
 
-#    def new_document(self):
-#        """Create a new untitled document
-#        """
-#        return TextDocument(self.app)
-
     def get_document(self, path):
         """Get a document object for the given path
 
-        :returns: A new or existing document.
+        :returns: A new or existing document. If the new document does not
+        have a "real" path (see ``TextDocument.has_real_path``) it will not
+        be tracked by this controller.
         """
         try:
             document = self.documents[path]
         except KeyError:
-            document = self.documents[path] = TextDocument(self.app, path)
+            document = TextDocument(self.app, path)
+            if document.has_real_path():
+                self.documents[path] = document
         return document
 
     def change_document_path(self, old_path, document):
@@ -89,17 +88,6 @@ class DocumentController(object):
         assert document.has_real_path(), document
         self.documents.pop(old_path, None)
         self.documents[document.file_path] = document
-
-#    def close_document(self, document):
-#        """Close document
-#
-#        Discard document from the set of open documents.
-#        """
-
-#    # TODO is this method needed?
-#    def is_document_open(self, path):
-#        """Return true if a document is open for the given path
-#        """
 
     def discard(self, document):
         """Remove document from controller"""
@@ -280,34 +268,31 @@ class TextDocument(object):
                 raise Error("parent directory is missing: {}".format(self.file_path))
             else:
                 raise Error("file path is not set")
-        if self.write_to_file(self.file_path):
-            self.persistent_path = self.file_path
-            for action in [
-                self._refresh_file_mtime,
-                self.clear_dirty,
-                self.app.save_window_states,
-                self.update_syntaxer,
-            ]:
-                try:
-                    action()
-                except Exception:
-                    log.error("unexpected error", exc_info=True)
+        self.write_to_file(self.file_path)
+        self.persistent_path = self.file_path
+        for action in [
+            self._refresh_file_mtime,
+            self.clear_dirty,
+            self.app.save_window_states,
+            self.update_syntaxer,
+        ]:
+            try:
+                action()
+            except Exception:
+                log.error("unexpected error", exc_info=True)
 
     def write_to_file(self, path):
         """Write the document's content to the given file path
 
         The given file path must be an absolute path.
         """
-        if os.path.isabs(path):
-            data, err = self.data()
-            if err is None:
-                ok, err = data.writeToFile_options_error_(path, 1, None)
-        else:
-            err = "cannot write to relative path: %s" % path
-        if err is not None:
-            log.error(err)
-            return False
-        return ok
+        if not os.path.isabs(path):
+            raise Error("cannot write to relative path: {}".format(path))
+        data, err = self.data()
+        if err is None:
+            ok, err = data.writeToFile_options_error_(path, 1, None)
+        if not ok:
+            raise Error("cannot write to {}: {}".format(path, err))
 
     def data(self):
         range = fn.NSMakeRange(0, self.text_storage.length())
