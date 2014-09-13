@@ -585,7 +585,7 @@ def test_Window_iter_editors_of_document():
             proj = m.mock(Project)
             projs.append(proj)
             dv = (m.mock(Editor) if proj_has_editor else None)
-            proj.find_editor_with_document(doc) >> dv
+            proj.iter_editors_of_document(doc) >> ([] if dv is None else [dv])
             if dv is not None:
                 editors.append(dv)
         with m:
@@ -647,12 +647,15 @@ def test_close_button_clicked():
         ed.recent = m.mock()
         dv = ed.wc.docsView >> m.mock(ak.NSOutlineView)
         dv.numberOfRows() >> num_rows
+        discard = m.method(ed.discard_and_focus_recent)
         if row < num_rows:
             item = m.mock()
             dv.itemAtRow_(row) >> item
-            item2 = m.mock(doc_class)
-            dv.realItemForOpaqueItem_(item) >> item2
-            item2.perform_close()
+            real_item = dv.realItemForOpaqueItem_(item) >> m.mock(doc_class)
+            discard(real_item)
+            def callback(do_close):
+                do_close()
+            expect(real_item.interactive_close(ANY)).call(callback)
         with m:
             ed.close_button_clicked(row)
     yield test, 0, 0

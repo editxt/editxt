@@ -257,33 +257,31 @@ def test_insert_items_already_in_project(app):
     proj.insert_items([editor], action=const.COPY)
     eq_(len(proj.editors), 2, proj.editors)
 
-def test_find_editor_with_document():
+def test_iter_editors_of_document():
     DOC = "the document we're looking for"
     def test(config):
-        theeditor = None
+        found = []
         proj = Project(None)
         proj.editors = docs = []
         m = Mocker()
         doc = m.mock(TextDocument)
-        found = False
         for item in config:
             editor = m.mock(Editor)
             docs.append(editor)
             editor.name >> item
-            if not found:
-                adoc = m.mock(TextDocument)
-                editor.document >> (doc if item is DOC else adoc)
-                if item is DOC:
-                    theeditor = editor
-                    found = True
+            adoc = m.mock(TextDocument)
+            editor.document >> (doc if item is DOC else adoc)
+            if item is DOC:
+                found.append(editor)
         with m:
             eq_(config, [editor.name for editor in docs])
-            result = proj.find_editor_with_document(doc)
-            eq_(result, theeditor)
+            result = list(proj.iter_editors_of_document(doc))
+            eq_(result, found)
     yield test, []
     yield test, [DOC]
     yield test, ["doc1", "doc2"]
     yield test, ["doc1", DOC, "doc3"]
+    yield test, ["doc1", DOC, "doc3", DOC]
 
 def test_can_rename():
     proj = Project(None)
@@ -313,7 +311,7 @@ def test_set_main_view_of_window():
     with m:
         proj.set_main_view_of_window(view, win) # for now this does nothing
 
-def test_perform_close():
+def test_interactive_close():
     import editxt.application as xtapp
     def test(c):
         m = Mocker()
@@ -348,7 +346,7 @@ def test_perform_close():
         else:
             ed.discard_and_focus_recent(proj)
         with m:
-            proj.perform_close()
+            proj.interactive_close()
     c = TestConfig(num_eds=1)
     for ndv in range(3):
         yield test, c(should_close=True, num_editors=ndv)

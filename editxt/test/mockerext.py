@@ -245,6 +245,8 @@ class MockerExt(mocker.Mocker):
                 object = obj[attr]
             else:
                 object = getattr(obj, attr)
+            if name is None:
+                name = "<%s>.%s" % (obj.__class__.__name__, attr)
             if inspect.isfunction(object) or inspect.ismethod(object):
                 kw.setdefault('sigcheck', False)
             mock = self.proxy(object, spec, type, name, count, passthrough)

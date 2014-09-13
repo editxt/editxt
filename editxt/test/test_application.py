@@ -370,7 +370,7 @@ def test_Application_close_current_document():
             editor = m.mock(Editor) if c.has_editor else None
             ed.current_editor >> editor
             if c.has_editor:
-                editor.perform_close()
+                editor.interactive_close(ANY)
         with m:
             app.close_current_document()
     c = TestConfig(has_window=True, has_editor=True)

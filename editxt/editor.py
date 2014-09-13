@@ -378,21 +378,21 @@ class Editor(object):
         """Display a message in the command view"""
         self.command_view.message(msg, self.text_view, msg_type)
 
-    def perform_close(self):
-        app = self.document.app
-        window = self.project.window
-        windows = list(app.iter_windows_with_editor_of_document(self.document))
-        if windows == [window]:
-            window.current_editor = self
-            info = app.context.put(self.maybe_close)
-            self.document.canCloseDocumentWithDelegate_shouldCloseSelector_contextInfo_(
-                self.document, "document:shouldClose:contextInfo:", info)
-        else:
-            window.discard_and_focus_recent(self)
+    def interactive_close(self, do_close):
+        """Close this editor if the user agrees to do so
 
-    def maybe_close(self, should_close):
-        if should_close:
-            self.project.window.discard_and_focus_recent(self)
+        :param do_close: A function to be called to close the document.
+        """
+        def last_editor_of_document():
+            return all(editor is self
+                for editor in self.app.iter_editors_of_document(self.document))
+        if self.is_dirty and last_editor_of_document():
+            def callback(should_close):
+                if should_close:
+                    do_close()
+            self.should_close(callback)
+        else:
+            do_close()
 
     def close(self):
         project = self.project

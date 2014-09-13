@@ -181,7 +181,7 @@ class Project(object):
             else:
                 if not isinstance(item, TextDocument):
                     raise ValueError("invalid item: {!r}".format(item))
-                editor = self.find_editor_with_document(item)
+                editor = next(self.iter_editors_of_document(item), None)
             if is_move and editor is not None:
                 if editor.project is self:
                     vindex = self.editors.index(editor)
@@ -205,16 +205,15 @@ class Project(object):
             index += 1
         return inserted, focus
 
-    def find_editor_with_document(self, doc):
+    def iter_editors_of_document(self, document):
         for editor in self.editors:
-            if editor.document is doc:
-                return editor
-        return None
+            if editor.document is document:
+                yield editor
 
     def set_main_view_of_window(self, view, window):
         pass # TODO add project-specific view?
 
-    def perform_close(self):
+    def interactive_close(self, callback=lambda closed:None):
         from editxt.application import DocumentSavingDelegate
         window = self.window
         app = window.app

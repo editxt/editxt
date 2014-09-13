@@ -215,7 +215,9 @@ class Application(object):
         if window is not None:
             editor = window.current_editor
             if editor is not None:
-                editor.perform_close()
+                def do_close():
+                    raise NotImplementedError
+                editor.interactive_close(do_close)
 
     def document_closed(self, document):
         """Remove document from the list of open documents"""
@@ -441,7 +443,7 @@ class Application(object):
             for editor in dirty_editors:
                 try:
                     editor.should_close(callback)
-                except RecursiveCall as call:
+                except RecursiveCall:
                     continue
                 except Exception:
                     log.exception("termination sequence failed")

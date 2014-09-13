@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+import os
 
 from editxt.editor import Editor
 from editxt.platform.views import BUTTON_STATE_NORMAL
@@ -36,6 +37,7 @@ class WindowController(object):
     def __init__(self, window):
         self.window_ = window
         self.current_editor = None
+        self.prompts = []
 
     def document(self):
         return None
@@ -50,14 +52,20 @@ class WindowController(object):
         return self.window_.undo_manager()
 
     def save_document_as(self, directory, filename, save_with_path):
+        self.prompts.append("save " + filename)
         if directory is not None and filename.endswith(".save"):
             log.info("save '%s' to %s", filename, directory)
         else:
-            log.info("save '%s' canceled", filename)
+            if directory is None:
+                reason = "cannot save to relative path"
+            else:
+                reason = "filename does not end with '.save'"
+            log.info("save '%s' canceled (%s)", filename, reason)
             directory = None
         save_with_path(directory)
 
     def prompt_to_close(self, file_path, save_discard_or_cancel, save_as):
+        self.prompts.append("close " + os.path.basename(file_path))
         if file_path.endswith(".save"):
             action = "save" + ("..." if save_as else "")
             response = True

@@ -561,45 +561,38 @@ def test_reset_edit_state():
 #         return True
 
 
-def test_perform_close():
-    def test(num_editors):
-        m = Mocker()
-        doc = m.mock(TextDocument)
-        proj = m.mock(Project)
-        with m.off_the_record():
-            dv = Editor(proj, document=doc)
-        ed = proj.window >> m.mock(Window)
-        app = doc.app >> m.mock(Application)
-        app.iter_windows_with_editor_of_document(doc) >> (ed for x in range(num_editors))
-        if num_editors == 1:
-            ed.current_editor = dv
-            info = app.context.put(dv.maybe_close) >> 42
-            def doc_should_close(dv, selector, context):
-                assert hasattr(TextDocument, "document_shouldClose_contextInfo_"), \
-                    "missing selector: Editor document:shouldClose:contextInfo:"
-            expect(doc.canCloseDocumentWithDelegate_shouldCloseSelector_contextInfo_(
-                doc, "document:shouldClose:contextInfo:", info)).call(doc_should_close)
-        else:
-            ed.discard_and_focus_recent(dv)
-        with m:
-            dv.perform_close()
-        eq_(TextDocument.document_shouldClose_contextInfo_.signature, b'v@:@ii')
-    for num_editors in range(3):
-        yield test, num_editors
+def test_interactive_close():
+    @gentest
+    def test(config, prompt=[], dirty=False, close=True):
+        calls = []
+        def callback():
+            calls.append(True)
+        with test_app(config) as app:
+            m = Mocker()
+            window = app.windows[0]
+            editor = window.current_editor
+            is_dirty = m.replace(editor.document, "is_dirty")
+            if not dirty or config == "editor(doc)* editor(doc)":
+                (is_dirty() << dirty).count(1)
+            else:
+                (is_dirty() << dirty).count(1, 3)
+            # replace to verify that close is not called
+            m.replace(editor.document, "close")
+            with m:
+                editor.interactive_close(callback)
+                eq_(calls, [True] if close else [])
+            eq_(window.wc.prompts, prompt)
+            post_config = "window project " + config
+            eq_(test_app.config(app), post_config)
 
-def test_Editor_maybe_close():
-    def test(should_close):
-        m = Mocker()
-        proj = m.mock(Project)
-        with m.off_the_record():
-            editor = Editor(proj, document=m.mock(TextDocument))
-        window = m.mock(Window)
-        if should_close:
-            (proj.window >> window).discard_and_focus_recent(editor)
-        with m:
-            editor.maybe_close(should_close)
-    yield test, True
-    yield test, False
+    yield test("editor*")
+    yield test("editor(A)* editor(B)")
+    yield test("editor(doc)* editor(doc)")
+    yield test("editor(doc)* editor(doc)", dirty=True)
+    yield test("editor(doc.save)*", ["close doc.save", "save doc.save"], dirty=True, close=False) # cancel save
+    yield test("editor(/doc.save)*", ["close doc.save"], dirty=True)
+    yield test("editor(doc.dont_save)*", ["close doc.dont_save"], dirty=True)
+    yield test("editor(doc)*", ["close doc"], dirty=True, close=False)
 
 def test_Editor_close():
     def test(c):

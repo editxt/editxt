@@ -221,8 +221,7 @@ class Window(object):
 
     def iter_editors_of_document(self, doc):
         for project in self.projects:
-            editor = project.find_editor_with_document(doc)
-            if editor is not None:
+            for editor in project.iter_editors_of_document(doc):
                 yield editor
 
     def should_select_item(self, outlineview, item):
@@ -377,9 +376,11 @@ class Window(object):
     def close_button_clicked(self, row):
         docs_view = self.wc.docsView
         if row < docs_view.numberOfRows():
+            def do_close():
+                self.discard_and_focus_recent(item)
             item = docs_view.itemAtRow_(row)
             item = docs_view.realItemForOpaqueItem_(item)
-            item.perform_close()
+            item.interactive_close(do_close)
 
     def window_did_become_key(self, window):
         editor = self.current_editor
