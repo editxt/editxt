@@ -74,7 +74,10 @@ class SyntaxFactory():
                         log.info("syntax definition: %s", " ".join(stat))
 
     def load_definition(self, filename):
-        ns = {"RE": RE}
+        ns = {"RE": RE,
+            "name": os.path.basename(filename)[:-len(const.SYNTAX_DEF_EXTENSION)],
+            "filepatterns": []
+        }
         with open(filename) as fh:
             exec(fh.read(), ns)
         ns.pop("RE", None)

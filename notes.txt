@@ -35,11 +35,6 @@ Python environment setup. RECOMMENDED: use a virtualenv
     CFLAGS=$(python3-config --cflags) ./configure --prefix=$VIRTUAL_ENV --disable-dependency-tracking
     make
     make install
-    cd ..
-    pip install --download=. PyYAML
-    tar xf PyYAML-3.10.tar.gz
-    cd PyYAML-3.10
-    CFLAGS="-L$VIRTUAL_ENV/lib -I$VIRTUAL_ENV/include" python setup.py --with-libyaml install
     cd ../.. && rm -rf temp
 
     pip install --requirement=requires.txt
