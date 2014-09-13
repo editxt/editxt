@@ -61,7 +61,7 @@ def test_application_init():
     app = Application()
     eq_(app.windows, [])
     assert isinstance(app.context, ContextMap)
-    assert app.syntax_factory is not None
+    assert app.syntax_factory is None
 
 def test_Application_logger():
     root = logging.getLogger()

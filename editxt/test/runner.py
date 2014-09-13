@@ -28,6 +28,7 @@ from os.path import abspath, dirname
 import editxt.test
 import editxt.test.mockerext as mockerext
 from editxt.application import Application
+from editxt.test.noseplugins import ListSlowestTests, SkipSlowTests
 from editxt.test.util import unittest_print_first_failures_last, \
     patch_nose_tools
 
@@ -90,7 +91,7 @@ def run(argv=None):
             index += 1
 
     #augment_checks(testmods)
-    plugins = [TestTimerPlugin()]
+    plugins = [TestTimerPlugin(), ListSlowestTests(), SkipSlowTests()]
 
     testall = "--test-all-on-pass" in argv
     if testall:

@@ -63,7 +63,7 @@ class Application(object):
             self.config = Config(
                 os.path.join(self.profile_path, const.CONFIG_FILENAME))
             self.context = ContextMap()
-            self.init_syntax_definitions()
+            self.syntax_factory = None
             state_dir = os.path.join(self.profile_path, const.STATE_DIR)
             command_history = CommandHistory(state_dir)
             self.text_commander = TextCommandController(command_history)
@@ -103,6 +103,7 @@ class Application(object):
         return self.syntax_factory.definitions
 
     def application_will_finish_launching(self, app, delegate):
+        self.init_syntax_definitions()
         self.text_commander.load_commands(delegate.textMenu)
         states = list(self.iter_saved_window_states())
         if states:

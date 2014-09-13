@@ -17,6 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+import sys
 import time
 from nose.plugins import Plugin
 from nose.plugins.skip import SkipTest
@@ -75,6 +76,9 @@ class ListSlowestTests(Plugin):
             self.enabled = True
             self.unknown_start = []
             self.finished = []
+        # keep a reference to the config so we can check the verbosity level
+        self.config = config
+        self.real_stdout = sys.stdout
 
     def beforeTest(self, test):
         test.__start_time = time.time()
@@ -86,6 +90,8 @@ class ListSlowestTests(Plugin):
             self.unknown_start.append((test))
         else:
             self.finished.append((test, elapsed))
+            if self.config.verbosity > 1:
+                self.real_stdout.write('  %.3fms\n' % (elapsed * 1000))
 
     def finalize(self, result):
         print('')
