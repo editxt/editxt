@@ -191,12 +191,20 @@ class WindowController(ak.NSWindowController):
 
     def _update_title(self):
         title = self.windowTitleForDocumentDisplayName_("")
+        editor = self.window_.current_editor
+        if editor is not None and editor.file_path and os.path.isabs(editor.file_path):
+            url = fn.NSURL.fileURLWithPath_(editor.file_path)
+        else:
+            url = None
         self.window().setTitle_(title)
+        self.window().setRepresentedURL_(url)
 
     def windowTitleForDocumentDisplayName_(self, name):
         editor = self.window_.current_editor
-        if editor is not None and editor.file_path is not None:
-            return user_path(editor.file_path)
+        if editor is not None:
+            if editor.file_path is not None:
+                return user_path(editor.file_path)
+            return editor.name or name
         return name
 
     def windowWillReturnUndoManager_(self, window):
