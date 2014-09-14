@@ -30,9 +30,9 @@ from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import *
 
 import editxt.constants as const
-from editxt.application import Application, DocumentController, DocumentSavingDelegate
+from editxt.application import Application
 from editxt.window import WindowController, Window
-from editxt.document import TextDocument
+from editxt.document import DocumentController, TextDocument
 from editxt.editor import Editor
 from editxt.platform.kvo import proxy_target
 from editxt.project import Project
