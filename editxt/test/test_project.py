@@ -37,7 +37,7 @@ from editxt.project import Project
 from editxt.util import dump_yaml
 from editxt.window import Window, WindowController
 
-from editxt.test.util import TestConfig, check_app_state, test_app
+from editxt.test.util import gentest, TestConfig, check_app_state, test_app
 
 log = logging.getLogger(__name__)
 # log.debug("""TODO
@@ -312,47 +312,32 @@ def test_set_main_view_of_window():
         proj.set_main_view_of_window(view, win) # for now this does nothing
 
 def test_interactive_close():
-    import editxt.application as xtapp
-    def test(c):
-        m = Mocker()
-        dsd_class = m.replace(xtapp, 'DocumentSavingDelegate')
-        ed = m.mock(Window)
-        proj = Project(ed)
-        app = ed.app >> m.mock(Application)
-        app.find_windows_with_project(proj) >> [ed for x in range(c.num_eds)]
-        if c.num_eds == 1:
-            docs = [m.mock(Editor)]
-            doc = docs[0].document >> m.mock(TextDocument)
-            app.iter_windows_with_editor_of_document(doc) >> \
-                (ed for x in range(c.num_editors))
-            dirty_editors = m.method(proj.dirty_editors)
-            dirty_editors() >> docs
-            def check_docs(_docs):
-                d = docs if c.num_editors == 1 else []
-                eq_(list(_docs), d + [proj])
-                return True
-            callback = []
-            def get_callback(func):
-                callback.append(func)
-                return True
-            def do_callback():
-                callback[0](c.should_close)
-            saver = m.mock(xtapp.DocumentSavingDelegate)
-            dsd_class.alloc() >> saver
-            saver.init_callback_(MATCH(check_docs), MATCH(get_callback)) >> saver
-            expect(saver.save_next_document()).call(do_callback)
-            if c.should_close:
-                ed.discard_and_focus_recent(proj)
-        else:
-            ed.discard_and_focus_recent(proj)
-        with m:
-            proj.interactive_close()
-    c = TestConfig(num_eds=1)
-    for ndv in range(3):
-        yield test, c(should_close=True, num_editors=ndv)
-        yield test, c(should_close=False, num_editors=ndv)
-    yield test, c(num_eds=0)
-    yield test, c(num_eds=2)
+    @gentest
+    def test(config, can_close=True, prompt=[]):
+        calls = []
+        def callback(can_close):
+            calls.append(can_close)
+        with test_app(config) as app:
+            m = Mocker()
+            window = app.windows[0]
+            project = window.projects[0]
+            for editor in project.editors:
+                is_dirty = m.replace(editor.document, "is_dirty")
+                dirty = "dirty" in editor.document.file_path
+                (is_dirty() << dirty).count(0, 3)
+            with m:
+                project.interactive_close(callback)
+            eq_(test_app.config(app), "window project " + config)
+            eq_(window.wc.prompts, prompt)
+            eq_(calls, [can_close])
+
+    yield test("editor")
+    yield test("editor(dirty)", False, ["close dirty"])
+    yield test("editor(dirty.save)", False, ["close dirty.save", "save dirty.save"]) # save canceled
+    yield test("editor(/dirty.save)", prompt=["close dirty.save"])
+    yield test("editor(dirty.dont_save)", prompt=["close dirty.dont_save"])
+    yield test("editor(dirty) project editor(dirty)")
+    yield test("editor(/dirty.save) editor(/dirty.save)", prompt=["close dirty.save"])
 
 def test_close():
     m = Mocker()

@@ -213,25 +213,44 @@ class Project(object):
     def set_main_view_of_window(self, view, window):
         pass # TODO add project-specific view?
 
-    def interactive_close(self, callback=lambda closed:None):
-        from editxt.application import DocumentSavingDelegate
-        window = self.window
-        app = window.app
-        if app.find_windows_with_project(self) == [window]:
-            def dirty_docs():
-                for editor in self.dirty_editors():
-                    itr = app.iter_windows_with_editor_of_document(editor.document)
-                    if list(itr) == [window]:
-                        yield editor
-                yield self
-            def callback(should_close):
-                if should_close:
-                    window.discard_and_focus_recent(self)
-            saver = DocumentSavingDelegate.alloc().\
-                init_callback_(dirty_docs(), callback)
-            saver.save_next_document()
-        else:
-            window.discard_and_focus_recent(self)
+    def interactive_close(self, do_close):
+        def iter_dirty_editors():
+            def other_project_has(document):
+                return any(editor.project is not self
+                           for editor in app.iter_editors_of_document(document))
+            window = self.window
+            app = window.app
+            seen = set()
+            for editor in self.editors:
+                if editor.document in seen:
+                    continue
+                seen.add(editor.document)
+                if editor.is_dirty and not other_project_has(editor.document):
+                    yield editor
+        class RecursiveCall(Exception): pass
+        def continue_closing():
+            def callback(ok_to_close):
+                if not ok_to_close:
+                    do_close(False)
+                    return
+                if recursive_call:
+                    raise RecursiveCall()
+                continue_closing()
+            recursive_call = True
+            for editor in dirty_editors:
+                try:
+                    editor.should_close(callback)
+                except RecursiveCall:
+                    continue
+                except Exception:
+                    log.exception("termination sequence failed")
+                    do_close(False)
+                    return
+                recursive_call = False
+                return
+            do_close(True)
+        dirty_editors = iter_dirty_editors()
+        continue_closing()
 
     def close(self):
         self.closing = True
