@@ -38,7 +38,7 @@ from editxt.editor import Editor
 from editxt.project import Project
 from editxt.util import load_yaml
 
-from editxt.test.util import (do_method_pass_through, gentest, TestConfig,
+from editxt.test.util import (do_method_pass_through, gentest, make_dirty, TestConfig,
     replattr, test_app, tempdir)
 
 log = logging.getLogger(__name__)
@@ -825,19 +825,16 @@ def test_should_terminate():
     @gentest
     def test(config, expected_calls=[]):
         with test_app(config) as app:
-            m = Mocker()
             for item in config.split():
                 if "(" in item:
                     editor = test_app.get(item, app)
-                    is_dirty = m.replace(editor.document, "is_dirty")
-                    (is_dirty() << True).count(0, 3)
+                    make_dirty(editor.document)
             calls = []
             def callback(ok):
                 calls.append(ok)
-            with m:
-                answer = app.should_terminate(callback)
-                eq_(answer, (callback if calls else True))
-                eq_(calls, expected_calls)
+            answer = app.should_terminate(callback)
+            eq_(answer, (callback if calls else True))
+            eq_(calls, expected_calls)
     # convention: editor(...) means that editor has unsaved changes
     yield test("")
     yield test("project")

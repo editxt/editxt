@@ -117,6 +117,14 @@ def do_method_pass_through(attr, inner_obj_class, outer_obj, token, method,
         eq_(rval, returns)
 
 
+def make_dirty(document):
+    """Make document.is_dirty() return true
+
+    Note: this does not actually change the document content.
+    """
+    document.undo_manager.actions_since_save = None
+
+
 @nose.tools.nottest
 class test_app(object):
     """A context manager that creates an Application object for testing purposes

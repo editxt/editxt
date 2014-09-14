@@ -26,8 +26,8 @@ import Foundation as fn
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.test_document import property_value_util, get_content
-from editxt.test.util import (assert_raises, gentest, make_file, TestConfig,
-    replattr, tempdir, test_app)
+from editxt.test.util import (assert_raises, gentest, make_dirty, make_file,
+    TestConfig, replattr, tempdir, test_app)
 
 import editxt.constants as const
 import editxt.editor as mod
@@ -568,19 +568,12 @@ def test_interactive_close():
         def callback():
             calls.append(True)
         with test_app(config) as app:
-            m = Mocker()
             window = app.windows[0]
             editor = window.current_editor
-            is_dirty = m.replace(editor.document, "is_dirty")
-            if not dirty or config == "editor(doc)* editor(doc)":
-                (is_dirty() << dirty).count(1)
-            else:
-                (is_dirty() << dirty).count(1, 3)
-            # replace to verify that close is not called
-            m.replace(editor.document, "close")
-            with m:
-                editor.interactive_close(callback)
-                eq_(calls, [True] if close else [])
+            if dirty:
+                make_dirty(editor.document)
+            editor.interactive_close(callback)
+            eq_(calls, [True] if close else [])
             eq_(window.wc.prompts, prompt)
             post_config = "window project " + config
             eq_(test_app.config(app), post_config)

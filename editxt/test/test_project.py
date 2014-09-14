@@ -37,7 +37,7 @@ from editxt.project import Project
 from editxt.util import dump_yaml
 from editxt.window import Window, WindowController
 
-from editxt.test.util import gentest, TestConfig, check_app_state, test_app
+from editxt.test.util import gentest, make_dirty, TestConfig, check_app_state, test_app
 
 log = logging.getLogger(__name__)
 # log.debug("""TODO
@@ -318,15 +318,12 @@ def test_interactive_close():
         def callback():
             calls.append(True)
         with test_app(config) as app:
-            m = Mocker()
             window = app.windows[0]
             project = window.projects[0]
             for editor in project.editors:
-                is_dirty = m.replace(editor.document, "is_dirty")
-                dirty = "dirty" in editor.document.file_path
-                (is_dirty() << dirty).count(0, 3)
-            with m:
-                project.interactive_close(callback)
+                if "dirty" in editor.document.file_path:
+                    make_dirty(editor.document)
+            project.interactive_close(callback)
             eq_(test_app.config(app), "window project " + config)
             eq_(window.wc.prompts, prompt)
             eq_(calls, [close] if close else [])
