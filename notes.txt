@@ -97,25 +97,25 @@ Replace NSDocumentController
 x  - Maintain list of open documents (DocumentController)
 x  - Undo/redo (menu items)
 x  - Fix document edited indicator
-  - Check/prompt for unsaved documents on close application
-    - close document with path
-      Do you want to save the changes made to the document “window.py”?
-      Your changes will be lost if you don’t save them.
-      (Don't Save)  (Cancel) [Save]
-    - close unsaved document
-      Do you want to save the changes made to the document “Untitled”?
-      Your changes will be lost if you don’t save them.
-      (Don't Save)  (Cancel) [Save...]
+x  - Check/prompt for unsaved documents on close application
+x    - close document with path
+x      Do you want to save the changes made to the document “window.py”?
+x      Your changes will be lost if you don’t save them.
+x      (Don't Save)  (Cancel) [Save]
+x    - close unsaved document
+x      Do you want to save the changes made to the document “Untitled”?
+x      Your changes will be lost if you don’t save them.
+x      (Don't Save)  (Cancel) [Save...]
   - Fix open document
   - Fix open/save menu items
   - Recent documents menu (move recent documents feature into project?)
   - Draggable icon/menu in title bar ...don't really care as long as can
     drag document out of sidebar into terminal/text widget -> insert path
   - Dock menu integration (windows ... and recent documents?)
-  - Document dirty indicator
+x  - Document dirty indicator
   - Window dirty indicator
   - Automatic file move detection
-  - Replace NSDocument architecture
+x  - Replace NSDocument architecture
 x    Editor.save() path rules
 x    - if relative, prompt for location (with last part of filename as suggested filename) and save
 x    - if absolute, attempt to save

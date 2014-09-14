@@ -174,6 +174,7 @@ class WindowController(ak.NSWindowController):
         :returns: True if the editor was setup, otherwise False.
         """
         main_view = self.mainView
+        self._update_title()
         if editor is not None:
             sel = self.docsController.selected_objects
             if not sel or sel[0] is not editor:
@@ -184,12 +185,13 @@ class WindowController(ak.NSWindowController):
                         subview.removeFromSuperview()
                     editor.set_main_view_of_window(main_view, self.window())
                     return True
-        #else:
-        #    self.window().setTitle_(editor.name)
-        #    log.debug("self.window().setTitle_(%r)", editor.name)
         for subview in main_view.subviews():
             subview.removeFromSuperview()
         return False
+
+    def _update_title(self):
+        title = self.windowTitleForDocumentDisplayName_("")
+        self.window().setTitle_(title)
 
     def windowTitleForDocumentDisplayName_(self, name):
         editor = self.window_.current_editor
