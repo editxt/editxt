@@ -176,7 +176,7 @@ def test_windowShouldClose_():
     win = m.mock(ak.NSWindow)
     window = m.mock(Window)
     wc = WindowController(window)
-    wc.window_.window_should_close(win) >> "<should_close>"
+    wc.window_.should_close(win.close >> "<closer>") >> "<should_close>"
     with m:
         result = wc.windowShouldClose_(win)
         eq_(result, "<should_close>")

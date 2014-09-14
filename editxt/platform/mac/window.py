@@ -203,7 +203,7 @@ class WindowController(ak.NSWindowController):
         self.window_.window_did_become_key(notification.object())
 
     def windowShouldClose_(self, window):
-        return self.window_.window_should_close(window)
+        return self.window_.should_close(window.close)
 
     def windowWillClose_(self, notification):
         self.window_.window_will_close()

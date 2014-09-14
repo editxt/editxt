@@ -39,8 +39,8 @@ from editxt.project import Project
 from editxt.test.noseplugins import slow_skip
 from editxt.util import representedObject
 
-from editxt.test.util import (do_method_pass_through, gentest, TestConfig, Regex,
-    replattr, tempdir, test_app)
+from editxt.test.util import (do_method_pass_through, gentest, make_dirty,
+    TestConfig, Regex, replattr, tempdir, test_app)
 
 import editxt.window as mod
 
@@ -680,60 +680,30 @@ def test_window_did_become_key():
     yield test, c(has_current=True)
     yield test, c(has_current=True, editor_type=Project)
 
-def test_window_should_close():
-    import editxt.application
-    @test_app
-    def test(app, c):
-        m = Mocker()
-        win = m.mock(ak.NSWindow)
-        dsd_class = m.replace('editxt.application.DocumentSavingDelegate')
-        window = Window(app)
-        window.wc = m.mock(WindowController)
-        app = m.replace(window, 'app')
-        dsd = m.mock(DocumentSavingDelegate)
-        dirty_docs = []
-        projs = window.projects = []
-        for p in c.projs:
-            proj = m.mock(Project)
-            projs.append(proj)
-            eds = app.find_windows_with_project(proj) >> []
-            if p.num_eds == 1:
-                eds.append(window)
-                docs = proj.dirty_editors() >> []
-                for i in range(p.num_dirty_docs):
-                    dv = m.mock(Editor)
-                    doc = dv.document >> m.mock(TextDocument)
-                    docs.append(dv)
-                    app.iter_windows_with_editor_of_document(doc) >> \
-                        (window for x in range(p.app_views))
-                    if p.app_views == 1:
-                        dirty_docs.append(dv)
-                dirty_docs.append(proj)
-            else:
-                eds.extend(m.mock(Window) for x in range(p.num_eds))
-        def match_dd(idd):
-            eq_(list(idd), dirty_docs)
-            return True
-        def match_cb(callback):
-            callback(c.should_close)
-            return True
-        if c.should_close:
-            win.close()
-        dsd_class.alloc() >> dsd
-        dsd.init_callback_(MATCH(match_dd), MATCH(match_cb)) >> dsd
-        dsd.save_next_document()
-        with m:
-            result = window.window_should_close(win)
-            eq_(result, False)
-    p = lambda ne, nd, av=1: TestConfig(num_eds=ne, num_dirty_docs=nd, app_views=av)
-    c = TestConfig(projs=[], should_close=True)
-    yield test, c
-    yield test, c(should_close=False)
-    yield test, c(projs=[p(0, 1)])
-    for num_dirty_docs in (0, 1, 2):
-        yield test, c(projs=[p(1, num_dirty_docs)], should_close=False)
-    yield test, c(projs=[p(2, 1)])
-    yield test, c(projs=[p(1, 1), p(1, 2)])
+def test_Window_should_close():
+    @gentest
+    def test(config, prompts=[], should_close=False, close=True):
+        calls = []
+        def do_close():
+            calls.append("close")
+        with test_app(config) as app:
+            window = app.windows[0]
+            for win in app.windows:
+                for project in win.projects:
+                    for editor in project.editors:
+                        if "dirty" in editor.file_path:
+                            make_dirty(editor.document)
+            result = window.should_close(do_close)
+            eq_(window.wc.prompts, prompts)
+            eq_(calls, ["close"] if close and not should_close else [])
+            eq_(result, should_close)
+
+    yield test("editor", should_close=True)
+    yield test("editor(dirty)", ["close dirty"], close=False)
+    yield test("editor(dirty.save)", ["close dirty.save", "save dirty.save"], close=False) # cancel save
+    yield test("editor(/dirty.save)", ["close dirty.save"])
+    yield test("editor(/dirty.dont_save)", ["close dirty.dont_save"])
+    yield test("editor(dirty) window project editor(dirty)", should_close=True)
 
 def test_window_will_close():
     @test_app

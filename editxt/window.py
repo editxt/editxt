@@ -388,34 +388,28 @@ class Window(object):
             # TODO refactor Editor to support check_for_external_changes()
             editor.document.check_for_external_changes(window)
 
-    def window_should_close(self, window):
-        from editxt.application import DocumentSavingDelegate
-        # this method is called after the window controller has prompted the
-        # user to save the current document (if it is dirty). This causes some
-        # wierdness with the window and subsequent sheets. Technically we
-        # do not need to prompt to save the current document a second time.
-        # However, we will because it is easier... THIS IS UGLY! but there
-        # doesn't seem to be a way to prevent the window controller from
-        # prompting to save the current document when the window's close button
-        # is clicked. UPDATE: the window controller seems to only prompt to save
-        # the current document if the document is new (untitled).
+    def should_close(self, do_close):
+        """Determine if the window should be closed
+
+        If this returns false an interactive close loop will be started, which
+        may eventually result in the window being closed.
+        """
         def iter_dirty_editors():
             app = self.app
             for proj in self.projects:
                 wins = app.find_windows_with_project(proj)
                 if wins == [self]:
                     for editor in proj.dirty_editors():
-                        doc = editor.document
-                        windows = app.iter_windows_with_editor_of_document(doc)
-                        if list(windows) == [self]:
+                        doc_windows = app.iter_windows_with_editor_of_document(
+                                            editor.document)
+                        if all(win is self for win in doc_windows):
                             yield editor
-                    yield proj
+        if next(iter_dirty_editors(), None) is None:
+            return True
         def callback(should_close):
             if should_close:
-                window.close()
-        saver = DocumentSavingDelegate.alloc(). \
-            init_callback_(iter_dirty_editors(), callback)
-        saver.save_next_document()
+                do_close()
+        self.app.async_interactive_close(iter_dirty_editors(), callback)
         return False
 
     def window_will_close(self):
