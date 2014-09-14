@@ -381,10 +381,10 @@ class Editor(object):
     def close(self):
         project = self.project
         doc = self.document
-        self.project = None
+        self.project = None # removes editor from project.editors
         if self.text_view is not None and doc.text_storage is not None:
             doc.text_storage.removeLayoutManager_(self.text_view.layoutManager())
-        if next(doc.app.iter_editors_of_document(doc), None) is None:
+        if all(e is self for e in doc.app.iter_editors_of_document(doc)):
             doc.close()
         self.document = None
         if self.main_view is not None:

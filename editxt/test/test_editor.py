@@ -579,6 +579,8 @@ def test_Editor_close():
                 eq_(doc.text_storage, None)
                 if not c.ts_is_none:
                     eq_(text_storage.delegate(), None)
+            else:
+                assert doc.text_storage is not None
             eq_(test_app.config(app), c.end)
 
     c = TestConfig(app="editor(a)",
