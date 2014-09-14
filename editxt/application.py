@@ -215,8 +215,9 @@ class Application(object):
         if window is not None:
             editor = window.current_editor
             if editor is not None:
+                # TODO implement this
                 def do_close():
-                    raise NotImplementedError
+                    editor.close()
                 editor.interactive_close(do_close)
 
     def document_closed(self, document):
