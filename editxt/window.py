@@ -275,6 +275,7 @@ class Window(object):
         :param save_as: Boolean, if true prompt to "save as" (with dialog),
         otherwise prompt to save (without dialog).
         """
+        self.current_editor = editor
         self.wc.prompt_to_close(editor.file_path, save_discard_or_cancel, save_as)
 
     @staticmethod

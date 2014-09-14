@@ -219,6 +219,7 @@ class WindowController(ak.NSWindowController):
         panel.setTreatsFilePackagesAsDirectories_(True)
         assert self.save_as_caller == None, "window cannot save two files at once"
         def callback(sheet, code):
+            sheet.orderOut_(panel)
             if code == ak.NSOKButton:
                 path = sheet.URL().path()
                 save_with_path(path)
@@ -253,6 +254,7 @@ class WindowController(ak.NSWindowController):
             elif diff and response == ak.NSAlertThirdButtonReturn:
                 diff_with_original()
             else:
+                end_alert()
                 save_with_path(None)
         alert.beginSheetModalForWindow_withCallback_(self.window(), respond)
 
@@ -274,8 +276,10 @@ class WindowController(ak.NSWindowController):
                 end_alert()
                 save_discard_or_cancel(True) # save
             elif response == ak.NSAlertThirdButtonReturn:
+                end_alert()
                 save_discard_or_cancel(False) # discard
             else:
+                end_alert()
                 save_discard_or_cancel(None) # cancel
         alert.beginSheetModalForWindow_withCallback_(self.window(), respond)
 

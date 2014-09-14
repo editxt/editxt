@@ -324,7 +324,10 @@ def test_interactive_close():
                 if "dirty" in editor.document.file_path:
                     make_dirty(editor.document)
             project.interactive_close(callback)
-            eq_(test_app.config(app), "window project " + config)
+            post_config = config.split()
+            if prompt:
+                post_config[0] += "*"
+            eq_(test_app.config(app), "window project " + " ".join(post_config))
             eq_(window.wc.prompts, prompt)
             eq_(calls, [close] if close else [])
 
