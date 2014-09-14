@@ -42,6 +42,6 @@ def test_beginSheetModalForWindow_withCallback_():
     def do(win, dgt, sel, context):
         dgt.alertDidEnd_returnCode_contextInfo_(alert, 42, 0)
     expect(beginSheet(win, ANY, "alertDidEnd:returnCode:contextInfo:", 0)).call(do)
-    callback(42)
+    callback(42, ANY)
     with m:
         alert.beginSheetModalForWindow_withCallback_(win, callback)

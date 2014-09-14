@@ -335,8 +335,8 @@ class Application(object):
             raise ValueError('unknown value type: {} {}'
                 .format(type(value), repr(value)))
         defaults = fn.NSUserDefaults.standardUserDefaults()
-        serials = defaults.arrayForKey_(const.WINDOW_CONTROLLERS_DEFAULTS_KEY)
-        settings = defaults.arrayForKey_(const.WINDOW_SETTINGS_DEFAULTS_KEY)
+        serials = defaults.arrayForKey_(const.WINDOW_CONTROLLERS_DEFAULTS_KEY) or []
+        settings = defaults.arrayForKey_(const.WINDOW_SETTINGS_DEFAULTS_KEY) or []
         serials = list(reversed(serials))
         for serial, setting in zip(serials, chain(settings, repeat(None))):
             try:

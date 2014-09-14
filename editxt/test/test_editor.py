@@ -340,49 +340,6 @@ def test_Editor_document_properties():
     yield test, c(value=const.NEWLINE_MODE_MAC, undoing=True)
     yield test, c(value=const.NEWLINE_MODE_MAC, redoing=True)
 
-def test_Editor_prompt():
-    from editxt.controls.alert import Alert
-    eq_(ak.NSAlertSecondButtonReturn - ak.NSAlertFirstButtonReturn, 1)
-    eq_(ak.NSAlertThirdButtonReturn - ak.NSAlertFirstButtonReturn, 2)
-    def test(c):
-        m = Mocker()
-        doc = m.mock(TextDocument)
-        with m.off_the_record():
-            dv = Editor(None, document=doc)
-        dv_window = m.method(dv.window)
-        alert_class = m.replace(mod, 'Alert')
-        callback = m.mock(name="callback")
-        win = dv_window() >> (m.mock(ak.NSWindow) if c.has_window else None)
-        if c.has_window:
-            alert = alert_class.alloc() >> m.mock(Alert); alert.init() >> alert
-            alert.setAlertStyle_(ak.NSInformationalAlertStyle)
-            alert.setMessageText_(c.message)
-            if c.info:
-                alert.setInformativeText_(c.info)
-            buttons = []
-            for i in range(c.buttons):
-                text = "Button_%i" % i
-                buttons.append(text)
-                alert.addButtonWithTitle_(text)
-            def do(window, callback):
-                callback(ak.NSAlertFirstButtonReturn + c.response)
-                return True
-            expect(alert.beginSheetModalForWindow_withCallback_(win, ANY)).call(do)
-        else:
-            buttons = ["" for i in range(c.buttons)]
-        callback(c.response)
-        with m:
-            dv.prompt(c.message, c.info, buttons, callback)
-    c = TestConfig(message="Do it?", info="Really?", has_window=True)
-    yield test, c(buttons=1, response=0)
-    yield test, c(buttons=2, response=0)
-    yield test, c(buttons=2, response=1)
-    yield test, c(buttons=2, has_window=False, response=1)
-    yield test, c(buttons=3, response=0)
-    yield test, c(buttons=3, response=1)
-    yield test, c(buttons=3, has_window=False, response=2)
-    # TODO test with zero buttons - should raise error
-
 def test_Editor_change_indentation():
     TAB = const.INDENT_MODE_TAB
     SPC = const.INDENT_MODE_SPACE

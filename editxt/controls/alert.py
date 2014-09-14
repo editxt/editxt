@@ -37,7 +37,7 @@ class Caller(fn.NSObject):
 
     @objc.typedSelector(b'v@:@ii')
     def alertDidEnd_returnCode_contextInfo_(self, alert, code, context):
-        self.callback(code)
+        self.callback(code, lambda:alert.window().orderOut_(self))
 
 
 class Alert(ak.NSAlert):

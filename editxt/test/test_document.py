@@ -308,7 +308,7 @@ def test_check_for_external_changes():
             alert.addButtonWithTitle_("Reload")
             alert.addButtonWithTitle_("Cancel")
             def callback(win, method):
-                method(ak.NSAlertFirstButtonReturn if c.reload else None)
+                method(ak.NSAlertFirstButtonReturn if c.reload else None, lambda:None)
                 return True
             expect(alert.beginSheetModalForWindow_withCallback_(win, ANY)) \
                 .call(callback)

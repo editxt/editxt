@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+import os
 
 import objc
 import AppKit as ak
@@ -210,19 +211,19 @@ class WindowController(ak.NSWindowController):
         self.window().setDelegate_(None)
 
     def save_document_as(self, directory, filename, save_with_path):
-        panel = NSSavePanel.alloc().init()
+        panel = ak.NSSavePanel.alloc().init()
         panel.setShowsHiddenFiles_(True)
         panel.setExtensionHidden_(False)
         panel.setTreatsFilePackagesAsDirectories_(True)
         assert self.save_as_caller == None, "window cannot save two files at once"
         def callback(sheet, code):
             if code == ak.NSOKButton:
-                path = sheet.URL().fileSystemRepresentation()
+                path = sheet.URL().path()
                 save_with_path(path)
             self.save_as_caller = None
         self.save_as_caller = SaveAsCaller.alloc().init(callback)
         panel.beginSheetForDirectory_file_modalForWindow_modalDelegate_didEndSelector_contextInfo_(
-            directory, filename, window,
+            directory, filename, self.window(),
             self.save_as_caller, "savePanelDidEnd:returnCode:contextInfo:", 0)
 
     def prompt_to_overwrite(self, file_path, save_with_path, save_as, diff_with_original):
@@ -240,10 +241,12 @@ class WindowController(ak.NSWindowController):
             alert.addButtonWithTitle_("Diff")
             alert.buttons()[2].setKeyEquivalent_("d")
         alert.addButtonWithTitle_("Cancel")
-        def respond(response):
+        def respond(response, end_alert):
             if response == ak.NSAlertFirstButtonReturn:
+                end_alert()
                 save_as()
             elif response == ak.NSAlertSecondButtonReturn:
+                end_alert()
                 save_with_path(file_path)
             elif diff and response == ak.NSAlertThirdButtonReturn:
                 diff_with_original()
@@ -264,13 +267,14 @@ class WindowController(ak.NSWindowController):
         # may need to use .objectAtIndex_(2) instead of [2]
         # http://stackoverflow.com/questions/16627894/how-to-make-the-nsalerts-2nd-button-the-return-button
         alert.buttons()[2].setKeyEquivalent_(" ") # space bar -> don't save
-        def respond(response):
+        def respond(response, end_alert):
             if response == ak.NSAlertFirstButtonReturn:
+                end_alert()
                 save_discard_or_cancel(True) # save
             elif response == ak.NSAlertThirdButtonReturn:
-                save_discard_or_cancel(None) # discard
+                save_discard_or_cancel(False) # discard
             else:
-                save_discard_or_cancel(False) # cancel
+                save_discard_or_cancel(None) # cancel
         alert.beginSheetModalForWindow_withCallback_(self.window(), respond)
 
     # outlineview datasource methods ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

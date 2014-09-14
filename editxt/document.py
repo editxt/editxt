@@ -367,7 +367,7 @@ class TextDocument(object):
             if self._filestat == stat: # TODO is this check necessary?
                 return
             self._filestat = stat
-            def callback(code):
+            def callback(code, end_alert):
                 if code == ak.NSAlertFirstButtonReturn:
                     self.reload_document()
                 # should self.file_changed_since_save() -> True on cancel here?
