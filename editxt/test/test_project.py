@@ -313,10 +313,10 @@ def test_set_main_view_of_window():
 
 def test_interactive_close():
     @gentest
-    def test(config, can_close=True, prompt=[]):
+    def test(config, prompt=[], close=True):
         calls = []
-        def callback(can_close):
-            calls.append(can_close)
+        def callback():
+            calls.append(True)
         with test_app(config) as app:
             m = Mocker()
             window = app.windows[0]
@@ -329,15 +329,15 @@ def test_interactive_close():
                 project.interactive_close(callback)
             eq_(test_app.config(app), "window project " + config)
             eq_(window.wc.prompts, prompt)
-            eq_(calls, [can_close])
+            eq_(calls, [close] if close else [])
 
     yield test("editor")
-    yield test("editor(dirty)", False, ["close dirty"])
-    yield test("editor(dirty.save)", False, ["close dirty.save", "save dirty.save"]) # save canceled
-    yield test("editor(/dirty.save)", prompt=["close dirty.save"])
-    yield test("editor(dirty.dont_save)", prompt=["close dirty.dont_save"])
+    yield test("editor(dirty)", ["close dirty"], False)
+    yield test("editor(dirty.save)", ["close dirty.save", "save dirty.save"], False) # save canceled
+    yield test("editor(/dirty.save)", ["close dirty.save"])
+    yield test("editor(dirty.dont_save)", ["close dirty.dont_save"])
     yield test("editor(dirty) project editor(dirty)")
-    yield test("editor(/dirty.save) editor(/dirty.save)", prompt=["close dirty.save"])
+    yield test("editor(/dirty.save) editor(/dirty.save)", ["close dirty.save"])
 
 def test_close():
     m = Mocker()

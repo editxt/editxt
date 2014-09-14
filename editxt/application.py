@@ -409,7 +409,7 @@ class Application(object):
         """Check if application can terminate
 
         :param callback: A callback to be used as the return value to signal
-        a delayed termination. If this object is returned it must be called with
+        a delayed termination. If this object is returned it will be called with
         a single boolean argument at some point in the future when it is known
         if the application should terminate or not.
         :returns: ``True``, ``False`` or ``callback``. ``True`` means the
@@ -419,42 +419,42 @@ class Application(object):
         before calling ``callback`` with either ``True`` or ``False``.
         """
         if next(self.iter_dirty_editors(), None) is not None:
-            self._async_should_terminate(callback)
+            self.async_interactive_close(self.iter_dirty_editors(), callback)
             return callback
         return True
 
-    def _async_should_terminate(self, should_terminate):
+    @staticmethod
+    def async_interactive_close(dirty_editors, callback):
         """Visit each dirty document and prompt for close
 
-        Calls ``should_terminate(False)`` if any unsaved document cancels the
-        close operation. Otherwise calls ``should_terminate(True)``.
+        Calls ``callback(False)`` if any unsaved document cancels the
+        close operation. Otherwise calls ``callback(True)``.
         """
         class RecursiveCall(Exception): pass
 
-        def close_next_editor():
-            def callback(ok_to_close):
+        def continue_closing():
+            def _callback(ok_to_close):
                 if not ok_to_close:
-                    should_terminate(False)
+                    callback(False)
                     return
                 if recursive_call:
                     raise RecursiveCall()
-                close_next_editor()
+                continue_closing()
             recursive_call = True
             for editor in dirty_editors:
                 try:
-                    editor.should_close(callback)
+                    editor.should_close(_callback)
                 except RecursiveCall:
                     continue
                 except Exception:
                     log.exception("termination sequence failed")
-                    should_terminate(False)
+                    callback(False)
                     return
                 recursive_call = False
                 return
-            should_terminate(True)
+            callback(True)
 
-        dirty_editors = self.iter_dirty_editors()
-        close_next_editor()
+        continue_closing()
 
     def will_terminate(self):
         self.save_window_states()

@@ -214,7 +214,7 @@ class Project(object):
         pass # TODO add project-specific view?
 
     def interactive_close(self, do_close):
-        def iter_dirty_editors():
+        def dirty_editors():
             def other_project_has(document):
                 return any(editor.project is not self
                            for editor in app.iter_editors_of_document(document))
@@ -227,30 +227,10 @@ class Project(object):
                 seen.add(editor.document)
                 if editor.is_dirty and not other_project_has(editor.document):
                     yield editor
-        class RecursiveCall(Exception): pass
-        def continue_closing():
-            def callback(ok_to_close):
-                if not ok_to_close:
-                    do_close(False)
-                    return
-                if recursive_call:
-                    raise RecursiveCall()
-                continue_closing()
-            recursive_call = True
-            for editor in dirty_editors:
-                try:
-                    editor.should_close(callback)
-                except RecursiveCall:
-                    continue
-                except Exception:
-                    log.exception("termination sequence failed")
-                    do_close(False)
-                    return
-                recursive_call = False
-                return
-            do_close(True)
-        dirty_editors = iter_dirty_editors()
-        continue_closing()
+        def callback(should_close):
+            if should_close:
+                do_close()
+        self.window.app.async_interactive_close(dirty_editors(), callback)
 
     def close(self):
         self.closing = True
