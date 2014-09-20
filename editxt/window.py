@@ -244,6 +244,11 @@ class Window(object):
         if isinstance(editor, Editor):
             editor.save(prompt=prompt)
 
+    def reload_current_document(self):
+        editor = self.current_editor
+        if isinstance(editor, Editor):
+            editor.document.reload_document()
+
     def save_document_as(self, editor, save_with_path):
         """Prompt for path to save document
 

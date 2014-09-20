@@ -424,6 +424,24 @@ def test_save_methods():
     yield test, "editor*", True
     yield test, "editor*", True, True
 
+def test_reload_current_document():
+    def test(cfg, reverted=False):
+        with test_app(cfg) as app:
+            m = Mocker()
+            window = app.windows[0]
+            current = window.current_editor
+            if reverted:
+                m.method(current.document.reload_document)()
+            else:
+                assert getattr(current, "document", None) is None, repr(current)
+            with m:
+                window.reload_current_document()
+
+    yield test, "window"
+    yield test, "project*"
+    yield test, "project* editor"
+    yield test, "project editor*", True
+
 def test_save_document_as():
     assert hasattr(Window, "save_document_as")
 

@@ -388,7 +388,6 @@ class TextDocument(object):
         down-side is that it may use a lot of memory if the document is very
         large.
         """
-        path = self.file_path
         if not self.file_exists():
             return
         undo = self.undo_manager

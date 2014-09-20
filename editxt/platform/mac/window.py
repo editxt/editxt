@@ -121,11 +121,14 @@ class WindowController(ak.NSWindowController):
     def openDocument_(self, sender):
         self.window_.open_documents()
 
-    def save_(self, sender):
+    def saveDocument_(self, sender):
         self.window_.save()
 
-    def saveAs_(self, sender):
+    def saveDocumentAs_(self, sender):
         self.window_.save_as()
+
+    def revertDocumentToSaved_(self, sender):
+        self.window_.reload_current_document()
 
     def newProject_(self, sender):
         self.window_.new_project()
