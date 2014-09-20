@@ -227,6 +227,15 @@ class Window(object):
     def should_select_item(self, outlineview, item):
         return True
 
+    def open_documents(self):
+        editor = self.current_editor
+        if editor and editor.file_path and os.path.isabs(editor.file_path):
+            directory, filename = os.path.split(editor.file_path)
+        else:
+            directory = os.path.expanduser("~")
+            filename = None
+        self.wc.open_documents(directory, filename, self.open_paths)
+
     def save_as(self):
         self.save(prompt=True)
 
@@ -560,6 +569,9 @@ class Window(object):
             item = self.app.find_item_with_id(ident)
             if item is not None:
                 yield item
+
+    def open_paths(self, paths):
+        return self.insert_items(self.iter_dropped_paths(paths))
 
     def iter_dropped_paths(self, paths):
         if not paths:

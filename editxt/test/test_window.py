@@ -390,6 +390,21 @@ def test_suspend_recent_updates():
     yield test, c(init="project(a) editor(1)* project(b) editor(2)",
                   final="window project(b) editor(2)*", remove="project(a)")
 
+def test_open_documents():
+    def test(cfg, prompt, after):
+        with test_app(cfg) as app:
+            window = app.windows[0]
+            window.open_documents()
+            eq_(window.wc.prompts, prompt)
+            eq_(test_app.config(app), "window project" + after)
+
+    yield test, "window", ["open ~"], "[0] editor[file.txt 1]*"
+    yield test, "project*", ["open ~"], " editor[file.txt 0]*"
+    yield test, "project* editor", ["open ~"], " editor editor[file.txt 0]*"
+    yield test, "project editor*", ["open ~"], " editor editor[file.txt 0]*"
+    yield test, "editor(/dir/doc.txt)*", ["open /dir"], " editor(/dir/doc.txt) editor[file.txt 0]*"
+    yield test, "editor(/cancel/doc.txt)*", ["open /cancel"], " editor(/cancel/doc.txt)*"
+
 def test_save_methods():
     def test(cfg, save, prompt=False):
         with test_app(cfg) as app:

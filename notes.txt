@@ -70,14 +70,14 @@ Build/package EditXT.app::
 Top priority
 
 Replace NSDocumentController
-  - Fix open document
-  - Fix open/save menu items
+  - Fix save menu items
   - Window dirty indicator
   - Automatic file move detection
   - Recent documents menu (move recent documents feature into project?)
   - Dock menu integration
       recent documents?
 x      windows
+x  - Implement open document with menu handler
 x  - Maintain list of open documents (DocumentController)
 x  - Undo/redo (menu items)
 x  - Fix document edited indicator

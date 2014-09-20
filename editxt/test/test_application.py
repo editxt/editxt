@@ -257,8 +257,7 @@ def test_open_documents_with_paths():
         m.method(app.current_window)() >> (window if c.has_window else None)
         if not c.has_window:
             create_window() >> window
-        items = window.iter_dropped_paths("<paths>") >> m.mock()
-        window.insert_items(items)
+        items = window.open_paths("<paths>") >> m.mock()
         with m:
             app.open_documents_with_paths("<paths>")
     c = TestConfig()

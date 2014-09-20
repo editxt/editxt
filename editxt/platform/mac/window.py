@@ -60,7 +60,7 @@ class WindowController(ak.NSWindowController):
     def __new__(cls, window):
         wc = cls.alloc().initWithWindowNibName_("EditorWindow")
         wc.window_ = window
-        wc.save_as_caller = None
+        wc.sheet_caller = None
         return wc
 
     @property
@@ -117,6 +117,9 @@ class WindowController(ak.NSWindowController):
 
     def projects(self):
         return self.window_.projects
+
+    def openDocument_(self, sender):
+        self.window_.open_documents()
 
     def save_(self, sender):
         self.window_.save()
@@ -220,22 +223,39 @@ class WindowController(ak.NSWindowController):
         self.window_.window_will_close()
         self.window().setDelegate_(None)
 
+    def open_documents(self, directory, filename, open_paths_callback):
+        panel = ak.NSOpenPanel.alloc().init()
+        panel.setShowsHiddenFiles_(True)
+        panel.setExtensionHidden_(False)
+        panel.setAllowsMultipleSelection_(True)
+        panel.setTreatsFilePackagesAsDirectories_(True)
+        assert self.sheet_caller == None, "window cannot process two sheets at once"
+        def callback(sheet, code):
+            if code == ak.NSOKButton:
+                paths = [url.path() for url in sheet.URLs()]
+                open_paths_callback(paths)
+            self.sheet_caller = None
+        self.sheet_caller = SheetCaller.alloc().init(callback)
+        panel.beginSheetForDirectory_file_modalForWindow_modalDelegate_didEndSelector_contextInfo_(
+            directory, filename, self.window(),
+            self.sheet_caller, "sheetDidEnd:returnCode:contextInfo:", 0)
+
     def save_document_as(self, directory, filename, save_with_path):
         panel = ak.NSSavePanel.alloc().init()
         panel.setShowsHiddenFiles_(True)
         panel.setExtensionHidden_(False)
         panel.setTreatsFilePackagesAsDirectories_(True)
-        assert self.save_as_caller == None, "window cannot save two files at once"
+        assert self.sheet_caller == None, "window cannot save two files at once"
         def callback(sheet, code):
             sheet.orderOut_(panel)
             if code == ak.NSOKButton:
                 path = sheet.URL().path()
                 save_with_path(path)
-            self.save_as_caller = None
-        self.save_as_caller = SaveAsCaller.alloc().init(callback)
+            self.sheet_caller = None
+        self.sheet_caller = SheetCaller.alloc().init(callback)
         panel.beginSheetForDirectory_file_modalForWindow_modalDelegate_didEndSelector_contextInfo_(
             directory, filename, self.window(),
-            self.save_as_caller, "savePanelDidEnd:returnCode:contextInfo:", 0)
+            self.sheet_caller, "sheetDidEnd:returnCode:contextInfo:", 0)
 
     def prompt_to_overwrite(self, file_path, save_with_path, save_as, diff_with_original):
         self.alert = alert = Alert.alloc().init()
@@ -326,14 +346,14 @@ class WindowController(ak.NSWindowController):
         return None
 
 
-class SaveAsCaller(fn.NSObject):
+class SheetCaller(fn.NSObject):
 
     @objc.namedSelector(b"init:")
     def init(self, callback):
-        self = super(SaveAsCaller, self).init()
+        self = super(SheetCaller, self).init()
         self.callback = callback
         return self
 
     @objc.typedSelector(b'v@:@ii')
-    def savePanelDidEnd_returnCode_contextInfo_(self, sheet, code, context):
+    def sheetDidEnd_returnCode_contextInfo_(self, sheet, code, context):
         self.callback(sheet, code)

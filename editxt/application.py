@@ -163,8 +163,7 @@ class Application(object):
         window = self.current_window()
         if window is None:
             window = self.create_window()
-        items = window.iter_dropped_paths(paths)
-        return window.insert_items(items)
+        return window.open_paths(paths)
 
     def open_config_file(self):
         items = self.open_documents_with_paths([self.config.path])

@@ -183,6 +183,9 @@ class test_app(object):
     )
 
     def __new__(cls, state=None):
+        from editxt.application import Application
+        if isinstance(state, Application):
+            return state.__test_app
         self = super(test_app, cls).__new__(cls)
         if callable(state):
             self.__init__()
@@ -221,6 +224,7 @@ class test_app(object):
 
     @classmethod
     def self(cls, app):
+        """DEPRECATED use test_app(app)"""
         return app.__test_app
 
     def _setup(self, app):

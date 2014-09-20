@@ -23,6 +23,7 @@ import os
 from editxt.editor import Editor
 from editxt.platform.views import BUTTON_STATE_NORMAL
 from editxt.util import WeakProperty
+from editxt.test.util import test_app
 
 log = logging.getLogger(__name__)
 
@@ -50,6 +51,16 @@ class WindowController(object):
 
     def undo_manager(self):
         return self.window_.undo_manager()
+
+    def open_documents(self, directory, filename, open_paths_callback):
+        if directory == os.path.expanduser("~"):
+            name = "~"
+        elif os.path.isabs(directory):
+            name = directory[len(test_app(self.window_.app).tmp):]
+        self.prompts.append("open %s" % name)
+        if "cancel" not in name:
+            log.info("open %s", directory)
+            open_paths_callback([os.path.join(directory, "file.txt")])
 
     def save_document_as(self, directory, filename, save_with_path):
         self.prompts.append("save " + filename)
