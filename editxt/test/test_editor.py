@@ -100,6 +100,13 @@ def test_Editor_init():
     yield test, {"state": {"path": "<document path>"}}
     yield test, {"document": "<document>"}
 
+def test_edit_errlog():
+    with test_app("project") as app:
+        project = app.windows[0].projects[0]
+        editor = project.create_editor_with_state({"internal": "errlog"})
+        eq_(editor.document, app.errlog.document)
+        eq_(editor.edit_state, {"internal": "errlog"})
+
 def test_Editor_project():
     with test_app("""
             window(A)
@@ -380,11 +387,13 @@ def test_Editor_change_indentation():
 
 def test_get_edit_state():
     from editxt.util import KVOProxy
-    def test(c):
+    @test_app("project")
+    def test(app, c):
         m = Mocker()
         doc = m.mock(TextDocument)
+        project = app.windows[0].projects[0]
         with m.off_the_record():
-            dv = Editor(None, document=doc)
+            dv = Editor(project, document=doc)
         m.property(dv, "soft_wrap")
         m.property(dv, "file_path")
         if c.tv_is_none:
@@ -409,17 +418,15 @@ def test_get_edit_state():
                 scrollpoint=["<sp.x>", "<sp.y>"],
                 soft_wrap=c.soft_wrap,
             )
-        (dv.file_path << ("<path>" if c.path_is_valid else None)).count(1, 2)
-        if c.path_is_valid:
-            state["path"] = "<path>"
+        (dv.file_path << "<path>").count(1, 2)
+        state["path"] = "<path>"
         with m:
             result = dv.edit_state
             eq_(result, state)
             if c.tv_is_none and c.set_state:
                 assert result is not state, "identity check should fail: must be a new (mutable) dict"
-    c = TestConfig(tv_is_none=False, path_is_valid=True, soft_wrap=const.WRAP_WORD)
+    c = TestConfig(tv_is_none=False, soft_wrap=const.WRAP_WORD)
     yield test, c
-    yield test, c(path_is_valid=False)
     yield test, c(soft_wrap=const.WRAP_NONE)
     yield test, c(tv_is_none=True, set_state=False)
     yield test, c(tv_is_none=True, set_state=True)
@@ -623,4 +630,3 @@ def test_Editor_on_do_command():
         cmd.dismiss()
         return True
     yield test, const.ESCAPE, setup_mocks
-

@@ -134,6 +134,17 @@ def test_serialize_project():
                 yield test, c(name=name, docs=docs, recent=rec, expn=True)
                 yield test, c(name=name, docs=docs, recent=rec, expn=False)
 
+def test_serialize_project_with_errlog():
+    with test_app("project") as app:
+        project = app.windows[0].projects[0]
+        project.create_editor_with_state({"internal": "errlog"})
+        serial = project.serialize()
+    print(serial)
+    with test_app("window") as app:
+        window = app.windows[0]
+        project = Project(window, serial=serial)
+        eq_(project.editors[0].document, app.errlog.document)
+
 def test_deserialize_project():
     from Foundation import NSData, NSPropertyListSerialization, NSPropertyListImmutable
     from editxt.project import KVOList

@@ -192,6 +192,11 @@ class Application(object):
             if set_current:
                 self.set_current_editor(editor)
 
+    def get_internal_document(self, name):
+        if name == "errlog":
+            return self.errlog.document
+        raise Error("unknown internal document: {}".format(name))
+
     def iter_dirty_editors(self):
         seen = set()
         for window in self.iter_windows():

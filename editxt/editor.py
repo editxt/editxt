@@ -67,9 +67,13 @@ class Editor(object):
 
     def __init__(self, project, *, document=None, path=None, state=None):
         if state is not None:
-            assert document is None, (state, document)
-            assert path is None, (state, path)
-            path = state["path"]
+            if "internal" in state:
+                app = project.window.app
+                document = app.get_internal_document(state["internal"])
+            else:
+                assert document is None, (state, document)
+                assert path is None, (state, path)
+                path = state["path"]
         if path is not None:
             assert document is None, (path, document)
         if document is None:
@@ -330,7 +334,10 @@ class Editor(object):
             )
         else:
             state = dict(getattr(self, "_state", {}))
-        if self.file_path is not None:
+        if self.document is self.app.errlog.document:
+            state["internal"] = "errlog"
+        else:
+            assert self.file_path is not None, repr(self)
             state["path"] = str(self.file_path)
         return state
     def _set_edit_state(self, state):

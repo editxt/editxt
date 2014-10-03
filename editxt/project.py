@@ -78,8 +78,7 @@ class Project(object):
         data = {"expanded": self.expanded}
         if self.name != const.UNTITLED_PROJECT_NAME:
             data["name"] = str(self.name) # HACK dump_yaml doesn't like pyobjc_unicode
-        states = (d.edit_state for d in self.editors)
-        documents = [s for s in states if "path" in s]
+        documents = [d.edit_state for d in self.editors]
         if documents:
             data["documents"] = documents
         if self.recent:
