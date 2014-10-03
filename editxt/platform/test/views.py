@@ -18,3 +18,14 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 from editxt.platform.mac.views import *
+
+class ListView(object):
+    """A test list view"""
+
+    def __init__(self, items, colspec, **options):
+        self.items = items
+        self.view = None
+        self.frame = None
+
+    def become_subview_of(self, view):
+        self.parent_view = view
