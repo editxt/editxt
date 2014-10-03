@@ -208,8 +208,8 @@ class Window(object):
         if editor is not None:
             self.recent.push(editor.id)
         if self.wc.setup_current_editor(editor):
-            assert isinstance(editor, Editor), editor
-            if self.find_project_with_editor(editor) is None:
+            if isinstance(editor, Editor) \
+                    and self.find_project_with_editor(editor) is None:
                 self.insert_items([editor])
 
     current_editor = property(_get_current_editor, _set_current_editor)

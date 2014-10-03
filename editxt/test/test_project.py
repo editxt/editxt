@@ -33,7 +33,7 @@ from editxt.application import Application, DocumentController
 from editxt.datatypes import WeakProperty
 from editxt.document import TextDocument
 from editxt.editor import Editor
-from editxt.project import Project
+from editxt.project import Project, Recent
 from editxt.util import dump_yaml
 from editxt.window import Window, WindowController
 
@@ -76,7 +76,8 @@ def test__init__serial():
     kvo_class = m.replace(mod, 'KVOList')
     deserialize = m.method(Project._deserialize)
     reset_cache = m.method(Project.reset_serial_cache)
-    docs = kvo_class() >> []
+    docs = []
+    (kvo_class() << docs).count(2)
     deserialize("<serial>")
     reset_cache()
     with m:
@@ -99,6 +100,10 @@ class MockDoc(object):
 
 def test_serialize_project():
     def test(c):
+        def objcstr(value):
+            value = ak.NSString.alloc().initWithString_(value)
+            isinstance(value, objc.pyobjc_unicode), (type(value), value)
+            return value
         def check(flag, key, serial, value=None):
             if flag:
                 assert key in serial, (key, serial)
@@ -107,9 +112,11 @@ def test_serialize_project():
             else:
                 assert key not in serial, key
         proj = Project(None)
+        recent = [objcstr("/file.txt"), objcstr("/doc.xml")]
+        if c.recent:
+            proj.recent.extend(Recent(p) for p in recent)
         if c.name:
-            proj.name = ak.NSString.alloc().initWithString_("<name>")
-            assert isinstance(proj.name, objc.pyobjc_unicode), type(proj.name)
+            proj.name = objcstr("<name>")
         if c.docs:
             proj.editors = [MockDoc(1)]
         proj.expanded = c.expn
@@ -118,12 +125,14 @@ def test_serialize_project():
         check(c.name, "name", serial, proj.name)
         check(c.docs, "documents", serial)
         check(True, "expanded", serial, c.expn)
+        check(c.recent, "recent", serial, recent)
         dump_yaml(serial) # verify that it does not crash
     c = TestConfig()
     for name in (True, False):
         for docs in (True, False):
-            yield test, c(name=name, docs=docs, expn=True)
-            yield test, c(name=name, docs=docs, expn=False)
+            for rec in (True, False):
+                yield test, c(name=name, docs=docs, recent=rec, expn=True)
+                yield test, c(name=name, docs=docs, recent=rec, expn=False)
 
 def test_deserialize_project():
     from Foundation import NSData, NSPropertyListSerialization, NSPropertyListImmutable
@@ -163,14 +172,16 @@ def test_deserialize_project():
             else:
                 eq_(proj.name, serial.get("name", const.UNTITLED_PROJECT_NAME))
                 eq_(proj.expanded, serial.get("expanded", True))
+                eq_([r.path for r in proj.recent], serial.get("recent", []))
             #assert not proj.is_dirty
-    yield test, {"path": "<path>"}
+    #yield test, {"path": "<path>"} # project with path not implemented
     yield test, {"documents": []}
     yield test, {"documents": ["doc1"]}
     yield test, {"documents": ["doc1"], "name": "custom name"}
     yield test, {"documents": ["doc_not_found"], "name": "custom name"}
     yield test, {"documents": [], "expanded": True}
     yield test, {"documents": [], "expanded": False}
+    yield test, {"documents": [], "recent": ["/file.txt"], "expanded": False}
 
 def test_save():
     def test(proj_has_path, is_changed):
@@ -213,6 +224,20 @@ def test_create_editor():
         project.create_editor()
         eq_(len(project.editors), 1)
         eq_(test_app(app).state, "window project editor[untitled 0]")
+
+def test_create_editor_with_recent_path():
+    @gentest
+    @test_app("project")
+    def test(app, recent_after, path="/file.txt"):
+        tapp = test_app(app)
+        project = app.windows[0].projects[0]
+        project.recent.append(Recent(tapp.temp_path("/file.txt")))
+        project.create_editor(tapp.temp_path(path))
+        eq_([tapp.pretty_path(r) for r in project.recent], recent_after)
+        eq_(test_app(app).state, "window project editor[%s 0]" % path)
+
+    yield test([])
+    yield test(["/file.txt"], path="/doc.xml")
 
 @test_app
 def test_insert_items(app):
@@ -283,6 +308,26 @@ def test_iter_editors_of_document():
     yield test, ["doc1", DOC, "doc3"]
     yield test, ["doc1", DOC, "doc3", DOC]
 
+def test_remove():
+    @gentest
+    def test(recent_after, recent_before=(), path="/file.txt", config="project"):
+        with test_app(config) as app:
+            tapp = test_app(app)
+            project = app.windows[0].projects[0]
+            doc = tapp.document_with_path(path)
+            project.recent.extend(
+                Recent(tapp.temp_path(p)) for p in recent_before)
+            editor = project.insert_items([doc], action=const.COPY)[1]
+            project.remove(editor)
+            print(test_app(app).state)
+            eq_([tapp.pretty_path(r) for r in project.recent], recent_after)
+
+    yield test([], path="file.txt")
+    yield test(["/file.txt"])
+    yield test(["/file.txt", "/doc.txt"], recent_before=["/doc.txt"])
+    yield test(["/file.txt"], recent_before=["/file.txt"])
+    yield test([], config="project editor(/file.txt)")
+
 def test_can_rename():
     proj = Project(None)
     eq_(proj.path, None)
@@ -304,12 +349,14 @@ def test_set_name():
     eq_(proj.name, "name")
 
 def test_set_main_view_of_window():
-    proj = Project(None)
+    project = Project(None)
     m = Mocker()
-    view = m.mock(ak.NSView)
-    win = m.mock(ak.NSWindow)
+    view = m.mock()
+    win = m.mock()
     with m:
-        proj.set_main_view_of_window(view, win) # for now this does nothing
+        eq_(project.main_view, None)
+        project.set_main_view_of_window(view, win)
+        assert project.main_view is not None
 
 def test_interactive_close():
     @gentest

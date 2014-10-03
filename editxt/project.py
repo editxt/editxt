@@ -27,7 +27,9 @@ import editxt.constants as const
 from editxt.datatypes import WeakProperty
 from editxt.editor import Editor
 from editxt.document import DocumentController, TextDocument
+from editxt.platform.app import add_recent_document
 from editxt.platform.kvo import KVOList, KVOProxy
+from editxt.platform.views import ListView
 
 
 log = logging.getLogger(__name__)
@@ -60,6 +62,8 @@ class Project(object):
         self.is_dirty = False
         self.undo_manager = None
         self.editors = KVOList()
+        self.recent = KVOList()
+        self.main_view = None
         self.closing = False
         if serial is not None:
             self._deserialize(serial)
@@ -78,15 +82,14 @@ class Project(object):
         documents = [s for s in states if "path" in s]
         if documents:
             data["documents"] = documents
+        if self.recent:
+            data["recent"] = [str(r.path) for r in self.recent]
         return data
 
     def _deserialize(self, serial):
         if "path" in serial:
             self.path = serial["path"]
-            plistData = fn.NSData.dataWithContentsOfFile_(self.path)
-            serial, format, error = fn.NSPropertyListSerialization. \
-                propertyListFromData_mutabilityOption_format_errorDescription_(
-                    plistData, fn.NSPropertyListImmutable, None, None)
+            raise NotImplementedError
         if serial:
             if "name" in serial:
                 self.name = serial["name"]
@@ -96,6 +99,8 @@ class Project(object):
                 except Exception:
                     log.warn("cannot open document: %r" % (doc_state,))
             self.expanded = serial.get("expanded", True)
+            if "recent" in serial:
+                self.recent.extend(Recent(path) for path in serial["recent"])
         if not self.editors:
             self.create_editor()
 
@@ -139,9 +144,8 @@ class Project(object):
         """
         raise NotImplementedError
 
-    def create_editor(self):
-        document = self.window.app.document_with_path(None)
-        editor = Editor(self, document=document)
+    def create_editor(self, path=None):
+        editor = Editor(self, path=path)
         self.insert_items([editor])
         return editor
 
@@ -186,6 +190,7 @@ class Project(object):
                 if editor.project is self:
                     vindex = self.editors.index(editor)
                     if vindex in [index - 1, index]:
+                        # TODO why not set `focus = editor`?
                         continue
                     if vindex - index <= 0:
                         index -= 1
@@ -200,18 +205,62 @@ class Project(object):
                     focus = editor
                     continue
             assert editor.project is self, (editor, editor.project, self)
+            self._discard_recent(editor.file_path)
             self.editors.insert(index, editor)
             focus = editor
             index += 1
         return inserted, focus
+
+    def remove(self, editor):
+        """Remove an editor from this project
+
+        Adds the document to this projects recent documents. Does
+        nothing if the editor is not in this project.
+        """
+        if not self.closing and editor in self.editors:
+            with self.window.suspend_recent_updates():
+                self.editors.remove(editor)
+                assert editor not in self.editors, (editor, self.editors)
+                self._add_recent(editor.document)
 
     def iter_editors_of_document(self, document):
         for editor in self.editors:
             if editor.document is document:
                 yield editor
 
+    def _add_recent(self, document):
+        """Add document to this projects recent documents
+
+        Does nothing if the document does not have an absolute path or there are
+        other editors with the same document in the project.
+        """
+        if os.path.isabs(document.file_path):
+            itr = self.iter_editors_of_document(document)
+            if next(itr, None) is None:
+                self._discard_recent(document.file_path)
+                self.recent.insert(0, Recent(document.file_path))
+                add_recent_document(document.file_path)
+                # TODO make limit customizable?
+                if len(self.recent) > 20:
+                    del self.recent[20:]
+
+    def _discard_recent(self, path):
+        """Discard recent items matching path"""
+        for item in reversed(list(self.recent)):
+            if item.path == path:
+                self.recent.remove(item)
+                item.close()
+
     def set_main_view_of_window(self, view, window):
-        pass # TODO add project-specific view?
+        def open_recent(item):
+            self.window.current_editor = self.create_editor(item.path)
+        if self.main_view is None:
+            self.main_view = ListView(
+                self.recent,
+                RECENT_COLSPEC,
+                on_double_click=open_recent,
+            )
+        self.main_view.become_subview_of(view)
 
     def interactive_close(self, do_close):
         def dirty_editors():
@@ -246,3 +295,25 @@ class Project(object):
 
     def __repr__(self):
         return '<%s 0x%x name=%s>' % (type(self).__name__, id(self), self.name)
+
+
+RECENT_COLSPEC = [
+    {"name": "path", "title": "Recent Files"}
+]
+
+
+class Recent(object):
+
+    def __init__(self, path):
+        self.path = path
+        self.proxy = KVOProxy(self)
+
+    def __repr__(self):
+        return "{}({!r})".format(type(self).__name__, self.path)
+
+    @property
+    def file_path(self):
+        return self.path
+
+    def close(self):
+        self.proxy = None

@@ -69,54 +69,18 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Replace NSDocumentController
-  - Window dirty indicator
-  - Automatic file move detection
-  - Recent documents menu (move recent documents feature into project?)
-  - Fix intermittent freeze on startup
-x  - Dock menu integration
-x  - Fix save menu items
-x  - Implement open document with menu handler
-x  - Maintain list of open documents (DocumentController)
-x  - Undo/redo (menu items)
-x  - Fix document edited indicator
-x  - Check/prompt for unsaved documents on close application
-x    - close document with path
-x      Do you want to save the changes made to the document “window.py”?
-x      Your changes will be lost if you don’t save them.
-x      (Don't Save)  (Cancel) [Save]
-x    - close unsaved document
-x      Do you want to save the changes made to the document “Untitled”?
-x      Your changes will be lost if you don’t save them.
-x      (Don't Save)  (Cancel) [Save...]
-x  - Draggable icon/menu in title bar
-x  - Document dirty indicator
-x  - Replace NSDocument architecture
-x    Editor.save() path rules
-x    - if relative, prompt for location (with last part of filename as suggested filename) and save
-x    - if absolute, attempt to save
-x      - are there other states we need to account for?
-x        - should prompt for overwrite if file was not loaded from its path?
-x    - NSDocument prompts (button) [default button]:
-x      - rename or delete file on disk while editing, save
-x        The location of the document “file.txt” cannot be determined.
-x        (Cancel) [Save As...]
-x      - open file with open dialog, move with finder, save
-x        The document “file.txt” has been moved.
-x        It will be saved to the “bin” folder, or you can specify another location.
-x        (Save As...)   (Cancel) [Save]
-x        - click Save As..., select existing file (normal Save As... workflow)
-x          “file.txt” already exists. Do you want to replace it?
-x          A file or folder with the same name already exists in the folder bin.
-x          Replacing it will overwrite its current contents.
-x          (Cancel) [Replace]
-x
-x      - open file, edit, change with another program, focus EditXT
-x        “file.txt” source document changed
-x        Discard changes and reload?
-x        (Cancel) [Reload]
-
+Open Error Log on launch if it was open before (not a new document named Error Log)
+Fix intermittent freeze on startup
 Drag document out of sidebar into terminal/text widget -> drop file path
+Fix window dirty indicator
+Add automatic file move detection
+
+
+Project enhancements
+  - show sorter paths in recent files list, and elide middle?
+  - project base path
+  - allow drag/drop from recent files list
+  - add support for drag/drop recent files
 
 Select mutliple documents -> main view is a composite view
   multiple concatenated document views (like skype messages pane with)

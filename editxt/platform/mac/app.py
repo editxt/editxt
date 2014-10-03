@@ -73,3 +73,10 @@ class AppDelegate(ak.NSObject):
 
     def applicationWillTerminate_(self, notification):
         self.app.will_terminate()
+
+
+def add_recent_document(path):
+    """Add file to File > Open Recent menu"""
+    url = fn.NSURL.fileURLWithPath_(path)
+    ak.NSDocumentController.sharedDocumentController() \
+        .noteNewRecentDocumentURL_(url)

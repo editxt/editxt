@@ -185,12 +185,11 @@ class WindowController(ak.NSWindowController):
             sel = self.docsController.selected_objects
             if not sel or sel[0] is not editor:
                 self.docsController.selected_objects = [editor]
-            if isinstance(editor, Editor): # TODO eliminate isinstance call
-                if editor.main_view not in main_view.subviews():
-                    for subview in main_view.subviews():
-                        subview.removeFromSuperview()
-                    editor.set_main_view_of_window(main_view, self.window())
-                    return True
+            if editor.main_view not in main_view.subviews():
+                for subview in main_view.subviews():
+                    subview.removeFromSuperview()
+                editor.set_main_view_of_window(main_view, self.window())
+                return True
         for subview in main_view.subviews():
             subview.removeFromSuperview()
         return False

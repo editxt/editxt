@@ -72,8 +72,9 @@ class Editor(object):
             path = state["path"]
         if path is not None:
             assert document is None, (path, document)
+        if document is None:
             document = project.window.app.document_with_path(path)
-        assert document is not None, (project, path, state)
+            assert document is not None, (project, path, state)
         self.editors = KVOList.alloc().init()
         self.id = next(DocumentController.id_gen)
         self._project = project
@@ -117,10 +118,8 @@ class Editor(object):
     @project.setter
     def project(self, new):
         old = getattr(self, "_project", None)
-        if old is not None and not old.closing and self in old.editors:
-            with old.window.suspend_recent_updates():
-                old.editors.remove(self)
-                assert self not in old.editors, (self, old.editors)
+        if old is not None:
+            old.remove(self)
         self._project = new
 
     @property
