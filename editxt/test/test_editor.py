@@ -109,14 +109,14 @@ def test_Editor_project():
             window(B)
                 project(1)*
         """) as app:
-        print(test_app.config(app))
+        print(test_app(app).state)
         win_A, win_B = app.windows
         proj_0, = win_A.projects
         proj_1, = win_B.projects
         editor_a, editor_b = proj_0.editors
         editor_a.project = proj_1
         eq_(editor_a.project, proj_1)
-        eq_(test_app.config(app),
+        eq_(test_app(app).state,
             "window(A) project(0) editor(b)* window(B) project(1)*")
 
 def test_Editor_window():
@@ -533,7 +533,7 @@ def test_interactive_close():
             eq_(calls, [True] if close else [])
             eq_(window.wc.prompts, prompt)
             post_config = "window project " + config
-            eq_(test_app.config(app), post_config)
+            eq_(test_app(app).state, post_config)
 
     yield test("editor*")
     yield test("editor(A)* editor(B)")
@@ -581,7 +581,7 @@ def test_Editor_close():
                     eq_(text_storage.delegate(), None)
             else:
                 assert doc.text_storage is not None
-            eq_(test_app.config(app), c.end)
+            eq_(test_app(app).state, c.end)
 
     c = TestConfig(app="editor(a)",
         ts_is_none=False,

@@ -31,7 +31,7 @@ from functools import wraps
 from nose import with_setup
 import nose.tools
 
-from editxt.util import untested
+from editxt.util import user_path, untested
 
 try:
     basestring
@@ -163,14 +163,14 @@ class test_app(object):
 
         with test_app("window project editor") as app:
             ...
-            eq_(test_app.state(app), "<expected state>")
+            eq_(test_app(app).state, "<expected state>")
 
     Alternate usage:
 
         @test_app
         def test(app, other, args):
             ...
-            eq_(test_app.state(app), "<expected state>")
+            eq_(test_app(app).state, "<expected state>")
         test("other", "args")
 
     """
@@ -182,23 +182,23 @@ class test_app(object):
         r"(\*?)$"
     )
 
-    def __new__(cls, state=None):
+    def __new__(cls, config=None):
         from editxt.application import Application
-        if isinstance(state, Application):
-            return state.__test_app
+        if isinstance(config, Application):
+            return config.__test_app
         self = super(test_app, cls).__new__(cls)
-        if callable(state):
+        if callable(config):
             self.__init__()
-            return self(state)
+            return self(config)
         return self
 
-    def __init__(self, state=None):
-        self.state = state
+    def __init__(self, config=None):
+        self.config = config
 
     def __call__(self, func):
         @wraps(func)
         def test_app(*args, **kw):
-            with self as app:
+            with type(self)(self.config) as app:
                 return func(app, *args, **kw)
         return test_app
 
@@ -210,12 +210,13 @@ class test_app(object):
         app = Application(profile_path)
         self.items = {}
         self.news = 0
+        self.app = app
         self._setup(app)
         app.__test_app = self
-        self.app = app
         return app
 
     def __exit__(self, exc_type, exc_value, tb):
+        self._state = self.state
         self.tempdir.__exit__(exc_type, exc_value, tb)
         for document in list(self.app.documents):
             document.close()
@@ -231,18 +232,18 @@ class test_app(object):
         from editxt.editor import Editor
         from editxt.project import Project
         from editxt.window import Window
-        state = self.state
+        config = self.config
         docs_by_name = {}
         items = self.items
-        if state is None:
+        if config is None:
             return
         window = project = None
-        for i, state_item in enumerate(state.split()):
-            match = self.editor_re.match(state_item)
-            assert match, "unknown state item: {}".format(state_item)
+        for i, config_item in enumerate(config.split()):
+            match = self.editor_re.match(config_item)
+            assert match, "unknown config item: {}".format(config_item)
             collapsed, item, name, current = match.groups()
             assert item == "project" or not collapsed, \
-                "unknown state item: {}".format(state_item)
+                "unknown config item: {}".format(config_item)
             if not name:
                 name = "<{}>".format(i)
             if item == "window" or window is None:
@@ -268,11 +269,7 @@ class test_app(object):
                     items[project] = "project<{}>".format(i)
             document = docs_by_name.get(name)
             if document is None:
-                path = name[1:-1]
-                if "/" in path:
-                    assert path.lstrip("/")[0] not in "\\:", path.lstrip("/")
-                    path = os.path.join(self.tmp, path.lstrip("/"))
-                document = app.document_with_path(path)
+                document = self.document_with_path(name[1:-1])
                 docs_by_name[name] = document
             editor = Editor(project, document=document)
             items[editor] = "editor" + name
@@ -281,8 +278,30 @@ class test_app(object):
             if current:
                 window.current_editor = editor
 
-    @classmethod
-    def state(cls, app):
+    def document_with_path(self, path):
+        """Get document with the given path
+
+        If path contains a path separator (/) the returned document will have a
+        path relative to this test app's temp dir.
+        """
+        if "/" in path:
+            path = self.temp_path(path)
+        return self.app.document_with_path(path)
+
+    def temp_path(self, path):
+        """Make path relative to this test app's temp dir"""
+        assert path.lstrip("/")[0] not in "\\:", path.lstrip("/")
+        return os.path.join(self.tmp, path.lstrip("/"))
+
+    def pretty_path(self, document):
+        """Get the path of this document relative to this app's temp dir"""
+        path = document.file_path
+        if path.startswith(self.tmp):
+            return path[len(self.tmp):]
+        return user_path(path)
+
+    @property
+    def state(self):
         """Get a string representing the app window/project/editor/document state
 
         Documents that were created after the app was initialized are
@@ -295,10 +314,12 @@ class test_app(object):
 
             window project editor | editor[Untitled 0]
         """
+        if not hasattr(self, "app"):
+            return self._state
         name_re = re.compile("(window|project|editor)<")
         def iter_items(app):
             def name(item):
-                name = cls.name(item, app)
+                name = self.name(item)
                 match = name_re.match(name)
                 return match.group(1) if match else name
             seen = set()
@@ -318,25 +339,21 @@ class test_app(object):
                 # documents not associated with any window (should not get here)
                 yield "|"
                 for document in documents:
-                    yield cls.name(document, app)
-        return " ".join(iter_items(app))
+                    yield self.name(document)
+        return " ".join(iter_items(self.app))
 
-    config = state # DEPRECATED
-
-    @classmethod
-    def name(cls, item, app):
+    def name(self, item):
         """Get the name of a window, project, or editor/document"""
         from editxt.document import TextDocument
         from editxt.editor import Editor
         from editxt.project import Project
         from editxt.window import Window
-        self = cls.self(app)
         name = self.items.get(item)
         if name is None:
             if isinstance(item, (Window, Project)):
                 name = "[{}]".format(self.news)
             else:
-                name = "[{} {}]".format(item.name, self.news)
+                name = "[{} {}]".format(self.pretty_path(item), self.news)
             ident = name
             prefix = "document" if isinstance(item, TextDocument) \
                                 else type(item).__name__.lower()
@@ -347,13 +364,11 @@ class test_app(object):
                 self.items[item.document] = "document" + ident
         return name
 
-    @classmethod
-    def get(cls, name, app):
+    def get(self, name):
         """Get the item for the given name
 
         :param name: The name of the item to get. Example: ``"editor(1)"``
         """
-        self = cls.self(app)
         return {v: k for k, v in self.items.items()}[name]
 
 

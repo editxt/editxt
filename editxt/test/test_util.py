@@ -193,7 +193,7 @@ def test_test_app_context_manager():
         assert app is not None
         window = Window(app)
         app.windows.append(window)
-    eq_(test_app.config(app), "window project editor(1) window[0]")
+    eq_(test_app(app).state, "window project editor(1) window[0]")
 
 
 def test_test_app_decorator():
@@ -206,7 +206,7 @@ def test_test_app_decorator():
         assert app is not None
         window = Window(app)
         app.windows.append(window)
-        eq_(test_app.config(app), "window[0]")
+        eq_(test_app(app).state, "window[0]")
     yield test,
 
     @test_app("editor(2)")
@@ -215,7 +215,7 @@ def test_test_app_decorator():
         assert app is not None
         window = Window(app)
         app.windows.append(window)
-        eq_(test_app.config(app), "window project editor(2) window[0]")
+        eq_(test_app(app).state, "window project editor(2) window[0]")
     yield test,
 
     if called != {1, 2}:

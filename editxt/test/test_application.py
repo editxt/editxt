@@ -829,7 +829,7 @@ def test_should_terminate():
         with test_app(config) as app:
             for item in config.split():
                 if "(" in item:
-                    editor = test_app.get(item, app)
+                    editor = test_app(app).get(item)
                     make_dirty(editor.document)
             calls = []
             def callback(ok):

@@ -373,12 +373,12 @@ def test_suspend_recent_updates():
                 assert window.recent is not real
                 window.recent.push(editor.id + 42)
                 if c.remove:
-                    item = test_app.get(c.remove, app)
+                    item = test_app(app).get(c.remove)
                     if isinstance(item, Editor):
                         item.project.editors.remove(item)
                     else:
                         item.window.projects.remove(item)
-            eq_(test_app.config(app), c.final)
+            eq_(test_app(app).state, c.final)
     c = TestConfig(remove=None)
     yield test, c(init="editor*", final="window project editor*")
     yield test, c(init="editor(1)* editor(2)",
@@ -396,13 +396,13 @@ def test_open_documents():
             window = app.windows[0]
             window.open_documents()
             eq_(window.wc.prompts, prompt)
-            eq_(test_app.config(app), "window project" + after)
+            eq_(test_app(app).state, "window project" + after)
 
-    yield test, "window", ["open ~"], "[0] editor[file.txt 1]*"
-    yield test, "project*", ["open ~"], " editor[file.txt 0]*"
-    yield test, "project* editor", ["open ~"], " editor editor[file.txt 0]*"
-    yield test, "project editor*", ["open ~"], " editor editor[file.txt 0]*"
-    yield test, "editor(/dir/doc.txt)*", ["open /dir"], " editor(/dir/doc.txt) editor[file.txt 0]*"
+    yield test, "window", ["open ~"], "[0] editor[~/file.txt 1]*"
+    yield test, "project*", ["open ~"], " editor[~/file.txt 0]*"
+    yield test, "project* editor", ["open ~"], " editor editor[~/file.txt 0]*"
+    yield test, "project editor*", ["open ~"], " editor editor[~/file.txt 0]*"
+    yield test, "editor(/dir/doc.txt)*", ["open /dir"], " editor(/dir/doc.txt) editor[/dir/file.txt 0]*"
     yield test, "editor(/cancel/doc.txt)*", ["open /cancel"], " editor(/cancel/doc.txt)*"
 
 def test_save_methods():
@@ -590,7 +590,7 @@ def test_get_current_project():
         with test_app(cfg) as app:
             window = app.windows[0]
             result = window.get_current_project(**args)
-            eq_(test_app.config(app), after or cfg)
+            eq_(test_app(app).state, after or cfg)
             if index is None:
                 eq_(result, None)
             else:
@@ -1117,7 +1117,7 @@ def test_insert_items():
                 return None, pindex
             return project, dindex + offset
         def namechar(item, seen=set()):
-            name = test_app.name(item, app)
+            name = test_app(app).name(item)
             name = name[len(type(item).__name__):]
             assert name.startswith(("(", "[", "<")), name
             assert name.endswith((")", "]", ">")), name
@@ -1221,12 +1221,12 @@ def test_insert_items():
                     name = "\[{} .\]".format(char.lower())
                 final.append("editor" + name)
             final = "^" + " ".join(final) + "$"
-            eq_(test_app.config(app), Regex(final, repr=final.replace("\\", "")))
+            eq_(test_app(app).state, Regex(final, repr=final.replace("\\", "")))
 
             def eq(a, b):
                 msg = lambda:"{} != {}".format(
-                    test_app.name(a, app),
-                    test_app.name(b, app),
+                    test_app(app).name(a),
+                    test_app(app).name(b),
                 )
                 eq_(a, b, msg)
             for window in app.windows:

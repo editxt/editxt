@@ -212,7 +212,7 @@ def test_create_editor():
         eq_(len(project.editors), 0)
         project.create_editor()
         eq_(len(project.editors), 1)
-        eq_(test_app.config(app), "window project editor[untitled 0]")
+        eq_(test_app(app).state, "window project editor[untitled 0]")
 
 @test_app
 def test_insert_items(app):
@@ -327,7 +327,7 @@ def test_interactive_close():
             post_config = config.split()
             if prompt:
                 post_config[0] += "*"
-            eq_(test_app.config(app), "window project " + " ".join(post_config))
+            eq_(test_app(app).state, "window project " + " ".join(post_config))
             eq_(window.wc.prompts, prompt)
             eq_(calls, [close] if close else [])
 
