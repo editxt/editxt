@@ -69,12 +69,10 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Open Error Log on launch if it was open before (not a new document named Error Log)
 Fix intermittent freeze on startup
 Drag document out of sidebar into terminal/text widget -> drop file path
 Fix window dirty indicator
 Add automatic file move detection
-
 
 Project enhancements
   - show sorter paths in recent files list, and elide middle?

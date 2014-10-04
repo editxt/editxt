@@ -334,11 +334,13 @@ class Editor(object):
             )
         else:
             state = dict(getattr(self, "_state", {}))
-        if self.document is self.app.errlog.document:
+        if self.document is self.app.errlog.document \
+                and not self.document.has_real_path():
             state["internal"] = "errlog"
         else:
             assert self.file_path is not None, repr(self)
             state["path"] = str(self.file_path)
+            state.pop("internal", None)
         return state
     def _set_edit_state(self, state):
         if self.text_view is not None:

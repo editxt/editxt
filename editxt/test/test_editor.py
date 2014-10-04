@@ -107,6 +107,19 @@ def test_edit_errlog():
         eq_(editor.document, app.errlog.document)
         eq_(editor.edit_state, {"internal": "errlog"})
 
+def test_saved_errlog_serial():
+    with test_app("project") as app:
+        project = app.windows[0].projects[0]
+        editor = project.create_editor_with_state({"internal": "errlog"})
+        editor.file_path = test_app(app).temp_path("error.log")
+        editor.document.save()
+        eq_(editor.document, app.errlog.document)
+        state = editor.edit_state
+        assert "internal" not in state, state
+        assert "path" in state, state
+        assert editor.document.file_exists(), editor.file_path
+    assert not editor.document.file_exists(), editor.file_path
+
 def test_Editor_project():
     with test_app("""
             window(A)
