@@ -150,6 +150,17 @@ class OutlineView(ak.NSOutlineView):
             self.trackingTag = -1
         super(OutlineView, self).dealloc()
 
+    def draggingSession_sourceOperationMaskForDraggingContext_(self, session, context):
+        if context == ak.NSDraggingContextWithinApplication:
+            return ak.NSDragOperationGeneric | ak.NSDragOperationCopy | ak.NSDragOperationMove
+        return ak.NSDragOperationCopy # only allow copy on external drag
+
+    def draggingSourceOperationMaskForLocal_(self, is_local):
+        # DEPRECATED only used pre OS X 10.7
+        if is_local:
+            return ak.NSDragOperationGeneric | ak.NSDragOperationCopy | ak.NSDragOperationMove
+        return ak.NSDragOperationCopy # only allow copy on external drag
+
     def trackMouseEvents(self):
         return self._trackMouseEvents
 
