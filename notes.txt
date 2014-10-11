@@ -69,10 +69,23 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+Fix UndoManager/TextView interaction: edit, save, type (not dirty)
+Fix automatic tab width detection
+Add ack-like command
+Add open file command
+Add move command to relocate file on disk
+Add py command for quick python command execution
 Fix intermittent freeze on startup
-Drag document out of sidebar into terminal/text widget -> drop file path
 Fix window dirty indicator
 Add automatic file move detection
+
+Use something like Sparkle to auto-update http://sparkle.andymatuschak.org/
+open command
+    - Open directory as project
+File tree as main project view
+grep command (for finding/printing lines in file)
+Persistent unsaved docs
+Embed file type icons in app (also provide support for user icon sets)
 
 Project enhancements
   - show sorter paths in recent files list, and elide middle?
@@ -83,19 +96,6 @@ Project enhancements
 Select mutliple documents -> main view is a composite view
   multiple concatenated document views (like skype messages pane with)
   banner at top shows title of document in view (like skype date banner)
-
-Use something like Sparkle to auto-update http://sparkle.andymatuschak.org/
-open command
-    - Open directory as project
-File tree as main project view
-grep command (for finding/printing lines in file)
-Persistent unsaved docs
-Embed file type icons in app (also provide support for user icon sets)
-
-Eliminate editxt.app global/singleton
-  - remaining places
-    - DocumentController: this thing is a pain (when does it get created?)
-    - tests... there are way too many
 
 Project drag/drop bugs
   - Current editor should be focused in new window when its project is dragged to new window
