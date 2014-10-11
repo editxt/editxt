@@ -17,6 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+import uuid
 import Foundation
 
 CONFIG_FILENAME = "config.yaml"
@@ -32,7 +33,8 @@ STATE_DIR = 'state'
 EDITOR_STATE = 'editor-{}.yaml'
 LOG_NAME = "EditXT Log"
 
-DOC_ID_LIST_PBOARD_TYPE = "EditXT document id list"
+# unique UTI name to prevent drag/drop to other EditXT process
+DOC_ID_LIST_PBOARD_TYPE = "EditXT document id list " + str(uuid.uuid4())
 MOVE = "move"
 COPY = "copy"
 CURRENT = "current"

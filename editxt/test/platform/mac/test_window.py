@@ -46,9 +46,9 @@ def test_WindowController_passthrough_to_Window():
         do_method_pass_through("window_", Window, wc, WC, *args)
     yield test, ("hoverButton_rowClicked_", "close_button_clicked"), (None, "<row>"), ("<row>",)
     #yield test, ("windowWillClose_", "window_will_close"), ("<window>",), ()
-    yield test, ("outlineView_writeItems_toPasteboard_", "write_items_to_pasteboard"), \
-        ("<ov>", "<items>", "<pasteboard>"), ("<ov>", "<items>", "<pasteboard>"), \
-        "<result>"
+#    yield test, ("outlineView_writeItems_toPasteboard_", "write_items_to_pasteboard"), \
+#        ("<ov>", "<items>", "<pasteboard>"), ("<ov>", "<items>", "<pasteboard>"), \
+#        "<result>"
 #    yield test, ("outlineView_acceptDrop_item_childIndex_", "accept_drop"), \
 #        ("<ov>", "<drop>", "<item>", "<index>"), ("<ov>", "<drop>", "<item>", "<index>"), \
 #        "<drag result>"

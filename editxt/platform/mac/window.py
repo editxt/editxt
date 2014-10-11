@@ -25,6 +25,7 @@ import AppKit as ak
 import Foundation as fn
 from PyObjCTools import AppHelper
 
+import editxt.constants as const
 from editxt.controls.alert import Alert
 from editxt.editor import Editor
 from editxt.platform.views import BUTTON_STATE_NORMAL
@@ -316,12 +317,29 @@ class WindowController(ak.NSWindowController):
     # outlineview datasource methods ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def outlineView_writeItems_toPasteboard_(self, view, items, pboard):
-        return self.window_.write_items_to_pasteboard(view, items, pboard)
+        real_items = [view.realItemForOpaqueItem_(item) for item in items]
+        pairs = self.window_.get_id_path_pairs(real_items)
+        ids = [p[0] for p in pairs]
+        paths = [p[1] for p in pairs if p[1] is not None]
+        if pairs:
+            pboard.clearContents()
+            pboard.setPropertyList_forType_(ids, const.DOC_ID_LIST_PBOARD_TYPE)
+            if len(ids) == len(paths):
+                assert pboard.writeObjects_([fn.NSURL.fileURLWithPath_(p) for p in paths])
+                assert pboard.writeObjects_([fn.NSString.stringWithString_(p) for p in paths])
+        return bool(pairs)
+
+    DROP_ACTIONS = {
+        ak.NSDragOperationCopy: const.COPY,
+        ak.NSDragOperationGeneric: None,
+    }
 
     def outlineView_acceptDrop_item_childIndex_(self, view, info, item, index):
+        pboard = info.draggingPasteboard()
         parent = None if item is None else representedObject(item)
-        return self.window_.accept_drop(
-            view, info.draggingPasteboard(), parent, index)
+        # move unless modifier specifies copy or generic insert (copy unless present)
+        action = self.DROP_ACTIONS.get(info.draggingSourceOperationMask(), const.MOVE)
+        return self.window_.accept_drop(view, pboard, parent, index, action)
 
     def outlineView_validateDrop_proposedItem_proposedChildIndex_(self, view, info, item, index):
         return self.window_.validate_drop(view, info, item, index)

@@ -868,47 +868,32 @@ def test_is_project_drag():
             result = not items.replace("p", "")
             yield test, c(items=items, accepted_type=atype, result=result)
 
-def test_write_items_to_pasteboard():
-    @test_app
-    def test(app, c):
-        m = Mocker()
-        ed = Window(app)
-        ov = m.mock(ak.NSOutlineView)
-        pb = m.mock(ak.NSPasteboard)
-        def path_exists(path):
-            return True
-        items = []
-        if c.items:
-            types = [const.DOC_ID_LIST_PBOARD_TYPE]
-            data = defaultdict(list)
-            for ident, item in enumerate(c.items):
-                opaque = object() # outline view item
-                items.append(opaque)
-                dragitem = m.mock(item.type)
-                ov.realItemForOpaqueItem_(opaque) >> dragitem
-                assert hasattr(item.type, "id"), "unknown attribute: %s.id" % item.type.__name__
-                dragitem.id >> ident
-                data[const.DOC_ID_LIST_PBOARD_TYPE].append(ident)
-                dragitem.file_path >> item.path
-                if item.path is not None:
-                    if ak.NSFilenamesPboardType not in data:
-                        types.append(ak.NSFilenamesPboardType)
-                    data[ak.NSFilenamesPboardType].append(item.path)
-            if data:
-                pb.declareTypes_owner_(types, None)
-                for dtype, ddata in data.items():
-                    pb.setPropertyList_forType_(ddata, dtype)
-        with replattr(os.path, 'exists', path_exists), m:
-            result = ed.write_items_to_pasteboard(ov, items, pb)
-            eq_(result, c.result)
-    c = TestConfig(result=True)
-    yield test, c(items=[], result=False)
-    item = TestConfig(type=Editor, path="/path/to/file")
-    yield test, c(items=[item])
-    yield test, c(items=[item(type=Project)])
-    yield test, c(items=[item(type=Project), item])
-    yield test, c(items=[item(path=None)])
-    yield test, c(items=[item(type=Project, path=None)])
+def test_get_id_path_pairs():
+    @gentest
+    def test(config, indices, path_info):
+        def getitem(index):
+            item = window.projects[index[0]]
+            if len(index) > 1:
+                item = item.editors[index[1]]
+                if item.document.has_real_path():
+                    assert item.file_path.startswith(tmp), item.file_path
+                    with open(item.file_path, "w") as fh:
+                        pass
+            assert len(index) < 3, index
+            return item
+        with test_app(config) as app:
+            tmp = test_app(app).tmp + os.path.sep
+            window = app.windows[0]
+            items = [getitem(i) for i in indices]
+            result = app.windows[0].get_id_path_pairs(items)
+            eq_(len(result), len(items))
+            eq_(len(result), len(path_info))
+            for item, has_path, pair in zip(items, path_info, result):
+                eq_(pair[0], item.id, item)
+                eq_(pair[1], item.file_path if has_path else None)
+    yield test("project", [[0]], [False])
+    yield test("project editor", [[0, 0]], [False])
+    yield test("project editor(/file.txt)", [[0, 0]], [True])
 
 def test_validate_drop():
     @test_app
@@ -941,6 +926,7 @@ def test_validate_drop():
                     ed.projects = ["<proj>"] * config.num_projs
                     ov.setDropItem_dropChildIndex_(None, config.num_projs)
         else:
+            drop = True
             if not config.item_is_none:
                 if config.item_is_proj:
                     index = config.index
@@ -950,6 +936,7 @@ def test_validate_drop():
                         ov.setDropItem_dropChildIndex_(item, config.proj_docs)
                 else:
                     obj = m.mock(type=Editor)
+                    drop = False
                 representedObject(item) >> obj
             else:
                 item = None
@@ -966,16 +953,20 @@ def test_validate_drop():
                         ov.setDropItem_dropChildIndex_(node, config.proj_docs)
                     else:
                         ov.setDropItem_dropChildIndex_(None, -1)
+                elif index == 0:
+                    drop = False
+            if drop:
+                info.draggingSourceOperationMask() >> ak.NSDragOperationGeneric
         with m:
             result = ed.validate_drop(ov, info, item, index)
             eq_(result, config.result)
-    cfg = TestConfig(is_proj=True, item_is_none=False, result=ak.NSDragOperationGeneric)
+    cfg = TestConfig(is_proj=True, item_is_none=False, result=ak.NSDragOperationMove)
     for i in (-1, 0, 1, 2):
         yield test, cfg(item_is_none=True, index=i, num_projs=2)
     yield test, cfg(path_is_none=True, result=ak.NSDragOperationNone)
     for p in (0, 1, 2):
         yield test, cfg(path_is_none=False, path_index=p)
-    cfg = cfg(is_proj=False)
+    cfg = cfg(is_proj=False, result=ak.NSDragOperationGeneric)
     for i in (-1, 0, 2):
         yield test, cfg(item_is_proj=True, index=i, proj_docs=2)
     yield test, cfg(item_is_proj=False, result=ak.NSDragOperationNone)
@@ -1001,15 +992,15 @@ def test_accept_drop():
         # TODO investigate where NSDraggingInfo went during the upgrade to 10.5
         parent = None if c.item_is_none else m.mock()
         index = 0
-        act = None
         items = m.mock()
         pb = m.mock(ak.NSPasteboard)
         pb.availableTypeFromArray_(ed.supported_drag_types) >> c.accepted_type
         if c.accepted_type == const.DOC_ID_LIST_PBOARD_TYPE:
             id_list = pb.propertyListForType_(const.DOC_ID_LIST_PBOARD_TYPE) >> m.mock()
             ed.iter_dropped_id_list(id_list) >> items
-            act = const.MOVE
+            act = c.act
         elif c.accepted_type == ak.NSFilenamesPboardType:
+            act = None
             paths = pb.propertyListForType_(ak.NSFilenamesPboardType) >> m.mock()
             items = ed.iter_dropped_paths(paths) >> items
         else:
@@ -1018,10 +1009,12 @@ def test_accept_drop():
         if items is not None:
             ed.insert_items(items, parent, index, act) >> c.result
         with m:
-            result = ed.accept_drop(ov, pb, parent, index)
+            result = ed.accept_drop(ov, pb, parent, index, c.act)
             eq_(result, c.result)
-    c = TestConfig(result=True, item_is_none=False)
+    c = TestConfig(result=True, item_is_none=False, act=None)
     yield test, c(accepted_type=const.DOC_ID_LIST_PBOARD_TYPE)
+    yield test, c(accepted_type=const.DOC_ID_LIST_PBOARD_TYPE, act=const.COPY)
+    yield test, c(accepted_type=const.DOC_ID_LIST_PBOARD_TYPE, act=const.MOVE)
     yield test, c(accepted_type=ak.NSFilenamesPboardType)
     yield test, c(accepted_type=ak.NSFilenamesPboardType, item_is_none=True)
     yield test, c(accepted_type=None, result=False)

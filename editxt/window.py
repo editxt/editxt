@@ -471,27 +471,19 @@ class Window(object):
             return all(Project.is_project_path(path) for path in paths)
         return False
 
-    def write_items_to_pasteboard(self, outline_view, items, pboard):
-        """Write dragged items to pasteboard
+    def get_id_path_pairs(self, items):
+        """Get a list of (<item id>, <item path>) pairs for given items
 
-        :param outline_view: The OutlineView containing the items.
-        :param items: A list of opaque outline view item objects.
-        :param pboard: ak.NSPasteboard object.
-        :returns: True if items were written else False.
+        :param items: A list of editors and/or projects.
+        :returns: A list of two-tuples (<item id>, <item path>). <item id> is
+        an opaque internal identifier for the document, and <item path> is
+        the file system path of the item or ``None`` if the item does not have
+        a path.
         """
-        data = defaultdict(list)
-        for item in items:
-            item = outline_view.realItemForOpaqueItem_(item)
-            data[const.DOC_ID_LIST_PBOARD_TYPE].append(item.id)
+        def pair(item):
             path = item.file_path
-            if path is not None and os.path.exists(path):
-                data[ak.NSFilenamesPboardType].append(path)
-        if data:
-            types = [t for t in self.supported_drag_types if t in data]
-            pboard.declareTypes_owner_(types, None)
-            for t in types:
-                pboard.setPropertyList_forType_(data[t], t)
-        return bool(data)
+            return (item.id, path if path and os.path.exists(path) else None)
+        return [pair(item) for item in items]
 
     def validate_drop(self, outline_view, info, item, index):
         if self.is_project_drag(info):
@@ -505,6 +497,7 @@ class Window(object):
                     return ak.NSDragOperationNone
             elif index < 0:
                 outline_view.setDropItem_dropChildIndex_(None, len(self.projects))
+            return ak.NSDragOperationMove
         else:
             # text document drag
             if item is not None:
@@ -530,18 +523,12 @@ class Window(object):
                         outline_view.setDropItem_dropChildIndex_(None, -1)
                 elif index == 0:
                     return ak.NSDragOperationNone # prevent drop above top project
-        # src = info.draggingSource()
-        # if src is not None:
-        #   # internal drag
-        #   if src is not outline_view:
-        #       delegate = getattr(src, "delegate", lambda:None)()
-        #       if isinstance(delegate, WindowController) and \
-        #           delegate is not self.wc:
-        #           # drag from some other window controller
-        #           # allow copy (may need to override outline_view.ignoreModifierKeysWhileDragging)
-        return ak.NSDragOperationGeneric
+        op = info.draggingSourceOperationMask()
+        if op not in [ak.NSDragOperationCopy, ak.NSDragOperationGeneric]:
+            op = ak.NSDragOperationMove
+        return op
 
-    def accept_drop(self, view, pasteboard, parent=const.CURRENT, index=-1):
+    def accept_drop(self, view, pasteboard, parent=const.CURRENT, index=-1, action=const.MOVE):
         """Accept drop operation
 
         :param view: The view on which the drop occurred.
@@ -549,18 +536,20 @@ class Window(object):
         :param parent: The parent item in the outline view.
         :param index: The index in the outline view or parent item at which the
             drop occurred.
+        :param action: The action to perform when dragging (see
+        ``insert_items(..., action)``). Ignored if the items being dropped are
+        paths.
         :returns: True if the drop was accepted, otherwise False.
         """
         pb = pasteboard
         t = pb.availableTypeFromArray_(self.supported_drag_types)
-        action = None
         if t == const.DOC_ID_LIST_PBOARD_TYPE:
             id_list = pb.propertyListForType_(const.DOC_ID_LIST_PBOARD_TYPE)
             items = self.iter_dropped_id_list(id_list)
-            action = const.MOVE
         elif t == ak.NSFilenamesPboardType:
             paths = pb.propertyListForType_(ak.NSFilenamesPboardType)
             items = self.iter_dropped_paths(paths)
+            action = None
         else:
             assert t is None, t
             return False
