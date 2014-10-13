@@ -181,6 +181,8 @@ class Editor(object):
                         document.file_path = path
                     document.save()
                     saved = True
+                    if self.text_view is not None:
+                        self.text_view.breakUndoCoalescing()
             except DocumentError as err:
                 log.error(err)
             except Exception:

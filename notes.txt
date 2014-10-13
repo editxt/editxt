@@ -69,7 +69,7 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Fix UndoManager/TextView interaction: edit, save, type (not dirty)
+Fix focus last document on launch
 Fix automatic tab width detection
 Add ack-like command
 Add open file command
