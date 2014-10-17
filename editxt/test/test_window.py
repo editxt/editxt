@@ -164,7 +164,7 @@ def test__setstate():
         ws = m.property(ed, 'window_settings')
         projects = []
         if data:
-            for serial in data.get("project_serials", []):
+            for serial in data.get("projects", data.get("project_serials", [])):
                 proj = project_class(ed, serial=serial) >> Item()
                 projects.append(proj)
             for pi, di in data.get("recent_items", []):
@@ -190,7 +190,8 @@ def test__setstate():
             eq_(list(ed.projects), projects)
     yield test, None
     yield test, dict()
-    yield test, dict(project_serials=["<serial>"])
+    yield test, dict(projects=["<serial>"])
+    yield test, dict(project_serials=["<serial>"]) # legacy
     yield test, dict(recent_items=[[0, 2], [0, 0], [0, "<project>"], [0, 1], [1, 0]])
     yield test, dict(window_settings="<window_settings>")
 
@@ -215,22 +216,15 @@ def test_state():
             proj.id >> p.id
             items[p.id] = [i, "<project>"]
             docs = proj.editors >> []
-            offset = 0
             for j, d in enumerate(p.docs):
                 editor = m.mock(Editor)
                 docs.append(editor)
-                if d > 0:
-                    path = "/path/do/file%s.txt" % d
-                    (editor.file_path << path).count(2)
-                    editor.id >> d
-                    items[d] = [i, j - offset]
-                else:
-                    offset += 1
-                    editor.file_path >> None
+                editor.id >> d
+                items[d] = [i, j]
         rits = [items[ri] for ri in c.recent if ri in items]
         data = {'window_settings': '<settings>'}
         if psets:
-            data["project_serials"] = psets
+            data["projects"] = psets
         if rits:
             data["recent_items"] = rits
         with replattr(os.path, 'exists', exists), m:

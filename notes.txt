@@ -69,7 +69,6 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Fix focus last document on launch
 Fix automatic tab width detection
 Add ack-like command
 Add open file command

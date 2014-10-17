@@ -95,7 +95,10 @@ class Window(object):
 
     def _setstate(self, state):
         if state:
-            for serial in state.get("project_serials", []):
+            projects = state.get("projects")
+            if projects is None:
+                projects = state.get("project_serials", []) # legacy
+            for serial in projects:
                 proj = Project(self, serial=serial)
                 self.projects.append(proj)
             for proj_index, doc_index in state.get("recent_items", []):
@@ -121,13 +124,9 @@ class Window(object):
                 if serial:
                     serials.append(serial)
                 indexes[project.id] = [i, "<project>"]
-                offset = 0
                 for j, doc in enumerate(project.editors):
-                    if doc.file_path and os.path.exists(doc.file_path):
-                        indexes[doc.id] = [i, j - offset]
-                    else:
-                        offset += 1
-            yield "project_serials", serials
+                    indexes[doc.id] = [i, j]
+            yield "projects", serials
             rits = []
             for ident in self.recent:
                 pair = indexes.get(ident)
@@ -145,7 +144,6 @@ class Window(object):
 
     def discard_and_focus_recent(self, item):
         ident = None if item is None else item.id
-        lookup = {}
         recent = self.recent
         with self.suspend_recent_updates():
             for project in list(self.projects):
@@ -156,14 +154,10 @@ class Window(object):
                         recent.discard(did)
                         assert editor.project is project, (editor.project, project)
                         editor.close()
-                    else:
-                        lookup[did] = editor
                 if ident == pid:
                     recent.discard(pid)
                     self.projects.remove(project)
                     project.close()
-                else:
-                    lookup[pid] = project
 
     @contextmanager
     def suspend_recent_updates(self, update_current=True):
