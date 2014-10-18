@@ -257,6 +257,8 @@ class test_app(object):
                     items[window] = "window<{}>".format(i)
             if item == "project" or project is None:
                 project = Project(window)
+                if "/" in name:
+                    project.path = self.temp_path(name[1:-1])
                 if collapsed:
                     project.expanded = False
                 window.projects.append(project)

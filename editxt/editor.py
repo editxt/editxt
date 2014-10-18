@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+import os
 
 import AppKit as ak
 import Foundation as fn
@@ -128,7 +129,7 @@ class Editor(object):
 
     @property
     def name(self):
-        return self.document.displayName()
+        return self.document.name
 
     @property
     def summary_info(self):
@@ -155,6 +156,12 @@ class Editor(object):
     @property
     def is_dirty(self):
         return self.document.is_dirty()
+
+    def dirname(self):
+        """Return a tuple: (directory, filename or None)"""
+        if self.file_path and os.path.isabs(self.file_path):
+            return os.path.dirname(self.file_path)
+        return self.project.dirname()
 
     def save(self, prompt=False, callback=(lambda saved:None)):
         """Save the document to disk

@@ -219,12 +219,11 @@ class Window(object):
 
     def open_documents(self):
         editor = self.current_editor
-        if editor and editor.file_path and os.path.isabs(editor.file_path):
-            directory, filename = os.path.split(editor.file_path)
+        if editor is not None:
+            directory = editor.dirname()
         else:
             directory = os.path.expanduser("~")
-            filename = None
-        self.wc.open_documents(directory, filename, self.open_paths)
+        self.wc.open_documents(directory, None, self.open_paths)
 
     def save_as(self):
         self.save(prompt=True)

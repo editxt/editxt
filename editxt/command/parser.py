@@ -60,6 +60,7 @@ Command parser specification:
         ' /abc/'    : bool = None, regex = 'abc', num = None
         '  1'  : bool = False, regex = None, num = 1
 """
+import os
 import re
 
 
@@ -196,6 +197,16 @@ class Field(object):
             self.placeholder = name
         self.name = identifier(name)
         self.default = default
+
+    def with_context(self, textview):
+        """Return a Field instance with textview and history context
+
+        The returned field object may be the same instance as the original
+        on which this method was invoked.
+
+        :param textview: The text view on which the command is being invoked.
+        """
+        return self
 
     def __eq__(self, other):
         if not issubclass(type(self), type(other)):
@@ -577,6 +588,60 @@ class String(Field):
 
 class VarArgs(Field):
     """Consume all remaining arguments by splitting the string"""
+
+class File(String):
+    """File path field
+
+    :param name: Argument name.
+    """
+
+    def __init__(self, name, path=None):
+        self.args = [name, path]
+        self.path = path
+        super().__init__(name)
+
+    def with_context(self, textview):
+        editor = textview.editor
+        return File(self.name, path=editor.dirname())
+
+    def consume(self, text, index):
+        """Consume a file path
+
+        :returns: (<path>, <index>)
+        """
+        if self.path is None:
+            raise Error("cannot consume file path without context")
+        path, stop = super().consume(text, index)
+        if path is None:
+            return path, stop
+        if path.endswith((os.path.sep, "/")):
+            raise ParseError("not a file: %s" % (path,), self, index, stop)
+        return os.path.join(self.path, path), stop
+
+    def get_completions(self, token):
+        join = os.path.join
+        path = join(self.path, token)
+        root, name = os.path.split(path)
+        assert len(self.path) <= len(root), (self.path, root)
+        if not os.path.exists(root):
+            return []
+        assert len(os.path.sep) == 1, os.path.sep
+        names = [n for n in sorted(os.listdir(root)) if n.startswith(name)]
+        print(names, root)
+        if os.path.isdir(path) and (name == ".." or name in names):
+            if name in names:
+                names.remove(name)
+            names.append(name + "/")
+        return [join(root, n)[len(self.path) + 1:] for n in names]
+
+    def arg_string(self, value):
+        if value and value.endswith((os.path.sep, "/")):
+            raise Error("not a file: {}={!r}".format(self.name, value))
+        if value.startswith(os.path.join(self.path, "")):
+            value = value[len(self.path) + 1:]
+        return super().arg_string(value)
+
+
 class RegexPattern(str):
 
     __slots__ = ["_flags"]

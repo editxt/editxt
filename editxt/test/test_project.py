@@ -199,7 +199,7 @@ def test_save():
         m = Mocker()
         window = m.mock(Window)
         proj = Project(window)
-        save_with_path = m.method(proj.save_with_path)
+        #save_with_path = m.method(proj.save_with_path)
         reset_cache = m.method(proj.reset_serial_cache)
         m.method(proj.serialize)() >> "<serial>"
         if proj_has_path:
@@ -207,8 +207,8 @@ def test_save():
         if is_changed:
             app = window.app >> m.mock(Application)
             proj.serial_cache = "<invalid-cache>"
-            if proj_has_path:
-                save_with_path(proj.path)
+            #if proj_has_path:
+            #    save_with_path(proj.path)
             app.save_window_states()
             reset_cache()
         else:
@@ -344,7 +344,7 @@ def test_can_rename():
     eq_(proj.path, None)
     assert proj.can_rename()
     proj.path = "<path>"
-    assert not proj.can_rename()
+    assert proj.can_rename()
 
 def test_name():
     proj = Project(None)

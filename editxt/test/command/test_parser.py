@@ -18,15 +18,17 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+import os
 import re
 from functools import partial
+from os.path import isabs, join
 
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_
 from editxt.test.util import assert_raises, TestConfig
 
 from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
-    CommandParser, SubArgs, SubParser, VarArgs,
+    File, CommandParser, SubArgs, SubParser, VarArgs,
     identifier, Options, Error, ArgumentError, ParseError)
 
 log = logging.getLogger(__name__)
@@ -388,8 +390,7 @@ def test_String():
     yield test, '"a c"', 0, ('a c', 5)
     yield test, "'a c'", 0, ('a c', 5)
     yield test, "'a c' ", 0, ('a c', 6)
-    yield test, "'a c", 0, \
-        ParseError("unterminated string: 'a c", arg, 0, 4)
+    yield test, "'a c", 0, ParseError("unterminated string: 'a c", arg, 0, 4)
     yield test, r"'a c\' '", 0, ("a c' ", 8)
     yield test, r"'a c\\' ", 0, ("a c\\", 8)
     yield test, r"'a c\"\' '", 0, ("a c\"\' ", 10)
@@ -436,7 +437,63 @@ def test_String():
     yield test, None, ""
     yield test, 5, Error("invalid value: str=5")
 
-# TODO test VarArgs
+def test_File():
+    from editxt.test.util import test_app
+    arg = File('path')
+    eq_(str(arg), 'path')
+    eq_(repr(arg), "File('path')")
+
+    with test_app("project(/dir) editor") as app:
+        tmp = test_app(app).tmp
+        os.mkdir(join(tmp, "dir"))
+        for path in [
+            "dir/a.txt",
+            "dir/b.txt",
+            #"dir/b file",
+            "file.txt",
+            "file.doc",
+            #"x y",
+        ]:
+            assert not isabs(path), path
+            with open(join(tmp, path), "w") as fh:
+                pass
+
+        textview=TestConfig(editor=app.windows[0].projects[0].editors[0])
+        arg = arg.with_context(textview)
+
+        test = make_arg_string_checker(arg)
+        yield test, "/str", "/str"
+        yield test, "/a b", '"/a b"'
+        yield test, join(tmp, "dir/file"), "file"
+        yield test, join(tmp, "dir/a b"), '"a b"'
+        yield test, join(tmp, "file"), join(tmp, "file")
+        yield test, "arg/", Error("not a file: path='arg/'")
+
+        test = make_type_checker(arg)
+        yield test, '', 0, (None, 0)
+        yield test, 'a', 0, (join(tmp, 'dir/a'), 1)
+        yield test, 'abc', 0, (join(tmp, 'dir/abc'), 3)
+        yield test, 'abc/', 0, ParseError("not a file: abc/", arg, 0, 4)
+        yield test, 'abc ', 0, (join(tmp, 'dir/abc'), 4)
+        yield test, 'file.txt', 0, (join(tmp, 'dir/file.txt'), 8)
+        yield test, '../file.txt', 0, (join(tmp, 'dir/../file.txt'), 11)
+        yield test, '/file.txt', 0, ('/file.txt', 9)
+        yield test, '"ab c"', 0, (join(tmp, 'dir/ab c'), 6)
+        yield test, "'ab c'", 0, (join(tmp, 'dir/ab c'), 6)
+        yield test, "'ab c/'", 0, ParseError("not a file: ab c/", arg, 0, 7)
+
+        test = make_completions_checker(arg)
+        yield test, "", (["a.txt", "b.txt"], 0)
+        yield test, "a", (["a.txt"], 1)
+        yield test, "a ", (None, 2)
+        yield test, "a.txt", (["a.txt"], 5)
+        yield test, "a.txt ", (None, 6)
+        #yield test, "b", (["b.txt", '"b file"'], 1) # TODO names with spaces
+        yield test, "..", (["../"], 2)
+        yield test, "../", (["../dir", "../file.doc", "../file.txt"], 3)
+        yield test, "../dir", (["../dir/"], 6)
+        yield test, "../dir/", (["../dir/a.txt", "../dir/b.txt"], 7)
+        yield test, "val", ([], 3)
 
 def test_Regex():
     arg = Regex('regex')
@@ -653,8 +710,8 @@ def make_completions_checker(arg):
         eq_(arg.parse_completions(input, 0), output)
     return test_parse_completions
 
-def make_arg_string_checker(arg):
-    def test_get_argstring(value, argstr, round_trip_equal=True):
+def make_arg_string_checker(arg, round_trip_equal=True):
+    def test_get_argstring(value, argstr, round_trip_equal=round_trip_equal):
         if isinstance(argstr, Exception):
             def check(err):
                 eq_(err, argstr)

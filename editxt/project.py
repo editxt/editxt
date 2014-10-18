@@ -78,6 +78,8 @@ class Project(object):
         data = {"expanded": self.expanded}
         if self.name != const.UNTITLED_PROJECT_NAME:
             data["name"] = str(self.name) # HACK dump_yaml doesn't like pyobjc_unicode
+        if self.path is not None:
+            data["path"] = self.path
         documents = [d.edit_state for d in self.editors]
         if documents:
             data["documents"] = documents
@@ -88,7 +90,6 @@ class Project(object):
     def _deserialize(self, serial):
         if "path" in serial:
             self.path = serial["path"]
-            raise NotImplementedError
         if serial:
             if "name" in serial:
                 self.name = serial["name"]
@@ -108,8 +109,8 @@ class Project(object):
 
     def save(self):
         if self.serial_cache != self.serialize():
-            if self.path is not None:
-                self.save_with_path(self.path)
+            #if self.path is not None:
+            #    self.save_with_path(self.path)
             self.window.app.save_window_states()
             self.reset_serial_cache()
 
@@ -130,11 +131,18 @@ class Project(object):
         return None
 
     def can_rename(self):
-        return self.path is None
+        return True
 
     @property
     def file_path(self):
         return self.path
+
+    def dirname(self):
+        """Return a tuple: (directory, filename or None)"""
+        if self.path:
+            assert os.path.isabs(self.path), self.path
+            return self.path
+        return os.path.expanduser("~")
 
     def editor_for_path(self, path):
         """Get the editor for the given path
