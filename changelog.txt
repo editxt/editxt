@@ -22,6 +22,15 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 the source repository for the gory details of what actually happened.
 
+2014-10-17 - 1.5.0
+  - Internal refactoring and bug fixes: eliminate NSDocument framework.
+    - Closing a project with modified documents now prompts to save changes.
+  - Add recently closed document list as main project view.
+  - Re-open error log (rather than new document named "EditXT Log") on launch.
+  - Allow drag/drop documents to other applications.
+  - Allow copy and move documents in file tree (hold Command key to copy).
+  - Fix bug in content analysis (indent mode and size, EOL mode).
+
 2014-05-18 - 1.4.0
   - Add *.mm to Objective-C syntax definition file patterns.
   - Fix bug that preventing opening document via File > Open dialog.
