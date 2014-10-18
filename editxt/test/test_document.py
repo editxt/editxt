@@ -558,20 +558,20 @@ def test_analyze_content():
             c.text = c.text.replace("\n", eol_char)
         m = Mocker()
         doc = TextDocument(app)
-        m.property(doc, "newline_mode")
-        m.property(doc, "indent_mode")
-        m.property(doc, "indent_size")
+        eq_((doc.newline_mode, doc.indent_mode, doc.indent_size),
+            (const.NEWLINE_MODE_UNIX, const.INDENT_MODE_SPACE, 4),
+            'invalid initial state')
         with m.off_the_record():
             doc.text_storage = ts = m.mock(ak.NSTextStorage)
         ts.string() >> fn.NSString.stringWithString_(c.text)
-        if "eol" in c:
-            doc.newline_mode = c.eol
-        if "imode" in c:
-            doc.indent_mode = c.imode
-        if "isize" in c:
-            doc.indent_size = c.isize
         with m:
             doc.analyze_content()
+        eq_((doc.newline_mode, doc.indent_mode, doc.indent_size),
+            (
+                c._get("eol", const.NEWLINE_MODE_UNIX),
+                c._get("imode", const.INDENT_MODE_SPACE),
+                c._get("isize", 4),
+            ))
     eols = [(mode, const.EOLS[mode]) for mode in [
         const.NEWLINE_MODE_UNIX,
         const.NEWLINE_MODE_MAC,

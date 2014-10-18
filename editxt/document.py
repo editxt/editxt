@@ -307,12 +307,12 @@ class TextDocument(object):
             None, None, None, (0, 0))
         if end != cend:
             eol = EOLREF.get(text[cend:end], const.NEWLINE_MODE_UNIX)
-            self.newline_mode = eol
+            self.props.newline_mode = eol
         mode, size = calculate_indent_mode_and_size(text)
         if size is not None:
-            self.indent_size = size
+            self.props.indent_size = size
         if mode is not None:
-            self.indent_mode = mode
+            self.props.indent_mode = mode
 
     def has_real_path(self):
         """Return true if this docuemnt has an absolute path where it could

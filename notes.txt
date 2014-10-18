@@ -69,7 +69,6 @@ Build/package EditXT.app::
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Fix automatic tab width detection
 Add ack-like command
 Add open file command
 Add move command to relocate file on disk
