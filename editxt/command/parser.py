@@ -577,24 +577,6 @@ class String(Field):
 
 class VarArgs(Field):
     """Consume all remaining arguments by splitting the string"""
-
-    def __init__(self, name, placeholder=""):
-        self.args = [name, placeholder]
-        self.placeholder = placeholder
-        super(VarArgs, self).__init__(name)
-
-    def consume(self, text, index):
-        """Consume remaining arguments
-
-        :returns: (<list of strings>, <index>)
-        """
-        return text[index:].split(), len(text)
-
-    def arg_string(self, value):
-        if value == self.default:
-            return ""
-        return " ".join(value)
-
 class RegexPattern(str):
 
     __slots__ = ["_flags"]

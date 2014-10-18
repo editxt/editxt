@@ -121,7 +121,7 @@ def test_CommandBar_execute():
     yield test, c(text='123 456', lookup='full', error=True)
 
 def test_CommandBar_get_placeholder():
-    from editxt.command.parser import CommandParser, Choice, Regex, VarArgs
+    from editxt.command.parser import CommandParser, Choice, Regex
     def test(c):
         m = Mocker()
         beep = m.replace(ak, 'NSBeep')
@@ -135,7 +135,6 @@ def test_CommandBar_get_placeholder():
         @command(arg_parser=CommandParser(
             Regex('search_pattern', replace=c.replace),
             Choice(('yep', False), ('yes', True)),
-            VarArgs("args", placeholder="..."),
         ), lookup_with_arg_parser=True)
         def search(textview, sender, args):
             raise NotImplementedError("should not get here")
@@ -160,30 +159,30 @@ def test_CommandBar_get_placeholder():
     yield test, c(text='cmd   ', expect="sort_regex")
     yield test, c(text='cmd  /', expect="//")
     yield test, c(text='cmd   :', expect="::")
-    yield test, c(text='/', expect="/ yep ...")
-    yield test, c(text='/x', expect="/ yep ...")
-    yield test, c(text='/x ', expect="/ yep ...")
-    yield test, c(text='/x/ ', expect="yep ...")
-    yield test, c(text='/x/  ', expect="...")
-    yield test, c(text='/x/ y', expect="... ...")
+    yield test, c(text='/', expect="/ yep")
+    yield test, c(text='/x', expect="/ yep")
+    yield test, c(text='/x ', expect="/ yep")
+    yield test, c(text='/x/ ', expect="yep")
+    yield test, c(text='/x/  ', expect="")
+    yield test, c(text='/x/ y', expect="...")
     yield test, c(text='/x/ y ', expect="")
     yield test, c(text='/x/ a', expect="")
     c = c(replace=True)
-    yield test, c(text='/', expect="// yep ...")
-    yield test, c(text='/     ', expect="// yep ...")
-    yield test, c(text='/x', expect="// yep ...")
-    yield test, c(text='/x ', expect="// yep ...")
-    yield test, c(text='/x/ ', expect="/ yep ...")
-    yield test, c(text='/x/  ', expect="/ yep ...")
-    yield test, c(text='/x//', expect=" yep ...")
-    yield test, c(text='/x//i', expect=" yep ...")
-    yield test, c(text='/x// ', expect="yep ...")
-    yield test, c(text='/x// y', expect="... ...")
+    yield test, c(text='/', expect="// yep")
+    yield test, c(text='/     ', expect="// yep")
+    yield test, c(text='/x', expect="// yep")
+    yield test, c(text='/x ', expect="// yep")
+    yield test, c(text='/x/ ', expect="/ yep")
+    yield test, c(text='/x/  ', expect="/ yep")
+    yield test, c(text='/x//', expect=" yep")
+    yield test, c(text='/x//i', expect=" yep")
+    yield test, c(text='/x// ', expect="yep")
+    yield test, c(text='/x// y', expect="...")
     yield test, c(text='/x// y ', expect="")
     yield test, c(text='/x// a', expect="")
 
 def test_CommandBar_get_completions():
-    from editxt.command.parser import CommandParser, Choice, Regex, VarArgs
+    from editxt.command.parser import CommandParser, Choice, Regex
     def test(c):
         m = Mocker()
         beep = m.replace(ak, 'NSBeep')

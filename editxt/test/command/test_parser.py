@@ -576,13 +576,13 @@ def test_RegexPattern():
 def test_SubParser():
     sub = SubArgs("val", Int("num"), abc="xyz")
     su2 = SubArgs("str", Choice(('yes', True), ('no', False)), abc="mno")
-    su3 = SubArgs("stx", VarArgs("args", placeholder="..."), abc="pqr")
+    su3 = SubArgs("stx", String("args"), abc="pqr")
     arg = SubParser("var", sub, su2, su3)
     eq_(str(arg), 'var')
     eq_(repr(arg),
         "SubParser('var', SubArgs('val', Int('num'), abc='xyz'), "
         "SubArgs('str', Choice(('yes', True), ('no', False)), abc='mno'), "
-        "SubArgs('stx', VarArgs('args', placeholder='...'), abc='pqr'))")
+        "SubArgs('stx', String('args'), abc='pqr'))")
 
     test = make_completions_checker(arg)
     yield test, "", (["str", "stx", "val"], 0)

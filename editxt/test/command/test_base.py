@@ -75,7 +75,7 @@ def test_command_decorator_defaults():
     eq_(cmd.hotkey, None)
     eq_(cmd.name, 'cmd')
     eq_(cmd.is_enabled(None, None), True)
-    eq_(cmd.arg_parser.parse('abc def'), Options(args=['abc', 'def']))
+    eq_(cmd.arg_parser.parse(''), Options())
     eq_(cmd.lookup_with_arg_parser, False)
 
 

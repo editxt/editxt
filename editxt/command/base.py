@@ -24,7 +24,7 @@ from functools import wraps
 import AppKit as ak
 import Foundation as fn
 
-from editxt.command.parser import CommandParser, Options, VarArgs
+from editxt.command.parser import CommandParser, Options
 from editxt.command.util import make_command_predicate
 from editxt.controls.alert import Caller
 from editxt.datatypes import WeakProperty
@@ -60,7 +60,7 @@ def command(func=None, name=None, title=None, hotkey=None,
         the command is enabled in the Text menu. Always enabled if None.
         Signature: `is_enabled(textview, sender)`.
     :param arg_parser: An object inplementing the `CommandParser` interface.
-        Defaults to `CommandParser(VarArgs("args"))`.
+        Defaults to `CommandParser()`.
     :param lookup_with_arg_parser: If True, use the `arg_parser.parse` to
         lookup the command. The parser should return None if it receives
         a text string that cannot be parsed.
@@ -88,7 +88,7 @@ def command(func=None, name=None, title=None, hotkey=None,
             func.title = title
         func.hotkey = hotkey
         func.is_enabled = is_enabled or (lambda textview, sender: True)
-        func.arg_parser = arg_parser or CommandParser(VarArgs("args"))
+        func.arg_parser = arg_parser or CommandParser()
         func.lookup_with_arg_parser = lookup_with_arg_parser
         func.parse = parse
         func.arg_string = arg_string
