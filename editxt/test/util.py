@@ -292,6 +292,8 @@ class test_app(object):
 
     def temp_path(self, path):
         """Make path relative to this test app's temp dir"""
+        if path == "/":
+            return self.tmp
         assert path.lstrip("/")[0] not in "\\:", path.lstrip("/")
         return os.path.join(self.tmp, path.lstrip("/"))
 

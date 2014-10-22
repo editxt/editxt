@@ -32,6 +32,7 @@ from editxt.command.util import has_selection, iterlines
 from editxt.command.changeindent import reindent
 from editxt.command.diff import diff
 from editxt.command.find import find
+from editxt.command.openfile import open_
 from editxt.command.sortlines import sort_lines
 from editxt.command.wraplines import wrap_at_margin, wrap_lines
 
@@ -58,6 +59,7 @@ def load_commands():
             reindent,
             find,
             diff,
+            open_,
             clear_highlighted_text,
             reload_config,
             set_variable,
@@ -90,7 +92,7 @@ def show_command_bar(textview, sender, args):
     if window is None:
         ak.NSBeep()
     else:
-        window.command.activate()
+        window.command.activate(text=args or "")
 
 
 @command(name='goto', title="Goto Line",

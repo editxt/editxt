@@ -46,6 +46,7 @@ def test_load_commands():
         mod.reindent,
         mod.find,
         mod.diff,
+        mod.open_,
         mod.clear_highlighted_text,
         mod.reload_config,
         mod.set_variable,
@@ -553,6 +554,9 @@ class CommandTester(object):
             class current_editor:
                 text_view = kw.pop("textview", None)
                 def message(msg, msg_type=const.INFO):
+                    if kw.get("error"):
+                        eq_(msg, kw["error"])
+                        return
                     if isinstance(msg, Exception):
                         raise msg
                     raise AssertionError(msg)

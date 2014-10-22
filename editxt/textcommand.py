@@ -46,13 +46,18 @@ class CommandBar(object):
         self.text_commander = text_commander
         self.history_view = None
 
-    def activate(self):
+    def activate(self, text=""):
         # abstract to a PyObjC-specific subclass when implementing other frontend
         editor = self.window.current_editor
         if editor is None:
             ak.NSBeep()
             return
-        editor.command_view.activate(self)
+        editor.command_view.activate(self, text)
+
+    def parser(self, command):
+        parser = command.arg_parser
+        view = self.window.current_editor.text_view
+        return command.arg_parser.with_context(view)
 
     def execute(self, text):
         self.reset()
@@ -66,7 +71,7 @@ class CommandBar(object):
         command = self.text_commander.lookup(cmdstr)
         if command is not None:
             try:
-                args = command.arg_parser.parse(argstr)
+                args = self.parser(command).parse(argstr)
             except Exception:
                 msg = 'argument parse error: {}'.format(argstr)
                 self.message(msg, exc_info=True)
@@ -111,7 +116,7 @@ class CommandBar(object):
         """Get arguments placeholder text"""
         command, argstr = self._find_command(text)
         if command is not None:
-            placeholder = command.arg_parser.get_placeholder(argstr)
+            placeholder = self.parser(command).get_placeholder(argstr)
             if placeholder:
                 if text and not argstr and not text.endswith(" "):
                     return " " + placeholder
@@ -135,7 +140,7 @@ class CommandBar(object):
         else:
             command, argstr = self._find_command(text)
             if command is not None:
-                words = command.arg_parser.get_completions(argstr)
+                words = self.parser(command).get_completions(argstr)
                 index = (0 if words else -1)
             else:
                 words, index = [], -1
@@ -192,6 +197,7 @@ class TextCommandController(object):
         return self.commands.get(alias)
 
     def lookup_full_command(self, command_text, full_parse=True):
+        # TODO parser.with_context
         for command in self.lookup_full_commands:
             if not full_parse:
                 if command.arg_parser.match(command_text):

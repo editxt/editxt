@@ -70,9 +70,18 @@ class CommandParser(object):
     :params *argspec: Argument specifiers.
     """
 
-    def __init__(self, *argspec):
+    def __init__(self, *argspec, context=None):
         self.argspec = argspec
+        self.context = context
         # TODO assert no duplicate arg names
+
+    def with_context(self, *args, **kw):
+        """Get a new command parser with the given context
+
+        See ``Field.with_context`` for argument specification.
+        """
+        argspec = (arg.with_context(*args, **kw) for arg in self.argspec)
+        return CommandParser(*argspec)
 
     def match(self, text, index=0):
         """Check if first argument can consume text at index
@@ -609,16 +618,20 @@ class File(String):
 
         :returns: (<path>, <index>)
         """
-        if self.path is None:
-            raise Error("cannot consume file path without context")
         path, stop = super().consume(text, index)
         if path is None:
             return path, stop
         if path.endswith((os.path.sep, "/")):
             raise ParseError("not a file: %s" % (path,), self, index, stop)
+        if os.path.isabs(path):
+            return path, stop
+        if self.path is None:
+            raise Error("cannot make absolute path (no context): {}".format(path))
         return os.path.join(self.path, path), stop
 
     def get_completions(self, token):
+        if self.path is None:
+            raise Error("cannot get completions (no context): {}".format(token))
         join = os.path.join
         path = join(self.path, token)
         root, name = os.path.split(path)
@@ -635,6 +648,8 @@ class File(String):
         return [join(root, n)[len(self.path) + 1:] for n in names]
 
     def arg_string(self, value):
+        if self.path is None:
+            raise Error("cannot get arg string (no context): {}".format(value))
         if value and value.endswith((os.path.sep, "/")):
             raise Error("not a file: {}={!r}".format(self.name, value))
         if value.startswith(os.path.join(self.path, "")):
