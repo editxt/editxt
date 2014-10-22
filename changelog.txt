@@ -20,7 +20,7 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This file contains notable new features and other large changes. See
-the source repository for the gory details of what actually happened.
+https://github.com/editxt/editxt for details of what actually happened.
 
 2014-10-21 - 1.5.1
   - Fix bug in automatic file reload.
