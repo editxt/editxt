@@ -68,10 +68,6 @@ class Window(object):
         wc.propsViewButton.setImage_(load_image(const.PROPS_DOWN_BUTTON_IMAGE))
         wc.propsViewButton.setAlternateImage_(load_image(const.PROPS_UP_BUTTON_IMAGE))
 
-        fn.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
-            wc, "windowDidBecomeKey:", ak.NSWindowDidBecomeKeyNotification, wc.window())
-        assert hasattr(WindowController, "windowDidBecomeKey_")
-
         wc.cleanImages = {
             BUTTON_STATE_HOVER: load_image(const.CLOSE_CLEAN_HOVER),
             BUTTON_STATE_NORMAL: load_image(const.CLOSE_CLEAN_NORMAL),

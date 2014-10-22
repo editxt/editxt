@@ -99,11 +99,6 @@ def test_window_did_load():
         wc.propsViewButton.setImage_(load_image(const.PROPS_DOWN_BUTTON_IMAGE))
         wc.propsViewButton.setAlternateImage_(load_image(const.PROPS_UP_BUTTON_IMAGE))
 
-        win = ed.wc.window() >> m.mock(ak.NSWindow)
-        note_ctr = m.replace(fn, 'NSNotificationCenter')
-        note_ctr.defaultCenter().addObserver_selector_name_object_(
-            ed.wc, "windowDidBecomeKey:", ak.NSWindowDidBecomeKeyNotification, win)
-
         wc.cleanImages = {
             cells.BUTTON_STATE_HOVER: load_image(const.CLOSE_CLEAN_HOVER),
             cells.BUTTON_STATE_NORMAL: load_image(const.CLOSE_CLEAN_NORMAL),
