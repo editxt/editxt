@@ -230,7 +230,8 @@ class TextDocument(object):
         :returns: True if the file was loaded from disk, otherwise False.
         """
         self.persistent_path = self.file_path
-        if self.file_exists():
+        self._refresh_file_mtime()
+        if self._filestat is not None:
             data = ak.NSData.dataWithContentsOfFile_(self.file_path)
             success, err = self.read_from_data(data)
             if success:

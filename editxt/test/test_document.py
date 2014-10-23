@@ -419,9 +419,15 @@ def test_TextDocument__load():
             else:
                 eq_(path_type, "abs-exists")
             doc = app.document_with_path(path)
-            if path_type != "abs-exists":
+            if path_type == "abs-exists":
+                content = "content changed"
+                with open(path, "w") as fh:
+                    fh.write(content)
+                assert doc.is_externally_modified()
+            else:
                 content = ""
             eq_(doc.text, content) # triggers doc._load()
+            assert not doc.is_externally_modified()
     yield test, "relative"
     yield test, "abs-missing"
     yield test, "abs-exists"
