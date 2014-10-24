@@ -203,7 +203,7 @@ class SheetController(CommandController):
             self.gui.window(), self.textview.window(), self.caller,
             "alertDidEnd:returnCode:contextInfo:", 0)
 
-    def sheet_did_end(self, code):
+    def sheet_did_end(self, code, end_alert):
         self.gui.window().orderOut_(None)
 
     @objc_delegate

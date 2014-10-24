@@ -22,6 +22,9 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+2014-10-24 - 1.5.3
+  - Fix bug that prevented text command sheets from closing.
+
 2014-10-22 - 1.5.2
   - Fix bad “Save as...” prompt on save after reload.
 
