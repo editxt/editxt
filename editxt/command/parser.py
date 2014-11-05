@@ -152,7 +152,7 @@ class CommandParser(object):
         :param text: Argument string.
         :returns: A list of possible values to complete the command.
         """
-        return self.parse_completions(text, 0)[0] # or [] TODO always return list
+        return self.parse_completions(text, 0)[0] or []
 
     def parse_completions(self, text, index):
         """Parse command text and return completions for the final argument
@@ -168,6 +168,7 @@ class CommandParser(object):
             values, index = arg.parse_completions(text, index)
             if values is not None:
                 return values, index
+        # ??? None indicates an error (the last token could not be consumed) ???
         return None, index
 
     def arg_string(self, options, strip=True):

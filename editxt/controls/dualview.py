@@ -28,7 +28,7 @@ class DualView(ak.NSView):
     @objc.namedSelector(
         b"init:topView:bottomView:topHeight:bottomHeight:flexTop:minCollapse:")
     def init(self, rect, top_view, bottom_view, top_height, bottom_height,
-             min_collapse=0.5, flex_top=True):
+             min_collapse=0, flex_top=True):
         """Initialize view with two subviews, top and bottom
 
         :param rect: The initial frame rect for this view.
@@ -42,7 +42,7 @@ class DualView(ak.NSView):
         hidden.
         :param min_collapse: The minimum fraction of this view's
         height that should be consumed by the flexible view (see
-        `flex_top`).
+        `flex_top`) unless that view requests a height of zero.
         :param flex_top: Expand or collapse the top view to consume the
         extra space or accommodate as much of the bottom view as
         possible if this is `True` (the default) and the sum of the
@@ -95,7 +95,7 @@ class DualView(ak.NSView):
         top_height = self.top_height()
         bottom_height = self.bottom_height()
         offset = self.subview_offset_rect
-        if not bottom_height and self.flex_top:
+        if not bottom_height:
             rect.size.width += offset.size.width
             rect.size.height += offset.size.height
             rect.origin.x += offset.origin.x
@@ -104,7 +104,7 @@ class DualView(ak.NSView):
             self.top.setHidden_(False)
             self.bottom.setHidden_(True)
             return
-        if not top_height and not self.flex_top:
+        if not top_height:
             rect.size.width += offset.size.width
             rect.size.height += offset.size.height
             rect.origin.x += offset.origin.x

@@ -214,7 +214,7 @@ def test_CommandBar_get_completions():
     yield test, c(text='cmd s', expect=(["selection"], 0))
     yield test, c(text='cmd se', expect=(["selection"], 0))
     yield test, c(text='cmd selection', expect=(["selection"], 0))
-    yield test, c(text='cmd sec', expect=(None, -1))
+    yield test, c(text='cmd sec', expect=([], -1))
     yield test, c(text='cmd s ', expect=(["forward", "reverse"], 0))
     yield test, c(text='cmd s r', expect=(["reverse"], 0))
     yield test, c(text='cmd s x', expect=(["xyz"], 0))

@@ -66,12 +66,23 @@ Build/package EditXT.app::
     # package in a zip file for distribution::
     python setup.py py2app --package
 
+View release stats:
+
+    curl https://api.github.com/repos/editxt/editxt/releases | grep -E "download_count|name" | less
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
 Add open file command
   - project path
   - file browser field type
+  - improve tab completion
+x    - display completion list above command bar
+x    - narrow completion list when typing (but do not hide it)
+    - completion item should be able to control if it is padded with a space,
+      where it begins, where it ends, etc.
+x    - fix ListView.preferred_height (does not always return the correct value)
+    - fix proposed completion after typing that narrows completion list (maybe not too important)
 Add ack-like command
 Add move command to relocate file on disk
 Add py command for quick python command execution

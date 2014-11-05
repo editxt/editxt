@@ -27,25 +27,44 @@ from Quartz.CoreGraphics import CGRectIntersectsRect
 
 from editxt.constants import ERROR, HTML, INFO, LARGE_NUMBER_FOR_TEXT
 from editxt.controls.dualview import DualView, SHOULD_RESIZE
+from editxt.platform.kvo import KVOList, KVOProxy
 
 log = logging.getLogger(__name__)
 ACTIVATE = "activate"
 MESSAGE_COLORS = {INFO: None, ERROR: ak.NSColor.redColor()}
 
+
 class CommandView(DualView):
 
     def initWithFrame_(self, rect):
-        self.input = ContentSizedTextView.alloc().initWithFrame_(rect)
-        self.input.scroller.setBorderType_(ak.NSBezelBorder)
         self.output = ContentSizedTextView.alloc().initWithFrame_(rect)
         self.output.scroller.setBorderType_(ak.NSBezelBorder)
+        self.completing = Completing()
+        self.completions = AutoCompleteView(
+            on_selection_changed=self.propose_completion)
+        self.completions.scroller.setBorderType_(ak.NSBezelBorder)
+        self.input = ContentSizedTextView.alloc().initWithFrame_(rect)
+        self.input.scroller.setBorderType_(ak.NSBezelBorder)
 
+        def completions_height():
+            return self.completions.preferred_height if self.completions else 0
         def input_height(rect=None):
-            return 0 if self.command is None else self.input.preferred_height
+            return self.input.preferred_height
+        self.input_group = DualView.alloc().init(rect,
+            self.completions.scroller, self.input.scroller,
+            completions_height, input_height)
+        self.input_group.subview_offset_rect = fn.NSMakeRect(-1, -1, 2, 1)
+        ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
+            self.input_group, "tile:", SHOULD_RESIZE, self.input)
+
+        def input_group_height():
+            group = self.input_group
+            return 0 if self.command is None \
+                     else (group.top_height() + group.bottom_height() - 1)
         def output_height():
             return self.output.preferred_height if self.output.string() else 0
         super().init(rect,
-            self.output.scroller, self.input.scroller, output_height, input_height)
+            self.output.scroller, self.input_group, output_height, input_group_height)
         self.subview_offset_rect = fn.NSMakeRect(-1, -1, 2, 1)
 
         self.output.setEditable_(False)
@@ -60,14 +79,17 @@ class CommandView(DualView):
         self.command = None
         self._last_completions = [None]
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
-            self, "shouldResize:", SHOULD_RESIZE, self.input)
+            self, "shouldResize:", SHOULD_RESIZE, self.input_group)
         return self
 
     def dealloc(self):
         self.input = None
+        self.completions = None
         self.output = None
         self.command = None
         ak.NSNotificationCenter.defaultCenter().removeObserver_(self)
+        ak.NSNotificationCenter.defaultCenter().removeObserver_(self.input_group)
+        self.input_group = None
         super().dealloc()
 
     def __bool__(self):
@@ -98,6 +120,7 @@ class CommandView(DualView):
     def deactivate(self):
         if self.command is not None:
             self.command, command = None, self.command
+            self.completions.items = []
             editor = command.window.current_editor
             if editor is not None and self.window() is not None:
                 self.window().makeFirstResponder_(editor.text_view)
@@ -131,21 +154,36 @@ class CommandView(DualView):
 
     def textView_doCommandBySelector_(self, textview, selector):
         if selector == "cancelOperation:": # escape key
-            self.deactivate()
+            if self.completions:
+                self.completions.items = []
+                self.should_resize()
+            else:
+                self.deactivate()
             return True
         if selector == "insertTab:":
-            self.complete(textview)
+            if self.completions:
+                word = self.completions.selected_item
+                self.auto_complete(textview, word or "")
+                self.complete(textview)
+            else:
+                self.complete(textview)
             return True
         if selector == "insertBacktab:":
             # ignore
             return True
         if selector == "moveUp:":
             #assert view is self, (view, self)
-            self.navigate_history()
+            if self.completions:
+                self.completions.select_prev()
+            else:
+                self.navigate_history()
             return True
         if selector == "moveDown:":
             #assert view is self, (view, self)
-            self.navigate_history(forward=True)
+            if self.completions:
+                self.completions.select_next()
+            else:
+                self.navigate_history(forward=True)
             return True
         if selector == "insertNewline:":
             text = textview.string()
@@ -155,6 +193,12 @@ class CommandView(DualView):
                 self.deactivate()
                 return True
         return False
+
+    def textViewDidChangeSelection_(self, notification):
+        textview = notification.object()
+        if self.completions and not self.completing:
+            from editxt.platform.events import call_later
+            call_later(0, self.complete, textview, auto_one=False)
 
     def get_completions(self, textview, range=None):
         if range is None:
@@ -169,32 +213,54 @@ class CommandView(DualView):
         self._last_completions = text, words, default_index
         return text, words, default_index
 
-    def complete(self, textview):
+    def complete(self, textview, auto_one=True):
         text, words, default_index = self.get_completions(textview)
-        if len(words) == 1:
+        if len(words) == 1 and auto_one:
             # replace immediately with single suggestion
-            word = words[0]
-            index = len(text) - len(word)
-            if index < 0:
-                index = 0
-            while index < len(text):
-                if word.startswith(text[index:]):
-                    break
-                index += 1
-            assert len(text) >= index, (text, index)
-            range = (index, len(text) - index)
-            word += " "
-            if textview.shouldChangeTextInRange_replacementString_(range, word):
+            self.auto_complete(textview, words[0], (len(text), 0))
+        else:
+            # show auto-complete menu
+            self.completions.items = [Completion(w) for w in words]
+            self.should_resize()
+
+    def propose_completion(self, items):
+        if not items:
+            word = ""
+        else:
+            word = items[0]
+        with self.completing:
+            added_range = self.auto_complete(self.input, word)
+            self.input.setSelectedRange_(added_range)
+
+    def auto_complete(self, textview, word, range=None):
+        """Auto-complete word replacing range
+
+        :param word: The word to complete.
+        :param range: The range of characters to replace.
+        :returns: The range of characters that were added.
+        """
+        if range is None:
+            range = self.input.selectedRanges()[0].rangeValue()
+        start, length = range
+        text = self.input.string()
+        assert start + length <= len(text), (range, text)
+        index = start - len(word)
+        if index < 0:
+            index = 0
+        while index < start:
+            if word.startswith(text[index:start]):
+                break
+            index += 1
+        assert start >= index, (text, index)
+        range = (index, start - index + length)
+        assert len(word) - (start - index) >= 0, (word, start, index)
+        if len(text) == start + length and word:
+            word += " " # append space if completing at end of input
+        if textview.shouldChangeTextInRange_replacementString_(range, word):
+            with self.completing:
                 textview.replaceCharactersInRange_withString_(range, word)
                 textview.didChangeText()
-        else:
-            # show menu of replacements
-            textview.complete_(self)
-
-    def textView_completions_forPartialWordRange_indexOfSelectedItem_(
-            self, textview, words, range, item_index):
-        words, default_index = self.get_completions(textview, range)[1:]
-        return [w + " " for w in words], default_index
+            return (start, len(word) - (start - index))
 
     def navigate_history(self, forward=False):
         old_text = self.input.string()
@@ -343,3 +409,85 @@ class ContentSizedTextView(ak.NSTextView):
         layout.drawGlyphsForGlyphRange_atPoint_(
             glyph_range, self.textContainerInset())
         self.unlockFocus()
+
+
+class AutoCompleteView(object):
+
+    def __init__(self, on_double_click=None, on_selection_changed=None):
+        if on_selection_changed is not None:
+            _osc = on_selection_changed
+            def on_selection_changed(items):
+                return _osc([x.value for x in items])
+        from editxt.platform.views import ListView
+        self._items = KVOList()
+        self.view = ListView(
+            self._items,
+            [{"name": "value", "title": None}],
+            on_double_click=on_double_click,
+            on_selection_changed=on_selection_changed,
+        )
+        self.view.view.setRefusesFirstResponder_(True)
+
+    @property
+    def scroller(self):
+        return self.view.scroll
+
+    @property
+    def preferred_height(self):
+        return self.view.preferred_height
+
+    def __bool__(self):
+        return bool(self._items)
+
+    @property
+    def items(self):
+        return self._items
+
+    @items.setter
+    def items(self, items):
+        self._items[:] = [KVOProxy(v) for v in items]
+        if items:
+            self.view.select(0)
+
+    def select_next(self):
+        index = self.view.selected_row
+        if index > -1 and index < len(self._items) - 1:
+            self.view.select(index + 1)
+        else:
+            self.view.select(0)
+
+    def select_prev(self):
+        index = self.view.selected_row
+        if index > 0:
+            self.view.select(index - 1)
+        else:
+            self.view.select(len(self._items) - 1)
+
+    @property
+    def selected_item(self):
+        row = self.view.selected_row
+        return self._items[row].value if row > -1 else None
+
+
+class Completion(object):
+
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return "{}({!r})".format(type(self).__name__, self.value)
+
+
+class Completing(object):
+
+    def __init__(self):
+        self.level = 0
+
+    def __bool__(self):
+        return bool(self.level)
+
+    def __enter__(self):
+        self.level += 1
+
+    def __exit__(self, *a):
+        self.level -= 1

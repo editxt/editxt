@@ -50,15 +50,16 @@ class ListView(object):
 
     :param on_double_click: optional function to be called when an item in the
     list is double-clicked. It is called with one argument: the item.
+    :param on_selection_changed: optional function to be called when selection
+    changes. ``on_selection_changed(selected_items)``
     """
 
-    def __init__(self, items, colspec, *, on_double_click=None):
+    def __init__(self, items, colspec, **kw):
         self.items = items
         self.colspec = colspec
-        self.on_double_click = on_double_click
-        self._init_table()
+        self._init_table(**kw)
 
-    def _init_table(self):
+    def _init_table(self, on_double_click=None, on_selection_changed=None):
         self.controller = ctrl = ak.NSArrayController.alloc().init()
         self.view = view = ak.NSTableView.alloc().init()
         self.scroll = scroll = ak.NSScrollView.alloc().init()
@@ -72,7 +73,7 @@ class ListView(object):
         for spec in self.colspec:
             name = spec["name"]
             attr = spec["attr"] if "attr" in spec else name
-            title = spec.get("title", name.title())
+            title = spec.get("title", name.title()) or ""
             keypath = "arrangedObjects" if attr is None else ("arrangedObjects." + attr)
             column = ak.NSTableColumn.alloc().initWithIdentifier_(name)
             column.bind_toObject_withKeyPath_options_(ak.NSValueBinding, ctrl, keypath, None)
@@ -80,10 +81,20 @@ class ListView(object):
             column.headerCell().setStringValue_(title)
             column.setEditable_(spec.get("editable", False))
             view.addTableColumn_(column)
+        if all(c.get("title", 1) is None for c in self.colspec):
+            view.setHeaderView_(None)
 
         self.delegate = TableDelegate.alloc().init_content_(view, ctrl)
-        if self.on_double_click is not None:
-            self.delegate.setup_double_click(self.on_double_click)
+        self.delegate.on_selection_changed = on_selection_changed
+        if on_double_click is not None:
+            self.delegate.setup_double_click(on_double_click)
+
+    @property
+    def preferred_height(self):
+        header = 0 if self.view.headerView() is None \
+                   else self.view.headerView().frame().size.height
+        space = self.view.intercellSpacing().height
+        return (self.view.rowHeight() + space) * len(self.items) + header
 
     def become_subview_of(self, view, focus=True):
         self.scroll.setFrame_(view.bounds())
@@ -91,6 +102,20 @@ class ListView(object):
         if focus:
             assert view.window() is not None, "cannot focus view: %r" % (view,)
             view.window().makeFirstResponder_(self.view)
+
+    @property
+    def selected_row(self):
+        """Get the last selected row"""
+        return self.view.selectedRow()
+
+    def select(self, indexes, extend=False):
+        """Select the given indexes
+        """
+        if not isinstance(indexes, set):
+            indexes = ak.NSIndexSet.indexSetWithIndex_(indexes)
+        else:
+            raise NotImplementedError
+        self.view.selectRowIndexes_byExtendingSelection_(indexes, extend)
 
     def close(self):
         self.delegate.close()
@@ -109,6 +134,8 @@ class TableDelegate(ak.NSObject):
         self = super().init()
         self.table = table
         self.content = content
+        self.on_selection_changed = None
+        table.setDelegate_(self)
         return self
 
     def setup_double_click(self, callback):
@@ -122,7 +149,20 @@ class TableDelegate(ak.NSObject):
         if row >= 0 and row < len(items):
             self.double_click_callback(proxy_target(items[row]))
 
+    def tableViewSelectionDidChange_(self, notification):
+        if self.on_selection_changed is None:
+            return
+        table = notification.object()
+        if table.numberOfSelectedRows() < 1:
+            self.on_selection_changed([])
+        elif table.numberOfSelectedRows() > 1:
+            raise NotImplementedError
+        else:
+            item = self.content.arrangedObjects()[table.selectedRow()]
+            self.on_selection_changed([proxy_target(item)])
+
     def close(self):
         self.table.setTarget_(None)
+        self.table.setDelegate_(None)
         self.table = None
         self.content = None

@@ -239,7 +239,7 @@ def test_KVOProxy():
     yield run, test_get
     yield run, test_set
     yield run, test_set_matching
-    yield run, test_proxy_proxy
+    #yield run, test_proxy_proxy
 
 
 def test_KVOLink():

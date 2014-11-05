@@ -118,7 +118,7 @@ def test_CommandParser():
     yield test, "high", ["high"]
     yield test, "high ", []
     yield test, "high 4", []
-    yield test, "high x", None # ??? None indicates an error (the last token could not be consumed) ???
+    yield test, "high x", []
     yield test, "high  4", ["4runner"]
 
 def test_CommandParser_empty():
@@ -174,7 +174,7 @@ def test_CommandParser_with_SubParser():
         eq_(parser.get_completions(text), result)
     yield test, "", ["num"]
     yield test, " ", ["yes", "no"]
-    yield test, "  ", None
+    yield test, "  ", []
     yield test, "n", ["num"]
     yield test, "n ", []
     yield test, "num ", []

@@ -92,15 +92,15 @@ class KVOList(fn.NSObject):
     def __setitem__(self, index, obj):
         if isinstance(index, slice):
             self.mutableArrayValueForKey_("items")[index] = [
-                item.proxy for item in obj]
+                proxy(item) for item in obj]
         else:
-            self.mutableArrayValueForKey_("items")[index] = obj.proxy
+            self.mutableArrayValueForKey_("items")[index] = proxy(obj)
 
     def __delitem__(self, index):
         del self.mutableArrayValueForKey_("items")[index]
 
     def __contains__(self, obj):
-        return obj.proxy in self._items
+        return proxy(obj) in self._items
 
     def __iter__(self):
         return (proxy_target(item) for item in self._items)
@@ -109,20 +109,20 @@ class KVOList(fn.NSObject):
         return '%s(%r)' % (type(self).__name__, list(self))
 
     def append(self, obj):
-        self.mutableArrayValueForKey_("items").append(obj.proxy)
+        self.mutableArrayValueForKey_("items").append(proxy(obj))
 
     def extend(self, items):
         self.mutableArrayValueForKey_("items").extend(
-            item.proxy for item in items)
+            proxy(item) for item in items)
 
     def index(self, obj):
-        return self._items.index(obj.proxy)
+        return self._items.index(proxy(obj))
 
     def insert(self, index, obj):
-        self.mutableArrayValueForKey_("items").insert(index, obj.proxy)
+        self.mutableArrayValueForKey_("items").insert(index, proxy(obj))
 
     def remove(self, obj):
-        self.mutableArrayValueForKey_("items").remove(obj.proxy)
+        self.mutableArrayValueForKey_("items").remove(proxy(obj))
 
     def pop(self, item=None):
         args = () if item is None else (item,)
@@ -188,9 +188,6 @@ class KVOProxy(fn.NSObject):
                 setattr(self._target, key, value)
 
     def __getattr__(self, key):
-        if key == "proxy":
-            raise AttributeError(
-                "{} has no attribute 'proxy'".format(type(self).__name__))
         return getattr(self._target, key)
 
     def __setattr__(self, key, value):
@@ -221,6 +218,11 @@ class KVOProxy(fn.NSObject):
 def proxy_target(proxy):
     """Retrieve the proxied object"""
     return proxy._target
+
+
+def proxy(item):
+    """Retrieve the proxy from the given object"""
+    return item if isinstance(item, KVOProxy) else item.proxy
 
 
 #class WeakKVOProxy(KVOProxy):
