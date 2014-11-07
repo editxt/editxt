@@ -28,7 +28,7 @@ import Foundation as fn
 
 import editxt.constants as const
 from editxt.command.base import CommandError
-from editxt.command.parser import ArgumentError
+from editxt.command.parser import ArgumentError, DelimitedWord
 from editxt.commands import load_commands
 from editxt.history import History
 from editxt.util import WeakProperty
@@ -145,6 +145,36 @@ class CommandBar(object):
             else:
                 words, index = [], -1
         return words, index
+
+    def auto_complete(self, text, word, replace_range):
+        """Get auto-complete word and range to be replaced
+
+        All range objects have the semantics of a two-tuple.
+
+        :param text: Command bar text.
+        :param word: The word to complete.
+        :param replace_range: The range of characters to replace.
+        :returns: (<replace text>, <replace range>, <select range>)
+        """
+        start, length = replace_range
+        assert start + length <= len(text), (replace_range, text)
+        index = start - len(word)
+        if index < 0:
+            index = 0
+        while index < start:
+            if word.startswith(text[index:start]):
+                break
+            index += 1
+        assert start >= index, (text, index)
+        replace = (index, start - index + length)
+        assert len(word) - (start - index) >= 0, (word, start, index)
+        if len(text) == start + length and word:
+            # append delimiter if completing at end of input
+            if isinstance(word, DelimitedWord):
+                word = word.complete()
+            else:
+                word += " "
+        return word, replace, (start, len(word) - (start - index))
 
     def should_insert_newline(self, text, index):
         """Return true if a newline can be inserted in text at index"""

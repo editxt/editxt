@@ -25,7 +25,7 @@ from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_, assert_raises
 import AppKit as ak
 import Foundation as fn
-from editxt.test.util import TestConfig, tempdir
+from editxt.test.util import gentest, TestConfig, tempdir
 
 import editxt.constants as const
 import editxt.textcommand as mod
@@ -222,6 +222,33 @@ def test_CommandBar_get_completions():
     yield test, c(text='/ ', expect=([], -1))
     yield test, c(text='/a', expect=([], -1))
     yield test, c(text='/abc/ ', expect=(["yes", "no"], 0))
+
+def test_CommandBar_auto_complete():
+    from editxt.command.parser import CommandParser, Choice, Regex, DelimitedWord
+    @command(arg_parser=CommandParser(
+        Choice(('selection', True), ('all', False), ('self', None)),
+        Choice(('forward', False), ('reverse xyz', True), name='reverse'),
+        Regex('sort_regex', True),
+    ))
+    def cmd(textview, sender, args):
+        raise NotImplementedError("should not get here")
+    bar = CommandTester(cmd)
+
+    @gentest
+    def test(text, word, range, expect):
+        eq_(bar.auto_complete(text, word, range), expect)
+
+    yield test("c", "cmd", (1, 0), ("cmd ", (0, 1), (1, 3)))
+    yield test("cm", "cmd", (2, 0), ("cmd ", (0, 2), (2, 2)))
+    yield test("cmd", "cmd", (3, 0), ("cmd ", (0, 3), (3, 1)))
+    yield test("cmxyz", "cmd", (2, 3), ("cmd ", (0, 5), (2, 2)))
+    yield test("cmd sel", "select", (7, 0), ("select ", (4, 3), (7, 4)))
+
+    yield test("c sel", "cmd", (1, 0), ("cmd", (0, 1), (1, 2)))
+
+    word = DelimitedWord("dir", lambda:"/")
+    yield test("d", word, (1, 0), ("dir/", (0, 1), (1, 3)))
+    yield test("d/file.txt", word, (1, 0), ("dir", (0, 1), (1, 2)))
 
 def test_CommandBar_get_history():
     def test(nav):

@@ -28,7 +28,7 @@ from nose.tools import eq_
 from editxt.test.util import assert_raises, TestConfig
 
 from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
-    File, CommandParser, SubArgs, SubParser, VarArgs,
+    File, CommandParser, SubArgs, SubParser, VarArgs, DelimitedWord,
     identifier, Options, Error, ArgumentError, ParseError)
 
 log = logging.getLogger(__name__)
@@ -494,6 +494,17 @@ def test_File():
         yield test, "../dir", (["dir/"], 6)
         yield test, "../dir/", (["a.txt", "b.txt"], 7)
         yield test, "val", ([], 3)
+
+        def test(input, output):
+            words = arg.get_completions(input)
+            assert all(isinstance(w, DelimitedWord) for w in words), \
+                repr([w for w in words if not isinstance(w, DelimitedWord)])
+            eq_([w.complete() for w in words], output)
+        yield test, "", ["a.txt ", "b.txt "]
+        yield test, "x", []
+        yield test, "..", ["../"]
+        yield test, "../", ["dir/", "file.doc ", "file.txt "]
+        yield test, "../dir", ["dir/"]
 
 def test_Regex():
     arg = Regex('regex')

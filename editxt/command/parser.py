@@ -631,22 +631,25 @@ class File(String):
         return os.path.join(self.path, path), stop
 
     def get_completions(self, token):
+        from os.path import exists, isdir, join, sep, split
         if self.path is None:
             raise Error("cannot get completions (no context): {}".format(token))
-        join = os.path.join
         path = join(self.path, token)
-        root, name = os.path.split(path)
+        root, name = split(path)
         assert len(self.path) <= len(root), (self.path, root)
-        if not os.path.exists(root):
+        if not exists(root):
             return []
-        assert len(os.path.sep) == 1, os.path.sep
-        names = [n for n in sorted(os.listdir(root)) if n.startswith(name)]
-        print(names, root)
-        if os.path.isdir(path) and (name == ".." or name in names):
+        assert len(sep) == 1, sep
+        def delim(name):
+            def get_delimiter():
+                return "/" if isdir(join(root, name)) else " "
+            return DelimitedWord(name, get_delimiter)
+        names = [delim(n) for n in sorted(os.listdir(root)) if n.startswith(name)]
+        if isdir(path) and (name == ".." or name in names):
             if name in names:
                 names.remove(name)
-            names.append(name + "/")
-        return names #[join(root, n)[len(self.path) + 1:] for n in names]
+            names.append(DelimitedWord(name + "/", lambda:""))
+        return names
 
     def arg_string(self, value):
         if self.path is None:
@@ -1030,6 +1033,19 @@ class Options(object):
             return rep
         vars = ['{}={}'.format(k, line_repr(v)) for k, v in self]
         return '{}({})'.format(type(self).__name__, ', '.join(vars))
+
+
+class DelimitedWord(str):
+
+    __slots__ = ["get_delimiter"]
+
+    def __new__(cls, value="", get_delimiter=lambda:" "):
+        obj = super(DelimitedWord, cls).__new__(cls, value)
+        obj.get_delimiter = get_delimiter
+        return obj
+
+    def complete(self):
+        return self + self.get_delimiter()
 
 
 class Error(Exception):

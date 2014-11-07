@@ -163,10 +163,9 @@ class CommandView(DualView):
         if selector == "insertTab:":
             if self.completions:
                 word = self.completions.selected_item
-                self.auto_complete(textview, word or "")
-                self.complete(textview)
-            else:
-                self.complete(textview)
+                if word:
+                    self.auto_complete(textview, word)
+            self.complete(textview)
             return True
         if selector == "insertBacktab:":
             # ignore
@@ -225,12 +224,12 @@ class CommandView(DualView):
 
     def propose_completion(self, items):
         if not items:
-            word = ""
-        else:
-            word = items[0]
+            return
+        word = items[0]
         with self.completing:
             added_range = self.auto_complete(self.input, word)
-            self.input.setSelectedRange_(added_range)
+            if added_range is not None:
+                self.input.setSelectedRange_(added_range)
 
     def auto_complete(self, textview, word, range=None):
         """Auto-complete word replacing range
@@ -241,26 +240,13 @@ class CommandView(DualView):
         """
         if range is None:
             range = self.input.selectedRanges()[0].rangeValue()
-        start, length = range
         text = self.input.string()
-        assert start + length <= len(text), (range, text)
-        index = start - len(word)
-        if index < 0:
-            index = 0
-        while index < start:
-            if word.startswith(text[index:start]):
-                break
-            index += 1
-        assert start >= index, (text, index)
-        range = (index, start - index + length)
-        assert len(word) - (start - index) >= 0, (word, start, index)
-        if len(text) == start + length and word:
-            word += " " # append space if completing at end of input
-        if textview.shouldChangeTextInRange_replacementString_(range, word):
+        word, replace, select = self.command.auto_complete(text, word, range)
+        if textview.shouldChangeTextInRange_replacementString_(replace, word):
             with self.completing:
-                textview.replaceCharactersInRange_withString_(range, word)
+                textview.replaceCharactersInRange_withString_(replace, word)
                 textview.didChangeText()
-            return (start, len(word) - (start - index))
+            return select
 
     def navigate_history(self, forward=False):
         old_text = self.input.string()
