@@ -598,8 +598,6 @@ class String(Field):
             return Regex.delimit(value, delimiters=""""'""")[0]
         return value
 
-class VarArgs(Field):
-    """Consume all remaining arguments by splitting the string"""
 
 class File(String):
     """File path field
@@ -904,8 +902,23 @@ class Regex(Field):
         return pattern + self.repr_flags(find)
 
 
-class SubParser(Field):
+class VarArgs(Field):
     """Argument type that consumes a variable number of arguments
+
+    :param name: Name of the list of consumed arguments.
+    :param field: A field to be consumed a variable number of times.
+    :param min: Minimum number of times to consume field (default is 1).
+    :param placeholder:
+    PROPOSED: `field` may be a list of fields in which case the result of this
+    VarArgs field will be a list of dicts. Are they all required?
+    """
+
+    def __init__(self, name, field, *, min=1, placeholder="..."):
+        ...
+
+
+class SubParser(Field):
+    """Dispatch to a named group of sub arguments
 
     The first argument consumed by this SubParser is used to lookup a
     SubArgs instance by name, and remaining arguments are parsed using
