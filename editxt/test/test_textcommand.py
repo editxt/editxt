@@ -373,7 +373,6 @@ def test_CommandBar_history_reset_on_execute():
             eq_(list(history), ["cmd"])
 
 def test_CommandBar_message():
-    from editxt.controls.commandview import CommandView
     from editxt.editor import Editor
     def test(c):
         m = Mocker()

@@ -26,4 +26,5 @@ from .treeview import (
     BUTTON_STATE_PRESSED,
 )
 
+from .commandview import CommandView
 from .listview import ListView

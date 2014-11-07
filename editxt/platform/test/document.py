@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # EditXT
-# Copyright 2007-2013 Daniel Miller <millerdev@gmail.com>
+# Copyright 2007-2014 Daniel Miller <millerdev@gmail.com>
 #
 # This file is part of EditXT, a programmer's text editor for Mac OS X,
 # which can be found at http://editxt.org/.
@@ -17,4 +17,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from editxt.platform.mac.document import *
+
+def text_storage_edit_connector(text_storage, on_text_edit):
+    from editxt.platform.mac.document import text_storage_edit_connector
+    return text_storage_edit_connector(text_storage, on_text_edit)
+
+def setup_main_view(*args):
+    pass
+
+def teardown_main_view(*args):
+    pass

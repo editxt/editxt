@@ -24,11 +24,11 @@ import AppKit as ak
 import Foundation as fn
 
 from editxt.constants import LARGE_NUMBER_FOR_TEXT
-from editxt.controls.commandview import CommandView
 from editxt.controls.dualview import DualView, SHOULD_RESIZE
 from editxt.controls.linenumberview import LineNumberView
 from editxt.controls.statscrollview import StatusbarScrollView
 from editxt.controls.textview import TextView
+from editxt.platform.mac.views import CommandView
 
 
 def text_storage_edit_connector(text_storage, on_text_edit):

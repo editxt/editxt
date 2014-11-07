@@ -31,10 +31,10 @@ from editxt.test.util import (assert_raises, gentest, make_dirty, make_file,
 
 import editxt.constants as const
 import editxt.editor as mod
-from editxt.controls.commandview import CommandView
 from editxt.application import Application
 from editxt.document import TextDocument
 from editxt.editor import Editor
+from editxt.platform.views import CommandView
 from editxt.project import Project
 from editxt.window import Window, WindowController
 

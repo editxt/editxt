@@ -29,3 +29,10 @@ class ListView(object):
 
     def become_subview_of(self, view):
         self.parent_view = view
+
+
+class CommandView(object):
+    """Test command view"""
+
+    def dismiss(self):
+        pass
