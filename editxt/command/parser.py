@@ -646,7 +646,7 @@ class File(String):
             if name in names:
                 names.remove(name)
             names.append(name + "/")
-        return [join(root, n)[len(self.path) + 1:] for n in names]
+        return names #[join(root, n)[len(self.path) + 1:] for n in names]
 
     def arg_string(self, value):
         if self.path is None:

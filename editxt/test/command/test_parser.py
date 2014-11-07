@@ -490,9 +490,9 @@ def test_File():
         yield test, "a.txt ", (None, 6)
         #yield test, "b", (["b.txt", '"b file"'], 1) # TODO names with spaces
         yield test, "..", (["../"], 2)
-        yield test, "../", (["../dir", "../file.doc", "../file.txt"], 3)
-        yield test, "../dir", (["../dir/"], 6)
-        yield test, "../dir/", (["../dir/a.txt", "../dir/b.txt"], 7)
+        yield test, "../", (["dir", "file.doc", "file.txt"], 3)
+        yield test, "../dir", (["dir/"], 6)
+        yield test, "../dir/", (["a.txt", "b.txt"], 7)
         yield test, "val", ([], 3)
 
 def test_Regex():
