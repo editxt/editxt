@@ -453,6 +453,7 @@ def test_File():
             "dir/a.txt",
             "dir/b.txt",
             "dir/B file",
+            ".hidden",
             "file.txt",
             "file.doc",
             #"x y",
@@ -510,6 +511,7 @@ def test_File():
         yield test, "B", (["B\\ file"], 1)
         yield test, "..", (["../"], 2)
         yield test, "../", (["dir", "file.doc", "file.txt"], 3)
+        yield test, "../.", ([".hidden"], 4)
         yield test, "../dir", (["dir/"], 6)
         yield test, "../dir/", (["a.txt", "B\\ file", "b.txt"], 7)
         yield test, "val", ([], 3)

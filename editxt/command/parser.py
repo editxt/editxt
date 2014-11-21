@@ -657,7 +657,9 @@ class File(String):
             def get_delimiter():
                 return "/" if isdir(join(root, word)) else " "
             return CompleteWord(word, get_delimiter, len(name))
-        if name.islower():
+        if not name:
+            match = lambda n: not n.startswith(".")
+        elif name.islower():
             def match(n, name=name.lower()):
                 return n.lower().startswith(name)
         else:
@@ -666,7 +668,8 @@ class File(String):
             # to upper-case, which switches to the other matcher
             def match(n):
                 return n.startswith(name)
-        names = [delim(n) for n in sorted(os.listdir(root), key=str.lower) if match(n)]
+        names = os.listdir(root)
+        names = [delim(n) for n in sorted(names, key=str.lower) if match(n)]
         if isdir(path) and (name == ".." or name in names):
             if name in names:
                 names.remove(name)
