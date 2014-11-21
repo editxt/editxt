@@ -42,17 +42,23 @@ def open_(textview, sender, args):
         open_files(args.paths, textview.editor.project)
 
 
-def open_files(paths, project, index=-1):
+def open_files(paths, project, index=None):
     """Open files in project
 
     :param paths: A list of file paths.
     :param project: The project in which to open paths.
-    :param index: The index at which to insert new editors in the project's list
-    of editors. Use `-1` to insert at the end; `'after_current'` will insert
-    after the current editor.
+    :param index: The index at which to insert new editors in the
+    project's list of editors. Use `-1` to insert at the end. Insert
+    after the current editor by default.
     """
-    #if index == 'after_current':
-    #    raise NotImplementedError
+    if index is None:
+        index = -1
+        current = project.window.current_editor
+        if current is not None:
+            try:
+                index = project.editors.index(current) + 1
+            except ValueError:
+                pass
     editors = [Editor(project, path=path) for path in paths]
     project.insert_items(editors, index)
     project.window.current_editor = editors[-1]

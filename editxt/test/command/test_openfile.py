@@ -25,23 +25,29 @@ from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_
 from editxt.test.command.test_sortlines import FakeTextView
 from editxt.test.test_commands import CommandTester
-from editxt.test.util import assert_raises, TestConfig, test_app
+from editxt.test.util import assert_raises, gentest, TestConfig, test_app
 
 import editxt.command.openfile as mod
 
 
 def test_open_command():
-    def test(command, expected, error=None):
-        with test_app("window project(/)") as app:
+    @gentest
+    def test(command, expected="", error=None, config=""):
+        if config:
+            config = " " + config
+        with test_app("window project(/)" + config) as app:
             tapp = test_app(app)
             view = FakeTextView("")
             view.editor = FakeEditor(app.windows[0].projects[0])
             CommandTester(mod.open_, textview=view, error=error)(command)
             eq_(tapp.state, ("window project(/) " + expected).strip())
 
-    yield test, "open file.txt", "editor[/file.txt 0]*"
-    yield test, "open file.txt other.txt", "editor[/file.txt 0] editor[/other.txt 1]*"
-    yield test, "open", "", "please specify a file path"
+    yield test("open file.txt", "editor[/file.txt 0]*")
+    yield test("open file.txt",
+               config="editor* editor",
+               expected="editor editor[/file.txt 0]* editor")
+    yield test("open file.txt other.txt", "editor[/file.txt 0] editor[/other.txt 1]*")
+    yield test("open", error="please specify a file path")
 
 def test_open_files():
     with test_app("project") as app:
