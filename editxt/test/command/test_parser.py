@@ -25,7 +25,7 @@ from os.path import isabs, join
 
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_
-from editxt.test.util import assert_raises, TestConfig
+from editxt.test.util import assert_raises, replattr, TestConfig
 
 from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
     File, CommandParser, SubArgs, SubParser, VarArgs, DelimitedWord,
@@ -387,6 +387,9 @@ def test_String():
     yield test, 'abc', 0, ('abc', 3)
     yield test, 'abc def', 0, ('abc', 4)
     yield test, 'abc', 1, ('bc', 3)
+    yield test, 'a"c', 0, ('a"c', 3)
+    yield test, '\\"c', 0, ('"c', 3)
+    yield test, 'a\\ c', 0, ('a c', 4)
     yield test, '"a c"', 0, ('a c', 5)
     yield test, "'a c'", 0, ('a c', 5)
     yield test, "'a c' ", 0, ('a c', 6)
@@ -449,7 +452,7 @@ def test_File():
         for path in [
             "dir/a.txt",
             "dir/b.txt",
-            #"dir/b file",
+            "dir/B file",
             "file.txt",
             "file.doc",
             #"x y",
@@ -464,6 +467,7 @@ def test_File():
         test = make_arg_string_checker(arg)
         yield test, "/str", "/str"
         yield test, "/a b", '"/a b"'
+        yield test, os.path.expanduser("~/a b"), '"~/a b"'
         yield test, join(tmp, "dir/file"), "file"
         yield test, join(tmp, "dir/a b"), '"a b"'
         yield test, join(tmp, "file"), join(tmp, "file")
@@ -478,33 +482,52 @@ def test_File():
         yield test, 'file.txt', 0, (join(tmp, 'dir/file.txt'), 8)
         yield test, '../file.txt', 0, (join(tmp, 'dir/../file.txt'), 11)
         yield test, '/file.txt', 0, ('/file.txt', 9)
+        yield test, '~/file.txt', 0, (os.path.expanduser('~/file.txt'), 10)
         yield test, '"ab c"', 0, (join(tmp, 'dir/ab c'), 6)
         yield test, "'ab c'", 0, (join(tmp, 'dir/ab c'), 6)
         yield test, "'ab c/'", 0, ParseError("not a file: ab c/", arg, 0, 7)
 
-        test = make_completions_checker(arg)
-        yield test, "", (["a.txt", "b.txt"], 0)
+        # completions
+        def expanduser(path):
+            if path.startswith("~"):
+                if len(path) == 1:
+                    return tmp
+                assert path.startswith("~/"), path
+                return tmp + path[1:]
+            return path
+        def test(input, output):
+            if input.startswith("/"):
+                input = tmp + "/"
+                output = (output[0], output[1] + len(tmp))
+            with replattr(os.path, "expanduser", expanduser):
+                eq_(arg.parse_completions(input, 0), output)
+        yield test, "", (["a.txt", "B\\ file", "b.txt"], 0)
         yield test, "a", (["a.txt"], 1)
         yield test, "a ", (None, 2)
         yield test, "a.txt", (["a.txt"], 5)
         yield test, "a.txt ", (None, 6)
-        #yield test, "b", (["b.txt", '"b file"'], 1) # TODO names with spaces
+        yield test, "B", (["B\\ file"], 1)
         yield test, "..", (["../"], 2)
         yield test, "../", (["dir", "file.doc", "file.txt"], 3)
         yield test, "../dir", (["dir/"], 6)
-        yield test, "../dir/", (["a.txt", "b.txt"], 7)
+        yield test, "../dir/", (["a.txt", "B\\ file", "b.txt"], 7)
         yield test, "val", ([], 3)
+        yield test, "/", (["dir", "file.doc", "file.txt"], 1)
+        yield test, "~", (["~/"], 1)
+        yield test, "~/", (["dir", "file.doc", "file.txt"], 2)
 
+        # delimiter completion
         def test(input, output):
             words = arg.get_completions(input)
             assert all(isinstance(w, DelimitedWord) for w in words), \
                 repr([w for w in words if not isinstance(w, DelimitedWord)])
             eq_([w.complete() for w in words], output)
-        yield test, "", ["a.txt ", "b.txt "]
+        yield test, "", ["a.txt ", "B\\ file ", "b.txt "]
         yield test, "x", []
         yield test, "..", ["../"]
         yield test, "../", ["dir/", "file.doc ", "file.txt "]
         yield test, "../dir", ["dir/"]
+        yield test, "~", ["~/"]
 
 def test_Regex():
     arg = Regex('regex')

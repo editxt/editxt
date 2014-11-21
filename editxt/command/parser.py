@@ -552,14 +552,16 @@ class String(Field):
         """
         if index >= len(text):
             return self.default, index
+        escapes = self.ESCAPES
         if text[index] not in ['"', "'"]:
             delim = ' '
             start = index
+            escapes = escapes.copy()
+            escapes[' '] = ' '
         else:
             delim = text[index]
             start = index + 1
         chars, esc = [], 0
-        escapes = self.ESCAPES
         for i, c in enumerate(text[start:]):
             if esc:
                 esc = 0
@@ -611,8 +613,7 @@ class File(String):
         super().__init__(name)
 
     def with_context(self, textview):
-        editor = textview.editor
-        return File(self.name, path=editor.dirname())
+        return File(self.name, path=textview.editor.dirname())
 
     def consume(self, text, index):
         """Consume a file path
@@ -624,6 +625,8 @@ class File(String):
             return path, stop
         if path.endswith((os.path.sep, "/")):
             raise ParseError("not a file: %s" % (path,), self, index, stop)
+        if path.startswith('~'):
+            path = os.path.expanduser(path)
         if os.path.isabs(path):
             return path, stop
         if self.path is None:
@@ -631,20 +634,31 @@ class File(String):
         return os.path.join(self.path, path), stop
 
     def get_completions(self, token):
-        from os.path import exists, isdir, join, sep, split
-        if self.path is None:
+        from os.path import exists, expanduser, isabs, isdir, join, sep, split
+        if token == '~':
+            return [DelimitedWord('~/', lambda:'')]
+        if token.startswith('~'):
+            token = expanduser(token)
+        if isabs(token):
+            base = "/"
+            path = token
+        elif self.path is None:
             raise Error("cannot get completions (no context): {}".format(token))
-        path = join(self.path, token)
+        else:
+            base = self.path
+            path = join(base, token)
         root, name = split(path)
-        assert len(self.path) <= len(root), (self.path, root)
+        assert len(base) <= len(root), (base, root)
         if not exists(root):
             return []
         assert len(sep) == 1, sep
         def delim(name):
+            name = name.replace(' ', '\\ ')
             def get_delimiter():
                 return "/" if isdir(join(root, name)) else " "
             return DelimitedWord(name, get_delimiter)
-        names = [delim(n) for n in sorted(os.listdir(root)) if n.startswith(name)]
+        names = [delim(n) for n in sorted(os.listdir(root), key=str.lower)
+                          if n.startswith(name)]
         if isdir(path) and (name == ".." or name in names):
             if name in names:
                 names.remove(name)
@@ -658,6 +672,10 @@ class File(String):
             raise Error("not a file: {}={!r}".format(self.name, value))
         if value.startswith(os.path.join(self.path, "")):
             value = value[len(self.path) + 1:]
+        else:
+            home = os.path.expanduser("~/")
+            if value.startswith(home):
+                value = "~/" + value[len(home):]
         return super().arg_string(value)
 
 
