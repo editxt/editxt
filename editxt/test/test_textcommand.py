@@ -224,7 +224,7 @@ def test_CommandBar_get_completions():
     yield test, c(text='/abc/ ', expect=(["yes", "no"], 0))
 
 def test_CommandBar_auto_complete():
-    from editxt.command.parser import CommandParser, Choice, Regex, DelimitedWord
+    from editxt.command.parser import CommandParser, Choice, Regex, CompleteWord
     @command(arg_parser=CommandParser(
         Choice(('selection', True), ('all', False), ('self', None)),
         Choice(('forward', False), ('reverse xyz', True), name='reverse'),
@@ -246,9 +246,17 @@ def test_CommandBar_auto_complete():
 
     yield test("c sel", "cmd", (1, 0), ("cmd", (0, 1), (1, 2)))
 
-    word = DelimitedWord("dir", lambda:"/")
+    word = CompleteWord("dir", lambda:"/")
     yield test("d", word, (1, 0), ("dir/", (0, 1), (1, 3)))
     yield test("d/file.txt", word, (1, 0), ("dir", (0, 1), (1, 2)))
+
+    word = CompleteWord("Dir", lambda:"/", overlap=1)
+    yield test("d", word, (1, 0), ("Dir/", (0, 1), (1, 3)))
+    yield test("d/file.txt", word, (1, 0), ("Dir", (0, 1), (1, 2)))
+
+    word = CompleteWord("DIR", lambda:"/", overlap=2)
+    yield test("di", word, (2, 0), ("DIR/", (0, 2), (2, 2)))
+    yield test("di/file.txt", word, (2, 0), ("DIR", (0, 2), (2, 1)))
 
 def test_CommandBar_get_history():
     def test(nav):

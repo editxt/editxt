@@ -28,7 +28,7 @@ import Foundation as fn
 
 import editxt.constants as const
 from editxt.command.base import CommandError
-from editxt.command.parser import ArgumentError, DelimitedWord
+from editxt.command.parser import ArgumentError, CompleteWord
 from editxt.commands import load_commands
 from editxt.history import History
 from editxt.util import WeakProperty
@@ -161,16 +161,19 @@ class CommandBar(object):
         index = start - len(word)
         if index < 0:
             index = 0
-        while index < start:
-            if word.startswith(text[index:start]):
-                break
-            index += 1
-        assert start >= index, (text, index)
+        if isinstance(word, CompleteWord) and word.overlap is not None:
+            index = start - word.overlap
+        else:
+            while index < start:
+                if word.startswith(text[index:start]):
+                    break
+                index += 1
+        assert start >= index, (text, start, index)
         replace = (index, start - index + length)
         assert len(word) - (start - index) >= 0, (word, start, index)
         if len(text) == start + length and word:
             # append delimiter if completing at end of input
-            if isinstance(word, DelimitedWord):
+            if isinstance(word, CompleteWord):
                 word = word.complete()
             else:
                 word += " "

@@ -636,7 +636,7 @@ class File(String):
     def get_completions(self, token):
         from os.path import exists, expanduser, isabs, isdir, join, sep, split
         if token == '~':
-            return [DelimitedWord('~/', lambda:'')]
+            return [CompleteWord('~/', (lambda:''), 1)]
         if token.startswith('~'):
             token = expanduser(token)
         if isabs(token):
@@ -652,17 +652,25 @@ class File(String):
         if not exists(root):
             return []
         assert len(sep) == 1, sep
-        def delim(name):
-            name = name.replace(' ', '\\ ')
+        def delim(word):
+            word = word.replace(' ', '\\ ')
             def get_delimiter():
-                return "/" if isdir(join(root, name)) else " "
-            return DelimitedWord(name, get_delimiter)
-        names = [delim(n) for n in sorted(os.listdir(root), key=str.lower)
-                          if n.startswith(name)]
+                return "/" if isdir(join(root, word)) else " "
+            return CompleteWord(word, get_delimiter, len(name))
+        if name.islower():
+            def match(n, name=name.lower()):
+                return n.lower().startswith(name)
+        else:
+            # edge case: when first match begins with a capital letter and
+            # user types that letter then TAB ... typed letter is converted
+            # to upper-case, which switches to the other matcher
+            def match(n):
+                return n.startswith(name)
+        names = [delim(n) for n in sorted(os.listdir(root), key=str.lower) if match(n)]
         if isdir(path) and (name == ".." or name in names):
             if name in names:
                 names.remove(name)
-            names.append(DelimitedWord(name + "/", lambda:""))
+            names.append(CompleteWord(name + "/", lambda:"", len(name)))
         return names
 
     def arg_string(self, value):
@@ -1053,13 +1061,14 @@ class Options(object):
         return '{}({})'.format(type(self).__name__, ', '.join(vars))
 
 
-class DelimitedWord(str):
+class CompleteWord(str):
 
-    __slots__ = ["get_delimiter"]
+    __slots__ = ["get_delimiter", "overlap"]
 
-    def __new__(cls, value="", get_delimiter=lambda:" "):
-        obj = super(DelimitedWord, cls).__new__(cls, value)
+    def __new__(cls, value="", get_delimiter=lambda:" ", overlap=None):
+        obj = super(CompleteWord, cls).__new__(cls, value)
         obj.get_delimiter = get_delimiter
+        obj.overlap = overlap
         return obj
 
     def complete(self):

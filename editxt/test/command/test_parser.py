@@ -28,7 +28,7 @@ from nose.tools import eq_
 from editxt.test.util import assert_raises, replattr, TestConfig
 
 from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
-    File, CommandParser, SubArgs, SubParser, VarArgs, DelimitedWord,
+    File, CommandParser, SubArgs, SubParser, VarArgs, CompleteWord,
     identifier, Options, Error, ArgumentError, ParseError)
 
 log = logging.getLogger(__name__)
@@ -506,6 +506,7 @@ def test_File():
         yield test, "a ", (None, 2)
         yield test, "a.txt", (["a.txt"], 5)
         yield test, "a.txt ", (None, 6)
+        yield test, "b", (["B\\ file", "b.txt"], 1)
         yield test, "B", (["B\\ file"], 1)
         yield test, "..", (["../"], 2)
         yield test, "../", (["dir", "file.doc", "file.txt"], 3)
@@ -517,17 +518,19 @@ def test_File():
         yield test, "~/", (["dir", "file.doc", "file.txt"], 2)
 
         # delimiter completion
-        def test(input, output):
+        def test(input, output, overlap=None):
             words = arg.get_completions(input)
-            assert all(isinstance(w, DelimitedWord) for w in words), \
-                repr([w for w in words if not isinstance(w, DelimitedWord)])
+            assert all(isinstance(w, CompleteWord) for w in words), \
+                repr([w for w in words if not isinstance(w, CompleteWord)])
             eq_([w.complete() for w in words], output)
-        yield test, "", ["a.txt ", "B\\ file ", "b.txt "]
+            if overlap is not None:
+                eq_([w.overlap for w in words], [overlap] * len(words), words)
+        yield test, "", ["a.txt ", "B\\ file ", "b.txt "], 0
         yield test, "x", []
-        yield test, "..", ["../"]
-        yield test, "../", ["dir/", "file.doc ", "file.txt "]
-        yield test, "../dir", ["dir/"]
-        yield test, "~", ["~/"]
+        yield test, "..", ["../"], 2
+        yield test, "../", ["dir/", "file.doc ", "file.txt "], 0
+        yield test, "../dir", ["dir/"], 3
+        yield test, "~", ["~/"], 1
 
 def test_Regex():
     arg = Regex('regex')
