@@ -30,7 +30,7 @@ from editxt.test.util import assert_raises, TestConfig, test_app
 import editxt.command.openfile as mod
 
 
-def test_sort_command():
+def test_open_command():
     def test(command, expected, error=None):
         with test_app("window project(/)") as app:
             tapp = test_app(app)
@@ -40,6 +40,7 @@ def test_sort_command():
             eq_(tapp.state, ("window project(/) " + expected).strip())
 
     yield test, "open file.txt", "editor[/file.txt 0]*"
+    yield test, "open file.txt other.txt", "editor[/file.txt 0] editor[/other.txt 1]*"
     yield test, "open", "", "please specify a file path"
 
 def test_open_files():

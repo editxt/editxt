@@ -24,22 +24,22 @@ from subprocess import Popen, list2cmdline
 
 import editxt.constants as const
 from editxt.command.base import command, CommandError
-from editxt.command.parser import CommandParser, File
+from editxt.command.parser import CommandParser, File, VarArgs
 from editxt.editor import Editor
 
 log = logging.getLogger(__name__)
 
 
-@command(name="open", arg_parser=CommandParser(File("path")))
+@command(name="open", arg_parser=CommandParser(VarArgs("paths", File("path"))))
 def open_(textview, sender, args):
     """Open file"""
     if args is None:
         from editxt.commands import show_command_bar
         show_command_bar(textview, sender, "open ")
-    elif args.path is None:
+    elif all(p is None for p in args.paths):
         raise CommandError("please specify a file path")
     else:
-        open_files([args.path], textview.editor.project)
+        open_files(args.paths, textview.editor.project)
 
 
 def open_files(paths, project, index=-1):
@@ -48,10 +48,10 @@ def open_files(paths, project, index=-1):
     :param paths: A list of file paths.
     :param project: The project in which to open paths.
     :param index: The index at which to insert new editors in the project's list
-    of editors. Use `-1` to insert at the end; `'current'` will insert
+    of editors. Use `-1` to insert at the end; `'after_current'` will insert
     after the current editor.
     """
-    #if index == 'current':
+    #if index == 'after_current':
     #    raise NotImplementedError
     editors = [Editor(project, path=path) for path in paths]
     project.insert_items(editors, index)

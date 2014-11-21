@@ -913,8 +913,67 @@ class VarArgs(Field):
     VarArgs field will be a list of dicts. Are they all required?
     """
 
-    def __init__(self, name, field, *, min=1, placeholder="..."):
-        ...
+    def __init__(self, name, field, *, min=1, placeholder=None, **kw):
+        self.args = [name, field]
+        self.kwargs = {"min": min, "placeholder": placeholder}
+        self.kwargs.update(kw)
+        super().__init__(name, **kw)
+        self.field = field
+        self.min = min
+        self.placeholder = placeholder
+
+    def __str__(self):
+        if self.placeholder is None:
+            return "{} ...".format(self.field.name)
+        return self.placeholder
+
+    def with_context(self, *args, **kw):
+        field = self.field.with_context(*args, **kw)
+        return VarArgs(self.name, field, **self.kwargs)
+
+    def consume(self, text, index):
+        values = []
+        if index >= len(text):
+            value, index = self.field.consume(text, index)
+            values.append(value)
+        else:
+            while index < len(text):
+                value, index = self.field.consume(text, index)
+                values.append(value)
+        if len(values) < self.min:
+            raise Error("not enough arguments (found {}, expected {})".format(
+                        len(values), self.min))
+        return values, index
+
+    def get_placeholder(self, text, index):
+        parsed = 0
+        prev_index = None
+        while index != prev_index:
+            prev_index = index
+            value, index = self.field.get_placeholder(text, index)
+            if index is None:
+                return (None, (prev_index if parsed else index))
+            if value is not None or index > len(text):
+                break
+            parsed += 1
+        if value is None:
+            return value, index
+        placeholder = "..." if self.placeholder is None else self.placeholder
+        return "{} {}".format(value, placeholder), index
+
+    def parse_completions(self, text, index):
+        while index < len(text):
+            prev_index = index
+            value, index = self.field.parse_completions(text, index)
+            if index == prev_index or (index == len(text) and text[-1] != ' '):
+                return value, index
+        return self.field.parse_completions(text, index)
+
+    def get_completions(self, token):
+        return self.field.get_completions(token)
+
+    def arg_string(self, value):
+        return " ".join(self.field.arg_string(v) for v in value)
 
 
 class SubParser(Field):

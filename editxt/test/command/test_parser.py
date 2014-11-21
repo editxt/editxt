@@ -669,6 +669,47 @@ def test_RegexPattern():
         assert a < b, "{!r} >= {!r}".format(a, b)
     yield lt, RegexPattern("a"), RegexPattern("a", re.I)
 
+def test_VarArgs():
+    arg = VarArgs("var", Choice('arg', 'nope', 'nah'))
+    eq_(str(arg), 'arg ...')
+    eq_(repr(arg), "VarArgs('var', Choice('arg', 'nope', 'nah'))")
+
+    test = make_completions_checker(arg)
+    yield test, "", (['arg', 'nope', 'nah'], 0)
+    yield test, "a", (["arg"], 1)
+    yield test, "a ", (['arg', 'nope', 'nah'], 2)
+    yield test, "b ", (None, 0)
+    yield test, "nah", (["nah"], 3)
+    yield test, "nah ", (['arg', 'nope', 'nah'], 4)
+    yield test, "arg a", (['arg'], 5)
+    yield test, "arg b", (None, 4)
+
+    test = make_placeholder_checker(arg)
+    yield test, "", 0, ("arg ...", 0)
+    yield test, "a", 0, ("rg ...", 1)
+    yield test, "a ", 0, ("arg ...", 2)
+    yield test, "a ", 2, ("arg ...", 2)
+    yield test, "arg", 0, (" ...", 3)
+    yield test, "arg ", 0, ("arg ...", 4)
+    yield test, "arg a", 0, ("rg ...", 5)
+    yield test, "arg x", 0, (None, 4)
+    yield test, "x", 0, (None, None)
+    yield test, "x ", 0, (None, None)
+
+    test = make_type_checker(arg)
+    yield test, '', 0, (['arg'], 0)
+    yield test, 'x', 0, ParseError("'x' does not match any of: arg, nope, nah", arg.field, 0, 1)
+    yield test, 'a', 0, (['arg'], 1)
+    yield test, 'a na no', 0, (['arg', 'nah', 'nope'], 7)
+
+    test = make_arg_string_checker(arg)
+    yield test, ["arg"], ""
+    yield test, ["nope"], "nope"
+    yield test, ["nah", "arg", "nah"], 'nah  nah'
+
+    # TODO test with string (especially unterminated string)
+    #arg = VarArgs("var", String("str"))
+
 def test_SubParser():
     sub = SubArgs("val", Int("num"), abc="xyz")
     su2 = SubArgs("str", Choice(('yes', True), ('no', False)), abc="mno")
@@ -729,7 +770,7 @@ def test_SubParser():
 Args = lambda *a, **k: (a, k)
 
 def make_type_checker(arg):
-    def test(text, start, expect):
+    def type_checker_test(text, start, expect):
         if isinstance(expect, Exception):
             def check(err):
                 eq_(err, expect)
@@ -737,7 +778,7 @@ def make_type_checker(arg):
                 arg.consume(text, start)
         else:
             eq_(arg.consume(text, start), expect)
-    return test
+    return type_checker_test
 
 def make_placeholder_checker(arg):
     def test_get_placeholder(text, index, result):
