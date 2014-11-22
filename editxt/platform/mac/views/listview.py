@@ -92,7 +92,7 @@ class ListView(object):
 
     @property
     def preferred_height(self):
-        header = 0 if self.view.headerView() is None \
+        header = 1 if self.view.headerView() is None \
                    else self.view.headerView().frame().size.height
         space = self.view.intercellSpacing().height
         return (self.view.rowHeight() + space) * len(self.items) + header
@@ -103,6 +103,28 @@ class ListView(object):
         if focus:
             assert view.window() is not None, "cannot focus view: %r" % (view,)
             view.window().makeFirstResponder_(self.view)
+
+    @property
+    def title(self):
+        if self.view.headerView() is None:
+            return None
+        return self.view.tableColumns()[0].headerCell().stringValue()
+
+    @title.setter
+    def title(self, value):
+        if value is None:
+            if self.view.headerView() is not None:
+                self.view.setHeaderView_(None)
+        else:
+            if self.view.headerView() is None:
+                header = ak.NSTableHeaderView.alloc().init()
+                header.setTableView_(self.view)
+                self.view.setHeaderView_(header)
+            cell = self.view.tableColumns()[0].headerCell()
+            cell.setStringValue_(value)
+            # is it always desirable to elide middle?
+            cell.setLineBreakMode_(ak.NSLineBreakByTruncatingMiddle)
+            self.view.headerView().setNeedsDisplay_(True)
 
     @property
     def selected_row(self):

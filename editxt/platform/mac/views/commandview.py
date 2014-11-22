@@ -25,6 +25,7 @@ import Foundation as fn
 from objc import pyobjc_unicode
 from Quartz.CoreGraphics import CGRectIntersectsRect
 
+from editxt.command.parser import CompletionsList
 from editxt.constants import ERROR, HTML, INFO, LARGE_NUMBER_FOR_TEXT
 from editxt.controls.dualview import DualView, SHOULD_RESIZE
 from editxt.platform.kvo import KVOList, KVOProxy
@@ -219,6 +220,10 @@ class CommandView(DualView):
             self.auto_complete(textview, words[0], (len(text), 0))
         else:
             # show auto-complete menu
+            if isinstance(words, CompletionsList):
+                self.completions.title = words.title
+            else:
+                self.completions.title = None
             self.completions.items = [Completion(w) for w in words]
             self.should_resize()
 
@@ -424,6 +429,14 @@ class AutoCompleteView(object):
 
     def __bool__(self):
         return bool(self._items)
+
+    @property
+    def title(self):
+        self.view.title
+
+    @title.setter
+    def title(self, value):
+        self.view.title = value
 
     @property
     def items(self):

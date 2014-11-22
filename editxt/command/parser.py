@@ -683,7 +683,7 @@ class File(String):
             if name in names:
                 names.remove(name)
             names.append(CompleteWord(name + "/", lambda:"", len(name)))
-        return names
+        return CompletionsList(names, title=root)
 
     def arg_string(self, value):
         if self.path is None:
@@ -1159,6 +1159,15 @@ class CompleteWord(str):
 
     def complete(self):
         return self + self.get_delimiter()
+
+
+class CompletionsList(list):
+
+    __slots__ = ["title"]
+
+    def __init__(self, *args, title=None):
+        super().__init__(*args)
+        self.title = title
 
 
 class Error(Exception):

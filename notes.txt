@@ -83,11 +83,11 @@ x    - completion item should be able to control if it is padded with a space,
 x      where it begins, where it ends, etc.
 x    - fix ListView.preferred_height (does not always return the correct value)
 x    - fix proposed completion after typing that narrows completion list (maybe not too important)
-  - fix bug in parser: Error Log, command bar "set project_path ", type "." (error) types ..
-  - show full path in header of File auto-complete menu
-  - pass editor to commands instead of textview
-    - update "set" subcommands to check context (do they have an editor with document, etc.)
-    - pass editor GUI text commands instead of textview
+x  - fix bug in parser: Error Log, command bar "set project_path ", type "." (error) types .. (cannot reproduce)
+x  - show full path in header of File auto-complete menu
+x  - pass editor to commands instead of textview
+    - pass editor to GUI text commands (SortLinesController, etc) instead of textview
+x    - update "set" subcommands to check context (do they have an editor with document, etc.)
 
 Fix window title on edge cases (not always up to date)
 Add context menu to items in sidebar: Copy file path
