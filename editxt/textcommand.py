@@ -267,7 +267,7 @@ class TextCommandController(object):
             command.__tag = tag = next(self.tagger)
             hotkey, keymask = self.validate_hotkey(command.hotkey)
             item = ak.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
-                command.title, "performTextCommand:", hotkey)
+                command.title, "doCommand:", hotkey)
             item.setKeyEquivalentModifierMask_(keymask)
             item.setTag_(tag)
             # HACK tag will not be the correct index if an item is ever removed

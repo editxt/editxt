@@ -137,6 +137,14 @@ class WindowController(ak.NSWindowController):
     def togglePropertiesPane_(self, sender):
         self.window_.toggle_properties_pane()
 
+    def doCommand_(self, sender):
+        self.window_.do_command(sender)
+
+    def validateUserInterfaceItem_(self, item):
+        if item.action() == "doCommand:":
+            return self.window_.validate_command(item)
+        return super().validateUserInterfaceItem_(item)
+
     def outlineViewSelectionDidChange_(self, notification):
         self.window_.selected_editor_changed()
 

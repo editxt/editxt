@@ -541,7 +541,7 @@ def test_TextCommandController_add_command():
         mi = mi_class.alloc() >> m.mock(ak.NSMenuItem)
         (cmd.title << "<title>").count(2)
         mi.initWithTitle_action_keyEquivalent_(
-            '<title>', "performTextCommand:" ,"<hotkey>") >> mi
+            '<title>', "doCommand:" ,"<hotkey>") >> mi
         mi.setKeyEquivalentModifierMask_("<keymask>")
         mi.setTag_(tag)
         menu.insertItem_atIndex_(mi, tag)

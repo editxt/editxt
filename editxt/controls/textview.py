@@ -72,7 +72,7 @@ class TextView(ak.NSTextView):
     def performFindPanelAction_(self, sender):
         FindController.shared_controller(self.app).perform_action(sender)
 
-    def performTextCommand_(self, sender):
+    def doCommand_(self, sender):
         self.app.text_commander.do_command(self.editor, sender)
 
     def doCommandBySelector_(self, selector):
@@ -83,7 +83,7 @@ class TextView(ak.NSTextView):
         if item.action() == "performFindPanelAction:":
             find = FindController.shared_controller(self.app)
             return find.validate_action(item.tag())
-        elif item.action() == "performTextCommand:":
+        elif item.action() == "doCommand:":
             return self.app.text_commander.is_command_enabled(self.editor, item)
         return super(TextView, self).validateUserInterfaceItem_(item)
 

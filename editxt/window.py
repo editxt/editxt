@@ -188,6 +188,12 @@ class Window(object):
                 self.current_editor = item
                 break
 
+    def do_command(self, sender):
+        self.app.text_commander.do_command(self.current_editor, sender)
+
+    def validate_command(self, item):
+        return self.app.text_commander.is_command_enabled(self.current_editor, item)
+
     def _get_current_editor(self):
         return self._current_editor
 

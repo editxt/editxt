@@ -108,7 +108,7 @@ class CommandView(DualView):
             # possibly use setSelectedRange
             # http://jeenaparadies.net/weblog/2009/apr/focus-a-nstextfield
             editor = command.window.current_editor
-            if editor is not None:
+            if editor is not None and editor.text_view is not None:
                 self.input.setFont_(editor.text_view.font())
             self.output.setString_("")
         if new_activation or initial_text:

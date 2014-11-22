@@ -50,7 +50,7 @@ def test_TextView_performFindPanelAction_():
     with m:
         tv.performFindPanelAction_(sender)
 
-def test_TextView_performTextCommand_():
+def test_TextView_doCommand_():
     from editxt.textcommand import TextCommandController
     m = Mocker()
     tv = TextView.alloc().init()
@@ -60,7 +60,7 @@ def test_TextView_performTextCommand_():
     sender = m.mock()
     tc.do_command(editor, sender)
     with m:
-        tv.performTextCommand_(sender)
+        tv.doCommand_(sender)
 
 def test_TextView_doCommandBySelector_():
     from editxt.textcommand import TextCommandController
@@ -89,7 +89,7 @@ def test_TextView_validateUserInterfaceItem_():
             tag = item.tag() >> 42
             (fc.shared_controller(app) >> m.mock(FindController)). \
                 validate_action(tag) >> True
-        elif c.action == "performTextCommand:":
+        elif c.action == "doCommand:":
             expectation.count(2)
             tc = app.text_commander >> m.mock(TextCommandController)
             tc.is_command_enabled(editor, item) >> True
@@ -99,7 +99,7 @@ def test_TextView_validateUserInterfaceItem_():
             assert tv.validateUserInterfaceItem_(item)
     c = TestConfig()
     yield test, c(action="performFindPanelAction:")
-    yield test, c(action="performTextCommand:")
+    yield test, c(action="doCommand:")
 
 def test_TextView_setFrameSize():
     def test(c):

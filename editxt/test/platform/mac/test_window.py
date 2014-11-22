@@ -62,6 +62,9 @@ def test_WindowController_passthrough_to_Window():
     yield test, ("revertDocumentToSaved_", "reload_current_document"), ("<sender>",), ()
     yield test, ("newProject_", "new_project"), ("<sender>",), ()
     yield test, ("togglePropertiesPane_", "toggle_properties_pane"), ("sender",), ()
+    yield test, ("doCommand_", "do_command"), ("sender",), ("sender",)
+    item = TestConfig(action=lambda:"doCommand:")
+    yield test, ("validateUserInterfaceItem_", "validate_command"), (item,), (item,)
 
 def test_windowDidLoad():
     m = Mocker()
