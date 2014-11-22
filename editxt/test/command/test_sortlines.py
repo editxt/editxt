@@ -27,6 +27,7 @@ import AppKit as ak
 import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
+from editxt.test.command import FakeTextView
 from editxt.test.util import TestConfig, untested, check_app_state, test_app
 
 import editxt.command.base as base
@@ -160,31 +161,3 @@ def sort_result(value):
         value = line.lstrip(" ")
         return value[0] if value else "|%i" % len(line)
     return "".join(ch(line) for line in value.split("\n"))
-
-class FakeTextView(object):
-
-    def __init__(self, text, sel=fn.NSMakeRange(0, 0)):
-        self.text = text
-        self.sel = sel
-
-    def selectedRange(self):
-        return self.sel
-
-    def setSelectedRange_(self, sel):
-        self.sel = sel
-
-    def string(self):
-        return fn.NSString.alloc().initWithString_(self.text)
-
-    def shouldChangeTextInRange_replacementString_(self, rng, str):
-        return True
-
-    def textStorage(self):
-        return self
-
-    def replaceCharactersInRange_withString_(self, rng, string):
-        end = rng[0] + rng[1]
-        self.text = self.text[:rng[0]] + string + self.text[end:]
-
-    def didChangeText(self):
-        pass

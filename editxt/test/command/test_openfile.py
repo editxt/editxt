@@ -23,7 +23,7 @@ from functools import partial
 
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_
-from editxt.test.command.test_sortlines import FakeTextView
+from editxt.test.command import FakeTextView
 from editxt.test.test_commands import CommandTester
 from editxt.test.util import assert_raises, gentest, TestConfig, test_app
 
