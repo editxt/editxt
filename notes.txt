@@ -85,7 +85,9 @@ x    - fix ListView.preferred_height (does not always return the correct value)
 x    - fix proposed completion after typing that narrows completion list (maybe not too important)
   - fix bug in parser: Error Log, command bar "set project_path ", type "." (error) types ..
   - show full path in header of File auto-complete menu
-  - pass editor instead of textview into CommandParser.with_context
+  - pass editor to commands instead of textview
+    - update "set" subcommands to check context (do they have an editor with document, etc.)
+    - pass editor GUI text commands instead of textview
 
 Fix window title on edge cases (not always up to date)
 Add context menu to items in sidebar: Copy file path

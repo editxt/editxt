@@ -469,8 +469,8 @@ def test_File():
         yield test, "", ([], 0)
         yield test, "../", (None, 0)
 
-        textview=TestConfig(editor=app.windows[0].projects[0].editors[0])
-        arg = arg.with_context(textview)
+        editor = app.windows[0].projects[0].editors[0]
+        arg = arg.with_context(editor)
 
         test = make_arg_string_checker(arg)
         yield test, "/str", "/str"
@@ -544,7 +544,7 @@ def test_File():
         arg = File('dir', directory=True)
         eq_(str(arg), 'dir')
         eq_(repr(arg), "File('dir', directory=True)")
-        arg = arg.with_context(textview)
+        arg = arg.with_context(editor)
 
         test = make_completions_checker(arg)
         yield test, "", ([], 0)

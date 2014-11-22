@@ -45,12 +45,12 @@ log = logging.getLogger(__name__)
             ('match-case', False)),
         Regex('sort-regex', True),
     ))
-def sort_lines(textview, sender, args):
+def sort_lines(editor, sender, args):
     if args is None:
-        sorter = SortLinesController(textview)
+        sorter = SortLinesController(editor.text_view)
         sorter.begin_sheet(sender)
     else:
-        sortlines(textview, args)
+        sortlines(editor.text_view, args)
 
 
 class SortOptions(Options):

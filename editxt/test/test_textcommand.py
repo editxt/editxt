@@ -89,8 +89,7 @@ def test_CommandBar_execute():
                     kw = {}
                 message(c.msg, **kw)
             else:
-                editor.text_view >> '<view>'
-                res = command('<view>', bar, '<args>')
+                res = command(editor, bar, '<args>')
                 if c.error:
                     expect(res).throw(Exception('bang!'))
                     message(ANY, exc_info=True)
@@ -396,9 +395,8 @@ def test_CommandBar_history_reset_on_execute():
         args = ["cmd"]
         editor = m.mock(Editor)
         (window.current_editor << editor).count(2)
-        (editor.text_view << '<view>').count(2)
         @command
-        def cmd(textview, sender, args):
+        def cmd(editor, sender, args):
             pass
         commander.add_command(cmd, None, None)
         with m:
@@ -560,7 +558,7 @@ def test_TextCommandController_validate_hotkey():
     eq_(tc.validate_hotkey(("a", 1)), ("a", 1))
     assert_raises(AssertionError, tc.validate_hotkey, ("a", "b", "c"))
 
-def test_TextCommandController_is_textview_command_enabled():
+def test_TextCommandController_is_command_enabled():
     def test(c):
         m = Mocker()
         lg = m.replace("editxt.textcommand.log")
@@ -577,7 +575,7 @@ def test_TextCommandController_is_textview_command_enabled():
             else:
                 tc.is_enabled(tv, mi) >> c.enabled
         with m:
-            result = tcc.is_textview_command_enabled(tv, mi)
+            result = tcc.is_command_enabled(tv, mi)
             eq_(result, c.enabled)
     c = TestConfig(has_command=True, enabled=False)
     yield test, c(has_command=False)
@@ -585,7 +583,7 @@ def test_TextCommandController_is_textview_command_enabled():
     yield test, c(error=False)
     yield test, c(error=False, enabled=True)
 
-def test_TextCommandController_do_textview_command():
+def test_TextCommandController_do_command():
     def test(c):
         m = Mocker()
         lg = m.replace("editxt.textcommand.log")
@@ -601,13 +599,13 @@ def test_TextCommandController_do_textview_command():
                 m.throw(Exception)
                 lg.error("%s.execute failed", ANY, exc_info=True)
         with m:
-            tcc.do_textview_command(tv, mi)
+            tcc.do_command(tv, mi)
     c = TestConfig(has_command=True)
     yield test, c(has_command=False)
     yield test, c(error=True)
     yield test, c(error=False)
 
-def test_TextCommandController_do_textview_command_by_selector():
+def test_TextCommandController_do_command_by_selector():
     def test(c):
         m = Mocker()
         lg = m.replace("editxt.textcommand.log")
@@ -623,7 +621,7 @@ def test_TextCommandController_do_textview_command_by_selector():
                 m.throw(Exception)
                 lg.error("%s failed", callback, exc_info=True)
         with m:
-            result = tcc.do_textview_command_by_selector(tv, sel)
+            result = tcc.do_command_by_selector(tv, sel)
             eq_(result, c.result)
     c = TestConfig(has_selector=True, result=False)
     yield test, c(has_selector=False)

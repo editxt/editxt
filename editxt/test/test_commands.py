@@ -235,6 +235,7 @@ def test_uncomment_line():
     yield test, c(old="x         abc\n", new="         abc\n")
 
 def test_text_commands():
+    from editxt.editor import Editor
     from editxt.document import TextDocument
     SAME = "<SAME AS INPUT>"
     def test(c):
@@ -244,10 +245,11 @@ def test_text_commands():
         result = TestConfig()
         default = False
         m = Mocker()
-        tv = m.mock(ak.NSTextView)
-        (tv.editor.document.indent_mode << c.mode).count(0, None)
-        (tv.editor.document.indent_size << c.size).count(0, None)
-        (tv.editor.document.eol << c.eol).count(0, None)
+        editor = m.mock(Editor)
+        tv = editor.text_view >> m.mock(ak.NSTextView)
+        (editor.document.indent_mode << c.mode).count(0, None)
+        (editor.document.indent_size << c.size).count(0, None)
+        (editor.document.eol << c.eol).count(0, None)
         sel = fn.NSMakeRange(*c.oldsel); (tv.selectedRange() << sel).count(0, None)
         (tv.string() << fn.NSString.stringWithString_(c.input)).count(0, None)
         (tv.shouldChangeTextInRange_replacementString_(ANY, ANY) << True).count(0, None)
@@ -263,7 +265,7 @@ def test_text_commands():
         if c.scroll:
             tv.scrollRangeToVisible_(ANY)
         with m:
-            c.method(tv, None, None)
+            c.method(editor, None, None)
             if "text" in result:
                 eq_(result.text, c.output)
             else:
@@ -438,11 +440,11 @@ def test_reload_config():
         mod.reload_config(tv, "<sender>", None)
 
 def test_clear_highlighted_text():
-    from editxt.controls.textview import TextView
+    from editxt.editor import Editor
     m = Mocker()
-    tv = m.mock(TextView)
-    view = tv.editor.finder.mark_occurrences("")
-    do = CommandTester(mod.clear_highlighted_text, textview=tv)
+    editor = m.mock(Editor)
+    editor.finder.mark_occurrences("")
+    do = CommandTester(mod.clear_highlighted_text, editor=editor)
     with m:
         do("clear_highlighted_text")
 
@@ -471,16 +473,16 @@ def test_set_variable():
     yield test, "set soft_wrap x", [], ""
 
     def test(command, attribute, value=None):
-        m = Mocker()
-        tv = m.mock(TextView)
-        editor = tv.editor >> m.mock(Editor)
-        do = CommandTester(mod.set_variable, textview=tv)
-        if isinstance(attribute, Exception):
-            with assert_raises(type(attribute), msg=str(attribute)), m:
-                do(command)
-        else:
-            setattr(editor.proxy >> m.mock(), attribute, value)
-            with m:
+        with test_app("editor*") as app:
+            m = Mocker()
+            editor = app.windows[0].current_editor
+            proxy = editor.proxy = m.mock()
+            do = CommandTester(mod.set_variable, editor=editor)
+            if isinstance(attribute, Exception):
+                with assert_raises(type(attribute), msg=str(attribute)):
+                    do(command)
+            else:
+                setattr(proxy, attribute, value)
                 do(command)
     c = TestConfig()
     yield test, "set", AssertionError("nothing set")
@@ -496,9 +498,7 @@ def test_set_variable():
     def test(command, attr, value, *value_before):
         with test_app("project editor*") as app:
             project = app.windows[0].projects[0]
-            editor = project.editors[0]
-            textview = editor.text_view = FakeTextView(editor=editor)
-        do = CommandTester(mod.set_variable, textview=textview)
+        do = CommandTester(mod.set_variable, editor=project.editors[0])
         if value_before:
             eq_(getattr(project, attr), *value_before)
             eq_(len(value_before), 1, value_before)
@@ -507,24 +507,23 @@ def test_set_variable():
     yield test, "set project_path ~/project", "path", os.path.expanduser("~/project"), None
 
     def test(command, size, mode):
-        m = Mocker()
-        tv = m.mock(TextView)
-        editor = tv.editor >> m.mock(Editor)
-        proxy = editor.proxy >> m.mock()
-        setattr(proxy, "indent_size", size)
-        setattr(proxy, "indent_mode", mode)
-        do = CommandTester(mod.set_variable, textview=tv)
-        with m:
+        with test_app("editor*") as app:
+            editor = app.windows[0].current_editor
+            do = CommandTester(mod.set_variable, editor=editor)
             do(command)
+            eq_(editor.indent_size, size)
+            eq_(editor.indent_mode, mode)
     yield test, "set indent", 4, const.INDENT_MODE_SPACE
     yield test, "set indent 3", 3, const.INDENT_MODE_SPACE
     yield test, "set indent 8 t", 8, const.INDENT_MODE_TAB
 
 def test_panel_actions():
+    from editxt.editor import Editor
     import sys
     def test(c):
         m = Mocker()
-        tv = m.mock(ak.NSTextView)
+        editor = m.mock(Editor)
+        tv = editor.text_view >> m.mock(ak.NSTextView)
         ctl_class = m.replace("editxt.command.{}.{}".format(c.mod, c.ctl.__name__))
         if c.func is not None:
             func = m.replace("editxt.command.{}.{}".format(c.mod, c.func.__name__))
@@ -536,7 +535,7 @@ def test_panel_actions():
             ctl = ctl_class(tv) >> m.mock(c.ctl)
             ctl.begin_sheet('<sender>')
         with m:
-            c.action(tv, '<sender>', args)
+            c.action(editor, '<sender>', args)
     c = TestConfig()
 
     from editxt.command.sortlines import SortLinesController, sortlines
@@ -567,16 +566,20 @@ class CommandTester(object):
             @staticmethod
             def insertItem_atIndex_(item, tag):
                 pass
+        def message(msg, msg_type=const.INFO):
+            if kw.get("error"):
+                eq_(msg, kw["error"])
+                return
+            if isinstance(msg, Exception):
+                raise msg
+            raise AssertionError(msg)
+        class editor:
+            text_view = kw.pop("textview", None)
+        editor = kw.pop("editor", editor)
+        if not isinstance(editor, type(Mocker().mock())):
+            editor.message = message
         class window:
-            class current_editor:
-                text_view = kw.pop("textview", None)
-                def message(msg, msg_type=const.INFO):
-                    if kw.get("error"):
-                        eq_(msg, kw["error"])
-                        return
-                    if isinstance(msg, Exception):
-                        raise msg
-                    raise AssertionError(msg)
+            current_editor = editor
         commander = textcommand.TextCommandController(
             kw.pop("history", []))
         for command in commands:

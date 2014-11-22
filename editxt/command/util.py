@@ -26,8 +26,11 @@ import editxt.constants as const
 log = logging.getLogger(__name__)
 
 
-def has_selection(textview, sender):
-    return textview.selectedRange().length > 0
+def has_selection(editor, sender):
+    return editor.text_view and editor.text_view.selectedRange().length > 0
+
+def has_editor(editor, sender):
+    return editor is not None
 
 
 _line_splitter = re.compile("([^\n\r\u2028]*(?:%s)?)" % "|".join(

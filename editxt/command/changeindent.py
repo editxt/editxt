@@ -31,8 +31,8 @@ log = logging.getLogger(__name__)
 
 
 @command(title="Change Indentation")
-def reindent(textview, sender, args):
-    ctl = ChangeIndentationController(textview)
+def reindent(editor, sender, args):
+    ctl = ChangeIndentationController(editor.text_view)
     ctl.begin_sheet(sender)
 
 

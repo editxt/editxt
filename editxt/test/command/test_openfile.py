@@ -34,13 +34,15 @@ def test_open_command():
     @gentest
     def test(command, expected="", error=None, config="", project_path="/"):
         project_config = "({})".format(project_path) if project_path else ""
+        if "*" not in config:
+            project_config += "*"
         base_config = "window project{} ".format(project_config)
         with test_app(base_config + config) as app:
-            tapp = test_app(app)
-            view = FakeTextView("")
-            view.editor = FakeEditor(app.windows[0].projects[0])
-            CommandTester(mod.open_, textview=view, error=error)(command)
-            eq_(tapp.state, (base_config + expected).strip())
+            editor = app.windows[0].current_editor
+            CommandTester(mod.open_, editor=editor, error=error)(command)
+            if not error:
+                base_config = base_config.replace("*", "")
+            eq_(test_app(app).state, (base_config + expected).strip())
 
     yield test("open file.txt", "editor[/file.txt 0]*")
     yield test("open file.txt",
@@ -57,12 +59,3 @@ def test_open_files():
         path = tapp.temp_path("file.txt")
         mod.open_files([path], project)
         eq_(tapp.state, "window project editor[/file.txt 0]*")
-
-
-class FakeEditor(object):
-
-    def __init__(self, project):
-        self.project = project
-
-    def dirname(self):
-        return self.project.dirname()

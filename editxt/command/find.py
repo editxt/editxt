@@ -65,11 +65,11 @@ WORD = "word"
     Choice('regex literal word python-replace', name='search_type'),
     Choice(('wrap', True), ('no-wrap', False), name='wrap_around'),
 ), lookup_with_arg_parser=True)
-def find(textview, sender, args):
+def find(editor, sender, args):
     assert args is not None, sender
     opts = FindOptions(**args.__dict__)
     save_to_find_pasteboard(opts.find_text)
-    finder = Finder(lambda:textview, opts, textview.app)
+    finder = Finder(lambda:editor.text_view, opts, editor.app)
     return getattr(finder, args.action)(sender)
 
 

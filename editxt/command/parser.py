@@ -208,13 +208,13 @@ class Field(object):
         self.name = identifier(name)
         self.default = default
 
-    def with_context(self, textview):
-        """Return a Field instance with textview and history context
+    def with_context(self, editor):
+        """Return a Field instance with editor (and history?) context
 
         The returned field object may be the same instance as the original
         on which this method was invoked.
 
-        :param textview: The text view on which the command is being invoked.
+        :param editor: The editor for which the command is being invoked.
         """
         return self
 
@@ -611,10 +611,10 @@ class File(String):
         self.directory = directory
         super().__init__(name)
 
-    def with_context(self, textview):
+    def with_context(self, editor):
         return File(
             self.name,
-            path=textview.editor.dirname(),
+            path=editor.dirname(),
             directory=self.directory,
         )
 

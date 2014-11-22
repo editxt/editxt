@@ -363,6 +363,7 @@ def test_set_main_view_of_window():
     project = Project(None)
     m = Mocker()
     view = m.mock()
+    view.bounds() >> "<frame>"
     win = m.mock()
     with m:
         eq_(project.main_view, None)

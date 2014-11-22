@@ -56,8 +56,8 @@ class CommandBar(object):
 
     def parser(self, command):
         parser = command.arg_parser
-        view = self.window.current_editor.text_view
-        return command.arg_parser.with_context(view)
+        editor = self.window.current_editor
+        return command.arg_parser.with_context(editor)
 
     def execute(self, text):
         self.reset()
@@ -86,7 +86,7 @@ class CommandBar(object):
             self.message('invalid command arguments: {}'.format(argstr))
             return
         try:
-            message = command(editor.text_view, self, args)
+            message = command(editor, self, args)
         except CommandError as err:
             self.message(err)
         except Exception:
@@ -290,29 +290,29 @@ class TextCommandController(object):
             return value
         return "", 0
 
-    def is_textview_command_enabled(self, textview, sender):
+    def is_command_enabled(self, editor, sender):
         command = self.commands.get(sender.tag())
         if command is not None:
             try:
-                return command.is_enabled(textview, sender)
+                return command.is_enabled(editor, sender)
             except Exception:
                 log.error("%s.is_enabled failed", type(command).__name__, exc_info=True)
         return False
 
-    def do_textview_command(self, textview, sender):
+    def do_command(self, editor, sender):
         command = self.commands.get(sender.tag())
         if command is not None:
             try:
-                command(textview, sender, None)
+                command(editor, sender, None)
             except Exception:
                 log.error("%s.execute failed", type(command).__name__, exc_info=True)
 
-    def do_textview_command_by_selector(self, textview, selector):
+    def do_command_by_selector(self, editor, selector):
         #log.debug(selector)
         callback = self.input_handlers.get(selector)
         if callback is not None:
             try:
-                callback(textview, None, None)
+                callback(editor, None, None)
                 return True
             except Exception:
                 log.error("%s failed", callback, exc_info=True)

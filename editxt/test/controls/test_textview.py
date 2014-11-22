@@ -29,6 +29,7 @@ from editxt.test.util import TestConfig, untested
 import editxt.constants as const
 import editxt.controls.textview as mod
 from editxt.controls.textview import TextView
+from editxt.editor import Editor
 
 log = logging.getLogger(__name__)
 
@@ -54,9 +55,10 @@ def test_TextView_performTextCommand_():
     m = Mocker()
     tv = TextView.alloc().init()
     app = tv.app = m.mock()
+    editor = tv.editor = m.mock(Editor)
     tc = app.text_commander >> m.mock(TextCommandController)
     sender = m.mock()
-    tc.do_textview_command(tv, sender)
+    tc.do_command(editor, sender)
     with m:
         tv.performTextCommand_(sender)
 
@@ -65,9 +67,10 @@ def test_TextView_doCommandBySelector_():
     m = Mocker()
     tv = TextView.alloc().init()
     app = tv.app = m.mock()
+    editor = tv.editor = m.mock(Editor)
     tc = app.text_commander >> m.mock(TextCommandController)
     selector = m.mock()
-    tc.do_textview_command_by_selector(tv, selector) >> True # omit super call
+    tc.do_command_by_selector(editor, selector) >> True # omit super call
     with m:
         tv.doCommandBySelector_(selector)
 
@@ -79,6 +82,7 @@ def test_TextView_validateUserInterfaceItem_():
         fc = m.replace(mod, "FindController")
         tv = TextView.alloc().init()
         app = tv.app = m.mock()
+        editor = tv.editor = m.mock(Editor)
         item = m.mock(ak.NSMenuItem)
         expectation = (item.action() << c.action)
         if c.action == "performFindPanelAction:":
@@ -88,7 +92,7 @@ def test_TextView_validateUserInterfaceItem_():
         elif c.action == "performTextCommand:":
             expectation.count(2)
             tc = app.text_commander >> m.mock(TextCommandController)
-            tc.is_textview_command_enabled(tv, item) >> True
+            tc.is_command_enabled(editor, item) >> True
         else:
             raise NotImplementedError # left untested because I don't know how to mock a super call
         with m:

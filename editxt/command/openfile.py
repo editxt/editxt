@@ -25,21 +25,25 @@ from subprocess import Popen, list2cmdline
 import editxt.constants as const
 from editxt.command.base import command, CommandError
 from editxt.command.parser import CommandParser, File, VarArgs
+from editxt.command.util import has_editor
 from editxt.editor import Editor
 
 log = logging.getLogger(__name__)
 
 
-@command(name="open", arg_parser=CommandParser(VarArgs("paths", File("path"))))
-def open_(textview, sender, args):
+@command(name="open",
+    arg_parser=CommandParser(VarArgs("paths", File("path"))),
+    is_enabled=has_editor,
+)
+def open_(editor, sender, args):
     """Open file"""
     if args is None:
         from editxt.commands import show_command_bar
-        show_command_bar(textview, sender, "open ")
+        show_command_bar(editor, sender, "open ")
     elif all(p is None for p in args.paths):
         raise CommandError("please specify a file path")
     else:
-        open_files(args.paths, textview.editor.project)
+        open_files(args.paths, editor.project)
 
 
 def open_files(paths, project, index=None):

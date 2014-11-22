@@ -27,7 +27,7 @@ import editxt.constants as const
 from editxt.command.base import command, CommandError
 from editxt.command.parser import (Choice, File, Int, String, Regex, RegexPattern,
     VarArgs, CommandParser, Options, SubArgs, SubParser)
-from editxt.command.util import has_selection, iterlines
+from editxt.command.util import has_editor, has_selection, iterlines
 
 from editxt.command.changeindent import reindent
 from editxt.command.diff import diff
@@ -85,10 +85,11 @@ def load_commands():
     )
 
 
-@command(title="Command Bar", hotkey=(";", ak.NSCommandKeyMask))
-def show_command_bar(textview, sender, args):
+@command(title="Command Bar", hotkey=(";", ak.NSCommandKeyMask),
+         is_enabled=has_editor)
+def show_command_bar(editor, sender, args):
     """Show the command bar"""
-    window = textview.editor.project.window
+    window = editor.project.window
     if window is None:
         ak.NSBeep()
     else:
@@ -98,29 +99,29 @@ def show_command_bar(textview, sender, args):
 @command(name='goto', title="Goto Line",
     arg_parser=CommandParser(Int("line")),
     lookup_with_arg_parser=True)
-def goto_line(textview, sender, opts):
+def goto_line(editor, sender, opts):
     """Jump to a line in the document"""
     if opts is None or opts.line is None:
-        show_command_bar(textview, sender, None)
+        show_command_bar(editor, sender, None)
         return
-    textview.goto_line(opts.line)
+    editor.text_view.goto_line(opts.line)
 
 
 @command(title="(Un)comment Selected Lines",
     hotkey=(",", ak.NSCommandKeyMask),
     is_enabled=has_selection)
-def comment_text(textview, sender, args):
+def comment_text(editor, sender, args):
     """Comment/uncomment the selected text region
 
     The region is uncommented if the first two lines start with comment
     characters. Otherwise, the region is commented.
     """
-    _comment_text(textview, sender, args, False)
+    _comment_text(editor, sender, args, False)
 
 @command(title="(Un)comment + Space Selected Lines",
     hotkey=(",", ak.NSCommandKeyMask | ak.NSShiftKeyMask),
     is_enabled=has_selection)
-def pad_comment_text(textview, sender, args):
+def pad_comment_text(editor, sender, args):
     """Comment/uncomment + space the selected text region
 
     The region is uncommented if the first two lines start with comment
@@ -128,20 +129,21 @@ def pad_comment_text(textview, sender, args):
     region, each line is prefixed with an additional space if it does
     not begin with a space or tab character.
     """
-    _comment_text(textview, sender, args, True)
+    _comment_text(editor, sender, args, True)
 
-def _comment_text(textview, sender, args, pad):
+def _comment_text(editor, sender, args, pad):
+    textview = editor.text_view
     text = textview.string()
     sel = text.lineRangeForRange_(textview.selectedRange())
-    comment_token = textview.editor.document.comment_token
+    comment_token = editor.document.comment_token
     if is_comment_range(text, sel, comment_token):
         func = uncomment_line
     else:
         func = comment_line
     args = (
         comment_token,
-        textview.editor.document.indent_mode,
-        textview.editor.document.indent_size,
+        editor.document.indent_mode,
+        editor.document.indent_size,
         pad,
     )
     seltext = "".join(func(line, *args) for line in iterlines(text, sel))
@@ -197,12 +199,13 @@ def uncomment_line(text, token, indent_mode, indent_size, pad=False):
 @command(title="Indent Selected Lines",
     hotkey=("]", ak.NSCommandKeyMask),
     is_enabled=has_selection)
-def indent_lines(textview, sender, args):
-    indent_mode = textview.editor.document.indent_mode
+def indent_lines(editor, sender, args):
+    indent_mode = editor.document.indent_mode
     if indent_mode == const.INDENT_MODE_TAB:
         istr = "\t"
     else:
-        istr = " " * textview.editor.document.indent_size
+        istr = " " * editor.document.indent_size
+    textview = editor.text_view
     sel = textview.selectedRange()
     text = textview.string()
     if sel.length == 0:
@@ -231,8 +234,8 @@ def indent_lines(textview, sender, args):
 
 
 @command(title="Un-indent Selected Lines", hotkey=("[", ak.NSCommandKeyMask))
-def dedent_lines(textview, sender, args):
-    def dedent(line, spt=textview.editor.document.indent_size):
+def dedent_lines(editor, sender, args):
+    def dedent(line, spt=editor.document.indent_size):
         if not line.strip():
             return line.lstrip(" \t")
         if line.startswith("\t"):
@@ -245,6 +248,7 @@ def dedent_lines(textview, sender, args):
             else:
                 break
         return line[remove:]
+    textview = editor.text_view
     text = textview.string()
     sel = text.lineRangeForRange_(textview.selectedRange())
     seltext = "".join(dedent(line) for line in iterlines(text, sel))
@@ -255,26 +259,26 @@ def dedent_lines(textview, sender, args):
             textview.didChangeText()
 
 
-@command(title="Reload config")
-def reload_config(textview, sender, args):
-    textview.app.config.reload()
+@command(title="Reload config", is_enabled=has_editor)
+def reload_config(editor, sender, args):
+    editor.app.config.reload()
 
 
 @command(title="Clear highlighted text")
-def clear_highlighted_text(textview, sender, args):
-    textview.editor.finder.mark_occurrences("")
+def clear_highlighted_text(editor, sender, args):
+    editor.finder.mark_occurrences("")
 
 
-def set_editor_variable(textview, name, args):
-    setattr(textview.editor.proxy, name, args.value)
+def set_editor_variable(editor, name, args):
+    setattr(editor.proxy, name, args.value)
 
-def set_project_variable(textview, command_name, args):
+def set_project_variable(editor, command_name, args):
     assert len(args) == 1, repr(args)
     for name, value in args:
-        setattr(textview.editor.project.proxy, name, value)
+        setattr(editor.project.proxy, name, value)
 
-def set_editor_indent_vars(textview, name, args):
-    proxy = textview.editor.proxy
+def set_editor_indent_vars(editor, name, args):
+    proxy = editor.proxy
     setattr(proxy, "indent_size", args.size)
     setattr(proxy, "indent_mode", args.mode)
 
@@ -287,12 +291,12 @@ def set_editor_indent_vars(textview, name, args):
         ),
         setter=set_editor_variable),
     SubArgs("indent",
-        Int("size", default=4), #lambda textview: app.config["indent_size"]),
+        Int("size", default=4), #lambda editor: app.config["indent_size"]),
         Choice(
             ("space", const.INDENT_MODE_SPACE),
             ("tab", const.INDENT_MODE_TAB),
             name="mode",
-            #default=lambda textview: textview.editor.document.indent_mode)
+            #default=lambda editor: editor.document.indent_mode)
         ),
         setter=set_editor_indent_vars),
     SubArgs("newline_mode",
@@ -302,7 +306,7 @@ def set_editor_indent_vars(textview, name, args):
             ("Windows windows", const.NEWLINE_MODE_WINDOWS),
             ("Unicode unicode", const.NEWLINE_MODE_UNICODE),
             name="value",
-            #default=lambda textview: textview.editor.newline_mode)
+            #default=lambda editor: editor.newline_mode)
         ),
         setter=set_editor_variable,
     ),
@@ -314,16 +318,16 @@ def set_editor_indent_vars(textview, name, args):
             ("yes on", const.WRAP_WORD),
             ("no off", const.WRAP_NONE),
             name="value",
-            #default=lambda textview: textview.editor.wrap_mode
+            #default=lambda editor: editor.wrap_mode
         ),
         setter=set_editor_variable),
-)))
-def set_variable(textview, sender, args):
+)), is_enabled=has_editor)
+def set_variable(editor, sender, args):
     if args.variable is None:
         raise CommandError("nothing set")
     else:
         sub, opts = args.variable
-        sub.data["setter"](textview, sub.name, opts)
+        sub.data["setter"](editor, sub.name, opts)
 
 
 @command(name='debug',
@@ -332,10 +336,11 @@ def set_variable(textview, sender, args):
         "error",
         "unhandled-error",
         name="action"
-    )))
-def debug(textview, sender, opts):
+    )),
+    is_enabled=has_editor)
+def debug(editor, sender, opts):
     if opts.action == "mem-profile":
-        textview.editor.document.app.open_error_log(set_current=True)
+        editor.document.app.open_error_log(set_current=True)
         mem_profile()
     elif opts.action == "error":
         raise Exception("raised by debug command")
@@ -363,8 +368,9 @@ def mem_profile():
 
 _ws = re.compile(r"([\t ]+)", re.UNICODE | re.MULTILINE)
 
-def insert_newline(textview, sender, args):
-    eol = textview.editor.document.eol
+def insert_newline(editor, sender, args):
+    textview = editor.text_view
+    eol = editor.document.eol
     sel = textview.selectedRange()
     text = textview.string()
     if sel.location > 0:
@@ -382,8 +388,9 @@ def insert_newline(textview, sender, args):
         textview.didChangeText()
         textview.scrollRangeToVisible_((sel[0] + len(eol), 0))
 
-def move_to_beginning_of_line(textview, sender, args):
-    eol = textview.editor.document.eol
+def move_to_beginning_of_line(editor, sender, args):
+    textview = editor.text_view
+    eol = editor.document.eol
     sel = textview.selectedRange()
     text = textview.string()
     if sel[0] > 0:
@@ -402,8 +409,9 @@ def move_to_beginning_of_line(textview, sender, args):
 
 #def move_to_beginning_of_line_and_modify_selection(textview, sender, args):
 
-def delete_backward(textview, sender, args):
-    if textview.editor.document.indent_mode == const.INDENT_MODE_TAB:
+def delete_backward(editor, sender, args):
+    textview = editor.text_view
+    if editor.document.indent_mode == const.INDENT_MODE_TAB:
         textview.deleteBackward_(sender)
         return
     sel = textview.selectedRange()
@@ -419,7 +427,7 @@ def delete_backward(textview, sender, args):
             delete = 1
         elif delete > 1:
             i = text.lineRangeForRange_((i, 0))[0]
-            size = textview.editor.document.indent_size
+            size = editor.document.indent_size
             maxdel = (sel[0] - i) % size
             if maxdel == 0:
                 maxdel = size

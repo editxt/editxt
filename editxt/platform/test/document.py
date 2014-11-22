@@ -27,3 +27,13 @@ def setup_main_view(*args):
 
 def teardown_main_view(*args):
     pass
+
+def add_command_view(view, frame):
+    class main_view:
+        top = view
+        bottom = None
+        def frame(self):
+            return frame
+        def become_subview_of(self, view, focus=None):
+            self.parent_view = view
+    return main_view()

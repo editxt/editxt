@@ -40,11 +40,12 @@ log = logging.getLogger(__name__)
 
 def test_wrap_to_margin_guide():
     m = Mocker()
-    tv = m.mock(ak.NSTextView)
+    editor = m.mock()
+    tv = editor.text_view >> m.mock(ak.NSTextView)
     wrap = m.replace(mod, 'wrap_selected_lines')
     wrap(tv, mod.Options(wrap_column=const.DEFAULT_RIGHT_MARGIN, indent=True))
     with m:
-        mod.wrap_at_margin(tv, None, None)
+        mod.wrap_at_margin(editor, None, None)
 
 def test_WrapLinesController_default_options():
     with test_app() as app:

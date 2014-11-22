@@ -26,6 +26,7 @@ class ListView(object):
         self.items = items
         self.view = None
         self.frame = None
+        self.scroll = None
 
     def become_subview_of(self, view):
         self.parent_view = view

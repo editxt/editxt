@@ -43,7 +43,7 @@ log = logging.getLogger(__name__)
 @mod.command(name='abc', title='Title', hotkey=(',', 0),
     is_enabled=lambda *a:False,
     arg_parser=CommandParser(Int("value")), lookup_with_arg_parser=True)
-def dummy_command(textview, sender, args):
+def dummy_command(editor, sender, args):
     assert False, "this command is not meant to be executed"
 
 def setup(controller_class, nib_name="TestController"):
@@ -67,14 +67,15 @@ def setup(controller_class, nib_name="TestController"):
 
 def test_command_decorator_defaults():
     @mod.command
-    def cmd(textview, sender, args):
+    def cmd(editor, sender, args):
         pass
 
     assert cmd.is_text_command
     eq_(cmd.title, None)
     eq_(cmd.hotkey, None)
     eq_(cmd.name, 'cmd')
-    eq_(cmd.is_enabled(None, None), True)
+    eq_(cmd.is_enabled(None, None), False)
+    eq_(cmd.is_enabled(TestConfig(text_view=object), None), True)
     eq_(cmd.arg_parser.parse(''), Options())
     eq_(cmd.lookup_with_arg_parser, False)
 
@@ -95,7 +96,7 @@ def test_command_decorator_with_args():
 def test_command_decorator_names():
     def test(input, output):
         @mod.command(name=input)
-        def cmd(textview, sender, args):
+        def cmd(editor, sender, args):
             pass
         eq_(cmd.name, output[0])
         eq_(cmd.names, output)
@@ -130,7 +131,7 @@ def test_save_options():
     yield test, Options(value=None), "abc"
 
     @mod.command(arg_parser=CommandParser(Int("value", default=42)))
-    def xyz(textview, sender, options): pass
+    def xyz(editor, sender, options): pass
 
     yield test, Options(value=345), "xyz 345", xyz
     yield test, Options(value=42), "xyz", xyz

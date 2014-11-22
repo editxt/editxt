@@ -142,3 +142,10 @@ class DualView(ak.NSView):
 
     def resizeSubviewsWithOldSize_(self, old_size):
         self.tile()
+
+    def become_subview_of(self, view, focus=None):
+        self.setFrame_(view.bounds())
+        view.addSubview_(self)
+        if focus:
+            assert view.window() is not None, "cannot focus view: %r" % (focus,)
+            view.window().makeFirstResponder_(focus)

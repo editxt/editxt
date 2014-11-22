@@ -103,20 +103,24 @@ def setup_main_view(editor, frame):
     #scroll.verticalRulerView().invalidateRuleThickness()
     scroll.setRulersVisible_(True)
 
-    command = CommandView.alloc().initWithFrame_(frame)
-
-    def doc_height():
-        return scroll.contentSize().height
-    def command_height():
-        return command.preferred_height
-    main_view = DualView.alloc().init(
-        frame, scroll, command, doc_height, command_height, 0.2)
-    ak.NSNotificationCenter.defaultCenter() \
-        .addObserver_selector_name_object_(
-            main_view, "tile:", SHOULD_RESIZE, command)
+    main_view = add_command_view(scroll, frame)
     main_view._text_delegate = TextViewDelegate.alloc().init_(editor)
     text.setDelegate_(main_view._text_delegate)
 
+    return main_view
+
+
+def add_command_view(document_scroller, frame):
+    command = CommandView.alloc().initWithFrame_(frame)
+    def doc_height():
+        return document_scroller.contentSize().height
+    def command_height():
+        return command.preferred_height
+    main_view = DualView.alloc().init(
+        frame, document_scroller, command, doc_height, command_height, 0.2)
+    ak.NSNotificationCenter.defaultCenter() \
+        .addObserver_selector_name_object_(
+            main_view, "tile:", SHOULD_RESIZE, command)
     return main_view
 
 

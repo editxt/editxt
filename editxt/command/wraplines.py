@@ -43,12 +43,12 @@ WHITESPACE = re.compile(r"[ \t]*")
         Int('wrap_column', default=const.DEFAULT_RIGHT_MARGIN),
         Choice(('indent', True), ('no-indent', False)),
     ))
-def wrap_lines(textview, sender, args):
+def wrap_lines(editor, sender, args):
     if args is None:
-        wrapper = WrapLinesController(textview)
+        wrapper = WrapLinesController(editor.text_view)
         wrapper.begin_sheet(sender)
     else:
-        wrap_selected_lines(textview, args)
+        wrap_selected_lines(editor.text_view, args)
 
 
 @command(title="Hard Wrap At Margin",
@@ -57,11 +57,11 @@ def wrap_lines(textview, sender, args):
         Choice(('indent', True), ('no-indent', False)), # TODO default to last used value
     ),
     is_enabled=has_selection)
-def wrap_at_margin(textview, sender, args):
+def wrap_at_margin(editor, sender, args):
     opts = Options()
     opts.wrap_column = const.DEFAULT_RIGHT_MARGIN
     opts.indent = args.indent if args is not None else True
-    wrap_selected_lines(textview, opts)
+    wrap_selected_lines(editor.text_view, opts)
 
 
 class WrapLinesController(SheetController):

@@ -48,8 +48,9 @@ def command(func=None, name=None, title=None, hotkey=None,
             is_enabled=None, arg_parser=None, lookup_with_arg_parser=False):
     """Text command decorator
 
-    Text command signature: `text_command(textview, sender, args)`
+    Text command signature: `text_command(editor, sender, args)`
     Both `sender` and `args` will be `None` in some contexts.
+    The text view can be accessed with `editor.text_view`.
 
     :param name: A name that can be typed in the command bar to invoke the
         command. Defaults to the decorated callable's `__name__`.
@@ -57,8 +58,9 @@ def command(func=None, name=None, title=None, hotkey=None,
     :param hotkey: Preferred command hotkey tuple: `(<key char>, <key mask>)`.
         Ignored if title is None.
     :param is_enabled: A callable that returns a boolean value indicating if
-        the command is enabled in the Text menu. Always enabled if None.
-        Signature: `is_enabled(textview, sender)`.
+        the command is enabled for the current context. By default a command
+        is enabled if the current editor has a text view.
+        Signature: `is_enabled(editor, sender)`.
     :param arg_parser: An object inplementing the `CommandParser` interface.
         Defaults to `CommandParser()`.
     :param lookup_with_arg_parser: If True, use the `arg_parser.parse` to
@@ -87,7 +89,11 @@ def command(func=None, name=None, title=None, hotkey=None,
         else:
             func.title = title
         func.hotkey = hotkey
-        func.is_enabled = is_enabled or (lambda textview, sender: True)
+        nonlocal is_enabled
+        if is_enabled is None:
+            def is_enabled(editor, sender):
+                return editor is not None and editor.text_view is not None
+        func.is_enabled = is_enabled
         func.arg_parser = arg_parser or CommandParser()
         func.lookup_with_arg_parser = lookup_with_arg_parser
         func.parse = parse

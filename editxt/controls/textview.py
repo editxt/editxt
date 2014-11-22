@@ -73,10 +73,10 @@ class TextView(ak.NSTextView):
         FindController.shared_controller(self.app).perform_action(sender)
 
     def performTextCommand_(self, sender):
-        self.app.text_commander.do_textview_command(self, sender)
+        self.app.text_commander.do_command(self.editor, sender)
 
     def doCommandBySelector_(self, selector):
-        if not self.app.text_commander.do_textview_command_by_selector(self, selector):
+        if not self.app.text_commander.do_command_by_selector(self.editor, selector):
             super(TextView, self).doCommandBySelector_(selector)
 
     def validateUserInterfaceItem_(self, item):
@@ -84,7 +84,7 @@ class TextView(ak.NSTextView):
             find = FindController.shared_controller(self.app)
             return find.validate_action(item.tag())
         elif item.action() == "performTextCommand:":
-            return self.app.text_commander.is_textview_command_enabled(self, item)
+            return self.app.text_commander.is_command_enabled(self.editor, item)
         return super(TextView, self).validateUserInterfaceItem_(item)
 
     # Drag/drop ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

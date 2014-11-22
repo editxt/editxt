@@ -28,6 +28,7 @@ from editxt.datatypes import WeakProperty
 from editxt.editor import Editor
 from editxt.document import DocumentController, TextDocument
 from editxt.platform.app import add_recent_document
+from editxt.platform.document import add_command_view
 from editxt.platform.kvo import KVOList, KVOProxy
 from editxt.platform.views import ListView
 
@@ -46,6 +47,7 @@ class Project(object):
     newline_mode = None
     syntaxdef = None
     character_encoding = None
+    text_view = None
     is_leaf = False
 
     @staticmethod
@@ -64,6 +66,7 @@ class Project(object):
         self.editors = KVOList()
         self.recent = KVOList()
         self.main_view = None
+        self.command_view = None
         self.closing = False
         if serial is not None:
             self._deserialize(serial)
@@ -132,6 +135,10 @@ class Project(object):
 
     def can_rename(self):
         return True
+
+    @property
+    def project(self):
+        return self
 
     @property
     def file_path(self):
@@ -259,15 +266,21 @@ class Project(object):
                 item.close()
 
     def set_main_view_of_window(self, view, window):
-        def open_recent(item):
-            self.window.current_editor = self.create_editor(item.path)
         if self.main_view is None:
-            self.main_view = ListView(
+            def open_recent(item):
+                self.window.current_editor = self.create_editor(item.path)
+            self.listview = ListView(
                 self.recent,
                 RECENT_COLSPEC,
                 on_double_click=open_recent,
             )
-        self.main_view.become_subview_of(view)
+            self.main_view = add_command_view(self.listview.scroll, view.bounds())
+            self.command_view = self.main_view.bottom
+        self.main_view.become_subview_of(view, focus=self.listview.view)
+
+    def message(self, msg, msg_type=const.INFO):
+        """Display a message in the command view"""
+        self.command_view.message(msg, msg_type=msg_type)
 
     def interactive_close(self, do_close):
         def dirty_editors():
@@ -299,6 +312,8 @@ class Project(object):
         self.window = None
         self.editors = None
         self.proxy = None
+        self.main_view = None
+        self.command_view = None
 
     def __repr__(self):
         return '<%s 0x%x name=%s>' % (type(self).__name__, id(self), self.name)

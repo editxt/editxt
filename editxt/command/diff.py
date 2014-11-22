@@ -30,9 +30,8 @@ log = logging.getLogger(__name__)
 
 
 @command(arg_parser=CommandParser(String("file")))
-def diff(textview, sender, args):
+def diff(editor, sender, args):
     """Diff with original"""
-    editor = textview.editor
     if args and args.file:
         file_path = os.path.expanduser(args.file)
     elif editor.document.has_real_path():
@@ -43,7 +42,7 @@ def diff(textview, sender, args):
         raise CommandError("file not found: {}".format(file_path))
     name = os.path.basename(editor.file_path)
     diff_program = editor.app.config["diff_program"]
-    external_diff(file_path, textview.string(), name, diff_program)
+    external_diff(file_path, editor.text_view.string(), name, diff_program)
 
 
 def external_diff(filepath, text, name, diff_program):

@@ -88,6 +88,7 @@ class ListView(object):
         self.delegate.on_selection_changed = on_selection_changed
         if on_double_click is not None:
             self.delegate.setup_double_click(on_double_click)
+        view.setDelegate_(self.delegate)
 
     @property
     def preferred_height(self):
@@ -121,6 +122,7 @@ class ListView(object):
         self.view.scrollRowToVisible_(first)
 
     def close(self):
+        self.view.setDelegate_(None)
         self.delegate.close()
         self.delegate = None
         self.scroll.setDocumentView_(None)
@@ -138,7 +140,6 @@ class TableDelegate(ak.NSObject):
         self.table = table
         self.content = content
         self.on_selection_changed = None
-        table.setDelegate_(self)
         return self
 
     def setup_double_click(self, callback):
@@ -166,6 +167,5 @@ class TableDelegate(ak.NSObject):
 
     def close(self):
         self.table.setTarget_(None)
-        self.table.setDelegate_(None)
         self.table = None
         self.content = None

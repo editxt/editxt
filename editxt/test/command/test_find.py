@@ -37,6 +37,7 @@ from editxt.command.find import (Finder, FindController, FindOptions,
 from editxt.command.find import FORWARD, BACKWARD
 from editxt.command.parser import RegexPattern
 from editxt.controls.textview import TextView
+from editxt.editor import Editor
 
 log = logging.getLogger(__name__)
 
@@ -60,8 +61,9 @@ def test_find_command():
         app = m.mock('editxt.application.Application')
         options = make_options(c)
         options.app = app
-        tv = m.mock(ak.NSTextView)
-        tv.app >> app
+        editor = m.mock(Editor)
+        tv = editor.text_view >> m.mock(ak.NSTextView)
+        editor.app >> app
         finder_cls = m.replace("editxt.command.find.Finder")
         save_paste = m.replace(mod, "save_to_find_pasteboard")
         def check_options(get_tv, args, app):
@@ -73,7 +75,7 @@ def test_find_command():
         getattr(finder, c.action)("<sender>") >> c.message
         with m:
             args = mod.find.arg_parser.parse(c.input)
-            result = mod.find(tv, "<sender>", args)
+            result = mod.find(editor, "<sender>", args)
             eq_(result, c.message)
 
     c = TestConfig(find="", replace="", search=mod.REGEX, ignore_case=False,
