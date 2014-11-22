@@ -32,15 +32,15 @@ import editxt.command.openfile as mod
 
 def test_open_command():
     @gentest
-    def test(command, expected="", error=None, config=""):
-        if config:
-            config = " " + config
-        with test_app("window project(/)" + config) as app:
+    def test(command, expected="", error=None, config="", project_path="/"):
+        project_config = "({})".format(project_path) if project_path else ""
+        base_config = "window project{} ".format(project_config)
+        with test_app(base_config + config) as app:
             tapp = test_app(app)
             view = FakeTextView("")
             view.editor = FakeEditor(app.windows[0].projects[0])
             CommandTester(mod.open_, textview=view, error=error)(command)
-            eq_(tapp.state, ("window project(/) " + expected).strip())
+            eq_(tapp.state, (base_config + expected).strip())
 
     yield test("open file.txt", "editor[/file.txt 0]*")
     yield test("open file.txt",
@@ -48,6 +48,7 @@ def test_open_command():
                expected="editor editor[/file.txt 0]* editor")
     yield test("open file.txt other.txt", "editor[/file.txt 0] editor[/other.txt 1]*")
     yield test("open", error="please specify a file path")
+    yield test("open file.txt", "editor[~/file.txt 0]*", project_path=None)
 
 def test_open_files():
     with test_app("project") as app:

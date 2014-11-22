@@ -238,7 +238,7 @@ def test_Choice():
     eq_(str(arg), 'arg-ument')
     eq_(arg.name, 'arg_ument')
 
-    test = make_type_checker(arg)
+    test = make_consume_checker(arg)
     yield test, 'arg-ument', 0, ("arg-ument", 9)
     yield test, 'arg', 0, ("arg-ument", 3)
     yield test, 'a', 0, ("arg-ument", 1)
@@ -259,7 +259,7 @@ def test_Choice():
     yield test, "arg", Error("invalid value: arg_ument='arg'")
 
     arg = Choice(('arg-ument', True), ('nope', False), ('nah', ""))
-    test = make_type_checker(arg)
+    test = make_consume_checker(arg)
     yield test, 'arg-ument', 0, (True, 9)
     yield test, 'arg', 0, (True, 3)
     yield test, 'a', 0, (True, 1)
@@ -287,7 +287,7 @@ def test_Choice():
     yield test, 'n', 0, ("...", 1)
 
     arg = Choice("argument parameter", "find search")
-    test = make_type_checker(arg)
+    test = make_consume_checker(arg)
     yield test, 'a', 0, ("argument", 1)
     yield test, 'arg', 0, ("argument", 3)
     yield test, 'argument', 0, ("argument", 8)
@@ -302,7 +302,7 @@ def test_Choice():
         ParseError("'arg-ument' does not match any of: argument, find", arg, 0, 9)
 
     arg = Choice(("argument parameter", True), ("find search", False))
-    test = make_type_checker(arg)
+    test = make_consume_checker(arg)
     yield test, 'a', 0, (True, 1)
     yield test, 'arg', 0, (True, 3)
     yield test, 'argument', 0, (True, 8)
@@ -322,7 +322,7 @@ def test_Choice_default_first():
     eq_(arg.name, 'true')
     eq_(repr(arg), "Choice(('true on', True), ('false off', False))")
 
-    test = make_type_checker(arg)
+    test = make_consume_checker(arg)
     yield test, '', 0, (True, 0)
     yield test, 't', 0, (True, 1)
     yield test, 'true', 0, (True, 4)
@@ -361,7 +361,7 @@ def test_Int():
     eq_(str(arg), 'num')
     eq_(repr(arg), "Int('num')")
 
-    test = make_type_checker(arg)
+    test = make_consume_checker(arg)
     yield test, '', 0, (None, 0)
     yield test, '3', 0, (3, 1)
     yield test, '42', 0, (42, 2)
@@ -381,7 +381,7 @@ def test_String():
     eq_(str(arg), 'str')
     eq_(repr(arg), "String('str')")
 
-    test = make_type_checker(arg)
+    test = make_consume_checker(arg)
     yield test, '', 0, (None, 0)
     yield test, 'a', 0, ('a', 1)
     yield test, 'abc', 0, ('abc', 3)
@@ -462,6 +462,13 @@ def test_File():
             with open(join(tmp, path), "w") as fh:
                 pass
 
+        test = make_consume_checker(arg)
+        yield test, "relative.txt", 0, Error("cannot make absolute path (no context): relative.txt")
+
+        test = make_completions_checker(arg)
+        yield test, "", ([], 0)
+        yield test, "../", (None, 0)
+
         textview=TestConfig(editor=app.windows[0].projects[0].editors[0])
         arg = arg.with_context(textview)
 
@@ -474,7 +481,7 @@ def test_File():
         yield test, join(tmp, "file"), join(tmp, "file")
         yield test, "arg/", Error("not a file: path='arg/'")
 
-        test = make_type_checker(arg)
+        test = make_consume_checker(arg)
         yield test, '', 0, (None, 0)
         yield test, 'a', 0, (join(tmp, 'dir/a'), 1)
         yield test, 'abc', 0, (join(tmp, 'dir/abc'), 3)
@@ -533,6 +540,17 @@ def test_File():
         yield test, "../", ["dir/", "file.doc ", "file.txt "], 0
         yield test, "../dir", ["dir/"], 3
         yield test, "~", ["~/"], 1
+
+        arg = File('dir', directory=True)
+        eq_(str(arg), 'dir')
+        eq_(repr(arg), "File('dir', directory=True)")
+        arg = arg.with_context(textview)
+
+        test = make_completions_checker(arg)
+        yield test, "", ([], 0)
+        yield test, "a", ([], 1)
+        yield test, "..", (["../"], 2)
+        yield test, "../", (["dir"], 3)
 
 def test_Regex():
     arg = Regex('regex')
@@ -696,7 +714,7 @@ def test_VarArgs():
     yield test, "x", 0, (None, None)
     yield test, "x ", 0, (None, None)
 
-    test = make_type_checker(arg)
+    test = make_consume_checker(arg)
     yield test, '', 0, (['arg'], 0)
     yield test, 'x', 0, ParseError("'x' does not match any of: arg, nope, nah", arg.field, 0, 1)
     yield test, 'a', 0, (['arg'], 1)
@@ -751,7 +769,7 @@ def test_SubParser():
     yield test, "str x", 0, (None, None)
     yield test, "str x ", 0, (None, None)
 
-    test = make_type_checker(arg)
+    test = make_consume_checker(arg)
     yield test, '', 0, (None, 0)
     yield test, 'x', 0, ParseError("'x' does not match any of: str, stx, val", arg, 0, 1)
     yield test, 'v 1', 0, ((sub, Options(num=1)), 3)
@@ -769,7 +787,7 @@ def test_SubParser():
 
 Args = lambda *a, **k: (a, k)
 
-def make_type_checker(arg):
+def make_consume_checker(arg):
     def type_checker_test(text, start, expect):
         if isinstance(expect, Exception):
             def check(err):

@@ -18,11 +18,13 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+import os
 
 from mocker import Mocker, expect, ANY, MATCH
 import AppKit as ak
 import Foundation as fn
-from editxt.test.util import assert_raises, eq_, TestConfig, replattr
+from editxt.test.command import FakeTextView
+from editxt.test.util import assert_raises, eq_, TestConfig, replattr, test_app
 
 import editxt.constants as const
 import editxt.commands as mod
@@ -457,6 +459,7 @@ def test_set_variable():
             "highlight_selected_text",
             "indent",
             "newline_mode",
+            "project_path",
             "soft_wrap",
         ], "variable ..."
     yield test, "set in", ["indent"], "dent 4 space"
@@ -488,6 +491,20 @@ def test_set_variable():
     yield test, "set newline_mode win", "newline_mode", const.NEWLINE_MODE_WINDOWS
     yield test, "set soft_wrap on", "soft_wrap", const.WRAP_WORD
     yield test, "set soft_wrap off", "soft_wrap", const.WRAP_NONE
+
+    # set_project_variable
+    def test(command, attr, value, *value_before):
+        with test_app("project editor*") as app:
+            project = app.windows[0].projects[0]
+            editor = project.editors[0]
+            textview = editor.text_view = FakeTextView(editor=editor)
+        do = CommandTester(mod.set_variable, textview=textview)
+        if value_before:
+            eq_(getattr(project, attr), *value_before)
+            eq_(len(value_before), 1, value_before)
+        do(command)
+        eq_(getattr(project, attr), value)
+    yield test, "set project_path ~/project", "path", os.path.expanduser("~/project"), None
 
     def test(command, size, mode):
         m = Mocker()

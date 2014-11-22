@@ -25,7 +25,7 @@ import Foundation as fn
 
 import editxt.constants as const
 from editxt.command.base import command, CommandError
-from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
+from editxt.command.parser import (Choice, File, Int, String, Regex, RegexPattern,
     VarArgs, CommandParser, Options, SubArgs, SubParser)
 from editxt.command.util import has_selection, iterlines
 
@@ -268,6 +268,11 @@ def clear_highlighted_text(textview, sender, args):
 def set_editor_variable(textview, name, args):
     setattr(textview.editor.proxy, name, args.value)
 
+def set_project_variable(textview, command_name, args):
+    assert len(args) == 1, repr(args)
+    for name, value in args:
+        setattr(textview.editor.project.proxy, name, value)
+
 def set_editor_indent_vars(textview, name, args):
     proxy = textview.editor.proxy
     setattr(proxy, "indent_size", args.size)
@@ -301,6 +306,9 @@ def set_editor_indent_vars(textview, name, args):
         ),
         setter=set_editor_variable,
     ),
+    SubArgs("project_path",
+        File("path", directory=True),
+        setter=set_project_variable),
     SubArgs("soft_wrap",
         Choice(
             ("yes on", const.WRAP_WORD),
@@ -326,7 +334,6 @@ def set_variable(textview, sender, args):
         name="action"
     )))
 def debug(textview, sender, opts):
-    """Various debugging helpers"""
     if opts.action == "mem-profile":
         textview.editor.document.app.open_error_log(set_current=True)
         mem_profile()

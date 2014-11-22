@@ -605,13 +605,18 @@ class File(String):
     :param name: Argument name.
     """
 
-    def __init__(self, name, path=None):
-        self.args = [name, path]
+    def __init__(self, name, path=None, directory=False):
+        self.args = [name, path, directory]
         self.path = path
+        self.directory = directory
         super().__init__(name)
 
     def with_context(self, textview):
-        return File(self.name, path=textview.editor.dirname())
+        return File(
+            self.name,
+            path=textview.editor.dirname(),
+            directory=self.directory,
+        )
 
     def consume(self, text, index):
         """Consume a file path
@@ -641,7 +646,7 @@ class File(String):
             base = "/"
             path = token
         elif self.path is None:
-            raise Error("cannot get completions (no context): {}".format(token))
+            return []
         else:
             base = self.path
             path = join(base, token)
@@ -650,11 +655,13 @@ class File(String):
         if not exists(root):
             return []
         assert len(sep) == 1, sep
+
         def delim(word):
             word = word.replace(' ', '\\ ')
             def get_delimiter():
                 return "/" if isdir(join(root, word)) else " "
             return CompleteWord(word, get_delimiter, len(name))
+
         if not name:
             match = lambda n: not n.startswith(".")
         elif name.islower():
@@ -666,7 +673,11 @@ class File(String):
             # to upper-case, which switches to the other matcher
             def match(n):
                 return n.startswith(name)
-        names = os.listdir(root)
+
+        if self.directory:
+            names = next(os.walk(root))[1]
+        else:
+            names = os.listdir(root)
         names = [delim(n) for n in sorted(names, key=str.lower) if match(n)]
         if isdir(path) and (name == ".." or name in names):
             if name in names:

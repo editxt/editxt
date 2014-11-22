@@ -74,7 +74,7 @@ View release stats:
 Top priority
 
 Add open file command
-  - project path
+x  - project path
 x  - file browser field type
 x  - improve tab completion
 x    - display completion list above command bar
@@ -83,6 +83,12 @@ x    - completion item should be able to control if it is padded with a space,
 x      where it begins, where it ends, etc.
 x    - fix ListView.preferred_height (does not always return the correct value)
 x    - fix proposed completion after typing that narrows completion list (maybe not too important)
+  - fix bug in parser: Error Log, command bar "set project_path ", type "." (error) types ..
+  - show full path in header of File auto-complete menu
+  - pass editor instead of textview into CommandParser.with_context
+
+Fix window title on edge cases (not always up to date)
+Add context menu to items in sidebar: Copy file path
 Add ack-like command
 Add move command to relocate file on disk
 Add py command for quick python command execution
