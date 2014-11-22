@@ -133,9 +133,23 @@ class CommandBar(object):
         selection).
         """
         if " " not in text:
+            editor = self.window.current_editor
+            def is_enabled(command, cache={}):
+                try:
+                    result = cache[command]
+                except KeyError:
+                    try:
+                        result = cache[command] = command.is_enabled(editor, self)
+                    except Exception:
+                        log.error("%s.is_enabled failed",
+                                  type(command).__name__, exc_info=True)
+                        result = False
+                return result
             words = sorted(name
-                for name in self.text_commander.commands
-                if isinstance(name, str) and name.startswith(text))
+                for name, command in self.text_commander.commands.items()
+                if isinstance(name, str)
+                    and name.startswith(text)
+                    and is_enabled(command))
             index = 0 if words else -1
         else:
             command, argstr = self._find_command(text)

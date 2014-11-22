@@ -130,13 +130,13 @@ def test_CommandBar_get_placeholder():
             Choice(('no', False), ('yes', True)),
             Regex('sort_regex', True),
         ))
-        def cmd(textview, sender, args):
+        def cmd(editor, sender, args):
             raise NotImplementedError("should not get here")
         @command(arg_parser=CommandParser(
             Regex('search_pattern', replace=c.replace),
             Choice(('yep', False), ('yes', True)),
         ), lookup_with_arg_parser=True)
-        def search(textview, sender, args):
+        def search(editor, sender, args):
             raise NotImplementedError("should not get here")
         bar = CommandTester(cmd, search)
         with m:
@@ -191,15 +191,18 @@ def test_CommandBar_get_completions():
             Choice(('forward', False), ('reverse xyz', True), name='reverse'),
             Regex('sort_regex', True),
         ))
-        def cmd(textview, sender, args):
+        def cmd(editor, sender, args):
             raise NotImplementedError("should not get here")
         @command(arg_parser=CommandParser(
             Regex('search_pattern'),
             Choice(('yes', True), ('no', False)),
         ), lookup_with_arg_parser=True)
-        def search(textview, sender, args):
+        def search(editor, sender, args):
             raise NotImplementedError("should not get here")
-        bar = CommandTester(cmd, search)
+        @command(arg_parser=CommandParser(Int('number')), is_enabled=lambda *a: False)
+        def count(editor, sender, args):
+            raise NotImplementedError("should not get here")
+        bar = CommandTester(cmd, search, count, textview=object)
         with m:
             eq_(bar.get_completions(c.text), c.expect)
     c = TestConfig()
@@ -229,7 +232,7 @@ def test_CommandBar_auto_complete():
         Choice(('forward', False), ('reverse xyz', True), name='reverse'),
         Regex('sort_regex', True),
     ))
-    def cmd(textview, sender, args):
+    def cmd(editor, sender, args):
         raise NotImplementedError("should not get here")
     bar = CommandTester(cmd)
 
