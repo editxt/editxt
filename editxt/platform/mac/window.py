@@ -143,7 +143,8 @@ class WindowController(ak.NSWindowController):
     def validateUserInterfaceItem_(self, item):
         if item.action() == "doCommand:":
             return self.window_.validate_command(item)
-        return super().validateUserInterfaceItem_(item)
+        # TODO implement validation for commands in file menu, etc.
+        return True
 
     def outlineViewSelectionDidChange_(self, notification):
         self.window_.selected_editor_changed()
