@@ -45,6 +45,7 @@ class CommandBar(object):
         self.window = window
         self.text_commander = text_commander
         self.history_view = None
+        self._cached_parser = (None, None, None)
 
     def activate(self, text=""):
         # abstract to a PyObjC-specific subclass when implementing other frontend
@@ -55,9 +56,12 @@ class CommandBar(object):
         editor.command_view.activate(self, text)
 
     def parser(self, command):
-        parser = command.arg_parser
         editor = self.window.current_editor
-        return command.arg_parser.with_context(editor)
+        command_, editor_, parser = self._cached_parser
+        if command is not command_ or editor is not editor_ or parser is None:
+            parser = command.arg_parser.with_context(editor)
+            self._cached_parser = (command, editor, parser)
+        return parser
 
     def execute(self, text):
         self.reset()

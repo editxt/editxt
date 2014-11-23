@@ -603,20 +603,27 @@ class File(String):
     """File path field
 
     :param name: Argument name.
+    :param directory: If true, auto-complete directories only. Default false.
     """
 
-    def __init__(self, name, path=None, directory=False):
-        self.args = [name, path, directory]
-        self.path = path
+    def __init__(self, name, directory=False, _editor=None):
+        self.args = [name, directory, _editor]
         self.directory = directory
+        self.editor = _editor
         super().__init__(name)
 
     def with_context(self, editor):
         return File(
             self.name,
-            path=editor.dirname(),
             directory=self.directory,
+            _editor=editor,
         )
+
+    @property
+    def path(self):
+        if self.editor is None:
+            return None
+        return self.editor.dirname()
 
     def consume(self, text, index):
         """Consume a file path
