@@ -312,7 +312,8 @@ def set_editor_indent_vars(editor, name, args):
     ),
     SubArgs("project_path",
         File("path", directory=True),
-        setter=set_project_variable),
+        setter=set_project_variable,
+        is_enabled=has_editor),
     SubArgs("soft_wrap",
         Choice(
             ("yes on", const.WRAP_WORD),

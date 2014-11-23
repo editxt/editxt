@@ -80,7 +80,7 @@ class CommandParser(object):
 
         See ``Field.with_context`` for argument specification.
         """
-        argspec = (arg.with_context(*args, **kw) for arg in self.argspec)
+        argspec = [arg.with_context(*args, **kw) for arg in self.argspec]
         return CommandParser(*argspec)
 
     def match(self, text, index=0):
@@ -999,10 +999,16 @@ class SubParser(Field):
     arguments to be parsed.
     """
 
-    def __init__(self, name, *subargs, **kw):
+    def __init__(self, name, *subargs):
         self.args = (name,) + subargs
-        super(SubParser, self).__init__(name, **kw)
+        super(SubParser, self).__init__(name)
         self.subargs = {p.name: p for p in subargs}
+
+    def with_context(self, *args, **kw):
+        subs = [a.with_context(*args, **kw)
+                for a in self.args[1:]
+                if a.is_enabled(*args, **kw)]
+        return SubParser(self.name, *subs)
 
     def consume(self, text, index):
         """Consume arguments based on the name of the first argument
@@ -1092,14 +1098,30 @@ class SubParser(Field):
 class SubArgs(object):
     """Arguments and data for SubParser"""
 
-    def __init__(self, name, *argspec, **data):
+    def __init__(self, name, *argspec, is_enabled=None, **data):
         self.name = name
         self.data = data
+        self._is_enabled = is_enabled
         self.parser = CommandParser(*argspec)
+
+    def is_enabled(self, editor):
+        if self._is_enabled is not None:
+            return self._is_enabled(editor)
+        return editor is not None and editor.text_view is not None
+
+    def with_context(self, *args, **kw):
+        sub = super(SubArgs, SubArgs).__new__(SubArgs)
+        sub.name = self.name
+        sub.data = self.data
+        sub._is_enabled = self._is_enabled
+        sub.parser = self.parser.with_context(*args, **kw)
+        return sub
 
     def __repr__(self):
         args = [repr(self.name)]
         args.extend(repr(a) for a in self.parser.argspec)
+        if self._is_enabled is not None:
+            args.append("is_enabled={!r}".format(self._is_enabled))
         args.extend("{}={!r}".format(*kv) for kv in sorted(self.data.items()))
         return "{}({})".format(type(self).__name__, ", ".join(args))
 

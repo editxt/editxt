@@ -729,15 +729,26 @@ def test_VarArgs():
     #arg = VarArgs("var", String("str"))
 
 def test_SubParser():
+    class is_enabled:
+        def __call__(self, editor):
+            return False
+        def __repr__(self):
+            return "is_enabled()"
     sub = SubArgs("val", Int("num"), abc="xyz")
     su2 = SubArgs("str", Choice(('yes', True), ('no', False)), abc="mno")
     su3 = SubArgs("stx", String("args"), abc="pqr")
-    arg = SubParser("var", sub, su2, su3)
+    su4 = SubArgs("hid", String("not"), is_enabled=is_enabled())
+    arg = SubParser("var", sub, su2, su3, su4)
     eq_(str(arg), 'var')
     eq_(repr(arg),
         "SubParser('var', SubArgs('val', Int('num'), abc='xyz'), "
         "SubArgs('str', Choice(('yes', True), ('no', False)), abc='mno'), "
-        "SubArgs('stx', String('args'), abc='pqr'))")
+        "SubArgs('stx', String('args'), abc='pqr'), "
+        "SubArgs('hid', String('not'), is_enabled=is_enabled()))")
+
+    arg = arg.with_context(TestConfig(text_view=object))
+    sub = arg.args[1]
+    su2 = arg.args[2]
 
     test = make_completions_checker(arg)
     yield test, "", (["str", "stx", "val"], 0)

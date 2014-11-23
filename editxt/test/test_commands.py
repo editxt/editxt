@@ -449,11 +449,11 @@ def test_clear_highlighted_text():
         do("clear_highlighted_text")
 
 def test_set_variable():
-    from editxt.editor import Editor
-    from editxt.controls.textview import TextView
-
     def test(command, completions, placeholder):
-        bar = CommandTester(mod.set_variable)
+        class editor:
+            text_view = object
+            dirname = lambda:None
+        bar = CommandTester(mod.set_variable, editor=editor)
         comps = (completions, (0 if completions else -1))
         eq_(bar.get_completions(command), comps)
         eq_(bar.get_placeholder(command), placeholder)
@@ -476,6 +476,7 @@ def test_set_variable():
         with test_app("editor*") as app:
             m = Mocker()
             editor = app.windows[0].current_editor
+            editor.text_view = object
             proxy = editor.proxy = m.mock()
             do = CommandTester(mod.set_variable, editor=editor)
             if isinstance(attribute, Exception):
@@ -498,17 +499,18 @@ def test_set_variable():
     def test(command, attr, value, *value_before):
         with test_app("project editor*") as app:
             project = app.windows[0].projects[0]
-        do = CommandTester(mod.set_variable, editor=project.editors[0])
-        if value_before:
-            eq_(getattr(project, attr), *value_before)
-            eq_(len(value_before), 1, value_before)
-        do(command)
-        eq_(getattr(project, attr), value)
+            do = CommandTester(mod.set_variable, editor=project.editors[0])
+            if value_before:
+                eq_(getattr(project, attr), *value_before)
+                eq_(len(value_before), 1, value_before)
+            do(command)
+            eq_(getattr(project, attr), value)
     yield test, "set project_path ~/project", "path", os.path.expanduser("~/project"), None
 
     def test(command, size, mode):
         with test_app("editor*") as app:
             editor = app.windows[0].current_editor
+            editor.text_view = object
             do = CommandTester(mod.set_variable, editor=editor)
             do(command)
             eq_(editor.indent_size, size)
@@ -574,7 +576,7 @@ class CommandTester(object):
                 raise msg
             raise AssertionError(msg)
         class editor:
-            text_view = kw.pop("textview", None)
+            text_view = kw.pop("textview", object)
         editor = kw.pop("editor", editor)
         if not isinstance(editor, type(Mocker().mock())):
             editor.message = message
