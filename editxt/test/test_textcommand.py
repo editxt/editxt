@@ -37,6 +37,12 @@ from editxt.textcommand import TextCommandController
 log = logging.getLogger(__name__)
 
 
+class IllBehaved(Int):
+    def get_placeholder(self, text, index):
+        raise Exception("bang!")
+    def get_completions(self, token):
+        raise Exception("bang!")
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # CommandBar tests
 
@@ -138,7 +144,10 @@ def test_CommandBar_get_placeholder():
         ), lookup_with_arg_parser=True)
         def search(editor, sender, args):
             raise NotImplementedError("should not get here")
-        bar = CommandTester(cmd, search)
+        @command(arg_parser=CommandParser(IllBehaved("bang")))
+        def ill(editor, sender, args):
+            raise NotImplementedError("should not get here")
+        bar = CommandTester(cmd, search, ill)
         with m:
             eq_(bar.get_placeholder(c.text), c.expect)
     c = TestConfig(replace=False)
@@ -180,6 +189,7 @@ def test_CommandBar_get_placeholder():
     yield test, c(text='/x// y', expect="...")
     yield test, c(text='/x// y ', expect="")
     yield test, c(text='/x// a', expect="")
+    yield test, c(text='ill', expect="")
 
 def test_CommandBar_get_completions():
     from editxt.command.parser import CommandParser, Choice, Regex
@@ -202,12 +212,15 @@ def test_CommandBar_get_completions():
         @command(arg_parser=CommandParser(Int('number')), is_enabled=lambda *a: False)
         def count(editor, sender, args):
             raise NotImplementedError("should not get here")
-        bar = CommandTester(cmd, search, count, textview=object)
+        @command(arg_parser=CommandParser(IllBehaved("bang")))
+        def ill(editor, sender, args):
+            raise NotImplementedError("should not get here")
+        bar = CommandTester(cmd, search, count, ill, textview=object)
         with m:
             eq_(bar.get_completions(c.text), c.expect)
     c = TestConfig()
     yield test, c(text='x', expect=([], -1))
-    yield test, c(text='', expect=(["cmd", "search"], 0))
+    yield test, c(text='', expect=(["cmd", "ill", "search"], 0))
     yield test, c(text='c', expect=(["cmd"], 0))
     yield test, c(text='cm', expect=(["cmd"], 0))
     yield test, c(text='cmd', expect=(["cmd"], 0))
@@ -224,6 +237,7 @@ def test_CommandBar_get_completions():
     yield test, c(text='/ ', expect=([], -1))
     yield test, c(text='/a', expect=([], -1))
     yield test, c(text='/abc/ ', expect=(["yes", "no"], 0))
+    yield test, c(text='ill ', expect=([], -1))
 
 def test_CommandBar_auto_complete():
     from editxt.command.parser import CommandParser, Choice, Regex, CompleteWord

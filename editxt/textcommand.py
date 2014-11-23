@@ -116,7 +116,11 @@ class CommandBar(object):
         """Get arguments placeholder text"""
         command, argstr = self._find_command(text)
         if command is not None:
-            placeholder = self.parser(command).get_placeholder(argstr)
+            try:
+                placeholder = self.parser(command).get_placeholder(argstr)
+            except Exception:
+                log.debug("get_placeholder failed", exc_info=True)
+                placeholder = None
             if placeholder:
                 if text and not argstr and not text.endswith(" "):
                     return " " + placeholder
@@ -141,7 +145,7 @@ class CommandBar(object):
                     try:
                         result = cache[command] = command.is_enabled(editor, self)
                     except Exception:
-                        log.error("%s.is_enabled failed",
+                        log.debug("%s.is_enabled failed",
                                   type(command).__name__, exc_info=True)
                         result = False
                 return result
@@ -154,7 +158,11 @@ class CommandBar(object):
         else:
             command, argstr = self._find_command(text)
             if command is not None:
-                words = self.parser(command).get_completions(argstr)
+                try:
+                    words = self.parser(command).get_completions(argstr)
+                except Exception:
+                    log.debug("get_completions failed", exc_info=True)
+                    words = []
                 index = (0 if words else -1)
             else:
                 words, index = [], -1
