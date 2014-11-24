@@ -62,6 +62,7 @@ Command parser specification:
 """
 import os
 import re
+from editxt.util import user_path
 
 
 class CommandParser(object):
@@ -690,7 +691,7 @@ class File(String):
             if name in names:
                 names.remove(name)
             names.append(CompleteWord(name + "/", lambda:"", len(name)))
-        return CompletionsList(names, title=root)
+        return CompletionsList(names, title=user_path(root))
 
     def arg_string(self, value):
         if self.path is None:
