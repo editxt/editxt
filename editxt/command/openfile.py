@@ -31,7 +31,7 @@ from editxt.editor import Editor
 log = logging.getLogger(__name__)
 
 
-@command(name="open",
+@command(name=["open", "xt"],
     arg_parser=CommandParser(VarArgs("paths", File("path"))),
     is_enabled=has_editor,
 )
