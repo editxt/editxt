@@ -63,17 +63,17 @@ def test_sort_command():
 
 def test_SortLinesController_default_options():
     with test_app() as app:
-        textview = base.Options(app=app)
-        ctl = SortLinesController(textview)
+        editor = base.Options(app=app)
+        ctl = SortLinesController(editor)
         for name, value in SortOptions.DEFAULTS.items():
             eq_(getattr(ctl.options, name), value, name)
 
 def test_SortLinesController_load_options():
     def test(hist, opts):
         with test_app() as app:
-            textview = base.Options(app=app)
+            editor = base.Options(app=app)
             app.text_commander.history.append(hist)
-            ctl = SortLinesController(textview)
+            ctl = SortLinesController(editor)
             eq_(ctl.options._target, SortOptions(**opts))
 
     yield test, "sort", {}
@@ -94,9 +94,9 @@ def test_SortLinesController_sort_():
     m = Mocker()
     sort = m.replace(mod, 'sortlines')
     with test_app() as app:
-        textview = base.Options(app=app)
-        slc = SortLinesController(textview)
-        sort(textview, slc.options)
+        editor = base.Options(app=app, text_view="text_view")
+        slc = SortLinesController(editor)
+        sort("text_view", slc.options)
         m.method(slc.save_options)()
         m.method(slc.cancel_)(None)
         with m:

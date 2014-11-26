@@ -49,8 +49,8 @@ def test_wrap_to_margin_guide():
 
 def test_WrapLinesController_default_options():
     with test_app() as app:
-        textview = base.Options(app=app)
-        ctl = WrapLinesController(textview)
+        editor = base.Options(app=app)
+        ctl = WrapLinesController(editor)
         eq_(ctl.options._target, mod.Options(
             wrap_column=const.DEFAULT_RIGHT_MARGIN,
             indent=True,
@@ -58,11 +58,11 @@ def test_WrapLinesController_default_options():
 
 def test_WrapLinesController_wrap_():
     with test_app() as app:
-        textview = base.Options(app=app)
         m = Mocker()
+        editor = base.Options(app=app, text_view=m.mock(TextView))
         cmd = m.replace(mod, 'wrap_selected_lines')
-        ctl = WrapLinesController(textview)
-        cmd(textview, ctl.options)
+        ctl = WrapLinesController(editor)
+        cmd(editor.text_view, ctl.options)
         m.method(ctl.save_options)()
         m.method(ctl.cancel_)(None)
         with m:

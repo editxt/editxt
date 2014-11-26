@@ -199,14 +199,14 @@ class SheetController(CommandController):
 
     DELEGATE_METHODS = {"cancel_": "cancel"}
 
-    def __init__(self, textview):
-        self.textview = textview
-        super(SheetController, self).__init__(textview.app)
+    def __init__(self, editor):
+        self.editor = editor
+        super(SheetController, self).__init__(editor.app)
 
     def begin_sheet(self, sender):
         self.caller = Caller.alloc().init(self.sheet_did_end)
         ak.NSApp.beginSheet_modalForWindow_modalDelegate_didEndSelector_contextInfo_(
-            self.gui.window(), self.textview.window(), self.caller,
+            self.gui.window(), self.editor.text_view.window(), self.caller,
             "alertDidEnd:returnCode:contextInfo:", 0)
 
     def sheet_did_end(self, code, end_alert):

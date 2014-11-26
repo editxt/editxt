@@ -193,14 +193,14 @@ def test_CommandController_save_options():
 @setup(SheetController)
 def test_SheetController_begin_sheet():
     from editxt.controls.alert import Caller
-    class FakeTextView(object): pass
+    class FakeEditor(object): pass
     with test_app() as app:
         m = Mocker()
-        tv = FakeTextView()
-        tv.app = app
-        tv.window = lambda:win
+        editor = FakeEditor()
+        editor.app = app
+        editor.text_view = TestConfig(window=lambda:win)
         win = m.mock(ak.NSWindow)
-        slc = SheetController(tv)
+        slc = SheetController(editor)
         def cb(callback):
             return (callback.__name__ == "sheet_did_end"
                 and callback.__self__ is slc)

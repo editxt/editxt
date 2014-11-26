@@ -38,13 +38,12 @@ log = logging.getLogger(__name__)
 
 def test_ChangeIndentationController_load_options():
     m = Mocker()
-    tv = m.mock(TextView)
-    dv = tv.editor >> m.mock(Editor)
-    mode = dv.indent_mode >> "<indent mode>"
-    size = dv.indent_size >> "<indent size>"
-    tv.app >> m.mock("editxt.application.Application")
+    editor = m.mock(Editor)
+    mode = editor.indent_mode >> "<indent mode>"
+    size = editor.indent_size >> "<indent size>"
+    editor.app >> m.mock("editxt.application.Application")
     with m:
-        ctl = ChangeIndentationController(tv) # calls load_options()
+        ctl = ChangeIndentationController(editor) # calls load_options()
         opts = ctl.options
         eq_(opts.from_mode, mode)
         eq_(opts.from_size, size)
@@ -53,27 +52,24 @@ def test_ChangeIndentationController_load_options():
         
 def test_ChangeIndentationController_save_options():
     m = Mocker()
-    tv = m.mock(TextView)
-    dv = tv.editor >> m.mock(Editor)
-    tv.app >> m.mock("editxt.application.Application")
+    editor = m.mock(Editor)
+    editor.app >> m.mock("editxt.application.Application")
     with m.order():
-        mode = dv.indent_mode >> "<indent mode>"
-        size = dv.indent_size >> "<indent size>"
+        mode = editor.indent_mode >> "<indent mode>"
+        size = editor.indent_size >> "<indent size>"
     with m:
-        ctl = ChangeIndentationController(tv)
+        ctl = ChangeIndentationController(editor)
         ctl.save_options()
 
 def test_ChangeIndentationController_execute_():
     m = Mocker()
-    tv = m.mock(TextView)
-    dv = m.mock(Editor)
-    (tv.editor << dv).count(2)
-    mode = dv.indent_mode >> "m"
-    size = dv.indent_size >> "s"
-    dv.change_indentation("m", "s", "m", "s", True)
-    tv.app >> m.mock("editxt.application.Application")
+    editor = m.mock(Editor)
+    editor.indent_mode >> "m"
+    editor.indent_size >> "s"
+    editor.change_indentation("m", "s", "m", "s", True)
+    editor.app >> m.mock("editxt.application.Application")
     m.method(ChangeIndentationController.save_options)()
     m.method(ChangeIndentationController.cancel_)(None)
     with m:
-        ctl = ChangeIndentationController(tv)
+        ctl = ChangeIndentationController(editor)
         ctl.execute_(None)

@@ -32,7 +32,7 @@ log = logging.getLogger(__name__)
 
 @command(title="Change Indentation")
 def reindent(editor, sender, args):
-    ctl = ChangeIndentationController(editor.text_view)
+    ctl = ChangeIndentationController(editor)
     ctl.begin_sheet(sender)
 
 
@@ -43,23 +43,23 @@ class ChangeIndentationController(SheetController):
     NIB_NAME = "ChangeIndentation"
 
     def load_options(self):
-        """load current indent mode from textview"""
+        """load current indent mode from editor"""
         opts = self.options
-        editor = self.textview.editor
+        editor = self.editor
         opts.from_mode = opts.to_mode = editor.indent_mode
         opts.from_size = opts.to_size = editor.indent_size
 
     def save_options(self):
         """no-op override"""
 #       opts = self.options
-#       editor = self.textview.editor
+#       editor = self.editor
 #       editor.indent_mode = opts.to_mode
 #       editor.indent_size = opts.to_size
 
     @objc_delegate
     def execute_(self, sender):
         opts = self.options
-        self.textview.editor.change_indentation(
+        self.editor.change_indentation(
             opts.from_mode,
             opts.from_size,
             opts.to_mode,

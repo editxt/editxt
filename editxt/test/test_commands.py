@@ -525,16 +525,16 @@ def test_panel_actions():
     def test(c):
         m = Mocker()
         editor = m.mock(Editor)
-        tv = editor.text_view >> m.mock(ak.NSTextView)
         ctl_class = m.replace("editxt.command.{}.{}".format(c.mod, c.ctl.__name__))
         if c.func is not None:
             func = m.replace("editxt.command.{}.{}".format(c.mod, c.func.__name__))
         if c.args:
+            tv = editor.text_view >> m.mock(ak.NSTextView)
             args = '<args>'
             func(tv, args)
         else:
             args = None
-            ctl = ctl_class(tv) >> m.mock(c.ctl)
+            ctl = ctl_class(editor) >> m.mock(c.ctl)
             ctl.begin_sheet('<sender>')
         with m:
             c.action(editor, '<sender>', args)

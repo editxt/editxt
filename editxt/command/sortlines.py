@@ -47,7 +47,7 @@ log = logging.getLogger(__name__)
     ))
 def sort_lines(editor, sender, args):
     if args is None:
-        sorter = SortLinesController(editor.text_view)
+        sorter = SortLinesController(editor)
         sorter.begin_sheet(sender)
     else:
         sortlines(editor.text_view, args)
@@ -88,9 +88,10 @@ class SortLinesController(SheetController):
 
     @objc_delegate
     def sort_(self, sender):
-        sortlines(self.textview, self.options)
+        sortlines(self.editor.text_view, self.options)
         self.save_options()
         self.cancel_(sender)
+
 
 def sortlines(textview, opts):
     text = textview.string()

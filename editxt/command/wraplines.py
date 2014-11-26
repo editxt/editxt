@@ -45,7 +45,7 @@ WHITESPACE = re.compile(r"[ \t]*")
     ))
 def wrap_lines(editor, sender, args):
     if args is None:
-        wrapper = WrapLinesController(editor.text_view)
+        wrapper = WrapLinesController(editor)
         wrapper.begin_sheet(sender)
     else:
         wrap_selected_lines(editor.text_view, args)
@@ -76,7 +76,7 @@ class WrapLinesController(SheetController):
 
     @objc_delegate
     def wrap_(self, sender):
-        wrap_selected_lines(self.textview, self.options)
+        wrap_selected_lines(self.editor.text_view, self.options)
         self.save_options()
         self.cancel_(sender)
 
