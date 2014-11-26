@@ -691,7 +691,7 @@ class File(String):
             if name in names:
                 names.remove(name)
             names.append(CompleteWord(name + "/", lambda:"", len(name)))
-        return CompletionsList(names, title=user_path(root), selected_index=None)
+        return CompletionsList(names, title=user_path(root))
 
     def arg_string(self, value):
         if self.path is None:
@@ -1193,12 +1193,11 @@ class CompleteWord(str):
 
 class CompletionsList(list):
 
-    __slots__ = ["title", "selected_index"]
+    __slots__ = ["title"]
 
-    def __init__(self, *args, title=None, selected_index=0):
+    def __init__(self, *args, title=None):
         super().__init__(*args)
         self.title = title
-        self.selected_index = selected_index
 
 
 class Error(Exception):

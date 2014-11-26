@@ -195,7 +195,7 @@ def test_CommandBar_get_completions():
     from editxt.command.parser import CommandParser, CompletionsList, Choice, Regex
     class HexDigit(Int):
         def get_completions(self, token):
-            return CompletionsList("0123456789abcdef", selected_index=3)
+            return CompletionsList("0123456789abcdef") #, selected_index=3)
 
     def test(c):
         m = Mocker()
@@ -230,28 +230,28 @@ def test_CommandBar_get_completions():
 
         bar = CommandTester(cmd, search, count, hex, ill, textview=object)
         with m:
-            eq_(bar.get_completions(c.text), c.expect)
-    c = TestConfig()
-    yield test, c(text='x', expect=([], None))
-    yield test, c(text='', expect=(["cmd", "hex", "ill", "search"], 0))
-    yield test, c(text='c', expect=(["cmd"], 0))
-    yield test, c(text='cm', expect=(["cmd"], 0))
-    yield test, c(text='cmd', expect=(["cmd"], 0))
-    yield test, c(text='cmx', expect=([], None))
-    yield test, c(text='cmd ', expect=(["selection", "all"], 0))
-    yield test, c(text='cmd s', expect=(["selection"], 0))
-    yield test, c(text='cmd se', expect=(["selection"], 0))
-    yield test, c(text='cmd selection', expect=(["selection"], 0))
-    yield test, c(text='cmd sec', expect=([], None))
-    yield test, c(text='cmd s ', expect=(["forward", "reverse"], 0))
-    yield test, c(text='cmd s r', expect=(["reverse"], 0))
-    yield test, c(text='cmd s x', expect=(["xyz"], 0))
-    yield test, c(text='hex ', expect=(list("0123456789abcdef"), 3))
-    yield test, c(text='/', expect=([], None))
-    yield test, c(text='/ ', expect=([], None))
-    yield test, c(text='/a', expect=([], None))
-    yield test, c(text='/abc/ ', expect=(["yes", "no"], 0))
-    yield test, c(text='ill ', expect=([], None))
+            eq_(bar.get_completions(c.text), (c.expect, c.select))
+    c = TestConfig(select=None)
+    yield test, c(text='x', expect=[])
+    yield test, c(text='', expect=["cmd", "hex", "ill", "search"])
+    yield test, c(text='c', expect=["cmd"])
+    yield test, c(text='cm', expect=["cmd"])
+    yield test, c(text='cmd', expect=["cmd"])
+    yield test, c(text='cmx', expect=[])
+    yield test, c(text='cmd ', expect=["selection", "all"])
+    yield test, c(text='cmd s', expect=["selection"])
+    yield test, c(text='cmd se', expect=["selection"])
+    yield test, c(text='cmd selection', expect=["selection"])
+    yield test, c(text='cmd sec', expect=[])
+    yield test, c(text='cmd s ', expect=["forward", "reverse"])
+    yield test, c(text='cmd s r', expect=["reverse"])
+    yield test, c(text='cmd s x', expect=["xyz"])
+    yield test, c(text='hex ', expect=list("0123456789abcdef"))
+    yield test, c(text='/', expect=[])
+    yield test, c(text='/ ', expect=[])
+    yield test, c(text='/a', expect=[])
+    yield test, c(text='/abc/ ', expect=["yes", "no"])
+    yield test, c(text='ill ', expect=[])
 
 def test_CommandBar_common_prefix():
     word_list = [

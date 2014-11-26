@@ -159,7 +159,6 @@ class CommandBar(object):
                 if isinstance(name, str)
                     and name.startswith(text)
                     and is_enabled(command))
-            index = 0 if words else None
         else:
             command, argstr = self._find_command(text)
             if command is not None:
@@ -168,13 +167,9 @@ class CommandBar(object):
                 except Exception:
                     log.debug("get_completions failed", exc_info=True)
                     words = []
-                if isinstance(words, CompletionsList):
-                    index = words.selected_index
-                else:
-                    index = (0 if words else None)
             else:
-                words, index = [], None
-        return words, index
+                words = []
+        return words, None
 
     def common_prefix(self, words):
         """Get the longest common prefix from the given list of words

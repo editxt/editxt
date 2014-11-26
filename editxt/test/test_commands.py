@@ -454,8 +454,7 @@ def test_set_variable():
             text_view = object
             dirname = lambda:None
         bar = CommandTester(mod.set_variable, editor=editor)
-        comps = (completions, (0 if completions else None))
-        eq_(bar.get_completions(command), comps)
+        eq_(bar.get_completions(command), (completions, None))
         eq_(bar.get_placeholder(command), placeholder)
     yield test, "set ", [
             "highlight_selected_text",
