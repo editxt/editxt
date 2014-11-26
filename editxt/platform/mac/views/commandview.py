@@ -164,6 +164,9 @@ class CommandView(DualView):
         if selector == "insertTab:":
             if self.completions:
                 word = self.completions.selected_item
+                if not word:
+                    words = [c.value for c in self.completions.items]
+                    word = self.command.common_prefix(words)
                 if word:
                     self.auto_complete(textview, word)
             self.complete(textview)

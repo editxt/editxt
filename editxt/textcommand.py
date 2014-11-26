@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+import os
 import sys
 import traceback
 from collections import defaultdict
@@ -174,6 +175,22 @@ class CommandBar(object):
             else:
                 words, index = [], None
         return words, index
+
+    def common_prefix(self, words):
+        """Get the longest common prefix from the given list of words
+
+        :returns: The longest common prefix string.
+        """
+        prefix = os.path.commonprefix(words)
+        if not prefix:
+            return ""
+        match = (w for w in words if w.startswith(prefix))
+        word = next(match) # get first word with prefix (there is at least one)
+        if next(match, False) and isinstance(word, CompleteWord):
+            # use empty delimiter if there are two or more matching words
+            assert len(prefix) >= word.overlap, (prefix, word, word.overlap)
+            return CompleteWord(prefix, lambda:"", word.overlap)
+        return word
 
     def auto_complete(self, text, word, replace_range):
         """Get auto-complete word and range to be replaced

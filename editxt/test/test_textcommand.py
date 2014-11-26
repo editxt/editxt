@@ -29,7 +29,7 @@ from editxt.test.util import gentest, TestConfig, tempdir
 
 import editxt.constants as const
 import editxt.textcommand as mod
-from editxt.command.parser import ArgumentError, CommandParser, Int, Options
+from editxt.command.parser import ArgumentError, CommandParser, Int, Options, CompleteWord
 from editxt.commands import command
 from editxt.test.test_commands import CommandTester
 from editxt.textcommand import TextCommandController
@@ -253,8 +253,37 @@ def test_CommandBar_get_completions():
     yield test, c(text='/abc/ ', expect=(["yes", "no"], 0))
     yield test, c(text='ill ', expect=([], None))
 
+def test_CommandBar_common_prefix():
+    word_list = [
+        "test_ab",
+        "test_ba",
+        "test_bab",
+        "text_xyz",
+    ]
+    bar = CommandTester()
+
+    @gentest
+    def test(word, expect, complete=""):
+        delim = lambda:"/"
+        overlap = len(word) - 2 if len(word) > 2 else 0
+        words = [CompleteWord(w, delim, overlap)
+                 for w in word_list if w.startswith(word)]
+        prefix = bar.common_prefix(words)
+        eq_(prefix, expect)
+        if complete is not None:
+            eq_(prefix.complete(), prefix + complete)
+            eq_(prefix.overlap, overlap)
+
+    yield test("x", "", None)
+    yield test("", "te", None)
+    yield test("t", "te")
+    yield test("tes", "test_")
+    yield test("test_a", "test_ab", "/")
+    yield test("test_b", "test_ba")
+    yield test("tex", "text_xyz", "/")
+
 def test_CommandBar_auto_complete():
-    from editxt.command.parser import CommandParser, Choice, Regex, CompleteWord
+    from editxt.command.parser import CommandParser, Choice, Regex
     @command(arg_parser=CommandParser(
         Choice(('selection', True), ('all', False), ('self', None)),
         Choice(('forward', False), ('reverse xyz', True), name='reverse'),
