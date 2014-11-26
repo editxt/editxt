@@ -192,10 +192,15 @@ def test_CommandBar_get_placeholder():
     yield test, c(text='ill', expect="")
 
 def test_CommandBar_get_completions():
-    from editxt.command.parser import CommandParser, Choice, Regex
+    from editxt.command.parser import CommandParser, CompletionsList, Choice, Regex
+    class HexDigit(Int):
+        def get_completions(self, token):
+            return CompletionsList("0123456789abcdef", selected_index=3)
+
     def test(c):
         m = Mocker()
         beep = m.replace(ak, 'NSBeep')
+
         @command(arg_parser=CommandParser(
             Choice(('selection', True), ('all', False)),
             Choice(('forward', False), ('reverse xyz', True), name='reverse'),
@@ -203,41 +208,50 @@ def test_CommandBar_get_completions():
         ))
         def cmd(editor, sender, args):
             raise NotImplementedError("should not get here")
+
         @command(arg_parser=CommandParser(
             Regex('search_pattern'),
             Choice(('yes', True), ('no', False)),
         ), lookup_with_arg_parser=True)
         def search(editor, sender, args):
             raise NotImplementedError("should not get here")
+
         @command(arg_parser=CommandParser(Int('number')), is_enabled=lambda *a: False)
         def count(editor, sender, args):
             raise NotImplementedError("should not get here")
+
+        @command(arg_parser=CommandParser(HexDigit('hex')))
+        def hex(editor, sender, args):
+            raise NotImplementedError("should not get here")
+
         @command(arg_parser=CommandParser(IllBehaved("bang")))
         def ill(editor, sender, args):
             raise NotImplementedError("should not get here")
-        bar = CommandTester(cmd, search, count, ill, textview=object)
+
+        bar = CommandTester(cmd, search, count, hex, ill, textview=object)
         with m:
             eq_(bar.get_completions(c.text), c.expect)
     c = TestConfig()
-    yield test, c(text='x', expect=([], -1))
-    yield test, c(text='', expect=(["cmd", "ill", "search"], 0))
+    yield test, c(text='x', expect=([], None))
+    yield test, c(text='', expect=(["cmd", "hex", "ill", "search"], 0))
     yield test, c(text='c', expect=(["cmd"], 0))
     yield test, c(text='cm', expect=(["cmd"], 0))
     yield test, c(text='cmd', expect=(["cmd"], 0))
-    yield test, c(text='cmx', expect=([], -1))
+    yield test, c(text='cmx', expect=([], None))
     yield test, c(text='cmd ', expect=(["selection", "all"], 0))
     yield test, c(text='cmd s', expect=(["selection"], 0))
     yield test, c(text='cmd se', expect=(["selection"], 0))
     yield test, c(text='cmd selection', expect=(["selection"], 0))
-    yield test, c(text='cmd sec', expect=([], -1))
+    yield test, c(text='cmd sec', expect=([], None))
     yield test, c(text='cmd s ', expect=(["forward", "reverse"], 0))
     yield test, c(text='cmd s r', expect=(["reverse"], 0))
     yield test, c(text='cmd s x', expect=(["xyz"], 0))
-    yield test, c(text='/', expect=([], -1))
-    yield test, c(text='/ ', expect=([], -1))
-    yield test, c(text='/a', expect=([], -1))
+    yield test, c(text='hex ', expect=(list("0123456789abcdef"), 3))
+    yield test, c(text='/', expect=([], None))
+    yield test, c(text='/ ', expect=([], None))
+    yield test, c(text='/a', expect=([], None))
     yield test, c(text='/abc/ ', expect=(["yes", "no"], 0))
-    yield test, c(text='ill ', expect=([], -1))
+    yield test, c(text='ill ', expect=([], None))
 
 def test_CommandBar_auto_complete():
     from editxt.command.parser import CommandParser, Choice, Regex, CompleteWord

@@ -225,6 +225,7 @@ class CommandView(DualView):
             else:
                 self.completions.title = None
             self.completions.items = [Completion(w) for w in words]
+            self.completions.select(default_index)
             self.should_resize()
 
     def propose_completion(self, items):
@@ -445,8 +446,9 @@ class AutoCompleteView(object):
     @items.setter
     def items(self, items):
         self._items[:] = [KVOProxy(v) for v in items]
-        if items:
-            self.view.select(0)
+
+    def select(self, index):
+        self.view.select(index)
 
     def select_next(self):
         index = self.view.selected_row

@@ -28,7 +28,7 @@ import Foundation as fn
 
 import editxt.constants as const
 from editxt.command.base import CommandError
-from editxt.command.parser import ArgumentError, CompleteWord
+from editxt.command.parser import ArgumentError, CompleteWord, CompletionsList
 from editxt.commands import load_commands
 from editxt.history import History
 from editxt.util import WeakProperty
@@ -137,7 +137,7 @@ class CommandBar(object):
         :param text: Command string.
         :returns: A tuple consisting of a list of potential completions
         and/or replacements for the word at the end of the command text,
-        and the index of the item that should be selected (-1 for no
+        and the index of the item that should be selected (`None` for no
         selection).
         """
         if " " not in text:
@@ -158,7 +158,7 @@ class CommandBar(object):
                 if isinstance(name, str)
                     and name.startswith(text)
                     and is_enabled(command))
-            index = 0 if words else -1
+            index = 0 if words else None
         else:
             command, argstr = self._find_command(text)
             if command is not None:
@@ -167,9 +167,12 @@ class CommandBar(object):
                 except Exception:
                     log.debug("get_completions failed", exc_info=True)
                     words = []
-                index = (0 if words else -1)
+                if isinstance(words, CompletionsList):
+                    index = words.selected_index
+                else:
+                    index = (0 if words else None)
             else:
-                words, index = [], -1
+                words, index = [], None
         return words, index
 
     def auto_complete(self, text, word, replace_range):

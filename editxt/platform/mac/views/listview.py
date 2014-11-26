@@ -134,14 +134,18 @@ class ListView(object):
     def select(self, indexes, extend=False):
         """Select the given indexes
         """
-        if not isinstance(indexes, set):
+        if indexes is None:
+            first = None
+            indexes = ak.NSIndexSet.indexSet()
+        elif not isinstance(indexes, set):
             first = indexes
             indexes = ak.NSIndexSet.indexSetWithIndex_(indexes)
         else:
             first = indexes[0]
             raise NotImplementedError
         self.view.selectRowIndexes_byExtendingSelection_(indexes, extend)
-        self.view.scrollRowToVisible_(first)
+        if first is not None:
+            self.view.scrollRowToVisible_(first)
 
     def close(self):
         self.view.setDelegate_(None)
