@@ -29,8 +29,10 @@ from editxt.test.util import gentest, TestConfig, tempdir
 
 import editxt.constants as const
 import editxt.textcommand as mod
-from editxt.command.parser import ArgumentError, CommandParser, Int, Options, CompleteWord
+from editxt.command.parser import (ArgumentError, CommandParser, Options,
+    Choice, Int, Regex, CompleteWord, CompletionsList)
 from editxt.commands import command
+from editxt.platform.views import CommandView
 from editxt.test.test_commands import CommandTester
 from editxt.textcommand import TextCommandController
 
@@ -56,6 +58,107 @@ def test_CommandBar_window():
     del window, text_commander
     eq_(cmd.window, None)
     eq_(cmd.text_commander, None)
+
+def test_CommandBar_on_key_press():
+    @command(arg_parser=CommandParser(
+        Choice(*"test_1 test_2 test_3 text".split()),
+        Choice(('forward', False), ('reverse xyz', True), name='reverse'),
+        Regex('sort_regex', True),
+    ))
+    def cmd(editor, sender, args):
+        pass
+
+    @command(arg_parser=CommandParser(Int('number')))
+    def count(editor, sender, args):
+        raise NotImplementedError("should not get here")
+
+    @command(arg_parser=CommandParser(IllBehaved("bang")))
+    def ill(editor, sender, args):
+        raise NotImplementedError("should not get here")
+
+    NA = object()
+
+    @gentest
+    def test(text, command_key, *,
+            new_text=NA,
+            complete=None,
+            default_complete=None,
+            new_complete=None,
+            new_default_complete=None,
+            completions_select_range=None,
+            sel=None,
+            new_sel=None,
+            expect=True,
+            has_command=True
+        ):
+        view = CommandView()
+        bar = CommandTester(cmd, count, ill, textview=object, command_view=view)
+        bar.activate(text)
+        if complete:
+            view.completions.items = complete
+        if default_complete:
+            print("selected completion:", complete.index(default_complete))
+            view.completions.select(complete.index(default_complete))
+            view.command_text = text
+        if sel:
+            view.command_text_selected_range = sel
+        if completions_select_range:
+            view.completions.select_range = completions_select_range
+
+        result = bar.on_key_command(command_key, view)
+        eq_(result, expect)
+        eq_(view.completions.items,
+            (complete or []) if new_complete is None else new_complete)
+        eq_(view.completions.selected_item, new_default_complete)
+        eq_(view.command_text, text if new_text is NA else new_text)
+        if sel is not None or new_sel is not None:
+            eq_(view.command_text_selected_range, sel if new_sel is None else new_sel)
+        eq_(view.command, bar.bar if has_command else None)
+
+    SEL = CommandView.KEYS.SELECTION_CHANGED
+    ESC = CommandView.KEYS.ESC
+    TAB = CommandView.KEYS.TAB
+    BACK_TAB = CommandView.KEYS.BACK_TAB
+    UP = CommandView.KEYS.UP
+    DOWN = CommandView.KEYS.DOWN
+    ENTER = CommandView.KEYS.ENTER
+
+    yield test("c", SEL)
+    yield test("c", SEL, complete=["cmd", "count", "ill"], new_complete=["cmd", "count"])
+
+    yield test("", TAB, new_complete=["cmd", "count", "ill"])
+    yield test("", TAB, complete=["cmd", "count", "ill"])
+    yield test("c", TAB, new_complete=["cmd", "count"])
+    yield test("c", TAB, complete=["cmd", "count"], new_complete=["cmd", "count"])
+    yield test("cm", TAB, new_text="cmd ")
+    yield test("cm", TAB, complete=["cmd"], new_text="cmd ", new_complete=[])
+    yield test("cmd t", TAB,
+        complete=[CompleteWord(w, overlap=1) for w in ["test_1", "test_2"]],
+        new_text="cmd test_",
+        new_complete=["test_1", "test_2"])
+
+    #yield test("", DOWN)
+    yield test("", DOWN, new_text="cmd ",
+        complete=["cmd", "count", "ill"], new_default_complete="cmd")
+    yield test("cmd ", DOWN, new_text="count ",
+        complete=["cmd", "count", "ill"], completions_select_range=(0, 4),
+        default_complete="cmd", new_default_complete="count")
+
+    #yield test("", UP)
+    yield test("", UP, new_text="ill ",
+        complete=["cmd", "count", "ill"], new_default_complete="ill")
+    yield test("ill ", UP, new_text="count ",
+        complete=["cmd", "count", "ill"], completions_select_range=(0, 4),
+        default_complete="ill", new_default_complete="count")
+
+    yield test("cmd ", ENTER, new_text=None, has_command=False)
+
+    yield test("c", ESC, new_text=None, has_command=False)
+    yield test("c", ESC,
+        completions_select_range=(0, 1), sel=(1, 0), new_sel=(0, 1),
+        complete=["cmd", "count", "ill"], new_complete=[])
+
+    yield test("c", BACK_TAB)
 
 def test_CommandBar_execute():
     from editxt.editor import Editor
@@ -127,7 +230,6 @@ def test_CommandBar_execute():
     yield test, c(text='123 456', lookup='full', error=True)
 
 def test_CommandBar_get_placeholder():
-    from editxt.command.parser import CommandParser, Choice, Regex
     def test(c):
         m = Mocker()
         beep = m.replace(ak, 'NSBeep')
@@ -192,7 +294,6 @@ def test_CommandBar_get_placeholder():
     yield test, c(text='ill', expect="")
 
 def test_CommandBar_get_completions():
-    from editxt.command.parser import CommandParser, CompletionsList, Choice, Regex
     class HexDigit(Int):
         def get_completions(self, token):
             return CompletionsList("0123456789abcdef") #, selected_index=3)
@@ -283,7 +384,6 @@ def test_CommandBar_common_prefix():
     yield test("tex", "text_xyz", "/")
 
 def test_CommandBar_auto_complete():
-    from editxt.command.parser import CommandParser, Choice, Regex
     @command(arg_parser=CommandParser(
         Choice(('selection', True), ('all', False), ('self', None)),
         Choice(('forward', False), ('reverse xyz', True), name='reverse'),

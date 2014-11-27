@@ -27,6 +27,14 @@ class ListView(object):
         self.view = None
         self.frame = None
         self.scroll = None
+        self.selected_row = -1
+        self.options = options
+
+    def select(self, index):
+        self.selected_row = index if index is not None else -1
+        if 'on_selection_changed' in self.options:
+            self.options['on_selection_changed'](
+                [] if self.selected_row < 0 else [self.items[self.selected_row]])
 
     def become_subview_of(self, view):
         self.parent_view = view
@@ -35,5 +43,48 @@ class ListView(object):
 class CommandView(object):
     """Test command view"""
 
+    class KEYS:
+        """The values of these constants are opaque
+
+        Use ``editxt.platform.views.CommandView.KEYS`` to reference them
+        """
+        ESC = "Esc"
+        TAB = "Tab"
+        BACK_TAB = "BackTab"
+        UP = "Up"
+        DOWN = "Down"
+        ENTER = "Enter"
+        SELECTION_CHANGED = "SelectionChanged"
+
+    def __init__(self):
+        from editxt.textcommand import AutoCompleteMenu
+        self.completions = AutoCompleteMenu(
+            on_selection_changed=self.propose_completion)
+        self.command = None
+        self._last_completions = [None]
+
+    def activate(self, command_bar, text):
+        self.command = command_bar
+        self.command_text = text
+        self.command_text_selected_range = (len(text), 0)
+
+    def replace_command_text_range(self, range, text):
+        before = self.command_text[:range[0]]
+        after = self.command_text[sum(range):]
+        self.command_text = before + text + after
+
+    def propose_completion(self, items):
+        self.command.propose_completion(self, items)
+
+    def deactivate(self):
+        if self.command is not None:
+            self.completions.items = []
+            self.command_text = None
+            #self.command.reset()
+        self.command = None
+
     def dismiss(self):
+        self.deactivate()
+
+    def should_resize(self):
         pass

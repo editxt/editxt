@@ -32,6 +32,9 @@ from editxt.command.base import CommandError
 from editxt.command.parser import ArgumentError, CompleteWord, CompletionsList
 from editxt.commands import load_commands
 from editxt.history import History
+from editxt.platform.events import call_later
+from editxt.platform.kvo import KVOList, KVOProxy
+from editxt.platform.views import CommandView
 from editxt.util import WeakProperty
 
 log = logging.getLogger(__name__)
@@ -46,15 +49,140 @@ class CommandBar(object):
         self.window = window
         self.text_commander = text_commander
         self.history_view = None
+        self.completing = Completing()
         self._cached_parser = (None, None, None)
 
     def activate(self, text=""):
-        # abstract to a PyObjC-specific subclass when implementing other frontend
         editor = self.window.current_editor
         if editor is None:
             ak.NSBeep()
             return
         editor.command_view.activate(self, text)
+        editor.command_view.__last_completions = [None]
+
+    def on_key_command(self, key, command_view, keys=CommandView.KEYS):
+        """Handle key press in command view
+
+        :param key: A command token corresponding to the key that was
+        pressed. This is one of the command key contsants defined in
+        `editxt.platform.views.CommandView.KEYS`.
+        :param view: The CommandView object.
+        :returns: True if the command was handled and should not be
+        propagated to the text view, otherwise false.
+        """
+        if key == keys.SELECTION_CHANGED:
+            if command_view.completions and not self.completing:
+                call_later(0, self.complete, command_view, auto_one=False)
+            return True
+
+        if key == keys.TAB:
+            word = command_view.completions.selected_item
+            if command_view.completions and not word:
+                words = command_view.completions.items
+                word = self.common_prefix(words)
+                if word:
+                    self._auto_complete(command_view, word)
+                if len(words) == 1:
+                    command_view.completions.items = []
+                    command_view.should_resize()
+            else:
+                self.complete(command_view)
+            return True
+
+        if key == keys.UP:
+            if command_view.completions:
+                command_view.completions.select_prev()
+            else:
+                self.navigate_history(command_view)
+            return True
+
+        if key == keys.DOWN:
+            if command_view.completions:
+                command_view.completions.select_next()
+            else:
+                self.navigate_history(command_view, forward=True)
+            return True
+
+        if key == keys.ENTER:
+            text = command_view.command_text
+            # TODO send cursor position instead of len(text)
+            if not self.should_insert_newline(text, len(text)):
+                self.execute(text)
+                command_view.deactivate()
+                return True
+
+        if key == keys.ESC:
+            if command_view.completions:
+                select_range = command_view.completions.select_range
+                command_view.completions.items = []
+                command_view.should_resize()
+                if select_range is not None:
+                    command_view.command_text_selected_range = select_range
+            else:
+                command_view.deactivate()
+            return True
+
+        if key == keys.BACK_TAB:
+            # ignore
+            return True
+
+        return False
+
+    def complete(self, command_view, auto_one=True):
+        text, words, default_index = self._get_completions(command_view)
+        if len(words) == 1 and auto_one:
+            # replace immediately with single suggestion
+            self._auto_complete(command_view, words[0], (len(text), 0))
+        else:
+            # show auto-complete menu and auto-complete with common prefix
+            completions = command_view.completions
+            if isinstance(words, CompletionsList):
+                completions.title = words.title
+            else:
+                completions.title = None
+            completions.items = words
+            completions.select(default_index)
+            command_view.should_resize()
+            word = self.common_prefix(words)
+            if word and auto_one:
+                self._auto_complete(command_view, word, (len(text), 0))
+
+    def _get_completions(self, command_view):
+        range = command_view.command_text_selected_range
+        index = range[0]
+        text = command_view.command_text
+        if index < len(text):
+            text = text[:index]
+        if command_view.__last_completions[0] == text:
+            return command_view.__last_completions
+        words, default_index = self.get_completions(text)
+        command_view.__last_completions = text, words, default_index
+        return text, words, default_index
+
+    def _auto_complete(self, command_view, word, range=None):
+        """Auto-complete word replacing range
+
+        :param word: The word to complete.
+        :param range: The range of characters to replace.
+        :returns: The range of characters that were added.
+        """
+        if range is None:
+            if command_view.completions.select_range is not None:
+                range = command_view.completions.select_range
+            else:
+                range = command_view.command_text_selected_range
+        text = command_view.command_text
+        word, replace, select = self.auto_complete(text, word, range)
+        with self.completing:
+            command_view.replace_command_text_range(replace, word)
+        command_view.completions.select_range = select
+
+    def propose_completion(self, command_view, items):
+        if not items:
+            return
+        word = items[0]
+        with self.completing:
+            self._auto_complete(command_view, word)
 
     def parser(self, command):
         editor = self.window.current_editor
@@ -180,11 +308,15 @@ class CommandBar(object):
         if not prefix:
             return ""
         match = (w for w in words if w.startswith(prefix))
-        word = next(match) # get first word with prefix (there is at least one)
-        if next(match, False) and isinstance(word, CompleteWord):
+        word = next(match)
+        if next(match, False):
             # use empty delimiter if there are two or more matching words
-            assert len(prefix) >= word.overlap, (prefix, word, word.overlap)
-            return CompleteWord(prefix, lambda:"", word.overlap)
+            if isinstance(word, CompleteWord):
+                assert len(prefix) >= word.overlap, (prefix, word, word.overlap)
+                overlap = word.overlap
+            else:
+                overlap = None
+            return CompleteWord(prefix, lambda:"", overlap)
         return word
 
     def auto_complete(self, text, word, replace_range):
@@ -223,6 +355,14 @@ class CommandBar(object):
     def should_insert_newline(self, text, index):
         """Return true if a newline can be inserted in text at index"""
         return False # TODO implement this
+
+    def navigate_history(self, command_view, forward=False):
+        old_text = command_view.command_text
+        text = self.get_history(old_text, forward)
+        if text is None:
+            ak.NSBeep()
+            return
+        command_view.command_text = text
 
     def get_history(self, current_text, forward=False):
         if self.history_view is None:
@@ -361,3 +501,95 @@ class TextCommandController(object):
 
 
 CommandHistory = History
+
+
+class AutoCompleteMenu(object):
+
+    def __init__(self, on_double_click=None, on_selection_changed=None):
+        if on_selection_changed is not None:
+            _osc = on_selection_changed
+            def on_selection_changed(items):
+                return _osc([x.value for x in items])
+        from editxt.platform.views import ListView
+        self._items = KVOList()
+        self.view = ListView(
+            self._items,
+            [{"name": "value", "title": None}],
+            on_double_click=on_double_click,
+            on_selection_changed=on_selection_changed,
+        )
+        self.select_range = None
+
+    @property
+    def scroller(self):
+        return self.view.scroll
+
+    @property
+    def preferred_height(self):
+        return self.view.preferred_height
+
+    def __bool__(self):
+        return bool(self._items)
+
+    @property
+    def title(self):
+        self.view.title
+
+    @title.setter
+    def title(self, value):
+        self.view.title = value
+
+    @property
+    def items(self):
+        return [i.value for i in self._items]
+
+    @items.setter
+    def items(self, items):
+        self._items[:] = [KVOProxy(Completion(v)) for v in items]
+        self.select_range = None
+
+    def select(self, index):
+        self.view.select(index)
+
+    def select_next(self):
+        index = self.view.selected_row
+        if index > -1 and index < len(self._items) - 1:
+            self.view.select(index + 1)
+        else:
+            self.view.select(0)
+
+    def select_prev(self):
+        index = self.view.selected_row
+        if index > 0:
+            self.view.select(index - 1)
+        else:
+            self.view.select(len(self._items) - 1)
+
+    @property
+    def selected_item(self):
+        row = self.view.selected_row
+        return self._items[row].value if row > -1 else None
+
+
+class Completion(object):
+
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return "{}({!r})".format(type(self).__name__, self.value)
+
+
+class Completing(object):
+
+    def __init__(self):
+        self.level = 0
+
+    def __bool__(self):
+        return bool(self.level)
+
+    def __enter__(self):
+        self.level += 1
+
+    def __exit__(self, *a):
+        self.level -= 1

@@ -576,6 +576,7 @@ class CommandTester(object):
             raise AssertionError(msg)
         class editor:
             text_view = kw.pop("textview", object)
+            command_view = kw.pop("command_view", object)
         editor = kw.pop("editor", editor)
         if not isinstance(editor, type(Mocker().mock())):
             editor.message = message
