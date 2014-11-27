@@ -111,7 +111,7 @@ def test_syntaxdefs():
         eq_(app.syntaxdefs, "<definitions>")
 
 def test_application_will_finish_launching():
-    from editxt.textcommand import TextCommandController
+    from editxt.textcommand import CommandManager
     def test(eds_config):
         app = Application()
         m = Mocker()
@@ -120,7 +120,7 @@ def test_application_will_finish_launching():
         nsapp = m.mock(ak.NSApplication)
         ud_class = m.replace(fn, 'NSUserDefaults')
         m.method(app.iter_saved_window_states)() >> iter(eds_config)
-        tc = m.replace(app, 'text_commander', spec=TextCommandController)
+        tc = m.replace(app, 'text_commander', spec=CommandManager)
         dc = m.mock(DocumentController)
         menu = dc.textMenu >> m.mock(ak.NSMenu)
         tc.load_commands(menu)

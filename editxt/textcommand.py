@@ -391,7 +391,7 @@ class CommandBar(object):
             self.text_commander.history.discard_view(view)
 
 
-class TextCommandController(object):
+class CommandManager(object):
 
     def __init__(self, history):
         self.history = history

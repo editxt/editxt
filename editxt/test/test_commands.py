@@ -583,7 +583,7 @@ class CommandTester(object):
             editor.message = message
         class window:
             current_editor = editor
-        commander = textcommand.TextCommandController(
+        commander = textcommand.CommandManager(
             kw.pop("history", []))
         for command in commands:
             commander.add_command(command, None, menu)

@@ -33,7 +33,7 @@ from editxt.commands import iterlines
 from editxt.config import Config
 from editxt.document import DocumentController
 from editxt.errorlog import ErrorLog, LogViewHandler
-from editxt.textcommand import CommandHistory, TextCommandController
+from editxt.textcommand import CommandHistory, CommandManager
 from editxt.util import (ContextMap, perform_selector,
     atomicfile, dump_yaml, load_yaml, WeakProperty)
 
@@ -66,7 +66,7 @@ class Application(object):
             self.syntax_factory = None
             state_dir = os.path.join(self.profile_path, const.STATE_DIR)
             command_history = CommandHistory(state_dir)
-            self.text_commander = TextCommandController(command_history)
+            self.text_commander = CommandManager(command_history)
 
     @classmethod
     def name(cls):
