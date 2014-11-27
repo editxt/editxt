@@ -585,15 +585,9 @@ def test_Regex():
     yield test, '/abc/i def', 0, ('abc', 7), re.I
     yield test, '/abc/is def', 0, ('abc', 8), re.I | re.S
     yield test, '/abc/is  def', 0, ('abc', 8), re.I | re.S
-    yield test, 'abc', 0, \
-        ParseError("invalid search pattern: 'abc'", arg, 0, 3)
-        #('abc', 3)
-    yield test, '^abc$', 0, \
-        ParseError("invalid search pattern: '^abc$'", arg, 0, 5)
-        #('^abc$', 5)
-    yield test, '^abc$ def', 0, \
-        ParseError("invalid search pattern: '^abc$ def'", arg, 0, 9)
-        #('^abc$', 6)
+    yield test, 'abc', 0, ('abc', 3)
+    yield test, '^abc$', 0, ('^abc$', 5)
+    yield test, '^abc$ def', 0, ('^abc$', 6)
     yield test, '/abc/X def', 0, \
         ParseError('unknown flag: X', arg, 5, 5)
 

@@ -776,7 +776,7 @@ class Regex(Field):
         """
         if index >= len(text):
             return self.default, index
-        if text[index] not in self.DELIMITERS:
+        if self.replace and text[index] not in self.DELIMITERS:
             msg = "invalid search pattern: {!r}".format(text[index:])
             raise ParseError(msg, self, index, len(text) - index)
         expr, index = self.consume_expression(text, index)
@@ -793,21 +793,26 @@ class Regex(Field):
         return RegexPattern(expr, flags), index
 
     def consume_expression(self, text, index):
-        delim = text[index]
+        if self.replace or text[index] in self.DELIMITERS:
+            delim = text[index]
+            delim_offset = 0
+        else:
+            delim = ' '
+            delim_offset = -2
         chars, esc = [], 0
         i = -1
-        for i, c in enumerate(text[index + 1:]):
+        for i, c in enumerate(text[index + 1 + (delim_offset // 2):]):
             if esc:
                 esc = 0
                 chars.append(c)
                 continue
             elif c == delim:
-                return ''.join(chars), index + i + 2
+                return ''.join(chars), index + i + 2 + delim_offset
             chars.append(c)
             if c == '\\':
                 esc = 1
         if not esc:
-            return ''.join(chars), index + i + 3
+            return ''.join(chars), index + i + 3 + delim_offset
         token = ''.join(chars)
         msg = 'unterminated regex: {}{}'.format(delim, token)
         raise ParseError(msg, self, index, len(text))

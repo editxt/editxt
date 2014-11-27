@@ -47,6 +47,7 @@ def test_load_commands():
         mod.sort_lines,
         mod.reindent,
         mod.find,
+        mod.ack,
         mod.diff,
         mod.open_,
         mod.clear_highlighted_text,

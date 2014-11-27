@@ -29,6 +29,7 @@ from editxt.command.parser import (Choice, File, Int, String, Regex, RegexPatter
     VarArgs, CommandParser, Options, SubArgs, SubParser)
 from editxt.command.util import has_editor, has_selection, iterlines
 
+from editxt.command.ack import ack
 from editxt.command.changeindent import reindent
 from editxt.command.diff import diff
 from editxt.command.find import find
@@ -58,6 +59,7 @@ def load_commands():
             sort_lines,
             reindent,
             find,
+            ack,
             diff,
             open_,
             clear_highlighted_text,

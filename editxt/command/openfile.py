@@ -18,9 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
-import os
-from tempfile import NamedTemporaryFile
-from subprocess import Popen, list2cmdline
 
 import editxt.constants as const
 from editxt.command.base import command, CommandError
