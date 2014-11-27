@@ -431,8 +431,11 @@ class Editor(object):
         return finder
 
     def on_do_command(self, command):
-        if command == platform_const.ESCAPE:
-            self.command_view.dismiss()
+        if command == platform_const.ESCAPE and self.command_view is not None:
+            if self.command_view:
+                self.command_view.dismiss()
+            else:
+                self.command_view.show_last_message()
             return True
         return False
 

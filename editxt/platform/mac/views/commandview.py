@@ -79,6 +79,7 @@ class CommandView(DualView):
 
         self.output.setEditable_(False)
         self.output.setSelectable_(True)
+        self.output.setDelegate_(self)
         self.input.setDelegate_(self)
         def text_did_change_handler(textview):
             if self.command is not None:
@@ -87,6 +88,8 @@ class CommandView(DualView):
         self.input.text_did_change_handler = text_did_change_handler
         self.setHidden_(True)
         self.command = None
+        self.last_command = ""
+        self.last_output = None
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
             self, "shouldResize:", SHOULD_RESIZE, self.input_group)
         return self
@@ -133,7 +136,7 @@ class CommandView(DualView):
     def command_text_selected_range(self, value):
         self.input.setSelectedRange_(value)
 
-    def activate(self, command, initial_text=""):
+    def activate(self, command, initial_text="", select=False):
         new_activation = self.command is None
         if new_activation:
             self.command = command
@@ -146,9 +149,18 @@ class CommandView(DualView):
             self.output.setString_("")
         if new_activation or initial_text:
             self.input.setString_(initial_text)
+            if select and initial_text:
+                self.command_text_selected_range = (0, len(initial_text))
             self.should_resize()
         if self.window() is not None:
             self.window().makeFirstResponder_(self.input)
+
+    def show_last_message(self):
+        if self.last_output:
+            self.output.setAttributedString_(self.last_output)
+            self.should_resize()
+        else:
+            ak.NSBeep()
 
     def deactivate(self):
         if self.command is not None:
@@ -178,6 +190,7 @@ class CommandView(DualView):
             text = ak.NSAttributedString.alloc().initWithString_attributes_(
                 message, attrs)
         self.output.setAttributedString_(text)
+        self.last_output = text
         if msg_type == ERROR:
             ak.NSBeep()
         self.should_resize()
@@ -186,10 +199,17 @@ class CommandView(DualView):
         self.command.propose_completion(self, items)
 
     def textView_doCommandBySelector_(self, textview, selector):
-        return self.command.on_key_command(selector, self)
+        self.last_command = self.command_text
+        if textview is self.input:
+            return self.command.on_key_command(selector, self)
+        elif selector == self.KEYS.ESC:
+            self.dismiss()
+            return True
+        return False
 
     def textViewDidChangeSelection_(self, notification):
-        self.command.on_key_command(self.KEYS.SELECTION_CHANGED, self)
+        if notification.object() is self.input:
+            self.command.on_key_command(self.KEYS.SELECTION_CHANGED, self)
 
     #def textDidEndEditing_(self, notification):
     #    self.deactivate()
