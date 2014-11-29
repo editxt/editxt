@@ -23,6 +23,7 @@ import sys
 import traceback
 from collections import defaultdict
 from itertools import count
+from urllib.parse import parse_qs, unquote, urlparse
 
 import AppKit as ak
 import Foundation as fn
@@ -34,6 +35,7 @@ from editxt.commands import load_commands
 from editxt.history import History
 from editxt.platform.events import call_later
 from editxt.platform.kvo import KVOList, KVOProxy
+from editxt.platform.markdown import AttributedString
 from editxt.platform.views import CommandView
 from editxt.util import WeakProperty
 
@@ -49,6 +51,7 @@ class CommandBar(object):
         self.window = window
         self.text_commander = text_commander
         self.history_view = None
+        #self.last_command = ""
         self.completing = Completing()
         self._cached_parser = (None, None, None)
 
@@ -193,6 +196,7 @@ class CommandBar(object):
         return parser
 
     def execute(self, text):
+        #self.last_command = text
         self.reset()
         if not text.strip():
             return
@@ -357,6 +361,7 @@ class CommandBar(object):
         return False # TODO implement this
 
     def navigate_history(self, command_view, forward=False):
+        # TODO test
         old_text = command_view.command_text
         text = self.get_history(old_text, forward)
         if text is None:
@@ -370,13 +375,17 @@ class CommandBar(object):
         return self.history_view.get(current_text, forward)
 
     def message(self, text, exc_info=None, msg_type=const.ERROR):
-        if exc_info:
-            if isinstance(exc_info, (int, bool)):
-                exc_info = sys.exc_info()
-            exc = "\n\n" + "".join(traceback.format_exception(*exc_info))
+        if isinstance(text, AttributedString):
+            assert not exc_info
+            msg = text
         else:
-            exc = ""
-        msg = "{}{}".format(text, exc)
+            if exc_info:
+                if isinstance(exc_info, (int, bool)):
+                    exc_info = sys.exc_info()
+                exc = "\n\n" + "".join(traceback.format_exception(*exc_info))
+            else:
+                exc = ""
+            msg = "{}{}".format(text, exc)
         editor = self.window.current_editor
         if editor is None:
             log.info(text, exc_info=exc_info)
@@ -384,6 +393,62 @@ class CommandBar(object):
                 ak.NSBeep()
         else:
             editor.message(msg, msg_type=msg_type)
+
+    def handle_link(self, link):
+        """Handle clicked hyperlink
+
+        :param link: Link URL string.
+        """
+        try:
+            url = urlparse(link)
+        except Exception:
+            log.warn("cannot parse: %r", link, exc_info=True)
+            return False
+        # TODO allow extensions to hook URL handling?
+        if url.scheme != "xt":
+            return False
+        if url.netloc == "open":
+            self.open_url(url, link)
+            return True
+        if url.netloc == "preferences":
+            self.window.app.open_config_file()
+            return True
+        log.warn("unhandled URL: %s", link)
+        return False
+
+    def open_url(self, url, link):
+        """Open file specified by URL
+
+        The URL must have two attributes:
+        - path : The path to the file. The first leading slash is
+          stripped, so absolute paths must have an extra slash.
+        - query : A query string from which an optional "goto" parameter
+          may be parsed. The goto parameter specifies a line or line +
+          selection (`line.sel_start.sel_length`) to goto/select after
+          opening the file.
+
+        :param url: Parsed URL. See `urllib.parse.urlparse` for structure.
+        :param link: The original URL string.
+        """
+        path = unquote(url.path)
+        if path.startswith("/"):
+            path = path[1:]
+        editors = self.window.open_paths([path])
+        if editors:
+            assert len(editors) == 1, (link, editors)
+            query = parse_qs(url.query)
+            if "goto" in query:
+                goto = query["goto"][0]
+                try:
+                    if "." in goto:
+                        line, start, end = goto.split(".")
+                        num = (int(line), int(start), int(end))
+                    else:
+                        num = int(goto)
+                except ValueError:
+                    log.debug("invalid goto: %r (link: %s)", goto, link)
+                else:
+                    editors[0].goto_line(num)
 
     def reset(self):
         view, self.history_view = self.history_view, None

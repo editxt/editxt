@@ -1159,7 +1159,6 @@ def test_insert_items():
             items = [name_to_item[char] for char in c.drop[0]] \
                     if "*" in c.final and c.init != c.final else []
 
-            m = Mocker()
             window = app.windows[0]
             if "project" in c:
                 eq_(c.drop[1], -1, "invalid test configuration; drop index "
@@ -1178,10 +1177,9 @@ def test_insert_items():
                 args = (parent, index, c.action)
 
             print('drop(%s) %s at %s of %s' % (c.action, c.drop[0], index, parent))
-            with m:
-                result = window.insert_items(items, *args)
+            result = window.insert_items(items, *args)
 
-            eq_(result, items)
+            eq_(len(result), len(items))
 
             final = ["window"]
             for char in c.final:

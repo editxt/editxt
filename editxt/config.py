@@ -58,6 +58,11 @@ def config_schema(): return {
         const.WRAP_NONE,
         const.WRAP_WORD,
         default=const.WRAP_NONE),
+    "command": {
+        "ack": {
+            "path": String("ack")
+        }
+    },
 }
 
 

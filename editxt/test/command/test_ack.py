@@ -23,6 +23,7 @@ from contextlib import contextmanager
 from os.path import isabs, join
 
 from mocker import Mocker, expect, ANY, MATCH
+from nose.plugins.skip import SkipTest
 from nose.tools import eq_
 from editxt.test.test_commands import CommandTester
 from editxt.test.util import assert_raises, gentest, TestConfig, test_app, tempdir
@@ -31,31 +32,36 @@ import editxt.command.ack as mod
 
 
 def test_ack():
+    if not mod.is_ack_installed():
+        raise SkipTest("ack not installed")
     @gentest
     def test(command, message="", config="", project_path="/"):
         config = "window project(/) editor(/dir/b.txt)*"
         with test_app(config) as app, \
                 setup_files(test_app(app).tmp) as tmp:
             editor = app.windows[0].current_editor
+            message = message.replace("xt://open/", "xt://open/%s/" % tmp)
             bar = CommandTester(mod.ack, editor=editor, error=message)
             bar(command)
             eq_(test_app(app).state, config)
 
     yield test("ack ([bB]|size:\ 10)",
-        "B file\n"
-        "1:name: dir/B file\n"
-        "2:size: 10\n"
+        "[B file](xt://open/dir/B%20file)\n"
+        "[1](xt://open/dir/B%20file?goto=1):name: dir/[B](xt://open/dir/B%20file?goto=1.10.1) file\n"
+        "[2](xt://open/dir/B%20file?goto=2):[size: 10](xt://open/dir/B%20file?goto=2.0.8)\n"
         "\n"
-        "b.txt\n"
-        "1:name: dir/b.txt\n")
+        "[b.txt](xt://open/dir/b.txt)\n"
+        "[1](xt://open/dir/b.txt?goto=1):name: dir/[b](xt://open/dir/b.txt?goto=1.10.1).txt\n")
     yield test("ack dir/[bB] ..",
-        "dir/B file\n"
-        "1:name: dir/B file\n"
+        "[dir/B file](xt://open/dir/../dir/B%20file)\n"
+        "[1](xt://open/dir/../dir/B%20file?goto=1):name: [dir/B](xt://open/dir/../dir/B%20file?goto=1.6.5) file\n"
         "\n"
-        "dir/b.txt\n"
-        "1:name: dir/b.txt\n")
+        "[dir/b.txt](xt://open/dir/../dir/b.txt)\n"
+        "[1](xt://open/dir/../dir/b.txt?goto=1):name: [dir/b](xt://open/dir/../dir/b.txt?goto=1.6.5).txt\n")
 
 def test_exec_shell():
+    if not mod.is_ack_installed():
+        raise SkipTest("ack not installed")
     with setup_files() as tmp:
         result = mod.exec_shell(["ack", "dir/[bB]"], cwd=tmp)
 

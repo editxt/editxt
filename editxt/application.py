@@ -168,11 +168,11 @@ class Application(object):
     def open_config_file(self):
         items = self.open_documents_with_paths([self.config.path])
         assert len(items) == 1, items
-        document = items[0]
-        assert document.file_path == self.config.path, \
-            (document.file_path, self.config.path)
-        if not (os.path.exists(document.file_path) or document.text):
-            document.text = self.config.default_config
+        editor = items[0]
+        assert editor.file_path == self.config.path, \
+            (editor.file_path, self.config.path)
+        if not (os.path.exists(editor.file_path) or editor.document.text):
+            editor.document.text = self.config.default_config
 
     def open_error_log(self, set_current=True):
         """Open the error log document

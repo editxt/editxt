@@ -193,7 +193,6 @@ class Project(object):
         focus = None
         inserted = []
         for item in items:
-            inserted.append(item)
             if isinstance(item, Editor):
                 editor, item = item, item.document
             else:
@@ -205,6 +204,7 @@ class Project(object):
                     vindex = self.editors.index(editor)
                     if vindex in [index - 1, index]:
                         # TODO why not set `focus = editor`?
+                        inserted.append(editor)
                         continue
                     if vindex - index <= 0:
                         index -= 1
@@ -217,10 +217,12 @@ class Project(object):
                 assert editor.project is self, (editor, editor.project)
                 if editor in self.editors:
                     focus = editor
+                    inserted.append(editor)
                     continue
             assert editor.project is self, (editor, editor.project, self)
             self._discard_recent(editor.file_path)
             self.editors.insert(index, editor)
+            inserted.append(editor)
             focus = editor
             index += 1
         return inserted, focus

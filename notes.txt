@@ -74,6 +74,14 @@ View release stats:
 Top priority
 
 Add ack command
+  - colored output
+x  - link to files
+x    - link file path (open file at first line)
+x    - link match (open file, goto matched line)
+  - command click to open file without focusing
+Improve default markdown styles.
+Allow last command output to be recalled in other editors
+Open command bar with last command selected if it resulted in an error
 Move editxt.platform.views.CommandView.KEYS into editxt.platform.const?
 Add context menu to items in sidebar: Copy file path
 Add move command to relocate file on disk

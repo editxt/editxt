@@ -25,7 +25,7 @@ from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_, assert_raises
 import AppKit as ak
 import Foundation as fn
-from editxt.test.util import gentest, TestConfig, tempdir
+from editxt.test.util import gentest, TestConfig, tempdir, test_app
 
 import editxt.constants as const
 import editxt.textcommand as mod
@@ -586,6 +586,27 @@ def test_CommandBar_message():
     c = TestConfig(text="command error", exc_info=None)
     yield test, c(msg="command error")
     yield test, c(msg="command error\n\nTraceback...Error!", exc_info=True)
+
+def test_CommandBar_handle_link():
+    from editxt.editor import Editor
+    @gentest
+    def test(link, expect, config="", goto=None):
+        with test_app("project*") as app:
+            m = Mocker()
+            command = app.windows[0].command
+            goto_line = m.replace(Editor, "goto_line")
+            if goto is not None:
+                goto_line(goto)
+            with m:
+                eq_(command.handle_link(link), expect)
+            if config:
+                eq_(test_app(app).state, "window project " + config)
+    yield test("http://google.com", False)
+    yield test("xt://open/file.txt", True, "editor[file.txt 0]*")
+    yield test("xt://open//file.txt", True, "editor[/file.txt 0]*")
+    yield test("xt://open//file.txt?goto=3", True, "editor[/file.txt 0]*", goto=3)
+    yield test("xt://open//file.txt?goto=3.10.2", True, "editor[/file.txt 0]*", goto=(3, 10, 2))
+    yield test("xt://preferences", True, "editor[/.profile/config.yaml 0]*")
 
 def test_CommandBar_reset():
     with tempdir() as tmp:

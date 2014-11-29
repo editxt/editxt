@@ -593,7 +593,7 @@ class Window(object):
             inserted. A project is considered to be "existing" if there
             is a project with the same path in the window where it is
             being inserted.
-        :returns: A list of items that were inserted.
+        :returns: A list of editors and projects that were inserted.
         """
         if (project is not None and
             project != const.CURRENT and

@@ -1,39 +1,24 @@
+# -*- coding: utf-8 -*-
 # EditXT
-# Copyright 2007-2013 Daniel Miller <millerdev@gmail.com>
-# 
+# Copyright 2007-2014 Daniel Miller <millerdev@gmail.com>
+#
 # This file is part of EditXT, a programmer's text editor for Mac OS X,
 # which can be found at http://editxt.org/.
-# 
+#
 # EditXT is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # EditXT is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
-# NOTE this is due to a bug in setuptools, some newer versions may work, but 5.2 does not
-setuptools==1.1.6
-    distribute>=0.7.3
+class AttributedString(str): pass
 
-commonmark>=0.5.4
-docopt==0.6.1
-py2app==0.7.3
-    altgraph==0.10.2
-    macholib==1.5.1
-    modulegraph==0.10.4
-pyobjc-core==2.5.1
-pyobjc-framework-Cocoa==2.5.1
-pyobjc-framework-Quartz==2.5.1
-pyobjc-framework-ExceptionHandling==2.5.1
-pyyaml==3.11
-
-# for testing
-#mocker>=1.1.1 # not python3 compatible yet, patch manually
-nose>=1.3.0
-testil>=1.0
+def markdown(value, pre=False):
+    return AttributedString(value)

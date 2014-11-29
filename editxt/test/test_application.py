@@ -274,9 +274,9 @@ def test_open_config_file():
         default_config = m.property(app.config, "default_config")
         m.replace("os.path.exists")(app.config.path) >> c.exists
         if not c.exists:
-            doc.text >> c.text
+            doc.document.text >> c.text
             if not c.text:
-                doc.text = default_config.value >> "# config"
+                doc.document.text = default_config.value >> "# config"
         with m:
             app.open_config_file()
     c = TestConfig(exists=False)

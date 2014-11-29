@@ -87,8 +87,7 @@ class CommandView(DualView):
                 textview.placeholder = self.command.get_placeholder(text)
         self.input.text_did_change_handler = text_did_change_handler
         self.setHidden_(True)
-        self.command = None
-        self.last_command = ""
+        self.command = self._command = None
         self.last_output = None
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
             self, "shouldResize:", SHOULD_RESIZE, self.input_group)
@@ -98,7 +97,7 @@ class CommandView(DualView):
         self.input = None
         self.completions = None
         self.output = None
-        self.command = None
+        self.command = self._command = None
         ak.NSNotificationCenter.defaultCenter().removeObserver_(self)
         ak.NSNotificationCenter.defaultCenter().removeObserver_(self.input_group)
         self.input_group = None
@@ -138,8 +137,8 @@ class CommandView(DualView):
 
     def activate(self, command, initial_text="", select=False):
         new_activation = self.command is None
+        self.command = self._command = command
         if new_activation:
-            self.command = command
             #self.performSelector_withObject_afterDelay_("selectText:", self, 0)
             # possibly use setSelectedRange
             # http://jeenaparadies.net/weblog/2009/apr/focus-a-nstextfield
@@ -154,13 +153,6 @@ class CommandView(DualView):
             self.should_resize()
         if self.window() is not None:
             self.window().makeFirstResponder_(self.input)
-
-    def show_last_message(self):
-        if self.last_output:
-            self.output.setAttributedString_(self.last_output)
-            self.should_resize()
-        else:
-            ak.NSBeep()
 
     def deactivate(self):
         if self.command is not None:
@@ -180,6 +172,8 @@ class CommandView(DualView):
     def message(self, message, textview=None, msg_type=INFO):
         if msg_type == HTML:
             raise NotImplementedError("convert message to NSAttributedString")
+        elif isinstance(message, ak.NSAttributedString):
+            text = message
         else:
             attrs = {}
             color = MESSAGE_COLORS[msg_type]
@@ -195,11 +189,17 @@ class CommandView(DualView):
             ak.NSBeep()
         self.should_resize()
 
+    def show_last_message(self):
+        if self.last_output:
+            self.output.setAttributedString_(self.last_output)
+            self.should_resize()
+        else:
+            ak.NSBeep()
+
     def propose_completion(self, items):
         self.command.propose_completion(self, items)
 
     def textView_doCommandBySelector_(self, textview, selector):
-        self.last_command = self.command_text
         if textview is self.input:
             return self.command.on_key_command(selector, self)
         elif selector == self.KEYS.ESC:
@@ -210,6 +210,9 @@ class CommandView(DualView):
     def textViewDidChangeSelection_(self, notification):
         if notification.object() is self.input:
             self.command.on_key_command(self.KEYS.SELECTION_CHANGED, self)
+
+    def textView_clickedOnLink_atIndex_(self, textview, link, index):
+        return self._command.handle_link(str(link))
 
     #def textDidEndEditing_(self, notification):
     #    self.deactivate()

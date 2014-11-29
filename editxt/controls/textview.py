@@ -53,6 +53,10 @@ class TextView(ak.NSTextView):
         line = 1
         tlen = len(text)
         index = 0
+        select_start = 0
+        select_len = 0
+        if isinstance(num, (tuple, list)):
+            num, select_start, select_len = num
         while line < num:
             frange = (index, tlen - index)
             found = text.rangeOfString_options_range_(eol, 0, frange)
@@ -61,7 +65,7 @@ class TextView(ak.NSTextView):
             index = found.location + found.length
             line += 1
         if line == num:
-            range = (index, 0)
+            range = (index + select_start, select_len)
             self.setSelectedRange_(range)
             self.scrollRangeToVisible_(range)
         else:

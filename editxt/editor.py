@@ -89,6 +89,7 @@ class Editor(object):
         self.text_view = None
         self.scroll_view = None
         self.command_view = None
+        self._goto_line = None
         props = document.props
         self.kvolink = KVOLink([
             (self.proxy, "icon", self.proxy, "summary_info"),
@@ -237,6 +238,8 @@ class Editor(object):
             self.text_view = self.scroll_view.documentView() # HACK deep reach
             self.soft_wrap = self.document.app.config["soft_wrap"]
             self.reset_edit_state()
+            if self._goto_line is not None:
+                self.text_view.goto_line(self._goto_line)
         else:
             self.main_view.setFrame_(frame)
         view.addSubview_(self.main_view)
@@ -378,6 +381,12 @@ class Editor(object):
     def message(self, msg, msg_type=const.INFO):
         """Display a message in the command view"""
         self.command_view.message(msg, self.text_view, msg_type)
+
+    def goto_line(self, line):
+        if self.text_view is None:
+            self._goto_line = line
+        else:
+            self.text_view.goto_line(line)
 
     def interactive_close(self, do_close):
         """Close this editor if the user agrees to do so
