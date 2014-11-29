@@ -17,25 +17,61 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+import re
+
 import AppKit as ak
 import Foundation as fn
 import CommonMark as commonmark
 
 AttributedString = ak.NSAttributedString
 
-def markdown(value, pre=False):
+SPACE_RE = re.compile("  +")
+NON_HARD_BREAK = re.compile(r"(?<!.\\|  )\n")
+
+def markdown(value, pre=False, css=""):
+    if pre:
+        value = NON_HARD_BREAK.sub("\\\n", value)
     parser = commonmark.DocParser()
     renderer = commonmark.HTMLRenderer()
-    if pre:
-        value = value.replace("\n", "\\\n")
     html = renderer.render(parser.parse(value))
     if pre:
-        html = "<div style='font-family: Monaco; whitespace: pre;'>{}</div>".format(html)
+        css = """
+        body {
+            font-family: "Lucida Console", Monaco, monospace;
+        }
+        """ + css
+        # HACK unfortunately we have to roll our own preformatted text
+        # because `white-space: pre` renders double-spaced lines.
+        def nbsp(match):
+            num = len(match.group(0))
+            if num % 2 == 0:
+                return " \u00A0" * (num // 2)
+            return " \u00A0" * (num // 2) + " "
+        html = SPACE_RE.sub(nbsp, html)
+    else:
+        # TODO make the default font/size configurable
+        css = """
+        body {
+            font: 12pt sans-serif;
+        }
+        """ + css
+    html = HTML_TEMPLATE.format(css=css, body=html)
     data = fn.NSString.stringWithString_(html) \
-             .dataUsingEncoding_(fn.NSUTF8StringEncoding)
+             .dataUsingEncoding_(fn.NSUnicodeStringEncoding)
     options = {
         "NSDocumentTypeDocumentAttribute": ak.NSHTMLTextDocumentType,
-        "NSCharacterEncodingDocumentAttribute": fn.NSUTF8StringEncoding,
+        "NSCharacterEncodingDocumentAttribute": fn.NSUnicodeStringEncoding,
     }
     return ak.NSAttributedString.alloc() \
         .initWithHTML_options_documentAttributes_(data, options, None)[0]
+
+HTML_TEMPLATE = """<!DOCTYPE html>
+<html>
+<head>
+    <style>{css}</style>
+</head>
+<body>
+{body}
+</body>
+</html>
+"""
