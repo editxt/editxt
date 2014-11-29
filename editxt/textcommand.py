@@ -458,7 +458,10 @@ class CommandBar(object):
 
 class CommandManager(object):
 
-    def __init__(self, history):
+    app = WeakProperty()
+
+    def __init__(self, history, app=None):
+        self.app = app
         self.history = history
         self.tagger = count()
         self.commands = commands = {}
@@ -528,6 +531,8 @@ class CommandManager(object):
                         alias, command, path)
                 else:
                     self.commands[alias] = command
+        if command.config is not None:
+            self.app.config.extend(command.name, command.config)
 
     def validate_hotkey(self, value):
         if value is not None:

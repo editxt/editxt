@@ -27,6 +27,7 @@ from traceback import format_exc
 from urllib.parse import quote
 
 import editxt.constants as const
+import editxt.config as config
 from editxt.command.base import command, CommandError
 from editxt.command.parser import CommandParser, File, Regex, String, VarArgs
 from editxt.command.util import has_editor
@@ -42,7 +43,7 @@ ACK_LINE = re.compile(r"(.*?):(\d+:.*)")
     VarArgs("options", String("options")),
     # TODO SubParser with dynamic dispatch based on pattern matching
     # (if it starts with a "-" it's an option, otherwise a file path)
-), is_enabled=has_editor)
+), config={"path": config.String("ack")}, is_enabled=has_editor)
 def ack(editor, sender, args):
     """Search for files matching pattern"""
     if args is None:
@@ -51,7 +52,7 @@ def ack(editor, sender, args):
         return
     elif args.pattern is None:
         raise CommandError("please specify a pattern to match")
-    ack_path = editor.app.config["command.ack.path"]
+    ack_path = editor.app.config.for_command("ack")["path"]
     cwd = args.path or editor.dirname()
     command = [ack_path, args.pattern] + [o for o in args.options if o]
     result = exec_shell(command, cwd=cwd)

@@ -717,6 +717,7 @@ def test_CommandManager_add_command():
         cmd = m.mock()
         cmd.names >> []
         cmd.lookup_with_arg_parser >> False
+        cmd.config >> None
         tag = cmd._CommandManager__tag = next(ctl.tagger) + 1
         validate(cmd.hotkey >> "<hotkey>") >> ("<hotkey>", "<keymask>")
         mi = mi_class.alloc() >> m.mock(ak.NSMenuItem)

@@ -59,9 +59,7 @@ def config_schema(): return {
         const.WRAP_WORD,
         default=const.WRAP_NONE),
     "command": {
-        "ack": {
-            "path": String("ack")
-        }
+        # namespace for values added by @command decorated functions
     },
 }
 
@@ -194,7 +192,7 @@ class Config(object):
         self.reload()
 
     def reload(self):
-        if exists(self.path):
+        if self.path and exists(self.path):
             try:
                 with open(self.path) as f:
                     data = load_yaml(f)
@@ -264,7 +262,9 @@ class Config(object):
             if not isinstance(value, dict):
                 raise ValueError(
                     "{}: expected dict, got {!r}".format(name, value))
-            raise NotImplementedError
+            config = Config(None, schema)
+            config.data = value
+            return config
         try:
             value = schema.validate(value, name)
         except Exception as err:
@@ -276,6 +276,16 @@ class Config(object):
         if value is NOT_SET:
             raise KeyError(name)
         return value
+
+    def extend(self, name, schema, namespace="command"):
+        command_schema = self.schema["command"]
+        if name in command_schema:
+            command_schema[name].update(schema)
+        else:
+            command_schema[name] = schema
+
+    def for_command(self, name):
+        return self["command.{}".format(name)]
 
     @property
     def default_config(self):
@@ -290,7 +300,7 @@ class Config(object):
                 elif value is NOT_SET:
                     pass
                 else:
-                    yield "#{}:".format(key)
+                    yield "#{}{}:".format("  " * level, key)
                     for line in get_lines(value, level + 1):
                         yield line
             yield ""

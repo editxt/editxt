@@ -66,7 +66,7 @@ class Application(object):
             self.syntax_factory = None
             state_dir = os.path.join(self.profile_path, const.STATE_DIR)
             command_history = CommandHistory(state_dir)
-            self.text_commander = CommandManager(command_history)
+            self.text_commander = CommandManager(command_history, app=self)
 
     @classmethod
     def name(cls):

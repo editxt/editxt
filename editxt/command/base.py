@@ -45,7 +45,8 @@ def load_commands():
 
 
 def command(func=None, name=None, title=None, hotkey=None,
-            is_enabled=None, arg_parser=None, lookup_with_arg_parser=False):
+            is_enabled=None, arg_parser=None, config=None,
+            lookup_with_arg_parser=False):
     """Text command decorator
 
     Text command signature: `text_command(editor, sender, args)`
@@ -63,6 +64,9 @@ def command(func=None, name=None, title=None, hotkey=None,
         Signature: `is_enabled(editor, sender)`.
     :param arg_parser: An object inplementing the `CommandParser` interface.
         Defaults to `CommandParser()`.
+    :param config: Extra configuration schema extending the main app config
+        under the "command.{command_name}" key.
+        See `editxt.config.config_schema` for more details.
     :param lookup_with_arg_parser: If True, use the `arg_parser.parse` to
         lookup the command. The parser should return None if it receives
         a text string that cannot be parsed.
@@ -97,6 +101,7 @@ def command(func=None, name=None, title=None, hotkey=None,
         func.arg_parser = arg_parser or CommandParser()
         func.lookup_with_arg_parser = lookup_with_arg_parser
         func.parse = parse
+        func.config = config
         func.arg_string = arg_string
         return func
     if func is None:

@@ -147,6 +147,9 @@ def test_Config_default_config():
             "bool": mod.Boolean(default=False),
             "enum": mod.Enum(("abc", 1), ("def", 2), ("ghi", 1), default=1),
             "color": mod.Color(default=get_color("0EFF6B")),
+            "sub": {
+                "int": mod.Integer(default=42),
+            }
         },
         "hidden": mod.NOT_SET,
         "int": mod.Integer(default=42),
@@ -158,6 +161,9 @@ def test_Config_default_config():
         "#  bool: false\n"
         "#  color: 0EFF6B\n"
         "#  enum: abc\n"
+        "#  sub:\n"
+        "#    int: 42\n"
+        "\n"
         "\n"
         "#int: 42\n"
         "#str: the answer\n"
