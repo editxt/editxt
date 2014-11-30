@@ -79,6 +79,9 @@ class CommandView(DualView):
 
         self.output.setEditable_(False)
         self.output.setSelectable_(True)
+        self.output.setLinkTextAttributes_({
+            ak.NSCursorAttributeName: ak.NSCursor.pointingHandCursor()
+        })
         self.output.setDelegate_(self)
         self.input.setDelegate_(self)
         def text_did_change_handler(textview):

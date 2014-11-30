@@ -35,12 +35,8 @@ def markdown(value, pre=False, css=""):
     renderer = commonmark.HTMLRenderer()
     html = renderer.render(parser.parse(value))
     if pre:
-        css = """
-        body {
-            font-family: "Lucida Console", Monaco, monospace;
-        }
-        """ + css
-        # HACK unfortunately we have to roll our own preformatted text
+        css = PRE_CSS + css
+        # unfortunately we have to roll our own preformatted text
         # because `white-space: pre` renders double-spaced lines.
         def nbsp(match):
             num = len(match.group(0))
@@ -65,6 +61,7 @@ def markdown(value, pre=False, css=""):
     return ak.NSAttributedString.alloc() \
         .initWithHTML_options_documentAttributes_(data, options, None)[0]
 
+
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html>
 <head>
@@ -74,4 +71,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 {body}
 </body>
 </html>
+"""
+
+PRE_CSS = """
+body {
+    font-family: "Lucida Console", Monaco, monospace;
+}
+a {
+    text-decoration: none;
+}
 """
