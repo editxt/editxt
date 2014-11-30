@@ -159,8 +159,8 @@ class CommandView(DualView):
 
     def deactivate(self):
         if self.command is not None:
-            self.command, command = None, self.command
             self.completions.items = []
+            self.command, command = None, self.command
             editor = command.window.current_editor
             if editor is not None and self.window() is not None:
                 self.window().makeFirstResponder_(editor.text_view)
