@@ -17,6 +17,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+import logging
+
+log = logging.getLogger(__name__)
+
 
 def add_recent_document(path):
     print("recent file:", path)
+
+
+def beep():
+    log.info("beep")

@@ -73,18 +73,19 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+Add "Toggle command output (ESC)" command to Text menu
+Use something like Sparkle to auto-update http://sparkle.andymatuschak.org/
+Show document pane scroll bar on left side
 Move editxt.platform.views.CommandView.KEYS into editxt.platform.const?
 Add context menu to items in sidebar: Copy file path
 Add move command to relocate file on disk
 Add py command for quick python command execution
+Add "shell" command for shell command execution (allow piping)
 Fix intermittent freeze on startup
 Fix window title on edge cases (not always up to date)
 Fix window dirty indicator
 Add automatic file move detection
 
-Use something like Sparkle to auto-update http://sparkle.andymatuschak.org/
-open command
-    - Open directory as project
 File tree as main project view
 grep command (for finding/printing lines in file)
 Persistent unsaved docs

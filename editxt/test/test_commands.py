@@ -49,6 +49,7 @@ def test_load_commands():
         mod.find,
         mod.ack,
         mod.diff,
+        mod.grab,
         mod.open_,
         mod.clear_highlighted_text,
         mod.reload_config,
@@ -564,11 +565,19 @@ import editxt.textcommand as textcommand
 class CommandTester(object):
 
     def __init__(self, *commands, **kw):
+        if kw.get("output"):
+            assert "error" not in kw, \
+                "CommandTester: cannot use both 'output' and 'error' kwargs"
+            self.output = None
         class menu:
             @staticmethod
             def insertItem_atIndex_(item, tag):
                 pass
         def message(msg, msg_type=const.INFO):
+            if kw.get("output"):
+                self.output = msg
+                self.output_msg_type = msg_type
+                return
             if kw.get("error"):
                 eq_(msg, kw["error"])
                 return

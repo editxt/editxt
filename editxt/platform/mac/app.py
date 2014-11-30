@@ -80,3 +80,7 @@ def add_recent_document(path):
     url = fn.NSURL.fileURLWithPath_(path)
     ak.NSDocumentController.sharedDocumentController() \
         .noteNewRecentDocumentURL_(url)
+
+
+def beep():
+    ak.NSBeep()

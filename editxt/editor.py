@@ -155,6 +155,12 @@ class Editor(object):
         self.document.file_path = value
 
     @property
+    def selection(self):
+        if self.text_view is None:
+            return None
+        return self.text_view.selectedRange()
+
+    @property
     def is_dirty(self):
         return self.document.is_dirty()
 
@@ -337,7 +343,7 @@ class Editor(object):
 
     def _get_edit_state(self):
         if self.text_view is not None:
-            sel = self.text_view.selectedRange()
+            sel = self.selection
             sp = self.scroll_view.contentView().bounds().origin
             state = dict(
                 selection=[sel.location, sel.length],

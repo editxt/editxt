@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # EditXT
-# Copyright 2007-2013 Daniel Miller <millerdev@gmail.com>
+# Copyright 2007-2014 Daniel Miller <millerdev@gmail.com>
 #
 # This file is part of EditXT, a programmer's text editor for Mac OS X,
 # which can be found at http://editxt.org/.
@@ -41,8 +41,9 @@ def test_ack():
                 setup_files(test_app(app).tmp) as tmp:
             editor = app.windows[0].current_editor
             message = message.replace("xt://open/", "xt://open/%s/" % tmp)
-            bar = CommandTester(mod.ack, editor=editor, error=message)
+            bar = CommandTester(mod.ack, editor=editor, output=True)
             bar(command)
+            eq_(bar.output, message)
             eq_(test_app(app).state, config)
 
     yield test("ack ([bB]|size:\ 10)",

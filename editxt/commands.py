@@ -33,6 +33,7 @@ from editxt.command.ack import ack
 from editxt.command.changeindent import reindent
 from editxt.command.diff import diff
 from editxt.command.find import find
+from editxt.command.grab import grab
 from editxt.command.openfile import open_
 from editxt.command.sortlines import sort_lines
 from editxt.command.wraplines import wrap_at_margin, wrap_lines
@@ -61,6 +62,7 @@ def load_commands():
             find,
             ack,
             diff,
+            grab,
             open_,
             clear_highlighted_text,
             reload_config,
