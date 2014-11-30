@@ -212,7 +212,9 @@ class CommandView(DualView):
             self.command.on_key_command(self.KEYS.SELECTION_CHANGED, self)
 
     def textView_clickedOnLink_atIndex_(self, textview, link, index):
-        return self._command.handle_link(str(link))
+        event = ak.NSApp.currentEvent()
+        meta = bool(event.modifierFlags() & ak.NSCommandKeyMask)
+        return self._command.handle_link(str(link), meta)
 
     #def textDidEndEditing_(self, notification):
     #    self.deactivate()

@@ -559,8 +559,8 @@ class Window(object):
             if item is not None:
                 yield item
 
-    def open_paths(self, paths):
-        return self.insert_items(self.iter_dropped_paths(paths))
+    def open_paths(self, paths, focus=True):
+        return self.insert_items(self.iter_dropped_paths(paths), focus=focus)
 
     def iter_dropped_paths(self, paths):
         if not paths:
@@ -573,7 +573,8 @@ class Window(object):
             else:
                 log.info("cannot open path: %s", path)
 
-    def insert_items(self, items, project=const.CURRENT, index=-1, action=None):
+    def insert_items(self, items, project=const.CURRENT, index=-1, action=None,
+                     focus=True):
         """Insert items into the document tree
 
         :param items: An iterable of projects, editors, and/or documents.
@@ -593,6 +594,8 @@ class Window(object):
             inserted. A project is considered to be "existing" if there
             is a project with the same path in the window where it is
             being inserted.
+        :param focus: Focus most recent newly opened editor if true (the
+            default).
         :returns: A list of editors and projects that were inserted.
         """
         if (project is not None and
@@ -600,7 +603,7 @@ class Window(object):
             project.window is not self):
             raise ValueError("project does not belong to this window")
         inserted = []
-        focus = None
+        focus_editor = None
         with self.suspend_recent_updates(update_current=False):
             pindex = index
             if pindex < 0:
@@ -611,7 +614,7 @@ class Window(object):
                         project, pindex = self._insert_project(item, pindex, action)
                         if project is not None:
                             inserted.append(project)
-                            focus = project
+                            focus_editor = project
                     # Reset index since the project into which non-project
                     # items will be inserted has changed.
                     index = -1
@@ -620,10 +623,10 @@ class Window(object):
                         if index >= 0:
                             raise NotImplementedError
                         project = self.get_current_project(create=True)
-                    inserts, focus = project.insert_items(group, index, action)
+                    inserts, focus_editor = project.insert_items(group, index, action)
                     inserted.extend(inserts)
-        if focus is not None:
-            self.current_editor = focus
+        if focus and focus_editor is not None:
+            self.current_editor = focus_editor
         return inserted
 
     def is_project(self, item):

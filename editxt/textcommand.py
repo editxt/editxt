@@ -394,10 +394,11 @@ class CommandBar(object):
         else:
             editor.message(msg, msg_type=msg_type)
 
-    def handle_link(self, link):
+    def handle_link(self, link, meta=False):
         """Handle clicked hyperlink
 
         :param link: Link URL string.
+        :param meta: Command key was pressed if true. Default false.
         """
         try:
             url = urlparse(link)
@@ -408,7 +409,7 @@ class CommandBar(object):
         if url.scheme != "xt":
             return False
         if url.netloc == "open":
-            self.open_url(url, link)
+            self.open_url(url, link, not meta)
             return True
         if url.netloc == "preferences":
             self.window.app.open_config_file()
@@ -416,7 +417,7 @@ class CommandBar(object):
         log.warn("unhandled URL: %s", link)
         return False
 
-    def open_url(self, url, link):
+    def open_url(self, url, link, focus=True):
         """Open file specified by URL
 
         The URL must have two attributes:
@@ -429,11 +430,12 @@ class CommandBar(object):
 
         :param url: Parsed URL. See `urllib.parse.urlparse` for structure.
         :param link: The original URL string.
+        :param focus: Focus newly opened editor.
         """
         path = unquote(url.path)
         if path.startswith("/"):
             path = path[1:]
-        editors = self.window.open_paths([path])
+        editors = self.window.open_paths([path], focus=focus)
         if editors:
             assert len(editors) == 1, (link, editors)
             query = parse_qs(url.query)
