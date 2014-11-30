@@ -51,16 +51,19 @@ class CommandBar(object):
         self.window = window
         self.text_commander = text_commander
         self.history_view = None
-        #self.last_command = ""
+        self.failed_command = None
         self.completing = Completing()
         self._cached_parser = (None, None, None)
 
-    def activate(self, text=""):
+    def activate(self, text="", select=False):
         editor = self.window.current_editor
         if editor is None:
             ak.NSBeep()
             return
-        editor.command_view.activate(self, text)
+        if not text and self.failed_command:
+            text = self.failed_command
+            select = True
+        editor.command_view.activate(self, text, select)
         editor.command_view.__last_completions = [None]
 
     def on_key_command(self, key, command_view, keys=CommandView.KEYS):
@@ -196,10 +199,10 @@ class CommandBar(object):
         return parser
 
     def execute(self, text):
-        #self.last_command = text
         self.reset()
         if not text.strip():
             return
+        self.failed_command = text
         cmdstr, space, argstr = text.lstrip(" ").partition(" ")
         editor = self.window.current_editor
         if editor is None:
@@ -229,6 +232,7 @@ class CommandBar(object):
         except Exception:
             self.message('error in command: {}'.format(command), exc_info=True)
         else:
+            self.failed_command = None
             if not text.startswith(" "):
                 self.text_commander.history.append(text)
             if message is not None:

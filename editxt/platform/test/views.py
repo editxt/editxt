@@ -63,10 +63,13 @@ class CommandView(object):
         self.command = None
         self._last_completions = [None]
 
-    def activate(self, command_bar, text):
+    def activate(self, command_bar, text, select=False):
         self.command = command_bar
         self.command_text = text
-        self.command_text_selected_range = (len(text), 0)
+        if select:
+            self.command_text_selected_range = (0, len(text))
+        else:
+            self.command_text_selected_range = (len(text), 0)
 
     def replace_command_text_range(self, range, text):
         before = self.command_text[:range[0]]
