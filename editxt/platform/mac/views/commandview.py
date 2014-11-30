@@ -91,7 +91,6 @@ class CommandView(DualView):
         self.input.text_did_change_handler = text_did_change_handler
         self.setHidden_(True)
         self.command = self._command = None
-        self.last_output = None
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
             self, "shouldResize:", SHOULD_RESIZE, self.input_group)
         return self
@@ -187,14 +186,18 @@ class CommandView(DualView):
             text = ak.NSAttributedString.alloc().initWithString_attributes_(
                 message, attrs)
         self.output.setAttributedString_(text)
-        self.last_output = text
+        self.window().__last_output = text
         if msg_type == ERROR:
             ak.NSBeep()
         self.should_resize()
 
     def show_last_message(self):
-        if self.last_output:
-            self.output.setAttributedString_(self.last_output)
+        try:
+            output = self.window().__last_output
+        except AttributeError:
+            output = None
+        if output:
+            self.output.setAttributedString_(output)
             self.should_resize()
         else:
             ak.NSBeep()
