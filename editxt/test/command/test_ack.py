@@ -40,7 +40,8 @@ def test_ack():
         with test_app(config) as app, \
                 setup_files(test_app(app).tmp) as tmp:
             editor = app.windows[0].current_editor
-            message = message.replace("xt://open/", "xt://open/%s/" % tmp)
+            if message is not None:
+                message = message.replace("xt://open/", "xt://open/%s/" % tmp)
             bar = CommandTester(mod.ack, editor=editor, output=True)
             bar(command)
             eq_(bar.output, message)
@@ -59,6 +60,7 @@ def test_ack():
         "\n"
         "[dir/b.txt](xt://open/dir/../dir/b.txt)\n"
         "[1](xt://open/dir/../dir/b.txt?goto=1):name: [dir/b](xt://open/dir/../dir/b.txt?goto=1.6.5).txt\n")
+    yield test("ack xyz", None)
 
 def test_exec_shell():
     if not mod.is_ack_installed():
@@ -80,9 +82,6 @@ def setup_files(tmp=None):
             "dir/a.txt",
             "dir/b.txt",
             "dir/B file",
-            ".hidden",
-            "file.txt",
-            "file.doc",
         ]:
             assert not isabs(path), path
             with open(join(tmp, path), "w") as fh:

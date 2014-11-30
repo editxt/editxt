@@ -31,6 +31,7 @@ import editxt.config as config
 from editxt.command.base import command, CommandError
 from editxt.command.parser import CommandParser, File, Regex, String, VarArgs
 from editxt.command.util import has_editor
+from editxt.platform.app import beep
 from editxt.platform.markdown import markdown
 
 log = logging.getLogger(__name__)
@@ -73,7 +74,10 @@ def ack(editor, sender, args):
     else:
         msg_type = const.ERROR
         message = result or result.err
-    editor.message(message, msg_type=msg_type)
+    if message:
+        editor.message(message, msg_type=msg_type)
+    else:
+        beep()
 
 
 def ack_lines(result, pattern, cwd):
