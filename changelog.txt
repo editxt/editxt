@@ -22,8 +22,27 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
-2014-12-XX - 1.6.0
-  - TODO list new features
+2014-12-01 - 1.6.0
+  - Toggle last command output with Escape key.
+  - Add "ack" command integration for code search. Command output contains
+    clickable links to open files. Command+click to open files in background.
+    Ack (http://beyondgrep.com/) must be installed and the path to the ack
+    executable may need to be specified in preferences. For example:
+    ```
+    command:
+      ack:
+        path: /usr/loca/bin/ack
+    ```
+  - Add "grab" command to collect lines matching a pattern.
+  - Add "open" command (alias "xt") for opening files from command bar.
+  - Add support for invoking commands from project view.
+  - Add "set project_path ..." command. The project path is used as a fallback
+    default path for commands that touch the filesystem if the current editor
+    does not have a path.
+  - Add Sparkle updater for automatic updates.
+  - Improve command bar auto-complete menu so it doesn't display off screen.
+  - Improve auto-complete algorithm to use longest common substring rather
+    than currently selected item.
 
 2014-10-24 - 1.5.3
   - Fix bug that prevented text command sheets from closing.
