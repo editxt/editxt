@@ -5,5 +5,37 @@
     <link>https://raw.githubusercontent.com/editxt/editxt/master/resources/updater/updates.xml</link>
     <description>Most recent changes with links to updates.</description>
     <language>en</language>
+    <item>
+      <title>Version 1.6.0</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li>Toggle last command output with Escape key.</li>
+<li>Add &quot;ack&quot; command integration for code search. Command output contains
+clickable links to open files. Command+click to open files in background.
+Ack (http://beyondgrep.com/) must be installed and the path to the ack
+executable may need to be specified in preferences. For example:
+<pre><code>command:
+  ack:
+    path: /usr/loca/bin/ack
+</code></pre></li>
+<li>Add &quot;grab&quot; command to collect lines matching a pattern.</li>
+<li>Add &quot;open&quot; command (alias &quot;xt&quot;) for opening files from command bar.</li>
+<li>Add support for invoking commands from project view.</li>
+<li>Add &quot;set project_path ...&quot; command. The project path is used as a fallback
+default path for commands that touch the filesystem if the current editor
+does not have a path.</li>
+<li>Add Sparkle updater for automatic updates.</li>
+<li>Improve command bar auto-complete menu so it doesn't display off screen.</li>
+<li>Improve auto-complete algorithm to use longest common substring rather
+than currently selected item.</li>
+</ul>
+
+        ]]>
+      </description>
+      <pubDate>Mon, 01 Dec 2014 23:44:51 +0500</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.6.0/EditXT-v1.6.0-ab5a6dd.zip" sparkle:version="20141201.ab5a6dd" sparkle:shortVersionString="1.6.0" sparkle:dsaSignature="MCwCFBSKDxRTzUL0rlSxTqkq9nlSVvnsAhRYIU3rOH/3lVEW2MKqPa+CFkagvA==" length="9988126" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
