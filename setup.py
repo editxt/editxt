@@ -19,12 +19,17 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import glob
 import os
+import re
 import shutil
 import sys
+import time
 
 from datetime import datetime
 from setuptools import setup
-from subprocess import Popen, PIPE
+from subprocess import check_output, Popen, PIPE
+
+import CommonMark as commonmark
+
 
 if hasattr(sys, 'real_prefix'):
     # HACK fixes for py2app + virtualenv
@@ -36,7 +41,8 @@ if hasattr(sys, 'real_prefix'):
 import py2app
 
 from editxt import __version__ as version
-revision = datetime.now().strftime("%Y%m%d")
+build_date = datetime.now()
+revision = build_date.strftime("%Y%m%d")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -102,7 +108,7 @@ setup(
         # work as expected without it!!
         argv_emulation=True,
         packages=["editxt"],
-        #frameworks=["lib/Frameworks/NDAlias.framework"],
+        frameworks=["resources/Sparkle-1.8.0/Sparkle.framework"],
         plist=dict(
             CFBundleGetInfoString = "%s %s.%s" % (version, revision, gitrev),
             CFBundleShortVersionString = version,
@@ -110,6 +116,8 @@ setup(
             NSHumanReadableCopyright = '© Daniel Miller',
             CFBundleIdentifier = "org.editxt." + appname,
             CFBundleIconFile = "PythonApplet.icns",
+            SUPublicDSAKeyFile = "dsa_pub.pem",
+            SUFeedURL = "https://github.com/editxt/editxt/raw/master/resources/updater/updates.xml",
             CFBundleDocumentTypes = [
                 dict(
                     CFBundleTypeName="All Documents",
@@ -177,6 +185,7 @@ setup(
         'resources/images/docsbar-props-up.png',
         'resources/images/docsbar-sizer.png',
         'resources/mytextcommand.py',
+        'resources/updater/dsa_pub.pem',
         ("syntax", glob.glob("resources/syntax/*")),
         #("../Frameworks", ("lib/Frameworks/NDAlias.framework",)),
     ],
@@ -199,6 +208,64 @@ if dev and hasattr(sys, 'real_prefix'):
     with open(bootfile, "wb") as file:
         file.write(bootfunc.encode('utf-8') + original)
 
+def prepare_sparkle_update(zip_path):
+    ts = time.mktime(build_date.timetuple())
+    utc_offset = datetime.utcfromtimestamp(ts) - build_date
+    assert utc_offset.days == 0, utc_offset
+    total_minutes = int(round(utc_offset.seconds / 60.))
+    hours, minutes = divmod(total_minutes, 60)
+    assert 0 <= hours <= 23, utc_offset
+    assert 0 <= minutes <= 59, utc_offset
+    tzinfo = "%02i%02i" % (hours, minutes)
+
+    sig = check_output([
+        join(thisdir, "resources/Sparkle-1.8.0/bin/sign_update.sh"),
+        zip_path,
+        join(thisdir, "resources/updater/dsa_priv.pem"),
+    ], universal_newlines=True).strip()
+
+    with open(join(thisdir, "resources/updater/item-template.xml")) as fh:
+        template = fh.read()
+    item = template.format(
+        title="Version {}".format(version),
+        changesHTML=get_latest_changes(version),
+        pubDate=build_date.strftime("%a, %d %b %Y %H:%M:%S +" + tzinfo),
+        url="https://github.com/editxt/editxt/releases/download/{}/{}".format(
+                version, os.path.basename(zip_path)),
+        version=revision + "." + gitrev,
+        shortVersion=version,
+        dsaSignature=sig,
+        length=os.stat(zip_path).st_size,
+    )
+
+    with open(join(thisdir, "resources/updater/updates.xml")) as fh:
+        updates = fh.read()
+    i = updates.rfind("  </channel>")
+    assert i > 0, updates
+    with open(join(thisdir, "resources/updater/updates.xml"), "w") as fh:
+        fh.write(updates[:i])
+        fh.write(item)
+        fh.write(updates[i:])
+
+
+def get_latest_changes(version):
+    regex = re.compile((
+        r"\n20\d\d-..-.. - {}\n" # date/version tag for current version
+        r"([\s\S]+?)"           # changes
+        r"\n20\d\d-..-.. - "    # older version tag
+    ).format(re.escape(version)))
+    with open(join(thisdir, "changelog.txt")) as fh:
+        data = fh.read()
+    match = regex.search(data)
+    if not match:
+        print("recent changes not found in changelog.txt")
+        return ""
+    value = match.group(1)
+    parser = commonmark.DocParser()
+    renderer = commonmark.HTMLRenderer()
+    return renderer.render(parser.parse(value))
+
+
 if package:
     from contextlib import closing
     from os.path import join
@@ -220,3 +287,4 @@ if package:
             for filename in filenames:
                 zip.write(join(dirpath, filename), join(zpath, filename))
 
+    prepare_sparkle_update(zip_path)

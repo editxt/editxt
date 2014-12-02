@@ -35,6 +35,12 @@
                                     <action selector="openConfigFile:" target="213" id="301"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Check for updates..." id="Qt8-ZH-FjX">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="checkForUpdates:" target="213" id="JtI-XQ-JBf"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="143">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
                             </menuItem>

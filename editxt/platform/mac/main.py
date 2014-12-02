@@ -61,6 +61,8 @@ def run(app, argv, unexpected_error_callback, use_pdb):
 
     register_value_transformers()
     AppDelegate.app = app # HACK global. Would prefer to set an instance variable
+    if not use_pdb:
+        AppDelegate.updater = load_sparkle()
 
     AppHelper.runEventLoop(argv, unexpected_error_callback, pdb=use_pdb)
 
@@ -77,3 +79,11 @@ def fix_PyObjCTools_path():
         head, tail = os.path.split(PyObjCTools.__path__[0])
         assert tail == "PyObjCTools", PyObjCTools.__path__
         PyObjCTools.__path__.append(os.path.join(head, "PyObjC", tail))
+
+
+def load_sparkle():
+    from os.path import abspath, dirname, join
+    base_path = join(dirname(os.environ['RESOURCEPATH']), 'Frameworks')
+    bundle_path = abspath(join(base_path, 'Sparkle.framework'))
+    objc.loadBundle('Sparkle', globals(), bundle_path=bundle_path)
+    return SUUpdater.sharedUpdater()

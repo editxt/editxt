@@ -1,0 +1,11 @@
+    <item>
+      <title>{title}</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          {changesHTML}
+        ]]>
+      </description>
+      <pubDate>{pubDate}</pubDate>
+      <enclosure url="{url}" sparkle:version="{version}" sparkle:shortVersionString="{shortVersion}" sparkle:dsaSignature="{dsaSignature}" length="{length}" type="application/octet-stream" />
+    </item>

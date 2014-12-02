@@ -6,4 +6,5 @@
 /build
 /dist
 /pages
+/resources/updater/dsa_priv.pem
 /ztemp

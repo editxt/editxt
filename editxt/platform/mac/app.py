@@ -17,9 +17,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+import logging
+
 import objc
 import AppKit as ak
 import Foundation as fn
+
+log = logging.getLogger(__name__)
 
 
 class AppDelegate(ak.NSObject):
@@ -27,6 +31,7 @@ class AppDelegate(ak.NSObject):
     app = None # set by editxt.platform.mac.main.run
     textMenu = objc.IBOutlet()
     textEditCommandsMenu = objc.IBOutlet()
+    updater = None
 
     def openPath_(self, sender):
         self.app.open_path_dialog()
@@ -54,6 +59,12 @@ class AppDelegate(ak.NSObject):
 
     def openErrorLog_(self, sender):
         self.app.open_error_log()
+
+    def checkForUpdates_(self, sender):
+        if self.updater is not None:
+            self.updater.checkForUpdates_(sender)
+        else:
+            log.info("updater not loaded")
 
     def applicationWillFinishLaunching_(self, app):
         self.app.application_will_finish_launching(app, self)
