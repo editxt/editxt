@@ -31,7 +31,7 @@ https://github.com/editxt/editxt for details of what actually happened.
     ```
     command:
       ack:
-        path: /usr/loca/bin/ack
+        path: /usr/local/bin/ack
     ```
   - Add "grab" command to collect lines matching a pattern.
   - Add "open" command (alias "xt") for opening files from command bar.
