@@ -209,15 +209,6 @@ if dev and hasattr(sys, 'real_prefix'):
         file.write(bootfunc.encode('utf-8') + original)
 
 def prepare_sparkle_update(zip_path):
-    ts = time.mktime(build_date.timetuple())
-    utc_offset = datetime.utcfromtimestamp(ts) - build_date
-    assert utc_offset.days == 0, utc_offset
-    total_minutes = int(round(utc_offset.seconds / 60.))
-    hours, minutes = divmod(total_minutes, 60)
-    assert 0 <= hours <= 23, utc_offset
-    assert 0 <= minutes <= 59, utc_offset
-    tzinfo = "%02i%02i" % (hours, minutes)
-
     sig = check_output([
         join(thisdir, "resources/Sparkle-1.8.0/bin/sign_update.sh"),
         zip_path,
@@ -229,7 +220,7 @@ def prepare_sparkle_update(zip_path):
     item = template.format(
         title="Version {}".format(version),
         changesHTML=get_latest_changes(version),
-        pubDate=build_date.strftime("%a, %d %b %Y %H:%M:%S +" + tzinfo),
+        pubDate=build_date.strftime("%a, %d %b %Y %H:%M:%S " + timezone(build_date)),
         url="https://github.com/editxt/editxt/releases/download/{}/{}".format(
                 version, os.path.basename(zip_path)),
         version=revision + "." + gitrev,
@@ -246,6 +237,24 @@ def prepare_sparkle_update(zip_path):
         fh.write(updates[:i])
         fh.write(item)
         fh.write(updates[i:])
+
+
+def timezone(local_datetime):
+    """Get timezone in +HHMM format"""
+    ts = time.mktime(local_datetime.replace(microsecond=0).timetuple())
+    utc_offset = local_datetime - datetime.utcfromtimestamp(ts)
+    assert -1 <= utc_offset.days <= 0, utc_offset
+    assert utc_offset.seconds % 900 == 0, utc_offset
+    total_minutes = (utc_offset.days * 24 * 3600 + utc_offset.seconds) // 60
+    assert total_minutes % 15 == 0, (utc_offset, total_minutes)
+    hours, minutes = divmod(total_minutes, 60)
+    assert minutes >= 0, (hours, minutes, total_minutes)
+    if hours < 0 and minutes > 0:
+        hours += 1
+        minutes = 60 - minutes
+    assert 0 <= abs(hours) <= 14, (utc_offset, hours, minutes)
+    assert 0 <= minutes < 60, (utc_offset, hours, minutes)
+    return "%+03i%02i" % (hours, minutes)
 
 
 def get_latest_changes(version):

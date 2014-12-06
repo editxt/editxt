@@ -34,7 +34,7 @@ than currently selected item.</li>
 
         ]]>
       </description>
-      <pubDate>Mon, 01 Dec 2014 23:44:51 +0500</pubDate>
+      <pubDate>Mon, 01 Dec 2014 23:44:51 -0500</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.6.0/EditXT-v1.6.0-ab5a6dd.zip" sparkle:version="20141201.ab5a6dd" sparkle:shortVersionString="1.6.0" sparkle:dsaSignature="MCwCFBSKDxRTzUL0rlSxTqkq9nlSVvnsAhRYIU3rOH/3lVEW2MKqPa+CFkagvA==" length="9988126" type="application/octet-stream" />
     </item>
   </channel>
