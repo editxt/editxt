@@ -23,6 +23,7 @@ import re
 import shutil
 import sys
 import time
+from os.path import join
 
 from datetime import datetime
 from setuptools import setup
@@ -89,8 +90,8 @@ else:
         if os.path.exists(path):
             shutil.rmtree(path)
     thisdir = os.path.dirname(os.path.abspath(__file__))
-    rmtree(os.path.join(thisdir, "build"))
-    rmtree(os.path.join(thisdir, "dist", appname + ".app"))
+    rmtree(join(thisdir, "build"))
+    rmtree(join(thisdir, "dist", appname + ".app"))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 setup(
@@ -199,7 +200,7 @@ setup(
 
 if dev and hasattr(sys, 'real_prefix'):
     # HACK patch __boot__.py to work with virtualenv
-    bootfile = os.path.join("dist", appname + ".app",
+    bootfile = join("dist", appname + ".app",
         "Contents/Resources/__boot__.py")
     with open(bootfile, "rb") as file:
         original = file.read()
@@ -275,9 +276,8 @@ def get_latest_changes(version):
     return renderer.render(parser.parse(value))
 
 
-if package:
+def build_zip():
     from contextlib import closing
-    from os.path import join
     from zipfile import ZipFile, ZIP_DEFLATED
     distpath = join(thisdir, 'dist')
     zip_file = '%s-v%s-%s.zip' % (appname, version, gitrev)
@@ -295,5 +295,9 @@ if package:
             zpath = dirpath[trimlen:]
             for filename in filenames:
                 zip.write(join(dirpath, filename), join(zpath, filename))
+    return zip_path
 
+
+if package:
+    zip_path = build_zip()
     prepare_sparkle_update(zip_path)
