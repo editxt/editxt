@@ -132,6 +132,8 @@ def load_image(name):
         return images[name]
     except KeyError:
         path = fn.NSBundle.mainBundle().pathForImageResource_(name)
+        if path is None:
+            raise RuntimeError("image resource not fund: {}".format(name))
         log.debug("loading image: %s", path)
         url = fn.NSURL.fileURLWithPath_(path)
         image = ak.NSImage.alloc().initWithContentsOfURL_(url)

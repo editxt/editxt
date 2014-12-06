@@ -29,6 +29,7 @@ from editxt.command.parser import CompletionsList
 from editxt.constants import ERROR, HTML, INFO, LARGE_NUMBER_FOR_TEXT
 from editxt.controls.dualview import DualView, SHOULD_RESIZE
 from editxt.platform.kvo import KVOList, KVOProxy
+from editxt.util import load_image
 
 log = logging.getLogger(__name__)
 ACTIVATE = "activate"
@@ -83,6 +84,7 @@ class CommandView(DualView):
             ak.NSCursorAttributeName: ak.NSCursor.pointingHandCursor()
         })
         self.output.setDelegate_(self)
+        self.setup_output_popout_button()
         self.input.setDelegate_(self)
         def text_did_change_handler(textview):
             if self.command is not None:
@@ -222,6 +224,32 @@ class CommandView(DualView):
         meta = bool(event.modifierFlags() & ak.NSCommandKeyMask)
         return self._command.handle_link(str(link), meta)
 
+    def setup_output_popout_button(self):
+        button = ak.NSButton.alloc().initWithFrame_(
+            ak.NSMakeRect(0, 0, 16, 16))
+        button.setButtonType_(ak.NSMomentaryChangeButton)
+        button.setImage_(load_image("popout-button.png"))
+        button.setAlternateImage_(load_image("popout-button-alt.png"))
+        button.setImagePosition_(ak.NSImageOnly)
+        button.setBezelStyle_(ak.NSInlineBezelStyle)
+        button.setBordered_(False)
+        button.setAutoresizingMask_(ak.NSViewMaxYMargin)
+        self.output.addSubview_(button)
+        image_size = button.image().size()
+        button.setFrame_(ak.NSMakeRect(
+            self.output.frame().size.width - image_size.width, # right,
+            2, # top
+            image_size.width,
+            image_size.height,
+        ))
+        button.setTarget_(self)
+        button.setAction_("popoutButtonClicked:")
+
+    def popoutButtonClicked_(self, sender):
+        if self._command is not None:
+            self._command.create_output_panel(self.output.textStorage())
+        self.dismiss()
+
     #def textDidEndEditing_(self, notification):
     #    self.deactivate()
 
@@ -282,7 +310,6 @@ class ContentSizedTextView(ak.NSTextView):
         #self.setFrameSize_(size)
         self.sizeToFit()
         scroller.setDocumentView_(self)
-        scroller
 
     @property
     def placeholder(self):

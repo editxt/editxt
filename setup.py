@@ -185,6 +185,8 @@ setup(
         'resources/images/docsbar-props-down.png',
         'resources/images/docsbar-props-up.png',
         'resources/images/docsbar-sizer.png',
+        'resources/images/popout-button.png',
+        'resources/images/popout-button-alt.png',
         'resources/mytextcommand.py',
         'resources/updater/dsa_pub.pem',
         ("syntax", glob.glob("resources/syntax/*")),

@@ -29,6 +29,7 @@ import editxt.constants as const
 from editxt.controls.alert import Alert
 from editxt.editor import Editor
 from editxt.platform.views import BUTTON_STATE_NORMAL
+from editxt.platform.events import call_later
 from editxt.util import untested, representedObject, user_path, WeakProperty
 
 log = logging.getLogger(__name__)
@@ -413,3 +414,83 @@ class EditorWindow(ak.NSWindow):
         for responder in self.mouse_moved_responders:
             if responder is not self.firstResponder():
                 responder.mouseMoved_(event)
+
+
+class OutputPanel(ak.NSPanel):
+
+    def __new__(cls, command, text):
+        self = cls.alloc().init()
+        self.command = command
+        self.text = text
+        return self
+
+    def init(self):
+        rect = ak.NSMakeRect(100, 100, 400, 300)
+        style = (
+            ak.NSHUDWindowMask | ak.NSUtilityWindowMask |
+            ak.NSTitledWindowMask | ak.NSClosableWindowMask |
+            ak.NSResizableWindowMask | ak.NSNonactivatingPanelMask
+        )
+        self = super().initWithContentRect_styleMask_backing_defer_(
+            rect, style, ak.NSBackingStoreBuffered, True)
+        frame = self.frame()
+        self.textview = textview = ak.NSTextView.alloc().initWithFrame_(frame)
+        textview.setEditable_(False)
+        textview.setSelectable_(True)
+        textview.setLinkTextAttributes_({
+            ak.NSCursorAttributeName: ak.NSCursor.pointingHandCursor()
+        })
+        textview.setDelegate_(self)
+
+        self.scroller = scroller = ak.NSScrollView.alloc().initWithFrame_(frame)
+        scroller.setHasHorizontalScroller_(False)
+        scroller.setHasVerticalScroller_(True)
+        scroller.setAutohidesScrollers_(True)
+        scroller.setAutoresizingMask_(
+            ak.NSViewWidthSizable | ak.NSViewHeightSizable)
+        container = textview.textContainer()
+        #size = scroller.contentSize()
+        container.setContainerSize_(
+            ak.NSMakeSize(frame.size.width, const.LARGE_NUMBER_FOR_TEXT))
+        container.setWidthTracksTextView_(True)
+        textview.setHorizontallyResizable_(False)
+        textview.setAutoresizingMask_(
+            ak.NSViewWidthSizable | ak.NSViewHeightSizable)
+        scroller.setDocumentView_(textview)
+        self.setContentView_(scroller)
+
+        self.setBecomesKeyOnlyIfNeeded_(True)
+        self.setReleasedWhenClosed_(True)
+        self.setHidesOnDeactivate_(False)
+        self.setLevel_(ak.NSNormalWindowLevel)
+        self.app = None
+        return self
+
+    def dealloc(self):
+        if self.app is not None and self in self.app.panels:
+            self.app.panels.remove(self)
+            self.app = None
+        self.textview = None
+        self.scroller = None
+        self.command = None
+        super().dealloc()
+
+    def show(self, window):
+        self.app = app = window.app
+        if self not in app.panels:
+            app.panels.append(self)
+        point = window.wc.window().frame().origin
+        self.orderFront_(window)
+
+    @property
+    def text(self):
+        return self.textview.textStorage()
+
+    @text.setter
+    def text(self, value):
+        self.textview.textStorage().setAttributedString_(value)
+
+    def textView_clickedOnLink_atIndex_(self, textview, link, index):
+        event = ak.NSApp.currentEvent()
+        meta = bool(event.modifierFlags() & ak.NSCommandKeyMask)
+        return self.command.handle_link(str(link), meta)

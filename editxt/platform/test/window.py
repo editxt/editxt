@@ -97,3 +97,13 @@ class WindowController(object):
 
     def windowDidBecomeKey_(self, window):
         raise NotImplementedError
+
+
+class OutputPanel(object):
+
+    def __init__(self, command, text):
+        self.command = command
+        self.text = text
+
+    def show(self, window):
+        pass

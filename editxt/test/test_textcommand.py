@@ -612,6 +612,13 @@ def test_CommandBar_handle_link():
     yield test("xt://preferences", True, "editor[/.profile/config.yaml 0]*")
     yield test("xt://open/file.txt", True, "editor[file.txt 0]", meta=True)
 
+def test_CommandBar_create_output_panel():
+    with test_app("window") as app:
+        command = app.windows[0].command
+        panel = command.create_output_panel("abc")
+        eq_(panel.command, command)
+        eq_(panel.text, "abc")
+
 def test_CommandBar_reset():
     with tempdir() as tmp:
         window = type("Window", (object,), {})()

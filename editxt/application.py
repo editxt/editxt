@@ -56,6 +56,7 @@ class Application(object):
         self.errlog_handler.setLevel(logging.INFO)
         self.errlog_handler.setFormatter(
             logging.Formatter("%(levelname).7s %(name)s - %(message)s"))
+        self.panels = []
         with self.logger():
             self._setup_profile = set()
             self.windows = []
