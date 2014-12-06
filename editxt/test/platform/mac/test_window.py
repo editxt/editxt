@@ -26,7 +26,7 @@ from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_
 
 from editxt.application import Application
-from editxt.platform.mac.window import WindowController
+from editxt.platform.mac.window import EditorWindow, WindowController
 from editxt.project import Project
 from editxt.util import representedObject
 from editxt.window import Window
@@ -184,3 +184,42 @@ def test_windowShouldClose_():
     with m:
         result = wc.windowShouldClose_(win)
         eq_(result, "<should_close>")
+
+
+def test_EditorWindow_add_mouse_moved_responder():
+    window = EditorWindow.alloc().init()
+    obj = object()
+    eq_(window.mouse_moved_responders, set())
+    window.add_mouse_moved_responder(obj)
+    eq_(window.mouse_moved_responders, set([obj]))
+    window.add_mouse_moved_responder(obj)
+    eq_(window.mouse_moved_responders, set([obj]))
+
+def test_EditorWindow_remove_mouse_moved_responder():
+    window = EditorWindow.alloc().init()
+    obj1 = object()
+    obj2 = object()
+    eq_(window.mouse_moved_responders, set())
+    window.remove_mouse_moved_responder(obj1)
+    window.add_mouse_moved_responder(obj1)
+    window.add_mouse_moved_responder(obj2)
+    eq_(window.mouse_moved_responders, set([obj1, obj2]))
+    window.remove_mouse_moved_responder(obj1)
+    eq_(window.mouse_moved_responders, set([obj2]))
+    window.remove_mouse_moved_responder(obj2)
+    window.remove_mouse_moved_responder(obj2) # second remove should not err
+    eq_(window.mouse_moved_responders, set())
+
+def test_EditorWindow_accepts_mouse_move_events():
+    window = EditorWindow.alloc().init()
+    obj1 = object()
+    obj2 = object()
+    eq_(window.acceptsMouseMovedEvents(), False)
+    window.add_mouse_moved_responder(obj1)
+    eq_(window.acceptsMouseMovedEvents(), True)
+    window.add_mouse_moved_responder(obj2)
+    eq_(window.acceptsMouseMovedEvents(), True)
+    window.remove_mouse_moved_responder(obj1)
+    eq_(window.acceptsMouseMovedEvents(), True)
+    window.remove_mouse_moved_responder(obj2)
+    eq_(window.acceptsMouseMovedEvents(), False)

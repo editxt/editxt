@@ -57,7 +57,6 @@ def run(app, argv, unexpected_error_callback, use_pdb):
     import editxt.controls.linenumberview
     import editxt.controls.splitview
     import editxt.controls.textview
-    import editxt.controls.window
 
     register_value_transformers()
     AppDelegate.app = app # HACK global. Would prefer to set an instance variable

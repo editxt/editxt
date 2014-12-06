@@ -73,8 +73,11 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Allow command output pane to be dragged/popped out to a separate window
+xAllow command output pane to be popped out to a separate window
   - Should be preserved (even across restarts) until closed
+Fix command output position when content overflows
+Fix command output flash on hide
+Allow output pane divider to be dragged up/down
 Implement docstring command help (F1 to activate)
 Improve interfaces for creating stand-alone commands
 Show document pane scroll bar on left side

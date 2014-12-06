@@ -386,3 +386,30 @@ class SheetCaller(fn.NSObject):
     @objc.typedSelector(b'v@:@ii')
     def sheetDidEnd_returnCode_contextInfo_(self, sheet, code, context):
         self.callback(sheet, code)
+
+
+class EditorWindow(ak.NSWindow):
+    """NSWindow subclass that provides mouseMoved events to registered subviews"""
+
+    @property
+    def mouse_moved_responders(self):
+        try:
+            mmr = self._mouse_moved_responders
+        except AttributeError:
+            mmr = self._mouse_moved_responders = set()
+        return mmr
+
+    def add_mouse_moved_responder(self, responder):
+        self.mouse_moved_responders.add(responder)
+        self.setAcceptsMouseMovedEvents_(True)
+
+    def remove_mouse_moved_responder(self, responder):
+        self.mouse_moved_responders.discard(responder)
+        if not self.mouse_moved_responders:
+            self.setAcceptsMouseMovedEvents_(False)
+
+    def mouseMoved_(self, event):
+        super(EditorWindow, self).mouseMoved_(event)
+        for responder in self.mouse_moved_responders:
+            if responder is not self.firstResponder():
+                responder.mouseMoved_(event)
