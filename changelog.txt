@@ -22,6 +22,12 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+2014-??-?? - 1.7.0
+  - Add button to show command output in panel so it can be preserved while
+    other commands are executed.
+  - Eliminate superfluous trailing backslash in ack command output.
+  - Fix display flash on hide command view.
+
 2014-12-01 - 1.6.0
   - Toggle last command output with Escape key.
   - Add "ack" command integration for code search. Command output contains

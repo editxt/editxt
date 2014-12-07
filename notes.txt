@@ -73,10 +73,9 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Fix markdown trailing backslash
-Allow output pane divider to be dragged up/down
 Implement docstring command help (F1 to activate)
-Improve interfaces for creating stand-alone commands
+Allow command view to be resized by dragging divider
+Improve interfaces for creating stand-alone (not shipped with EditXT) commands
 Show document pane scroll bar on left side
 Move editxt.platform.views.CommandView.KEYS into editxt.platform.const?
 Add context menu to items in sidebar: Copy file path

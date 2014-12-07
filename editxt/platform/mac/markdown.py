@@ -30,7 +30,7 @@ NON_HARD_BREAK = re.compile(r"(?<!.\\|  )\n")
 
 def markdown(value, pre=False, css=""):
     if pre:
-        value = NON_HARD_BREAK.sub("\\\n", value)
+        value = NON_HARD_BREAK.sub("\\\n", value.rstrip("\n"))
     parser = commonmark.DocParser()
     renderer = commonmark.HTMLRenderer()
     html = renderer.render(parser.parse(value))
@@ -46,11 +46,7 @@ def markdown(value, pre=False, css=""):
         html = SPACE_RE.sub(nbsp, html)
     else:
         # TODO make the default font/size configurable
-        css = """
-        body {
-            font: 12pt sans-serif;
-        }
-        """ + css
+        css = DEFAULT_CSS + css
     html = HTML_TEMPLATE.format(css=css, body=html)
     data = fn.NSString.stringWithString_(html) \
              .dataUsingEncoding_(fn.NSUnicodeStringEncoding)
@@ -67,9 +63,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <head>
     <style>{css}</style>
 </head>
-<body>
-{body}
-</body>
+<body>{body}</body>
 </html>
 """
 
@@ -79,5 +73,19 @@ body {
 }
 a {
     text-decoration: none;
+}
+p:last-of-type {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+"""
+
+DEFAULT_CSS = """
+body {
+    font: 12pt sans-serif;
+}
+p:last-of-type {
+    margin-bottom: 0;
+    padding-bottom: 0;
 }
 """
