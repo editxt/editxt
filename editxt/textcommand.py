@@ -114,8 +114,8 @@ class CommandBar(object):
             text = command_view.command_text
             # TODO send cursor position instead of len(text)
             if not self.should_insert_newline(text, len(text)):
-                self.execute(text)
                 command_view.deactivate()
+                self.execute(text)
                 return True
 
         if key == keys.ESC:
