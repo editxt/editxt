@@ -457,8 +457,8 @@ class CommandBar(object):
                 else:
                     editors[0].goto_line(num)
 
-    def create_output_panel(self, text):
-        panel = OutputPanel(self, text)
+    def create_output_panel(self, text, rect):
+        panel = OutputPanel(self, text, rect)
         panel.show(self.window)
         return panel
 

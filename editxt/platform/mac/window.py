@@ -418,14 +418,15 @@ class EditorWindow(ak.NSWindow):
 
 class OutputPanel(ak.NSPanel):
 
-    def __new__(cls, command, text):
-        self = cls.alloc().init()
+    def __new__(cls, command, text, rect=None):
+        self = cls.alloc().init_(rect)
         self.command = command
         self.text = text
         return self
 
-    def init(self):
-        rect = ak.NSMakeRect(100, 100, 400, 300)
+    def init_(self, rect):
+        if rect is None:
+            rect = ak.NSMakeRect(100, 100, 400, 300)
         style = (
             ak.NSHUDWindowMask | ak.NSUtilityWindowMask |
             ak.NSTitledWindowMask | ak.NSClosableWindowMask |

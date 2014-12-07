@@ -28,3 +28,11 @@ from .treeview import (
 
 from .commandview import CommandView
 from .listview import ListView
+
+
+def screen_rect(view, rect=None):
+    """Convert view rect to screen coordinates"""
+    if rect is None:
+        rect = view.bounds()
+    window_rect = view.convertRect_toView_(rect, None)
+    return view.window().convertRectToScreen_(window_rect)

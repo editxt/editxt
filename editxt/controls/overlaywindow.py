@@ -21,6 +21,8 @@ import AppKit as ak
 import Foundation as fn
 import objc
 
+from editxt.platform.mac.views import screen_rect
+
 
 class OverlayWindow(ak.NSWindow):
     """Overlay window for floating controls over NSScrollView
@@ -67,11 +69,9 @@ class OverlayWindow(ak.NSWindow):
     def updateSize(self):
         if self.parent.window() is None:
             return
-        overlay_rect = self.parent.overlay_bounds
-        window_rect = self.parent.convertRect_toView_(overlay_rect, None)
-        screen_rect = self.parent.window().convertRectToScreen_(window_rect)
-        if self.frame() != screen_rect:
-            self.setFrame_display_(screen_rect, True)
+        rect = screen_rect(self.parent, self.parent.overlay_bounds)
+        if self.frame() != rect:
+            self.setFrame_display_(rect, True)
 
     def acceptsFirstResponder(self):
         return True

@@ -101,7 +101,7 @@ class WindowController(object):
 
 class OutputPanel(object):
 
-    def __init__(self, command, text):
+    def __init__(self, command, text, rect=None):
         self.command = command
         self.text = text
 

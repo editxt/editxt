@@ -101,6 +101,7 @@ class CommandView(DualView):
         self.input = None
         self.completions = None
         self.output = None
+        self.popout_button = None
         self.command = self._command = None
         ak.NSNotificationCenter.defaultCenter().removeObserver_(self)
         ak.NSNotificationCenter.defaultCenter().removeObserver_(self.input_group)
@@ -244,10 +245,14 @@ class CommandView(DualView):
         ))
         button.setTarget_(self)
         button.setAction_("popoutButtonClicked:")
+        self.popout_button = button
 
     def popoutButtonClicked_(self, sender):
         if self._command is not None:
-            self._command.create_output_panel(self.output.textStorage())
+            from editxt.platform.views import screen_rect
+            rect = screen_rect(self.output)
+            rect.origin.y -= self.popout_button.image().size().height
+            self._command.create_output_panel(self.output.textStorage(), rect)
         self.dismiss()
 
     #def textDidEndEditing_(self, notification):

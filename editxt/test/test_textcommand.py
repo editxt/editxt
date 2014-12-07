@@ -615,7 +615,7 @@ def test_CommandBar_handle_link():
 def test_CommandBar_create_output_panel():
     with test_app("window") as app:
         command = app.windows[0].command
-        panel = command.create_output_panel("abc")
+        panel = command.create_output_panel("abc", "<screen rect>")
         eq_(panel.command, command)
         eq_(panel.text, "abc")
 
