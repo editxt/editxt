@@ -35,6 +35,7 @@ class StatusbarScrollView(ak.NSScrollView):
         self.status_view = StatusView.alloc().initWithFrame_(rect)
         try:
             self.scrollerStyle # raises AttributeError on OS X 10.6 or lower
+            self.overlay_bounds = rect
             self.can_overlay_scrollers = True
         except AttributeError:
             self.can_overlay_scrollers = False
@@ -69,8 +70,15 @@ class StatusbarScrollView(ak.NSScrollView):
 
         if self.can_overlay_scrollers:
             if self.overlay is not None:
-                x = rect.size.width - status_size.width - scrollw
-                status.setFrame_(fn.NSMakeRect(x, 0, *status_size))
+                # Set overlay rect in this view's coordinate system.
+                # This avoids overlay resize redraw flash when the
+                # overlay window was sized to self.bounds()
+                self.overlay_bounds = fn.NSMakeRect(
+                    rect.size.width - status_size.width - scrollw,
+                    rect.size.height - status_size.height,
+                    *status_size)
+                status.setFrame_(fn.NSMakeRect(0, 0, *status_size))
+                self.overlay.updateSize()
         else:
             # status | scrollers
             status_rect, hrect = fn.NSDivideRect(
