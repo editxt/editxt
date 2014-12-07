@@ -74,6 +74,10 @@ View release stats:
 Top priority
 
 Implement docstring command help (F1 to activate)
+Aesthetics
+  - font size (make easy to adjust)
+  - syntax highlighting
+  - colors (dark theme)
 Allow command view to be resized by dragging divider
 Improve interfaces for creating stand-alone (not shipped with EditXT) commands
 Show document pane scroll bar on left side

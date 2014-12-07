@@ -172,6 +172,9 @@ class CommandParser(object):
         # ??? None indicates an error (the last token could not be consumed) ???
         return None, index
 
+    def get_help(self, text):
+        raise NotImplementedError
+
     def arg_string(self, options, strip=True):
         """Compile command string from options
 

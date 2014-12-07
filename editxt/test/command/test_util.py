@@ -20,7 +20,7 @@
 from mocker import Mocker, ANY
 from AppKit import NSMakeRange, NSRange, NSTextStorage, NSTextView
 #from Foundation import *
-from editxt.test.util import eq_, TestConfig
+from editxt.test.util import eq_, gentest, TestConfig
 
 import editxt.constants as const
 import editxt.command.util as mod
@@ -49,6 +49,23 @@ def test_replace_newlines():
     yield test, c(input="\r \n", output="\n \n")
     yield test, c(input="\r \n \u2028", output="\n \n \n")
     yield test, c(input="\r \r\n\n \u2028", output="\n \n\n \n")
+
+def test_markdoc():
+    def test(input, output):
+        eq_(mod.markdoc(input), output)
+
+    yield test, "", ""
+    yield test, "Line 1\nLine 2\n  In\n", \
+                "# Line 1\nLine 2\n  In\n"
+    yield test, """Line 1
+                Line 2
+                  In
+                """, "# Line 1\nLine 2\n  In\n"
+    yield test, """
+                Line 1
+                Line 2
+                  In
+                """, "# Line 1\nLine 2\n  In\n"
 
 def test_change_indentation():
     from editxt.document import TextDocument

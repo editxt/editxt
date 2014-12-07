@@ -565,6 +565,49 @@ def test_CommandBar_history_reset_on_execute():
             eq_(bar.history_view, None)
             eq_(list(history), ["cmd"])
 
+def test_CommandBar_show_help():
+    from editxt.commands import help
+
+    @command(arg_parser=CommandParser(
+        Choice(*"test_1 test_2 test_3 text".split()),
+        Choice(('forward', False), ('reverse xyz', True), name='reverse'),
+        Regex('sort_regex', True),
+    ))
+    def cmd(editor, sender, args):
+        """Command help
+
+        Body
+        """
+        pass
+
+    @command(arg_parser=CommandParser(Int('number')))
+    def count(editor, sender, args):
+        """Counter with a very long
+        wrapped first line
+
+        Body
+        """
+        raise NotImplementedError("should not get here")
+
+    @command(arg_parser=CommandParser(IllBehaved("bang")))
+    def ill(editor, sender, args):
+        raise NotImplementedError("should not get here")
+
+    @gentest
+    def test(text, output):
+        view = CommandView()
+        bar = CommandTester(cmd, count, ill,
+                            command_view=view,
+                            output=True)
+        bar.show_help(text)
+        eq_(bar.output, output)
+
+    yield test("", mod.markdoc(help.__doc__))
+    yield test("c", mod.markdoc(help.__doc__))
+    yield test("cmd", mod.markdoc(cmd.__doc__))
+    yield test("cmd ", mod.markdoc(cmd.__doc__))
+    # TODO argument help
+
 def test_CommandBar_message():
     from editxt.editor import Editor
     def test(c):

@@ -225,6 +225,12 @@ class CommandView(DualView):
         meta = bool(event.modifierFlags() & ak.NSCommandKeyMask)
         return self._command.handle_link(str(link), meta)
 
+    def commandHelp_(self, sender):
+        if self.command is not None:
+            self.command.show_help(self.command_text)
+        else:
+            ak.NSBeep()
+
     def setup_output_popout_button(self):
         button = ak.NSButton.alloc().initWithFrame_(
             ak.NSMakeRect(0, 0, 16, 16))

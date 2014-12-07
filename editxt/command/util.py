@@ -20,6 +20,7 @@
 import logging
 import re
 from collections import Counter
+from textwrap import dedent
 
 import editxt.constants as const
 
@@ -76,6 +77,28 @@ def replace_newlines(textview, eol):
         textview.textStorage().replaceCharactersInRange_withString_(range, next)
         textview.didChangeText()
         textview.setSelectedRange_(sel)
+
+
+def markdoc(text, *args, header=True, **kw):
+    """Render docstring as markdown
+
+    :param header: When true (the default) make the first line a level-
+    one heading (<h1>). Must be specified as keyword argument.
+    """
+    from editxt.platform.markdown import markdown
+    if "\n" not in text:
+        first = newline = ""
+        rest = text
+    else:
+        first, newline, rest = text.partition("\n")
+        if first.strip():
+            if header:
+                first = "# " + first
+        else:
+            first = "# " if header else ""
+            newline = ""
+    text = "".join([first, newline, dedent(rest)])
+    return markdown(text, *args, **kw)
 
 
 _indentation_regex = re.compile("([ \t]*)([^\r\n\u2028]*[\r\n\u2028]*)")

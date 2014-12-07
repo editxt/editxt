@@ -67,6 +67,7 @@ def load_commands():
             clear_highlighted_text,
             reload_config,
             set_variable,
+            help,
             debug,
         ],
 
@@ -333,6 +334,29 @@ def set_variable(editor, sender, args):
     else:
         sub, opts = args.variable
         sub.data["setter"](editor, sub.name, opts)
+
+
+@command(arg_parser=CommandParser(
+    String("command", default="") # TODO auto-complete commands?
+), is_enabled=has_editor)
+def help(editor, sender, opts):
+    """Command Help
+
+    Commands modify text, open new documents, change application state,
+    etc. Commands are invoked from the Command menu, from the command
+    bar, or with hotkeys.
+
+    ## Discover and learn about commands
+
+    - Auto-complete - press the Tab key to show the auto-complete menu.
+    - Argument tips - command argument tips are displayed in a lighter
+      color following the command and arguments that have already been
+      typed in the command bar.
+    - Command help - use command help to get more detailed instructions
+      for invoking a command. Command help can be accessed through the
+      Help menu or by pressing the F1 key.
+    """
+    editor.project.window.command.show_help(opts.command if opts else "")
 
 
 @command(name='debug',

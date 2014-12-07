@@ -31,8 +31,10 @@ import Foundation as fn
 import editxt.constants as const
 from editxt.command.base import CommandError
 from editxt.command.parser import ArgumentError, CompleteWord, CompletionsList
-from editxt.commands import load_commands
+from editxt.command.util import markdoc
+from editxt.commands import load_commands, help
 from editxt.history import History
+from editxt.platform.app import beep
 from editxt.platform.events import call_later
 from editxt.platform.kvo import KVOList, KVOProxy
 from editxt.platform.markdown import AttributedString
@@ -378,6 +380,23 @@ class CommandBar(object):
         if self.history_view is None:
             self.history_view = self.text_commander.history.view()
         return self.history_view.get(current_text, forward)
+
+    def show_help(self, text):
+        """Show help for comment text"""
+        command, argstr = self._find_command(text)
+        if command is None:
+            message = help.__doc__
+        else:
+            message = command.__doc__ or ""
+            #if argstr or " " in text:
+            #    msg = [message]
+            #    # TODO handle exception
+            #    msg.append(self.parser(command).get_help(argstr))
+            #    message = "\n\n".join(m for m in msg if m.strip())
+        if message:
+            self.message(markdoc(message), msg_type=const.INFO)
+        else:
+            beep()
 
     def message(self, text, exc_info=None, msg_type=const.ERROR):
         if isinstance(text, AttributedString):
