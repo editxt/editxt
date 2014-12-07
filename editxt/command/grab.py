@@ -54,6 +54,5 @@ def grab(editor, sender, args):
         if norm(regex.search(line)):
             lines.append(line)
     if lines:
-        editor.message("".join(lines), msg_type=const.INFO)
-    else:
-        beep()
+        return "".join(lines)
+    beep()
