@@ -73,7 +73,9 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Implement docstring command help (F1 to activate)
+Fix ack command with --after
+  - output formatting
+  - allow options intermixed with paths (VarArgs dispatch)
 Aesthetics
   - font size (make easy to adjust)
   - syntax highlighting

@@ -267,8 +267,7 @@ class CommandView(DualView):
             from editxt.platform.views import screen_rect
             rect = screen_rect(self.output)
             rect.origin.y -= self.popout_button.image().size().height
-            self._command.create_output_panel(self.output.textStorage(), rect)
-        self.dismiss()
+            self._command.create_output_panel(self, self.output.textStorage(), rect)
 
     #def textDidEndEditing_(self, notification):
     #    self.deactivate()

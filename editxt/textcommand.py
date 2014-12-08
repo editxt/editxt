@@ -479,9 +479,13 @@ class CommandBar(object):
                 else:
                     editors[0].goto_line(num)
 
-    def create_output_panel(self, text, rect):
+    def create_output_panel(self, command_view, text, rect):
         panel = OutputPanel(self, text, rect)
         panel.show(self.window)
+        if command_view.command is None:
+            command_view.dismiss()
+        else:
+            command_view.message("")
         return panel
 
     def reset(self):

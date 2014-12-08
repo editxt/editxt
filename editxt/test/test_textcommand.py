@@ -662,11 +662,24 @@ def test_CommandBar_handle_link():
     yield test("xt://open/file.txt", True, "editor[file.txt 0]", meta=True)
 
 def test_CommandBar_create_output_panel():
-    with test_app("window") as app:
-        command = app.windows[0].command
-        panel = command.create_output_panel("abc", "<screen rect>")
-        eq_(panel.command, command)
-        eq_(panel.text, "abc")
+    def test(has_command):
+        with test_app("window") as app:
+            view = CommandView()
+            view.message("abc")
+            command = app.windows[0].command
+            if has_command:
+                view.command = command
+            panel = command.create_output_panel(view, "abc", "<screen rect>")
+            eq_(panel.command, command)
+            eq_(panel.text, "abc")
+            if has_command:
+                eq_(view.command, command)
+            else:
+                eq_(view.command, None)
+            eq_(view.output_text, "")
+            
+    yield test, True
+    yield test, False
 
 def test_CommandBar_reset():
     with tempdir() as tmp:
