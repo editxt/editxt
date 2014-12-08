@@ -73,9 +73,17 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+12/8/14 3:01:08.728 PM EditXT[25351]: ERROR editxt - *** Python exception discarded!
+Traceback (most recent call last):
+  File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.3/editxt/controls/linenumberview.py", line 147, in drawHashMarksAndLabelsInRect_
+TypeError: Need 0 arguments, got 1
+
+Fix bug in auto-complete
+  command: "xt <TAB>no<TAB>" -> "xt nnotes.txt "
 Fix ack command with --after
   - output formatting
   - allow options intermixed with paths (VarArgs dispatch)
+  - error on path with trailing slash
 Aesthetics
   - font size (make easy to adjust)
   - syntax highlighting
