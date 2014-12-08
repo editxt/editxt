@@ -66,7 +66,7 @@ class CommandView(DualView):
             completions_height, input_height)
         self.input_group.subview_offset_rect = fn.NSMakeRect(-1, -1, 2, 1)
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
-            self.input_group, "tile:", SHOULD_RESIZE, self.input)
+            self.input_group, "shouldResize:", SHOULD_RESIZE, self.input)
 
         def input_group_height():
             group = self.input_group
@@ -75,7 +75,8 @@ class CommandView(DualView):
         def output_height():
             return self.output.preferred_height if self.output.string() else 0
         super().init(rect,
-            self.output.scroller, self.input_group, output_height, input_group_height)
+            self.output.scroller, self.input_group,
+            output_height, input_group_height)
         self.subview_offset_rect = fn.NSMakeRect(-1, -1, 2, 1)
 
         self.output.setEditable_(False)
@@ -140,6 +141,10 @@ class CommandView(DualView):
     def command_text_selected_range(self, value):
         self.input.setSelectedRange_(value)
 
+    @property
+    def output_text(self):
+        return self.output.string()
+
     def activate(self, command, initial_text="", select=False):
         new_activation = self.command is None
         self.command = self._command = command
@@ -175,6 +180,10 @@ class CommandView(DualView):
             self.deactivate()
 
     def message(self, message, textview=None, msg_type=INFO):
+        if not message:
+            self.output.setString_("")
+            self.should_resize()
+            return
         if msg_type == HTML:
             raise NotImplementedError("convert message to NSAttributedString")
         elif isinstance(message, ak.NSAttributedString):

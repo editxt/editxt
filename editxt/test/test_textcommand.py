@@ -89,7 +89,9 @@ def test_CommandBar_on_key_press():
             sel=None,
             new_sel=None,
             expect=True,
-            has_command=True
+            has_command=True,
+            output="",
+            new_output=NA
         ):
         view = CommandView()
         bar = CommandTester(cmd, count, ill, textview=object, command_view=view)
@@ -104,6 +106,8 @@ def test_CommandBar_on_key_press():
             view.command_text_selected_range = sel
         if completions_select_range:
             view.completions.select_range = completions_select_range
+        if output:
+            view.message(output)
 
         result = bar.on_key_command(command_key, view)
         eq_(result, expect)
@@ -111,6 +115,7 @@ def test_CommandBar_on_key_press():
             (complete or []) if new_complete is None else new_complete)
         eq_(view.completions.selected_item, new_default_complete)
         eq_(view.command_text, text if new_text is NA else new_text)
+        eq_(view.output_text, output if new_output is NA else new_output)
         if sel is not None or new_sel is not None:
             eq_(view.command_text_selected_range, sel if new_sel is None else new_sel)
         eq_(view.command, bar.bar if has_command else None)
@@ -154,6 +159,7 @@ def test_CommandBar_on_key_press():
     yield test("cmd ", ENTER, new_text=None, has_command=False)
 
     yield test("c", ESC, new_text=None, has_command=False)
+    yield test("c", ESC, output="abc", new_output="")
     yield test("c", ESC,
         completions_select_range=(0, 1), sel=(1, 0), new_sel=(0, 1),
         complete=["cmd", "count", "ill"], new_complete=[])

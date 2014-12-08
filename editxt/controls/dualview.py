@@ -28,7 +28,7 @@ class DualView(ak.NSView):
     @objc.namedSelector(
         b"init:topView:bottomView:topHeight:bottomHeight:flexTop:minCollapse:")
     def init(self, rect, top_view, bottom_view, top_height, bottom_height,
-             min_collapse=0, flex_top=True):
+             min_collapse=0.2, flex_top=True):
         """Initialize view with two subviews, top and bottom
 
         :param rect: The initial frame rect for this view.
@@ -76,7 +76,6 @@ class DualView(ak.NSView):
             self.bottom.setHidden_(not self.bottom_height())
         return super(DualView, self).setHidden_(value)
 
-    @objc.namedSelector(b"shouldResize:")
     def should_resize(self, ignored=None):
         """Notify this view's superview that this view wants to be resized
 
@@ -85,6 +84,9 @@ class DualView(ak.NSView):
         The superview may observe SHOULD_RESIZE notifications posted
         by this view to know when to resize its subviews.
         """
+        self.shouldResize_(ignored)
+
+    def shouldResize_(self, ignored):
         ak.NSNotificationCenter.defaultCenter() \
             .postNotificationName_object_(SHOULD_RESIZE, self)
 
@@ -139,6 +141,10 @@ class DualView(ak.NSView):
         self.top.setHidden_(False)
         self.bottom.setFrame_(bottom_rect)
         self.bottom.setHidden_(False)
+
+    def setFrame_(self, rect):
+        super().setFrame_(rect)
+        self.tile()
 
     def resizeSubviewsWithOldSize_(self, old_size):
         self.tile()

@@ -17,6 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+from editxt.constants import INFO
 from editxt.platform.mac.views import *
 
 class ListView(object):
@@ -61,6 +62,7 @@ class CommandView(object):
         self.completions = AutoCompleteMenu(
             on_selection_changed=self.propose_completion)
         self.command = None
+        self.output_text = ""
         self._last_completions = [None]
 
     def activate(self, command_bar, text, select=False):
@@ -79,6 +81,9 @@ class CommandView(object):
     def propose_completion(self, items):
         self.command.propose_completion(self, items)
 
+    def message(self, message, textview=None, msg_type=INFO):
+        self.output_text = message
+
     def deactivate(self):
         if self.command is not None:
             self.completions.items = []
@@ -87,6 +92,7 @@ class CommandView(object):
         self.command = None
 
     def dismiss(self):
+        self.output_text = ""
         self.deactivate()
 
     def should_resize(self):

@@ -127,6 +127,8 @@ class CommandBar(object):
                 command_view.should_resize()
                 if select_range is not None:
                     command_view.command_text_selected_range = select_range
+            elif command_view.output_text:
+                command_view.message("")
             else:
                 command_view.deactivate()
             return True
@@ -149,9 +151,10 @@ class CommandBar(object):
                 completions.title = words.title
             else:
                 completions.title = None
-            completions.items = words
+            if completions.items != words:
+                completions.items = words
+                command_view.should_resize()
             completions.select(default_index)
-            command_view.should_resize()
             word = self.common_prefix(words)
             if word and auto_one:
                 self._auto_complete(command_view, word, (len(text), 0))
