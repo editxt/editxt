@@ -55,7 +55,8 @@ def command(func=None, name=None, title=None, hotkey=None,
 
     :param name: A name that can be typed in the command bar to invoke the
         command. Defaults to the decorated callable's `__name__`.
-    :param title: The command title displayed in Text menu. Not in menu if None.
+    :param title: The command title displayed in Command menu. Not in menu if
+        `None`.
     :param hotkey: Preferred command hotkey tuple: `(<key char>, <key mask>)`.
         Ignored if title is None.
     :param is_enabled: A callable that returns a boolean value indicating if

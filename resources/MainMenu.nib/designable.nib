@@ -259,8 +259,8 @@
                         </items>
                     </menu>
                 </menuItem>
-                <menuItem title="Text" id="260">
-                    <menu key="submenu" title="Text" id="261">
+                <menuItem title="Command" id="260">
+                    <menu key="submenu" title="Command" id="261">
                         <items>
                             <menuItem isSeparatorItem="YES" hidden="YES" id="284">
                                 <modifierMask key="keyEquivalentModifierMask" command="YES"/>
