@@ -26,6 +26,7 @@ import Foundation as fn
 
 from editxt.command.find import FindController
 from editxt.datatypes import WeakProperty
+from editxt.platform.app import beep
 
 log = logging.getLogger(__name__)
 
@@ -69,7 +70,7 @@ class TextView(ak.NSTextView):
             self.setSelectedRange_(range)
             self.scrollRangeToVisible_(range)
         else:
-            ak.NSBeep()
+            beep()
 
     # Find panel amd text command interaction ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

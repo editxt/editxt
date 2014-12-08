@@ -28,6 +28,7 @@ from editxt.command.base import command, CommandError
 from editxt.command.parser import (Choice, File, Int, String, Regex, RegexPattern,
     VarArgs, CommandParser, Options, SubArgs, SubParser)
 from editxt.command.util import has_editor, has_selection, iterlines
+from editxt.platform.app import beep
 
 from editxt.command.ack import ack
 from editxt.command.changeindent import reindent
@@ -96,7 +97,7 @@ def show_command_bar(editor, sender, args):
     """Show the command bar"""
     window = editor.project.window
     if window is None:
-        ak.NSBeep()
+        beep()
     else:
         window.command.activate(text=args or "")
 

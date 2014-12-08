@@ -603,8 +603,7 @@ class CommandTester(object):
         self.refs = (window, commander)
 
     def __call__(self, command):
-        with replattr(ak, "NSBeep", lambda:None): # HACK
-            self.bar.execute(command)
+        self.bar.execute(command)
 
     def __getattr__(self, name):
         return getattr(self.bar, name)

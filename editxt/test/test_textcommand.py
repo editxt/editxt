@@ -166,7 +166,7 @@ def test_CommandBar_execute():
     def test(c):
         m = Mocker()
         window = m.mock()
-        beep = m.replace(ak, 'NSBeep')
+        beep = m.replace(mod, 'beep')
         commander = m.mock(CommandManager)
         bar = mod.CommandBar(window, commander)
         message = m.replace(bar, "message")
@@ -232,7 +232,7 @@ def test_CommandBar_execute():
 def test_CommandBar_get_placeholder():
     def test(c):
         m = Mocker()
-        beep = m.replace(ak, 'NSBeep')
+        beep = m.replace(mod, 'beep')
         @command(arg_parser=CommandParser(
             Choice(('selection', True), ('all', False)),
             Choice(('no', False), ('yes', True)),
@@ -300,7 +300,7 @@ def test_CommandBar_get_completions():
 
     def test(c):
         m = Mocker()
-        beep = m.replace(ak, 'NSBeep')
+        beep = m.replace(mod, 'beep')
 
         @command(arg_parser=CommandParser(
             Choice(('selection', True), ('all', False)),

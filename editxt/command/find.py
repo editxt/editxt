@@ -31,6 +31,7 @@ from editxt.command.base import command, CommandError, objc_delegate, PanelContr
 from editxt.command.parser import Choice, Regex, RegexPattern, CommandParser, Options
 from editxt.command.util import make_command_predicate
 from editxt.datatypes import WeakProperty
+from editxt.platform.app import beep
 from editxt.platform.kvo import KVOProxy, KVOLink
 
 log = logging.getLogger(__name__)
@@ -220,7 +221,7 @@ class Finder(object):
                 target.didChangeText()
                 target.setNeedsDisplay_(True)
                 return
-        ak.NSBeep()
+        beep()
 
     def replace_all(self, sender):
         self._replace_all()
@@ -286,7 +287,7 @@ class Finder(object):
                 target.setSelectedRange_(range)
                 target.scrollRangeToVisible_(range)
                 return
-        ak.NSBeep()
+        beep()
 
     def _find(self, target, ftext, selection, direction):
         """Return the range of the found text or None if not found"""
@@ -317,7 +318,7 @@ class Finder(object):
         ftext = self.options.find_text
         range = None if target is None else target.selectedRange()
         if target is None or not ftext or (in_selection and range.length == 0):
-            ak.NSBeep()
+            beep()
             return
         text = target.string()
         options = self.options
@@ -356,7 +357,7 @@ class Finder(object):
                 target.didChangeText()
                 target.setNeedsDisplay_(True)
                 return
-        ak.NSBeep()
+        beep()
 
     def simplefinditer(self, text, ftext, range,
                        direction=FORWARD, yield_on_wrap=True):
@@ -519,7 +520,7 @@ class FindController(PanelController):
         try:
             self.action_registry.get(sender.tag(), default)(sender)
         except CommandError as err:
-            ak.NSBeep()
+            beep()
             target = self.find_target()
             if target is not None:
                 target.editor.message(str(err), msg_type=const.ERROR)
@@ -667,7 +668,7 @@ class FindController(PanelController):
             else:
                 self.flash_status_text("Not found")
         else:
-            ak.NSBeep()
+            beep()
 
     def flash_status_text(self, text):
         self.stop_flashing_status()
@@ -704,7 +705,7 @@ class FindController(PanelController):
                 title = "Cannot Compile Python Expression"
                 error = err
             if error is not None:
-                ak.NSBeep()
+                beep()
                 # Note: if the find dialog type is NSPanel (instead of NSWindow)
                 # the focus will switch back to the main document window rather
                 # than to the find dialog, which is not what we want. Therefore

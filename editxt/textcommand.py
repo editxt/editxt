@@ -61,7 +61,7 @@ class CommandBar(object):
     def activate(self, text="", select=False):
         editor = self.window.current_editor
         if editor is None:
-            ak.NSBeep()
+            beep()
             return
         if not text and self.failed_command:
             text = self.failed_command
@@ -209,7 +209,7 @@ class CommandBar(object):
         cmdstr, space, argstr = text.lstrip(" ").partition(" ")
         editor = self.window.current_editor
         if editor is None:
-            ak.NSBeep()
+            beep()
             return
         command = self.text_commander.lookup(cmdstr)
         if command is not None:
@@ -372,7 +372,7 @@ class CommandBar(object):
         old_text = command_view.command_text
         text = self.get_history(old_text, forward)
         if text is None:
-            ak.NSBeep()
+            beep()
             return
         command_view.command_text = text
 
@@ -414,7 +414,7 @@ class CommandBar(object):
         if editor is None:
             log.info(text, exc_info=exc_info)
             if msg_type == const.ERROR:
-                ak.NSBeep()
+                beep()
         else:
             editor.message(msg, msg_type=msg_type)
 

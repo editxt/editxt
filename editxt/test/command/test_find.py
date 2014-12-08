@@ -248,7 +248,7 @@ def test_FindController_perform_action():
             m = Mocker()
             fc = FindController(app)
             flog = m.replace("editxt.command.find.log")
-            beep = m.replace(ak, "NSBeep")
+            beep = m.replace(mod, "beep")
             find_target = m.method(fc.find_target)
             sender = m.mock()
             (sender.tag() << c.tag).count(1, 2)
@@ -339,7 +339,7 @@ def test_FindController_actions():
     yield test, c(meth="find_selected_text_reverse", do=do, saved=False)
 
     def do(m, c, fc, sender):
-        beep = m.replace(ak, 'NSBeep')
+        beep = m.replace(mod, 'beep')
         dobeep = True
         tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
         if c.has_tv:
@@ -441,7 +441,7 @@ def test_FindController_finder_find():
         with test_app() as app:
             m = Mocker()
             fc = FindController(app)
-            beep = m.replace(ak, 'NSBeep')
+            beep = m.replace(mod, 'beep')
             dobeep = True
             direction = "<direction>"
             _find = m.method(fc.finder._find)
@@ -470,7 +470,7 @@ def test_FindController_validate_expression():
             m = Mocker()
             fc = FindController(app)
             fc.options = make_options(c)
-            beep = m.replace(ak, "NSBeep")
+            beep = m.replace(mod, "beep")
             sheet = m.replace(ak, "NSBeginAlertSheet")
             gui = m.replace(fc, "gui")
             ftext = m.mock(ak.NSTextField)
@@ -552,7 +552,7 @@ def test_FindController__replace_all():
         with test_app() as app:
             m = Mocker()
             fc = FindController(app)
-            beep = m.replace(ak, 'NSBeep')
+            beep = m.replace(mod, 'beep')
             dobeep = True
             tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
             options = m.replace(fc.finder, "options")
@@ -620,7 +620,7 @@ def test_FindController_count_occurrences():
     def test(c):
         with test_app() as app:
             m = Mocker()
-            beep = m.replace(ak, 'NSBeep')
+            beep = m.replace(mod, 'beep')
             fc = FindController(app)
             flash = m.method(fc.flash_status_text)
             mark = m.method(fc.finder.mark_occurrences)
