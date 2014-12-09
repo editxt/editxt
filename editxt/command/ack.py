@@ -29,13 +29,21 @@ from urllib.parse import quote
 import editxt.constants as const
 import editxt.config as config
 from editxt.command.base import command, CommandError
-from editxt.command.parser import CommandParser, File, Regex, String, VarArgs
+from editxt.command.parser import CommandParser, File, Regex, RegexPattern, String, VarArgs
 from editxt.command.util import has_editor
 from editxt.platform.app import beep
 from editxt.platform.markdown import markdown
 
 log = logging.getLogger(__name__)
-ACK_LINE = re.compile(r"(.*?):(\d+:.*)")
+ACK_LINE = re.compile(r"(\d+)([:-])(.*)")
+DEFAULT_OPTIONS = [
+    "--heading",
+    "--group",
+    "--break",
+    "--nopager",
+    "--nocolor",
+    "--print0",
+]
 
 
 @command(arg_parser=CommandParser(
@@ -53,13 +61,18 @@ def ack(editor, sender, args):
         return
     elif args.pattern is None:
         raise CommandError("please specify a pattern to match")
+    pattern = args.pattern
+    if "-i" in args.options or "--ignore-case" in args.options:
+        pattern = RegexPattern(pattern, pattern.flags | re.IGNORECASE)
+    elif pattern.flags & re.IGNORECASE:
+        args.options.append("--ignore-case")
     ack_path = editor.app.config.for_command("ack")["path"]
     cwd = args.path or editor.dirname()
-    command = [ack_path, args.pattern] + [o for o in args.options if o]
+    command = [ack_path, pattern] + [o for o in args.options if o] + DEFAULT_OPTIONS
     result = exec_shell(command, cwd=cwd)
     if result.returncode == 0:
         msg_type = const.INFO
-        lines = ack_lines(result, args.pattern, cwd)
+        lines = ack_lines(result, pattern, cwd)
         message = markdown("\n".join(lines), pre=True)
     elif not is_ack_installed(ack_path):
         msg_type = const.ERROR
@@ -84,21 +97,20 @@ def ack_lines(result, pattern, cwd):
     if not result:
         yield result.err or "no output"
         return
-    regex = re.compile(pattern + """|(['"(\[`_])""")
-    prev_filepath = None
-    for line in result.split("\n"):
-        match = ACK_LINE.match(line)
-        if match:
-            filepath = match.group(1)
-            if filepath != prev_filepath:
-                abspath = os.path.join(cwd, filepath)
-                if prev_filepath:
-                    yield ""
-                yield open_link(filepath, abspath)
-                prev_filepath = filepath
-            yield link_matches(match.group(2), abspath, regex)
-        else:
-            yield line
+    regex = re.compile(pattern + r"""|(['"(\[`_])""", pattern.flags)
+    for file_and_lines in result.split("\n"):
+        filepath, *lines = file_and_lines.split("\x00")
+        if not lines:
+            yield filepath
+            continue
+        abspath = os.path.join(cwd, filepath)
+        yield open_link(filepath, abspath)
+        for line in lines:
+            match = ACK_LINE.match(line)
+            if match:
+                yield link_matches(match, abspath, regex)
+            else:
+                yield line
 
 
 def open_link(text, path, goto=None):
@@ -117,12 +129,12 @@ def open_link(text, path, goto=None):
 
 def markdown_link(text, url):
     return "[{}]({})".format(
-        text.replace("\\", "\\\\").replace("[", "\\[").replace("]", "\\]"),
+        text.replace("\\", "\\\\").replace("[", "\\[").replace("]", "\\]").replace("_", "\\_"),
         url
     )
 
 
-def link_matches(line, filepath, regex, split=re.compile("(\d+):")):
+def link_matches(match, filepath, regex, split=re.compile("(\d+):")):
     def link(match):
         if match.groups()[-1]:
             return "\\" + match.groups()[-1]
@@ -132,14 +144,10 @@ def link_matches(line, filepath, regex, split=re.compile("(\d+):")):
         else:
             goto = num
         return open_link(match.group(0), filepath, goto)
-    num_match = split.match(line)
-    if num_match:
-        num = num_match.group(1)
-        line = line[len(num) + 1:]
-        prefix = open_link(num, filepath, num) + ":"
-    else:
-        num = None
-        prefix = ""
+    num, delim, line = match.group(1, 2, 3)
+    prefix = open_link(num, filepath, num) + delim
+    if delim == "-":
+        return prefix + line
     return prefix + regex.sub(link, line)
 
 

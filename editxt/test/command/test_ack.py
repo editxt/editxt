@@ -40,11 +40,12 @@ def test_ack():
         with test_app(config) as app, \
                 setup_files(test_app(app).tmp) as tmp:
             editor = app.windows[0].current_editor
-            if message is not None:
-                message = message.replace("xt://open/", "xt://open/%s/" % tmp)
             bar = CommandTester(mod.ack, editor=editor, output=True)
             bar(command)
-            eq_(bar.output, message)
+            output = bar.output
+            if output is not None:
+                output = output.replace("xt://open/%s/" % tmp, "xt://open/")
+            eq_(output, message)
             eq_(test_app(app).state, config)
 
     yield test("ack ([bB]|size:\ 10)",
@@ -55,6 +56,20 @@ def test_ack():
         "[b.txt](xt://open/dir/b.txt)\n"
         "[1](xt://open/dir/b.txt?goto=1):name: dir/[b](xt://open/dir/b.txt?goto=1.10.1).txt\n")
     yield test("ack dir/[bB] ..",
+        "[dir/B file](xt://open/dir/../dir/B%20file)\n"
+        "[1](xt://open/dir/../dir/B%20file?goto=1):name: [dir/B](xt://open/dir/../dir/B%20file?goto=1.6.5) file\n"
+        "\n"
+        "[dir/b.txt](xt://open/dir/../dir/b.txt)\n"
+        "[1](xt://open/dir/../dir/b.txt?goto=1):name: [dir/b](xt://open/dir/../dir/b.txt?goto=1.6.5).txt\n")
+    yield test("ack dir/[bB] .. --after=1",
+        "[dir/B file](xt://open/dir/../dir/B%20file)\n"
+        "[1](xt://open/dir/../dir/B%20file?goto=1):name: [dir/B](xt://open/dir/../dir/B%20file?goto=1.6.5) file\n"
+        "[2](xt://open/dir/../dir/B%20file?goto=2)-size: 10\n"
+        "\n"
+        "[dir/b.txt](xt://open/dir/../dir/b.txt)\n"
+        "[1](xt://open/dir/../dir/b.txt?goto=1):name: [dir/b](xt://open/dir/../dir/b.txt?goto=1.6.5).txt\n"
+        "[2](xt://open/dir/../dir/b.txt?goto=2)-size: 9\n")
+    yield test("ack dir/b .. -i",
         "[dir/B file](xt://open/dir/../dir/B%20file)\n"
         "[1](xt://open/dir/../dir/B%20file?goto=1):name: [dir/B](xt://open/dir/../dir/B%20file?goto=1.6.5) file\n"
         "\n"
