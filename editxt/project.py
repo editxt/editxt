@@ -276,7 +276,8 @@ class Project(object):
                 RECENT_COLSPEC,
                 on_double_click=open_recent,
             )
-            self.main_view = add_command_view(self.listview.scroll, view.bounds())
+            self.main_view = add_command_view(
+                self.listview.scroll, view.bounds(), self.window.command)
             self.command_view = self.main_view.bottom
         self.main_view.become_subview_of(view, focus=self.listview.view)
 

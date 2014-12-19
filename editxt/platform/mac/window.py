@@ -191,7 +191,7 @@ class WindowController(ak.NSWindowController):
         :returns: True if the editor was setup, otherwise False.
         """
         main_view = self.mainView
-        self._update_title()
+        self._update_title(editor)
         if editor is not None:
             sel = self.docsController.selected_objects
             if not sel or sel[0] is not editor:
@@ -205,9 +205,8 @@ class WindowController(ak.NSWindowController):
             subview.removeFromSuperview()
         return False
 
-    def _update_title(self):
+    def _update_title(self, editor):
         title = self.windowTitleForDocumentDisplayName_("")
-        editor = self.window_.current_editor
         if editor is not None and editor.file_path and os.path.isabs(editor.file_path):
             url = fn.NSURL.fileURLWithPath_(editor.file_path)
         else:

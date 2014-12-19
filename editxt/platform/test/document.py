@@ -28,10 +28,12 @@ def setup_main_view(*args):
 def teardown_main_view(*args):
     pass
 
-def add_command_view(view, frame):
+def add_command_view(view, frame, command_bar):
+    class command_view:
+        command = command_bar
     class main_view:
         top = view
-        bottom = None
+        bottom = command_view
         def frame(self):
             return frame
         def become_subview_of(self, view, focus=None):

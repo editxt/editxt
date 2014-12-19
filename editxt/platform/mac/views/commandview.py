@@ -46,7 +46,7 @@ class CommandView(DualView):
         ENTER = "insertNewline:"
         SELECTION_CHANGED = None
 
-    def initWithFrame_(self, rect):
+    def init_frame_(self, command, rect):
         from editxt.textcommand import AutoCompleteMenu
         self.output = ContentSizedTextView.alloc().initWithFrame_(rect)
         self.output.scroller.setBorderType_(ak.NSBezelBorder)
@@ -70,7 +70,7 @@ class CommandView(DualView):
 
         def input_group_height():
             group = self.input_group
-            return 0 if self.command is None \
+            return 0 if not self.active \
                      else (group.top_height() + group.bottom_height() - 1)
         def output_height():
             return self.output.preferred_height if self.output.string() else 0
@@ -88,12 +88,13 @@ class CommandView(DualView):
         self.setup_output_popout_button()
         self.input.setDelegate_(self)
         def text_did_change_handler(textview):
-            if self.command is not None:
+            if self.active:
                 text = textview.string()
                 textview.placeholder = self.command.get_placeholder(text)
         self.input.text_did_change_handler = text_did_change_handler
         self.setHidden_(True)
-        self.command = self._command = None
+        self.command = command
+        self.active = False
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
             self, "shouldResize:", SHOULD_RESIZE, self.input_group)
         return self
@@ -103,14 +104,14 @@ class CommandView(DualView):
         self.completions = None
         self.output = None
         self.popout_button = None
-        self.command = self._command = None
+        self.command = None
         ak.NSNotificationCenter.defaultCenter().removeObserver_(self)
         ak.NSNotificationCenter.defaultCenter().removeObserver_(self.input_group)
         self.input_group = None
         super().dealloc()
 
     def __bool__(self):
-        return self.command is not None or bool(self.output.string())
+        return self.active or bool(self.output.string())
 
     @property
     def preferred_height(self):
@@ -146,8 +147,8 @@ class CommandView(DualView):
         return self.output.string()
 
     def activate(self, command, initial_text="", select=False):
-        new_activation = self.command is None
-        self.command = self._command = command
+        new_activation = not self.active
+        self.active = True
         if new_activation:
             #self.performSelector_withObject_afterDelay_("selectText:", self, 0)
             # possibly use setSelectedRange
@@ -165,13 +166,13 @@ class CommandView(DualView):
             self.window().makeFirstResponder_(self.input)
 
     def deactivate(self):
-        if self.command is not None:
+        if self.active:
             self.completions.items = []
-            self.command, command = None, self.command
-            editor = command.window.current_editor
+            self.active = False
+            editor = self.command.window.current_editor
             if editor is not None and self.window() is not None:
                 self.window().makeFirstResponder_(editor.text_view)
-            command.reset()
+            self.command.reset()
         self.should_resize()
 
     def dismiss(self):
@@ -232,10 +233,10 @@ class CommandView(DualView):
     def textView_clickedOnLink_atIndex_(self, textview, link, index):
         event = ak.NSApp.currentEvent()
         meta = bool(event.modifierFlags() & ak.NSCommandKeyMask)
-        return self._command.handle_link(str(link), meta)
+        return self.command.handle_link(str(link), meta)
 
     def commandHelp_(self, sender):
-        if self.command is not None:
+        if self.active:
             self.command.show_help(self.command_text)
         else:
             ak.NSBeep()
@@ -263,11 +264,10 @@ class CommandView(DualView):
         self.popout_button = button
 
     def popoutButtonClicked_(self, sender):
-        if self._command is not None:
-            from editxt.platform.views import screen_rect
-            rect = screen_rect(self.output)
-            rect.origin.y -= self.popout_button.image().size().height
-            self._command.create_output_panel(self, self.output.textStorage(), rect)
+        from editxt.platform.views import screen_rect
+        rect = screen_rect(self.output)
+        rect.origin.y -= self.popout_button.image().size().height
+        self.command.create_output_panel(self, self.output.textStorage(), rect)
 
     #def textDidEndEditing_(self, notification):
     #    self.deactivate()

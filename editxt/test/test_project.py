@@ -360,7 +360,8 @@ def test_set_name():
     eq_(proj.name, "name")
 
 def test_set_main_view_of_window():
-    project = Project(None)
+    window = TestConfig(command="<command>")
+    project = Project(window)
     m = Mocker()
     view = m.mock()
     view.bounds() >> "<frame>"
@@ -369,6 +370,7 @@ def test_set_main_view_of_window():
         eq_(project.main_view, None)
         project.set_main_view_of_window(view, win)
         assert project.main_view is not None
+        eq_(project.command_view.command, "<command>")
 
 def test_interactive_close():
     @gentest

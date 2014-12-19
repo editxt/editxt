@@ -73,11 +73,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-ERROR editxt - *** Python exception discarded!
-Traceback (most recent call last):
-  File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.3/editxt/platform/mac/views/commandview.py", line 235, in textView_clickedOnLink_atIndex_
-AttributeError: 'NoneType' object has no attribute 'handle_link'
-
 Fix bug in auto-complete
   command: "xt <TAB>no<TAB>" -> "xt nnotes.txt "
 Fix ack command with --after
@@ -236,6 +231,60 @@ Traceback (most recent call last):
   File "PyObjCTools/AppHelper.pyc", line 235, in runEventLoop
 ValueError: NSInvalidArgumentException - -[NSURL _undoRedoTextOperation:]:
     unrecognized selector sent to instance 0x31d5fa0
+
+Bug: click on document in tree view
+  ERROR editxt - *** Python exception discarded!
+  Traceback (most recent call last):
+    File "editxt/platform/mac/window.py", line 151, in outlineViewSelectionDidChange_
+    File "editxt/window.py", line 216, in selected_editor_changed
+    File "editxt/window.py", line 206, in _set_current_editor
+    File "editxt/platform/mac/window.py", line 194, in setup_current_editor
+    File "editxt/platform/mac/window.py", line 212, in _update_title
+  TypeError: Need 2 arguments, got 1
+
+  ERROR editxt - *** Python exception discarded!
+  Traceback (most recent call last):
+    File "editxt/platform/mac/views/treeview.py", line 298, in mouseDown_
+    File "editxt/platform/mac/window.py", line 151, in outlineViewSelectionDidChange_
+    File "editxt/window.py", line 216, in selected_editor_changed
+    File "editxt/window.py", line 206, in _set_current_editor
+    File "editxt/platform/mac/window.py", line 194, in setup_current_editor
+    File "editxt/platform/mac/window.py", line 212, in _update_title
+  TypeError: Need 2 arguments, got 1
+
+  12/19/14 3:23:13.051 PM EditXT[999]: (
+  	0   CoreFoundation                      0x00007fff95d6db06 __exceptionPreprocess + 198
+  	1   libobjc.A.dylib                     0x00007fff914b23f0 objc_exception_throw + 43
+  	2   CoreFoundation                      0x00007fff95e01f49 -[NSException raise] + 9
+  	3   _objc.so                            0x00000001056475be PyObjCErr_ToObjCWithGILState + 46
+  	4   _objc.so                            0x0000000105633db6 PyObjCFFI_MakeClosure + 5174
+  	5   _objc.so                            0x000000010562788b ffi_closure_unix64_inner + 619
+  	6   _objc.so                            0x0000000105626e76 ffi_closure_unix64 + 70
+  	7   AppKit                              0x00007fff950e2644 -[NSApplication sendEvent:] + 5761
+  	8   AppKit                              0x00007fff94ff821a -[NSApplication run] + 636
+  	9   AppKit                              0x00007fff94f9cbd6 NSApplicationMain + 869
+  	10  _AppKit.so                          0x0000000101e7e82b PyInit__AppKit + 7499
+  	11  Python                              0x0000000101cdc35e PyEval_EvalFrameEx + 29822
+  	12  Python                              0x0000000101cdd4e8 PyEval_EvalCodeEx + 2296
+  	13  Python                              0x0000000101cdb977 PyEval_EvalFrameEx + 27287
+  	14  Python                              0x0000000101cdbaff PyEval_EvalFrameEx + 27679
+  	15  Python                              0x0000000101cdd4e8 PyEval_EvalCodeEx + 2296
+  	16  Python                              0x0000000101cdb977 PyEval_EvalFrameEx + 27287
+  	17  Python                              0x0000000101cdd4e8 PyEval_EvalCodeEx + 2296
+  	18  Python                              0x0000000101cdd5af PyEval_EvalCode + 63
+  	19  Python                              0x0000000101cd250e _PyBuiltin_Init + 9982
+  	20  Python                              0x0000000101cdc35e PyEval_EvalFrameEx + 29822
+  	21  Python                              0x0000000101cdbaff PyEval_EvalFrameEx + 27679
+  	22  Python                              0x0000000101cdd4e8 PyEval_EvalCodeEx + 2296
+  	23  Python                              0x0000000101cdd5af PyEval_EvalCode + 63
+  	24  Python                              0x0000000101d0448b PyRun_FileExFlags + 187
+  	25  Python                              0x0000000101d0481d PyRun_SimpleFileExFlags + 717
+  	26  EditXT                              0x00000001000043f6 start + 13830
+  	27  EditXT                              0x0000000100004b6e main + 1438
+  	28  EditXT                              0x0000000100000e24 start + 52
+  	29  ???                                 0x0000000000000002 0x0 + 2
+  )
+
 
 fix bug: drag symlink into documents pane
     Exception Type:  EXC_BAD_ACCESS (SIGBUS)
