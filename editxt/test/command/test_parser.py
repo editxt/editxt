@@ -99,27 +99,30 @@ def test_CommandParser():
     yield test, "hi", "gh 50 name"
     yield test, "high ", "50 name"
 
-    def make_completions_checker(argstr, expected, parser=radio_parser):
-        eq_(parser.get_completions(argstr), expected)
-    test = make_completions_checker
-    yield test, "", ['manual', 'preset']
+    def check_completions(argstr, expected, start=None, parser=radio_parser):
+        words = parser.get_completions(argstr)
+        eq_(words, expected)
+        if start is not None:
+            eq_([w.start for w in words], [start] * len(words), words)
+    test = check_completions
+    yield test, "", ['manual', 'preset'], 0
     yield test, "  ", []
     yield test, "  5", []
     yield test, "  5 ", []
     yield test, "  high", []
-    yield test, " ", ["off", "high", "medium", "low"]
-    yield test, " hi", ["high"]
+    yield test, " ", ["off", "high", "medium", "low"], 1
+    yield test, " hi", ["high"], 1
 
     parser = CommandParser(
         level, Int("value"), Choice("highlander", "tundra", "4runner"))
-    test = partial(make_completions_checker, parser=parser)
-    yield test, "h", ["high"]
-    yield test, "t", ["tundra"]
-    yield test, "high", ["high"]
+    test = partial(check_completions, parser=parser)
+    yield test, "h", ["high"], 0
+    yield test, "t", ["tundra"], 0
+    yield test, "high", ["high"], 0
     yield test, "high ", []
     yield test, "high 4", []
     yield test, "high x", []
-    yield test, "high  4", ["4runner"]
+    yield test, "high  4", ["4runner"], 6
 
 def test_CommandParser_empty():
     eq_(arg_parser.parse(''), Options(yes=True))
@@ -527,19 +530,20 @@ def test_File():
         yield test, "~/", (["dir", "file.doc", "file.txt"], 2)
 
         # delimiter completion
-        def test(input, output, overlap=None):
+        def test(input, output, start=None):
             words = arg.get_completions(input)
             assert all(isinstance(w, CompleteWord) for w in words), \
                 repr([w for w in words if not isinstance(w, CompleteWord)])
             eq_([w.complete() for w in words], output)
-            if overlap is not None:
-                eq_([w.overlap for w in words], [overlap] * len(words), words)
-        yield test, "", ["a.txt ", "B\\ file ", "b.txt "], 0
+            if start is not None:
+                eq_([w.start for w in words], [start] * len(words), words)
+        yield test, "", ["a.txt ", "B\\ file ", "b.txt "]
         yield test, "x", []
-        yield test, "..", ["../"], 2
-        yield test, "../", ["dir/", "file.doc ", "file.txt "], 0
-        yield test, "../dir", ["dir/"], 3
-        yield test, "~", ["~/"], 1
+        yield test, "..", ["../"]
+        yield test, "../", ["dir/", "file.doc ", "file.txt "]
+        yield test, "../dir", ["dir/"]
+        yield test, "../di", ["dir/"]
+        yield test, "~", ["~/"]
 
         arg = File('dir', directory=True)
         eq_(str(arg), 'dir')
@@ -549,8 +553,8 @@ def test_File():
         test = make_completions_checker(arg)
         yield test, "", ([], 0)
         yield test, "a", ([], 1)
-        yield test, "..", (["../"], 2)
-        yield test, "../", (["dir"], 3)
+        yield test, "..", (["../"], 2), 0
+        yield test, "../", (["dir"], 3), 3
 
 def test_Regex():
     arg = Regex('regex')
@@ -687,13 +691,13 @@ def test_VarArgs():
     eq_(repr(arg), "VarArgs('var', Choice('arg', 'nope', 'nah'))")
 
     test = make_completions_checker(arg)
-    yield test, "", (['arg', 'nope', 'nah'], 0)
-    yield test, "a", (["arg"], 1)
-    yield test, "a ", (['arg', 'nope', 'nah'], 2)
+    yield test, "", (['arg', 'nope', 'nah'], 0), 0
+    yield test, "a", (["arg"], 1), 0
+    yield test, "a ", (['arg', 'nope', 'nah'], 2), 2
     yield test, "b ", (None, 0)
-    yield test, "nah", (["nah"], 3)
-    yield test, "nah ", (['arg', 'nope', 'nah'], 4)
-    yield test, "arg a", (['arg'], 5)
+    yield test, "nah", (["nah"], 3), 0
+    yield test, "nah ", (['arg', 'nope', 'nah'], 4), 4
+    yield test, "arg a", (['arg'], 5), 4
     yield test, "arg b", (None, 4)
 
     test = make_placeholder_checker(arg)
@@ -745,15 +749,15 @@ def test_SubParser():
     su2 = arg.args[2]
 
     test = make_completions_checker(arg)
-    yield test, "", (["str", "stx", "val"], 0)
-    yield test, "v", (["val"], 1)
+    yield test, "", (["str", "stx", "val"], 0), 0
+    yield test, "v", (["val"], 1), 0
     yield test, "v ", ([], 2)
-    yield test, "val", (["val"], 3)
+    yield test, "val", (["val"], 3), 0
     yield test, "val ", ([], 4)
     yield test, "val v", (None, 4)
-    yield test, "st", (["str", "stx"], 2)
-    yield test, "str ", (["yes", "no"], 4)
-    yield test, "str y", (["yes"], 5)
+    yield test, "st", (["str", "stx"], 2), 0
+    yield test, "str ", (["yes", "no"], 4), 4
+    yield test, "str y", (["yes"], 5), 4
 
     test = make_placeholder_checker(arg)
     yield test, "", 0, ("var ...", 0)
@@ -809,8 +813,12 @@ def make_placeholder_checker(arg):
     return test_get_placeholder
 
 def make_completions_checker(arg):
-    def test_parse_completions(input, output):
-        eq_(arg.parse_completions(input, 0), output)
+    def test_parse_completions(input, output, start=None):
+        result = arg.parse_completions(input, 0)
+        eq_(result, output)
+        if start is not None:
+            words = result[0]
+            eq_([w.start for w in words], [start] * len(words), words)
     return test_parse_completions
 
 def make_arg_string_checker(arg, round_trip_equal=True):

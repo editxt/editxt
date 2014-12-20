@@ -309,6 +309,13 @@ class CommandBar(object):
                 except Exception:
                     log.debug("get_completions failed", exc_info=True)
                     words = []
+                else:
+                    if argstr != text:
+                        diff = len(text) - len(argstr)
+                        assert diff > 0, (text, argstr)
+                        for word in words:
+                            if hasattr(word, 'start'):
+                                word.start += diff
             else:
                 words = []
         return words, None
@@ -325,12 +332,7 @@ class CommandBar(object):
         word = next(match)
         if next(match, False):
             # use empty delimiter if there are two or more matching words
-            if isinstance(word, CompleteWord):
-                assert len(prefix) >= word.overlap, (prefix, word, word.overlap)
-                overlap = word.overlap
-            else:
-                overlap = None
-            return CompleteWord(prefix, lambda:"", overlap)
+            return CompleteWord(prefix, lambda:"", getattr(word, 'start', None))
         return word
 
     def auto_complete(self, text, word, replace_range):
@@ -348,8 +350,8 @@ class CommandBar(object):
         index = start - len(word)
         if index < 0:
             index = 0
-        if isinstance(word, CompleteWord) and word.overlap is not None:
-            index = start - word.overlap
+        if getattr(word, 'start', None) is not None:
+            index = word.start
         else:
             while index < start:
                 if word.startswith(text[index:start]):

@@ -62,6 +62,8 @@ Command parser specification:
 """
 import os
 import re
+from functools import partial
+
 from editxt.util import user_path
 
 
@@ -156,20 +158,11 @@ class CommandParser(object):
         return self.parse_completions(text, 0)[0] or []
 
     def parse_completions(self, text, index):
-        """Parse command text and return completions for the final argument
-
-        :param text: Command text string.
-        :param index: Position in text to begin parsing.
-        :returns: ``(list_of_completions, end)`` where ``end`` is
-        the index in ``text`` where parsing of this argument stopped.
-        ``list_of_completions`` will be ``None`` if another argument
-        (outside of this parser) could be parsed.
-        """
+        """See ``Field.parse_completions``"""
         for arg in self.argspec:
             values, index = arg.parse_completions(text, index)
             if values is not None:
                 return values, index
-        # ??? None indicates an error (the last token could not be consumed) ???
         return None, index
 
     def get_help(self, text):
@@ -337,8 +330,21 @@ class Field(object):
         return (None if terminated else ""), index
 
     def parse_completions(self, text, index):
-        """See ``CommandParser.parse_completions`` for interface documentation
+        """Parse command text and return completions for the final argument
+
+        :param text: Command text string.
+        :param index: Position in text to begin parsing.
+        :returns: ``(list_of_completions, end)`` where ``end`` is
+        the index in ``text`` where parsing of this argument stopped.
+        ``list_of_completions`` will be ``None`` if another argument
+        (outside of this parser) could be parsed.
         """
+        def completion(word):
+            if getattr(word, 'start', None) is not None:
+                word.start += index
+            else:
+                word = CompleteWord(word, start=index)
+            return word
         try:
             token, end, terminated = self.parse_token(text, index)
         except ParseError as err:
@@ -350,7 +356,7 @@ class Field(object):
             if end >= len(text):
                 values = self.get_completions(token)
                 if values:
-                    return values, err.parse_index
+                    return [completion(v) for v in values], err.parse_index
             return None, index
         except ArgumentError as err:
             raise NotImplementedError # TODO
@@ -359,6 +365,8 @@ class Field(object):
             values = None
         else:
             values = self.get_completions(token)
+            if values:
+                values = [completion(v) for v in values]
         return values, end
 
     def get_completions(self, token):
@@ -366,6 +374,9 @@ class Field(object):
 
         :param text: Argument value prefix.
         :returns: A list of possible completions for given prefix.
+        The ``start`` attribute of ``CompleteWord`` objects in the
+        returned list may be set to an offset into the original
+        token where the completion should start.
         """
         return []
 
@@ -650,9 +661,13 @@ class File(String):
     def get_completions(self, token):
         from os.path import exists, expanduser, isabs, isdir, join, sep, split
         if token == '~':
-            return [CompleteWord('~/', (lambda:''), 1)]
+            return [CompleteWord('~/', (lambda:''))]
         if token.startswith('~'):
+            original_length = len(token)
             token = expanduser(token)
+            diff = len(token) - original_length
+        else:
+            diff = 0
         if isabs(token):
             base = "/"
             path = token
@@ -661,6 +676,7 @@ class File(String):
         else:
             base = self.path
             path = join(base, token)
+            diff += len(base) + 1
         root, name = split(path)
         assert len(base) <= len(root), (base, root)
         if not exists(root):
@@ -671,7 +687,7 @@ class File(String):
             word = word.replace(' ', '\\ ')
             def get_delimiter():
                 return "/" if isdir(join(root, word)) else " "
-            return CompleteWord(word, get_delimiter, len(name))
+            return CompleteWord(word, get_delimiter, len(root) + 1 - diff)
 
         if not name:
             match = lambda n: not n.startswith(".")
@@ -693,7 +709,7 @@ class File(String):
         if isdir(path) and (name == ".." or name in names):
             if name in names:
                 names.remove(name)
-            names.append(CompleteWord(name + "/", lambda:"", len(name)))
+            names.append(CompleteWord(name + "/", lambda:"", len(root) + 1 - diff))
         return CompletionsList(names, title=user_path(root))
 
     def arg_string(self, value):
@@ -1085,16 +1101,15 @@ class SubParser(Field):
         return (" ".join(values) if values else None), index
 
     def parse_completions(self, text, index):
-        """See ``CommandParser.parse_completions`` for interface documentation
-        """
+        comp = partial(CompleteWord, start=index)
         name, end = self.consume_token(text, index)
         if name is None:
             if end < len(text) or text[index:end].endswith(" "):
                 return None, end
-            return sorted(self.subargs), end
+            return [comp(w) for w in sorted(self.subargs)], end
         if len(name) == end - index:
             # there is no space after name
-            return self.get_completions(name), end
+            return [comp(w) for w in self.get_completions(name)], end
         sub = self.subargs.get(name)
         if sub is None:
             names = [n for n in self.subargs if n.startswith(name)]
@@ -1187,12 +1202,17 @@ class Options(object):
 
 class CompleteWord(str):
 
-    __slots__ = ["get_delimiter", "overlap"]
+    __slots__ = ["get_delimiter", "start"]
 
-    def __new__(cls, value="", get_delimiter=lambda:" ", overlap=None):
+    def __new__(cls, value="", get_delimiter=None, start=None):
         obj = super(CompleteWord, cls).__new__(cls, value)
-        obj.get_delimiter = get_delimiter
-        obj.overlap = overlap
+        if isinstance(value, CompleteWord):
+            if get_delimiter is None:
+                get_delimiter = value.get_delimiter
+            if start is None:
+                start = value.start
+        obj.get_delimiter = get_delimiter or (lambda:" ")
+        obj.start = start
         return obj
 
     def complete(self):

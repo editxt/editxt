@@ -73,8 +73,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Fix bug in auto-complete
-  command: "xt <TAB>no<TAB>" -> "xt nnotes.txt "
 Fix ack command with --after
   - allow options intermixed with paths (VarArgs dispatch)
 x  - output formatting

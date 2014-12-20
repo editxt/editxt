@@ -138,9 +138,13 @@ def test_CommandBar_on_key_press():
     yield test("cm", TAB, new_text="cmd ")
     yield test("cm", TAB, complete=["cmd"], new_text="cmd ", new_complete=[])
     yield test("cmd t", TAB,
-        complete=[CompleteWord(w, overlap=1) for w in ["test_1", "test_2"]],
+        complete=[CompleteWord(w, start=4) for w in ["test_1", "test_2"]],
         new_text="cmd test_",
         new_complete=["test_1", "test_2"])
+    yield test("cmd test_1", TAB,
+        complete=[CompleteWord("test_1", start=4)],
+        new_text="cmd test_1 ",
+        new_complete=[])
 
     #yield test("", DOWN)
     yield test("", DOWN, new_text="cmd ",
@@ -304,7 +308,8 @@ def test_CommandBar_get_completions():
         def get_completions(self, token):
             return CompletionsList("0123456789abcdef") #, selected_index=3)
 
-    def test(c):
+    @gentest
+    def test(text, expect, select=None, start=None):
         m = Mocker()
         beep = m.replace(mod, 'beep')
 
@@ -337,28 +342,31 @@ def test_CommandBar_get_completions():
 
         bar = CommandTester(cmd, search, count, hex, ill, textview=object)
         with m:
-            eq_(bar.get_completions(c.text), (c.expect, c.select))
-    c = TestConfig(select=None)
-    yield test, c(text='x', expect=[])
-    yield test, c(text='', expect=["cmd", "hex", "ill", "search"])
-    yield test, c(text='c', expect=["cmd"])
-    yield test, c(text='cm', expect=["cmd"])
-    yield test, c(text='cmd', expect=["cmd"])
-    yield test, c(text='cmx', expect=[])
-    yield test, c(text='cmd ', expect=["selection", "all"])
-    yield test, c(text='cmd s', expect=["selection"])
-    yield test, c(text='cmd se', expect=["selection"])
-    yield test, c(text='cmd selection', expect=["selection"])
-    yield test, c(text='cmd sec', expect=[])
-    yield test, c(text='cmd s ', expect=["forward", "reverse"])
-    yield test, c(text='cmd s r', expect=["reverse"])
-    yield test, c(text='cmd s x', expect=["xyz"])
-    yield test, c(text='hex ', expect=list("0123456789abcdef"))
-    yield test, c(text='/', expect=[])
-    yield test, c(text='/ ', expect=[])
-    yield test, c(text='/a', expect=[])
-    yield test, c(text='/abc/ ', expect=["yes", "no"])
-    yield test, c(text='ill ', expect=[])
+            result = bar.get_completions(text)
+            eq_(result, (expect, select))
+            if start is not None:
+                eq_([w.start for w in result[0]], [start] * len(result[0]))
+
+    yield test('x', [])
+    yield test('', ["cmd", "hex", "ill", "search"])
+    yield test('c', ["cmd"])
+    yield test('cm', ["cmd"])
+    yield test('cmd', ["cmd"])
+    yield test('cmx', [])
+    yield test('cmd ', ["selection", "all"], start=4)
+    yield test('cmd s', ["selection"], start=4)
+    yield test('cmd se', ["selection"])
+    yield test('cmd selection', ["selection"])
+    yield test('cmd sec', [])
+    yield test('cmd s ', ["forward", "reverse"], start=6)
+    yield test('cmd s r', ["reverse"], start=6)
+    yield test('cmd s x', ["xyz"])
+    yield test('hex ', list("0123456789abcdef"))
+    yield test('/', [])
+    yield test('/ ', [])
+    yield test('/a', [])
+    yield test('/abc/ ', ["yes", "no"])
+    yield test('ill ', [])
 
 def test_CommandBar_common_prefix():
     word_list = [
@@ -370,21 +378,21 @@ def test_CommandBar_common_prefix():
     bar = CommandTester()
 
     @gentest
-    def test(word, expect, complete=""):
+    def test(word, expect, complete="", start=0):
         delim = lambda:"/"
-        overlap = len(word) - 2 if len(word) > 2 else 0
-        words = [CompleteWord(w, delim, overlap)
+        words = [CompleteWord(w, delim, start)
                  for w in word_list if w.startswith(word)]
         prefix = bar.common_prefix(words)
         eq_(prefix, expect)
         if complete is not None:
             eq_(prefix.complete(), prefix + complete)
-            eq_(prefix.overlap, overlap)
+            eq_(prefix.start, start)
 
     yield test("x", "", None)
     yield test("", "te", None)
     yield test("t", "te")
     yield test("tes", "test_")
+    yield test("tes", "test_", start=42)
     yield test("test_a", "test_ab", "/")
     yield test("test_b", "test_ba")
     yield test("tex", "text_xyz", "/")
@@ -415,11 +423,11 @@ def test_CommandBar_auto_complete():
     yield test("d", word, (1, 0), ("dir/", (0, 1), (1, 3)))
     yield test("d/file.txt", word, (1, 0), ("dir", (0, 1), (1, 2)))
 
-    word = CompleteWord("Dir", lambda:"/", overlap=1)
+    word = CompleteWord("Dir", lambda:"/", start=0)
     yield test("d", word, (1, 0), ("Dir/", (0, 1), (1, 3)))
     yield test("d/file.txt", word, (1, 0), ("Dir", (0, 1), (1, 2)))
 
-    word = CompleteWord("DIR", lambda:"/", overlap=2)
+    word = CompleteWord("DIR", lambda:"/", start=0)
     yield test("di", word, (2, 0), ("DIR/", (0, 2), (2, 2)))
     yield test("di/file.txt", word, (2, 0), ("DIR", (0, 2), (2, 1)))
 
