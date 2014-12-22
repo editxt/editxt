@@ -73,6 +73,9 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+File tree navigation COMMAND+OPTION+Arrow
+doc command
+  focus document by filename
 Fix ack command with --after
   - allow options intermixed with paths (VarArgs dispatch)
 x  - output formatting
@@ -281,6 +284,69 @@ Bug: click on document in tree view
   	27  EditXT                              0x0000000100004b6e main + 1438
   	28  EditXT                              0x0000000100000e24 start + 52
   	29  ???                                 0x0000000000000002 0x0 + 2
+  )
+
+  Related:
+
+  ERROR editxt - *** Python exception discarded!
+  Traceback (most recent call last):
+    File "/Users/SharedSSD/Applications/EditXT.app/Contents/Resources/lib/python3.3/editxt/controls/linenumberview.py", line 147, in drawHashMarksAndLabelsInRect_
+  TypeError: Need 0 arguments, got 1
+
+  12/21/14 9:56:54.868 AM EditXT[30170]: (
+  	0   CoreFoundation                      0x00007fff949a3b06 __exceptionPreprocess + 198
+  	1   libobjc.A.dylib                     0x00007fff8fc363f0 objc_exception_throw + 43
+  	2   CoreFoundation                      0x00007fff94a37f49 -[NSException raise] + 9
+  	3   _objc.so                            0x00000001056475be PyObjCErr_ToObjCWithGILState + 46
+  	4   _objc.so                            0x0000000105633db6 PyObjCFFI_MakeClosure + 5174
+  	5   _objc.so                            0x000000010562788b ffi_closure_unix64_inner + 619
+  	6   _objc.so                            0x0000000105626e76 ffi_closure_unix64 + 70
+  	7   AppKit                              0x00007fff99acc064 -[NSView _drawRect:clip:] + 4217
+  	8   AppKit                              0x00007fff99aca6c1 -[NSView _recursiveDisplayAllDirtyWithLockFocus:visRect:] + 1656
+  	9   AppKit                              0x00007fff9994ed2a -[NSRulerView _recursiveDisplayAllDirtyWithLockFocus:visRect:] + 1041
+  	10  AppKit                              0x00007fff99acaad9 -[NSView _recursiveDisplayAllDirtyWithLockFocus:visRect:] + 2704
+  	11  AppKit                              0x00007fff99acaad9 -[NSView _recursiveDisplayAllDirtyWithLockFocus:visRect:] + 2704
+  	12  AppKit                              0x00007fff99acaad9 -[NSView _recursiveDisplayAllDirtyWithLockFocus:visRect:] + 2704
+  	13  AppKit                              0x00007fff99ac86f2 -[NSView _recursiveDisplayRectIfNeededIgnoringOpacity:isVisibleRect:rectIsVisibleRectForView:topView:] + 817
+  	14  AppKit                              0x00007fff99ac9a44 -[NSView _recursiveDisplayRectIfNeededIgnoringOpacity:isVisibleRect:rectIsVisibleRectForView:topView:] + 5763
+  	15  AppKit                              0x00007fff99ac9a44 -[NSView _recursiveDisplayRectIfNeededIgnoringOpacity:isVisibleRect:rectIsVisibleRectForView:topView:] + 5763
+  	16  AppKit                              0x00007fff99ac9a44 -[NSView _recursiveDisplayRectIfNeededIgnoringOpacity:isVisibleRect:rectIsVisibleRectForView:topView:] + 5763
+  	17  AppKit                              0x00007fff99ac8143 -[NSThemeFrame _recursiveDisplayRectIfNeededIgnoringOpacity:isVisibleRect:rectIsVisibleRectForView:topView:] + 314
+  	18  AppKit                              0x00007fff99ac3d6d -[NSView _displayRectIgnoringOpacity:isVisibleRect:rectIsVisibleRectForView:] + 4675
+  	19  AppKit                              0x00007fff99a8dc93 -[NSView displayIfNeeded] + 1830
+  	20  AppKit                              0x00007fff99a8d1cc _handleWindowNeedsDisplayOrLayoutOrUpdateConstraints + 738
+  	21  AppKit                              0x00007fff9a058901 __83-[NSWindow _postWindowNeedsDisplayOrLayoutOrUpdateConstraintsUnlessPostingDisabled]_block_invoke_01208 + 46
+  	22  CoreFoundation                      0x00007fff9496a417 __CFRUNLOOP_IS_CALLING_OUT_TO_AN_OBSERVER_CALLBACK_FUNCTION__ + 23
+  	23  CoreFoundation                      0x00007fff9496a381 __CFRunLoopDoObservers + 369
+  	24  CoreFoundation                      0x00007fff949457b8 __CFRunLoopRun + 728
+  	25  CoreFoundation                      0x00007fff949450e2 CFRunLoopRunSpecific + 290
+  	26  HIToolbox                           0x00007fff8f60aeb4 RunCurrentEventLoopInMode + 209
+  	27  HIToolbox                           0x00007fff8f60ab94 ReceiveNextEventCommon + 166
+  	28  HIToolbox                           0x00007fff8f60aae3 BlockUntilNextEventMatchingListInMode + 62
+  	29  AppKit                              0x00007fff99a8a533 _DPSNextEvent + 685
+  	30  AppKit                              0x00007fff99a89df2 -[NSApplication nextEventMatchingMask:untilDate:inMode:dequeue:] + 128
+  	31  AppKit                              0x00007fff99a811a3 -[NSApplication run] + 517
+  	32  AppKit                              0x00007fff99a25bd6 NSApplicationMain + 869
+  	33  _AppKit.so                          0x00000001007c982b PyInit__AppKit + 7499
+  	34  Python                              0x00000001024dc35e PyEval_EvalFrameEx + 29822
+  	35  Python                              0x00000001024dd4e8 PyEval_EvalCodeEx + 2296
+  	36  Python                              0x00000001024db977 PyEval_EvalFrameEx + 27287
+  	37  Python                              0x00000001024dbaff PyEval_EvalFrameEx + 27679
+  	38  Python                              0x00000001024dd4e8 PyEval_EvalCodeEx + 2296
+  	39  Python                              0x00000001024db977 PyEval_EvalFrameEx + 27287
+  	40  Python                              0x00000001024dd4e8 PyEval_EvalCodeEx + 2296
+  	41  Python                              0x00000001024dd5af PyEval_EvalCode + 63
+  	42  Python                              0x00000001024d250e _PyBuiltin_Init + 9982
+  	43  Python                              0x00000001024dc35e PyEval_EvalFrameEx + 29822
+  	44  Python                              0x00000001024dbaff PyEval_EvalFrameEx + 27679
+  	45  Python                              0x00000001024dd4e8 PyEval_EvalCodeEx + 2296
+  	46  Python                              0x00000001024dd5af PyEval_EvalCode + 63
+  	47  Python                              0x000000010250448b PyRun_FileExFlags + 187
+  	48  Python                              0x000000010250481d PyRun_SimpleFileExFlags + 717
+  	49  EditXT                              0x00000001000043f6 start + 13830
+  	50  EditXT                              0x0000000100004b6e main + 1438
+  	51  EditXT                              0x0000000100000e24 start + 52
+  	52  ???                                 0x0000000000000002 0x0 + 2
   )
 
 

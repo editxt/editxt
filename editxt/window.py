@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+import sys
 from collections import defaultdict
 from contextlib import contextmanager
 from itertools import groupby
@@ -154,6 +155,62 @@ class Window(object):
                     recent.discard(pid)
                     self.projects.remove(project)
                     project.close()
+
+    def focus(self, value, offset=1):
+        """Change the current document by navigating the tree or recent documents
+
+        :param value: One of the `Direction` constants in
+        `editxt.constants` or an editor's file path. `BACK` selects an
+        item in the recent editors stack. `UP` and `DOWN` move up or
+        down in the tree.
+        :param offset: The number of positions to move in direction.
+        :returns: True if a new editor was focused, otherwise false.
+        """
+        def focus(ident):
+            for project in self.projects:
+                if project.id == ident:
+                    self.current_editor = project
+                    return True
+                else:
+                    for editor in project.editors:
+                        if editor.id == ident:
+                            self.current_editor = editor
+                            return True
+            return False
+        def get_item_in_tree(current, offset):
+            if current is not None:
+                items = []
+                index = 0
+                stop = sys.maxsize
+                for project in self.projects:
+                    items.append(project)
+                    if current.id == project.id:
+                        stop = index + offset
+                        if stop <= index:
+                            break
+                    index += 1
+                    if project.expanded:
+                        for editor in project.editors:
+                            items.append(editor)
+                            if current.id == editor.id:
+                                stop = index + offset
+                                if stop <= index:
+                                    break
+                            index += 1
+                if 0 <= stop < len(items):
+                    return items[stop]
+            return None
+        if isinstance(value, const.Constant):
+            if value == const.BACK:
+                if 0 < offset <= len(self.recent):
+                    return focus(self.recent[-offset - 1])
+            if value == const.UP:
+                offset = -offset
+            editor = get_item_in_tree(self.current_editor, offset)
+            if editor is not None:
+                self.current_editor = editor
+                return True
+        return False
 
     @contextmanager
     def suspend_recent_updates(self, update_current=True):

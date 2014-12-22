@@ -52,6 +52,7 @@ def test_load_commands():
         mod.grab,
         mod.open_,
         mod.clear_highlighted_text,
+        mod.docnav,
         mod.reload_config,
         mod.set_variable,
         mod.help,

@@ -20,6 +20,18 @@
 import uuid
 import Foundation
 
+class Constant(object):
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return str(self.value)
+
+    def __repr__(self):
+        return "{}({!r})" % (type(self).__name__, self.value)
+
+
 CONFIG_FILENAME = "config.yaml"
 UNTITLED_DOCUMENT_NAME = "untitled"
 UNTITLED_PROJECT_NAME = "untitled project"
@@ -111,3 +123,7 @@ CLOSE_DIRTY_SELECTED = "close-dirty-selected.png"
 
 REGEX_HELP_URL = "http://docs.python.org/3/library/re.html#regular-expression-syntax"
 
+
+BACK = Constant("back")
+UP = Constant("up")
+DOWN = Constant("down")

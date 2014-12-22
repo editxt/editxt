@@ -33,6 +33,7 @@ from editxt.platform.app import beep
 from editxt.command.ack import ack
 from editxt.command.changeindent import reindent
 from editxt.command.diff import diff
+from editxt.command.docnav import doc as docnav
 from editxt.command.find import find
 from editxt.command.grab import grab
 from editxt.command.openfile import open_
@@ -66,6 +67,7 @@ def load_commands():
             grab,
             open_,
             clear_highlighted_text,
+            docnav,
             reload_config,
             set_variable,
             help,
