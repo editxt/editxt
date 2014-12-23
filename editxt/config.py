@@ -61,6 +61,11 @@ def config_schema(): return {
     "command": {
         # namespace for values added by @command decorated functions
     },
+    "shortcuts": {
+        "Command+Alt+Left": String("doc back"),
+        "Command+Alt+Up": String("doc up"),
+        "Command+Alt+Down": String("doc down"),
+    }
 }
 
 
@@ -234,7 +239,7 @@ class Config(object):
         self.valid[name] = value
         return value
 
-    def lookup(self, name):
+    def lookup(self, name, as_dict=False):
         value = self.data
         schema = self.schema
         assert isinstance(schema, dict), schema
@@ -252,16 +257,15 @@ class Config(object):
             try:
                 value = value[part]
             except KeyError:
-                if isinstance(schema, dict):
-                    value = {}
-                else:
-                    value = schema.default
+                value = value_of(schema)
             so_far.append(part)
 
         if isinstance(schema, dict):
             if not isinstance(value, dict):
-                raise ValueError(
-                    "{}: expected dict, got {!r}".format(name, value))
+                log.error("%s: expected dict, got %r", ".".join(so_far), value)
+                value = schema_to_dict(schema)
+            if as_dict:
+                return value
             config = Config(None, schema)
             config.data = value
             return config
@@ -305,3 +309,12 @@ class Config(object):
                         yield line
             yield ""
         return "\n".join(get_lines(self.schema))
+
+
+def value_of(cfg):
+    if isinstance(cfg, dict):
+        return schema_to_dict(cfg)
+    return cfg.default
+
+def schema_to_dict(schema):
+    return {key: value_of(cfg) for key, cfg in schema.items()}

@@ -573,7 +573,7 @@ class CommandTester(object):
             self.output = None
         class menu:
             @staticmethod
-            def insertItem_atIndex_(item, tag):
+            def addItem_(item):
                 pass
         def message(msg, msg_type=const.INFO):
             if kw.get("output"):

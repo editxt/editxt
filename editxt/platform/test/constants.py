@@ -17,5 +17,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+from editxt.platform.mac.constants import KEY
 
 ESCAPE = "escape"

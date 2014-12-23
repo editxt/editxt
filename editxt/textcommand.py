@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+import re
 import sys
 import traceback
 from collections import defaultdict
@@ -31,8 +32,9 @@ import Foundation as fn
 import editxt.constants as const
 from editxt.command.base import CommandError
 from editxt.command.parser import ArgumentError, CompleteWord, CompletionsList
-from editxt.command.util import markdoc
+from editxt.command.util import has_editor, markdoc
 from editxt.commands import load_commands, help
+from editxt.config import schema_to_dict
 from editxt.history import History
 from editxt.platform.app import beep
 from editxt.platform.events import call_later
@@ -40,7 +42,7 @@ from editxt.platform.kvo import KVOList, KVOProxy
 from editxt.platform.markdown import AttributedString
 from editxt.platform.views import CommandView
 from editxt.platform.window import OutputPanel
-from editxt.util import WeakProperty
+from editxt.util import parse_hotkey, WeakProperty
 
 log = logging.getLogger(__name__)
 
@@ -250,14 +252,7 @@ class CommandBar(object):
         :returns: A tuple ``(command, argument_string)``. ``command`` will be
         ``None`` if no matching command is found.
         """
-        if not text:
-            return None, text
-        cmdstr, space, argstr = text.partition(" ")
-        command = self.text_commander.lookup(cmdstr)
-        if command is None:
-            argstr = text
-            command, a = self.text_commander.lookup_full_command(argstr, False)
-        return command, argstr
+        return self.text_commander.find_command(text)
 
     def get_placeholder(self, text):
         """Get arguments placeholder text"""
@@ -535,6 +530,16 @@ class CommandManager(object):
             return command, args
         return None, None
 
+    def find_command(self, text):
+        if not text:
+            return None, text
+        cmdstr, space, argstr = text.partition(" ")
+        command = self.lookup(cmdstr)
+        if command is None:
+            argstr = text
+            command, a = self.lookup_full_command(argstr, False)
+        return command, argstr
+
     def get_completions(self, text, index):
         # TODO implement this
         return []
@@ -551,16 +556,31 @@ class CommandManager(object):
                 self.add_command(command, path, menu)
             self.input_handlers.update(reg.get("input_handlers", {}))
 
+    def load_shortcuts(self, menu):
+        shortcuts = schema_to_dict(self.app.config.schema["shortcuts"])
+        shortcuts.update(self.app.config.lookup("shortcuts", as_dict=True))
+        def make_command(text):
+            from editxt.command.base import command
+            cmd, argstr = self.find_command(text)
+            @command(is_enabled=None if cmd is None else cmd.is_enabled)
+            def exec(editor, sender, args):
+                editor.project.window.command.execute(text)
+            exec.__name__ = text
+            return exec
+        for hotkey, text in sorted(shortcuts.items(), key=lambda kv: kv[1]):
+            key, mask = parse_hotkey(hotkey)
+            command = make_command(text)
+            if key is not None and command is not None:
+                tag = self.add_menu_item(menu, text, "doCommand:", key, mask)
+                self.commands[tag] = command
+            else:
+                log.warn("unrecognized hotkey: %s", hotkey)
+
     def add_command(self, command, path, menu):
         if command.title is not None:
-            command.__tag = tag = next(self.tagger)
-            hotkey, keymask = self.validate_hotkey(command.hotkey)
-            item = ak.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
-                command.title, "doCommand:", hotkey)
-            item.setKeyEquivalentModifierMask_(keymask)
-            item.setTag_(tag)
-            # HACK tag will not be the correct index if an item is ever removed
-            menu.insertItem_atIndex_(item, tag)
+            key, mask = self.validate_hotkey(command.hotkey)
+            tag = command.__tag = self.add_menu_item(
+                menu, command.title, "doCommand:", key, mask)
             self.commands[tag] = command
         if command.lookup_with_arg_parser:
             self.lookup_full_commands.insert(0, command)
@@ -573,6 +593,15 @@ class CommandManager(object):
                     self.commands[alias] = command
         if command.config is not None:
             self.app.config.extend(command.name, command.config)
+
+    def add_menu_item(self, menu, title, selector, key, mask):
+        tag = next(self.tagger)
+        item = ak.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+            title, "doCommand:", key)
+        item.setKeyEquivalentModifierMask_(mask)
+        item.setTag_(tag)
+        menu.addItem_(item)
+        return tag
 
     def validate_hotkey(self, value):
         if value is not None:

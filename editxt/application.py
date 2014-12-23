@@ -106,6 +106,7 @@ class Application(object):
     def application_will_finish_launching(self, app, delegate):
         self.init_syntax_definitions()
         self.text_commander.load_commands(delegate.textMenu)
+        self.text_commander.load_shortcuts(delegate.shortcutsMenu)
         states = list(self.iter_saved_window_states())
         if states:
             errors = []

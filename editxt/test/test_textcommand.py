@@ -747,7 +747,7 @@ def test_CommandManager_lookup_full_command():
         ctl = CommandManager("<history>")
         for command in c.commands:
             ctl.add_command(command, None, menu)
-            menu.insertItem_atIndex_(ANY, ANY)
+            menu.addItem_(ANY)
         eq_(ctl.lookup_full_command(c.lookup), c.result)
     @command(name="cm")
     def cmd(*args):
@@ -787,6 +787,28 @@ def test_CommandManager_load_commands():
     yield test, c(commands=0, handlers=0)
     yield test, c(commands=2, handlers=2)
 
+def test_CommandManager_load_shortcuts():
+    from editxt.config import config_schema
+    shorts = config_schema()["shortcuts"]
+    menu = const.Constant("menu")
+    expect = []
+    tags = {}
+    key = lambda kv: kv[1].default
+    for i, (hotkey, value) in enumerate(sorted(shorts.items(), key=key)):
+        hkey = mod.parse_hotkey(hotkey)
+        expect.append((menu, value.default, "doCommand:") + hkey)
+        tags[value.default] = i
+    items = []
+    def add_menu_item(menu, title, selector, hotkey, modifiers):
+        items.append((menu, title, selector, hotkey, modifiers))
+        return tags[title]
+    with test_app() as app:
+        ctl = CommandManager("<history>", app=app)
+        ctl.add_menu_item = add_menu_item
+        ctl.load_shortcuts(menu)
+        eq_(items, expect)
+        eq_(set(ctl.commands), set(tags.values()))
+
 def test_CommandManager_add_command():
     def test(c):
         m = Mocker()
@@ -807,7 +829,7 @@ def test_CommandManager_add_command():
             '<title>', "doCommand:" ,"<hotkey>") >> mi
         mi.setKeyEquivalentModifierMask_("<keymask>")
         mi.setTag_(tag)
-        menu.insertItem_atIndex_(mi, tag)
+        menu.addItem_(mi)
         with m:
             ctl.add_command(cmd, None, menu)
             assert ctl.commands[tag] is cmd, (ctl.commands[tag], cmd)

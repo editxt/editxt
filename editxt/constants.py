@@ -29,7 +29,7 @@ class Constant(object):
         return str(self.value)
 
     def __repr__(self):
-        return "{}({!r})" % (type(self).__name__, self.value)
+        return "{}({!r})".format(type(self).__name__, self.value)
 
 
 CONFIG_FILENAME = "config.yaml"

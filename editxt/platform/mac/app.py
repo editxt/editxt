@@ -30,6 +30,7 @@ class AppDelegate(ak.NSObject):
 
     app = None # set by editxt.platform.mac.main.run
     textMenu = objc.IBOutlet()
+    shortcutsMenu = objc.IBOutlet()
     textEditCommandsMenu = objc.IBOutlet()
     updater = None
 

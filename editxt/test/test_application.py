@@ -122,8 +122,8 @@ def test_application_will_finish_launching():
         m.method(app.iter_saved_window_states)() >> iter(eds_config)
         tc = m.replace(app, 'text_commander', spec=CommandManager)
         dc = m.mock(DocumentController)
-        menu = dc.textMenu >> m.mock(ak.NSMenu)
-        tc.load_commands(menu)
+        tc.load_commands(dc.textMenu >> m.mock(ak.NSMenu))
+        tc.load_shortcuts(dc.shortcutsMenu >> m.mock(ak.NSMenu))
         if eds_config:
             error = False
             for ed_config in eds_config:

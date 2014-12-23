@@ -33,6 +33,7 @@ import AppKit as ak
 import Foundation as fn
 
 import editxt.constants as const
+from editxt.platform.constants import KEY
 from editxt.platform.kvo import proxy_target
 
 # DEPRECATED
@@ -219,6 +220,20 @@ def hex_value(color):
     )
 
 COLOR_RE = re.compile("^#?[0-9a-f]{6}$", re.IGNORECASE)
+
+
+def parse_hotkey(hotkey):
+    """Parse a hotkey string returning a tuple: `(key, modifier_mask)`"""
+    *groups, key = hotkey.split("+")
+    modifiers = 0
+    for modifier in groups:
+        mod = getattr(KEY.Modifier, modifier, None)
+        if mod is None:
+            return None, 0
+        modifiers |= mod
+    if len(key) > 1:
+        key = getattr(KEY, key, None)
+    return key, modifiers
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
