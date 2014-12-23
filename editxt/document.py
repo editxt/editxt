@@ -21,6 +21,7 @@ import logging
 import objc
 import os
 from itertools import count
+from os.path import realpath
 
 import AppKit as ak
 import Foundation as fn
@@ -71,11 +72,11 @@ class DocumentController(object):
         be tracked by this controller.
         """
         try:
-            document = self.documents[path]
+            document = self.documents[realpath(path)]
         except KeyError:
             document = TextDocument(self.app, path)
             if document.has_real_path():
-                self.documents[path] = document
+                self.documents[realpath(path)] = document
         return document
 
     def change_document_path(self, old_path, document):
@@ -86,12 +87,13 @@ class DocumentController(object):
         file_path attribute pointing to its new location on disk.
         """
         assert document.has_real_path(), document
-        self.documents.pop(old_path, None)
-        self.documents[document.file_path] = document
+        if old_path and os.path.isabs(old_path):
+            self.documents.pop(realpath(old_path), None)
+        self.documents[realpath(document.file_path)] = document
 
     def discard(self, document):
         """Remove document from controller"""
-        self.documents.pop(document.file_path, None)
+        self.documents.pop(realpath(document.file_path), None)
 
 
 class TextDocument(object):
