@@ -60,6 +60,5 @@ def open_files(paths, project, index=None):
                 index = project.editors.index(current) + 1
             except ValueError:
                 pass
-    editors = [Editor(project, path=path) for path in paths]
-    project.insert_items(editors, index)
-    project.window.current_editor = editors[-1]
+    documents = [project.app.document_with_path(path) for path in paths]
+    project.window.insert_items(documents, project, index)

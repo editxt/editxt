@@ -137,6 +137,10 @@ class Project(object):
         return True
 
     @property
+    def app(self):
+        return self.window.app
+
+    @property
     def project(self):
         return self
 

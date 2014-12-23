@@ -48,6 +48,9 @@ def test_open_command():
     yield test("open file.txt",
                config="editor* editor",
                expected="editor editor[/file.txt 0]* editor")
+    yield test("open file.txt",
+               config="editor* editor(/file.txt)",
+               expected="editor editor(/file.txt)*")
     yield test("open file.txt other.txt", "editor[/file.txt 0] editor[/other.txt 1]*")
     yield test("open", error="please specify a file path")
     yield test("open file.txt", "editor[~/file.txt 0]*", project_path=None)

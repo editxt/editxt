@@ -73,8 +73,8 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-File tree navigation COMMAND+OPTION+Arrow
 doc command
+x  File tree navigation COMMAND+OPTION+Arrow
   focus document by filename
 Fix ack command with --after
   - allow options intermixed with paths (VarArgs dispatch)
