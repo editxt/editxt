@@ -376,6 +376,14 @@ class test_app(object):
         return {v: k for k, v in self.items.items()}[name]
 
 
+@contextmanager
+def expect_beep(on=True, count=1):
+    import editxt.platform.test.app as app
+    before_count = app.beep_count
+    yield
+    eq_(app.beep_count - before_count, count if on else 0, 'beep')
+
+
 def check_app_state(test):
     def checker(when):
         def check_app_state():

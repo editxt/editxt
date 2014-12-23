@@ -18,7 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 from editxt.test.test_commands import CommandTester
-from editxt.test.util import assert_raises, eq_, gentest, TestConfig, test_app
+from editxt.test.util import (assert_raises, eq_, expect_beep, gentest,
+    TestConfig, test_app)
 
 import editxt.command.docnav as mod
 
@@ -35,24 +36,37 @@ def test_doc():
     """
     BEEP = object()
     @gentest
-    def test(command, focus, recent="DEBAC", back=0):
+    def test(command, focus, recent="DEBAC", prev=0):
         with test_app(CONFIG) as app:
             tapp = test_app(app)
             for doc in recent:
                 app.windows[0].current_editor = tapp.get("editor(%s)" % doc)
             editor = app.windows[0].current_editor
             bar = CommandTester(mod.doc, editor=editor)
-            bar(command)
-            state = CONFIG.split()
-            def f(item):
-                return (item + '*') if focus in item else item
-            eq_(tapp.state, ' '.join([f(item) for item in state]))
+            if prev:
+                bar("doc previous %s" % prev)
+            with expect_beep(focus is BEEP):
+                bar(command)
+                if focus is BEEP:
+                    focus = recent[-1]
+                state = CONFIG.split()
+                def f(item):
+                    return (item + '*') if focus in item else item
+                eq_(tapp.state, ' '.join([f(item) for item in state]))
 
     yield test("doc", "A")
-    yield test("doc back", "A")
-    yield test("doc back 2", "B")
-#    yield test("doc front", BEEP)
-#    yield test("doc front", "A", back=2)
-#    yield test("doc front", "C", back=1)
+    yield test("doc previous", "A")
+    yield test("doc previous 2", "B")
+    yield test("doc previous 3", "E")
+    yield test("doc previous 4", "D")
+    yield test("doc previous 5", BEEP)
+    yield test("doc next", BEEP)
+    yield test("doc next", "A", prev=2)
+    yield test("doc next", "C", prev=1)
     yield test("doc up", "B")
+    yield test("doc up 2", "A")
+    yield test("doc up 3", "project")
+    yield test("doc up 4", BEEP)
     yield test("doc down", "D")
+    yield test("doc down 2", "E")
+    yield test("doc down 3", BEEP)

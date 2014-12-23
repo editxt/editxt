@@ -29,15 +29,15 @@ from editxt.platform.constants import KEY
 
 log = logging.getLogger(__name__)
 
-DIRECTIONS = {
-    "back": const.BACK,
-    "up": const.UP,
-    "down": const.DOWN,
-}
-
 
 @command(arg_parser=CommandParser(
-    Choice("back", "up", "down", name="direction"),
+    Choice(
+        ("previous", const.PREVIOUS),
+        ("next", const.NEXT),
+        ("up", const.UP),
+        ("down", const.DOWN),
+        name="direction"
+    ),
     Int("offset", default=1),
 ), title="Navigate Document Tree", is_enabled=has_editor)
 def doc(editor, sender, args):
@@ -46,7 +46,5 @@ def doc(editor, sender, args):
         from editxt.commands import show_command_bar
         show_command_bar(editor, sender, doc.name + " ")
         return
-    value = DIRECTIONS[args.direction]
-    moved = editor.project.window.focus(value, args.offset)
-    if not moved:
+    if not editor.project.window.focus(args.direction, args.offset):
         beep()

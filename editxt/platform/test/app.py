@@ -20,6 +20,7 @@
 import logging
 
 log = logging.getLogger(__name__)
+beep_count = 0
 
 
 def add_recent_document(path):
@@ -27,4 +28,6 @@ def add_recent_document(path):
 
 
 def beep():
+    global beep_count
+    beep_count += 1
     log.info("beep")

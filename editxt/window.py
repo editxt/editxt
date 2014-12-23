@@ -58,6 +58,7 @@ class Window(object):
         self.command = CommandBar(self, app.text_commander)
         self.projects = KVOList()
         self.recent = self._suspended_recent = RecentItemStack(100)
+        self._recent_history = None
         self.window_settings_loaded = False
 
     def window_did_load(self):
@@ -159,10 +160,10 @@ class Window(object):
     def focus(self, value, offset=1):
         """Change the current document by navigating the tree or recent documents
 
-        :param value: One of the `Direction` constants in
-        `editxt.constants` or an editor's file path. `BACK` selects an
-        item in the recent editors stack. `UP` and `DOWN` move up or
-        down in the tree.
+        :param value: One of the direction constants in
+        `editxt.constants` or an editor's file path. `NEXT` and
+        `PREVIOUS` select items in the recent editors stack. `UP` and
+        `DOWN` move up or down in the tree.
         :param offset: The number of positions to move in direction.
         :returns: True if a new editor was focused, otherwise false.
         """
@@ -201,9 +202,21 @@ class Window(object):
                     return items[stop]
             return None
         if isinstance(value, const.Constant):
-            if value == const.BACK:
-                if 0 < offset <= len(self.recent):
-                    return focus(self.recent[-offset - 1])
+            if value == const.PREVIOUS or value == const.NEXT:
+                history = ((list(reversed(self.recent)) + [0])
+                           if self._recent_history is None
+                           else self._recent_history)
+                if value == const.PREVIOUS:
+                    offset = offset + history[-1]
+                else:
+                    offset = history[-1] - offset
+                if 0 <= offset < len(history) - 1:
+                    ok = focus(history[offset])
+                    if ok:
+                        history[-1] = offset
+                        self._recent_history = history
+                    return ok
+                return False
             if value == const.UP:
                 offset = -offset
             editor = get_item_in_tree(self.current_editor, offset)
@@ -255,6 +268,7 @@ class Window(object):
         return self._current_editor
 
     def _set_current_editor(self, editor):
+        self._recent_history = None
         if editor is self._current_editor:
             return
         self._current_editor = editor
