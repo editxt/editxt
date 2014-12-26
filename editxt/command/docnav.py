@@ -23,7 +23,7 @@ import re
 import editxt.constants as const
 from editxt.command.base import command, CommandError
 from editxt.command.parser import (CommandParser, Choice, CompleteWord,
-    Int, Regex, String)
+    Int, Regex, String, ParseError, ArgumentError)
 from editxt.command.util import has_editor
 from editxt.editor import Editor
 from editxt.platform.app import beep
@@ -60,15 +60,18 @@ class EditorTreeItem(String):
             parts.append(editor.project.name)
         return "::".join(p for p in parts if p is not None)
 
-    def value_of(self, token, text, index):
+    def cached_completions(self, token, text, index):
         key = (text, index)
+        try:
+            items = self.completions[key]
+        except KeyError:
+            items = self.completions[key] = self.get_completions(token)
+        return items
+
+    def value_of(self, token, text, index):
         if self.completions is not None and token:
-            try:
-                items = self.completions[key]
-            except KeyError:
-                items = self.completions[key] = self.get_completions(token)
             starts = []
-            for comp in items:
+            for comp in self.cached_completions(token, text, index):
                 if comp == token:
                     return comp.value
                 if comp.startswith(token):
@@ -105,7 +108,7 @@ class EditorTreeItem(String):
                 return # ignore exact match
             itemset.add(word)
             if ' ' in word:
-                word = Regex.delimit(word, delimiters='\'"')[0]
+                word = word.replace(" ", "\\ ")
             items.append(CompleteWord(word, start=0, value=editor))
         items = []
         itemset = set()
@@ -116,6 +119,21 @@ class EditorTreeItem(String):
                 if editor.name.startswith(token):
                     add_completion(editor)
         return items
+
+    def get_placeholder(self, text, index):
+        if index >= len(text):
+            return str(self), index
+        try:
+            token, index, terminated = self.parse_token(text, index)
+        except ParseError as err:
+            return None, None
+        except ArgumentError as err:
+            raise NotImplementedError # TODO
+        comps = [word for word in self.cached_completions(token, text, index)
+                      if word.startswith(token)]
+        if len(comps) == 1:
+            return comps[0][len(token):], index
+        return (None if terminated else ""), index
 
     def arg_string(self, value):
         if value is not None:

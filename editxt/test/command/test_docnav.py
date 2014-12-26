@@ -58,6 +58,7 @@ def test_doc():
     yield test("doc E", "E")
     yield test("doc X", BEEP)
 
+    yield test("doc", "A")
     yield test("doc  previous", "A")
     yield test("doc  previous 2", "B")
     yield test("doc  previous 3", "E")
