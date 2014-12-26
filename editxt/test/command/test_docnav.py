@@ -44,7 +44,7 @@ def test_doc():
             editor = app.windows[0].current_editor
             bar = CommandTester(mod.doc, editor=editor)
             if prev:
-                bar("doc previous %s" % prev)
+                bar("doc  previous %s" % prev)
             with expect_beep(focus is BEEP):
                 bar(command)
                 if focus is BEEP:
@@ -54,19 +54,28 @@ def test_doc():
                     return (item + '*') if focus in item else item
                 eq_(tapp.state, ' '.join([f(item) for item in state]))
 
-    yield test("doc", "A")
-    yield test("doc previous", "A")
-    yield test("doc previous 2", "B")
-    yield test("doc previous 3", "E")
-    yield test("doc previous 4", "D")
-    yield test("doc previous 5", BEEP)
-    yield test("doc next", BEEP)
-    yield test("doc next", "A", prev=2)
-    yield test("doc next", "C", prev=1)
-    yield test("doc up", "B")
-    yield test("doc up 2", "A")
-    yield test("doc up 3", "project")
-    yield test("doc up 4", BEEP)
-    yield test("doc down", "D")
-    yield test("doc down 2", "E")
-    yield test("doc down 3", BEEP)
+    yield test("doc A", "A")
+    yield test("doc E", "E")
+    yield test("doc X", BEEP)
+
+    yield test("doc  previous", "A")
+    yield test("doc  previous 2", "B")
+    yield test("doc  previous 3", "E")
+    yield test("doc  previous 4", "D")
+    yield test("doc  previous 5", BEEP)
+    yield test("doc  next", BEEP)
+    yield test("doc  next", "A", prev=2)
+    yield test("doc  next", "C", prev=1)
+    yield test("doc  up", "B")
+    yield test("doc  up 2", "A")
+    yield test("doc  up 3", "project")
+    yield test("doc  up 4", BEEP)
+    yield test("doc  down", "D")
+    yield test("doc  down 2", "E")
+    yield test("doc  down 3", BEEP)
+
+def test_config_shortcuts():
+    from editxt.config import config_schema
+    eq_({f.default for f in config_schema()["shortcuts"].values()
+                   if f.default.startswith("doc ")},
+        {'doc  previous', 'doc  next', 'doc  up', 'doc  down'})

@@ -109,7 +109,9 @@ class CommandParser(object):
         errors = []
         for arg in self.argspec:
             try:
-                value, index = arg.consume(text, index) #, previous_errors=errors)
+                start = index
+                token, index = arg.consume(text, index) #, previous_errors=errors)
+                value = arg.value_of(token, text, start)
                 errors = []
             except ParseError as err:
                 errors.append(err)
@@ -254,6 +256,10 @@ class Field(object):
             consumed token.
         """
         raise NotImplementedError("abstract method")
+
+    def value_of(self, token, text, index):
+        """Convert consumed token to argument value"""
+        return token
 
     def consume_token(self, text, index):
         """Helper method that consumes one token from text starting at index
@@ -1202,17 +1208,19 @@ class Options(object):
 
 class CompleteWord(str):
 
-    __slots__ = ["get_delimiter", "start"]
-
-    def __new__(cls, value="", get_delimiter=None, start=None):
-        obj = super(CompleteWord, cls).__new__(cls, value)
-        if isinstance(value, CompleteWord):
+    def __new__(cls, _value="", get_delimiter=None, start=None, **kw):
+        obj = super(CompleteWord, cls).__new__(cls, _value)
+        if isinstance(_value, CompleteWord):
             if get_delimiter is None:
-                get_delimiter = value.get_delimiter
+                get_delimiter = _value.get_delimiter
             if start is None:
-                start = value.start
+                start = _value.start
+            for key, value in _value.__dict__.items():
+                if not key.startswith("_") and key not in kw:
+                    setattr(obj, key, value)
         obj.get_delimiter = get_delimiter or (lambda:" ")
         obj.start = start
+        obj.__dict__.update(kw)
         return obj
 
     def complete(self):

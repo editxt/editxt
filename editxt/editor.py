@@ -34,7 +34,7 @@ from editxt.controls.alert import Alert
 from editxt.document import DocumentController, Error as DocumentError
 from editxt.platform.document import setup_main_view, teardown_main_view
 from editxt.platform.kvo import KVOList, KVOProxy, KVOLink
-from editxt.util import register_undo_callback, WeakProperty
+from editxt.util import register_undo_callback, user_path, WeakProperty
 
 log = logging.getLogger(__name__)
 
@@ -163,6 +163,14 @@ class Editor(object):
     @property
     def is_dirty(self):
         return self.document.is_dirty()
+
+    def short_path(self, name=True):
+        path = self.file_path
+        if not name:
+            path = os.path.dirname(path)
+        if self.project.path and path.startswith(self.project.path + os.path.sep):
+            path = path[len(self.project.path) + 1:]
+        return user_path(path)
 
     def dirname(self):
         """Return a tuple: (directory, filename or None)"""

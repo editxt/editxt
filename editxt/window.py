@@ -223,6 +223,8 @@ class Window(object):
             if editor is not None:
                 self.current_editor = editor
                 return True
+        if isinstance(value, (Editor, Project)):
+            return focus(value.id)
         return False
 
     @contextmanager

@@ -148,6 +148,9 @@ class Project(object):
     def file_path(self):
         return self.path
 
+    def short_path(self, name=True):
+        return self.path or ""
+
     def dirname(self):
         """Return a tuple: (directory, filename or None)"""
         if self.path:

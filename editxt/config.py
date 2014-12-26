@@ -62,10 +62,10 @@ def config_schema(): return {
         # namespace for values added by @command decorated functions
     },
     "shortcuts": {
-        "Command+Alt+Left": String("doc previous"),
-        "Command+Alt+Right": String("doc next"),
-        "Command+Alt+Up": String("doc up"),
-        "Command+Alt+Down": String("doc down"),
+        "Command+Alt+Left": String("doc  previous"),
+        "Command+Alt+Right": String("doc  next"),
+        "Command+Alt+Up": String("doc  up"),
+        "Command+Alt+Down": String("doc  down"),
     }
 }
 

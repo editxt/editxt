@@ -309,7 +309,7 @@ class CommandBar(object):
                         diff = len(text) - len(argstr)
                         assert diff > 0, (text, argstr)
                         for word in words:
-                            if hasattr(word, 'start'):
+                            if getattr(word, 'start', None) is not None:
                                 word.start += diff
             else:
                 words = []
