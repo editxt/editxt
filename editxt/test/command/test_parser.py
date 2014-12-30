@@ -29,7 +29,7 @@ from editxt.test.util import assert_raises, replattr, TestConfig
 
 import editxt.command.parser as mod
 from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
-    File, CommandParser, SubArgs, SubParser, VarArgs, CompleteWord,
+    File, CommandParser, SubArgs, SubParser, VarArgs, CompleteWord, Conditional,
     identifier, Options, Error, ArgumentError, ParseError)
 
 log = logging.getLogger(__name__)
@@ -197,6 +197,53 @@ def test_CommandParser_with_SubParser_errors():
                         Int("num"), 4, 5)])
     with assert_raises(ArgumentError, msg=check):
         parser.parse('num x')
+
+def test_CommandParser_with_Conditional():
+    def not_off(arg):
+        return arg.preceding.level != 0
+    parser = CommandParser(
+        Choice(
+            ("off", 0),
+            ('high', 4),
+            ("medium", 2),
+            ('low', 1),
+            name="level"
+        ),
+        Conditional(not_off, yesno),
+    )
+
+    def test(text, result):
+        eq_(parser.get_placeholder(text), result)
+    yield test, "", "off"
+    yield test, " ", ""
+    yield test, "  ", ""
+    yield test, "h", "igh yes"
+    yield test, "h ", "yes"
+    yield test, "lo", "w yes"
+    yield test, "lo ", "yes"
+    yield test, "num ", ""
+    yield test, "num  ", ""
+
+    def test(text, result):
+        eq_(parser.get_completions(text), result)
+    yield test, "", ["off", "high", "medium", "low"]
+    yield test, " ", []
+    yield test, "  ", []
+    yield test, "h", ["high"]
+    yield test, "h ", ["yes", "no"]
+    yield test, "lo", ["low"]
+    yield test, "lo ", ["yes", "no"]
+    yield test, "num ", []
+    yield test, "num  ", []
+
+    def test(text, args):
+        eq_(parser.parse(text), args)
+    yield test, "", Options(level=0, yes=True)
+    yield test, " ", Options(level=0, yes=True)
+    yield test, "h", Options(level=4, yes=True)
+    yield test, "h ", Options(level=4, yes=True)
+    yield test, "h n", Options(level=4, yes=False)
+    yield test, "lo", Options(level=1, yes=True)
 
 def test_CommandParser_order():
     def test(text, result):

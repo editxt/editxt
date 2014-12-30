@@ -73,9 +73,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-doc command
-x  File tree navigation COMMAND+OPTION+Arrow
-  focus document by filename
 Show error in find dialog when in Python replace mode and replace string is invalid
 Fix ack command with --after
   - allow options intermixed with paths (VarArgs dispatch)

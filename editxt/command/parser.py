@@ -112,10 +112,13 @@ class CommandParser(object):
         if args is None:
             args = Options()
         for field in self.argspec:
-            arg = Arg(field, text, index, args)
-            yield arg
-            if not arg.errors:
-                index = arg.end
+            try:
+                arg = Arg(field, text, index, args)
+                yield arg
+                if not arg.errors:
+                    index = arg.end
+            except SkipField as skip:
+                arg = skip
             setattr(args, field.name, arg.value)
         if index < len(text):
             yield Arg(None, text, index, args)
@@ -411,6 +414,7 @@ class Field(object):
         `self.consume(...)`.
         :param arg: The `Arg` object.
         :returns: The argument value.
+        :raises: `SkipField` to cause this field to be skipped.
         """
         return consumed
 
@@ -1233,6 +1237,38 @@ class SubArgs(object):
         return "{}({})".format(type(self).__name__, ", ".join(args))
 
 
+class Conditional(Field):
+
+    def __init__(self, is_enabled, field, editor=None, **kw):
+        default = kw.setdefault('default', field.default)
+        self.args = [is_enabled, field, default]
+        super().__init__(field.name, default)
+        self.is_enabled = is_enabled
+        self.field = field
+        self.editor = editor
+
+    def with_context(self, editor):
+        return type(self)(
+            self.is_enabled, self.field, editor, default=self.default)
+
+    def consume(self, text, index):
+        return self.field.consume(text, index)
+
+    def value_of(self, consumed, arg):
+        if not self.is_enabled(arg):
+            raise SkipField(self.default)
+        return self.field.value_of(consumed, arg)
+
+    def get_placeholder(self, arg):
+        return self.field.get_placeholder(arg)
+
+    def get_completions(self, arg):
+        return self.field.get_completions(arg)
+
+    def arg_string(self, value):
+        return self.field.arg_string(value)
+
+
 class Options(object):
     """Parsed argument container
 
@@ -1357,3 +1393,10 @@ class ParseError(Error):
     @property
     def parse_index(self):
         return self.args[3]
+
+
+class SkipField(Error):
+
+    @property
+    def value(self):
+        return self.args[0]

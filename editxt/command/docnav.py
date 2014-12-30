@@ -23,7 +23,7 @@ import re
 import editxt.constants as const
 from editxt.command.base import command, CommandError
 from editxt.command.parser import (CommandParser, Choice, CompleteWord,
-    Int, Regex, String, Error)
+    Conditional, Int, Regex, String, Error)
 from editxt.command.util import has_editor
 from editxt.editor import Editor
 from editxt.platform.app import beep
@@ -140,16 +140,20 @@ class EditorTreeItem(String):
         return super().arg_string(value)
 
 
+def no_editor(arg):
+    return arg.preceding.editor is None
+
+
 @command(arg_parser=CommandParser(
     EditorTreeItem("editor"),
-    Choice(
+    Conditional(no_editor, Choice(
         ("previous", const.PREVIOUS),
         ("next", const.NEXT),
         ("up", const.UP),
         ("down", const.DOWN),
         name="direction"
-    ),
-    Int("offset", default=1),
+    )),
+    Conditional(no_editor, Int("offset", default=1)),
 ), title="Navigate Document Tree", is_enabled=has_editor)
 def doc(editor, sender, args):
     """Navigate the document tree"""
