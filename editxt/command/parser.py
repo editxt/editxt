@@ -271,6 +271,40 @@ class Arg(object):
         """
         return self.end > len(self.text)
 
+    def consume_token(self, index=None):
+        """Consume one space-delimited token from the command string
+
+        This consumes all text up to (including) the next space in the
+        command string. The returned value will not contain spaces. If
+        the character at index is a space, then first element of the
+        returned tuple will be `None` indicating that the argument
+        should use its default value. This is meant to be called by
+        subclasses; it is not part of the public interface.
+
+        :param index: Optional index from which to consume; defaults to the
+        start of this arg.
+        :returns: A tuple `(<token>, <index>)` where `token` is the
+        consumed string (`None` if there was nothing to consume), and
+        `index` is that following the last consumed character.
+        """
+        if isinstance(self, Arg):
+            text = self.text
+            if index is None:
+                index = self.start
+        else:
+            text = self
+        if index > len(text):
+            return None, index
+        if index == len(text) or text[index] == ' ':
+            return None, index + 1
+        end = text.find(' ', index)
+        if end < 0:
+            token = text[index:]
+            end = len(text)
+        else:
+            token = text[index:end]
+        return token, end + 1
+
     def get_placeholder(self):
         return self.field.get_placeholder(self.text, self.start, self.preceding)
 
@@ -358,33 +392,6 @@ class Field(object):
     def value_of(self, token, text, index, args):
         """Convert consumed token to argument value"""
         return token
-
-    def consume_token(self, text, index):
-        """Helper method that consumes one token from text starting at index
-
-        This consumes all text up to (including) the next space in the
-        string. The returned token will not contain spaces. If the
-        character at index is a space, then first element of the
-        returned tuple will be `None` indicating that the argument
-        should use its default value. This is meant to be called by
-        subclasses; it is not part of the public interface.
-
-        :param text: Argument string.
-        :param index: Index from which to consume argument.
-        :returns: A tuple `(<token string or None>, <index>)` where `index`
-            is that following the last consumed character in `text`.
-        """
-        if index > len(text):
-            return None, index
-        if index == len(text) or text[index] == ' ':
-            return None, index + 1
-        end = text.find(' ', index)
-        if end < 0:
-            token = text[index:]
-            end = len(text)
-        else:
-            token = text[index:end]
-        return token, end + 1
 
     def parse_token(self, text, index):
         """Parse argument token from text starting at index
@@ -531,7 +538,7 @@ class Choice(Field):
 
         :returns: (<chosen or default value>, <index>)
         """
-        token, end = self.consume_token(text, index)
+        token, end = Arg.consume_token(text, index)
         if token is None:
             return self.default, end
         if token in self.mapping:
@@ -550,8 +557,7 @@ class Choice(Field):
     def get_placeholder(self, text, index, args):
         if index >= len(text):
             return str(self)
-        token, end = self.consume_token(text, index)
-        assert not text[index:end].endswith(" "), (text, index, end)
+        token, end = Arg.consume_token(text, index)
         if not token:
             return ""
         names = self.get_completions(token, args)
@@ -584,7 +590,7 @@ class Int(Field):
 
         :returns: (<int or default value>, <index>)
         """
-        token, end = self.consume_token(text, index)
+        token, end = Arg.consume_token(text, index)
         if token is None:
             return self.default, end
         try:
@@ -1126,7 +1132,7 @@ class SubParser(Field):
         :returns: ((subparser, <consumed argument options>), <index>)
         :raises: ParserError, ArgumentError with sub-errors
         """
-        name, end = self.consume_token(text, index)
+        name, end = Arg.consume_token(text, index)
         if not name:
             return self.default, end
         sub = self.subargs.get(name)
@@ -1148,7 +1154,7 @@ class SubParser(Field):
     def get_placeholder(self, text, index, args):
         if index >= len(text):
             return "{} ...".format(self)
-        name, end = self.consume_token(text, index)
+        name, end = Arg.consume_token(text, index)
         space_after_name = end < len(text) or text[index:end].endswith(" ")
         if name is None:
             if space_after_name:
@@ -1172,7 +1178,7 @@ class SubParser(Field):
         return " ".join(values)
 
     def get_completions(self, text, args):
-        name, end = self.consume_token(text, 0)
+        name, end = Arg.consume_token(text, 0)
         if name is None:
             assert end >= len(text) and not text[:end].endswith(" "), (text, end)
             return sorted(self.subargs)
