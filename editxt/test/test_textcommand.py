@@ -118,6 +118,10 @@ def test_CommandBar_on_key_press():
         eq_(view.output_text, output if new_output is NA else new_output)
         if sel is not None or new_sel is not None:
             eq_(view.command_text_selected_range, sel if new_sel is None else new_sel)
+            if complete == new_complete:
+                eq_(view.completions.select_range, sel if new_sel is None else new_sel)
+            else:
+                eq_(view.completions.select_range, None)
         eq_(view.command, bar.bar if has_command else None)
 
     SEL = CommandView.KEYS.SELECTION_CHANGED
@@ -130,6 +134,7 @@ def test_CommandBar_on_key_press():
 
     yield test("c", SEL)
     yield test("c", SEL, complete=["cmd", "count", "ill"], new_complete=["cmd", "count"])
+    yield test("c", SEL, completions_select_range=(5, 4), new_sel=(1, 0))
 
     yield test("", TAB, new_complete=["cmd", "count", "ill"])
     yield test("", TAB, complete=["cmd", "count", "ill"])
@@ -165,7 +170,7 @@ def test_CommandBar_on_key_press():
     yield test("c", ESC, new_text=None, has_command=False)
     yield test("c", ESC, output="abc", new_output="")
     yield test("c", ESC,
-        completions_select_range=(0, 1), sel=(1, 0), new_sel=(0, 1),
+        completions_select_range=(0, 1), sel=(0, 1), new_sel=(0, 1),
         complete=["cmd", "count", "ill"], new_complete=[])
 
     yield test("c", BACK_TAB)

@@ -84,6 +84,8 @@ class CommandBar(object):
         if key == keys.SELECTION_CHANGED:
             if command_view.completions and not self.completing:
                 call_later(0, self.complete, command_view, auto_one=False)
+            command_view.completions.select_range = \
+                command_view.command_text_selected_range
             return True
 
         if key == keys.TAB:
