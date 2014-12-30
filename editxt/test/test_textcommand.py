@@ -305,7 +305,7 @@ def test_CommandBar_get_placeholder():
 
 def test_CommandBar_get_completions():
     class HexDigit(Int):
-        def get_completions(self, token, args):
+        def get_completions(self, arg):
             return CompletionsList("0123456789abcdef") #, selected_index=3)
 
     @gentest

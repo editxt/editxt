@@ -27,6 +27,7 @@ from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_
 from editxt.test.util import assert_raises, replattr, TestConfig
 
+import editxt.command.parser as mod
 from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
     File, CommandParser, SubArgs, SubParser, VarArgs, CompleteWord,
     identifier, Options, Error, ArgumentError, ParseError)
@@ -237,11 +238,11 @@ def test_identifier():
     yield test, "arg-ument", "arg_ument"
 
 def test_Choice():
-    arg = Choice('arg-ument', 'nope', 'nah')
-    eq_(str(arg), 'arg-ument')
-    eq_(arg.name, 'arg_ument')
+    field = Choice('arg-ument', 'nope', 'nah')
+    eq_(str(field), 'arg-ument')
+    eq_(field.name, 'arg_ument')
 
-    test = make_consume_checker(arg)
+    test = make_consume_checker(field)
     yield test, 'arg-ument', 0, ("arg-ument", 10)
     yield test, 'arg', 0, ("arg-ument", 4)
     yield test, 'a', 0, ("arg-ument", 2)
@@ -255,14 +256,14 @@ def test_Choice():
     yield test, 'nah', 0, ("nah", 4)
     yield test, 'na', 0, ("nah", 3)
 
-    test = make_arg_string_checker(arg)
+    test = make_arg_string_checker(field)
     yield test, "arg-ument", ""
     yield test, "nope", "nope"
     yield test, "nah", "nah"
     yield test, "arg", Error("invalid value: arg_ument='arg'")
 
-    arg = Choice(('arg-ument', True), ('nope', False), ('nah', ""))
-    test = make_consume_checker(arg)
+    field = Choice(('arg-ument', True), ('nope', False), ('nah', ""))
+    test = make_consume_checker(field)
     yield test, 'arg-ument', 0, (True, 10)
     yield test, 'arg', 0, (True, 4)
     yield test, 'a', 0, (True, 2)
@@ -275,22 +276,23 @@ def test_Choice():
     yield test, 'no', 0, (False, 3)
     yield test, 'nah', 0, ("", 4)
     yield test, 'na', 0, ("", 3)
+# TODO pass arg instead of field to errors
     yield test, 'n', 0, \
-        ParseError("'n' is ambiguous: nope, nah", arg, 0, 2)
+        ParseError("'n' is ambiguous: nope, nah", field, 0, 2)
     yield test, 'arg', 1, \
-        ParseError("'rg' does not match any of: arg-ument, nope, nah", arg, 1, 3)
+        ParseError("'rg' does not match any of: arg-ument, nope, nah", field, 1, 3)
     yield test, 'args', 0, \
-        ParseError("'args' does not match any of: arg-ument, nope, nah", arg, 0, 4)
+        ParseError("'args' does not match any of: arg-ument, nope, nah", field, 0, 4)
     yield test, 'args arg', 0, \
-        ParseError("'args' does not match any of: arg-ument, nope, nah", arg, 0, 4)
+        ParseError("'args' does not match any of: arg-ument, nope, nah", field, 0, 4)
 
-    test = make_placeholder_checker(arg)
+    test = make_placeholder_checker(field)
     yield test, '', 0, "arg-ument"
     yield test, 'a', 0, "rg-ument"
     yield test, 'n', 0, "..."
 
-    arg = Choice("argument parameter", "find search")
-    test = make_consume_checker(arg)
+    field = Choice("argument parameter", "find search")
+    test = make_consume_checker(field)
     yield test, 'a', 0, ("argument", 2)
     yield test, 'arg', 0, ("argument", 4)
     yield test, 'argument', 0, ("argument", 9)
@@ -302,10 +304,10 @@ def test_Choice():
     yield test, 's', 0, ("find", 2)
     yield test, 'search', 0, ("find", 7)
     yield test, 'arg-ument', 0, \
-        ParseError("'arg-ument' does not match any of: argument, find", arg, 0, 9)
+        ParseError("'arg-ument' does not match any of: argument, find", field, 0, 9)
 
-    arg = Choice(("argument parameter", True), ("find search", False))
-    test = make_consume_checker(arg)
+    field = Choice(("argument parameter", True), ("find search", False))
+    test = make_consume_checker(field)
     yield test, 'a', 0, (True, 2)
     yield test, 'arg', 0, (True, 4)
     yield test, 'argument', 0, (True, 9)
@@ -317,26 +319,26 @@ def test_Choice():
     yield test, 's', 0, (False, 2)
     yield test, 'search', 0, (False, 7)
     yield test, 'arg-ument', 0, \
-        ParseError("'arg-ument' does not match any of: argument, find", arg, 0, 9)
+        ParseError("'arg-ument' does not match any of: argument, find", field, 0, 9)
 
 def test_Choice_default_first():
-    arg = Choice(('true on', True), ('false off', False))
-    eq_(str(arg), 'true')
-    eq_(arg.name, 'true')
-    eq_(repr(arg), "Choice(('true on', True), ('false off', False))")
+    field = Choice(('true on', True), ('false off', False))
+    eq_(str(field), 'true')
+    eq_(field.name, 'true')
+    eq_(repr(field), "Choice(('true on', True), ('false off', False))")
 
-    test = make_consume_checker(arg)
+    test = make_consume_checker(field)
     yield test, '', 0, (True, 1)
     yield test, 't', 0, (True, 2)
     yield test, 'true', 0, (True, 5)
     yield test, 'false', 0, (False, 6)
     yield test, 'f', 0, (False, 2)
     yield test, 'True', 0, \
-        ParseError("'True' does not match any of: true, false", arg, 0, 4)
+        ParseError("'True' does not match any of: true, false", field, 0, 4)
     yield test, 'False', 0, \
-        ParseError("'False' does not match any of: true, false", arg, 0, 5)
+        ParseError("'False' does not match any of: true, false", field, 0, 5)
 
-    test = make_placeholder_checker(arg)
+    test = make_placeholder_checker(field)
     yield test, '', 0, "true"
     yield test, 't', 0, "rue"
     yield test, 'true', 0, ""
@@ -347,10 +349,10 @@ def test_Choice_default_first():
     yield test, 'of', 0, "f"
 
 def test_Choice_strings():
-    arg = Choice('maybe yes no', name='yes')
-    eq_(str(arg), 'maybe')
-    eq_(arg.name, 'yes')
-    eq_(repr(arg), "Choice('maybe yes no', name='yes')")
+    field = Choice('maybe yes no', name='yes')
+    eq_(str(field), 'maybe')
+    eq_(field.name, 'yes')
+    eq_(repr(field), "Choice('maybe yes no', name='yes')")
 
 def test_Choice_repr():
     def test(rep, args):
@@ -360,31 +362,31 @@ def test_Choice_repr():
     yield test, "Choice('y', 'n', name='abc')", Args('y', 'n', name='abc')
 
 def test_Int():
-    arg = Int('num')
-    eq_(str(arg), 'num')
-    eq_(repr(arg), "Int('num')")
+    field = Int('num')
+    eq_(str(field), 'num')
+    eq_(repr(field), "Int('num')")
 
-    test = make_consume_checker(arg)
+    test = make_consume_checker(field)
     yield test, '', 0, (None, 1)
     yield test, '3', 0, (3, 2)
     yield test, '42', 0, (42, 3)
     yield test, '100 99', 0, (100, 4)
     yield test, '1077 ', 1, (77, 5)
     yield test, 'a 99', 0, \
-        ParseError("invalid literal for int() with base 10: 'a'", arg, 0, 1)
+        ParseError("invalid literal for int() with base 10: 'a'", field, 0, 1)
 
-    test = make_arg_string_checker(arg)
+    test = make_arg_string_checker(field)
     yield test, 42, "42"
     yield test, -42, "-42"
     yield test, None, ""
     yield test, "arg", Error("invalid value: num='arg'")
 
 def test_String():
-    arg = String('str')
-    eq_(str(arg), 'str')
-    eq_(repr(arg), "String('str')")
+    field = String('str')
+    eq_(str(field), 'str')
+    eq_(repr(field), "String('str')")
 
-    test = make_consume_checker(arg)
+    test = make_consume_checker(field)
     yield test, '', 0, (None, 0)
     yield test, 'a', 0, ('a', 2)
     yield test, 'abc', 0, ('abc', 4)
@@ -396,7 +398,7 @@ def test_String():
     yield test, '"a c"', 0, ('a c', 5)
     yield test, "'a c'", 0, ('a c', 5)
     yield test, "'a c' ", 0, ('a c', 6)
-    yield test, "'a c", 0, ParseError("unterminated string: 'a c", arg, 0, 4)
+    yield test, "'a c", 0, ParseError("unterminated string: 'a c", field, 0, 4)
     yield test, r"'a c\' '", 0, ("a c' ", 8)
     yield test, r"'a c\\' ", 0, ("a c\\", 8)
     yield test, r"'a c\"\' '", 0, ("a c\"\' ", 10)
@@ -409,17 +411,17 @@ def test_String():
     yield test, r"'a c\t\' '", 0, ("a c\t' ", 10)
     yield test, r"'a c\v\' '", 0, ("a c\v' ", 10)
     yield test, r"'a c\v\' ' ", 0, ("a c\v' ", 11)
-    yield test, '\\', 0, ParseError("unterminated string: \\", arg, 0, 1)
+    yield test, '\\', 0, ParseError("unterminated string: \\", field, 0, 1)
     yield test, '\\\\', 0, ("\\", 3)
-    yield test, '\\\\\\', 0, ParseError("unterminated string: \\\\\\", arg, 0, 3)
+    yield test, '\\\\\\', 0, ParseError("unterminated string: \\\\\\", field, 0, 3)
     yield test, '\\\\\\\\', 0, ("\\\\", 5)
     yield test, '""', 0, ("", 2)
-    yield test, '"\\"', 0, ParseError('unterminated string: "\\"', arg, 0, 3)
+    yield test, '"\\"', 0, ParseError('unterminated string: "\\"', field, 0, 3)
     yield test, '"\\\\"', 0, ("\\", 4)
-    yield test, '"\\\\\\"', 0, ParseError('unterminated string: "\\\\\\"', arg, 0, 5)
+    yield test, '"\\\\\\"', 0, ParseError('unterminated string: "\\\\\\"', field, 0, 5)
     yield test, '"\\\\\\\\"', 0, ("\\\\", 6)
 
-    test = make_arg_string_checker(arg)
+    test = make_arg_string_checker(field)
     yield test, "str", "str"
     yield test, "a b", '"a b"', 5
     yield test, "a 'b", '''"a 'b"''', 6
@@ -445,9 +447,9 @@ def test_String():
 
 def test_File():
     from editxt.test.util import test_app
-    arg = File('path')
-    eq_(str(arg), 'path')
-    eq_(repr(arg), "File('path')")
+    field = File('path')
+    eq_(str(field), 'path')
+    eq_(repr(field), "File('path')")
 
     with test_app("project(/dir) editor") as app:
         tmp = test_app(app).tmp
@@ -465,17 +467,17 @@ def test_File():
             with open(join(tmp, path), "w") as fh:
                 pass
 
-        test = make_consume_checker(arg)
+        test = make_consume_checker(field)
         yield test, "relative.txt", 0, Error("cannot make absolute path (no context): relative.txt")
 
-        test = make_completions_checker(arg)
+        test = make_completions_checker(field)
         yield test, "", []
         yield test, "../", []
 
         editor = app.windows[0].projects[0].editors[0]
-        arg = arg.with_context(editor)
+        field = field.with_context(editor)
 
-        test = make_arg_string_checker(arg)
+        test = make_arg_string_checker(field)
         yield test, "/str", "/str"
         yield test, "/a b", '"/a b"', 6
         yield test, os.path.expanduser("~/a b"), '"~/a b"', 7
@@ -484,11 +486,11 @@ def test_File():
         yield test, join(tmp, "file"), join(tmp, "file")
         yield test, "arg/", Error("not a file: path='arg/'")
 
-        test = make_consume_checker(arg)
+        test = make_consume_checker(field)
         yield test, '', 0, (None, 0)
         yield test, 'a', 0, (join(tmp, 'dir/a'), 2)
         yield test, 'abc', 0, (join(tmp, 'dir/abc'), 4)
-        yield test, 'abc/', 0, ParseError("not a file: abc/", arg, 0, 5)
+        yield test, 'abc/', 0, ParseError("not a file: abc/", field, 0, 5)
         yield test, 'abc ', 0, (join(tmp, 'dir/abc'), 4)
         yield test, 'file.txt', 0, (join(tmp, 'dir/file.txt'), 9)
         yield test, '../file.txt', 0, (join(tmp, 'dir/../file.txt'), 12)
@@ -496,7 +498,7 @@ def test_File():
         yield test, '~/file.txt', 0, (os.path.expanduser('~/file.txt'), 11)
         yield test, '"ab c"', 0, (join(tmp, 'dir/ab c'), 6)
         yield test, "'ab c'", 0, (join(tmp, 'dir/ab c'), 6)
-        yield test, "'ab c/'", 0, ParseError("not a file: ab c/", arg, 0, 7)
+        yield test, "'ab c/'", 0, ParseError("not a file: ab c/", field, 0, 7)
 
         # completions
         def expanduser(path):
@@ -510,12 +512,11 @@ def test_File():
             if input.startswith("/"):
                 input = tmp + "/"
             with replattr(os.path, "expanduser", expanduser):
-                eq_(arg.get_completions(input, None), output)
+                arg = mod.Arg(field, input, 0, None)
+                eq_(field.get_completions(arg), output)
         yield test, "", ["a.txt", "B\\ file", "b.txt"]
         yield test, "a", ["a.txt"]
-        yield test, "a ", []
         yield test, "a.txt", ["a.txt"]
-        yield test, "a.txt ", []
         yield test, "b", ["B\\ file", "b.txt"]
         yield test, "B", ["B\\ file"]
         yield test, "..", ["../"]
@@ -530,7 +531,8 @@ def test_File():
 
         # delimiter completion
         def test(input, output, start=0):
-            words = arg.get_completions(input, None)
+            arg = mod.Arg(field, input, 0, None)
+            words = field.get_completions(arg)
             assert all(isinstance(w, CompleteWord) for w in words), \
                 repr([w for w in words if not isinstance(w, CompleteWord)])
             eq_([w.complete() for w in words], output)
@@ -543,35 +545,35 @@ def test_File():
         yield test, "../di", ["dir/"], 3
         yield test, "~", ["~/"], None
 
-        arg = File('dir', directory=True)
-        eq_(str(arg), 'dir')
-        eq_(repr(arg), "File('dir', directory=True)")
-        arg = arg.with_context(editor)
+        field = File('dir', directory=True)
+        eq_(str(field), 'dir')
+        eq_(repr(field), "File('dir', directory=True)")
+        field = field.with_context(editor)
 
-        test = make_completions_checker(arg)
+        test = make_completions_checker(field)
         yield test, "", [], 0
         yield test, "a", [], 0
         yield test, "..", ["../"], 0
         yield test, "../", ["dir"], 3
 
 def test_Regex():
-    arg = Regex('regex')
-    eq_(str(arg), 'regex')
-    eq_(repr(arg), "Regex('regex')")
+    field = Regex('regex')
+    eq_(str(field), 'regex')
+    eq_(repr(field), "Regex('regex')")
 
     def regex_test(text, start, expect, flags=0):
         if isinstance(expect, Exception):
             def check(err):
                 eq_(err, expect)
             with assert_raises(type(expect), msg=check):
-                arg.consume(text, start)
+                field.consume(text, start)
             return
-        value = arg.consume(text, start)
+        value = field.consume(text, start)
         if expect[0] in [None, (None, None)]:
             eq_(value, expect)
             return
         expr, index = value
-        if arg.replace:
+        if field.replace:
             (expr, replace) = expr
             got = ((expr, replace), index)
         else:
@@ -591,15 +593,15 @@ def test_Regex():
     yield test, '^abc$', 0, ('^abc$', 6)
     yield test, '^abc$ def', 0, ('^abc$', 6)
     yield test, '/abc/X def', 0, \
-        ParseError('unknown flag: X', arg, 5, 5)
+        ParseError('unknown flag: X', field, 5, 5)
 
-    test = make_placeholder_checker(arg)
+    test = make_placeholder_checker(field)
     yield test, "", 0, "regex"
     yield test, "/", 0, "/"
     yield test, "//", 0, ""
     #yield test, "// ", 0, None
 
-    test = make_arg_string_checker(arg)
+    test = make_arg_string_checker(field)
     yield test, RegexPattern("str"), "/str/"
     yield test, RegexPattern("str", re.I), "/str/i"
     yield test, RegexPattern("/usr/bin"), ":/usr/bin:"
@@ -613,8 +615,8 @@ def test_Regex():
     yield test, RegexPattern(r'''///'"':\\:"'"'''), r''':///'"'\:\\\:"'":''', False
     yield test, "str", Error("invalid value: regex='str'")
 
-    arg = Regex('regex', replace=True)
-    eq_(repr(arg), "Regex('regex', replace=True)")
+    field = Regex('regex', replace=True)
+    eq_(repr(field), "Regex('regex', replace=True)")
     test = regex_test
     yield test, '', 0, ((None, None), 1)
     yield test, '/abc', 0, (('abc', None), 5)
@@ -633,29 +635,29 @@ def test_Regex():
     yield test, '/abc/def/is  def', 0, (('abc', 'def'), 12), re.I | re.S
     yield test, '/(', 0, (("(", None), 3)
     yield test, 'abc', 0, \
-        ParseError("invalid search pattern: 'abc'", arg, 0, 0)
+        ParseError("invalid search pattern: 'abc'", field, 0, 0)
     yield test, 'abc def', 0, \
-        ParseError("invalid search pattern: 'abc def'", arg, 0, 0)
+        ParseError("invalid search pattern: 'abc def'", field, 0, 0)
     yield test, '/abc/def/y  def', 0, \
-        ParseError('unknown flag: y', arg, 9, 9)
+        ParseError('unknown flag: y', field, 9, 9)
     msg = 'invalid regular expression: unbalanced parenthesis'
 
-    test = make_placeholder_checker(arg)
+    test = make_placeholder_checker(field)
     yield test, "", 0, "regex"
     yield test, "/", 0, "//"
     yield test, "/x/", 0, "/"
     yield test, "/\\//", 0, "/"
     yield test, "/x//", 0, ""
 
-    arg = Regex('regex', replace=True, default=("", ""))
-    test = make_placeholder_checker(arg)
+    field = Regex('regex', replace=True, default=("", ""))
+    test = make_placeholder_checker(field)
     yield test, "", 0, "regex"
     yield test, "/", 0, "//"
     yield test, "/x/", 0, "/"
     yield test, "/\\//", 0, "/"
     yield test, "/x//", 0, ""
 
-    test = make_arg_string_checker(arg)
+    test = make_arg_string_checker(field)
     yield test, (RegexPattern("str"), 'abc'), "/str/abc/"
     yield test, (RegexPattern("str", re.I), 'abc'), "/str/abc/i"
     yield test, (RegexPattern("/usr/bin"), "abc"), ":/usr/bin:abc:"
@@ -684,11 +686,11 @@ def test_RegexPattern():
     yield lt, RegexPattern("a"), RegexPattern("a", re.I)
 
 def test_VarArgs():
-    arg = VarArgs("var", Choice('arg', 'nope', 'nah'))
-    eq_(str(arg), 'arg ...')
-    eq_(repr(arg), "VarArgs('var', Choice('arg', 'nope', 'nah'))")
+    field = VarArgs("var", Choice('arg', 'nope', 'nah'))
+    eq_(str(field), 'arg ...')
+    eq_(repr(field), "VarArgs('var', Choice('arg', 'nope', 'nah'))")
 
-    test = make_completions_checker(arg)
+    test = make_completions_checker(field)
     yield test, "", ['arg', 'nope', 'nah'], 0
     yield test, "a", ["arg"], 0
     yield test, "a ", ['arg', 'nope', 'nah'], 2
@@ -698,7 +700,7 @@ def test_VarArgs():
     yield test, "arg a", ['arg'], 4
     yield test, "arg b", []
 
-    test = make_placeholder_checker(arg)
+    test = make_placeholder_checker(field)
     yield test, "", 0, "arg ..."
     yield test, "a", 0, "rg ..."
     yield test, "a ", 0, "arg ..."
@@ -710,19 +712,19 @@ def test_VarArgs():
     yield test, "x", 0, None
     yield test, "x ", 0, None
 
-    test = make_consume_checker(arg)
+    test = make_consume_checker(field)
     yield test, '', 0, (['arg'], 1)
-    yield test, 'x', 0, ParseError("'x' does not match any of: arg, nope, nah", arg.field, 0, 1)
+    yield test, 'x', 0, ParseError("'x' does not match any of: arg, nope, nah", field.field, 0, 1)
     yield test, 'a', 0, (['arg'], 2)
     yield test, 'a na no', 0, (['arg', 'nah', 'nope'], 8)
 
-    test = make_arg_string_checker(arg)
+    test = make_arg_string_checker(field)
     yield test, ["arg"], ""
     yield test, ["nope"], "nope"
     yield test, ["nah", "arg", "nah"], 'nah  nah'
 
     # TODO test with string (especially unterminated string)
-    #arg = VarArgs("var", String("str"))
+    #field = VarArgs("var", String("str"))
 
 def test_SubParser():
     class is_enabled:
@@ -734,19 +736,19 @@ def test_SubParser():
     su2 = SubArgs("str", Choice(('yes', True), ('no', False)), abc="mno")
     su3 = SubArgs("stx", String("args"), abc="pqr")
     su4 = SubArgs("hid", String("not"), is_enabled=is_enabled())
-    arg = SubParser("var", sub, su2, su3, su4)
-    eq_(str(arg), 'var')
-    eq_(repr(arg),
+    field = SubParser("var", sub, su2, su3, su4)
+    eq_(str(field), 'var')
+    eq_(repr(field),
         "SubParser('var', SubArgs('val', Int('num'), abc='xyz'), "
         "SubArgs('str', Choice(('yes', True), ('no', False)), abc='mno'), "
         "SubArgs('stx', String('args'), abc='pqr'), "
         "SubArgs('hid', String('not'), is_enabled=is_enabled()))")
 
-    arg = arg.with_context(TestConfig(text_view=object))
-    sub = arg.args[1]
-    su2 = arg.args[2]
+    field = field.with_context(TestConfig(text_view=object))
+    sub = field.args[1]
+    su2 = field.args[2]
 
-    test = make_completions_checker(arg)
+    test = make_completions_checker(field)
     yield test, "", ["str", "stx", "val"]
     yield test, "v", ["val"]
     yield test, "v ", []
@@ -757,7 +759,7 @@ def test_SubParser():
     yield test, "str ", ["yes", "no"], 4
     yield test, "str y", ["yes"], 4
 
-    test = make_placeholder_checker(arg)
+    test = make_placeholder_checker(field)
     yield test, "", 0, "var ..."
     yield test, "v", 0, "al num"
     yield test, "v ", 0, "num"
@@ -776,9 +778,9 @@ def test_SubParser():
     yield test, "str x", 0, ""
     yield test, "str x ", 0, ""
 
-    test = make_consume_checker(arg)
+    test = make_consume_checker(field)
     yield test, '', 0, (None, 1)
-    yield test, 'x', 0, ParseError("'x' does not match any of: str, stx, val", arg, 0, 1)
+    yield test, 'x', 0, ParseError("'x' does not match any of: str, stx, val", field, 0, 1)
     yield test, 'v 1', 0, ((sub, Options(num=1)), 4)
     yield test, 'val 1', 0, ((sub, Options(num=1)), 6)
     yield test, 'val 1 2', 0, ((sub, Options(num=1)), 6)
@@ -787,49 +789,51 @@ def test_SubParser():
             ParseError("invalid literal for int() with base 10: 'x'",
                        Int("num"), 4, 5)], 4)
 
-    test = make_arg_string_checker(arg)
+    test = make_arg_string_checker(field)
     yield test, (sub, Options(num=1)), "val 1"
     yield test, (su2, Options(yes=True)), "str "
     yield test, (su2, Options(yes=False)), "str no"
 
 Args = lambda *a, **k: (a, k)
 
-def make_consume_checker(arg):
+def make_consume_checker(field):
     def type_checker_test(text, start, expect):
         if isinstance(expect, Exception):
             def check(err):
                 eq_(err, expect)
             with assert_raises(type(expect), msg=check):
-                arg.consume(text, start)
+                field.consume(text, start)
         else:
-            eq_(arg.consume(text, start), expect)
+            eq_(field.consume(text, start), expect)
     return type_checker_test
 
-def make_placeholder_checker(arg):
+def make_placeholder_checker(field):
     def test_get_placeholder(text, index, result):
-        eq_(arg.get_placeholder(text, index, None), result)
+        arg = mod.Arg(field, text, index, None)
+        eq_(field.get_placeholder(arg), result)
     return test_get_placeholder
 
-def make_completions_checker(arg):
+def make_completions_checker(field):
     def test_get_completions(input, output, start=None):
-        result = arg.get_completions(input, None)
+        arg = mod.Arg(field, input, 0, None)
+        result = field.get_completions(arg)
         eq_(result, output)
         if start is not None:
             eq_([w.start for w in result], [start] * len(result), result)
     return test_get_completions
 
-def make_arg_string_checker(arg):
+def make_arg_string_checker(field):
     def test_get_argstring(value, argstr, index=None):
         if isinstance(argstr, Exception):
             def check(err):
                 eq_(err, argstr)
             with assert_raises(type(argstr), msg=check):
-                arg.arg_string(value)
+                field.arg_string(value)
         else:
             if index is not False:
                 if index is None:
                     index = len(argstr) + 1
-                eq_(arg.consume(argstr, 0), (value, index))
+                eq_(field.consume(argstr, 0), (value, index))
             else:
-                assert arg.consume(argstr, 0) != (value, len(argstr))
+                assert field.consume(argstr, 0) != (value, len(argstr))
     return test_get_argstring
