@@ -63,6 +63,7 @@ Command parser specification:
 import os
 import re
 from functools import partial
+from itertools import chain
 
 from editxt.util import user_path
 
@@ -97,6 +98,28 @@ class CommandParser(object):
             return False
         return True
 
+    def tokenize(self, text, index, args=None):
+        """Generate a sequence of parsed argument values
+
+        :param text: Argument string.
+        :param index: Start tokenizing at this index in text.
+        :param args: Optional object on which to set accumulated
+        argument value attributes.
+        :yields: A sequence of ``Token`` objects. If there is leftover
+        text after all arguments have been parsed the last generated
+        token will contain the remaining text with ``None`` for ``arg``.
+        """
+        if args is None:
+            args = Options()
+        for arg in self.argspec:
+            token = Token(arg, text, index, args)
+            yield token
+            if not token.errors:
+                index = token.end
+            setattr(args, arg.name, token.value)
+        if index < len(text):
+            yield Token(None, text, index, args)
+
     def parse(self, text, index=0):
         """Parse arguments from the given text
 
@@ -107,65 +130,65 @@ class CommandParser(object):
         """
         opts = Options()
         errors = []
-        for arg in self.argspec:
-            try:
-                start = index
-                token, index = arg.consume(text, index) #, previous_errors=errors)
-                value = arg.value_of(token, text, start)
-                errors = []
-            except ParseError as err:
-                errors.append(err)
-                value = arg.default
-            except ArgumentError as err:
-                assert err.errors, "unexpected {!r}".format(err)
-                errors.extend(err.errors)
-                value = arg.default
-            setattr(opts, arg.name, value)
+        for token in self.tokenize(text, index, opts):
+            if token.arg is None:
+                if errors:
+                    break
+                msg = 'unexpected argument(s): ' + str(token)
+                raise ArgumentError(msg, opts, [], token.start)
+            if not token.errors:
+                if errors:
+                    del errors[:]
+            else:
+                errors.extend(token.errors)
         if errors:
             msg = 'invalid arguments: {}'.format(text)
-            raise ArgumentError(msg, opts, errors, index)
-        if index < len(text):
-            msg = 'unexpected argument(s): ' + text[index:]
-            raise ArgumentError(msg, opts, errors, index)
+            raise ArgumentError(msg, opts, errors)
         return opts
 
     def default_options(self):
         return Options(**{arg.name: arg.default for arg in self.argspec})
 
-    def get_placeholder(self, text):
+    def get_placeholder(self, text, index=0):
         """Get placeholder string to follow the given command text
 
         :param text: Argument string.
         :returns: A string of placeholder text, which can be used as a
             hint about remaining arguments to be entered.
         """
-        index = 0
+        args = Options()
         values = []
-        for arg in self.argspec:
-            value, next_index = arg.get_placeholder(text, index)
-            if next_index is None:
-                assert value is None, value
+        for token in self.tokenize(text, index, args):
+            if not token.could_consume_more:
                 continue
-            index = next_index
+            # TODO do not return next_index from get_placeholder
+            value = token.arg.get_placeholder(token.text, token.start, args)
             if value is not None:
                 values.append(value)
         return " ".join(values)
 
-    def get_completions(self, text):
+    def get_completions(self, text, index=0):
         """Get completions for the given command text
 
         :param text: Argument string.
+        :param index: Index in ``text`` to start parsing.
         :returns: A list of possible values to complete the command.
         """
-        return self.parse_completions(text, 0)[0] or []
-
-    def parse_completions(self, text, index):
-        """See ``Field.parse_completions``"""
-        for arg in self.argspec:
-            values, index = arg.parse_completions(text, index)
-            if values is not None:
-                return values, index
-        return None, index
+        def completion(word, index):
+            if getattr(word, 'start', None) is not None:
+                word.start += index
+            else:
+                word = CompleteWord(word, start=index)
+            return word
+        args = Options()
+        for token in self.tokenize(text, index, args):
+            if token.arg is None:
+                return []
+            if token.could_consume_more:
+                # TODO what if token has errors? is raw reliable?
+                words = token.arg.get_completions(str(token), args)
+                return [completion(w, token.start) for w in words]
+        return []
 
     def get_help(self, text):
         raise NotImplementedError
@@ -185,6 +208,74 @@ class CommandParser(object):
                 raise Error("missing option: {}".format(arg.name))
             args.append(arg.arg_string(value))
         return " ".join(args).rstrip(" ") if strip else " ".join(args)
+
+
+class Token(object):
+    """A parsed argument in a command string
+
+    Important attributes:
+
+    - `arg` : Argument that consumed this token. Can be `None`.
+    - `text` : Full command string.
+    - `start` : Index of the first consumed character.
+    - `end` : Index of the last consumed character.
+    - `value` : Parsed argument value. Its type depends on `arg`.
+    - `errors` : Errors raised while consuming the token.
+
+    """
+
+    def __init__(self, arg, text, index, args):
+        self.arg = arg
+        self.text = text
+        self.start = start = index
+        self.errors = []
+        if arg is None:
+            value = None
+            index = len(text)
+        elif self.start > len(text):
+            value = arg.default
+            index = start
+        else:
+            try:
+                consumed, index = arg.consume(text, start)
+                value = arg.value_of(consumed, text, start, args)
+                if index == len(text) and not text[start:].endswith(" "):
+                    # this argument could consume more characters
+                    index += 1
+            except ParseError as err:
+                self.errors.append(err)
+                value = arg.default
+                index = err.parse_index
+            except ArgumentError as err:
+                assert err.errors, "unexpected {!r}".format(err)
+                self.errors.extend(err.errors)
+                value = arg.default
+                index = err.errors[-1].parse_index
+        self.value = value
+        self.end = index
+
+    def __repr__(self):
+        if hasattr(self, "end"):
+            plus = "+" if self.could_consume_more else ""
+            return "<{} {!r}{}>".format(type(self).__name__, self, plus)
+        return super().__repr__()
+
+    def __str__(self):
+        """Return the portion of the argument string consumed by this token
+
+        Does not include the space between this and the next token even
+        though that space is consumed by this token.
+        """
+        value = self.text[self.start:self.end]
+        if value.endswith(" ") and not self.could_consume_more:
+            return value[:-1]
+        return value
+
+    @property
+    def could_consume_more(self):
+        """Return true if this token could consume more characters if present
+        """
+        return self.end > len(self.text)
 
 
 IDENTIFIER_PATTERN = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*$')
@@ -257,7 +348,7 @@ class Field(object):
         """
         raise NotImplementedError("abstract method")
 
-    def value_of(self, token, text, index):
+    def value_of(self, token, text, index, args):
         """Convert consumed token to argument value"""
         return token
 
@@ -276,9 +367,9 @@ class Field(object):
         :returns: A tuple `(<token string or None>, <index>)` where `index`
             is that following the last consumed character in `text`.
         """
-        if index >= len(text):
+        if index > len(text):
             return None, index
-        elif text[index] == ' ':
+        if index == len(text) or text[index] == ' ':
             return None, index + 1
         end = text.find(' ', index)
         if end < 0:
@@ -286,8 +377,7 @@ class Field(object):
             end = len(text)
         else:
             token = text[index:end]
-            end += 1
-        return token, end
+        return token, end + 1
 
     def parse_token(self, text, index):
         """Parse argument token from text starting at index
@@ -309,7 +399,7 @@ class Field(object):
         )
         return text[index:end], end, terminated
 
-    def get_placeholder(self, text, index):
+    def get_placeholder(self, text, index, args):
         """Get placeholder string for this argument
 
         If this argument matches the last argument in the given ``text``
@@ -320,65 +410,25 @@ class Field(object):
 
         :param text: Argument string.
         :param index: Index in text to begin parsing.
-        :returns: A two-tuple with the first item being a placeholder
-        string (``None`` if an argument would have been consumed), and
-        the second item being the index to resume parsing in text
-        (``None`` if the argument was present but could be parsed).
+        :param args: ``Options`` containing preceding argument values.
+        :returns: A placeholder string (``None`` to ignore this
+        argument's placeholder).
         """
         if index >= len(text):
-            return str(self), index
+            return str(self)
         try:
             token, index, terminated = self.parse_token(text, index)
         except ParseError as err:
-            return None, None
+            return None
         except ArgumentError as err:
             raise NotImplementedError # TODO
-        return (None if terminated else ""), index
+        return None if terminated else ""
 
-    def parse_completions(self, text, index):
-        """Parse command text and return completions for the final argument
-
-        :param text: Command text string.
-        :param index: Position in text to begin parsing.
-        :returns: ``(list_of_completions, end)`` where ``end`` is
-        the index in ``text`` where parsing of this argument stopped.
-        ``list_of_completions`` will be ``None`` if another argument
-        (outside of this parser) could be parsed.
-        """
-        def completion(word):
-            if getattr(word, 'start', None) is not None:
-                word.start += index
-            else:
-                word = CompleteWord(word, start=index)
-            return word
-        try:
-            token, end, terminated = self.parse_token(text, index)
-        except ParseError as err:
-            token = text[index:err.parse_index]
-            end = err.parse_index
-            # HACK cannot really determine if terminated here:
-            # case: "x " -> Int -> ParseError ... terminted=True
-            # case: "' " -> String -> ParseError ... terminted=False
-            if end >= len(text):
-                values = self.get_completions(token)
-                if values:
-                    return [completion(v) for v in values], err.parse_index
-            return None, index
-        except ArgumentError as err:
-            raise NotImplementedError # TODO
-        if terminated or end < len(text):
-            # TODO what about Int(...).consume("x y", 0) ?
-            values = None
-        else:
-            values = self.get_completions(token)
-            if values:
-                values = [completion(v) for v in values]
-        return values, end
-
-    def get_completions(self, token):
+    def get_completions(self, text, args):
         """Get a list of possible completions for token
 
-        :param text: Argument value prefix.
+        :param text: Argument token string, possibly incomplete.
+        :param args: ``Options`` containing preceding argument values.
         :returns: A list of possible completions for given prefix.
         The ``start`` attribute of ``CompleteWord`` objects in the
         returned list may be set to an offset into the original
@@ -479,35 +529,34 @@ class Choice(Field):
             return self.default, end
         if token in self.mapping:
             return self.mapping[token], end
-        names = ', '.join(n for n in self.names if n.startswith(token))
+        names = ', '.join(n
+            for n in chain(self.names, self.alternates)
+            if n.startswith(token))
         if names:
             msg = '{!r} is ambiguous: {}'.format(token, names)
         else:
+            end = index + len(token)
             names = ', '.join(self.names)
             msg = '{!r} does not match any of: {}'.format(token, names)
         raise ParseError(msg, self, index, end)
 
-    def get_placeholder(self, text, index):
+    def get_placeholder(self, text, index, args):
         if index >= len(text):
-            return str(self), index
+            return str(self)
         token, end = self.consume_token(text, index)
+        assert not text[index:end].endswith(" "), (text, index, end)
         if not token:
-            return None, end
-        names = self.get_completions(token)
+            return ""
+        names = self.get_completions(token, args)
         if not names:
-            placeholder = end = None
-        elif text[index:end].endswith(" "):
-            if len(names) == 1:
-                placeholder = None
-            else:
-                placeholder = end = None
+            placeholder = ""
         elif len(names) == 1:
             placeholder = names[0][len(token):]
         else:
             placeholder = "..."
-        return placeholder, end
+        return placeholder
 
-    def get_completions(self, token):
+    def get_completions(self, token, args):
         """List choice names that complete token"""
         names = [n for n in self.names if n.startswith(token)]
         return names or [n for n in self.alternates if n.startswith(token)]
@@ -534,14 +583,14 @@ class Int(Field):
         try:
             return int(token), end
         except (ValueError, TypeError) as err:
-            raise ParseError(str(err), self, index, end)
+            raise ParseError(str(err), self, index, index + len(token))
 
-    def get_placeholder(self, text, index):
+    def get_placeholder(self, text, index, args):
         if index >= len(text):
             if isinstance(self.default, int):
-                return str(self.default), index
-            return str(self), index
-        return super(Int, self).get_placeholder(text, index)
+                return str(self.default)
+            return str(self)
+        return super(Int, self).get_placeholder(text, index, args)
 
     def arg_string(self, value):
         if value == self.default:
@@ -565,6 +614,7 @@ class String(Field):
         't': '\t',
         'v': '\v',
     }
+    DELIMITERS = '"\''
 
     def consume(self, text, index):
         """Consume a string value
@@ -574,7 +624,7 @@ class String(Field):
         if index >= len(text):
             return self.default, index
         escapes = self.ESCAPES
-        if text[index] not in ['"', "'"]:
+        if text[index] not in self.DELIMITERS:
             delim = ' '
             start = index
             escapes = escapes.copy()
@@ -601,7 +651,7 @@ class String(Field):
                 chars.append(c)
         if delim == ' ':
             if not esc:
-                return ''.join(chars), len(text) # FIXME? should add one to index?
+                return ''.join(chars), len(text) + 1
             delim = ''
         msg = 'unterminated string: {}{}'.format(delim, text[start:])
         raise ParseError(msg, self, index, len(text))
@@ -655,6 +705,7 @@ class File(String):
         if path is None:
             return path, stop
         if path.endswith((os.path.sep, "/")):
+            # TODO should not raise here? maybe check if not self.directory?
             raise ParseError("not a file: %s" % (path,), self, index, stop)
         if path.startswith('~'):
             path = os.path.expanduser(path)
@@ -664,7 +715,7 @@ class File(String):
             raise Error("cannot make absolute path (no context): {}".format(path))
         return os.path.join(self.path, path), stop
 
-    def get_completions(self, token):
+    def get_completions(self, token, args):
         from os.path import exists, expanduser, isabs, isdir, join, sep, split
         if token == '~':
             return [CompleteWord('~/', (lambda:''))]
@@ -799,11 +850,13 @@ class Regex(Field):
         Either <RegexPattern> or <replacement string> may be the
         respective portion of the default value if not present.
         """
-        if index >= len(text):
+        if index > len(text):
             return self.default, index
+        if index == len(text):
+            return self.default, index + 1
         if self.replace and text[index] not in self.DELIMITERS:
             msg = "invalid search pattern: {!r}".format(text[index:])
-            raise ParseError(msg, self, index, len(text) - index)
+            raise ParseError(msg, self, index, index)
         expr, index = self.consume_expression(text, index)
         if self.replace:
             if _default is None:
@@ -840,7 +893,7 @@ class Regex(Field):
             return ''.join(chars), index + i + 3 + delim_offset
         token = ''.join(chars)
         msg = 'unterminated regex: {}{}'.format(delim, token)
-        raise ParseError(msg, self, index, len(text))
+        raise ParseError(msg, self, index, len(text) + 1)
 
     def consume_flags(self, text, index):
         flags = {'i': re.IGNORECASE, 's': re.DOTALL, 'l': re.LOCALE}
@@ -856,21 +909,21 @@ class Regex(Field):
                 msg = 'unknown flag: {}'.format(c)
                 raise ParseError(msg, self, index, index)
             index += 1
-        return value, index
+        return value, index + (0 if index > len(text) else 1)
 
-    def get_placeholder(self, text, index):
+    def get_placeholder(self, text, index, args):
         if index >= len(text):
-            return str(self), index
+            return str(self)
+        if self.replace and text[index] not in self.DELIMITERS:
+            msg = "invalid search pattern: {!r}".format(text[index:])
+            raise ParseError(msg, self, index, index)
         delim = text[index]
-        try:
-            value, end = self.consume(text, index, (None, None))
-        except ParseError:
-            return None, None
-        if self.replace and value[1] is None:
-            return delim * 2, end
-        if end > len(text):
-            return delim, end
-        return (None if text[end - 1] == " " else ""), end
+        ignore, index = self.consume_expression(text, index)
+        if self.replace:
+            if index > len(text):
+                return delim * 2
+            ignore, index = self.consume_expression(text, index - 1)
+        return delim if index > len(text) else ""
 
     @classmethod
     def delimit(cls, value, allchars=None, delimiters=DELIMITERS):
@@ -958,11 +1011,15 @@ class VarArgs(Field):
     :param field: A field to be consumed a variable number of times.
     :param min: Minimum number of times to consume field (default is 1).
     :param placeholder:
+    :param default: The default value if there are no arguments to consume.
+    If this is callable it will be called with no arguments to create a value
+    each time the default value is needed.
     PROPOSED: `field` may be a list of fields in which case the result of this
     VarArgs field will be a list of dicts. Are they all required?
     """
 
     def __init__(self, name, field, *, min=1, placeholder=None, **kw):
+        kw.setdefault('default', list)
         self.args = [name, field]
         self.kwargs = {"min": min, "placeholder": placeholder}
         self.kwargs.update(kw)
@@ -970,6 +1027,13 @@ class VarArgs(Field):
         self.field = field
         self.min = min
         self.placeholder = placeholder
+
+    @property
+    def default(self):
+        return self._default() if callable(self._default) else self._default
+    @default.setter
+    def default(self, value):
+        self._default = value
 
     def __str__(self):
         if self.placeholder is None:
@@ -994,32 +1058,42 @@ class VarArgs(Field):
                         len(values), self.min))
         return values, index
 
-    def get_placeholder(self, text, index):
-        parsed = 0
-        prev_index = None
-        while index != prev_index:
-            prev_index = index
-            value, index = self.field.get_placeholder(text, index)
-            if index is None:
-                return (None, (prev_index if parsed else index))
-            if value is not None or index > len(text):
-                break
-            parsed += 1
+    def get_placeholder(self, text, index, args):
+        field = self.field
+        start = None
+        while index != start:
+            start = index
+            token = Token(field, text, index, args)
+            if token.could_consume_more:
+                value = field.get_placeholder(text, index, args)
+                if value is not None or index > len(text):
+                    break
+            if token.errors:
+                return None
+            index = token.end
         if value is None:
-            return value, index
+            return value
         placeholder = "..." if self.placeholder is None else self.placeholder
-        return "{} {}".format(value, placeholder), index
+        return "{} {}".format(value, placeholder)
 
-    def parse_completions(self, text, index):
-        while index < len(text):
-            prev_index = index
-            value, index = self.field.parse_completions(text, index)
-            if index == prev_index or (index == len(text) and text[-1] != ' '):
-                return value, index
-        return self.field.parse_completions(text, index)
-
-    def get_completions(self, token):
-        return self.field.get_completions(token)
+    def get_completions(self, text, args):
+        def completion(word, index):
+            if getattr(word, 'start', None) is not None:
+                word.start += index
+            else:
+                word = CompleteWord(word, start=index)
+            return word
+        field = self.field
+        index = 0
+        while True:
+            token = Token(field, text, index, args)
+            if token.could_consume_more:
+                words = field.get_completions(str(token), args)
+                return [completion(word, index) for word in words]
+            if token.errors or token.end == index:
+                break
+            index = token.end
+        return []
 
     def arg_string(self, value):
         return " ".join(self.field.arg_string(v) for v in value)
@@ -1061,71 +1135,59 @@ class SubParser(Field):
         if sub is None:
             names = [n for n in self.subargs if n.startswith(name)]
             if len(names) != 1:
-                msg = "{!r} does not match any of: {}".format(
-                        name, ", ".join(sorted(self.subargs)))
+                if len(names) > 1:
+                    msg = "{!r} is ambiguous: {}".format(
+                            name, ", ".join(sorted(self.subargs)))
+                else:
+                    msg = "{!r} does not match any of: {}".format(
+                            name, ", ".join(sorted(self.subargs)))
+                    end = index + len(name)
                 raise ParseError(msg, self, index, end)
             sub = self.subargs[names[0]]
-        try:
-            opts = sub.parser.parse(text, end)
-        except ArgumentError as err:
-            if not err.errors:
-                # we're finished, but there are unparsed arguments
-                return (sub, err.options), err.parse_index
-            raise
-        return (sub, opts), len(text)
+        opts, index = sub.parse(text, end)
+        return (sub, opts), index
 
-    def get_placeholder(self, text, index):
+    def get_placeholder(self, text, index, args):
         if index >= len(text):
-            return "{} ...".format(self), index
+            return "{} ...".format(self)
         name, end = self.consume_token(text, index)
         space_after_name = end < len(text) or text[index:end].endswith(" ")
         if name is None:
             if space_after_name:
-                return self.default, end
-            return "{} ...".format(self), end
+                return str(self)
+            return "{} ...".format(self)
         sub = self.subargs.get(name)
         if sub is None:
             names = [n for n in self.subargs if n.startswith(name)]
             if not names:
-                return None, None
+                return None
             if len(names) > 1:
                 if space_after_name:
-                    return None, None
-                return "...", end
+                    return None
+                return "..."
             sub = self.subargs[names[0]]
             placeholder = names[0][len(name):]
         else:
             placeholder = ""
         values = [] if space_after_name else [placeholder]
-        index = end
-        for arg in sub.parser.argspec:
-            value, index = arg.get_placeholder(text, index)
-            if index is None:
-                return None, None
-            if value is not None:
-                values.append(value)
-        return (" ".join(values) if values else None), index
+        values.append(sub.parser.get_placeholder(text, end))
+        return " ".join(values)
 
-    def parse_completions(self, text, index):
-        comp = partial(CompleteWord, start=index)
-        name, end = self.consume_token(text, index)
+    def get_completions(self, text, args):
+        name, end = self.consume_token(text, 0)
         if name is None:
-            if end < len(text) or text[index:end].endswith(" "):
-                return None, end
-            return [comp(w) for w in sorted(self.subargs)], end
-        if len(name) == end - index:
+            assert end >= len(text) and not text[:end].endswith(" "), (text, end)
+            return sorted(self.subargs)
+        if end > len(text):
             # there is no space after name
-            return [comp(w) for w in self.get_completions(name)], end
+            return [w for w in sorted(self.subargs) if w.startswith(name)]
         sub = self.subargs.get(name)
         if sub is None:
             names = [n for n in self.subargs if n.startswith(name)]
             if len(names) != 1:
-                return [], len(text)
+                return []
             sub = self.subargs[names[0]]
-        return sub.parser.parse_completions(text, end)
-
-    def get_completions(self, token):
-        return [n for n in sorted(self.subargs) if n.startswith(token)]
+        return sub.parser.get_completions(text, end)
 
     def arg_string(self, value):
         sub, opts = value
@@ -1153,6 +1215,22 @@ class SubArgs(object):
         sub._is_enabled = self._is_enabled
         sub.parser = self.parser.with_context(*args, **kw)
         return sub
+
+    def parse(self, text, index):
+        args = Options()
+        errors = []
+        for token in self.parser.tokenize(text, index, args):
+            if token.arg is None:
+                index = token.start
+                break
+            if token.errors:
+                errors.extend(token.errors)
+            else:
+                index = token.end
+        if errors:
+            msg = 'invalid arguments: {}'.format(text)
+            raise ArgumentError(msg, args, errors, index)
+        return args, index
 
     def __repr__(self):
         args = [repr(self.name)]

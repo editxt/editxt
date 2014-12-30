@@ -68,7 +68,7 @@ class EditorTreeItem(String):
             items = self.completions[key] = self.get_completions(token)
         return items
 
-    def value_of(self, token, text, index):
+    def value_of(self, token, text, index, args):
         if self.completions is not None and token:
             starts = []
             for comp in self.cached_completions(token, text, index):
@@ -89,8 +89,8 @@ class EditorTreeItem(String):
             return self.NO_MATCH
         return self.default
 
-    def parse_completions(self, text, index):
-        items, end = super().parse_completions(text, index)
+    def parse_completions(self, text, index, args):
+        items, end = super().parse_completions(text, index, args)
         if self.completions is not None:
             self.completions[(text, index)] = items
         return items, end
@@ -120,7 +120,7 @@ class EditorTreeItem(String):
                     add_completion(editor)
         return items
 
-    def get_placeholder(self, text, index):
+    def get_placeholder(self, text, index, args):
         if index >= len(text):
             return str(self), index
         try:
