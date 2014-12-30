@@ -23,7 +23,7 @@ import re
 import editxt.constants as const
 from editxt.command.base import command, CommandError
 from editxt.command.parser import (CommandParser, Choice, CompleteWord,
-    Int, Regex, String, ParseError, ArgumentError)
+    Int, Regex, String, Error)
 from editxt.command.util import has_editor
 from editxt.editor import Editor
 from editxt.platform.app import beep
@@ -60,32 +60,32 @@ class EditorTreeItem(String):
             parts.append(editor.project.name)
         return "::".join(p for p in parts if p is not None)
 
-    def cached_completions(self, token, text, index):
-        key = (text, index)
+    def cached_completions(self, arg):
+        key = (arg.text, arg.start)
         try:
             items = self.completions[key]
         except KeyError:
-            items = self.completions[key] = self.get_completions(token)
+            items = self.completions[key] = self.get_completions(arg)
         return items
 
-    def value_of(self, token, text, index, args):
-        if self.completions is not None and token:
+    def value_of(self, consumed, arg):
+        if self.completions is not None and consumed:
             starts = []
-            for comp in self.cached_completions(token, text, index):
-                if comp == token:
+            for comp in self.cached_completions(arg):
+                if comp == consumed:
                     return comp.value
-                if comp.startswith(token):
+                if comp.startswith(consumed):
                     starts.append(comp.value)
             if starts:
                 return starts[0]
             name = self.full_name
             for project in self.sorted_projects():
-                if name(project) == token:
+                if name(project) == consumed:
                     return project
                 for editor in project.editors:
-                    if name(editor) == token:
+                    if name(editor) == consumed:
                         return editor
-        if token:
+        if consumed:
             return self.NO_MATCH
         return self.default
 
@@ -95,7 +95,7 @@ class EditorTreeItem(String):
             self.completions[(text, index)] = items
         return items, end
 
-    def get_completions(self, token):
+    def get_completions(self, arg):
         if self.editor is None:
             return []
         def add_completion(editor):
@@ -110,6 +110,10 @@ class EditorTreeItem(String):
             if ' ' in word:
                 word = word.replace(" ", "\\ ")
             items.append(CompleteWord(word, start=0, value=editor))
+        try:
+            token = self.consume(arg.text, arg.start)[0] or ""
+        except Error:
+            return ""
         items = []
         itemset = set()
         for project in self.sorted_projects():
@@ -120,20 +124,15 @@ class EditorTreeItem(String):
                     add_completion(editor)
         return items
 
-    def get_placeholder(self, text, index, args):
-        if index >= len(text):
-            return str(self), index
-        try:
-            token, index, terminated = self.parse_token(text, index)
-        except ParseError as err:
-            return None, None
-        except ArgumentError as err:
-            raise NotImplementedError # TODO
-        comps = [word for word in self.cached_completions(token, text, index)
+    def get_placeholder(self, arg):
+        if not arg:
+            return str(self)
+        token = self.consume(arg.text, arg.start)[0] or ""
+        comps = [word for word in self.cached_completions(arg)
                       if word.startswith(token)]
         if len(comps) == 1:
-            return comps[0][len(token):], index
-        return (None if terminated else ""), index
+            return comps[0][len(token):]
+        return ""
 
     def arg_string(self, value):
         if value is not None:

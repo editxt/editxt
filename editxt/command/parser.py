@@ -99,7 +99,7 @@ class CommandParser(object):
         return True
 
     def tokenize(self, text, index, args=None):
-        """Generate a sequence of parsed argument values
+        """Generate a sequence of parsed arguments
 
         :param text: Argument string.
         :param index: Start tokenizing at this index in text.
@@ -156,9 +156,8 @@ class CommandParser(object):
         :returns: A string of placeholder text, which can be used as a
             hint about remaining arguments to be entered.
         """
-        args = Options()
         values = []
-        for arg in self.tokenize(text, index, args):
+        for arg in self.tokenize(text, index):
             if not arg.could_consume_more:
                 continue
             value = arg.get_placeholder()
@@ -173,8 +172,7 @@ class CommandParser(object):
         :param index: Index in ``text`` to start parsing.
         :returns: A list of possible values to complete the command.
         """
-        args = Options()
-        for arg in self.tokenize(text, index, args):
+        for arg in self.tokenize(text, index):
             if arg.field is None:
                 return []
             if arg.could_consume_more:
@@ -226,13 +224,13 @@ class Arg(object):
         if field is None:
             value = None
             index = len(text)
+            assert index > start, (text, start, index)
         elif self.start > len(text):
             value = field.default
             index = start
         else:
             try:
-                consumed, index = field.consume(text, start)
-                value = field.value_of(consumed, text, start, preceding)
+                value, index = field.consume(text, start)
                 if index == len(text) and not text[start:].endswith(" "):
                     # this argument could consume more characters
                     index += 1
@@ -245,13 +243,15 @@ class Arg(object):
                 self.errors.extend(err.errors)
                 value = field.default
                 index = err.errors[-1].parse_index
-        self.value = value
         self.end = index
+        if field is not None:
+            value = field.value_of(value, self)
+        self.value = value
 
     def __repr__(self):
         if hasattr(self, "end"):
             plus = "+" if self.could_consume_more else ""
-            return "<{} {!r}{}>".format(type(self).__name__, self, plus)
+            return "<{} {!r}{}>".format(type(self).__name__, str(self), plus)
         return super().__repr__()
 
     def __str__(self):
@@ -404,9 +404,15 @@ class Field(object):
         """
         raise NotImplementedError("abstract method")
 
-    def value_of(self, token, text, index, args):
-        """Convert consumed token to argument value"""
-        return token
+    def value_of(self, consumed, arg):
+        """Convert consumed result to argument value
+
+        :param consumed: The first item in the tuple returned by
+        `self.consume(...)`.
+        :param arg: The `Arg` object.
+        :returns: The argument value.
+        """
+        return consumed
 
     def get_placeholder(self, arg):
         """Get placeholder string for this argument
