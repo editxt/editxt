@@ -43,7 +43,7 @@ import py2app
 
 from editxt import __version__ as version
 build_date = datetime.now()
-revision = build_date.strftime("%Y%m%d")
+revision = build_date.strftime("%Y%m%d%H%M")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
