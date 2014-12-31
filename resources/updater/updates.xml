@@ -102,5 +102,30 @@ is located on your local machine):</p>
       <pubDate>Tue, 30 Dec 2014 21:35:00 -0500</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.7.1/EditXT-v1.7.1-b02198a.zip" sparkle:version="201412302135.b02198a" sparkle:shortVersionString="1.7.1" sparkle:dsaSignature="MCwCFHHMoyoIed+T1fgYfEMERBhFzNdoAhRvjgGG2hO3Ns4NK39O5M684DaCug==" length="11481357" type="application/octet-stream" />
     </item>
+    <item>
+      <title>Version 1.7.2</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li><p>NOTE for users updating from versions before 1.7.1: you need to run a
+command in the terminal before clicking <strong>Install and Relaunch</strong> during the
+update process (adjust the <code>/Applications/EditXT.app</code> part of the path to
+where EditXT.app is located on your local machine):</p>
+<pre><code>chmod +x /Applications/EditXT.app/Contents/Frameworks/Sparkle.framework/Versions/Current/Resources/Autoupdate.app/Contents/MacOS/Autoupdate
+</code></pre></li>
+<li><p>Fix bug in sparkle framework that prevented check for updates.</p></li>
+<li><p>Fix deprecated image drawing call.</p></li>
+<li><p>Add syntax definition for git diff format.</p></li>
+</ul>
+
+        ]]>
+      </description>
+      <sparkle:releaseNotesLink>
+        https://github.com/editxt/editxt/releases
+      </sparkle:releaseNotesLink>
+      <pubDate>Wed, 31 Dec 2014 01:06:10 -0500</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.7.2/EditXT-v1.7.2-fa3739c.zip" sparkle:version="201412310106.fa3739c" sparkle:shortVersionString="1.7.2" sparkle:dsaSignature="MCwCFGcp798C1d6dAMjJ+TmR31RpTJ52AhRgj6WW96QE8RSgvhkv49TuBRXRlA==" length="11523588" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
