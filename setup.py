@@ -92,19 +92,24 @@ print("building %s %s %s.%s" % (appname, version, revision, gitrev))
 
 thisdir = os.path.dirname(os.path.abspath(__file__))
 
-# remove old build
-if "--noclean" in sys.argv:
-    sys.argv.remove("--noclean")
-else:
-    def rmtree(path):
-        print("removing", path)
-        if os.path.exists(path):
-            shutil.rmtree(path)
-    rmtree(join(thisdir, "build"))
-    rmtree(join(thisdir, "dist", appname + ".app"))
+def clean():
+    # remove old build
+    if "--noclean" in sys.argv:
+        sys.argv.remove("--noclean")
+    else:
+        def rmtree(path):
+            print("removing", path)
+            if os.path.exists(path):
+                shutil.rmtree(path)
+        rmtree(join(thisdir, "build"))
+        rmtree(join(thisdir, "dist", appname + ".app"))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-setup(
+setup_args = {}
+def prepare_build(**kw):
+    setup_args.update(kw)
+
+prepare_build(
     name=appname,
     app=['boot.py'],
     version=version,
@@ -297,7 +302,7 @@ def update_change_log_html():
         for line in fh:
             if lines:
                 if regex.match(line):
-                    line = "### " + line
+                    line = "## " + line
                 lines.append(line)
             elif line == "## Change Log\n":
                 lines.append("")
@@ -338,6 +343,12 @@ def build_zip():
     return zip_path
 
 
+if "--html-only" in sys.argv:
+    update_change_log_html()
+    sys.exit()
+
+clean()
+setup(**setup_args)
 if package:
     zip_path = build_zip()
     prepare_sparkle_update(zip_path)
