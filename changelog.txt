@@ -22,12 +22,13 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+## Change Log
+
 2014-12-31 - 1.7.3
   - NOTE for users updating from versions before 1.7.1: you need to run a
     command in the terminal before clicking **Install and Relaunch** during the
     update process (adjust the `/Applications/EditXT.app` part of the path to
     where EditXT.app is located on your local machine):
-
     ```
     chmod +x /Applications/EditXT.app/Contents/Frameworks/Sparkle.framework/Versions/Current/Resources/Autoupdate.app/Contents/MacOS/Autoupdate
     ```
@@ -37,12 +38,13 @@ https://github.com/editxt/editxt for details of what actually happened.
     py2app 0.9 somehow caused the main text view to draw anti-aliased text. User
     font preferences are on the todo list, so hopefully we won't need this hack
     for long.
+  - Add version history page for Sparkle updates on github.
+
 2014-12-31 - 1.7.2
   - NOTE for users updating from versions before 1.7.1: you need to run a
     command in the terminal before clicking **Install and Relaunch** during the
     update process (adjust the `/Applications/EditXT.app` part of the path to
     where EditXT.app is located on your local machine):
-
     ```
     chmod +x /Applications/EditXT.app/Contents/Frameworks/Sparkle.framework/Versions/Current/Resources/Autoupdate.app/Contents/MacOS/Autoupdate
     ```
@@ -52,16 +54,13 @@ https://github.com/editxt/editxt for details of what actually happened.
 
 2014-12-30 - 1.7.1
   - Fix a bug that prevented auto-update.
-
     NOTE: you need to run a command in the terminal before clicking
     **Install and Relaunch** during the update process (adjust the
     `/Applications/EditXT.app` part of the path to where EditXT.app
     is located on your local machine):
-
     ```
     chmod +x /Applications/EditXT.app/Contents/Frameworks/Sparkle.framework/Versions/Current/Resources/Autoupdate.app/Contents/MacOS/Autoupdate
     ```
-
     Bug details: https://github.com/sparkle-project/Sparkle/issues/309
 
 2014-12-30 - 1.7.0
@@ -81,7 +80,7 @@ https://github.com/editxt/editxt for details of what actually happened.
       navigation. These default shortcuts are merged with the custom shortcuts
       specified in the config file.
     - Some shortcuts in other menus cannot be overridden with custom shortcuts.
-  - Add "doc" command for document tree navigation. This command can be used
+  - Add `doc` command for document tree navigation. This command can be used
     to focus editors by name, in the order they have been most recently visited
     (`previous` / `next`), or by relative position (`up` / `down`).
   - Rename *Text* menu to *Command*
@@ -89,28 +88,29 @@ https://github.com/editxt/editxt for details of what actually happened.
     *Help > Command Help* menu item when the command bar is active.
   - Add button to show command output in panel so it can be preserved while
     other commands that produce output are executed.
-  - Fix "ack" command output formatting.
+  - Fix `ack` command output formatting.
   - Eliminate superfluous trailing backslash in ack command output.
-  - Fix "open" command creating duplicate editor.
+  - Fix `open` command creating duplicate editor.
   - Fix command bar auto-complete bugs.
   - Fix display flash on hide command view.
   - Various other bug fixes.
 
 2014-12-01 - 1.6.0
   - Toggle last command output with Escape key.
-  - Add "ack" command integration for code search. Command output contains
+  - Add `ack` command integration for code search. Command output contains
     clickable links to open files. Command+click to open files in background.
-    Ack (http://beyondgrep.com/) must be installed and the path to the ack
-    executable may need to be specified in preferences. For example:
+    Ack ([http://beyondgrep.com/](http://beyondgrep.com/)) must be installed and
+    the path to the ack executable may need to be specified in preferences. For
+    example:
     ```
     command:
       ack:
         path: /usr/local/bin/ack
     ```
-  - Add "grab" command to collect lines matching a pattern.
-  - Add "open" command (alias "xt") for opening files from command bar.
+  - Add `grab` command to collect lines matching a pattern.
+  - Add `open` command (also `xt`) for opening files from command bar.
   - Add support for invoking commands from project view.
-  - Add "set project_path ..." command. The project path is used as a fallback
+  - Add `set project_path ...` command. The project path is used as a fallback
     default path for commands that touch the filesystem if the current editor
     does not have a path.
   - Add Sparkle updater for automatic updates.
@@ -137,7 +137,7 @@ https://github.com/editxt/editxt for details of what actually happened.
   - Fix bug in content analysis (indent mode and size, EOL mode).
 
 2014-05-18 - 1.4.0
-  - Add *.mm to Objective-C syntax definition file patterns.
+  - Add `*.mm` to Objective-C syntax definition file patterns.
   - Fix bug that preventing opening document via File > Open dialog.
   - Add diff command to compare with file on disk.
   - Improve error handling for find commands.
@@ -151,18 +151,18 @@ https://github.com/editxt/editxt for details of what actually happened.
     allowing text transformations such as case changes or conditional
     replacements, far beyond what is possible with a regular expression find/
     replace operation. Example replace expression:
-
-      match.group(1).lower() + match.group(2)
-
+    ```
+    match[1].lower() + match[2]
+    ```
   - Dramatic performance boost when highlighting selected text.
   - Add count-occurrences action to find command.
   - Add right_margin config settings:
-
-      right_margin:
-        position: 80
-        line_color: BBDDBB
-        margin_color: DDBBDD
-
+    ```
+    right_margin:
+      position: 80
+      line_color: BBDDBB
+      margin_color: DDBBDD
+    ```
   - Add syntax definitions for shell scripts and Objective C
 
 2013-09-26 - 1.3.2
@@ -178,30 +178,34 @@ https://github.com/editxt/editxt for details of what actually happened.
   - Added status message output to command bar.
   - Log config file path on load.
   - Move document defaults to config file:
+    ```
     indent:
       mode: (space|tab) # default is space
       size: 4
     newline_mode: (LF|CR|CRLF|UNICODE) # default is LF
     soft_wrap: (none|word)
+    ```
   - Added commands:
-    - Clear highlighted text (clear_highlighted_text).
-    - Reload config (reload_config)
-    - "set <variable> ..." to set document variables:
-      - highlight_selected_text
-      - indent
-      - newline_mode
-      - soft_wrap
+    - Clear highlighted text (`clear_highlighted_text`).
+    - Reload config (`reload_config`)
+    - `set <variable> ...` to set document variables:
+      - `highlight_selected_text`
+      - `indent`
+      - `newline_mode`
+      - `soft_wrap`
   - Make Preferences... menu item open config file.
-  - Add config file (~/.editxt/config.yaml) with selection matching settings:
+  - Add config file (`~/.editxt/config.yaml`) with selection matching settings:
+    ```
     highlight_selected_text:
       enabled: (yes|no) # default is yes
       color: FEFF6B
+    ```
   - Mark occurrences when counting with the find dialog.
   - Mark (highlight) all occurrences of selected text (length > 3, containing
     no spaces), yellow for now.
-  - Allow close document from menu and with COMMAND+W hotkey
+  - Allow close document from menu and with *Command+W* hotkey
   - Many improvements on command bar
-    - More commands: wrap, sort, find/replace
+    - More commands: `wrap`, `sort`, `/find/replace/i`
     - Argument placeholders/hints
     - Tab completion
     - Command history
@@ -213,9 +217,9 @@ https://github.com/editxt/editxt for details of what actually happened.
 
 2013-01-05 - 1.2.0 (unreleased)
   - Add command bar (needs more work, but it's minimally usable).
-  - Add "Goto Line" command.
-  - Store app config and state in ~/.editxt.
-  - Add "xt" command line script to packaged app.
+  - Add "Goto Line" command: type line number in command bar.
+  - Store app config and state in `~/.editxt`.
+  - Add `xt` command line script to packaged app.
   - Display full path in window title and document tooltips.
   - Fix cursor column status view: left-most position is now 0 instead of 1.
   - Create new (empty) document when opening non-existent path from command
@@ -224,7 +228,7 @@ https://github.com/editxt/editxt for details of what actually happened.
 
 2012-05-22 - 1.1.0
   - Added non-padded (un)comment text command. This is now the default comment
-    mode (SHIFT+COMMA). Moved old command to SHIFT+COMMAND+COMMA.
+    mode (*Shift+,*). Moved old command to *Command+Shift+,*.
   - Improve button text in find/replace dialog.
   - Fixed bug in backspace at end of line with trailing whitespace.
   - Fixed bug in document auto-reload which caused a prompt to "Save As..."
@@ -237,11 +241,14 @@ https://github.com/editxt/editxt for details of what actually happened.
   - Internal: improve logging configuration.
   - Internal: major package reorganization.
 
-2010-10-13 - 1.0.1 - Fixed undo and document pane hover bugs.
+2010-10-13 - 1.0.1
+  - Fixed undo and document pane hover bugs.
 
-2010-08-16 - 1.0.0 - Added GPLv3 license and released on github.com
+2010-08-16 - 1.0.0
+  - Added GPLv3 license and released on github.com
 
-2007-12-29 - Initial development. During this period, as soon as it was
-    functional enough for day-to-day use, EditXT was used as the primary
-    editor with which to further develop itself. In addition to that,
-    EditXT was also used on a daily basis for other software development.
+2007-12-29 - Initial development
+  During this period, as soon as it was functional enough for day-to-day use,
+  EditXT was used as the primary editor with which to further develop itself.
+  In addition to that, EditXT was also used on a daily basis for other
+  software development.

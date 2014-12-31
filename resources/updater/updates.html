@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: sans-serif;
+    }
+    h3 {
+      padding: 0.65em 0.5em 0;
+      border-bottom: 1px solid #e1e1e8;
+    }
+    p, li {
+      line-height: 1.2em;
+    }
+    code, pre {
+      padding: 0 3px 2px;
+      font-family: Monaco, Menlo, Consolas, "Courier New", monospace;
+      font-size: 12px;
+      color: #333333;
+      -webkit-border-radius: 3px;
+         -moz-border-radius: 3px;
+              border-radius: 3px;
+    }
+    code {
+      padding: 2px 4px;
+      color: #c14;
+      white-space: nowrap;
+      background-color: #f7f7f9;
+      border: 1px solid #e1e1e8;
+    }
+    pre {
+      display: block;
+      padding: 0.5em 0.5em 0.5em;
+      word-break: break-all;
+      word-wrap: break-word;
+      white-space: pre;
+      overflow-x: scroll;
+      overflow-y: hidden;
+      background-color: #f5f5f5;
+      border: 1px solid #ccc;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      -webkit-border-radius: 4px;
+         -moz-border-radius: 4px;
+              border-radius: 4px;
+    }
+    pre code {
+      color: inherit;
+      background-color: transparent;
+      white-space: pre;
+      border: 0;
+    }
+  </style>
+</head>
+<body><h3>2014-12-31 - 1.7.3</h3>
+<ul>
+<li>NOTE for users updating from versions before 1.7.1: you need to run a
+command in the terminal before clicking <strong>Install and Relaunch</strong> during the
+update process (adjust the <code>/Applications/EditXT.app</code> part of the path to
+where EditXT.app is located on your local machine):
+<pre><code>chmod +x /Applications/EditXT.app/Contents/Frameworks/Sparkle.framework/Versions/Current/Resources/Autoupdate.app/Contents/MacOS/Autoupdate
+</code></pre></li>
+<li>Better fix for bug in sparkle framework that prevented check for updates.</li>
+<li>Disable font smoothing in views that use the default fixed width font, which
+is currently hard-coded at Monaco 10pt. It appears that the upgrade to
+py2app 0.9 somehow caused the main text view to draw anti-aliased text. User
+font preferences are on the todo list, so hopefully we won't need this hack
+for long.</li>
+<li>Add version history page for Sparkle updates on github.</li>
+</ul>
+<h3>2014-12-31 - 1.7.2</h3>
+<ul>
+<li>NOTE for users updating from versions before 1.7.1: you need to run a
+command in the terminal before clicking <strong>Install and Relaunch</strong> during the
+update process (adjust the <code>/Applications/EditXT.app</code> part of the path to
+where EditXT.app is located on your local machine):
+<pre><code>chmod +x /Applications/EditXT.app/Contents/Frameworks/Sparkle.framework/Versions/Current/Resources/Autoupdate.app/Contents/MacOS/Autoupdate
+</code></pre></li>
+<li>Fix bug in sparkle framework that prevented check for updates.</li>
+<li>Fix deprecated image drawing call.</li>
+<li>Add syntax definition for git diff format.</li>
+</ul>
+<h3>2014-12-30 - 1.7.1</h3>
+<ul>
+<li>Fix a bug that prevented auto-update.
+NOTE: you need to run a command in the terminal before clicking
+<strong>Install and Relaunch</strong> during the update process (adjust the
+<code>/Applications/EditXT.app</code> part of the path to where EditXT.app
+is located on your local machine):
+<pre><code>chmod +x /Applications/EditXT.app/Contents/Frameworks/Sparkle.framework/Versions/Current/Resources/Autoupdate.app/Contents/MacOS/Autoupdate
+</code></pre>
+Bug details: https://github.com/sparkle-project/Sparkle/issues/309</li>
+</ul>
+<h3>2014-12-30 - 1.7.0</h3>
+<ul>
+<li>Add customizable <em>Shortcuts</em> menu for quick command execution. The items in
+this menu can be customized by adding a <code>shortcuts</code> section to the config
+file (EditXT &gt; Preferences). For example:
+<pre><code>shortcuts:
+  Command+C: clear_highlighted_text
+  Command+Alt+s: sort
+</code></pre>
+Note:
+<ul>
+<li>Menu is not yet updated with <code>reload_config</code> command. Restart for now.</li>
+<li>The following key combinaations are equivalent:
+<code>Command+C</code> and <code>Command+Shift+c</code></li>
+<li>The <em>Shortcuts</em> menu is pre-loaded with shortcuts for document tree
+navigation. These default shortcuts are merged with the custom shortcuts
+specified in the config file.</li>
+<li>Some shortcuts in other menus cannot be overridden with custom shortcuts.</li>
+</ul></li>
+<li>Add <code>doc</code> command for document tree navigation. This command can be used
+to focus editors by name, in the order they have been most recently visited
+(<code>previous</code> / <code>next</code>), or by relative position (<code>up</code> / <code>down</code>).</li>
+<li>Rename <em>Text</em> menu to <em>Command</em></li>
+<li>Add command bar help, which is accessed with F1 key or with the
+<em>Help &gt; Command Help</em> menu item when the command bar is active.</li>
+<li>Add button to show command output in panel so it can be preserved while
+other commands that produce output are executed.</li>
+<li>Fix <code>ack</code> command output formatting.</li>
+<li>Eliminate superfluous trailing backslash in ack command output.</li>
+<li>Fix <code>open</code> command creating duplicate editor.</li>
+<li>Fix command bar auto-complete bugs.</li>
+<li>Fix display flash on hide command view.</li>
+<li>Various other bug fixes.</li>
+</ul>
+<h3>2014-12-01 - 1.6.0</h3>
+<ul>
+<li>Toggle last command output with Escape key.</li>
+<li>Add <code>ack</code> command integration for code search. Command output contains
+clickable links to open files. Command+click to open files in background.
+Ack (<a href="http://beyondgrep.com/">http://beyondgrep.com/</a>) must be installed and
+the path to the ack executable may need to be specified in preferences. For
+example:
+<pre><code>command:
+  ack:
+    path: /usr/local/bin/ack
+</code></pre></li>
+<li>Add <code>grab</code> command to collect lines matching a pattern.</li>
+<li>Add <code>open</code> command (also <code>xt</code>) for opening files from command bar.</li>
+<li>Add support for invoking commands from project view.</li>
+<li>Add <code>set project_path ...</code> command. The project path is used as a fallback
+default path for commands that touch the filesystem if the current editor
+does not have a path.</li>
+<li>Add Sparkle updater for automatic updates.</li>
+<li>Improve command bar auto-complete menu so it doesn't display off screen.</li>
+<li>Improve auto-complete algorithm to use longest common substring rather
+than currently selected item.</li>
+</ul>
+<h3>2014-10-24 - 1.5.3</h3>
+<ul>
+<li>Fix bug that prevented text command sheets from closing.</li>
+</ul>
+<h3>2014-10-22 - 1.5.2</h3>
+<ul>
+<li>Fix bad “Save as...” prompt on save after reload.</li>
+</ul>
+<h3>2014-10-21 - 1.5.1</h3>
+<ul>
+<li>Fix bug in automatic file reload.</li>
+</ul>
+<h3>2014-10-17 - 1.5.0</h3>
+<ul>
+<li>Internal refactoring and bug fixes: eliminate NSDocument framework.
+<ul>
+<li>Closing a project with modified documents now prompts to save changes.</li>
+</ul></li>
+<li>Add recently closed document list as main project view.</li>
+<li>Re-open error log (rather than new document named &quot;EditXT Log&quot;) on launch.</li>
+<li>Allow drag/drop documents to other applications.</li>
+<li>Allow copy and move documents in file tree (hold Command key to copy).</li>
+<li>Fix bug in content analysis (indent mode and size, EOL mode).</li>
+</ul>
+<h3>2014-05-18 - 1.4.0</h3>
+<ul>
+<li>Add <code>*.mm</code> to Objective-C syntax definition file patterns.</li>
+<li>Fix bug that preventing opening document via File &gt; Open dialog.</li>
+<li>Add diff command to compare with file on disk.</li>
+<li>Improve error handling for find commands.</li>
+<li>Improve error logging.</li>
+<li>Suppress traceback on break xt script.</li>
+<li>Overlay scrollers on OS X 10.7+</li>
+<li>Runs on Python 3.</li>
+<li>Fix bug that prevented replace with nothing (empty string).</li>
+<li>Added Python Replace feature to find command. This feature evaluates a
+Python expression during the replace phase of a find/replace operation
+allowing text transformations such as case changes or conditional
+replacements, far beyond what is possible with a regular expression find/
+replace operation. Example replace expression:
+<pre><code>match[1].lower() + match[2]
+</code></pre></li>
+<li>Dramatic performance boost when highlighting selected text.</li>
+<li>Add count-occurrences action to find command.</li>
+<li>Add right_margin config settings:
+<pre><code>right_margin:
+  position: 80
+  line_color: BBDDBB
+  margin_color: DDBBDD
+</code></pre></li>
+<li>Add syntax definitions for shell scripts and Objective C</li>
+</ul>
+<h3>2013-09-26 - 1.3.2</h3>
+<ul>
+<li>Use SafeDump to dump editor config files (preparation for v1.4).</li>
+</ul>
+<h3>2013-09-26 - 1.3.1</h3>
+<ul>
+<li>Fix bug that prevented replace with nothing (empty string).</li>
+</ul>
+<h3>2013-09-22 - 1.3.0</h3>
+<ul>
+<li>Omit command from history if it has a leading space.</li>
+<li>Integrate GUI and hotkey commands with command bar history.</li>
+<li>Improve indent size calculation.</li>
+<li>Added status message output to command bar.</li>
+<li>Log config file path on load.</li>
+<li>Move document defaults to config file:
+<pre><code>indent:
+  mode: (space|tab) # default is space
+  size: 4
+newline_mode: (LF|CR|CRLF|UNICODE) # default is LF
+soft_wrap: (none|word)
+</code></pre></li>
+<li>Added commands:
+<ul>
+<li>Clear highlighted text (<code>clear_highlighted_text</code>).</li>
+<li>Reload config (<code>reload_config</code>)</li>
+<li><code>set &lt;variable&gt; ...</code> to set document variables:
+<ul>
+<li><code>highlight_selected_text</code></li>
+<li><code>indent</code></li>
+<li><code>newline_mode</code></li>
+<li><code>soft_wrap</code></li>
+</ul></li>
+</ul></li>
+<li>Make Preferences... menu item open config file.</li>
+<li>Add config file (<code>~/.editxt/config.yaml</code>) with selection matching settings:
+<pre><code>highlight_selected_text:
+  enabled: (yes|no) # default is yes
+  color: FEFF6B
+</code></pre></li>
+<li>Mark occurrences when counting with the find dialog.</li>
+<li>Mark (highlight) all occurrences of selected text (length &gt; 3, containing
+no spaces), yellow for now.</li>
+<li>Allow close document from menu and with <em>Command+W</em> hotkey</li>
+<li>Many improvements on command bar
+<ul>
+<li>More commands: <code>wrap</code>, <code>sort</code>, <code>/find/replace/i</code></li>
+<li>Argument placeholders/hints</li>
+<li>Tab completion</li>
+<li>Command history</li>
+</ul></li>
+<li>Improve exception logging.</li>
+<li>Fix bugs related to app termination with unsaved documents.</li>
+<li>Fix log file syntax highlighting.</li>
+<li>Fix startup errors due to strange arguments passed by OS X.</li>
+<li>Fix long pause on quit with many documents open.</li>
+</ul>
+<h3>2013-01-05 - 1.2.0 (unreleased)</h3>
+<ul>
+<li>Add command bar (needs more work, but it's minimally usable).</li>
+<li>Add &quot;Goto Line&quot; command: type line number in command bar.</li>
+<li>Store app config and state in <code>~/.editxt</code>.</li>
+<li>Add <code>xt</code> command line script to packaged app.</li>
+<li>Display full path in window title and document tooltips.</li>
+<li>Fix cursor column status view: left-most position is now 0 instead of 1.</li>
+<li>Create new (empty) document when opening non-existent path from command
+line.</li>
+<li>Always move (do not copy) document or project on internal drag.</li>
+</ul>
+<h3>2012-05-22 - 1.1.0</h3>
+<ul>
+<li>Added non-padded (un)comment text command. This is now the default comment
+mode (<em>Shift+,</em>). Moved old command to <em>Command+Shift+,</em>.</li>
+<li>Improve button text in find/replace dialog.</li>
+<li>Fixed bug in backspace at end of line with trailing whitespace.</li>
+<li>Fixed bug in document auto-reload which caused a prompt to &quot;Save As...&quot;
+on next save.</li>
+<li>Fixed bug: crash on OS X Lion when collapsing project.</li>
+<li>Fixed bug: crash on OS X Lion due to no current project in settings file on
+launch. 'NSNull' object has no attribute 'indexAtPosition_' in editor.py
+line 290, in get_current_project.</li>
+<li>Internal: upgrade to PyObjC 2.3 and Python 2.7.3.</li>
+<li>Internal: improve logging configuration.</li>
+<li>Internal: major package reorganization.</li>
+</ul>
+<h3>2010-10-13 - 1.0.1</h3>
+<ul>
+<li>Fixed undo and document pane hover bugs.</li>
+</ul>
+<h3>2010-08-16 - 1.0.0</h3>
+<ul>
+<li>Added GPLv3 license and released on github.com</li>
+</ul>
+<h3>2007-12-29 - Initial development</h3>
+<p>During this period, as soon as it was functional enough for day-to-day use,
+EditXT was used as the primary editor with which to further develop itself.
+In addition to that, EditXT was also used on a daily basis for other
+software development.</p>
+</body>
+</html>

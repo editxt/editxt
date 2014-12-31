@@ -7,7 +7,7 @@
         ]]>
       </description>
       <sparkle:releaseNotesLink>
-        https://github.com/editxt/editxt/releases
+        http://htmlpreview.github.io/?https://raw.github.com/editxt/editxt/blob/master/resources/updater/updates.html
       </sparkle:releaseNotesLink>
       <pubDate>{pubDate}</pubDate>
       <enclosure url="{url}" sparkle:version="{version}" sparkle:shortVersionString="{shortVersion}" sparkle:dsaSignature="{dsaSignature}" length="{length}" type="application/octet-stream" />

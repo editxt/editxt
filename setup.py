@@ -90,6 +90,8 @@ if changes:
             sys.exit()
 print("building %s %s %s.%s" % (appname, version, revision, gitrev))
 
+thisdir = os.path.dirname(os.path.abspath(__file__))
+
 # remove old build
 if "--noclean" in sys.argv:
     sys.argv.remove("--noclean")
@@ -98,7 +100,6 @@ else:
         print("removing", path)
         if os.path.exists(path):
             shutil.rmtree(path)
-    thisdir = os.path.dirname(os.path.abspath(__file__))
     rmtree(join(thisdir, "build"))
     rmtree(join(thisdir, "dist", appname + ".app"))
 
@@ -250,6 +251,8 @@ def prepare_sparkle_update(zip_path):
         fh.write(item)
         fh.write(updates[i:])
 
+    update_change_log_html()
+
 
 def timezone(local_datetime):
     """Get timezone in +HHMM format"""
@@ -285,6 +288,32 @@ def get_latest_changes(version):
     parser = commonmark.DocParser()
     renderer = commonmark.HTMLRenderer()
     return renderer.render(parser.parse(value))
+
+
+def update_change_log_html():
+    regex = re.compile(r"20\d\d-..-.. - ")
+    lines = []
+    with open(join(thisdir, "changelog.txt")) as fh:
+        for line in fh:
+            if lines:
+                if regex.match(line):
+                    line = "### " + line
+                lines.append(line)
+            elif line == "## Change Log\n":
+                lines.append("")
+    if not lines:
+        print("Change Log header not found in changelog.txt")
+        return False
+    value = "".join(lines)
+    parser = commonmark.DocParser()
+    renderer = commonmark.HTMLRenderer()
+    updates_html = renderer.render(parser.parse(value))
+    with open(join(thisdir, "resources/updater/updates-template.html")) as fh:
+        template = fh.read()
+    html = template % {"body": updates_html}
+    with open(join(thisdir, "resources/updater/updates.html"), "w") as fh:
+        fh.write(html)
+    return True
 
 
 def build_zip():
