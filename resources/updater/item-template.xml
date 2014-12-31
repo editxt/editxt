@@ -6,6 +6,9 @@
           {changesHTML}
         ]]>
       </description>
+      <sparkle:releaseNotesLink>
+        https://github.com/editxt/editxt/releases
+      </sparkle:releaseNotesLink>
       <pubDate>{pubDate}</pubDate>
       <enclosure url="{url}" sparkle:version="{version}" sparkle:shortVersionString="{shortVersion}" sparkle:dsaSignature="{dsaSignature}" length="{length}" type="application/octet-stream" />
     </item>
