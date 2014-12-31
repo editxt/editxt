@@ -37,5 +37,49 @@ than currently selected item.</li>
       <pubDate>Mon, 01 Dec 2014 23:44:51 -0500</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.6.0/EditXT-v1.6.0-ab5a6dd.zip" sparkle:version="20141201.ab5a6dd" sparkle:shortVersionString="1.6.0" sparkle:dsaSignature="MCwCFBSKDxRTzUL0rlSxTqkq9nlSVvnsAhRYIU3rOH/3lVEW2MKqPa+CFkagvA==" length="9988126" type="application/octet-stream" />
     </item>
+    <item>
+      <title>Version 1.7.0</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li>Add customizable <em>Shortcuts</em> menu for quick command execution. The items in
+this menu can be customized by adding a <code>shortcuts</code> section to the config
+file (EditXT &gt; Preferences). For example:
+<pre><code>shortcuts:
+  Command+C: clear_highlighted_text
+  Command+Alt+s: sort
+</code></pre>
+Note:
+<ul>
+<li>Menu is not yet updated with <code>reload_config</code> command. Restart for now.</li>
+<li>The following key combinaations are equivalent:
+<code>Command+C</code> and <code>Command+Shift+c</code></li>
+<li>The <em>Shortcuts</em> menu is pre-loaded with shortcuts for document tree
+navigation. These default shortcuts are merged with the custom shortcuts
+specified in the config file.</li>
+<li>Some shortcuts in other menus cannot be overridden with custom shortcuts.</li>
+</ul></li>
+<li>Add &quot;doc&quot; command for document tree navigation. This command can be used
+to focus editors by name, in the order they have been most recently visited
+(<code>previous</code> / <code>next</code>), or by relative position (<code>up</code> / <code>down</code>).</li>
+<li>Rename <em>Text</em> menu to <em>Command</em></li>
+<li>Add command bar help, which is accessed with F1 key or with the
+<em>Help &gt; Command Help</em> menu item when the command bar is active.</li>
+<li>Add button to show command output in panel so it can be preserved while
+other commands that produce output are executed.</li>
+<li>Fix &quot;ack&quot; command output formatting.</li>
+<li>Eliminate superfluous trailing backslash in ack command output.</li>
+<li>Fix &quot;open&quot; command creating duplicate editor.</li>
+<li>Fix command bar auto-complete bugs.</li>
+<li>Fix display flash on hide command view.</li>
+<li>Various other bug fixes.</li>
+</ul>
+
+        ]]>
+      </description>
+      <pubDate>Tue, 30 Dec 2014 20:37:39 -0500</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.7.0/EditXT-v1.7.0-bf27753.zip" sparkle:version="201412302037.bf27753" sparkle:shortVersionString="1.7.0" sparkle:dsaSignature="MCwCFCKHLi8c08dAeN42rAamoo/VZ59uAhQ5c98+emOWfLzCd/dycAK362aJRA==" length="10022910" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
