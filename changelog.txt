@@ -22,6 +22,19 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+2014-12-31 - 1.7.2
+  - NOTE for users updating from versions before 1.7.1: you need to run a
+    command in the terminal before clicking **Install and Relaunch** during the
+    update process (adjust the `/Applications/EditXT.app` part of the path to
+    where EditXT.app is located on your local machine):
+
+    ```
+    chmod +x /Applications/EditXT.app/Contents/Frameworks/Sparkle.framework/Versions/Current/Resources/Autoupdate.app/Contents/MacOS/Autoupdate
+    ```
+  - Fix bug in sparkle framework that prevented check for updates.
+  - Fix deprecated image drawing call.
+  - Add syntax definition for git diff format.
+
 2014-12-30 - 1.7.1
   - Fix a bug that prevented auto-update.
 
