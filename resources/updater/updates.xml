@@ -127,5 +127,34 @@ where EditXT.app is located on your local machine):</p>
       <pubDate>Wed, 31 Dec 2014 01:06:10 -0500</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.7.2/EditXT-v1.7.2-fa3739c.zip" sparkle:version="201412310106.fa3739c" sparkle:shortVersionString="1.7.2" sparkle:dsaSignature="MCwCFGcp798C1d6dAMjJ+TmR31RpTJ52AhRgj6WW96QE8RSgvhkv49TuBRXRlA==" length="11523588" type="application/octet-stream" />
     </item>
+    <item>
+      <title>Version 1.7.3</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li>NOTE for users updating from versions before 1.7.1: you need to run a
+command in the terminal before clicking <strong>Install and Relaunch</strong> during the
+update process (adjust the <code>/Applications/EditXT.app</code> part of the path to
+where EditXT.app is located on your local machine):
+<pre><code>chmod +x /Applications/EditXT.app/Contents/Frameworks/Sparkle.framework/Versions/Current/Resources/Autoupdate.app/Contents/MacOS/Autoupdate
+</code></pre></li>
+<li>Better fix for bug in sparkle framework that prevented check for updates.</li>
+<li>Disable font smoothing in views that use the default fixed width font, which
+is currently hard-coded at Monaco 10pt. It appears that the upgrade to
+py2app 0.9 somehow caused the main text view to draw anti-aliased text. User
+font preferences are on the todo list, so hopefully we won't need this hack
+for long.</li>
+<li>Add version history page for Sparkle updates on github.</li>
+</ul>
+
+        ]]>
+      </description>
+      <sparkle:releaseNotesLink>
+        http://htmlpreview.github.io/?https://raw.github.com/editxt/editxt/blob/master/resources/updater/updates.html
+      </sparkle:releaseNotesLink>
+      <pubDate>Wed, 31 Dec 2014 14:54:14 -0500</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.7.3/EditXT-v1.7.3-100402e.zip" sparkle:version="201412311454.100402e" sparkle:shortVersionString="1.7.3" sparkle:dsaSignature="MCwCFCcMN2iRAalpEDHNs/JuhokWNDbAAhRv92m43EZJITRxpUJye+pgRDIKvQ==" length="11481181" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
