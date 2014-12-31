@@ -18,8 +18,15 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
 
-name = "Objective C"
-filepatterns = ["*.h", "*.m", "*.mm"]
+name = "C"
+filepatterns = [
+    "*.c",      # C
+    "*.h",      # [Obj-]C[++] / etc header files
+    "*.cpp",    # C++
+    "*.m",      # Obj-C
+    "*.mm",     # Obj-C C++
+    "*.ino",    # Arduino C++
+]
 comment_token = "//"
 word_groups = [
     # --------------------------------------------------------------------------
@@ -38,6 +45,7 @@ word_groups = [
         debugger
         default
         delete
+        dispatch_block_t
         do
         double
     	else
@@ -68,6 +76,7 @@ word_groups = [
         release
         return
         short
+        signed
         static
         super
         switch
@@ -78,6 +87,9 @@ word_groups = [
         transient
         try
         typeof
+        uint32_t
+        uint64_t
+        unsigned
         var
         volatile
         while
@@ -131,6 +143,7 @@ word_groups = [
 ]
 delimited_ranges = [
     (RE('[@]?"'), ['"', RE(r"[^\\]\n")], "D32E1B", None),
+    (RE('\s\<'), [RE('\.h\>'), RE(r"[^\\]\n")], "D32E1B", None),
     (RE("[@]?'"), ["'", RE(r"[^\\]\n")], "008080", None),
     ("//", [RE(r"(?=\n)")], "008000", None),
     ("/*", ["*/"], "505050", None),

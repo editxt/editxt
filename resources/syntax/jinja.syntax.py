@@ -17,28 +17,18 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
-
-#colors:
-#    505050 (gray)
-#    1BBA03 (green text)
-#    BA0004 (red text)
-#    D6FFD5 (green background)
-#    FEE9E9 (red background)
-#    19BABA (bright cyan)
-#    008080 (other cyan)
-#    008000 (comment green)
-#    0002BB (blue)
-#    59069B (purple)
-
-name = "Git Diff"
-filepatterns = ["*.diff", "*.patch"]
+name = "Jinja Templates"
+filepatterns = ["*.jn2"]
+comment_token = "{#"
+word_groups = []
 delimited_ranges = [
-    (RE('(?m)^diff '), [RE(r"(?m)$")], "505050", None),
-    (RE('(?m)^index '), [RE(r"(?m)$")], "505050", None),
-    # Uncomment these if you want something different for the ---/+++ lines
-    (RE(r'(?m)^--- '),  [RE(r"(?m)$")], "59069B", None),
-    (RE(r'(?m)^\+\+\+ '),  [RE(r"(?m)$")], "59069B", None),
-    (RE(r'(?m)^-(?!-- )'),  [RE(r"(?m)$")], "BA0004", None),
-    (RE(r'(?m)^\+(?!\+\+ )'),  [RE(r"(?m)$")], "1BBA03", None),
-    (RE(r'(?m)^@@ [^@\n]+?'),  [RE(r" @@ ")], "19BABA", None),
+    # xml tags
+    ("<!--", ["-->"], "008000", None),
+    (RE("<(/)?[a-zA-Z]"), [">", RE(r"(?=\{\{ )")], "000080", None),
+    # both (hackish and nasty)
+    (RE(r"(?<= \}\}).+?(?=(>|\{\{ |\n))"), [">", RE(r"(?=\{\{ |\n)")], "000080", None),
+    # jinja2 syntax
+    (RE(r"\{\%(-)? "), ["}", RE(r"(?=\n)")], "800000", None),
+    ("{{ ", [" }}", RE(r"(?=\n)")], "800000", None),
+    ("{#", ["#}"], "666666", None),
 ]
