@@ -702,9 +702,6 @@ class File(String):
         path, stop = super().consume(text, index)
         if path is None:
             return path, stop
-        if path.endswith((os.path.sep, "/")):
-            # TODO should not raise here? maybe check if not self.directory?
-            raise ParseError("not a file: %s" % (path,), self, index, stop)
         if path.startswith('~'):
             path = os.path.expanduser(path)
         if os.path.isabs(path):

@@ -519,7 +519,6 @@ def test_File():
 
         test = make_completions_checker(field)
         yield test, "", []
-        yield test, "../", []
 
         editor = app.windows[0].projects[0].editors[0]
         field = field.with_context(editor)
@@ -537,7 +536,6 @@ def test_File():
         yield test, '', 0, (None, 0)
         yield test, 'a', 0, (join(tmp, 'dir/a'), 2)
         yield test, 'abc', 0, (join(tmp, 'dir/abc'), 4)
-        yield test, 'abc/', 0, ParseError("not a file: abc/", field, 0, 5)
         yield test, 'abc ', 0, (join(tmp, 'dir/abc'), 4)
         yield test, 'file.txt', 0, (join(tmp, 'dir/file.txt'), 9)
         yield test, '../file.txt', 0, (join(tmp, 'dir/../file.txt'), 12)
@@ -545,7 +543,7 @@ def test_File():
         yield test, '~/file.txt', 0, (os.path.expanduser('~/file.txt'), 11)
         yield test, '"ab c"', 0, (join(tmp, 'dir/ab c'), 6)
         yield test, "'ab c'", 0, (join(tmp, 'dir/ab c'), 6)
-        yield test, "'ab c/'", 0, ParseError("not a file: ab c/", field, 0, 7)
+        yield test, "'ab c/'", 0, (join(tmp, 'dir/ab c/'), 7)
 
         # completions
         def expanduser(path):
@@ -596,6 +594,13 @@ def test_File():
         eq_(str(field), 'dir')
         eq_(repr(field), "File('dir', directory=True)")
         field = field.with_context(editor)
+
+        test = make_consume_checker(field)
+        yield test, '', 0, (None, 0)
+        yield test, 'a', 0, (join(tmp, 'dir/a'), 2)
+        yield test, 'abc', 0, (join(tmp, 'dir/abc'), 4)
+        yield test, 'abc ', 0, (join(tmp, 'dir/abc'), 4)
+        yield test, 'abc/', 0, (join(tmp, 'dir/abc/'), 5)
 
         test = make_completions_checker(field)
         yield test, "", [], 0
