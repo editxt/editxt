@@ -46,6 +46,15 @@ build_date = datetime.now()
 revision = build_date.strftime("%Y%m%d%H%M")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Fix modulegraph 0.12 bug : http://stackoverflow.com/q/25394320/10840
+
+def _fix_modulegraph():
+    import modulegraph.modulegraph as mod
+    mod.ModuleGraph.scan_code = mod.ModuleGraph._scan_code
+    mod.ModuleGraph.load_module = mod.ModuleGraph._load_module
+_fix_modulegraph()
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # handle -A switch (dev build)
 if "-A" in sys.argv:

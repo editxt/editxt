@@ -22,6 +22,20 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+2014-12-30 - 1.7.1
+  - Fix a bug that prevented auto-update.
+
+    NOTE: you need to run a command in the terminal before clicking
+    **Install and Relaunch** during the update process (adjust the
+    `/Applications/EditXT.app` part of the path to where EditXT.app
+    is located on your local machine):
+
+    ```
+    chmod +x /Applications/EditXT.app/Contents/Frameworks/Sparkle.framework/Versions/Current/Resources/Autoupdate.app/Contents/MacOS/Autoupdate
+    ```
+
+    Bug details: https://github.com/sparkle-project/Sparkle/issues/309
+
 2014-12-30 - 1.7.0
   - Add customizable *Shortcuts* menu for quick command execution. The items in
     this menu can be customized by adding a `shortcuts` section to the config
