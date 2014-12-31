@@ -85,4 +85,42 @@ def load_sparkle():
     base_path = join(dirname(os.environ['RESOURCEPATH']), 'Frameworks')
     bundle_path = abspath(join(base_path, 'Sparkle.framework'))
     objc.loadBundle('Sparkle', globals(), bundle_path=bundle_path)
+    swizzle_SUWindowController()
     return SUUpdater.sharedUpdater()
+
+
+def swizzle_SUWindowController():
+    def swizzle(old):
+        def swizzleWithNewMethod_(f):
+            # http://permalink.gmane.org/gmane.comp.python.pyobjc.devel/5446
+            cls = old.definingClass
+            oldSelectorName = old.__name__.replace(b"_", b":")
+            oldIMP = cls.instanceMethodForSelector_(oldSelectorName)
+            newSelectorName = f.__name__.encode('ascii').replace(b"_", b":")
+
+            newSEL = objc.selector(
+                f,
+                selector=newSelectorName,
+                signature=old.signature
+            )
+            oldSEL = objc.selector(
+                lambda self, *args: oldIMP(self, *args),
+                selector=newSelectorName,
+                signature=old.signature
+            )
+
+            # Swap the two methods
+            objc.classAddMethod(cls, newSelectorName, oldSEL)
+            objc.classAddMethod(cls, oldSelectorName, newSEL)
+            log.debug("Swizzled %s.%s <-> %s",
+                cls.__name__,
+                oldSelectorName.decode('ascii'),
+                newSelectorName.decode('ascii'),
+            )
+            return f
+
+        return swizzleWithNewMethod_
+
+    @swizzle(SUWindowController.initWithHost_windowNibName_)
+    def initWithHost_windowNibName_(self, host, nibName):
+        return self.initWithWindowNibName_owner_(nibName, self)
