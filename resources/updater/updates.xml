@@ -81,5 +81,26 @@ other commands that produce output are executed.</li>
       <pubDate>Tue, 30 Dec 2014 20:37:39 -0500</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.7.0/EditXT-v1.7.0-bf27753.zip" sparkle:version="201412302037.bf27753" sparkle:shortVersionString="1.7.0" sparkle:dsaSignature="MCwCFCKHLi8c08dAeN42rAamoo/VZ59uAhQ5c98+emOWfLzCd/dycAK362aJRA==" length="10022910" type="application/octet-stream" />
     </item>
+    <item>
+      <title>Version 1.7.1</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li><p>Fix a bug that prevented auto-update.</p>
+<p>NOTE: you need to run a command in the terminal before clicking
+<strong>Install and Relaunch</strong> during the update process (adjust the
+<code>/Applications/EditXT.app</code> part of the path to where EditXT.app
+is located on your local machine):</p>
+<pre><code>chmod +x /Applications/EditXT.app/Contents/Frameworks/Sparkle.framework/Versions/Current/Resources/Autoupdate.app/Contents/MacOS/Autoupdate
+</code></pre>
+<p>Bug details: https://github.com/sparkle-project/Sparkle/issues/309</p></li>
+</ul>
+
+        ]]>
+      </description>
+      <pubDate>Tue, 30 Dec 2014 21:35:00 -0500</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.7.1/EditXT-v1.7.1-b02198a.zip" sparkle:version="201412302135.b02198a" sparkle:shortVersionString="1.7.1" sparkle:dsaSignature="MCwCFHHMoyoIed+T1fgYfEMERBhFzNdoAhRvjgGG2hO3Ns4NK39O5M684DaCug==" length="11481357" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
