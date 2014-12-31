@@ -129,7 +129,7 @@ class StatusView(ak.NSView):
         super(StatusView, self).initWithFrame_(rect)
         font = ak.NSFont.fontWithName_size_("Monaco", 9.0)
         for fname in ["linenumView", "columnView", "selectionView"]:
-            field = ak.NSTextField.alloc().initWithFrame_(fn.NSZeroRect)
+            field = StatusField.alloc().initWithFrame_(fn.NSZeroRect)
             field.setStringValue_("")
             field.setEditable_(False)
             field.setBackgroundColor_(ak.NSColor.controlColor())
@@ -174,3 +174,9 @@ class StatusView(ak.NSView):
             self.selectionView.setIntValue_(sel)
         else:
             self.selectionView.setStringValue_("")
+
+
+class StatusField(ak.NSTextField):
+
+    from editxt.platform.mac.views.util import disable_font_smoothing
+    drawRect_ = disable_font_smoothing(ak.NSTextField.drawRect_)

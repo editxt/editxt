@@ -24,6 +24,7 @@ import objc
 import AppKit as ak
 import Foundation as fn
 
+from editxt.platform.mac.views.util import disable_font_smoothing
 from editxt.util import untested
 
 log = logging.getLogger(__name__)
@@ -109,6 +110,7 @@ class LineNumberView(ak.NSRulerView):
             self.scrollView().tile()
 
     @untested
+    @disable_font_smoothing
     def drawHashMarksAndLabelsInRect_(self, rect):
         """Draw the line numbers
 

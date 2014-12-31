@@ -146,6 +146,11 @@ class CommandView(DualView):
     def output_text(self):
         return self.output.string()
 
+    def get_font(self, view):
+        if view is not None:
+            return view.font()
+        return ak.NSFont.fontWithName_size_("Monaco", 10.0)
+
     def activate(self, command, initial_text="", select=False):
         new_activation = not self.active
         self.active = True
@@ -154,8 +159,8 @@ class CommandView(DualView):
             # possibly use setSelectedRange
             # http://jeenaparadies.net/weblog/2009/apr/focus-a-nstextfield
             editor = command.window.current_editor
-            if editor is not None and editor.text_view is not None:
-                self.input.setFont_(editor.text_view.font())
+            font = self.get_font(editor and editor.text_view)
+            self.input.setFont_(font)
             self.output.setString_("")
         if new_activation or initial_text:
             self.input.setString_(initial_text)
@@ -185,6 +190,7 @@ class CommandView(DualView):
             self.output.setString_("")
             self.should_resize()
             return
+        self.output.font_smoothing = True
         if msg_type == HTML:
             raise NotImplementedError("convert message to NSAttributedString")
         elif isinstance(message, ak.NSAttributedString):
@@ -194,8 +200,8 @@ class CommandView(DualView):
             color = MESSAGE_COLORS[msg_type]
             if color is not None:
                 attrs[ak.NSForegroundColorAttributeName] = color
-            if textview is not None:
-                attrs[ak.NSFontAttributeName] = textview.font()
+            attrs[ak.NSFontAttributeName] = self.get_font(textview)
+            self.output.font_smoothing = False
             text = ak.NSAttributedString.alloc().initWithString_attributes_(
                 message, attrs)
         self.output.setAttributedString_(text)
@@ -396,6 +402,8 @@ class ContentSizedTextView(ak.NSTextView):
             ak.NSNotificationCenter.defaultCenter() \
                 .postNotificationName_object_(SHOULD_RESIZE, self)
 
+    from editxt.platform.mac.views.util import disable_font_smoothing
+    @disable_font_smoothing
     def drawRect_(self, rect):
         super(ContentSizedTextView, self).drawRect_(rect)
         if not self._placeholder:

@@ -145,3 +145,9 @@ class TextView(ak.NSTextView):
             if text_height + extra_space > height:
                 height = text_height + extra_space
         super(TextView, self).setFrameSize_(fn.NSMakeSize(size.width, height))
+
+    # Disable font smoothing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # TODO add a preference to enable font smoothing at a specific text size
+
+    from editxt.platform.mac.views.util import disable_font_smoothing
+    drawRect_ = disable_font_smoothing(ak.NSTextView.drawRect_)
