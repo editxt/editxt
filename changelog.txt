@@ -22,11 +22,37 @@ along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
-2014-??-?? - 1.7.0
+2014-12-30 - 1.7.0
+  - Add customizable *Shortcuts* menu for quick command execution. The items in
+    this menu can be customized by adding a `shortcuts` section to the config
+    file (EditXT > Preferences). For example:
+    ```
+    shortcuts:
+      Command+C: clear_highlighted_text
+      Command+Alt+s: sort
+    ```
+    Note:
+    - Menu is not yet updated with `reload_config` command. Restart for now.
+    - The following key combinaations are equivalent:
+      `Command+C` and `Command+Shift+c`
+    - The *Shortcuts* menu is pre-loaded with shortcuts for document tree
+      navigation. These default shortcuts are merged with the custom shortcuts
+      specified in the config file.
+    - Some shortcuts in other menus cannot be overridden with custom shortcuts.
+  - Add "doc" command for document tree navigation. This command can be used
+    to focus editors by name, in the order they have been most recently visited
+    (`previous` / `next`), or by relative position (`up` / `down`).
+  - Rename *Text* menu to *Command*
+  - Add command bar help, which is accessed with F1 key or with the
+    *Help > Command Help* menu item when the command bar is active.
   - Add button to show command output in panel so it can be preserved while
-    other commands are executed.
+    other commands that produce output are executed.
+  - Fix "ack" command output formatting.
   - Eliminate superfluous trailing backslash in ack command output.
+  - Fix "open" command creating duplicate editor.
+  - Fix command bar auto-complete bugs.
   - Fix display flash on hide command view.
+  - Various other bug fixes.
 
 2014-12-01 - 1.6.0
   - Toggle last command output with Escape key.
