@@ -67,6 +67,8 @@ class ImageAndTextCell(ak.NSTextFieldCell):
 
     def drawWithFrame_inView_(self, frame, view):
         if self._image is not None:
+            if self._image.isFlipped() != view.isFlipped():
+                self._image.setFlipped_(view.isFlipped())
             isize = self._image.size()
             iframe, frame = fn.NSDivideRect(
                 frame, None, None, isize.width + ICON_PADDING, fn.NSMinXEdge)
@@ -75,11 +77,8 @@ class ImageAndTextCell(ak.NSTextFieldCell):
                 ak.NSRectFill(iframe)
             iframe.origin.x += ICON_PADDING
             iframe.size = isize
-            if view.isFlipped():
-                iframe.origin.y += ceil((frame.size.height + iframe.size.height) / 2)
-            else:
-                iframe.origin.y += ceil((frame.size.height - iframe.size.height) / 2)
-            self._image.compositeToPoint_operation_(iframe.origin, ak.NSCompositeSourceOver)
+            self._image.drawAtPoint_fromRect_operation_fraction_(
+                iframe.origin, ak.NSZeroRect, ak.NSCompositeSourceOver, 1.0)
         frame.origin.x += 3
         frame.size.width -= 3
         super(ImageAndTextCell, self).drawWithFrame_inView_(frame, view)
