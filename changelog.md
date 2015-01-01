@@ -1,30 +1,10 @@
-# EditXT
-Copyright 2007-2014 Daniel Miller <millerdev@gmail.com>
-
-This file is part of EditXT, a programmer's text editor for Mac OS X,
-which can be found at http://editxt.org/.
-
-EditXT is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-EditXT is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# EditXT Change Log
 
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
-## Change Log
 
-### 2014-12-31 - 1.7.3
+## 2014-12-31 - 1.7.3
 
 - NOTE for users updating from versions before 1.7.1: you need to run a
   command in the terminal before clicking **Install and Relaunch** during the
@@ -41,7 +21,7 @@ https://github.com/editxt/editxt for details of what actually happened.
   for long.
 - Add version history page for Sparkle updates on github.
 
-### 2014-12-31 - 1.7.2
+## 2014-12-31 - 1.7.2
 
 - NOTE for users updating from versions before 1.7.1: you need to run a
   command in the terminal before clicking **Install and Relaunch** during the
@@ -54,7 +34,7 @@ https://github.com/editxt/editxt for details of what actually happened.
 - Fix deprecated image drawing call.
 - Add syntax definition for git diff format.
 
-### 2014-12-30 - 1.7.1
+## 2014-12-30 - 1.7.1
 
 - Fix a bug that prevented auto-update.
   NOTE: you need to run a command in the terminal before clicking
@@ -66,7 +46,7 @@ https://github.com/editxt/editxt for details of what actually happened.
   ```
   Bug details: https://github.com/sparkle-project/Sparkle/issues/309
 
-### 2014-12-30 - 1.7.0
+## 2014-12-30 - 1.7.0
 
 - Add customizable *Shortcuts* menu for quick command execution. The items in
   this menu can be customized by adding a `shortcuts` section to the config
@@ -99,7 +79,7 @@ https://github.com/editxt/editxt for details of what actually happened.
 - Fix display flash on hide command view.
 - Various other bug fixes.
 
-### 2014-12-01 - 1.6.0
+## 2014-12-01 - 1.6.0
 
 - Toggle last command output with Escape key.
 - Add `ack` command integration for code search. Command output contains
@@ -123,19 +103,19 @@ https://github.com/editxt/editxt for details of what actually happened.
 - Improve auto-complete algorithm to use longest common substring rather
   than currently selected item.
 
-### 2014-10-24 - 1.5.3
+## 2014-10-24 - 1.5.3
 
 - Fix bug that prevented text command sheets from closing.
 
-### 2014-10-22 - 1.5.2
+## 2014-10-22 - 1.5.2
 
 - Fix bad “Save as...” prompt on save after reload.
 
-### 2014-10-21 - 1.5.1
+## 2014-10-21 - 1.5.1
 
 - Fix bug in automatic file reload.
 
-### 2014-10-17 - 1.5.0
+## 2014-10-17 - 1.5.0
 
 - Internal refactoring and bug fixes: eliminate NSDocument framework.
   - Closing a project with modified documents now prompts to save changes.
@@ -145,7 +125,7 @@ https://github.com/editxt/editxt for details of what actually happened.
 - Allow copy and move documents in file tree (hold Command key to copy).
 - Fix bug in content analysis (indent mode and size, EOL mode).
 
-### 2014-05-18 - 1.4.0
+## 2014-05-18 - 1.4.0
 
 - Add `*.mm` to Objective-C syntax definition file patterns.
 - Fix bug that preventing opening document via File > Open dialog.
@@ -175,15 +155,15 @@ https://github.com/editxt/editxt for details of what actually happened.
   ```
 - Add syntax definitions for shell scripts and Objective C
 
-### 2013-09-26 - 1.3.2
+## 2013-09-26 - 1.3.2
 
 - Use SafeDump to dump editor config files (preparation for v1.4).
 
-### 2013-09-26 - 1.3.1
+## 2013-09-26 - 1.3.1
 
 - Fix bug that prevented replace with nothing (empty string).
 
-### 2013-09-22 - 1.3.0
+## 2013-09-22 - 1.3.0
 
 - Omit command from history if it has a leading space.
 - Integrate GUI and hotkey commands with command bar history.
@@ -228,7 +208,7 @@ https://github.com/editxt/editxt for details of what actually happened.
 - Fix startup errors due to strange arguments passed by OS X.
 - Fix long pause on quit with many documents open.
 
-### 2013-01-05 - 1.2.0 (unreleased)
+## 2013-01-05 - 1.2.0 (unreleased)
 
 - Add command bar (needs more work, but it's minimally usable).
 - Add "Goto Line" command: type line number in command bar.
@@ -240,7 +220,7 @@ https://github.com/editxt/editxt for details of what actually happened.
   line.
 - Always move (do not copy) document or project on internal drag.
 
-### 2012-05-22 - 1.1.0
+## 2012-05-22 - 1.1.0
 
 - Added non-padded (un)comment text command. This is now the default comment
   mode (*Shift+,*). Moved old command to *Command+Shift+,*.
@@ -256,15 +236,15 @@ https://github.com/editxt/editxt for details of what actually happened.
 - Internal: improve logging configuration.
 - Internal: major package reorganization.
 
-### 2010-10-13 - 1.0.1
+## 2010-10-13 - 1.0.1
 
 - Fixed undo and document pane hover bugs.
 
-### 2010-08-16 - 1.0.0
+## 2010-08-16 - 1.0.0
 
 - Added GPLv3 license and released on github.com
 
-### 2007-12-29 - Initial development
+## 2007-12-29 - Initial development
 
 During this period, as soon as it was functional enough for day-to-day use,
 EditXT was used as the primary editor with which to further develop itself.

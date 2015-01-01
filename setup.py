@@ -279,9 +279,9 @@ def timezone(local_datetime):
 
 def get_latest_changes(version):
     regex = re.compile((
-        r"\n### \d{{4}}-..-.. - {}\n" # date/version tag for current version
+        r"\n## \d{{4}}-..-.. - {}\n" # date/version tag for current version
         r"([\s\S]+?)"           # changes
-        r"\n### \d{{4}}-..-.. - "    # older version tag
+        r"\n## \d{{4}}-..-.. - "    # older version tag
     ).format(re.escape(version)))
     with open(join(thisdir, "changelog.md")) as fh:
         data = fh.read()
@@ -296,16 +296,15 @@ def get_latest_changes(version):
 
 
 def update_change_log_html():
-    regex = re.compile(r"##+ ")
+    regex = re.compile(r"## \d{4}-..-.. - ")
     lines = []
     with open(join(thisdir, "changelog.md")) as fh:
         for line in fh:
             if lines:
-                if regex.match(line):
-                    line = line[1:]
                 lines.append(line)
-            elif line == "## Change Log\n":
+            elif regex.match(line):
                 lines.append("\n")
+                lines.append(line)
     if not lines:
         print("Change Log header not found in changelog.md")
         return False
