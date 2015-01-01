@@ -332,7 +332,7 @@ def build_zip():
     with closing(zip):
         zip.write(join(thisdir, 'changelog.md'), 'changelog.md')
         zip.write(join(thisdir, 'COPYING'), 'COPYING')
-        zip.write(join(thisdir, 'README.txt'), 'README.txt')
+        zip.write(join(thisdir, 'README.md'), 'README.md')
         zip.write(join(thisdir, 'bin/xt.py'), 'xt')
         app_path = join(thisdir, 'dist', appname + '.app')
         trimlen = len(distpath) + 1
