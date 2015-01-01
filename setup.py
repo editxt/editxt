@@ -322,12 +322,12 @@ def update_change_log_html():
 
 def build_zip():
     from contextlib import closing
-    from zipfile import ZipFile, ZIP_DEFLATED
+    from itertools import chain
+    from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
     distpath = join(thisdir, 'dist')
     zip_file = '%s-v%s-%s.zip' % (appname, version, gitrev)
     print('packaging for distribution: %s' % zip_file)
-    zip_path = join(distpath, zip_file)
-    zip = ZipFile(zip_path, "w", ZIP_DEFLATED)
+    zip = ZipFile(join(distpath, zip_file), "w", ZIP_DEFLATED)
     with closing(zip):
         zip.write(join(thisdir, 'changelog.md'), 'changelog.md')
         zip.write(join(thisdir, 'COPYING'), 'COPYING')
@@ -337,9 +337,26 @@ def build_zip():
         trimlen = len(distpath) + 1
         for dirpath, dirnames, filenames in os.walk(app_path):
             zpath = dirpath[trimlen:]
-            for filename in filenames:
-                zip.write(join(dirpath, filename), join(zpath, filename))
-    return zip_path
+            if filenames or dirnames:
+                dirs = ((item, True) for item in dirnames)
+                files = ((item, False) for item in filenames)
+                for filename, isdir in chain(dirs, files):
+                    filepath = join(dirpath, filename)
+                    zip_path = join(zpath, filename)
+                    if os.path.islink(filepath):
+                        info = ZipInfo(zip_path)
+                        info.create_system = 3
+                        info.external_attr = 2716663808
+                        linkdest = os.readlink(filepath)
+                        assert not os.path.isabs(linkdest), linkdest
+                        zip.writestr(info, linkdest)
+                    elif not isdir:
+                        zip.write(filepath, zip_path)
+            else:
+                # write empty directory
+                info = ZipInfo(zpath + os.path.sep)
+                zip.writestr(info, '')
+    return zip.filename
 
 
 if "--html-only" in sys.argv:
