@@ -3,6 +3,18 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+## 2015-01-01 - 1.7.4
+
+- NOTE for users updating from versions before 1.7.1: you need to run a
+  command in the terminal before clicking **Install and Relaunch** during the
+  update process (adjust the `/Applications/EditXT.app` part of the path to
+  where EditXT.app is located on your local machine):
+  ```
+  chmod +x /Applications/EditXT.app/Contents/Frameworks/Sparkle.framework/Versions/Current/Resources/Autoupdate.app/Contents/MacOS/Autoupdate
+  ```
+- Add/update syntax definitions: Bind zone, diff, Jinja, SQL
+- Fix packaging issue that broke auto-updater.
+- Fix parse error in commands with file arguments.
 
 ## 2014-12-31 - 1.7.3
 
