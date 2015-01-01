@@ -279,15 +279,15 @@ def timezone(local_datetime):
 
 def get_latest_changes(version):
     regex = re.compile((
-        r"\n20\d\d-..-.. - {}\n" # date/version tag for current version
+        r"\n### \d{{4}}-..-.. - {}\n" # date/version tag for current version
         r"([\s\S]+?)"           # changes
-        r"\n20\d\d-..-.. - "    # older version tag
+        r"\n### \d{{4}}-..-.. - "    # older version tag
     ).format(re.escape(version)))
-    with open(join(thisdir, "changelog.txt")) as fh:
+    with open(join(thisdir, "changelog.md")) as fh:
         data = fh.read()
     match = regex.search(data)
     if not match:
-        print("recent changes not found in changelog.txt")
+        print("recent changes not found in changelog.md")
         return ""
     value = match.group(1)
     parser = commonmark.DocParser()
@@ -296,18 +296,18 @@ def get_latest_changes(version):
 
 
 def update_change_log_html():
-    regex = re.compile(r"20\d\d-..-.. - ")
+    regex = re.compile(r"##+ ")
     lines = []
-    with open(join(thisdir, "changelog.txt")) as fh:
+    with open(join(thisdir, "changelog.md")) as fh:
         for line in fh:
             if lines:
                 if regex.match(line):
-                    line = "## " + line
+                    line = line[1:]
                 lines.append(line)
             elif line == "## Change Log\n":
-                lines.append("")
+                lines.append("\n")
     if not lines:
-        print("Change Log header not found in changelog.txt")
+        print("Change Log header not found in changelog.md")
         return False
     value = "".join(lines)
     parser = commonmark.DocParser()
@@ -330,7 +330,7 @@ def build_zip():
     zip_path = join(distpath, zip_file)
     zip = ZipFile(zip_path, "w", ZIP_DEFLATED)
     with closing(zip):
-        zip.write(join(thisdir, 'changelog.txt'), 'changelog.txt')
+        zip.write(join(thisdir, 'changelog.md'), 'changelog.md')
         zip.write(join(thisdir, 'COPYING'), 'COPYING')
         zip.write(join(thisdir, 'README.txt'), 'README.txt')
         zip.write(join(thisdir, 'bin/xt.py'), 'xt')
