@@ -25,7 +25,7 @@ from os.path import isabs, join
 
 from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_
-from editxt.test.util import assert_raises, replattr, TestConfig
+from editxt.test.util import assert_raises, gentest, replattr, TestConfig
 
 import editxt.command.parser as mod
 from editxt.command.parser import (Arg, Choice, Int, String, Regex, RegexPattern,
@@ -280,6 +280,26 @@ def test_CommandParser_order():
 #        '/^abc$/ bool 123'
 #        '/^abc$/ b 123'
 #        '/^abc$/b 123'
+
+def test_Arg():
+    opts = Options()
+    @gentest
+    def test(arg, strval):
+        eq_(str(arg), strval)
+    yield test(mod.Arg(yesno, '', 0, opts), '')
+    yield test(mod.Arg(yesno, ' ', 0, opts), '')
+    yield test(mod.Arg(yesno, ' xyz', 0, opts), '')
+    yield test(mod.Arg(yesno, 'y', 0, opts), 'y')
+    yield test(mod.Arg(yesno, 'yes', 0, opts), 'yes')
+    yield test(mod.Arg(yesno, 'yes ', 0, opts), 'yes')
+    yield test(mod.Arg(yesno, ' yes ', 0, opts), '')
+
+    string = String('str')
+    yield test(mod.Arg(string, '', 0, opts), '')
+    yield test(mod.Arg(string, '" " ', 0, opts), '" "')
+    yield test(mod.Arg(string, '\\ ', 0, opts), '\\ ')
+    yield test(mod.Arg(string, ' \\ ', 0, opts), '')
+    yield test(mod.Arg(string, '  \\ ', 0, opts), '')
 
 def test_identifier():
     def test(name, ident):

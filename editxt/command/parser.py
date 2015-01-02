@@ -270,7 +270,7 @@ class Arg(object):
         start, end = self.start, self.end
         if start == end:
             return ""
-        if self.could_consume_more:
+        if self.could_consume_more or self.text[end - 1:end] == " ":
             end -= 1
         return self.text[start:end]
 
