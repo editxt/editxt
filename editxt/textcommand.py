@@ -674,7 +674,7 @@ class AutoCompleteMenu(object):
 
     @property
     def title(self):
-        self.view.title
+        return self.view.title
 
     @title.setter
     def title(self, value):

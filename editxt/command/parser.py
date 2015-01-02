@@ -327,14 +327,14 @@ class Arg(object):
         return self.field.get_placeholder(self)
 
     def get_completions(self):
-        def completion(word, index=self.start):
+        index = self.start
+        words = self.field.get_completions(self)
+        for i, word in enumerate(words):
             if getattr(word, 'start', None) is not None:
                 word.start += index
             else:
-                word = CompleteWord(word, start=index)
-            return word
-        words = self.field.get_completions(self)
-        return [completion(w) for w in words]
+                words[i] = CompleteWord(word, start=index)
+        return words
 
 
 IDENTIFIER_PATTERN = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*$')

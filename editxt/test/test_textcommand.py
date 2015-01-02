@@ -45,6 +45,14 @@ class IllBehaved(Int):
     def get_completions(self, token):
         raise Exception("bang!")
 
+class TitleChoice(Choice):
+    def __init__(self, *args, title=None, **kw):
+        super().__init__(*args, **kw)
+        self.title = title
+    def get_completions(self, arg):
+        items = super().get_completions(arg)
+        return CompletionsList(items, title=self.title)
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # CommandBar tests
 
@@ -61,7 +69,7 @@ def test_CommandBar_window():
 
 def test_CommandBar_on_key_press():
     @command(arg_parser=CommandParser(
-        Choice(*"test_1 test_2 test_3 text".split()),
+        TitleChoice(*"test_1 test_2 test_3 text".split(), title="tests"),
         Choice(('forward', False), ('reverse xyz', True), name='reverse'),
         Regex('sort_regex', True),
     ))
@@ -86,6 +94,7 @@ def test_CommandBar_on_key_press():
             new_complete=None,
             new_default_complete=None,
             completions_select_range=None,
+            completions_title=None,
             sel=None,
             new_sel=None,
             expect=True,
@@ -114,6 +123,7 @@ def test_CommandBar_on_key_press():
         eq_(view.completions.items,
             (complete or []) if new_complete is None else new_complete)
         eq_(view.completions.selected_item, new_default_complete)
+        eq_(view.completions.title, completions_title)
         eq_(view.command_text, text if new_text is NA else new_text)
         eq_(view.output_text, output if new_output is NA else new_output)
         if sel is not None or new_sel is not None:
@@ -146,6 +156,10 @@ def test_CommandBar_on_key_press():
         complete=[CompleteWord(w, start=4) for w in ["test_1", "test_2"]],
         new_text="cmd test_",
         new_complete=["test_1", "test_2"])
+    yield test("cmd ", TAB,
+        new_text="cmd te",
+        new_complete=["test_1", "test_2", 'test_3', 'text'],
+        completions_title="tests")
     yield test("cmd test_1", TAB,
         complete=[CompleteWord("test_1", start=4)],
         new_text="cmd test_1 ",

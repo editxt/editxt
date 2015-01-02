@@ -28,6 +28,7 @@ class ListView(object):
         self.view = None
         self.frame = None
         self.scroll = None
+        self.title = None
         self.selected_row = -1
         self.options = options
 
