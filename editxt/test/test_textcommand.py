@@ -793,8 +793,9 @@ def test_CommandManager_load_shortcuts():
     key = lambda kv: kv[1].default
     for i, (hotkey, value) in enumerate(sorted(shorts.items(), key=key)):
         hkey = mod.parse_hotkey(hotkey)
-        expect.append((menu, value.default, "doCommand:") + hkey)
-        tags[value.default] = i
+        title = value.default.lstrip()
+        expect.append((menu, title, "doCommand:") + hkey)
+        tags[title] = i
     items = []
     def add_menu_item(menu, title, selector, hotkey, modifiers):
         items.append((menu, title, selector, hotkey, modifiers))

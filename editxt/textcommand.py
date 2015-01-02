@@ -579,7 +579,8 @@ class CommandManager(object):
             key, mask = parse_hotkey(hotkey)
             command = make_command(text)
             if key is not None and command is not None:
-                tag = self.add_menu_item(menu, text, "doCommand:", key, mask)
+                title = text.lstrip()
+                tag = self.add_menu_item(menu, title, "doCommand:", key, mask)
                 self.commands[tag] = command
             elif key is None:
                 log.warn("unrecognized hotkey: %s", hotkey)
