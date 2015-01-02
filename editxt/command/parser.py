@@ -79,6 +79,9 @@ class CommandParser(object):
         self.context = context
         # TODO assert no duplicate arg names
 
+    def default_options(self):
+        return Options(**{field.name: field.default for field in self.argspec})
+
     def with_context(self, *args, **kw):
         """Get a new command parser with the given context
 
@@ -148,9 +151,6 @@ class CommandParser(object):
             msg = 'invalid arguments: {}'.format(text)
             raise ArgumentError(msg, opts, errors)
         return opts
-
-    def default_options(self):
-        return Options(**{field.name: field.default for field in self.argspec})
 
     def get_placeholder(self, text, index=0):
         """Get placeholder string to follow the given command text
