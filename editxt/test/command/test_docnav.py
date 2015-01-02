@@ -101,5 +101,5 @@ def test_doc():
 def test_config_shortcuts():
     from editxt.config import config_schema
     eq_({f.default for f in config_schema()["shortcuts"].values()
-                   if f.default.startswith("doc ")},
-        {'doc  previous', 'doc  next', 'doc  up', 'doc  down'})
+                   if f.default.startswith(" doc ")},
+        {' doc  previous', ' doc  next', ' doc  up', ' doc  down'})
