@@ -70,15 +70,15 @@ class EditorTreeItem(String):
         if self.completions is not None and consumed:
             starts = []
             for comp in self.cached_completions(arg):
-                if comp == consumed:
-                    return comp.value
-                if comp.startswith(consumed):
-                    starts.append(comp.value)
+                if comp.name == consumed:
+                    return comp.editor
+                if comp.name.startswith(consumed):
+                    starts.append(comp.editor)
             if starts:
                 return starts[0]
-            name = self.full_name
+            full_name = self.full_name
             for editor in self.iter_editors(arg):
-                if name(editor) == consumed:
+                if full_name(editor) == consumed:
                     return editor
         if consumed:
             return self.NO_MATCH
@@ -93,37 +93,37 @@ class EditorTreeItem(String):
     def get_completions(self, arg):
         if self.editor is None:
             return []
+        try:
+            token = self.consume(arg.text, arg.start)[0] or ""
+        except Error:
+            return []
         editors = []
         names = defaultdict(int)
         for editor in self.iter_editors(arg):
             editors.append(editor)
             names[editor.name] += 1
         words = []
-        wordset = set()
+        nameset = set()
+        full_name = self.full_name
         for editor in editors:
-            word = editor.name
-            if names[editor.name] > 1:
-                word += "::" + editor.short_path(name=False)
-            if word in wordset:
-                return # ignore exact match
-            wordset.add(word)
-            if ' ' in word:
-                word = word.replace(" ", "\\ ")
-            words.append(CompleteWord(word, start=0, value=editor))
-        try:
-            token = self.consume(arg.text, arg.start)[0] or ""
-        except Error:
-            return ""
-        if ' ' in token:
-            token = token.replace(" ", "\\ ")
-        return [word for word in words if word.startswith(token)]
+            name = editor.name
+            if names[name] > 1:
+                name = full_name(editor)
+            if name in nameset:
+                continue # ignore duplicate
+            nameset.add(name)
+            if not name.startswith(token):
+                continue
+            escaped = name.replace(" ", "\\ ") if " " in name else name
+            words.append(CompleteWord(escaped, editor=editor, name=name))
+        return words
 
     def get_placeholder(self, arg):
         if not arg:
             return str(self)
         token = self.consume(arg.text, arg.start)[0] or ""
         comps = [word for word in self.cached_completions(arg)
-                      if word.startswith(token)]
+                      if word.name.startswith(token)]
         if len(comps) == 1:
             return comps[0][len(token):]
         return ""

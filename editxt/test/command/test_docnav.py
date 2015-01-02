@@ -51,7 +51,7 @@ def test_doc():
                 bar(command)
                 if focus is BEEP:
                     focus = recent[-1]
-                state = _config.split()
+                state = test_app.split(_config)
                 def f(item):
                     return (item + '*') if focus in item else item
                 eq_(tapp.state, ' '.join([f(item) for item in state]))
@@ -90,6 +90,13 @@ def test_doc():
     yield test("doc work", "work:/work")
     yield test("doc new", BEEP)
     yield test("doc play file", "/play/file")
+
+    test = partial(test, recent=["untitled"], _config="""
+        window
+            project(null space:/)
+                editor(untitled)
+    """)
+    yield test("doc null\\ space", "null space:/")
 
 def test_config_shortcuts():
     from editxt.config import config_schema

@@ -173,10 +173,11 @@ class test_app(object):
 
     """
 
+    split_re = re.compile("\s+(?=window|-?project|editor|$)")
     editor_re = re.compile(
         r"(-?)"
         r"(window|project|editor)"
-        r"((?:\((?:[A-Za-z0-9_]+:)?[._/a-zA-Z0-9-]+\))?)"
+        r"((?:\((?:[A-Za-z0-9_ ]+:)?[._/a-zA-Z0-9-]+\))?)"
         r"(\*?)$"
     )
 
@@ -226,6 +227,10 @@ class test_app(object):
         """DEPRECATED use test_app(app)"""
         return app.__test_app
 
+    @classmethod
+    def split(cls, config):
+        return [x for x in cls.split_re.split(config) if x]
+
     def _setup(self, app):
         from editxt.editor import Editor
         from editxt.project import Project
@@ -236,7 +241,7 @@ class test_app(object):
         if config is None:
             return
         window = project = None
-        for i, config_item in enumerate(config.split()):
+        for i, config_item in enumerate(self.split(config)):
             match = self.editor_re.match(config_item)
             assert match, "unknown config item: {}".format(config_item)
             collapsed, item, name, current = match.groups()
