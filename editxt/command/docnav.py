@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import re
+from collections import defaultdict
 
 import editxt.constants as const
 from editxt.command.base import command, CommandError
@@ -44,21 +45,17 @@ class EditorTreeItem(String):
     def with_context(self, editor):
         return EditorTreeItem(self.name, default=self.default, editor=editor)
 
-    def sorted_projects(self):
-        def key(item):
-            primary = 0 if item[1] is current_project else 1
-            return (primary, item[0])
+    def iter_editors(self, arg):
         current_project = self.editor.project
-        enum = enumerate(self.editor.project.window.projects)
-        for i, project in sorted(enum, key=key):
+        for editor in current_project.editors:
+            yield editor
+        for project in current_project.window.projects:
             yield project
 
     @staticmethod
     def full_name(editor):
         parts = [editor.name, editor.short_path(name=False)]
-        if isinstance(editor, Editor):
-            parts.append(editor.project.name)
-        return "::".join(p for p in parts if p is not None)
+        return "::".join(p for p in parts if p)
 
     def cached_completions(self, arg):
         key = (arg.text, arg.start)
@@ -79,12 +76,9 @@ class EditorTreeItem(String):
             if starts:
                 return starts[0]
             name = self.full_name
-            for project in self.sorted_projects():
-                if name(project) == consumed:
-                    return project
-                for editor in project.editors:
-                    if name(editor) == consumed:
-                        return editor
+            for editor in self.iter_editors(arg):
+                if name(editor) == consumed:
+                    return editor
         if consumed:
             return self.NO_MATCH
         return self.default
@@ -98,31 +92,30 @@ class EditorTreeItem(String):
     def get_completions(self, arg):
         if self.editor is None:
             return []
-        def add_completion(editor):
+        editors = []
+        names = defaultdict(int)
+        for editor in self.iter_editors(arg):
+            editors.append(editor)
+            names[editor.name] += 1
+        words = []
+        wordset = set()
+        for editor in editors:
             word = editor.name
-            if word in itemset:
+            if names[editor.name] > 1:
                 word += "::" + editor.short_path(name=False)
-            if isinstance(editor, Editor) and word in itemset:
-                word += "::" + editor.project.name
-            if word in itemset:
+            if word in wordset:
                 return # ignore exact match
-            itemset.add(word)
+            wordset.add(word)
             if ' ' in word:
                 word = word.replace(" ", "\\ ")
-            items.append(CompleteWord(word, start=0, value=editor))
+            words.append(CompleteWord(word, start=0, value=editor))
         try:
             token = self.consume(arg.text, arg.start)[0] or ""
         except Error:
             return ""
-        items = []
-        itemset = set()
-        for project in self.sorted_projects():
-            if project.name.startswith(token):
-                add_completion(project)
-            for editor in project.editors:
-                if editor.name.startswith(token):
-                    add_completion(editor)
-        return items
+        if ' ' in token:
+            token = token.replace(" ", "\\ ")
+        return [word for word in words if word.startswith(token)]
 
     def get_placeholder(self, arg):
         if not arg:

@@ -74,14 +74,11 @@ View release stats:
 Top priority
 
 Show error in find dialog when in Python replace mode and replace string is invalid
+Fix doc command with path like document.py::~/code/EditXT/editxt/platform/mac
 Fix ack command with --after
   - allow options intermixed with paths (VarArgs dispatch)
-x  - output formatting
 Fix ack command
   - wrong default path in project view
-  - "ack drawInRect ~/code/EditXT/editxt/"
-    ack: ~/code/EditXT/editxt/: No such file or directory
-xx  - error on path with trailing slash (cannot reproduce)
 Aesthetics
   - font size (make easy to adjust)
   - syntax highlighting

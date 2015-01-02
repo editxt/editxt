@@ -17,6 +17,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+from functools import partial
+
 from editxt.test.test_commands import CommandTester
 from editxt.test.util import (assert_raises, eq_, expect_beep, gentest,
     TestConfig, test_app)
@@ -36,8 +38,8 @@ def test_doc():
     """
     BEEP = object()
     @gentest
-    def test(command, focus, recent="DEBAC", prev=0):
-        with test_app(CONFIG) as app:
+    def test(command, focus, recent="DEBAC", prev=0, _config=CONFIG):
+        with test_app(_config) as app:
             tapp = test_app(app)
             for doc in recent:
                 app.windows[0].current_editor = tapp.get("editor(%s)" % doc)
@@ -49,7 +51,7 @@ def test_doc():
                 bar(command)
                 if focus is BEEP:
                     focus = recent[-1]
-                state = CONFIG.split()
+                state = _config.split()
                 def f(item):
                     return (item + '*') if focus in item else item
                 eq_(tapp.state, ' '.join([f(item) for item in state]))
@@ -74,6 +76,18 @@ def test_doc():
     yield test("doc  down", "D")
     yield test("doc  down 2", "E")
     yield test("doc  down 3", BEEP)
+
+    CONFIG = """
+        window
+            project(work:/work)
+                editor(/work/src/file)
+                editor(/work/dst/file)
+            project(play:/play)
+                editor(/play/file)
+                editor(new)
+    """
+    test = partial(test, recent=["/work/src/file"], _config=CONFIG)
+    yield test("doc file::dst", "/work/dst/file")
 
 def test_config_shortcuts():
     from editxt.config import config_schema

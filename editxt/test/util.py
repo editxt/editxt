@@ -82,17 +82,15 @@ def gentest(test):
     WARNING do not use this to decorate test functions outside of a generator
     test. It will cause the test to appear to pass without actually running it.
     """
-    def run_test_with(*args):
-        if args and isinstance(args[-1], KeywordArgs):
-            args, kw = args[:-1], args[-1].kw
-        else:
-            kw = {}
-        rval = test(*args, **kw)
-        assert rval is None, "test returned unexpected value: %r" % (value,)
     def assemble_test_args(*args, **kw):
+        def run_test_with(*ignore):
+            rval = test(*args, **kw)
+            assert rval is None, "test returned unexpected value: %r" % (value,)
+        display_args = args
         if kw:
-            args += (KeywordArgs(kw),)
-        return (run_test_with,) + args
+            visible_kw = {k: v for k, v in kw.items() if not k.startswith("_")}
+            display_args += (KeywordArgs(visible_kw),)
+        return (run_test_with,) + display_args
     return assemble_test_args
 
 
@@ -178,7 +176,7 @@ class test_app(object):
     editor_re = re.compile(
         r"(-?)"
         r"(window|project|editor)"
-        r"((?:\([._/a-zA-Z0-9-]+\))?)"
+        r"((?:\((?:[A-Za-z0-9_]+:)?[._/a-zA-Z0-9-]+\))?)"
         r"(\*?)$"
     )
 
@@ -242,7 +240,8 @@ class test_app(object):
             match = self.editor_re.match(config_item)
             assert match, "unknown config item: {}".format(config_item)
             collapsed, item, name, current = match.groups()
-            assert item == "project" or not collapsed, \
+            has_ext_name = name and ":" in name
+            assert item == "project" or (not collapsed and not has_ext_name), \
                 "unknown config item: {}".format(config_item)
             if not name:
                 name = "<{}>".format(i)
@@ -257,8 +256,13 @@ class test_app(object):
                     items[window] = "window<{}>".format(i)
             if item == "project" or project is None:
                 project = Project(window)
+                if has_ext_name:
+                    name_offset = name.index(":") + 1
+                    project.name = name[1:name_offset - 1]
+                else:
+                    name_offset = 1
                 if "/" in name:
-                    project.path = self.temp_path(name[1:-1])
+                    project.path = self.temp_path(name[name_offset:-1])
                 if collapsed:
                     project.expanded = False
                 window.projects.append(project)
