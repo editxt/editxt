@@ -27,7 +27,7 @@ word_groups = [
         assert    else      if        pass      yield    
         break     except    import    class     in       
         raise     continue  finally   is        return   
-        def       for       lambda    try
+        def       for       lambda    try       nonlocal
     """.split(), "0000CC"),
     ("self True False None".split(), "000080"),
     #("== != < > <= >=".split(), "FF0000"),
