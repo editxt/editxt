@@ -542,7 +542,7 @@ class CommandManager(object):
         if command is None:
             command, a = self.lookup_full_command(text, False)
         else:
-            index = text.index(cmdstr) + len(cmdstr) + 1
+            index += len(cmdstr) + 1
         return command, index
 
     def get_completions(self, text, index):

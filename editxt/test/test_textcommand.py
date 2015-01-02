@@ -191,7 +191,8 @@ def test_CommandBar_on_key_press():
 
 def test_CommandBar_execute():
     @gentest
-    def test(text, fail=True, beep=False, config="editor*", message=None, call=0):
+    def test(text, fail=True, beep=False, config="editor*", message=None,
+             call=0, history=False):
         @command(arg_parser=CommandParser(
             Choice(('action', None), "cmd_err", "error", "message"),
         ))
@@ -219,8 +220,7 @@ def test_CommandBar_execute():
             eq_(messages, [message] if message else [])
             eq_(bar.failed_command, text if fail else None)
             eq_(calls, call)
-            if call and not fail:
-                eq_(bar.get_history(""), text)
+            eq_(bar.get_history(""), text if history else None)
 
     yield test("", fail=False)
     yield test("cmd", config="window", beep=True)
@@ -229,8 +229,9 @@ def test_CommandBar_execute():
     yield test("cmd cmd_err", call=1, message="cmd_err")
     yield test("cmd err", call=1,
         message="error in command: cmd in editxt.test.test_textcommand")
-    yield test("cmd", call=1, fail=False)
-    yield test("cmd m", call=1, fail=False, message="message")
+    yield test("cmd", call=1, fail=False, history=True)
+    yield test("cmd m", call=1, fail=False, message="message", history=True)
+    yield test(" cmd m", call=1, fail=False, message="message")
 
 def test_CommandBar_get_placeholder():
     def test(c):
