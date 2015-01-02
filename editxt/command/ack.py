@@ -90,7 +90,7 @@ def ack(editor, sender, args):
     if message:
         editor.message(message, msg_type=msg_type)
     else:
-        beep()
+        return "no match for pattern: {}".format(args.pattern)
 
 
 def ack_lines(result, pattern, cwd):

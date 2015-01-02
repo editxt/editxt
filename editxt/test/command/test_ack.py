@@ -75,7 +75,7 @@ def test_ack():
         "\n"
         "[dir/b.txt](xt://open/dir/../dir/b.txt)\n"
         "[1](xt://open/dir/../dir/b.txt?goto=1):name: [dir/b](xt://open/dir/../dir/b.txt?goto=1.6.5).txt\n")
-    yield test("ack xyz", None)
+    yield test("ack xyz", "no match for pattern: xyz")
 
 def test_exec_shell():
     if not mod.is_ack_installed():
