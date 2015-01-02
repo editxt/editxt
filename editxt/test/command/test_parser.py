@@ -28,7 +28,7 @@ from nose.tools import eq_
 from editxt.test.util import assert_raises, replattr, TestConfig
 
 import editxt.command.parser as mod
-from editxt.command.parser import (Choice, Int, String, Regex, RegexPattern,
+from editxt.command.parser import (Arg, Choice, Int, String, Regex, RegexPattern,
     File, CommandParser, SubArgs, SubParser, VarArgs, CompleteWord, Conditional,
     identifier, Options, Error, ArgumentError, ParseError)
 
@@ -42,7 +42,10 @@ def test_CommandParser():
     def test_parser(argstr, options, parser):
         if isinstance(options, Exception):
             def check(err):
-                eq_(err, options)
+                eq_(type(err), type(options))
+                eq_(str(err), str(options))
+                eq_(err.errors, options.errors)
+                eq_(err.parse_index, options.parse_index)
             with assert_raises(type(options), msg=check):
                 parser.parse(argstr)
         else:
@@ -84,8 +87,7 @@ def test_CommandParser():
     yield test, " high", Options(level=4)
     yield test, "high", Options(level=4)
     yield test, "hi", Options(level=4)
-    yield test, "high '' yes", ArgumentError('unexpected argument(s): yes',
-        Options(volume=50, equalizer=None, name='', level=4), [], 8)
+    yield test, "high '' yes", ArgumentError('unexpected argument(s): yes', ..., [], 8)
 
     def test_placeholder(argstr, expected, parser=radio_parser):
         eq_(parser.get_placeholder(argstr), expected)
@@ -133,9 +135,10 @@ def test_CommandParser_too_many_args():
         arg_parser.parse('yes unexpected')
 
 def test_CommandParser_incomplete():
-    parser = CommandParser(Choice('arg', 'all'))
+    field = Choice('arg', 'all')
+    parser = CommandParser(field)
     def check(err):
-        eq_(err.options, Options(arg="arg"))
+        eq_(err.options, Options(arg=Arg(field, 'a', 0, Options())))
         eq_(err.errors, [ParseError("'a' is ambiguous: arg, all", Choice('arg', 'all'), 0, 2)])
     with assert_raises(ArgumentError, msg=check):
         parser.parse('a')
@@ -189,9 +192,10 @@ def test_CommandParser_with_SubParser_errors():
     arg = SubParser("var", sub)
     parser = CommandParser(arg)
     def check(err):
+        arg = Arg(None, 'num x', 0, Options())
         eq_(str(err), "invalid arguments: num x\n"
                       "invalid literal for int() with base 10: 'x'")
-        eq_(err.options, Options(var=None))
+        eq_(err.options, Options(var=arg))
         eq_(err.errors,
             [ParseError("invalid literal for int() with base 10: 'x'",
                         Int("num"), 4, 5)])
@@ -200,7 +204,7 @@ def test_CommandParser_with_SubParser_errors():
 
 def test_CommandParser_with_Conditional():
     def not_off(arg):
-        return arg.preceding.level != 0
+        return arg.args.level.value != 0
     parser = CommandParser(
         Choice(
             ("off", 0),
@@ -837,7 +841,7 @@ def test_SubParser():
     yield test, 'val 1', 0, ((sub, Options(num=1)), 6)
     yield test, 'val 1 2', 0, ((sub, Options(num=1)), 6)
     yield test, 'val x 2', 0, ArgumentError("invalid arguments: val x 2",
-        Options(num=None), [
+        Options(num=Arg(None, 'x', 0, Options())), [
             ParseError("invalid literal for int() with base 10: 'x'",
                        Int("num"), 4, 5)], 4)
 

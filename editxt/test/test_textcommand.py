@@ -25,7 +25,7 @@ from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_, assert_raises
 import AppKit as ak
 import Foundation as fn
-from editxt.test.util import gentest, TestConfig, tempdir, test_app
+from editxt.test.util import expect_beep, gentest, TestConfig, tempdir, test_app
 
 import editxt.constants as const
 import editxt.textcommand as mod
@@ -190,73 +190,47 @@ def test_CommandBar_on_key_press():
     yield test("c", BACK_TAB)
 
 def test_CommandBar_execute():
-    from editxt.editor import Editor
-    from editxt.textcommand import CommandManager
-    def test(c):
-        m = Mocker()
-        window = m.mock()
-        beep = m.replace(mod, 'beep')
-        commander = m.mock(CommandManager)
-        bar = mod.CommandBar(window, commander)
-        message = m.replace(bar, "message")
-        args = c.text.split()
-        if args and not c.current:
-            window.current_editor >> None
-            beep()
-        elif args:
-            editor = window.current_editor >> m.mock(Editor)
-            command = m.mock()
-            if c.lookup == 'first':
-                commander.lookup(args[0]) >> command
-                if isinstance(c.args, Exception):
-                    expect(command.arg_parser.parse(c.argstr)).throw(c.args)
-                else:
-                    command.arg_parser.parse(c.argstr) >> c.args
-            elif c.lookup == 'full':
-                commander.lookup(args[0]) >> None
-                if c.args is None:
-                    commander.lookup_full_command(c.text) >> (None, None)
-                else:
-                    commander.lookup_full_command(c.text) >> (command, c.args)
-            else:
-                assert c.lookup == None, c.lookup
-            if c.args is None or isinstance(c.args, Exception):
-                if isinstance(c.args, Exception):
-                    kw = {"exc_info": True}
-                else:
-                    kw = {}
-                message(c.msg, **kw)
-            else:
-                res = command(editor, bar, '<args>')
-                if c.error:
-                    expect(res).throw(Exception('bang!'))
-                    message(ANY, exc_info=True)
-                elif not c.text.startswith(" "):
-                    res >> c.msg
-                    history = commander.history >> m.mock(mod.CommandHistory)
-                    history.append(c.text)
-                    if c.msg:
-                        message(c.msg, msg_type=const.INFO)
-        with m:
-            bar.execute(c.text)
-    c = TestConfig(args='<args>', error=False, current=True,
-                   msg=None, exc_info=None)
-    yield test, c(text='')
-# these tests are too fragile (bad use of mocks)
-#    yield test, c(text='cmd x y z', argstr='x y z', lookup='first')
-#    yield test, c(text='cmd x y z', argstr='x y z', lookup='first', msg="msg")
-#    yield test, c(text=' cmd x y z', argstr='x y z', lookup='first')
-#    yield test, c(text='cmd  x y  z', argstr=' x y  z', lookup='first')
-#    yield test, c(text='cmd x ', argstr='x ', lookup='first', args=Exception(),
-#                  msg='argument parse error: x ', exc_info=True)
-    yield test, c(text='123 456', lookup='full')
-    yield test, c(text='123 456', lookup='full', msg="message for you, sir!")
-    yield test, c(text='123 456', lookup='full', current=False)
-#    yield test, c(text='cmd', argstr='', lookup='first', args=None,
-#                  msg='invalid command arguments: ')
-    yield test, c(text='123 456', lookup='full', args=None,
-                  msg='unknown command: 123 456')
-    yield test, c(text='123 456', lookup='full', error=True)
+    @gentest
+    def test(text, fail=True, beep=False, config="editor*", message=None, call=0):
+        @command(arg_parser=CommandParser(
+            Choice(('action', None), "cmd_err", "error", "message"),
+        ))
+        def cmd(editor, sender, args):
+            nonlocal calls
+            calls += 1
+            if args.action == "cmd_err":
+                raise mod.CommandError("cmd_err")
+            if args.action == "error":
+                raise Exception("error")
+            if args.action == "message":
+                return args.action
+        calls = 0
+        messages = []
+        with test_app(config) as app:
+            bar = mod.CommandBar(app.windows[0], app.text_commander)
+            app.text_commander.add_command(cmd, None, None)
+            def bar_message(msg, *args, exc_info=False, **kw):
+                if exc_info:
+                    log.info(str(msg), exc_info=True)
+                messages.append(str(msg))
+            bar.message = bar_message
+            with expect_beep(beep):
+                bar.execute(text)
+            eq_(messages, [message] if message else [])
+            eq_(bar.failed_command, text if fail else None)
+            eq_(calls, call)
+            if call and not fail:
+                eq_(bar.get_history(""), text)
+
+    yield test("", fail=False)
+    yield test("cmd", config="window", beep=True)
+    yield test("xyz", message="unknown command: xyz")
+    yield test("cmd xyz", message="parse error: cmd xyz")
+    yield test("cmd cmd_err", call=1, message="cmd_err")
+    yield test("cmd err", call=1,
+        message="error in command: cmd in editxt.test.test_textcommand")
+    yield test("cmd", call=1, fail=False)
+    yield test("cmd m", call=1, fail=False, message="message")
 
 def test_CommandBar_get_placeholder():
     def test(c):
@@ -808,10 +782,13 @@ def test_CommandManager_load_commands():
 
 def test_CommandManager_load_shortcuts():
     from editxt.config import config_schema
+    @command
+    def doc(editor, sender, opts):
+        pass
     shorts = config_schema()["shortcuts"]
     menu = const.Constant("menu")
     expect = []
-    tags = {}
+    tags = {doc: doc.name}
     key = lambda kv: kv[1].default
     for i, (hotkey, value) in enumerate(sorted(shorts.items(), key=key)):
         hkey = mod.parse_hotkey(hotkey)
@@ -823,6 +800,7 @@ def test_CommandManager_load_shortcuts():
         return tags[title]
     with test_app() as app:
         ctl = CommandManager("<history>", app=app)
+        ctl.add_command(doc, None, menu)
         ctl.add_menu_item = add_menu_item
         ctl.load_shortcuts(menu)
         eq_(items, expect)

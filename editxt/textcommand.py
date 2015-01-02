@@ -213,34 +213,31 @@ class CommandBar(object):
         if not text.strip():
             return
         self.failed_command = text
-        cmdstr, space, argstr = text.lstrip(" ").partition(" ")
         editor = self.window.current_editor
         if editor is None:
             beep()
             return
-        command = self.text_commander.lookup(cmdstr)
-        if command is not None:
-            try:
-                args = self.parser(command).parse(argstr)
-            except Exception:
-                msg = 'argument parse error: {}'.format(argstr)
-                self.message(msg, exc_info=True)
-                return
-        else:
-            argstr = text
-            command, args = self.text_commander.lookup_full_command(argstr)
-            if command is None:
-                self.message('unknown command: {}'.format(argstr))
-                return
-        if args is None:
-            self.message('invalid command arguments: {}'.format(argstr))
+        command, index = self._find_command(text)
+        if command is None:
+            self.message('unknown command: {}'.format(text))
             return
+        try:
+            args = self.parser(command).parse(text, index)
+        except Exception:
+            msg = 'parse error: {}'.format(text)
+            self.message(msg, exc_info=True)
+            return
+        assert args is not None, 'invalid command arguments: {}'.format(text)
         try:
             message = command(editor, self, args)
         except CommandError as err:
             self.message(err)
         except Exception:
-            self.message('error in command: {}'.format(command), exc_info=True)
+            msg = 'error in command: {} in {}'.format(
+                command.__name__,
+                command.__module__,
+            )
+            self.message(msg, exc_info=True)
         else:
             self.failed_command = None
             if not text.startswith(" "):
@@ -249,24 +246,25 @@ class CommandBar(object):
                 self.message(message, msg_type=const.INFO)
 
     def _find_command(self, text):
-        """Get a tuple (command, argument_string)
+        """Get a tuple (command, arg_index)
 
-        :returns: A tuple ``(command, argument_string)``. ``command`` will be
-        ``None`` if no matching command is found.
+        :returns: A tuple ``(command, arg_index)``. ``command`` will be
+        ``None`` if no matching command is found. ``arg_index`` is the index
+        of the first argument in the string.
         """
         return self.text_commander.find_command(text)
 
     def get_placeholder(self, text):
         """Get arguments placeholder text"""
-        command, argstr = self._find_command(text)
+        command, index = self._find_command(text)
         if command is not None:
             try:
-                placeholder = self.parser(command).get_placeholder(argstr)
+                placeholder = self.parser(command).get_placeholder(text, index)
             except Exception:
                 log.debug("get_placeholder failed", exc_info=True)
                 placeholder = None
             if placeholder:
-                if text and not argstr and not text.endswith(" "):
+                if text and index > len(text):
                     return " " + placeholder
                 return placeholder
         return ""
@@ -299,20 +297,13 @@ class CommandBar(object):
                     and name.startswith(text)
                     and is_enabled(command))
         else:
-            command, argstr = self._find_command(text)
+            command, index = self._find_command(text)
             if command is not None:
                 try:
-                    words = self.parser(command).get_completions(argstr)
+                    words = self.parser(command).get_completions(text, index)
                 except Exception:
                     log.debug("get_completions failed", exc_info=True)
                     words = []
-                else:
-                    if argstr != text:
-                        diff = len(text) - len(argstr)
-                        assert diff > 0, (text, argstr)
-                        for word in words:
-                            if getattr(word, 'start', None) is not None:
-                                word.start += diff
             else:
                 words = []
         return words, None
@@ -385,15 +376,15 @@ class CommandBar(object):
 
     def show_help(self, text):
         """Show help for comment text"""
-        command, argstr = self._find_command(text)
+        command, index = self._find_command(text)
         if command is None:
             message = help.__doc__
         else:
             message = command.__doc__ or ""
-            #if argstr or " " in text:
+            #if index <= len(text) or " " in text:
             #    msg = [message]
             #    # TODO handle exception
-            #    msg.append(self.parser(command).get_help(argstr))
+            #    msg.append(self.parser(command).get_help(text, index))
             #    message = "\n\n".join(m for m in msg if m.strip())
         if message:
             self.message(markdoc(message), msg_type=const.INFO)
@@ -533,14 +524,26 @@ class CommandManager(object):
         return None, None
 
     def find_command(self, text):
-        if not text:
-            return None, text
-        cmdstr, space, argstr = text.partition(" ")
+        """Find a command for the given command string
+
+        :returns: `(command, index)` where `index` is the index in text
+        to start parsing arguments.
+        """
+        if not text.strip():
+            return None, None
+        if text.startswith(" "):
+            full = text
+            text = text.lstrip(" ")
+            index = len(full) - len(text)
+        else:
+            index = 0
+        cmdstr = text.split(" ", 1)[0]
         command = self.lookup(cmdstr)
         if command is None:
-            argstr = text
-            command, a = self.lookup_full_command(argstr, False)
-        return command, argstr
+            command, a = self.lookup_full_command(text, False)
+        else:
+            index = text.index(cmdstr) + len(cmdstr) + 1
+        return command, index
 
     def get_completions(self, text, index):
         # TODO implement this
@@ -563,7 +566,10 @@ class CommandManager(object):
         shortcuts.update(self.app.config.lookup("shortcuts", as_dict=True))
         def make_command(text):
             from editxt.command.base import command
-            cmd, argstr = self.find_command(text)
+            cmd, ignore = self.find_command(text)
+            if cmd is None:
+                log.warn("unrecognized command: %r", text)
+                return None
             @command(is_enabled=None if cmd is None else cmd.is_enabled)
             def exec(editor, sender, args):
                 editor.project.window.command.execute(text)
@@ -575,7 +581,7 @@ class CommandManager(object):
             if key is not None and command is not None:
                 tag = self.add_menu_item(menu, text, "doCommand:", key, mask)
                 self.commands[tag] = command
-            else:
+            elif key is None:
                 log.warn("unrecognized hotkey: %s", hotkey)
 
     def add_command(self, command, path, menu):

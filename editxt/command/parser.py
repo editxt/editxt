@@ -115,14 +115,12 @@ class CommandParser(object):
         if args is None:
             args = Options()
         for field in self.argspec:
-            try:
-                arg = Arg(field, text, index, args)
+            arg = Arg(field, text, index, args)
+            if not arg.skipped:
                 yield arg
                 if not arg.errors:
                     index = arg.end
-            except SkipField as skip:
-                arg = skip
-            setattr(args, field.name, arg.value)
+            setattr(args, field.name, arg)
         if index < len(text):
             yield Arg(None, text, index, args)
 
@@ -134,14 +132,14 @@ class CommandParser(object):
         :raises: `ArgumentError` if the text string is invalid.
         :returns: `Options` object with argument values as attributes.
         """
-        opts = Options()
+        args = Options()
         errors = []
-        for arg in self.tokenize(text, index, opts):
+        for arg in self.tokenize(text, index, args):
             if arg.field is None:
                 if errors:
                     break
                 msg = 'unexpected argument(s): ' + str(arg)
-                raise ArgumentError(msg, opts, [], arg.start)
+                raise ArgumentError(msg, args, [], arg.start)
             if not arg.errors:
                 if errors:
                     del errors[:]
@@ -149,8 +147,8 @@ class CommandParser(object):
                 errors.extend(arg.errors)
         if errors:
             msg = 'invalid arguments: {}'.format(text)
-            raise ArgumentError(msg, opts, errors)
-        return opts
+            raise ArgumentError(msg, args, errors)
+        return Options(**{name: arg.value for name, arg in args})
 
     def get_placeholder(self, text, index=0):
         """Get placeholder string to follow the given command text
@@ -213,17 +211,19 @@ class Arg(object):
     - `start` : Index of the first consumed character.
     - `end` : Index of the last consumed character.
     - `value` : Parsed argument value. Its type depends on `field`.
+    - `skipped` : A boolean value indicating if this arg was skipped.
     - `errors` : Errors raised while consuming the argument.
-    - `preceding` : `Options` object containing preceding argument values.
+    - `args` : `Options` object containing preceding Args.
 
     """
 
-    def __init__(self, field, text, index, preceding):
+    def __init__(self, field, text, index, args):
         self.field = field
         self.text = text
         self.start = start = index
+        self.skipped = False
         self.errors = []
-        self.preceding = preceding
+        self.args = args
         if field is None:
             value = None
             index = len(text)
@@ -248,7 +248,11 @@ class Arg(object):
                 index = err.errors[-1].parse_index
         self.end = index
         if field is not None:
-            value = field.value_of(value, self)
+            try:
+                value = field.value_of(value, self)
+            except SkipField:
+                self.skipped = True
+                value = self.field.default
         self.value = value
 
     def __repr__(self):
@@ -282,6 +286,14 @@ class Arg(object):
         if self.could_consume_more:
             end -= 1
         return end - start
+
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self.value == other.value and str(self) == str(other)
+        return NotImplemented
+
+    def __ne__(self, other):
+        return not (self == other)
 
     @property
     def could_consume_more(self):
@@ -1062,7 +1074,7 @@ class VarArgs(Field):
         start = None
         while index != start:
             start = index
-            sub = Arg(self.field, text, index, arg.preceding)
+            sub = Arg(self.field, text, index, arg.args)
             if sub.could_consume_more:
                 value = sub.get_placeholder()
                 if value is not None or index > len(text):
@@ -1078,7 +1090,7 @@ class VarArgs(Field):
     def get_completions(self, arg):
         index = arg.start
         while True:
-            sub = Arg(self.field, arg.text, index, arg.preceding)
+            sub = Arg(self.field, arg.text, index, arg.args)
             if sub.could_consume_more:
                 return sub.get_completions()
             if sub.errors or sub.end == index:
@@ -1223,7 +1235,7 @@ class SubArgs(object):
         if errors:
             msg = 'invalid arguments: {}'.format(text)
             raise ArgumentError(msg, args, errors, index)
-        return args, index
+        return Options(**{name: arg.value for name, arg in args}), index
 
     def __repr__(self):
         args = [repr(self.name)]

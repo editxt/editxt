@@ -139,16 +139,17 @@ class ProjectItem(EditorTreeItem):
     def iter_editors(self, arg):
         if not has_project(arg):
             return
-        for editor in arg.preceding.name.editors:
+        for editor in arg.args.name.value.editors:
             yield editor
 
 
 def no_editor(arg):
     # a bit hackish, but only true if first arg is skipped
-    return arg.text.startswith(" ")
+    name = arg.args.name
+    return name.value is None and not name.could_consume_more
 
 def has_project(arg):
-    return isinstance(arg.preceding.name, Project)
+    return isinstance(arg.args.name.value, Project)
 
 
 @command(arg_parser=CommandParser(
