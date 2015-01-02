@@ -1245,8 +1245,8 @@ class Conditional(Field):
         self.editor = editor
 
     def with_context(self, editor):
-        return type(self)(
-            self.is_enabled, self.field, editor, default=self.default)
+        field = self.field.with_context(editor)
+        return type(self)(self.is_enabled, field, editor, default=self.default)
 
     def consume(self, text, index):
         return self.field.consume(text, index)

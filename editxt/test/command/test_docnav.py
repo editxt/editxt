@@ -77,7 +77,7 @@ def test_doc():
     yield test("doc  down 2", "E")
     yield test("doc  down 3", BEEP)
 
-    CONFIG = """
+    test = partial(test, recent=["/work/src/file"], _config="""
         window
             project(work:/work)
                 editor(/work/src/file)
@@ -85,9 +85,11 @@ def test_doc():
             project(play:/play)
                 editor(/play/file)
                 editor(new)
-    """
-    test = partial(test, recent=["/work/src/file"], _config=CONFIG)
+    """)
     yield test("doc file::dst", "/work/dst/file")
+    yield test("doc work", "work:/work")
+    yield test("doc new", BEEP)
+    yield test("doc play file", "/play/file")
 
 def test_config_shortcuts():
     from editxt.config import config_schema

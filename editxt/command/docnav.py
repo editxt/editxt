@@ -29,6 +29,7 @@ from editxt.command.util import has_editor
 from editxt.editor import Editor
 from editxt.platform.app import beep
 from editxt.platform.constants import KEY
+from editxt.project import Project
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +44,7 @@ class EditorTreeItem(String):
         self.completions = {} if editor is not None else None
 
     def with_context(self, editor):
-        return EditorTreeItem(self.name, default=self.default, editor=editor)
+        return type(self)(self.name, default=self.default, editor=editor)
 
     def iter_editors(self, arg):
         current_project = self.editor.project
@@ -133,12 +134,26 @@ class EditorTreeItem(String):
         return super().arg_string(value)
 
 
+class ProjectItem(EditorTreeItem):
+
+    def iter_editors(self, arg):
+        if not has_project(arg):
+            return
+        for editor in arg.preceding.name.editors:
+            yield editor
+
+
 def no_editor(arg):
-    return arg.preceding.editor is None
+    # a bit hackish, but only true if first arg is skipped
+    return arg.text.startswith(" ")
+
+def has_project(arg):
+    return isinstance(arg.preceding.name, Project)
 
 
 @command(arg_parser=CommandParser(
-    EditorTreeItem("editor"),
+    EditorTreeItem("name"),
+    Conditional(has_project, ProjectItem("file")),
     Conditional(no_editor, Choice(
         ("previous", const.PREVIOUS),
         ("next", const.NEXT),
@@ -154,9 +169,12 @@ def doc(editor, sender, args):
         from editxt.commands import show_command_bar
         show_command_bar(editor, sender, doc.name + " ")
         return
-    if args.editor is not None:
-        if args.editor is not EditorTreeItem.NO_MATCH and \
-                editor.project.window.focus(args.editor):
+    if args.name is not None:
+        new_editor = args.file
+        if new_editor is None:
+            new_editor = args.name
+        if new_editor is not EditorTreeItem.NO_MATCH and \
+                editor.project.window.focus(new_editor):
             return
     elif editor.project.window.focus(args.direction, args.offset):
         return
