@@ -22,6 +22,7 @@ import logging
 import objc
 import AppKit as ak
 import Foundation as fn
+from objc import super
 
 from editxt.platform.kvo import proxy_target
 

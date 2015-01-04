@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import AppKit as ak
 import objc
+from objc import super
 
 SHOULD_RESIZE = "should_resize"
 

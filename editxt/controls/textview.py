@@ -23,6 +23,7 @@ import re
 import objc
 import AppKit as ak
 import Foundation as fn
+from objc import super
 
 from editxt.command.find import FindController
 from editxt.datatypes import WeakProperty

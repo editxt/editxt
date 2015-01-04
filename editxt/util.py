@@ -31,6 +31,7 @@ import objc
 import yaml
 import AppKit as ak
 import Foundation as fn
+from objc import super
 
 import editxt.constants as const
 from editxt.platform.constants import KEY

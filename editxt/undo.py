@@ -17,8 +17,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-import Foundation as fn
 from weakref import WeakSet
+
+import Foundation as fn
+from objc import super
+
 from editxt.platform.kvo import kvo_change
 
 

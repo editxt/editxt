@@ -22,6 +22,7 @@ import objc
 import objc
 import AppKit as ak
 import Foundation as fn
+from objc import super
 
 from editxt.constants import LARGE_NUMBER_FOR_TEXT
 from editxt.controls.dualview import DualView, SHOULD_RESIZE

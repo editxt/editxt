@@ -23,6 +23,7 @@ import os
 import objc
 import AppKit as ak
 import Foundation as fn
+from objc import super
 from PyObjCTools import AppHelper
 
 import editxt.constants as const

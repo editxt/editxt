@@ -21,6 +21,7 @@ import logging
 
 import AppKit as ak
 import Foundation as fn
+from objc import super
 
 from editxt.controls.overlaywindow import OverlayWindow
 

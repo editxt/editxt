@@ -23,6 +23,7 @@ from weakref import WeakKeyDictionary
 
 import objc
 import Foundation as fn
+from objc import super
 
 from editxt.datatypes import AbstractNamedProperty, WeakProperty
 

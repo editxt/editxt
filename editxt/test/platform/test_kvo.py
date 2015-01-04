@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import objc
 import Foundation as fn
+from objc import super
 
 from mocker import ANY, expect, Mocker
 

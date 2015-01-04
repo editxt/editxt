@@ -20,6 +20,7 @@
 import AppKit as ak
 import Foundation as fn
 import objc
+from objc import super
 
 from editxt.platform.mac.views import screen_rect
 

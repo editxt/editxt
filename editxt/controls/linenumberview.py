@@ -23,6 +23,7 @@ import re
 import objc
 import AppKit as ak
 import Foundation as fn
+from objc import super
 
 from editxt.platform.mac.views.util import disable_font_smoothing
 from editxt.util import untested

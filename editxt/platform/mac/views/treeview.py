@@ -21,7 +21,7 @@ import logging
 
 import AppKit as ak
 import Foundation as fn
-from objc import Category, IBOutlet
+from objc import Category, IBOutlet, super
 
 from editxt.platform.kvo import proxy_target
 from editxt.util import representedObject

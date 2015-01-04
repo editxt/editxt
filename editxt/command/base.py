@@ -23,6 +23,7 @@ from functools import wraps
 
 import AppKit as ak
 import Foundation as fn
+from objc import super
 
 from editxt.command.parser import CommandParser, Options
 from editxt.command.util import make_command_predicate
