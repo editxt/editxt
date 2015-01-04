@@ -267,12 +267,7 @@ class Arg(object):
         Does not include the space between this and the next arg even
         though that space is consumed by this arg.
         """
-        start, end = self.start, self.end
-        if start == end:
-            return ""
-        if self.could_consume_more or self.text[end - 1:end] == " ":
-            end -= 1
-        return self.text[start:end]
+        return self.text[self.start:self.start + len(self)]
 
     def __len__(self):
         """Return the length of this arg in the command string
@@ -283,8 +278,9 @@ class Arg(object):
         start, end = self.start, self.end
         if start == end:
             return 0
-        if self.could_consume_more:
+        if self.could_consume_more or self.text[end - 1:end] == " ":
             end -= 1
+        assert start <= end, (self.text, start, end)
         return end - start
 
     def __eq__(self, other):
@@ -339,8 +335,8 @@ class Arg(object):
         return self.field.get_placeholder(self)
 
     def get_completions(self):
-        index = self.start
         words = self.field.get_completions(self)
+        index = self.start
         for i, word in enumerate(words):
             if getattr(word, 'start', None) is not None:
                 word.start += index
@@ -1092,7 +1088,7 @@ class VarArgs(Field):
         while True:
             sub = Arg(self.field, arg.text, index, arg.args)
             if sub.could_consume_more:
-                return sub.get_completions()
+                return self.field.get_completions(sub)
             if sub.errors or sub.end == index:
                 break
             index = sub.end

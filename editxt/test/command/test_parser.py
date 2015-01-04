@@ -35,6 +35,13 @@ from editxt.command.parser import (Arg, Choice, Int, String, Regex, RegexPattern
 log = logging.getLogger(__name__)
 
 
+class ColonString(String):
+    def get_completions(self, arg):
+        if arg:
+            return [CompleteWord(":" + str(arg), start=len(arg))]
+        return []
+
+
 yesno = Choice(('yes', True), ('no', False))
 arg_parser = CommandParser(yesno)
 
@@ -76,7 +83,7 @@ def test_CommandParser():
         ),
         level,
         Int("volume", default=50), #, min=0, max=100),
-        String("name"), #, quoted=True),
+        String("name"),
     )
     test = partial(test_parser, parser=radio_parser)
     yield test, "manual", Options(equalizer=(manual, Options(bass=50, treble=50)))
@@ -115,6 +122,15 @@ def test_CommandParser():
     yield test, "  high", []
     yield test, " ", ["off", "high", "medium", "low"], 1
     yield test, " hi", ["high"], 1
+
+    parser = CommandParser(
+        Int("num", default=0),
+        VarArgs("value", ColonString("value")),
+    )
+    test = partial(check_completions, parser=parser)
+    yield test, "", []
+    yield test, "abc", [":abc"], 3
+    yield test, " abc", [":abc"], 4
 
     parser = CommandParser(
         level, Int("value"), Choice("highlander", "tundra", "4runner"))
@@ -767,13 +783,13 @@ def test_VarArgs():
     eq_(repr(field), "VarArgs('var', Choice('arg', 'nope', 'nah'))")
 
     test = make_completions_checker(field)
-    yield test, "", ['arg', 'nope', 'nah'], 0
-    yield test, "a", ["arg"], 0
-    yield test, "a ", ['arg', 'nope', 'nah'], 2
+    yield test, "", ['arg', 'nope', 'nah']
+    yield test, "a", ["arg"]
+    yield test, "a ", ['arg', 'nope', 'nah']
     yield test, "b ", []
-    yield test, "nah", ["nah"], 0
-    yield test, "nah ", ['arg', 'nope', 'nah'], 4
-    yield test, "arg a", ['arg'], 4
+    yield test, "nah", ["nah"]
+    yield test, "nah ", ['arg', 'nope', 'nah']
+    yield test, "arg a", ['arg']
     yield test, "arg b", []
 
     test = make_placeholder_checker(field)
