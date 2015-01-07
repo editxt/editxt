@@ -406,7 +406,7 @@ class ContentSizedTextView(ak.NSTextView):
     @disable_font_smoothing
     def drawRect_(self, rect):
         super(ContentSizedTextView, self).drawRect_(rect)
-        if not self._placeholder:
+        if not self._placeholder or self.isHiddenOrHasHiddenAncestor():
             return
         # draw placeholder text after main content text
         # BUG 3-or-more-word placeholder does not draw properly when wrapped
