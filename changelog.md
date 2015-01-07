@@ -3,6 +3,16 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+## 2015-01-06 - 1.7.5
+
+- Show message instead of beep on `ack` command with no match.
+- Do not update command history on keyboard document navigation.
+- Switch to a file in another project with `doc PROJECT FILE`.
+- Add `nonlocal` keyword to Python syntax definition.
+- Fix crasher bug related to command bar view.
+- Fix missing command auto-complete title.
+- Fix various bugs in `doc` command.
+
 ## 2015-01-01 - 1.7.4
 
 - NOTE for users updating from versions before 1.7.1: you need to run a
