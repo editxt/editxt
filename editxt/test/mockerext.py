@@ -24,6 +24,7 @@ import types
 import weakref
 from contextlib import contextmanager
 from editxt.test.util import replattr
+from functools import wraps
 from importlib import import_module
 
 log = logging.getLogger(__name__)
@@ -111,7 +112,9 @@ class MockExt(mocker.Mock):
             value = getattr(self, "__mocker_" + name + "__")
             if value is not default:
                 if name in ("spec", "type"):
-                    if name != "type" or value != self.__mocker_spec__:
+                    if name == "spec" and isinstance(value, str):
+                        pass
+                    elif name != "type" or value != self.__mocker_spec__:
                         if isinstance(value, property):
                             nameval = "property(%s, ...)" % value.fget.__name__
                         else:
@@ -274,6 +277,20 @@ class AttributeReplacer(mocker.Task):
         self.ctx.__exit__(None, None, None)
 
 
+def _method_wrapper(func, nargs):
+    return {
+        0: lambda self: func(self),
+        1: lambda self, a: func(self, a),
+        2: lambda self, a, b: func(self, a, b),
+        3: lambda self, a, b, c: func(self, a, b, c),
+        4: lambda self, a, b, c, d: func(self, a, b, c, d),
+        5: lambda self, a, b, c, d, e: func(self, a, b, c, d, e),
+        6: lambda self, a, b, c, d, e, f: func(self, a, b, c, d, e, f),
+        7: lambda self, a, b, c, d, e, f, g: func(self, a, b, c, d, e, f, g),
+        8: lambda self, a, b, c, d, e, f, g, h: func(self, a, b, c, d, e, f, g, h),
+    }[nargs]
+
+
 class ReplacedMethod(object):
 
     replaced_methods = {}
@@ -288,6 +305,17 @@ class ReplacedMethod(object):
             rep.class_ = class_
             rep.registry = []
             rep.installed = False
+            if issubclass(objtype, NSObject) and hasattr(func, "selector"):
+                selstr = func.selector.decode('ascii')
+                nargs = selstr.count(":")
+                try:
+                    original = objtype.instanceMethodForSelector_(func.selector)
+                    original = _method_wrapper(original, nargs)
+                    log.info("replaced %s.%s", objtype.__name__, selstr)
+                except TypeError:
+                    log.warn("cannot get instance method for %s", selstr)
+                    original = None
+                rep.original_method = original
             cls.replaced_methods[(objtype, method_name)] = rep
             #setattr(objtype, method_name, rep)
         return rep
@@ -305,7 +333,18 @@ class ReplacedMethod(object):
             if obj is mocked:
                 del self.registry[i]
                 break
-        if not issubclass(self.objtype, NSObject):
+        if issubclass(self.objtype, NSObject) and hasattr(self, "original_method"):
+            if self.original_method is None:
+                return
+            del self.replaced_methods[(self.objtype, self.name)]
+            import objc
+            sel = objc.selector(
+                self.original_method,
+                selector=self.func.selector,
+                signature=self.func.signature
+            )
+            objc.classAddMethod(self.objtype, self.func.selector, sel)
+        else:
             # restore the world to the way it was before
             # (not possible with PyObjC types)
             del self.replaced_methods[(self.objtype, self.name)]
@@ -318,8 +357,24 @@ class ReplacedMethod(object):
             if obj is mocked or mocked is None:
                 # TODO implement passthrough
                 return getattr(mock, self.name)
-        return self.func.__get__(obj, objtype)
-    
+        #return self.func.__get__(obj, objtype)
+        return self._make_wrapper(self.func, obj, objtype)
+
+    @staticmethod
+    def _make_wrapper(func, obj, objtype):
+        """HACK introduced for PyObjC 3.0.4
+
+        Method is no longer restored after deleting the original.
+        See http://sourceforge.net/p/pyobjc/mailman/message/23093627/ for
+        description of how it worked before this hack became necessary.
+        """
+        method = func.__get__(obj, objtype)
+        @wraps(func)
+        def wrapper(*args, **kw):
+            return method(*args, **kw)
+        wrapper.definingClass = objtype
+        return wrapper
+
 #   def __set__(self, obj, value):
 #       raise NotImplementedError
 
@@ -331,28 +386,6 @@ class MethodReplacer(mocker.Task):
     """Task which installs and deinstalls a mocked method."""
 
     NA = object()
-
-    @staticmethod
-    def _create_func(name, nargs):
-        """create a function with the specified name and number of arguments"""
-        import types
-        def f(): pass
-        names = tuple("a%i" % i for i in range(nargs))
-        f_code = types.CodeType(
-            nargs,
-            f.__code__.co_nlocals,
-            f.__code__.co_stacksize,
-            f.__code__.co_flags,
-            f.__code__.co_code,
-            f.__code__.co_consts,
-            f.__code__.co_names,
-            names,
-            f.__code__.co_filename,
-            name,
-            f.__code__.co_firstlineno,
-            f.__code__.co_lnotab,
-        )
-        return types.FunctionType(f_code, f.__globals__, name)
 
     def __init__(self, mock_factory, *method_spec, **kw):
         # get objtype and method_name
@@ -491,16 +524,19 @@ class PropertyReplacer(mocker.Task):
         self.type_ = type_
         self.name = name
         self.prop = prop
+        self.restored = False
         setattr(type_, name, prop)
 
     def restore(self):
+        self.restored = True
         if self.prop.original is self.NA:
             delattr(self.type_, self.name)
         else:
             setattr(self.type_, self.name, self.prop.original)
 
     def __del__(self):
-        self.restore()
+        if not self.restored:
+            self.restore()
 
 
 class SpecCheckerExt(mocker.SpecChecker):
@@ -513,8 +549,10 @@ class SpecCheckerExt(mocker.SpecChecker):
     """
     
     VARARGS_METHOD_SPECS = {
-        b"arrayWithObjects:": (("self",), "args", None, None),
-        b"dictionaryWithObjectsAndKeys:": (("self",), "args", None, None),
+        b"arrayWithObjects:":
+            inspect.FullArgSpec(("self",), "args", None, None, [], {}, {}),
+        b"dictionaryWithObjectsAndKeys:":
+            inspect.FullArgSpec(("self",), "args", None, None, [], {}, {}),
     }
 
     def __init__(self, method):
@@ -528,17 +566,74 @@ class SpecCheckerExt(mocker.SpecChecker):
 
         if method is not None:
             try:
-                self._args, self._varargs, self._varkwargs, self._defaults = \
-                    SpecCheckerExt.getargspec(method)
+                self._argspec = SpecCheckerExt.getargspec(method)
             except TypeError:
                 self._unsupported = True
             else:
                 if self._defaults is None:
                     self._defaults = ()
                 # TODO move is_instancemethod into mocker.py for Python 3 support
+                # and inspect.isclass for Python 3.4 support
                 if is_instancemethod(method) \
+                    or inspect.isclass(method) \
                     or isinstance(method, objc_selector):
                     self._args = self._args[1:]
+
+    @property
+    def _args(self):
+        try:
+            return self.__args
+        except AttributeError:
+            return self._argspec.args
+    @_args.setter
+    def _args(self, value):
+        self.__args = value
+
+    @property
+    def _varargs(self):
+        return self._argspec.varargs
+
+    @property
+    def _varkwargs(self):
+        return self._argspec.varkw
+
+    @property
+    def _defaults(self):
+        try:
+            return self.__defaults
+        except AttributeError:
+            return self._argspec.defaults
+    @_defaults.setter
+    def _defaults(self, value):
+        self.__defaults = value
+
+    def _raise(self, message):
+        spec = inspect.formatargspec(*self._argspec)
+        raise AssertionError("Specification is %s%s: %s" %
+                             (self._method.__name__, spec, message))
+
+    def run(self, path):
+        if not self._method:
+            raise AssertionError("Method not found in real specification")
+        if self._unsupported:
+            return # Can't check it. Happens with builtin functions. :-(
+        action = path.actions[-1]
+        obtained_len = len(action.args)
+        obtained_kwargs = action.kwargs.copy()
+        nodefaults_len = len(self._args) - len(self._defaults)
+        for i, name in enumerate(self._args):
+            if i < obtained_len and name in action.kwargs:
+                self._raise("%r provided twice" % name)
+            if (i >= obtained_len and i < nodefaults_len and
+                name not in action.kwargs):
+                self._raise("%r not provided" % name)
+            obtained_kwargs.pop(name, None)
+        for name in self._argspec.kwonlyargs:
+            obtained_kwargs.pop(name, None)
+        if obtained_len > len(self._args) and not self._varargs:
+            self._raise("too many args provided")
+        if obtained_kwargs and not self._varkwargs:
+            self._raise("unknown kwargs: %s" % ", ".join(obtained_kwargs))
 
     @classmethod
     def getargspec(cls, method):
@@ -553,8 +648,8 @@ class SpecCheckerExt(mocker.SpecChecker):
                     pass
                 nargs = method.selector.count(b":")
                 names = tuple(["self"] + ["arg%i" % i for i in range(nargs)])
-                return names, None, None, None
-        return inspect.getargspec(method)
+                return inspect.FullArgSpec(names, None, None, None, [], {}, {})
+        return inspect.getfullargspec(method)
 
     def verify(self):
         if self._method is None:
@@ -562,6 +657,8 @@ class SpecCheckerExt(mocker.SpecChecker):
 
 
 def get_class(unbound_method):
+    if hasattr(unbound_method, "definingClass"):
+        return unbound_method.definingClass
     assert unbound_method.__module__ is not None, unbound_method
     assert "." in unbound_method.__qualname__, unbound_method
     assert "<locals>" not in unbound_method.__qualname__, unbound_method

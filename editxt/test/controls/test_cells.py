@@ -67,8 +67,8 @@ def test_drawWithFrame_inView_():
         cell = mod.ImageAndTextCell.alloc().init()
         frame = fn.NSMakeRect(0, 0, 20, 100)
         view = m.mock(ak.NSView)
-        draws = m.method(mod.ImageAndTextCell.drawsBackground)
-        color = m.method(mod.ImageAndTextCell.backgroundColor)
+        draws = m.method(mod.ImageAndTextCell, "drawsBackground")
+        color = m.method(mod.ImageAndTextCell, "backgroundColor")
         fill = m.replace(ak, 'NSRectFill')
         if c.image:
             img = cell._image = m.mock(ak.NSImage)

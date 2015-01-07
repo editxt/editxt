@@ -21,6 +21,7 @@ import AppKit as ak
 from functools import wraps
 
 def disable_font_smoothing(draw):
+    @wraps(draw)
     def wrapper(self, *args, **kw):
         ak.NSGraphicsContext.saveGraphicsState()
         context = ak.NSGraphicsContext.currentContext()
@@ -29,9 +30,4 @@ def disable_font_smoothing(draw):
             return draw(self, *args, **kw)
         finally:
             ak.NSGraphicsContext.restoreGraphicsState()
-    if hasattr(draw, 'signature'):
-        wrapper.__name__ = draw.__name__.decode('ascii').replace(':', '_')
-        wrapper.signature = draw.signature
-    else:
-        wrapper = wraps(draw)(wrapper)
     return wrapper

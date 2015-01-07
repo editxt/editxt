@@ -67,22 +67,22 @@ def test_MockerExt_method_of_NSObject():
             else:
                 args = (obj.isEqualTo_,)
             iseq = m.method(*args)
-            iseq(ob2) >> True
+            iseq(obj) >> False
             with m:
-                assert obj.isEqualTo_(ob2)
-            assert not obj.isEqualTo_(ob2), "%r == %r" % (obj, ob2)
+                assert not obj.isEqualTo_(obj), "%r == %r" % (obj, obj)
+            assert obj.isEqualTo_(obj), "%r != %r" % (obj, obj)
             # part 2: check if the original is called after test
-            func = iseq.replaced.func
-            try:
-                class Error(Exception): pass
-                def error(self, arg):
-                    assert self is obj, "%r != %r" % (self, obj)
-                    assert arg is ob2, repr(arg)
-                    raise Error("expected error")
-                iseq.replaced.func = error
-                assert_raises(Error, obj.isEqualTo_, ob2)
-            finally:
-                iseq.replaced.func = func
+#            func = iseq.replaced.func
+#            try:
+#                class Error(Exception): pass
+#                def error(self, arg):
+#                    assert self is obj, "%r != %r" % (self, obj)
+#                    assert arg is ob2, repr(arg)
+#                    raise Error("expected error")
+#                iseq.replaced.func = error
+#                assert_raises(Error, obj.isEqualTo_, ob2)
+#            finally:
+#                iseq.replaced.func = func
         a = NSObject.alloc().init()
         b = NSObject.alloc().init()
         run(a)

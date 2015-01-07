@@ -122,7 +122,7 @@ prepare_build(
         # not play nicely with Exposé (the window does not come to the front
         # when switching to EditXT with Exposé). Luckily everything seems to
         # work as expected without it!!
-        argv_emulation=True,
+        #argv_emulation=True,
         packages=["editxt"],
         frameworks=["resources/Sparkle-1.8.0/Sparkle.framework"],
         plist=dict(
