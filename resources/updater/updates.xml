@@ -181,5 +181,28 @@ where EditXT.app is located on your local machine):
       <pubDate>Thu, 01 Jan 2015 15:35:53 -0500</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.7.4/EditXT-v1.7.4-e561f02.zip" sparkle:version="201501011535.e561f02" sparkle:shortVersionString="1.7.4" sparkle:dsaSignature="MCwCFFM0BIjPEBlS7RbjG43qVmYcA2q4AhRuR0tfR+jGyEQSVTHx7kcY8rgtXA==" length="9678493" type="application/octet-stream" />
     </item>
+    <item>
+      <title>Version 1.7.5</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li>Show message instead of beep on <code>ack</code> command with no match.</li>
+<li>Do not update command history on keyboard document navigation.</li>
+<li>Switch to a file in another project with <code>doc PROJECT FILE</code>.</li>
+<li>Add <code>nonlocal</code> keyword to Python syntax definition.</li>
+<li>Fix crasher bug related to command bar view.</li>
+<li>Fix missing command auto-complete title.</li>
+<li>Fix various bugs in <code>doc</code> command.</li>
+</ul>
+
+        ]]>
+      </description>
+      <sparkle:releaseNotesLink>
+        http://htmlpreview.github.io/?https://raw.github.com/editxt/editxt/blob/master/resources/updater/updates.html
+      </sparkle:releaseNotesLink>
+      <pubDate>Tue, 06 Jan 2015 20:56:36 -0500</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.7.5/EditXT-v1.7.5-e8def0a.zip" sparkle:version="201501062056.e8def0a" sparkle:shortVersionString="1.7.5" sparkle:dsaSignature="MCwCFDuU6vAHOXXgYCBhYNGY0tMXjbk1AhQhQsU7gaIirRxsX0CvKh2Q0tNvKg==" length="9683064" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
