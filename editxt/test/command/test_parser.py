@@ -193,8 +193,11 @@ def test_CommandParser_with_SubParser():
     yield test, "num ", "n yes"
     yield test, "num  ", "yes"
 
-    def test(text, result):
-        eq_(parser.get_completions(text), result)
+    def test(text, expect, start=None):
+        result = parser.get_completions(text)
+        eq_(result, expect)
+        if start is not None:
+            eq_([w.start for w in result], [start] * len(expect), result)
     yield test, "", ["num"]
     yield test, " ", ["yes", "no"]
     yield test, "  ", []
@@ -202,6 +205,12 @@ def test_CommandParser_with_SubParser():
     yield test, "n ", []
     yield test, "num ", []
     yield test, "num  ", ["yes", "no"]
+
+    cat = SubArgs("cat", yesno)
+    arg = SubParser("var", cat)
+    parser = CommandParser(yesno, arg)
+    yield test, "y", ["yes"], 0
+    yield test, " cat ", ["yes", "no"], 5
 
 def test_CommandParser_with_SubParser_errors():
     sub = SubArgs("num", Int("num"), abc="xyz")

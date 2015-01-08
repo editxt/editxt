@@ -73,6 +73,7 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+Pass Arg to parser errors (rather than Field)
 Show error in find dialog when in Python replace mode and replace string is invalid
 Fix doc command with path like document.py::~/code/EditXT/editxt/platform/mac
 Fix ack command with --after

@@ -1188,7 +1188,10 @@ class SubParser(Field):
             if len(names) != 1:
                 return []
             sub = self.subargs[names[0]]
-        return sub.parser.get_completions(text, end)
+        words = sub.parser.get_completions(text, end)
+        for word in words:
+            word.start -= arg.start
+        return words
 
     def arg_string(self, value):
         sub, opts = value
