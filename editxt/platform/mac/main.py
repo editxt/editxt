@@ -94,31 +94,16 @@ def swizzle_SUWindowController():
         def swizzleWithNewMethod_(f):
             # http://permalink.gmane.org/gmane.comp.python.pyobjc.devel/5446
             cls = old.definingClass
-            oldSelectorName = old.__name__.replace(b"_", b":")
-            oldIMP = cls.instanceMethodForSelector_(oldSelectorName)
-            newSelectorName = f.__name__.encode('ascii').replace(b"_", b":")
-
-            newSEL = objc.selector(
+            objc.classAddMethod(cls, old.selector, objc.selector(
                 f,
-                selector=newSelectorName,
+                selector=old.selector,
                 signature=old.signature
-            )
-            oldSEL = objc.selector(
-                lambda self, *args: oldIMP(self, *args),
-                selector=newSelectorName,
-                signature=old.signature
-            )
-
-            # Swap the two methods
-            objc.classAddMethod(cls, newSelectorName, oldSEL)
-            objc.classAddMethod(cls, oldSelectorName, newSEL)
-            log.debug("Swizzled %s.%s <-> %s",
+            ))
+            log.debug("Swizzled %s.%s",
                 cls.__name__,
-                oldSelectorName.decode('ascii'),
-                newSelectorName.decode('ascii'),
+                old.selector.decode('ascii'),
             )
             return f
-
         return swizzleWithNewMethod_
 
     @swizzle(SUWindowController.initWithHost_windowNibName_)
