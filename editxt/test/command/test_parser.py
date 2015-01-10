@@ -38,7 +38,15 @@ log = logging.getLogger(__name__)
 class ColonString(String):
     def get_completions(self, arg):
         if arg:
-            return [CompleteWord(":" + str(arg), start=len(arg))]
+            start = str(arg).rfind(":")
+            if start < 0:
+                start = len(arg)
+                begin = ""
+            else:
+                begin = str(arg)[start:]
+            return [CompleteWord(v, start=start)
+                    for v in [":abc", ":def"]
+                    if v.startswith(begin)]
         return []
 
 
@@ -129,8 +137,9 @@ def test_CommandParser():
     )
     test = partial(check_completions, parser=parser)
     yield test, "", []
-    yield test, "abc", [":abc"], 3
-    yield test, " abc", [":abc"], 4
+    yield test, "abc", [":abc", ":def"], 3
+    yield test, " abc", [":abc", ":def"], 4
+    yield test, " abc:def:ghi def:a", [":abc"], 16
 
     parser = CommandParser(
         level, Int("value"), Choice("highlander", "tundra", "4runner"))

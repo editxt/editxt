@@ -335,19 +335,19 @@ class CommandBar(object):
         """
         start, length = replace_range
         assert start + length <= len(text), (replace_range, text)
-        index = start - len(word)
-        if index < 0:
-            index = 0
         if getattr(word, 'start', None) is not None:
             index = word.start
         else:
+            index = start - len(word)
+            if index < 0:
+                index = 0
             while index < start:
                 if word.startswith(text[index:start]):
                     break
                 index += 1
-        assert start >= index, (text, start, index)
+        assert start >= index, (text, start, index, word)
         replace = (index, start - index + length)
-        assert len(word) - (start - index) >= 0, (word, start, index)
+        assert len(word) - (start - index) >= 0, (text, start, index, word)
         if len(text) == start + length and word:
             # append delimiter if completing at end of input
             if isinstance(word, CompleteWord):

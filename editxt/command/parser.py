@@ -1088,7 +1088,15 @@ class VarArgs(Field):
         while True:
             sub = Arg(self.field, arg.text, index, arg.args)
             if sub.could_consume_more:
-                return self.field.get_completions(sub)
+                words = self.field.get_completions(sub)
+                if index > arg.start:
+                    diff = index - arg.start
+                    for i, word in enumerate(words):
+                        if getattr(word, 'start', None) is not None:
+                            word.start += diff
+                        else:
+                            words[i] = CompleteWord(word, start=diff)
+                return words
             if sub.errors or sub.end == index:
                 break
             index = sub.end
