@@ -164,11 +164,11 @@ def has_project(arg):
     )),
     Conditional(no_editor, Int("offset", default=1)),
 ), title="Navigate Document Tree", is_enabled=has_editor)
-def doc(editor, sender, args):
+def doc(editor, args):
     """Navigate the document tree"""
     if args is None:
         from editxt.commands import show_command_bar
-        show_command_bar(editor, sender, doc.name + " ")
+        show_command_bar(editor, doc.name + " ")
         return
     if args.name is not None:
         new_editor = args.file

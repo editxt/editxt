@@ -229,7 +229,7 @@ class CommandBar(object):
             return
         assert args is not None, 'invalid command arguments: {}'.format(text)
         try:
-            message = command(editor, self, args)
+            message = command(editor, args)
         except CommandError as err:
             self.message(err)
         except Exception:
@@ -285,7 +285,7 @@ class CommandBar(object):
                     result = cache[command]
                 except KeyError:
                     try:
-                        result = cache[command] = command.is_enabled(editor, self)
+                        result = cache[command] = command.is_enabled(editor)
                     except Exception:
                         log.debug("%s.is_enabled failed",
                                   type(command).__name__, exc_info=True)
@@ -571,7 +571,7 @@ class CommandManager(object):
                 log.warn("unrecognized command: %r", text)
                 return None
             @command(is_enabled=None if cmd is None else cmd.is_enabled)
-            def exec(editor, sender, args):
+            def exec(editor, args):
                 editor.project.window.command.execute(text)
             exec.__name__ = text
             return exec
@@ -623,7 +623,7 @@ class CommandManager(object):
         command = self.commands.get(sender.tag())
         if command is not None:
             try:
-                return command.is_enabled(editor, sender)
+                return command.is_enabled(editor)
             except Exception:
                 log.error("%s.is_enabled failed", type(command).__name__, exc_info=True)
         return False
@@ -632,7 +632,7 @@ class CommandManager(object):
         command = self.commands.get(sender.tag())
         if command is not None:
             try:
-                command(editor, sender, None)
+                command(editor, None)
             except Exception:
                 log.error("%s.execute failed", type(command).__name__, exc_info=True)
 
@@ -641,7 +641,7 @@ class CommandManager(object):
         callback = self.input_handlers.get(selector)
         if callback is not None:
             try:
-                callback(editor, None, None)
+                callback(editor, None)
                 return True
             except Exception:
                 log.error("%s failed", callback, exc_info=True)

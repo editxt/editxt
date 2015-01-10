@@ -43,10 +43,10 @@ WHITESPACE = re.compile(r"[ \t]*")
         Int('wrap_column', default=const.DEFAULT_RIGHT_MARGIN),
         Choice(('indent', True), ('no-indent', False)),
     ))
-def wrap_lines(editor, sender, args):
+def wrap_lines(editor, args):
     if args is None:
         wrapper = WrapLinesController(editor)
-        wrapper.begin_sheet(sender)
+        wrapper.begin_sheet(None)
     else:
         wrap_selected_lines(editor.text_view, args)
 
@@ -57,7 +57,7 @@ def wrap_lines(editor, sender, args):
         Choice(('indent', True), ('no-indent', False)), # TODO default to last used value
     ),
     is_enabled=has_selection)
-def wrap_at_margin(editor, sender, args):
+def wrap_at_margin(editor, args):
     opts = Options()
     opts.wrap_column = const.DEFAULT_RIGHT_MARGIN
     opts.indent = args.indent if args is not None else True

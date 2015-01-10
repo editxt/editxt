@@ -45,7 +45,7 @@ def test_wrap_to_margin_guide():
     wrap = m.replace(mod, 'wrap_selected_lines')
     wrap(tv, mod.Options(wrap_column=const.DEFAULT_RIGHT_MARGIN, indent=True))
     with m:
-        mod.wrap_at_margin(editor, None, None)
+        mod.wrap_at_margin(editor, None)
 
 def test_WrapLinesController_default_options():
     with test_app() as app:

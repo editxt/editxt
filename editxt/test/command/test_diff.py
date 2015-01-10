@@ -65,7 +65,7 @@ def test_diff():
             text_view = editor.text_view = m.mock(TextView)
             text_view.string() >> "def"
             with m:
-                mod.diff(editor, None, args)
+                mod.diff(editor, args)
                 assert diffed
     yield test, True
     yield test, False
@@ -83,7 +83,7 @@ def test_diff_missing_file():
             msg.format(editor.file_path)
             m = Mocker()
             with m, assert_raises(mod.CommandError, msg=msg):
-                mod.diff(editor, None, None)
+                mod.diff(editor, None)
     yield test, "file has not been saved"
     yield test, "file not found: {}", True
 

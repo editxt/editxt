@@ -45,10 +45,10 @@ log = logging.getLogger(__name__)
             ('match-case', False)),
         Regex('sort-regex', True),
     ))
-def sort_lines(editor, sender, args):
+def sort_lines(editor, args):
     if args is None:
         sorter = SortLinesController(editor)
-        sorter.begin_sheet(sender)
+        sorter.begin_sheet(None)
     else:
         sortlines(editor.text_view, args)
 

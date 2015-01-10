@@ -53,11 +53,11 @@ DEFAULT_OPTIONS = [
     # TODO SubParser with dynamic dispatch based on pattern matching
     # (if it starts with a "-" it's an option, otherwise a file path)
 ), config={"path": config.String("ack")}, is_enabled=has_editor)
-def ack(editor, sender, args):
+def ack(editor, args):
     """Search for files matching pattern"""
     if args is None:
         from editxt.commands import show_command_bar
-        show_command_bar(editor, sender, "ack ")
+        show_command_bar(editor, "ack ")
         return
     elif args.pattern is None:
         raise CommandError("please specify a pattern to match")

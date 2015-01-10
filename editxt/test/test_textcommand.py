@@ -73,15 +73,15 @@ def test_CommandBar_on_key_press():
         Choice(('forward', False), ('reverse xyz', True), name='reverse'),
         Regex('sort_regex', True),
     ))
-    def cmd(editor, sender, args):
+    def cmd(editor, args):
         pass
 
     @command(arg_parser=CommandParser(Int('number')))
-    def count(editor, sender, args):
+    def count(editor, args):
         raise NotImplementedError("should not get here")
 
     @command(arg_parser=CommandParser(IllBehaved("bang")))
-    def ill(editor, sender, args):
+    def ill(editor, args):
         raise NotImplementedError("should not get here")
 
     NA = object()
@@ -196,7 +196,7 @@ def test_CommandBar_execute():
         @command(arg_parser=CommandParser(
             Choice(('action', None), "cmd_err", "error", "message"),
         ))
-        def cmd(editor, sender, args):
+        def cmd(editor, args):
             nonlocal calls
             calls += 1
             if args.action == "cmd_err":
@@ -242,16 +242,16 @@ def test_CommandBar_get_placeholder():
             Choice(('no', False), ('yes', True)),
             Regex('sort_regex', True),
         ))
-        def cmd(editor, sender, args):
+        def cmd(editor, args):
             raise NotImplementedError("should not get here")
         @command(arg_parser=CommandParser(
             Regex('search_pattern', replace=c.replace),
             Choice(('yep', False), ('yes', True)),
         ), lookup_with_arg_parser=True)
-        def search(editor, sender, args):
+        def search(editor, args):
             raise NotImplementedError("should not get here")
         @command(arg_parser=CommandParser(IllBehaved("bang")))
-        def ill(editor, sender, args):
+        def ill(editor, args):
             raise NotImplementedError("should not get here")
         bar = CommandTester(cmd, search, ill)
         with m:
@@ -312,26 +312,26 @@ def test_CommandBar_get_completions():
             Choice(('forward', False), ('reverse xyz', True), name='reverse'),
             Regex('sort_regex', True),
         ))
-        def cmd(editor, sender, args):
+        def cmd(editor, args):
             raise NotImplementedError("should not get here")
 
         @command(arg_parser=CommandParser(
             Regex('search_pattern'),
             Choice(('yes', True), ('no', False)),
         ), lookup_with_arg_parser=True)
-        def search(editor, sender, args):
+        def search(editor, args):
             raise NotImplementedError("should not get here")
 
         @command(arg_parser=CommandParser(Int('number')), is_enabled=lambda *a: False)
-        def count(editor, sender, args):
+        def count(editor, args):
             raise NotImplementedError("should not get here")
 
         @command(arg_parser=CommandParser(HexDigit('hex')))
-        def hex(editor, sender, args):
+        def hex(editor, args):
             raise NotImplementedError("should not get here")
 
         @command(arg_parser=CommandParser(IllBehaved("bang")))
-        def ill(editor, sender, args):
+        def ill(editor, args):
             raise NotImplementedError("should not get here")
 
         bar = CommandTester(cmd, search, count, hex, ill, textview=object)
@@ -397,7 +397,7 @@ def test_CommandBar_auto_complete():
         Choice(('forward', False), ('reverse xyz', True), name='reverse'),
         Regex('sort_regex', True),
     ))
-    def cmd(editor, sender, args):
+    def cmd(editor, args):
         raise NotImplementedError("should not get here")
     bar = CommandTester(cmd)
 
@@ -564,7 +564,7 @@ def test_CommandBar_history_reset_on_execute():
         editor = m.mock(Editor)
         (window.current_editor << editor).count(2)
         @command
-        def cmd(editor, sender, args):
+        def cmd(editor, args):
             pass
         commander.add_command(cmd, None, None)
         with m:
@@ -581,7 +581,7 @@ def test_CommandBar_show_help():
         Choice(('forward', False), ('reverse xyz', True), name='reverse'),
         Regex('sort_regex', True),
     ))
-    def cmd(editor, sender, args):
+    def cmd(editor, args):
         """Command help
 
         Body
@@ -589,7 +589,7 @@ def test_CommandBar_show_help():
         pass
 
     @command(arg_parser=CommandParser(Int('number')))
-    def count(editor, sender, args):
+    def count(editor, args):
         """Counter with a very long
         wrapped first line
 
@@ -598,7 +598,7 @@ def test_CommandBar_show_help():
         raise NotImplementedError("should not get here")
 
     @command(arg_parser=CommandParser(IllBehaved("bang")))
-    def ill(editor, sender, args):
+    def ill(editor, args):
         raise NotImplementedError("should not get here")
 
     @gentest
@@ -784,7 +784,7 @@ def test_CommandManager_load_commands():
 def test_CommandManager_load_shortcuts():
     from editxt.config import config_schema
     @command
-    def doc(editor, sender, opts):
+    def doc(editor, opts):
         pass
     shorts = config_schema()["shortcuts"]
     menu = const.Constant("menu")
@@ -854,10 +854,10 @@ def test_CommandManager_is_command_enabled():
         cmds.get(mi.tag() >> 42) >> (tc if c.has_command else None)
         if c.has_command:
             if c.error:
-                expect(tc.is_enabled(tv, mi)).throw(Exception)
+                expect(tc.is_enabled(tv)).throw(Exception)
                 lg.error("%s.is_enabled failed", ANY, exc_info=True)
             else:
-                tc.is_enabled(tv, mi) >> c.enabled
+                tc.is_enabled(tv) >> c.enabled
         with m:
             result = tcc.is_command_enabled(tv, mi)
             eq_(result, c.enabled)
@@ -878,7 +878,7 @@ def test_CommandManager_do_command():
         cmds = m.replace(tcc, 'commands')
         cmds.get(mi.tag() >> 42) >> (tc if c.has_command else None)
         if c.has_command:
-            tc(tv, mi, None)
+            tc(tv, None)
             if c.error:
                 m.throw(Exception)
                 lg.error("%s.execute failed", ANY, exc_info=True)
@@ -900,7 +900,7 @@ def test_CommandManager_do_command_by_selector():
         handlers = m.replace(tcc, 'input_handlers')
         cmd = handlers.get(sel) >> (callback if c.has_selector else None)
         if c.has_selector:
-            callback(tv, None, None)
+            callback(tv, None)
             if c.error:
                 m.throw(Exception)
                 lg.error("%s failed", callback, exc_info=True)

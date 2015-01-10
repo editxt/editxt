@@ -27,10 +27,10 @@ import editxt.constants as const
 log = logging.getLogger(__name__)
 
 
-def has_selection(editor, sender=None):
+def has_selection(editor):
     return editor.text_view and editor.text_view.selectedRange().length > 0
 
-def has_editor(editor, sender=None):
+def has_editor(editor):
     return editor is not None
 
 

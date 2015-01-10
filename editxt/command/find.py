@@ -67,12 +67,12 @@ WORD = "word"
     Choice('regex literal word python-replace', name='search_type'),
     Choice(('wrap', True), ('no-wrap', False), name='wrap_around'),
 ), lookup_with_arg_parser=True)
-def find(editor, sender, args):
-    assert args is not None, sender
+def find(editor, args):
+    assert args is not None, editor
     opts = FindOptions(**args.__dict__)
     save_to_find_pasteboard(opts.find_text)
     finder = Finder(lambda:editor.text_view, opts, editor.app)
-    return getattr(finder, args.action)(sender)
+    return getattr(finder, args.action)(None)
 
 
 def toggle_boolean(depname):

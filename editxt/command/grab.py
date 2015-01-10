@@ -35,11 +35,11 @@ log = logging.getLogger(__name__)
     Choice("all", "selection", name="scope"),
     #Choice("output", "pboard", "new document"), # maybe allow pipe instead of these
 ), title="Grab lines")
-def grab(editor, sender, args):
+def grab(editor, args):
     """Collect lines matching a pattern"""
     if args is None:
         from editxt.commands import show_command_bar
-        show_command_bar(editor, sender, "grab ")
+        show_command_bar(editor, "grab ")
         return
     elif args.pattern is None:
         raise CommandError("please specify a pattern to match")

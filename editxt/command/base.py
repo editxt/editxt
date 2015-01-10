@@ -50,8 +50,8 @@ def command(func=None, name=None, title=None, hotkey=None,
             lookup_with_arg_parser=False):
     """Text command decorator
 
-    Text command signature: `text_command(editor, sender, args)`
-    Both `sender` and `args` will be `None` in some contexts.
+    Text command signature: `text_command(editor, args)`
+    `args` will be `None` in some contexts.
     The text view can be accessed with `editor.text_view`.
 
     :param name: A name that can be typed in the command bar to invoke the
@@ -63,7 +63,7 @@ def command(func=None, name=None, title=None, hotkey=None,
     :param is_enabled: A callable that returns a boolean value indicating if
         the command is enabled for the current context. By default a command
         is enabled if the current editor has a text view.
-        Signature: `is_enabled(editor, sender)`.
+        Signature: `is_enabled(editor)`.
     :param arg_parser: An object inplementing the `CommandParser` interface.
         Defaults to `CommandParser()`.
     :param config: Extra configuration schema extending the main app config
@@ -97,7 +97,7 @@ def command(func=None, name=None, title=None, hotkey=None,
         func.hotkey = hotkey
         nonlocal is_enabled
         if is_enabled is None:
-            def is_enabled(editor, sender):
+            def is_enabled(editor):
                 return editor is not None and editor.text_view is not None
         func.is_enabled = is_enabled
         func.arg_parser = arg_parser or CommandParser()

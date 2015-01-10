@@ -32,11 +32,11 @@ log = logging.getLogger(__name__)
     arg_parser=CommandParser(VarArgs("paths", File("path"))),
     is_enabled=has_editor,
 )
-def open_(editor, sender, args):
+def open_(editor, args):
     """Open file"""
     if args is None:
         from editxt.commands import show_command_bar
-        show_command_bar(editor, sender, "open ")
+        show_command_bar(editor, "open ")
     elif all(p is None for p in args.paths):
         raise CommandError("please specify a file path")
     else:

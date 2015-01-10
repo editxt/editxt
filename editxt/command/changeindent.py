@@ -31,9 +31,9 @@ log = logging.getLogger(__name__)
 
 
 @command(title="Change Indentation")
-def reindent(editor, sender, args):
+def reindent(editor, args):
     ctl = ChangeIndentationController(editor)
-    ctl.begin_sheet(sender)
+    ctl.begin_sheet(None)
 
 
 class ChangeIndentationController(SheetController):

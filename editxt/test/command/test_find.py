@@ -72,10 +72,10 @@ def test_find_command():
         finder = m.mock(Finder)
         save_paste(c.find)
         (finder_cls(ANY, ANY, app) << finder).call(check_options)
-        getattr(finder, c.action)("<sender>") >> c.message
+        getattr(finder, c.action)(None) >> c.message
         with m:
             args = mod.find.arg_parser.parse(c.input)
-            result = mod.find(editor, "<sender>", args)
+            result = mod.find(editor, args)
             eq_(result, c.message)
 
     c = TestConfig(find="", replace="", search=mod.REGEX, ignore_case=False,

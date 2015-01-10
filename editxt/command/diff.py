@@ -30,7 +30,7 @@ log = logging.getLogger(__name__)
 
 
 @command(arg_parser=CommandParser(String("file")))
-def diff(editor, sender, args):
+def diff(editor, args):
     """Diff with original"""
     if args and args.file:
         file_path = os.path.expanduser(args.file)

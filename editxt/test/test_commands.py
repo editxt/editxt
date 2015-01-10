@@ -269,7 +269,7 @@ def test_text_commands():
         if c.scroll:
             tv.scrollRangeToVisible_(ANY)
         with m:
-            c.method(editor, None, None)
+            c.method(editor, None)
             if "text" in result:
                 eq_(result.text, c.output)
             else:
@@ -441,7 +441,7 @@ def test_reload_config():
     config = tv.app.config >> m.mock(Config)
     config.reload()
     with m:
-        mod.reload_config(tv, "<sender>", None)
+        mod.reload_config(tv, None)
 
 def test_clear_highlighted_text():
     from editxt.editor import Editor
@@ -538,9 +538,9 @@ def test_panel_actions():
         else:
             args = None
             ctl = ctl_class(editor) >> m.mock(c.ctl)
-            ctl.begin_sheet('<sender>')
+            ctl.begin_sheet(None)
         with m:
-            c.action(editor, '<sender>', args)
+            c.action(editor, args)
     c = TestConfig()
 
     from editxt.command.sortlines import SortLinesController, sortlines

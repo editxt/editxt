@@ -77,8 +77,8 @@ def load_commands():
         # A dict of of NSResponder selectors mapped to callbacks
         #
         # Each callback should have the same signature as a text command.
-        # The second and third arguments (sender, args) will always be None
-        # when executed in this context.
+        # The second argument (args) will always be None when executed
+        # in this context.
         input_handlers={
             "insertTab:": indent_lines,
             "insertBacktab:": dedent_lines,
@@ -95,7 +95,7 @@ def load_commands():
 
 @command(title="Command Bar", hotkey=(";", ak.NSCommandKeyMask),
          is_enabled=has_editor)
-def show_command_bar(editor, sender, args):
+def show_command_bar(editor, args):
     """Show the command bar"""
     window = editor.project.window
     if window is None:
@@ -107,10 +107,10 @@ def show_command_bar(editor, sender, args):
 @command(name='goto', title="Goto Line",
     arg_parser=CommandParser(Int("line")),
     lookup_with_arg_parser=True)
-def goto_line(editor, sender, opts):
+def goto_line(editor, opts):
     """Jump to a line in the document"""
     if opts is None or opts.line is None:
-        show_command_bar(editor, sender, None)
+        show_command_bar(editor, None)
         return
     editor.text_view.goto_line(opts.line)
 
@@ -118,18 +118,18 @@ def goto_line(editor, sender, opts):
 @command(title="(Un)comment Selected Lines",
     hotkey=(",", ak.NSCommandKeyMask),
     is_enabled=has_selection)
-def comment_text(editor, sender, args):
+def comment_text(editor, args):
     """Comment/uncomment the selected text region
 
     The region is uncommented if the first two lines start with comment
     characters. Otherwise, the region is commented.
     """
-    _comment_text(editor, sender, args, False)
+    _comment_text(editor, args, False)
 
 @command(title="(Un)comment + Space Selected Lines",
     hotkey=(",", ak.NSCommandKeyMask | ak.NSShiftKeyMask),
     is_enabled=has_selection)
-def pad_comment_text(editor, sender, args):
+def pad_comment_text(editor, args):
     """Comment/uncomment + space the selected text region
 
     The region is uncommented if the first two lines start with comment
@@ -137,9 +137,9 @@ def pad_comment_text(editor, sender, args):
     region, each line is prefixed with an additional space if it does
     not begin with a space or tab character.
     """
-    _comment_text(editor, sender, args, True)
+    _comment_text(editor, args, True)
 
-def _comment_text(editor, sender, args, pad):
+def _comment_text(editor, args, pad):
     textview = editor.text_view
     text = textview.string()
     sel = text.lineRangeForRange_(textview.selectedRange())
@@ -207,7 +207,7 @@ def uncomment_line(text, token, indent_mode, indent_size, pad=False):
 @command(title="Indent Selected Lines",
     hotkey=("]", ak.NSCommandKeyMask),
     is_enabled=has_selection)
-def indent_lines(editor, sender, args):
+def indent_lines(editor, args):
     indent_mode = editor.document.indent_mode
     if indent_mode == const.INDENT_MODE_TAB:
         istr = "\t"
@@ -242,7 +242,7 @@ def indent_lines(editor, sender, args):
 
 
 @command(title="Un-indent Selected Lines", hotkey=("[", ak.NSCommandKeyMask))
-def dedent_lines(editor, sender, args):
+def dedent_lines(editor, args):
     def dedent(line, spt=editor.document.indent_size):
         if not line.strip():
             return line.lstrip(" \t")
@@ -268,12 +268,12 @@ def dedent_lines(editor, sender, args):
 
 
 @command(title="Reload config", is_enabled=has_editor)
-def reload_config(editor, sender, args):
+def reload_config(editor, args):
     editor.app.config.reload()
 
 
 @command(title="Clear highlighted text")
-def clear_highlighted_text(editor, sender, args):
+def clear_highlighted_text(editor, args):
     editor.finder.mark_occurrences("")
 
 
@@ -331,7 +331,7 @@ def set_editor_indent_vars(editor, name, args):
         ),
         setter=set_editor_variable),
 )), is_enabled=has_editor)
-def set_variable(editor, sender, args):
+def set_variable(editor, args):
     if args.variable is None:
         raise CommandError("nothing set")
     else:
@@ -342,7 +342,7 @@ def set_variable(editor, sender, args):
 @command(arg_parser=CommandParser(
     String("command", default="") # TODO auto-complete commands?
 ), is_enabled=has_editor)
-def help(editor, sender, opts):
+def help(editor, opts):
     """Command Help
 
     Commands modify text, open new documents, change application state,
@@ -370,7 +370,7 @@ def help(editor, sender, opts):
         name="action"
     )),
     is_enabled=has_editor)
-def debug(editor, sender, opts):
+def debug(editor, opts):
     if opts.action == "mem-profile":
         editor.document.app.open_error_log(set_current=True)
         mem_profile()
@@ -400,7 +400,7 @@ def mem_profile():
 
 _ws = re.compile(r"([\t ]+)", re.UNICODE | re.MULTILINE)
 
-def insert_newline(editor, sender, args):
+def insert_newline(editor, args):
     textview = editor.text_view
     eol = editor.document.eol
     sel = textview.selectedRange()
@@ -420,7 +420,7 @@ def insert_newline(editor, sender, args):
         textview.didChangeText()
         textview.scrollRangeToVisible_((sel[0] + len(eol), 0))
 
-def move_to_beginning_of_line(editor, sender, args):
+def move_to_beginning_of_line(editor, args):
     textview = editor.text_view
     eol = editor.document.eol
     sel = textview.selectedRange()
@@ -439,12 +439,12 @@ def move_to_beginning_of_line(editor, sender, args):
     textview.setSelectedRange_(new)
     textview.scrollRangeToVisible_(new)
 
-#def move_to_beginning_of_line_and_modify_selection(textview, sender, args):
+#def move_to_beginning_of_line_and_modify_selection(editor, args):
 
-def delete_backward(editor, sender, args):
+def delete_backward(editor, args):
     textview = editor.text_view
     if editor.document.indent_mode == const.INDENT_MODE_TAB:
-        textview.deleteBackward_(sender)
+        textview.deleteBackward_(None)
         return
     sel = textview.selectedRange()
     if sel.length == 0:
