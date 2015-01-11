@@ -30,6 +30,7 @@ def init(platform, use_pdb):
         "kvo",
 
         "app",
+        "font",
         "document",
         "events",
         "markdown",

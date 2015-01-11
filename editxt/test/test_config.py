@@ -208,6 +208,13 @@ def test_Type_validate():
     yield test, mod.Integer, NOT_SET, None, None
     yield test, mod.Integer, 'x', ValueError("key: expected integer, got 'x'")
 
+    yield test, mod.Float, 42, 42.0
+    yield test, mod.Float, 42.1, 42.1
+    yield test, mod.Float, NOT_SET, NOT_SET
+    yield test, mod.Float, NOT_SET, "abc", "abc"
+    yield test, mod.Float, NOT_SET, None, None
+    yield test, mod.Float, 'x', ValueError("key: expected float, got 'x'")
+
     yield test, mod.Color, "FEFF6B", get_color("FEFF6B")
     yield test, mod.Color, "x", \
         ValueError("key: expected RRGGBB hex color string, got 'x'")

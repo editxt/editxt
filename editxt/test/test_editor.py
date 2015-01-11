@@ -575,7 +575,8 @@ def test_Editor_close():
             if c.ts_is_none:
                 doc.text_storage = None
             else:
-                text_storage = doc.text_storage
+                with replattr(doc, 'reset_text_attributes', lambda *a: None, sigcheck=False):
+                    text_storage = doc.text_storage
                 text_storage.setDelegate_(doc)
                 remove_layout = m.method(text_storage.removeLayoutManager_)
             wc = editor.project.window.wc = m.mock(WindowController)

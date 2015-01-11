@@ -18,16 +18,15 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import AppKit as ak
-from functools import wraps
 
-def font_smoothing(draw):
-    @wraps(draw)
-    def wrapper(self, *args, **kw):
-        ak.NSGraphicsContext.saveGraphicsState()
-        context = ak.NSGraphicsContext.currentContext()
-        context.setShouldAntialias_(getattr(self, 'font_smoothing', True))
-        try:
-            return draw(self, *args, **kw)
-        finally:
-            ak.NSGraphicsContext.restoreGraphicsState()
-    return wrapper
+from editxt.datatypes import Font
+
+_font = ak.NSFont.userFixedPitchFontOfSize_(-1.0)
+DEFAULT_FONT = Font(_font.displayName(), _font.pointSize(), True, _font)
+
+
+def get_font(face, size, smooth, ignore=None):
+    font = ak.NSFont.fontWithName_size_(face, size)
+    if font is None:
+        font = ak.NSFont.fontWithName_size_(DEFAULT_FONT.face, size)
+    return Font(font.displayName(), font.pointSize(), smooth, font)

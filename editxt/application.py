@@ -22,6 +22,7 @@ import logging
 import os
 from contextlib import contextmanager
 from itertools import chain, repeat
+from weakref import WeakSet
 
 import objc
 import AppKit as ak
@@ -34,6 +35,7 @@ from editxt.config import Config
 from editxt.document import DocumentController
 from editxt.errorlog import ErrorLog, LogViewHandler
 from editxt.textcommand import CommandHistory, CommandManager
+from editxt.platform.font import get_font
 from editxt.util import (ContextMap, perform_selector,
     atomicfile, dump_yaml, load_yaml, WeakProperty)
 
@@ -41,6 +43,7 @@ log = logging.getLogger(__name__)
 
 
 class Error(Exception): pass
+
 
 class Application(object):
 
@@ -57,6 +60,7 @@ class Application(object):
         self.errlog_handler.setFormatter(
             logging.Formatter("%(levelname).7s %(name)s - %(message)s"))
         self.panels = []
+        self.config_callbacks = WeakSet()
         with self.logger():
             self._setup_profile = set()
             self.windows = []
@@ -102,6 +106,38 @@ class Application(object):
     @property
     def syntaxdefs(self):
         return self.syntax_factory.definitions
+
+    @property
+    def default_font(self, cache=[]):
+        """Get the default application font
+
+        Uses the value specified in the config file (all fields are optinal):
+
+        ```
+        font:
+            face: Inconsolata
+            size: 13
+            smooth: true
+        ```
+
+        Falling back to the default system fixed width font for unspecified
+        or unknown values.
+
+        :returns: A `editxt.datatypes.Font` instance.
+        """
+        cfg = self.config["font"]
+        key = (cfg["face"], cfg["size"], cfg["smooth"])
+        if not (cache and cache[0] == key):
+            cache[:] = [key, get_font(*key)]
+        return cache[1]
+
+    def reload_config(self):
+        self.config.reload()
+        for callback in self.config_callbacks:
+            callback()
+
+    def on_reload_config(self, callback):
+        self.config_callbacks.add(callback)
 
     def application_will_finish_launching(self, app, delegate):
         self.init_syntax_definitions()
@@ -503,7 +539,7 @@ class OpenPathController(ak.NSWindowController):
         tv.setHorizontallyResizable_(True)
         tv.setAutoresizingMask_(ak.NSViewNotSizable)
         tv.setFieldEditor_(True)
-        tv.setFont_(ak.NSFont.fontWithName_size_("Monaco", 10.0))
+        tv.setFont_(self.app.default_font.font)
 
     def populateWithClipboard(self):
         paths = self.paths
@@ -528,4 +564,3 @@ class OpenPathController(ak.NSWindowController):
         self.app.open_documents_with_paths(
             p.strip() for p in paths if p.strip())
         self.window().orderOut_(self)
-

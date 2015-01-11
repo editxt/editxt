@@ -269,7 +269,7 @@ def dedent_lines(editor, args):
 
 @command(title="Reload config", is_enabled=has_editor)
 def reload_config(editor, args):
-    editor.app.config.reload()
+    editor.app.reload_config()
 
 
 @command(title="Clear highlighted text")

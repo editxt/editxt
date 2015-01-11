@@ -17,17 +17,4 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-import AppKit as ak
-from functools import wraps
-
-def font_smoothing(draw):
-    @wraps(draw)
-    def wrapper(self, *args, **kw):
-        ak.NSGraphicsContext.saveGraphicsState()
-        context = ak.NSGraphicsContext.currentContext()
-        context.setShouldAntialias_(getattr(self, 'font_smoothing', True))
-        try:
-            return draw(self, *args, **kw)
-        finally:
-            ak.NSGraphicsContext.restoreGraphicsState()
-    return wrapper
+from ..mac.font import *

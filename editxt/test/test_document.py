@@ -167,25 +167,32 @@ def test_TextDocument_reset_text_attributes(app):
     doc = TextDocument(app)
     with m.off_the_record():
         ts = doc.text_storage = m.mock(ak.NSTextStorage)
-    font = ak.NSFont.fontWithName_size_("Monaco", 10.0)
+    font = app.default_font.font
     spcw = font.screenFontWithRenderingMode_(ak.NSFontDefaultRenderingMode) \
         .advancementForGlyph_(ord(" ")).width
     ps = ps_class.defaultParagraphStyle().mutableCopy() >> m.mock()
     ps.setTabStops_([])
     ps.setDefaultTabInterval_(spcw * INDENT_SIZE)
     real_ps = ps.copy() >> "<paragraph style>"
-    attrs = {ak.NSFontAttributeName: font, ak.NSParagraphStyleAttributeName: real_ps}
+    attrs = {
+        ak.NSFontAttributeName: font,
+        ak.NSParagraphStyleAttributeName: real_ps,
+        "font_smoothing": app.default_font.smooth
+    }
     ts.addAttributes_range_(attrs, fn.NSMakeRange(0, ts.length() >> 20))
     editors = [
         (m.mock(Editor), m.mock(ak.NSTextView)),
         (m.mock(Editor), None),
     ]
     m.method(app.iter_editors_of_document)(doc) >> (dv for dv, tv in editors)
-    for dv, tv in editors:
-        (dv.text_view << tv).count(1 if tv is None else 3)
+    for editor, tv in editors:
+        editor.text_view >> tv
         if tv is not None:
+            ruler = editor.scroll_view.verticalRulerView() >> m.mock()
+            ruler.font_smoothing = tv.font_smoothing = attrs["font_smoothing"]
             tv.setTypingAttributes_(attrs)
             tv.setDefaultParagraphStyle_(real_ps)
+            tv.setNeedsDisplay_(True)
     with m:
         doc.reset_text_attributes(INDENT_SIZE)
         eq_(doc.default_text_attributes(), attrs)
@@ -343,6 +350,7 @@ def test_reload_document():
             m = Mocker()
             call_later = m.replace(mod, "call_later")
             doc = TextDocument(app, path)
+            reset_text_attributes = m.method(doc.reset_text_attributes)
             doc.text = text
             if c.url_is_none or not c.exists:
                 return end()
@@ -361,27 +369,28 @@ def test_reload_document():
                 editor = Editor(project, document=doc)
                 editor.text_view = (tv if text_view_exists else None)
                 project.editors.append(editor)
+            reset_text_attributes()
             if not any(c.view_state):
                 # TODO reload without undo
                 #doc_ts.replaceCharactersInRange_withString_(range, text)
                 undo.removeAllActions()
                 return end()
             range = fn.NSRange(0, 4)
-            if tv.shouldChangeTextInRange_replacementString_(range, text) >> True:
-                # TODO get edit_state of each document view
-                # TODO diff the two text blocks and change chunks of text
-                # throughout the document (in a single undo group if possible)
-                # also adjust edit states if possible
-                # see http://www.python.org/doc/2.5.2/lib/module-difflib.html
-                #doc_ts.replaceCharactersInRange_withString_(range, text)
-                tv.didChangeText()
-                tv.breakUndoCoalescing()
-                # TODO restore edit states
-                # HACK use timed invocation to allow didChangeText notification
-                # to update change count before _clearUndo is invoked
-                call_later(0, doc.clear_dirty)
-                tv.setSelectedRange_(fn.NSRange(0, 0)) # TODO remove
-                m.method(doc.update_syntaxer)()
+            tv.shouldChangeTextInRange_replacementString_(range, text) >> True
+            # TODO get edit_state of each document view
+            # TODO diff the two text blocks and change chunks of text
+            # throughout the document (in a single undo group if possible)
+            # also adjust edit states if possible
+            # see http://www.python.org/doc/2.5.2/lib/module-difflib.html
+            #doc_ts.replaceCharactersInRange_withString_(range, text)
+            tv.didChangeText()
+            tv.breakUndoCoalescing()
+            # TODO restore edit states
+            # HACK use timed invocation to allow didChangeText notification
+            # to update change count before _clearUndo is invoked
+            call_later(0, doc.clear_dirty)
+            tv.setSelectedRange_(fn.NSRange(0, 0)) # TODO remove
+            m.method(doc.update_syntaxer)()
             end()
     from editxt.test.util import profile
     c = TestConfig(url_is_none=False, exists=True,

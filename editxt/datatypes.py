@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from collections import deque
+from collections import deque, namedtuple
 from itertools import count
 from weakref import ref
 
@@ -118,3 +118,7 @@ class WeakProperty(AbstractNamedProperty):
 
     def __delete__(self, obj):
         delattr(obj, self.name(obj))
+
+
+# The fourth "font" element in this tuple is for platform font information
+Font = namedtuple("Font", ["face", "size", "smooth", "font"])

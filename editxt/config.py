@@ -21,6 +21,7 @@ import logging
 from os.path import exists, join
 
 import editxt.constants as const
+from editxt.platform.font import DEFAULT_FONT
 from editxt.util import get_color, hex_value, load_yaml
 
 log = logging.getLogger(__name__)
@@ -42,6 +43,11 @@ def config_schema(): return {
             const.INDENT_MODE_TAB,
             default=const.INDENT_MODE_SPACE),
         "size": Integer(default=4, minimum=1),
+    },
+    "font": {
+        "face": String(default=DEFAULT_FONT.face),
+        "size": Float(minimum=-1.0, default=DEFAULT_FONT.size),
+        "smooth": Boolean(default=DEFAULT_FONT.smooth),
     },
     "newline_mode": Enum(
         const.NEWLINE_MODE_UNIX,
@@ -142,6 +148,25 @@ class Integer(Type):
                     .format(key, value, self.minimum))
             return value
         raise ValueError("{}: expected integer, got {!r}".format(key, value))
+
+
+class Float(Type):
+
+    def __init__(self, *args, **kw):
+        self.minimum = kw.pop("minimum", None)
+        super(Float, self).__init__(*args, **kw)
+
+    def validate(self, value, key):
+        if value is NOT_SET:
+            return self.default
+        if isinstance(value, int):
+            value = float(value)
+        if isinstance(value, float):
+            if self.minimum is not None and value < self.minimum:
+                raise ValueError("{}: {} is less than the minimum value ({})"
+                    .format(key, value, self.minimum))
+            return value
+        raise ValueError("{}: expected float, got {!r}".format(key, value))
 
 
 class Boolean(Type):

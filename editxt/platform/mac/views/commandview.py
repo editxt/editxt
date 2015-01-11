@@ -28,6 +28,7 @@ from Quartz.CoreGraphics import CGRectIntersectsRect
 from editxt.command.parser import CompletionsList
 from editxt.constants import ERROR, HTML, INFO, LARGE_NUMBER_FOR_TEXT
 from editxt.controls.dualview import DualView, SHOULD_RESIZE
+from editxt.platform.mac.views.util import font_smoothing
 from editxt.platform.kvo import KVOList, KVOProxy
 from editxt.util import load_image
 
@@ -148,8 +149,9 @@ class CommandView(DualView):
 
     def get_font(self, view):
         if view is not None:
-            return view.font()
-        return ak.NSFont.fontWithName_size_("Monaco", 10.0)
+            return view.font(), getattr(view, "font_smoothing", True)
+        font = self.command.window.app.default_font
+        return font.font, font.smooth
 
     def activate(self, command, initial_text="", select=False):
         new_activation = not self.active
@@ -159,8 +161,9 @@ class CommandView(DualView):
             # possibly use setSelectedRange
             # http://jeenaparadies.net/weblog/2009/apr/focus-a-nstextfield
             editor = command.window.current_editor
-            font = self.get_font(editor and editor.text_view)
+            font, smooth = self.get_font(editor and editor.text_view)
             self.input.setFont_(font)
+            self.input.font_smoothing = smooth
             self.output.setString_("")
         if new_activation or initial_text:
             self.input.setString_(initial_text)
@@ -200,8 +203,8 @@ class CommandView(DualView):
             color = MESSAGE_COLORS[msg_type]
             if color is not None:
                 attrs[ak.NSForegroundColorAttributeName] = color
-            attrs[ak.NSFontAttributeName] = self.get_font(textview)
-            self.output.font_smoothing = False
+            attrs[ak.NSFontAttributeName], smooth = self.get_font(textview)
+            self.output.font_smoothing = smooth
             text = ak.NSAttributedString.alloc().initWithString_attributes_(
                 message, attrs)
         self.output.setAttributedString_(text)
@@ -402,8 +405,7 @@ class ContentSizedTextView(ak.NSTextView):
             ak.NSNotificationCenter.defaultCenter() \
                 .postNotificationName_object_(SHOULD_RESIZE, self)
 
-    from editxt.platform.mac.views.util import disable_font_smoothing
-    @disable_font_smoothing
+    @font_smoothing
     def drawRect_(self, rect):
         super(ContentSizedTextView, self).drawRect_(rect)
         if not self._placeholder or self.isHiddenOrHasHiddenAncestor():

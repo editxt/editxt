@@ -121,6 +121,7 @@ class TextDocument(object):
         self.newline_mode = app.config["newline_mode"]
         self.highlight_selected_text = app.config["highlight_selected_text.enabled"]
 
+        app.on_reload_config(self.reset_text_attributes)
         #self.save_hooks = []
 
     @property
@@ -167,7 +168,7 @@ class TextDocument(object):
     @text.setter
     def text(self, value):
         self.text_storage.mutableString().setString_(value)
-        self.reset_text_attributes(self.indent_size)
+        self.reset_text_attributes()
 
     @property
     def newline_mode(self):
@@ -188,17 +189,19 @@ class TextDocument(object):
         else:
             self.document_attrs.pop(ak.NSCharacterEncodingDocumentAttribute, None)
 
-    def reset_text_attributes(self, indent_size, reset_views=True):
+    def reset_text_attributes(self, indent_size=0):
         attrs = self.default_text_attributes(indent_size)
         ps = attrs[ak.NSParagraphStyleAttributeName]
         range = fn.NSMakeRange(0, self.text_storage.length())
         self.text_storage.addAttributes_range_(attrs, range)
-        if not reset_views:
-            return
         for editor in self.app.iter_editors_of_document(self):
-            if editor.text_view is not None:
-                editor.text_view.setTypingAttributes_(attrs)
-                editor.text_view.setDefaultParagraphStyle_(ps)
+            view = editor.text_view
+            if view is not None:
+                ruler = editor.scroll_view.verticalRulerView() # HACK deep reach
+                view.font_smoothing = ruler.font_smoothing = attrs["font_smoothing"]
+                view.setTypingAttributes_(attrs)
+                view.setDefaultParagraphStyle_(ps)
+                view.setNeedsDisplay_(True)
 
     def default_text_attributes(self, indent_size=None):
         if indent_size is None:
@@ -206,7 +209,9 @@ class TextDocument(object):
                 return self._text_attributes
             except AttributeError:
                 indent_size = self.indent_size
-        font = ak.NSFont.fontWithName_size_("Monaco", 10.0)
+        if indent_size == 0:
+            indent_size = self.indent_size
+        font = self.app.default_font.font
         spcw = font.screenFontWithRenderingMode_(ak.NSFontDefaultRenderingMode) \
             .advancementForGlyph_(ord("8")).width
         ps = ak.NSParagraphStyle.defaultParagraphStyle().mutableCopy()
@@ -216,6 +221,7 @@ class TextDocument(object):
         self._text_attributes = attrs = {
             ak.NSFontAttributeName: font,
             ak.NSParagraphStyleAttributeName: ps,
+            "font_smoothing": self.app.default_font.smooth,
         }
         return attrs
 
@@ -237,12 +243,12 @@ class TextDocument(object):
             data = ak.NSData.dataWithContentsOfFile_(self.file_path)
             success, err = self.read_from_data(data)
             if success:
-                self.reset_text_attributes(self.indent_size, False)
                 self.analyze_content()
+                self.reset_text_attributes()
             else:
                 log.error(err) # TODO display error in progress bar
             return success
-        self.reset_text_attributes(self.indent_size, False)
+        self.reset_text_attributes()
         return False
 
     def read_from_data(self, data):

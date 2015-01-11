@@ -28,6 +28,7 @@ from objc import super
 from editxt.command.find import FindController
 from editxt.datatypes import WeakProperty
 from editxt.platform.app import beep
+from editxt.platform.mac.views.util import font_smoothing
 
 log = logging.getLogger(__name__)
 
@@ -150,5 +151,4 @@ class TextView(ak.NSTextView):
     # Disable font smoothing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # TODO add a preference to enable font smoothing at a specific text size
 
-    from editxt.platform.mac.views.util import disable_font_smoothing
-    drawRect_ = disable_font_smoothing(ak.NSTextView.drawRect_)
+    drawRect_ = font_smoothing(ak.NSTextView.drawRect_)

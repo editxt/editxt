@@ -438,8 +438,7 @@ def test_reload_config():
     from editxt.config import Config
     m = Mocker()
     tv = m.mock(ak.NSTextView)
-    config = tv.app.config >> m.mock(Config)
-    config.reload()
+    tv.app.reload_config()
     with m:
         mod.reload_config(tv, None)
 

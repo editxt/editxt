@@ -284,6 +284,45 @@ def test_open_config_file():
     yield test, c(text=True)
     yield test, c(text=False)
 
+def test_Application_default_font():
+    from editxt.platform.font import DEFAULT_FONT as FONT
+    fields = ["face", "size", "smooth"]
+    @gentest
+    def test(face=None, size=None, smooth=None, fallback=None):
+        expect = tuple([getattr(FONT, key) if val is None else val
+            for key, val in zip(fields, [fallback or face, size, smooth])])
+        with test_app() as app:
+            if any(v is not None for v in [face, size, smooth]):
+                os.mkdir(app.profile_path)
+                with open(app.config.path, "w") as fh:
+                    fh.write("font:\n")
+                    for key in fields:
+                        val = locals()[key]
+                        if val is not None:
+                            fh.write("  {}: {}\n".format(key, val))
+                app.reload_config()
+            eq_(app.default_font[:3], expect)
+
+    yield test()
+    yield test("Courier New")
+    yield test("Courier New", 10.0, False)
+    yield test("No Such Font", fallback=FONT.face)
+
+def test_Application_reload_config():
+    reloads = 0
+    with test_app() as app:
+        def callback():
+            nonlocal reloads
+            reloads += 1
+        app.reload_config()
+        eq_(reloads, 0)
+        app.on_reload_config(callback)
+        app.reload_config()
+        eq_(reloads, 1)
+        del callback
+        app.reload_config()
+        eq_(reloads, 1)
+
 def test_open_error_log():
     def test(c):
         m = Mocker()
@@ -873,7 +912,7 @@ def test_OpenPathController_windowDidLoad():
     tv.setHorizontallyResizable_(True)
     tv.setAutoresizingMask_(ak.NSViewNotSizable)
     tv.setFieldEditor_(True)
-    tv.setFont_(ANY)
+    tv.setFont_(app.default_font.font >> "<font>")
     with m:
         opc.windowDidLoad()
         eq_(opc.app, app)
