@@ -221,6 +221,7 @@ def test_CommandBar_execute():
             eq_(bar.failed_command, text if fail else None)
             eq_(calls, call)
             eq_(bar.get_history(""), text if history else None)
+            eq_(bar._cached_parser, (None, None, None))
 
     yield test("", fail=False)
     yield test("cmd", config="window", beep=True)

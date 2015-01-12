@@ -189,6 +189,16 @@ class TextDocument(object):
         else:
             self.document_attrs.pop(ak.NSCharacterEncodingDocumentAttribute, None)
 
+    @property
+    def font(self):
+        try:
+            return self._font
+        except AttributeError:
+            return self.app.default_font
+    @font.setter
+    def font(self, value):
+        self._font = value
+
     def reset_text_attributes(self, indent_size=0):
         attrs = self.default_text_attributes(indent_size)
         ps = attrs[ak.NSParagraphStyleAttributeName]

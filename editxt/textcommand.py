@@ -227,6 +227,8 @@ class CommandBar(object):
             msg = 'parse error: {}'.format(text)
             self.message(msg, exc_info=True)
             return
+        finally:
+            self._cached_parser = (None, None, None)
         assert args is not None, 'invalid command arguments: {}'.format(text)
         try:
             message = command(editor, args)

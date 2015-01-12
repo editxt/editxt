@@ -63,6 +63,7 @@ Command parser specification:
 import os
 import re
 from functools import partial
+from inspect import signature, Parameter
 from itertools import chain
 
 from editxt.util import user_path
@@ -355,25 +356,25 @@ def identifier(name):
 
 
 class Field(object):
-    """Base command argument type used to parse argument values"""
+    """Base command argument type used to parse argument values
+
+    :param name: Argument name.
+    :param default: Default value. If this is a callable it must accept
+    one optional argument; it will be called with the editor to get the
+    contextual default value for `with_context`.
+    """
 
     def __init__(self, name, default=None):
         if not hasattr(self, 'args'):
-            self.args = [name, default]
+            assert not hasattr(self, "kwargs"), type(self)
+            self.args = [name]
+            self.kwargs = {"default": default}
         if not hasattr(self, 'placeholder'):
             self.placeholder = name
         self.name = identifier(name)
+        if callable(default):
+            default = default()
         self.default = default
-
-    def with_context(self, editor):
-        """Return a Field instance with editor (and history?) context
-
-        The returned field object may be the same instance as the original
-        on which this method was invoked.
-
-        :param editor: The editor for which the command is being invoked.
-        """
-        return self
 
     def __eq__(self, other):
         if not issubclass(type(self), type(other)):
@@ -384,18 +385,30 @@ class Field(object):
         return self.placeholder
 
     def __repr__(self):
-        argnames = self.__init__.__func__.__code__.co_varnames
-        defaults = self.__init__.__func__.__defaults__ or []
-        assert argnames[0] == 'self', argnames
-        #assert len(self.args) == len(argnames) - 1, self.args
-        args = []
-        for name, default, value in zip(
-                reversed(argnames), reversed(defaults), reversed(self.args)):
-            if default != value:
-                args.append('{}={!r}'.format(name, value))
-        slice = -len(defaults) or None
-        args.extend(repr(a) for a in reversed(self.args[:slice]))
-        return '{}({})'.format(type(self).__name__, ', '.join(reversed(args)))
+        sig = signature(self.__init__.__func__)
+        defaults = {p.name: p.default
+            for p in sig.parameters.values()
+            if p.default is not Parameter.empty}
+        NA = object()
+        args = [repr(a) for a in self.args]
+        args.extend('{}={!r}'.format(k, v)
+            for k, v in self.kwargs.items()
+            if v != defaults.get(k, NA))
+        return '{}({})'.format(type(self).__name__, ', '.join(args))
+
+    def with_context(self, editor):
+        """Return a Field instance with editor context
+
+        The returned field object may be the same instance as the original
+        on which this method was invoked.
+
+        :param editor: The editor for which the command is being invoked.
+        """
+        if callable(self.kwargs.get("default")):
+            kw = dict(self.kwargs)
+            kw["default"] = kw["default"](editor)
+            return type(self)(*self.args, **kw)
+        return self
 
     def consume(self, text, index):
         """Consume argument value from text starting at index
@@ -461,7 +474,7 @@ class Choice(Field):
     positional arguments consisting of either strings, or tuples in the
     form ("name-string", <value>). The value is the name in the case
     where name/value pairs are not given. The first choice is the
-    default.
+    default unless a `default=...` keyword argument is provided.
     :param name: Optional name, defaults to the first choice name. Must
     be specified as a keyword argument.
     """
@@ -508,8 +521,14 @@ class Choice(Field):
                         map.pop(key)
                     else:
                         map[key] = value
-        self.placeholder = names[0]
-        super(Choice, self).__init__(kw.pop('name', names[0]), map[names[0]])
+        if "default" in kw:
+            default = kw.pop("default")
+            default_value = default() if callable(default) else default
+            self.placeholder = self.reverse_map[default_value]
+        else:
+            default = map[names[0]]
+            self.placeholder = names[0]
+        super(Choice, self).__init__(kw.pop('name', names[0]), default)
         if kw:
             raise ValueError("unexpected arguments: %r" % (kw,))
 
@@ -606,6 +625,38 @@ class Int(Field):
         raise Error("invalid value: {}={!r}".format(self.name, value))
 
 
+class Float(Int):
+    """A float argument
+    """
+
+    def consume(self, text, index):
+        """Consume a float value
+
+        :returns: (<float or default value>, <index>)
+        """
+        token, end = Arg.consume_token(text, index)
+        if token is None:
+            return self.default, end
+        try:
+            return float(token), end
+        except (ValueError, TypeError) as err:
+            raise ParseError(str(err), self, index, index + len(token))
+
+    def get_placeholder(self, arg):
+        if not arg:
+            if isinstance(self.default, float):
+                return str(self.default)
+            return str(self)
+        return ""
+
+    def arg_string(self, value):
+        if value == self.default:
+            return ""
+        if isinstance(value, float):
+            return str(value)
+        raise Error("invalid value: {}={!r}".format(self.name, value))
+
+
 class String(Field):
 
     ESCAPES = {
@@ -684,7 +735,8 @@ class File(String):
     """
 
     def __init__(self, name, directory=False, _editor=None):
-        self.args = [name, directory, _editor]
+        self.args = [name]
+        self.kwargs = {"directory": directory}
         self.directory = directory
         self.editor = _editor
         super().__init__(name)
@@ -787,6 +839,55 @@ class File(String):
         return super().arg_string(value)
 
 
+class FontFace(String):
+    """Font face chooser argument type
+    """
+
+    @property
+    def system_font_names(self):
+        try:
+            return self._system_font_names
+        except AttributeError:
+            pass
+        from editxt.platform.font import get_system_font_names
+        names = self._system_font_names = get_system_font_names()
+        return names
+
+    def consume(self, text, index):
+        token, end = super().consume(text, index)
+        if token is self.default:
+            return token, end
+        if isinstance(token, str):
+            comps = self.get_completions(token, lambda n: n)
+            if len(comps) == 1:
+                return comps[0], end
+            names = ', '.join(n for n in comps)
+        else:
+            names = ""
+        if names:
+            msg = '{!r} is ambiguous: {}'.format(token, names)
+        else:
+            end = index + len(token)
+            names = ', '.join(self.system_font_names)
+            msg = '{!r} does not match any of: {}'.format(token, names)
+        raise ParseError(msg, self, index, end)
+
+    def get_completions(self, arg, escape=lambda n: n.replace(" ", "\\ ")):
+        token = str(arg).lower()
+        names = self.system_font_names
+        return [escape(n) for n in names if n.lower().startswith(token)]
+
+    def get_placeholder(self, arg):
+        if not arg:
+            default = str(self.default) if self.default is not None else ""
+            return default if default else str(self)
+        token = str(arg)
+        comps = self.get_completions(token, lambda n: n)
+        if len(comps) == 1:
+            return comps[0][len(token):]
+        return ""
+
+
 class RegexPattern(str):
 
     __slots__ = ["_flags"]
@@ -838,11 +939,15 @@ class Regex(Field):
     DELIMITERS = "/:\"'"
 
     def __init__(self, name, replace=False, default=None, flags=0):
-        self.args = [name, replace, default, flags]
+        self.args = [name]
+        self.kwargs = {"replace": replace, "default": default, "flags": flags}
         self.replace = replace
         self.flags = flags
         default = (None, None) if replace and default is None else default
         super(Regex, self).__init__(name, default)
+
+    def with_context(self, editor):
+        return self
 
     def consume(self, text, index, _default=None):
         """Consume regular expression and optional replacement string and flags
@@ -1024,12 +1129,10 @@ class VarArgs(Field):
     VarArgs field will be a list of dicts. Are they all required?
     """
 
-    def __init__(self, name, field, *, min=1, placeholder=None, **kw):
-        kw.setdefault('default', list)
+    def __init__(self, name, field, *, min=1, placeholder=None, default=list):
         self.args = [name, field]
-        self.kwargs = {"min": min, "placeholder": placeholder}
-        self.kwargs.update(kw)
-        super().__init__(name, **kw)
+        self.kwargs = {"min": min, "placeholder": placeholder, "default": default}
+        super().__init__(name, default=default)
         self.field = field
         self.min = min
         self.placeholder = placeholder
@@ -1120,6 +1223,7 @@ class SubParser(Field):
 
     def __init__(self, name, *subargs):
         self.args = (name,) + subargs
+        self.kwargs = {}
         super(SubParser, self).__init__(name)
         self.subargs = {p.name: p for p in subargs}
 
@@ -1237,6 +1341,8 @@ class SubArgs(object):
                 break
             if arg.errors:
                 errors.extend(arg.errors)
+                if arg.could_consume_more:
+                    break
             else:
                 index = arg.end
         if errors:
@@ -1256,9 +1362,9 @@ class SubArgs(object):
 class Conditional(Field):
 
     def __init__(self, is_enabled, field, editor=None, **kw):
-        default = kw.setdefault('default', field.default)
+        default = kw.pop('default', field.default)
         self.args = [is_enabled, field, default]
-        super().__init__(field.name, default)
+        super().__init__(field.name, default, **kw)
         self.is_enabled = is_enabled
         self.field = field
         self.editor = editor

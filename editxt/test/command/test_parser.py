@@ -221,6 +221,12 @@ def test_CommandParser_with_SubParser():
     yield test, "y", ["yes"], 0
     yield test, " cat ", ["yes", "no"], 5
 
+    cat = SubArgs("cat", Choice("siamese", "simple"), yesno)
+    arg = SubParser("var", cat)
+    parser = CommandParser(arg)
+    yield test, "", ["cat"], 0
+    yield test, "cat si", ["siamese", "simple"], 4
+
 def test_CommandParser_with_SubParser_errors():
     sub = SubArgs("num", Int("num"), abc="xyz")
     arg = SubParser("var", sub)
@@ -486,6 +492,28 @@ def test_Int():
     yield test, None, ""
     yield test, "arg", Error("invalid value: num='arg'")
 
+def test_Float():
+    field = mod.Float('num')
+    eq_(str(field), 'num')
+    eq_(repr(field), "Float('num')")
+
+    test = make_consume_checker(field)
+    yield test, '', 0, (None, 1)
+    yield test, '3', 0, (3.0, 2)
+    yield test, '3.', 0, (3.0, 3)
+    yield test, '3.1', 0, (3.1, 4)
+    yield test, '42', 0, (42.0, 3)
+    yield test, '1.2 99', 0, (1.2, 4)
+    yield test, '10.7 ', 1, (0.7, 5)
+    yield test, 'a 99', 0, \
+        ParseError("could not convert string to float: 'a'", field, 0, 1)
+
+    test = make_arg_string_checker(field)
+    yield test, 42.0, "42.0"
+    yield test, -42.0, "-42.0"
+    yield test, None, ""
+    yield test, "arg", Error("invalid value: num='arg'")
+
 def test_String():
     field = String('str')
     eq_(str(field), 'str')
@@ -665,6 +693,55 @@ def test_File():
         yield test, "a", [], 0
         yield test, "..", ["../"], 0
         yield test, "../", ["dir"], 3
+
+def test_FontFace():
+    from editxt.datatypes import Font
+    field = mod.FontFace('face', default="Mono Type")
+    eq_(str(field), 'face')
+    eq_(repr(field), "FontFace('face', default='Mono Type')")
+
+    test = make_consume_checker(field)
+    yield test, "", 0, (field.default, 0)
+
+    test = make_completions_checker(field)
+    yield test, "", ["Duo\\ Type", "Mension", "Mono\\ Type", "Courier\\ New"]
+
+    class editor:
+        font = Font("Mono Type", 10.0, False, None)
+    field = field.with_context(editor)
+
+    test = make_consume_checker(field)
+    yield test, '', 0, (field.default, 0)
+    yield test, 'a', 0, ParseError(
+        "'a' does not match any of: Duo Type, Mension, Mono Type, Courier New",
+        mod.FontFace('face', default='Mono Type'), 0, 1)
+    yield test, 'c', 0, ("Courier New", 2)
+    yield test, 'C', 0, ("Courier New", 2)
+    yield test, 'Du', 0, ("Duo Type", 3)
+    yield test, 'm', 0, ParseError(
+        "'m' is ambiguous: Mension, Mono Type",
+        mod.FontFace('face', default='Mono Type'), 0, 2)
+    yield test, 'me', 0, ("Mension", 3)
+
+    test = make_completions_checker(field)
+    yield test, "", ["Duo\\ Type", "Mension", "Mono\\ Type", "Courier\\ New"]
+    yield test, "a", []
+    yield test, "m", ["Mension", "Mono\ Type"]
+    yield test, "M", ["Mension", "Mono\ Type"]
+
+    test = make_placeholder_checker(field)
+    yield test, "", 0, field.default
+    yield test, "a", 0, ""
+    yield test, "m", 0, ""
+    yield test, "mo", 0, "no Type"
+    yield test, "Me", 0, "nsion"
+
+    test = make_arg_string_checker(field)
+    yield test, "Mono Type", '"Mono Type"', 11
+
+    field = mod.FontFace('face', default=["a", "b", "c"])
+    test = make_consume_checker(field)
+    yield test, "", 0, (field.default, 0)
 
 def test_Regex():
     field = Regex('regex')

@@ -30,3 +30,8 @@ def get_font(face, size, smooth, ignore=None):
     if font is None:
         font = ak.NSFont.fontWithName_size_(DEFAULT_FONT.face, size)
     return Font(font.displayName(), font.pointSize(), smooth, font)
+
+
+def get_system_font_names():
+    names = ak.NSFontManager.sharedFontManager().availableFontFamilies()
+    return [str(name) for name in names]

@@ -17,4 +17,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from ..mac.font import *
+from editxt.datatypes import Font
+from editxt.platform.mac.font import *
+
+def get_system_font_names():
+    """Return a list of system font names
+    """
+    return ["Duo Type", "Mension", "Mono Type", "Courier New"]

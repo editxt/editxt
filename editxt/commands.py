@@ -25,10 +25,11 @@ import Foundation as fn
 
 import editxt.constants as const
 from editxt.command.base import command, CommandError
-from editxt.command.parser import (Choice, File, Int, String, Regex, RegexPattern,
-    VarArgs, CommandParser, Options, SubArgs, SubParser)
+from editxt.command.parser import (Choice, File, Float, FontFace, Int, String,
+    Regex, RegexPattern, VarArgs, CommandParser, Options, SubArgs, SubParser)
 from editxt.command.util import has_editor, has_selection, iterlines
 from editxt.platform.app import beep
+from editxt.platform.font import DEFAULT_FONT, get_font
 
 from editxt.command.ack import ack
 from editxt.command.changeindent import reindent
@@ -280,6 +281,16 @@ def clear_highlighted_text(editor, args):
 def set_editor_variable(editor, name, args):
     setattr(editor.proxy, name, args.value)
 
+def set_editor_font(editor, name, args):
+    font = get_font(args.face, args.size, args.smooth)
+    setattr(editor.proxy, name, font)
+
+def _default_font_attribute(name):
+    def default(editor=None):
+        font = DEFAULT_FONT if editor is None else editor.font
+        return getattr(font, name)
+    return default
+
 def set_project_variable(editor, command_name, args):
     assert len(args) == 1, repr(args)
     for name, value in args:
@@ -291,6 +302,16 @@ def set_editor_indent_vars(editor, name, args):
     setattr(proxy, "indent_mode", args.mode)
 
 @command(name="set", arg_parser=CommandParser(SubParser("variable",
+    SubArgs("font",
+        FontFace("face", default=_default_font_attribute("face")),
+        Float("size", default=_default_font_attribute("size")),
+        Choice(
+            ("smooth", True),
+            ("jagged", False),
+            name="smooth",
+            default=_default_font_attribute("smooth"),
+        ),
+        setter=set_editor_font),
     SubArgs("highlight_selected_text",
         Choice(
             ("yes", True),

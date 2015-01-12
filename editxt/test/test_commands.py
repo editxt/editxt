@@ -452,20 +452,28 @@ def test_clear_highlighted_text():
         do("clear_highlighted_text")
 
 def test_set_variable():
+    from editxt.platform.font import Font
+    class editor:
+        text_view = object
+        dirname = lambda:None
+        font = Font("Mension", 15.0, False, None)
     def test(command, completions, placeholder):
-        class editor:
-            text_view = object
-            dirname = lambda:None
         bar = CommandTester(mod.set_variable, editor=editor)
         eq_(bar.get_completions(command), (completions, None))
         eq_(bar.get_placeholder(command), placeholder)
     yield test, "set ", [
+            "font",
             "highlight_selected_text",
             "indent",
             "newline_mode",
             "project_path",
             "soft_wrap",
         ], "variable ..."
+    yield test, "set fo", ["font"], "nt {face} {size} {smooth}".format(
+        face=editor.font.face,
+        size=editor.font.size,
+        smooth=("smooth" if editor.font.smooth else "jagged"),
+    )
     yield test, "set in", ["indent"], "dent 4 space"
     yield test, "set indent 4 ", ["space", "tab"], "space"
     yield test, "set s", ["soft_wrap"], "oft_wrap yes"

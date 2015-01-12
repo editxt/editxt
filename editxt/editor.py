@@ -330,6 +330,10 @@ class Editor(object):
         self.document.character_encoding = new
 
     @document_property
+    def font(self, new, old):
+        self.document.font = new
+
+    @document_property
     def highlight_selected_text(self, new, old):
         if not new:
             self.finder.mark_occurrences("")
