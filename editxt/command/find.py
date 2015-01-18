@@ -790,10 +790,14 @@ def make_found_range_factory(options):
         def expand(self, text):
             match = Match(self.match)
             try:
-                return repy(match, self.range)
+                value = repy(match, self.range)
             except Exception as err:
                 return "!! {} >> {} >> {}: {} !!" \
                     .format(match, text, type(err).__name__, err)
+            if not isinstance(value, str):
+                return "!! {} >> {} >> Python Replace expected str, got {!r} !!" \
+                    .format(match, text, value)
+            return value
     elif options.search_type == REGEX or options.search_type == WORD:
         def expand(self, text):
             try:

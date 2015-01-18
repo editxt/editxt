@@ -188,6 +188,20 @@ def test_Finder_python_replace():
             " is a brown "
             "!! fox >> match[1] >> IndexError: no such group !!")
     yield test, c(
+        find="[Ff]ox", replace="",
+        action="replace_all",
+        expect="The quick "
+            "!! Fox >>  >> Python Replace expected str, got None !!"
+            " is a brown "
+            "!! fox >>  >> Python Replace expected str, got None !!")
+    yield test, c(
+        find="[Ff]ox", replace="1",
+        action="replace_all",
+        expect="The quick "
+            "!! Fox >> 1 >> Python Replace expected str, got 1 !!"
+            " is a brown "
+            "!! fox >> 1 >> Python Replace expected str, got 1 !!")
+    yield test, c(
         find="x", replace="match(", action="replace_all",
         expect=mod.InvalidPythonExpression(
             "def repy(match, range_):\n"
