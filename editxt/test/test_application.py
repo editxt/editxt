@@ -309,17 +309,19 @@ def test_Application_default_font():
     yield test("No Such Font", fallback=FONT.face)
 
 def test_Application_reload_config():
+    class Owner: pass
     reloads = 0
     with test_app() as app:
         def callback():
             nonlocal reloads
             reloads += 1
+        owner = Owner()
         app.reload_config()
         eq_(reloads, 0)
-        app.on_reload_config(callback)
+        app.on_reload_config(callback, owner)
         app.reload_config()
         eq_(reloads, 1)
-        del callback
+        del owner
         app.reload_config()
         eq_(reloads, 1)
 

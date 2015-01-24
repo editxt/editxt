@@ -22,7 +22,7 @@ import logging
 import os
 from contextlib import contextmanager
 from itertools import chain, repeat
-from weakref import WeakSet
+from weakref import WeakValueDictionary
 
 import objc
 import AppKit as ak
@@ -59,12 +59,12 @@ class Application(object):
         self.errlog_handler.setLevel(logging.INFO)
         self.errlog_handler.setFormatter(
             logging.Formatter("%(levelname).7s %(name)s - %(message)s"))
-        self.panels = []
-        self.config_callbacks = WeakSet()
         with self.logger():
+            self.panels = []
             self._setup_profile = set()
             self.windows = []
             self.path_opener = None
+            self.config_callbacks = WeakValueDictionary()
             self.config = Config(
                 os.path.join(self.profile_path, const.CONFIG_FILENAME))
             self.context = ContextMap()
@@ -136,8 +136,8 @@ class Application(object):
         for callback in self.config_callbacks:
             callback()
 
-    def on_reload_config(self, callback):
-        self.config_callbacks.add(callback)
+    def on_reload_config(self, callback, owner):
+        self.config_callbacks[callback] = owner
 
     def application_will_finish_launching(self, app, delegate):
         self.init_syntax_definitions()

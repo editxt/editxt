@@ -68,9 +68,9 @@ Aesthetics
   - font size (make easy to adjust)
 x    - remove all hard-coded fonts
 x    - add preference for default font
-    - Command+Option+= / Command+Option+- / Command+Option+0
     - fix font wierdness when typing newline as first char in editor
     - fix font wierdness on last line of line number view
+    - Command+Option+= / Command+Option+- / Command+Option+0
   - syntax highlighting
   - colors (dark theme)
 Pythonic...
