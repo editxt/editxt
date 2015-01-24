@@ -437,7 +437,8 @@ def test_get_edit_state():
             result = dv.edit_state
             eq_(result, state)
             if c.tv_is_none and c.set_state:
-                assert result is not state, "identity check should fail: must be a new (mutable) dict"
+                assert result is not state, \
+                    "identity check should fail: must be a new (mutable) dict"
     c = TestConfig(tv_is_none=False, soft_wrap=const.WRAP_WORD)
     yield test, c
     yield test, c(soft_wrap=const.WRAP_NONE)

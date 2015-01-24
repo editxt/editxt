@@ -66,13 +66,16 @@ Top priority
 
 Aesthetics
   - font size (make easy to adjust)
-    - Command+= / Command+- / Command+0
-    - add preference for default font
-    - remove all hard-coded fonts
+x    - remove all hard-coded fonts
+x    - add preference for default font
+    - Command+Option+= / Command+Option+- / Command+Option+0
     - fix font wierdness when typing newline as first char in editor
     - fix font wierdness on last line of line number view
   - syntax highlighting
   - colors (dark theme)
+Pythonic...
+  - TextView wrapper
+  - TreeView wrapper
 Show error in find dialog when in Python replace mode and replace string is invalid
 Fix ack command with --after
   - allow options intermixed with paths (VarArgs dispatch)
