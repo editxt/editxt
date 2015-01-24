@@ -722,6 +722,7 @@ def test_FontFace():
         "'m' is ambiguous: Mension, Mono Type",
         mod.FontFace('face', default='Mono Type'), 0, 2)
     yield test, 'me', 0, ("Mension", 3)
+    yield test, ' ', 0, ("Mono Type", 1)
 
     test = make_completions_checker(field)
     yield test, "", ["Duo\\ Type", "Mension", "Mono\\ Type", "Courier\\ New"]

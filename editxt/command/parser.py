@@ -699,7 +699,10 @@ class String(Field):
                 except KeyError:
                     chars.append('\\')
             elif c == delim:
-                if delim != ' ' and text[start + i + 1:start + i + 2] == ' ':
+                if delim == ' ':
+                    if not chars:
+                        return self.default, start + i + 1
+                elif text[start + i + 1:start + i + 2] == ' ':
                     start += 1 # consume trailing space
                 return ''.join(chars), start + i + 1
             if c == '\\':
