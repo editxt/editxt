@@ -198,12 +198,14 @@ class TextDocument(object):
     @font.setter
     def font(self, value):
         self._font = value
+        self.reset_text_attributes()
 
     def reset_text_attributes(self, indent_size=0):
         attrs = self.default_text_attributes(indent_size)
         ps = attrs[ak.NSParagraphStyleAttributeName]
         range = fn.NSMakeRange(0, self.text_storage.length())
         self.text_storage.addAttributes_range_(attrs, range)
+        self.text_storage.setFont_(self.font.font)
         for editor in self.app.iter_editors_of_document(self):
             view = editor.text_view
             if view is not None:
@@ -221,7 +223,7 @@ class TextDocument(object):
                 indent_size = self.indent_size
         if indent_size == 0:
             indent_size = self.indent_size
-        font = self.app.default_font.font
+        font = self.font.font
         spcw = font.screenFontWithRenderingMode_(ak.NSFontDefaultRenderingMode) \
             .advancementForGlyph_(ord("8")).width
         ps = ak.NSParagraphStyle.defaultParagraphStyle().mutableCopy()
@@ -231,7 +233,7 @@ class TextDocument(object):
         self._text_attributes = attrs = {
             ak.NSFontAttributeName: font,
             ak.NSParagraphStyleAttributeName: ps,
-            "font_smoothing": self.app.default_font.smooth,
+            "font_smoothing": self.font.smooth,
         }
         return attrs
 

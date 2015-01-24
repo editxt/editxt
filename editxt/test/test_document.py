@@ -180,6 +180,7 @@ def test_TextDocument_reset_text_attributes(app):
         "font_smoothing": app.default_font.smooth
     }
     ts.addAttributes_range_(attrs, fn.NSMakeRange(0, ts.length() >> 20))
+    ts.setFont_(doc.font.font)
     editors = [
         (m.mock(Editor), m.mock(ak.NSTextView)),
         (m.mock(Editor), None),
