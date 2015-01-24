@@ -252,6 +252,7 @@ class Editor(object):
             self.text_view = self.scroll_view.documentView() # HACK deep reach
             self.soft_wrap = self.document.app.config["soft_wrap"]
             self.reset_edit_state()
+            self.set_text_attributes()
             if self._goto_line is not None:
                 self.text_view.goto_line(self._goto_line)
         else:
@@ -261,6 +262,18 @@ class Editor(object):
         self.document.update_syntaxer()
         self.scroll_view.verticalRulerView().invalidateRuleThickness()
         self.document.check_for_external_changes(window)
+
+    def set_text_attributes(self, attrs=None):
+        view = self.text_view
+        if view is None:
+            return
+        if attrs is None:
+            attrs = self.document.default_text_attributes()
+        ruler = self.scroll_view.verticalRulerView() # HACK deep reach
+        view.font_smoothing = ruler.font_smoothing = attrs["font_smoothing"]
+        view.setTypingAttributes_(attrs)
+        view.setDefaultParagraphStyle_(attrs[ak.NSParagraphStyleAttributeName])
+        view.setNeedsDisplay_(True)
 
     def _get_soft_wrap(self):
         if self.text_view is None or self.text_view.textContainer() is None:

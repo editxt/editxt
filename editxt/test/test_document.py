@@ -181,19 +181,10 @@ def test_TextDocument_reset_text_attributes(app):
     }
     ts.addAttributes_range_(attrs, fn.NSMakeRange(0, ts.length() >> 20))
     ts.setFont_(doc.font.font)
-    editors = [
-        (m.mock(Editor), m.mock(ak.NSTextView)),
-        (m.mock(Editor), None),
-    ]
-    m.method(app.iter_editors_of_document)(doc) >> (dv for dv, tv in editors)
-    for editor, tv in editors:
-        editor.text_view >> tv
-        if tv is not None:
-            ruler = editor.scroll_view.verticalRulerView() >> m.mock()
-            ruler.font_smoothing = tv.font_smoothing = attrs["font_smoothing"]
-            tv.setTypingAttributes_(attrs)
-            tv.setDefaultParagraphStyle_(real_ps)
-            tv.setNeedsDisplay_(True)
+    editors = [m.mock(Editor), m.mock(Editor)]
+    m.method(app.iter_editors_of_document)(doc) >> editors
+    for editor in editors:
+        editor.set_text_attributes(attrs)
     with m:
         doc.reset_text_attributes(INDENT_SIZE)
         eq_(doc.default_text_attributes(), attrs)
