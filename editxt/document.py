@@ -202,9 +202,10 @@ class TextDocument(object):
 
     def reset_text_attributes(self, indent_size=0):
         attrs = self.default_text_attributes(indent_size)
-        range = fn.NSMakeRange(0, self.text_storage.length())
-        self.text_storage.addAttributes_range_(attrs, range)
-        self.text_storage.setFont_(self.font.font)
+        if self.text_storage is not None:
+            range = fn.NSMakeRange(0, self.text_storage.length())
+            self.text_storage.addAttributes_range_(attrs, range)
+            self.text_storage.setFont_(self.font.font)
         for editor in self.app.iter_editors_of_document(self):
             editor.set_text_attributes(attrs)
 

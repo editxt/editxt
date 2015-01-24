@@ -159,35 +159,42 @@ def test_TextDocument_default_text_attributes(app):
     assert ak.NSParagraphStyleAttributeName in attrs
     assert attrs is doc.default_text_attributes()
 
-@test_app
-def test_TextDocument_reset_text_attributes(app):
-    INDENT_SIZE = 42
-    m = Mocker()
-    ps_class = m.replace(ak, 'NSParagraphStyle')
-    doc = TextDocument(app)
-    with m.off_the_record():
-        ts = doc.text_storage = m.mock(ak.NSTextStorage)
-    font = app.default_font.font
-    spcw = font.screenFontWithRenderingMode_(ak.NSFontDefaultRenderingMode) \
-        .advancementForGlyph_(ord(" ")).width
-    ps = ps_class.defaultParagraphStyle().mutableCopy() >> m.mock()
-    ps.setTabStops_([])
-    ps.setDefaultTabInterval_(spcw * INDENT_SIZE)
-    real_ps = ps.copy() >> "<paragraph style>"
-    attrs = {
-        ak.NSFontAttributeName: font,
-        ak.NSParagraphStyleAttributeName: real_ps,
-        "font_smoothing": app.default_font.smooth
-    }
-    ts.addAttributes_range_(attrs, fn.NSMakeRange(0, ts.length() >> 20))
-    ts.setFont_(doc.font.font)
-    editors = [m.mock(Editor), m.mock(Editor)]
-    m.method(app.iter_editors_of_document)(doc) >> editors
-    for editor in editors:
-        editor.set_text_attributes(attrs)
-    with m:
-        doc.reset_text_attributes(INDENT_SIZE)
-        eq_(doc.default_text_attributes(), attrs)
+def test_TextDocument_reset_text_attributes():
+    @test_app
+    def test(app, has_text_storage):
+        INDENT_SIZE = 42
+        m = Mocker()
+        ps_class = m.replace(ak, 'NSParagraphStyle')
+        doc = TextDocument(app)
+        if has_text_storage:
+            with m.off_the_record():
+                ts = doc.text_storage = m.mock(ak.NSTextStorage)
+        else:
+            ts = doc.text_storage = None
+        font = app.default_font.font
+        spcw = font.screenFontWithRenderingMode_(ak.NSFontDefaultRenderingMode) \
+            .advancementForGlyph_(ord(" ")).width
+        ps = ps_class.defaultParagraphStyle().mutableCopy() >> m.mock()
+        ps.setTabStops_([])
+        ps.setDefaultTabInterval_(spcw * INDENT_SIZE)
+        real_ps = ps.copy() >> "<paragraph style>"
+        attrs = {
+            ak.NSFontAttributeName: font,
+            ak.NSParagraphStyleAttributeName: real_ps,
+            "font_smoothing": app.default_font.smooth
+        }
+        if has_text_storage:
+            ts.addAttributes_range_(attrs, fn.NSMakeRange(0, ts.length() >> 20))
+            ts.setFont_(doc.font.font)
+        editors = [m.mock(Editor), m.mock(Editor)]
+        m.method(app.iter_editors_of_document)(doc) >> editors
+        for editor in editors:
+            editor.set_text_attributes(attrs)
+        with m:
+            doc.reset_text_attributes(INDENT_SIZE)
+            eq_(doc.default_text_attributes(), attrs)
+    yield test, True
+    yield test, False
 
 @test_app
 def test__refresh_file_mtime(app):
