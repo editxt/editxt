@@ -454,9 +454,15 @@ def test_clear_highlighted_text():
 def test_set_variable():
     from editxt.platform.font import Font
     class editor:
+        class project:
+            path = os.path.expanduser("~/project")
         text_view = object
         dirname = lambda:None
         font = Font("Mension", 15.0, False, None)
+        highlight_selected_text = True
+        indent_mode = const.INDENT_MODE_TAB
+        indent_size = 2
+        soft_wrap = const.WRAP_WORD
     def test(command, completions, placeholder):
         bar = CommandTester(mod.set_variable, editor=editor)
         eq_(bar.get_completions(command), (completions, None))
@@ -474,11 +480,13 @@ def test_set_variable():
         size=editor.font.size,
         smooth=("smooth" if editor.font.smooth else "jagged"),
     )
-    yield test, "set in", ["indent"], "dent 4 space"
-    yield test, "set indent 4 ", ["space", "tab"], "space"
-    yield test, "set s", ["soft_wrap"], "oft_wrap yes"
-    yield test, "set soft_wrap", ["soft_wrap"], " yes"
-    yield test, "set soft_wrap ", ["yes", "no"], "yes"
+    yield test, "set high", ["highlight_selected_text"], "light_selected_text no"
+    yield test, "set in", ["indent"], "dent 2 tab"
+    yield test, "set indent 4 ", ["space", "tab"], "tab"
+    yield test, "set project_path ", [], "~/project"
+    yield test, "set s", ["soft_wrap"], "oft_wrap no"
+    yield test, "set soft_wrap", ["soft_wrap"], " no"
+    yield test, "set soft_wrap ", ["yes", "no"], "no"
     yield test, "set soft_wrap o", ["on", "off"], "..."
     yield test, "set soft_wrap x", [], ""
 
@@ -486,7 +494,7 @@ def test_set_variable():
         with test_app("editor*") as app:
             m = Mocker()
             editor = app.windows[0].current_editor
-            editor.text_view = object
+            editor.text_view = TestConfig(textContainer=lambda:None)
             proxy = editor.proxy = m.mock()
             do = CommandTester(mod.set_variable, editor=editor)
             if isinstance(attribute, Exception):
@@ -520,7 +528,7 @@ def test_set_variable():
     def test(command, size, mode):
         with test_app("editor*") as app:
             editor = app.windows[0].current_editor
-            editor.text_view = object
+            editor.text_view = TestConfig(textContainer=lambda:None)
             do = CommandTester(mod.set_variable, editor=editor)
             do(command)
             eq_(editor.indent_size, size)

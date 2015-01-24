@@ -737,17 +737,21 @@ class File(String):
     :param directory: If true, auto-complete directories only. Default false.
     """
 
-    def __init__(self, name, directory=False, _editor=None):
+    def __init__(self, name, directory=False, default=None, _editor=None):
         self.args = [name]
-        self.kwargs = {"directory": directory}
+        self.kwargs = {"directory": directory, "default": default}
         self.directory = directory
         self.editor = _editor
-        super().__init__(name)
+        super().__init__(name, default=default)
 
     def with_context(self, editor):
+        default = self.kwargs["default"]
+        if callable(default):
+            default = default(editor)
         return File(
             self.name,
             directory=self.directory,
+            default=default,
             _editor=editor,
         )
 
@@ -827,6 +831,11 @@ class File(String):
                 names.remove(name)
             names.append(CompleteWord(name + "/", lambda:"", len(root) + 1 - diff))
         return CompletionsList(names, title=user_path(root))
+
+    def get_placeholder(self, arg):
+        if not arg and isinstance(self.default, str):
+            return self.default
+        return super().get_placeholder(arg)
 
     def arg_string(self, value):
         if self.path is None:

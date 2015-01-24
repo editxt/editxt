@@ -30,6 +30,7 @@ from editxt.command.parser import (Choice, File, Float, FontFace, Int, String,
 from editxt.command.util import has_editor, has_selection, iterlines
 from editxt.platform.app import beep
 from editxt.platform.font import DEFAULT_FONT, get_font
+from editxt.util import user_path
 
 from editxt.command.ack import ack
 from editxt.command.changeindent import reindent
@@ -291,10 +292,18 @@ def _default_font_attribute(name):
         return getattr(font, name)
     return default
 
+def _default_highlight_selected_text(editor=None):
+    return True if editor is None else not editor.highlight_selected_text
+
 def set_project_variable(editor, command_name, args):
     assert len(args) == 1, repr(args)
     for name, value in args:
         setattr(editor.project.proxy, name, value)
+
+def _default_project_path(editor=None):
+    if editor is None or editor.project is None or editor.project.path is None:
+        return None
+    return user_path(editor.project.path)
 
 def set_editor_indent_vars(editor, name, args):
     proxy = editor.proxy
@@ -317,15 +326,18 @@ def set_editor_indent_vars(editor, name, args):
             ("yes", True),
             ("no", False),
             name="value",
+            default=_default_highlight_selected_text,
         ),
         setter=set_editor_variable),
     SubArgs("indent",
-        Int("size", default=4), #lambda editor: app.config["indent_size"]),
+        Int("size", default=lambda editor=None: 4 if editor is None else editor.indent_size),
         Choice(
             ("space", const.INDENT_MODE_SPACE),
             ("tab", const.INDENT_MODE_TAB),
             name="mode",
-            #default=lambda editor: editor.document.indent_mode)
+            default=(lambda editor=None:
+                        const.INDENT_MODE_SPACE if editor is None
+                        else editor.indent_mode)
         ),
         setter=set_editor_indent_vars),
     SubArgs("newline_mode",
@@ -335,12 +347,13 @@ def set_editor_indent_vars(editor, name, args):
             ("Windows windows", const.NEWLINE_MODE_WINDOWS),
             ("Unicode unicode", const.NEWLINE_MODE_UNICODE),
             name="value",
-            #default=lambda editor: editor.newline_mode)
+            #default=lambda editor=None: const.NEWLINE_MODE_UNIX if editor is None
+            #                            else editor.newline_mode)
         ),
         setter=set_editor_variable,
     ),
     SubArgs("project_path",
-        File("path", directory=True),
+        File("path", directory=True, default=_default_project_path),
         setter=set_project_variable,
         is_enabled=has_editor),
     SubArgs("soft_wrap",
@@ -348,7 +361,9 @@ def set_editor_indent_vars(editor, name, args):
             ("yes on", const.WRAP_WORD),
             ("no off", const.WRAP_NONE),
             name="value",
-            #default=lambda editor: editor.wrap_mode
+            default=(lambda editor=None: const.WRAP_WORD
+                if editor is None or editor.soft_wrap == const.WRAP_NONE
+                else const.WRAP_NONE)
         ),
         setter=set_editor_variable),
 )), is_enabled=has_editor)
