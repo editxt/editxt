@@ -83,6 +83,7 @@ def main(argv=list(sys.argv)):
         else:
             logging.config.dictConfig(logging_config)
             from editxt.application import Application
+            argv = [a for a in argv if not a.startswith("-psn")] # OS X < 10.9 hack
             argv = argv[1:] # drop program name
             doc = __doc__.replace('Profile directory.',
                 'Profile directory [default: {}].'
