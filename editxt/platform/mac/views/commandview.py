@@ -23,7 +23,6 @@ import math
 import AppKit as ak
 import Foundation as fn
 from objc import pyobjc_unicode, super
-from Quartz.CoreGraphics import CGRectIntersectsRect
 
 from editxt.command.parser import CompletionsList
 from editxt.constants import ERROR, HTML, INFO, LARGE_NUMBER_FOR_TEXT
