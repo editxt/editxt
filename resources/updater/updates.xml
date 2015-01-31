@@ -204,5 +204,22 @@ where EditXT.app is located on your local machine):
       <pubDate>Tue, 06 Jan 2015 20:56:36 -0500</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.7.5/EditXT-v1.7.5-e8def0a.zip" sparkle:version="201501062056.e8def0a" sparkle:shortVersionString="1.7.5" sparkle:dsaSignature="MCwCFDuU6vAHOXXgYCBhYNGY0tMXjbk1AhQhQsU7gaIirRxsX0CvKh2Q0tNvKg==" length="9683064" type="application/octet-stream" />
     </item>
+    <item>
+      <title>Version 1.7.6</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li>Fix bugs in command parser.</li>
+</ul>
+
+        ]]>
+      </description>
+      <sparkle:releaseNotesLink>
+        http://htmlpreview.github.io/?https://raw.github.com/editxt/editxt/blob/master/resources/updater/updates.html
+      </sparkle:releaseNotesLink>
+      <pubDate>Sat, 31 Jan 2015 11:55:30 -0500</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.7.6/EditXT-v1.7.6-0262d95.zip" sparkle:version="201501311155.0262d95" sparkle:shortVersionString="1.7.6" sparkle:dsaSignature="MCwCFF+DrxyuLDv9H3Mgw4MnZOiyr1sjAhQ8KuRfYiM8GDHvMlPspDYGHVyRdQ==" length="9683151" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
