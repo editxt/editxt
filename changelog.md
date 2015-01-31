@@ -3,6 +3,10 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+## 2015-01-31 - 1.7.6
+
+- Fix bugs in command parser.
+
 ## 2015-01-06 - 1.7.5
 
 - Show message instead of beep on `ack` command with no match.
