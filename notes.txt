@@ -76,6 +76,28 @@ x    - add preference for default font
 Pythonic...
   - TextView wrapper
   - TreeView wrapper
+Refactor tests to not depend on py2app bundle
+  - this is a problem on 10.9+ unless py2app main.c is modified
+Fix stdout/stderr and error output
+  - `debug unhandled-error`
+    - ./xt on 10.8
+      - python traceback printed in...
+        - EditXT Log
+        - terminal
+        - not console.app
+      - Objective-C error message + traceback printed in...
+        - not EditXT Log
+        - terminal
+        - console.app
+    - ./xt on 10.9 with unmodified py2app main.c
+      - python traceback printed in...
+        - ? EditXT Log
+        - not terminal
+        - ? console.app
+      - Objective-C error message + traceback printed in...
+        - ? EditXT Log
+        - not terminal
+        - ? console.app
 Show error in find dialog when in Python replace mode and replace string is invalid
 Fix ack command with --after
   - allow options intermixed with paths (VarArgs dispatch)
