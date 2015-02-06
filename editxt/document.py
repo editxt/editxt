@@ -32,9 +32,9 @@ import editxt.platform.constants as platform_const
 
 from editxt.command.util import calculate_indent_mode_and_size
 from editxt.controls.alert import Alert
-from editxt.platform.document import text_storage_edit_connector
 from editxt.platform.events import call_later
 from editxt.platform.kvo import KVOLink, KVOProxy
+from editxt.platform.text import Text
 from editxt.syntax import SyntaxCache
 from editxt.undo import UndoManager
 from editxt.util import (untested, refactor,
@@ -148,18 +148,16 @@ class TextDocument(object):
         try:
             return self._text_storage
         except AttributeError:
-            self.text_storage = \
-                ak.NSTextStorage.alloc().initWithString_attributes_("", {})
+            self.text_storage = Text()
             self._load()
         return self._text_storage
     @text_storage.setter
     def text_storage(self, value):
-        if hasattr(self, "_text_storage_edit_connector"):
-            self._text_storage_edit_connector.disconnect()
-            del self._text_storage_edit_connector
+        if hasattr(self, "_disable_text_edit_callback"):
+            self._disable_text_edit_callback()
+            del self._disable_text_edit_callback
         if value is not None:
-            self._text_storage_edit_connector = \
-                text_storage_edit_connector(value, self.on_text_edit)
+            self._disable_text_edit_callback = value.on_edit(self.on_text_edit)
         self._text_storage = value
 
     @property
@@ -408,7 +406,7 @@ class TextDocument(object):
         undo = self.undo_manager
         undo.should_remove = False
         textstore = self._text_storage
-        self._text_storage = ak.NSTextStorage.alloc().init()
+        self._text_storage = Text()
         try:
             ok = self._load()
         finally:

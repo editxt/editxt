@@ -81,101 +81,16 @@ def test_calculate_thickness():
         estimate_line_count = m.method(lnv.estimate_line_count)
         ruleThickness = m.method(lnv.ruleThickness)
         lines = []
-        font = None if c.font_is_none else m.mock(ak.NSFont)
-        (tv.textStorage() >> m.mock(ak.NSTextStorage)).font() >> font
-        if c.font_is_none:
-            ruleThickness() >> c.result
-        else:
-            estimate_line_count(font) >> c.numlines
-            cw = font.advancementForGlyph_(ord("0")).width >> 15
+        font = tv.font() >> m.mock(ak.NSFont)
+        estimate_line_count(font) >> c.numlines
+        cw = font.advancementForGlyph_(ord("8")).width >> 15
         with m:
             result = lnv.calculate_thickness()
             eq_(result, c.result)
             eq_(lnv.lines, lines)
     c = TestConfig(font_is_none=False)
-    yield test, c(font_is_none=True, result=0)
     yield test, c(numlines=0, result=15 * 4)
     yield test, c(numlines=1, result=15 * 4)
-    yield test, c(numlines=20, result=15 * 5)
-    yield test, c(numlines=3000, result=15 * 7)
-
-def test_line_number_at_char_index():
-    def test(c):
-        m = Mocker()
-        tv = m.mock(TextView)
-        lnv = create_lnv(tv)
-        font = None if c.font_is_none else m.mock(ak.NSFont)
-        (tv.textStorage() >> m.mock(ak.NSTextStorage)).font() >> font
-        if not c.font_is_none:
-            rect = m.mock(fn.NSRect)
-            rng = m.mock(fn.NSRange)
-            lm = tv.layoutManager() >> m.mock(ak.NSLayoutManager)
-            lm.defaultLineHeightForFont_(font) >> 10
-            lm.lineFragmentRectForGlyphAtIndex_effectiveRange_(c.index, None) >> (rect, rng)
-            rect.origin.y >> (10 * c.index)
-        with m:
-            result = lnv.line_number_at_char_index(c.index)
-            eq_(result, c.result)
-    c = TestConfig(font_is_none=False)
-    yield test, c(font_is_none=True, index=0, result=0)
-    yield test, c(index=0, result=1)
-
-
-# - (void)calculateLines
-# {
-#     id              view;
-#
-#     view = [self clientView];
-#
-#     if ([view isKindOfClass:[NSTextView class]])
-#     {
-#         unsigned        index, numberOfLines, stringLength, lineEnd, contentEnd;
-#         NSString        *text;
-#         float         oldThickness, newThickness;
-#
-#         text = [view string];
-#         stringLength = [text length];
-#         [lineIndices release];
-#         lineIndices = [[NSMutableArray alloc] init];
-#
-#         index = 0;
-#         numberOfLines = 0;
-#
-#         do
-#         {
-#             [lineIndices addObject:[NSNumber numberWithUnsignedInt:index]];
-#
-#             index = NSMaxRange([text lineRangeForRange:NSMakeRange(index, 0)]);
-#             numberOfLines++;
-#         }
-#         while (index < stringLength);
-#
-#         // Check if text ends with a new line.
-#         [text getLineStart:NULL end:&lineEnd contentsEnd:&contentEnd forRange:NSMakeRange([[lineIndices lastObject] unsignedIntValue], 0)];
-#         if (contentEnd < lineEnd)
-#         {
-#             [lineIndices addObject:[NSNumber numberWithUnsignedInt:index]];
-#         }
-#
-#         oldThickness = [self ruleThickness];
-#         newThickness = [self requiredThickness];
-#         if (fabs(oldThickness - newThickness) > 1)
-#         {
-#             NSInvocation            *invocation;
-#
-#             // Not a good idea to resize the view during calculations (which can happen during
-#             // display). Do a delayed perform (using NSInvocation since arg is a float).
-#             invocation = [NSInvocation invocationWithMethodSignature:[self methodSignatureForSelector:@selector(setRuleThickness:)]];
-#             [invocation setSelector:@selector(setRuleThickness:)];
-#             [invocation setTarget:self];
-#             [invocation setArgument:&newThickness atIndex:2];
-#
-#             [invocation performSelector:@selector(invoke) withObject:nil afterDelay:0.0];
-#         }
-#     }
-# }
-
-
-# def test_line_number_at_location():
-#     lnv = create_lnv()
-#     lnv.line_number_at_location # test for method presence
+    yield test, c(numlines=20, result=15 * 4)
+    yield test, c(numlines=200, result=15 * 5)
+    yield test, c(numlines=3000, result=15 * 6)

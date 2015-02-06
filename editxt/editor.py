@@ -32,6 +32,7 @@ from editxt.command.util import change_indentation, replace_newlines
 from editxt.constants import LARGE_NUMBER_FOR_TEXT
 from editxt.controls.alert import Alert
 from editxt.document import DocumentController, Error as DocumentError
+from editxt.linenumbers import LineNumbers
 from editxt.platform.document import setup_main_view, teardown_main_view
 from editxt.platform.kvo import KVOList, KVOProxy, KVOLink
 from editxt.util import register_undo_callback, user_path, WeakProperty
@@ -90,6 +91,7 @@ class Editor(object):
         self.scroll_view = None
         self.command_view = None
         self._goto_line = None
+        self.line_numbers = LineNumbers(self.document.text_storage)
         props = document.props
         self.kvolink = KVOLink([
             (self.proxy, "icon", self.proxy, "summary_info"),
@@ -274,6 +276,10 @@ class Editor(object):
         view.setTypingAttributes_(attrs)
         view.setDefaultParagraphStyle_(attrs[ak.NSParagraphStyleAttributeName])
         view.setNeedsDisplay_(True)
+        font = attrs[ak.NSFontAttributeName]
+        half_char = font.advancementForGlyph_(ord("8")).width / 2
+        view.setTextContainerInset_(fn.NSMakeSize(half_char, half_char)) # width/height
+        self.scroll_view.verticalRulerView().invalidateRuleThickness()
 
     def _get_soft_wrap(self):
         if self.text_view is None or self.text_view.textContainer() is None:
@@ -304,6 +310,7 @@ class Editor(object):
             #tv.setConstrainedFrameSize_(size) #doesn't seem to work
             tv.setFrameSize_(size)
             tv.sizeToFit()
+        self.scroll_view.setNeedsDisplay_(True)
         # TODO
         # if selection was visible:
         #     put selection as near to where it was as possible
@@ -451,6 +458,7 @@ class Editor(object):
         self.scroll_view = None
         self.command_view = None
         self.proxy = None
+        self.line_numbers.close()
 
     def __repr__(self):
         name = 'N/A' if self.document is None else self.name
@@ -481,9 +489,10 @@ class Editor(object):
 
     def on_selection_changed(self, textview):
         text = textview.string()
+        text_length = text.length()
         range = textview.selectedRange()
-        index = range.location if range.location < text.length() else (text.length() - 1)
-        line = self.scroll_view.verticalRulerView().line_number_at_char_index(index)
+        index = range.location if range.location < text_length else (text_length - 1)
+        line = self.line_numbers[index]
         i = index
         while i > 0 and text[i - 1] != "\n":
             i -= 1

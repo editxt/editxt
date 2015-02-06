@@ -91,6 +91,7 @@ def test_Editor_init():
         if path is not None:
             doc = proj.window.app.document_with_path(path) >> doc
         m.off_the_record(doc.props)
+        m.off_the_record(doc.text_storage)
         with m:
             result = Editor(proj, **kw)
             eq_(result.project, proj)
@@ -293,6 +294,7 @@ def test_set_soft_wrap():
         tv.setHorizontallyResizable_(not wrap)
         tv.setAutoresizingMask_(ak.NSViewWidthSizable
             if wrap else ak.NSViewWidthSizable | ak.NSViewHeightSizable)
+        sv.setNeedsDisplay_(True)
         with m:
             dv.soft_wrap = c.mode
     c = TestConfig(mode=const.WRAP_NONE)
@@ -580,7 +582,7 @@ def test_Editor_close():
             else:
                 with replattr(doc, 'reset_text_attributes', lambda *a: None, sigcheck=False):
                     text_storage = doc.text_storage
-                text_storage.setDelegate_(doc)
+                #text_storage.setDelegate_(doc)
                 remove_layout = m.method(text_storage.removeLayoutManager_)
             wc = editor.project.window.wc = m.mock(WindowController)
             if not (c.tv_is_none or c.ts_is_none):
@@ -601,8 +603,8 @@ def test_Editor_close():
             eq_(editor.proxy, None)
             if c.close_doc:
                 eq_(doc.text_storage, None)
-                if not c.ts_is_none:
-                    eq_(text_storage.delegate(), None)
+                #if not c.ts_is_none:
+                    #eq_(text_storage.delegate(), None)
             else:
                 assert doc.text_storage is not None
             eq_(test_app(app).state, c.end)

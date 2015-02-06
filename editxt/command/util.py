@@ -47,7 +47,7 @@ def iterlines(text, range=(0,)):
     if not text:
         yield text
     else:
-        if range != (0,):
+        if len(list(range)) == 2:
             range = (range[0], sum(range))
         for line in _line_splitter.finditer(text, *range):
             if line.group():

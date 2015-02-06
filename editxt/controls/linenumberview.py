@@ -38,15 +38,8 @@ class LineNumberView(ak.NSRulerView):
         self.textview = scrollview.documentView()
         self.lines = []
         self.paragraph_style = ps = ak.NSParagraphStyle.defaultParagraphStyle().mutableCopy()
-        self.paragraphStyle = ps
         ps.setAlignment_(ak.NSRightTextAlignment)
         self.line_count = 1
-
-        # [[NSNotificationCenter defaultCenter]
-        #     addObserver:self
-        #     selector:@selector(textDidChange:)
-        #     name:NSTextStorageDidProcessEditingNotification
-        #     object:[(NSTextView *)aView textStorage]];
 
         # subscribe to text edit notifications
         fn.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
@@ -61,14 +54,8 @@ class LineNumberView(ak.NSRulerView):
 
     @untested
     def estimate_line_count(self, font):
-        if "not in word wrap mode": # TODO detect word wrap mode
-            tv = self.textview
-            line_height = tv.layoutManager().defaultLineHeightForFont_(font)
-            min_count = int(round(tv.bounds().size.height / line_height))
-            return self.update_line_count(min_count)
-        else:
-            raise NotImplementedError("word-wrap line counting not implementedd")
-            # http://developer.apple.com/documentation/Cocoa/Conceptual/TextLayout/Tasks/CountLines.html
+        min_count = len(self.textview.editor.line_numbers.lines)
+        return self.update_line_count(min_count)
 
     @untested
     def update_line_count(self, value):
@@ -77,26 +64,13 @@ class LineNumberView(ak.NSRulerView):
             self.line_count = lc = value
         return lc
 
-    def line_number_at_char_index(self, index):
-        font = self.textview.textStorage().font()
-        if font is None:
-            return 0
-        lm = self.textview.layoutManager()
-        line_height = lm.defaultLineHeightForFont_(font)
-        lrect, range = lm.lineFragmentRectForGlyphAtIndex_effectiveRange_(index, None)
-        return int(round(lrect.origin.y / line_height)) + 1
-
     # Rule thickness and drawing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def calculate_thickness(self):
-        store = self.textview.textStorage()
-        if store is not None:
-            font = store.font()
-            if font is not None:
-                charwidth = font.advancementForGlyph_(ord("0")).width
-                lines = self.estimate_line_count(font)
-                return int((len(str(lines)) + 3) * charwidth)
-        return self.ruleThickness()
+        font = self.textview.font()
+        charwidth = font.advancementForGlyph_(ord("8")).width
+        lines = self.estimate_line_count(font)
+        return int(max(len(str(lines)) + 2, 4) * charwidth)
 
     def requiredThickness(self):
         return self.calculate_thickness()
@@ -110,9 +84,38 @@ class LineNumberView(ak.NSRulerView):
             self.setRuleThickness_(int(thickness))
             self.scrollView().tile()
 
-    @untested
+    line_cache = {}
+
+    def drawRect_(self, rect):
+        # draw background and border line
+        tv = self.textview
+        ignore, line_color, margin_color, line_number_color = tv.marginParams
+        half_char = tv.textContainerInset().height
+        line_pos = rect.size.width - half_char / 2
+
+        margin_color.set()
+        ak.NSRectFill(fn.NSMakeRect(
+            rect.origin.x,
+            rect.origin.y,
+            line_pos,
+            rect.size.height
+        ))
+        ak.NSColor.whiteColor().set()
+        ak.NSRectFill(fn.NSMakeRect(
+            rect.origin.x + line_pos,
+            rect.origin.y,
+            rect.size.width - line_pos,
+            rect.size.height
+        ))
+        line_color.setStroke()
+        ak.NSBezierPath.strokeLineFromPoint_toPoint_(
+            fn.NSMakePoint(rect.origin.x + line_pos, rect.origin.y),
+            fn.NSMakePoint(rect.origin.x + line_pos, rect.origin.y + rect.size.height)
+        )
+        self.draw_line_numbers(rect, line_number_color)
+
     @font_smoothing
-    def drawHashMarksAndLabelsInRect_(self, rect):
+    def draw_line_numbers(self, rect, color):
         """Draw the line numbers
 
         There is a bug (in Cocoa on OS X 10.6 ?) which causes a region of the
@@ -123,41 +126,55 @@ class LineNumberView(ak.NSRulerView):
         Another bug causes the ruler to (initially) move in the wrong direction
         if the text view's textContainerInset().height is set larger than zero.
         """
-        tv = self.textview
-        font = tv.textStorage().font()
-        if font is None:
-            return
-        lm = tv.layoutManager()
-        lineHeight = tv.layoutManager().defaultLineHeightForFont_(font)
-        offset = (tv.textContainerInset().height - 1) \
-            - self.scrollView().documentVisibleRect().origin.y
-        top = fn.NSMakePoint(0, rect.origin.y - offset)
-        bot = fn.NSMakePoint(0, rect.origin.y - offset + rect.size.height)
-        topGlyph = lm.glyphIndexForPoint_inTextContainer_(top, tv.textContainer())
-        botGlyph = lm.glyphIndexForPoint_inTextContainer_(bot, tv.textContainer())
-        drawWidth = self.baselineLocation() + self.requiredThickness() - (lineHeight / 2)
-        drawRect = fn.NSMakeRect(0, 0, drawWidth, lineHeight)
+        view = self.textview
+        font = view.font()
+        layout = view.layoutManager()
+        container = view.textContainer()
+        line_height = layout.defaultLineHeightForFont_(font)
+        y_max = rect.origin.y + rect.size.height + line_height
+        half_char = view.textContainerInset().height
+        lines = view.editor.line_numbers
+        null_range = (ak.NSNotFound, 0)
+        convert_point = self.convertPoint_fromView_
+        char_rects = layout.rectArrayForCharacterRange_withinSelectedCharacterRange_inTextContainer_rectCount_
+
+        view_y = self.convertPoint_toView_(rect.origin, view).y
+        visible_rect = self.scrollView().contentView().bounds()
+        view_rect = fn.NSMakeRect(0, view_y, visible_rect.size.width, rect.size.height)
+        y_offset = view.textContainerOrigin().y + layout.defaultBaselineOffsetForFont_(font)
+
+        glyph_range = layout.glyphRangeForBoundingRect_inTextContainer_(
+                            view_rect, container)
+        if glyph_range.location == 0 and view_rect.origin.y > 0:
+            glyph_range = layout.glyphRangeForBoundingRect_inTextContainer_(
+                            visible_rect, container)
+        first_char = layout.characterIndexForGlyphAtIndex_(glyph_range.location)
+
+        draw_width = rect.size.width - half_char * 2
+        draw_rect = fn.NSMakeRect(0, 0, draw_width, 0)
         attr = {
             ak.NSFontAttributeName: font,
-            ak.NSParagraphStyleAttributeName: self.paragraphStyle,
+            ak.NSParagraphStyleAttributeName: self.paragraph_style,
+            ak.NSForegroundColorAttributeName: color,
         }
-        i = topGlyph
-        line = max(0, int(top.y)) // int(lineHeight) + 1
-        # TODO handle word-wrap mode line counting (when that feature is implemented)
 
-        while i <= botGlyph:
-            lrect, range = lm.lineFragmentRectForGlyphAtIndex_effectiveRange_(i, None)
+        # draw line numbers
+        y_pos = None
+        for line, char_index in lines.iter_from(first_char):
+            if char_index < first_char:
+                continue
+            rects, n = char_rects((char_index, 0), null_range, container, None)
+            if not n:
+                continue
+            y_pos = (convert_point(rects[0].origin, view).y + y_offset)
+            if y_pos > y_max:
+                break
+            draw_rect.origin.y = y_pos
             text = fn.NSString.stringWithString_(str(line))
-            drawRect.origin.y = lrect.origin.y + offset
-            text.drawInRect_withAttributes_(drawRect, attr)
+            text.drawWithRect_options_attributes_(draw_rect, 0, attr)
+
+        if lines.newline_at_end and y_pos is not None:
             line += 1
-            i += range.length
-        last = tv.textStorage().length() - 1
-        if i >= last and tv.string()[last] in "\n\r":
-            # draw last line number when the last character is newline
+            draw_rect.origin.y = y_pos + line_height
             text = fn.NSString.stringWithString_(str(line))
-            drawRect.origin.y = lrect.origin.y + offset + lineHeight
-            text.drawInRect_withAttributes_(drawRect, attr)
-            self.update_line_count(line + 1)
-        else:
-            self.update_line_count(line)
+            text.drawWithRect_options_attributes_(draw_rect, 0, attr)

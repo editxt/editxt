@@ -3,6 +3,26 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+## ... - 1.8.0
+
+- [Pick a font](http://hivelogic.com/articles/top-10-programming-fonts/)!
+  (install if necessary) then `set font YourFavoriteFont` to give it a spin.
+  Finally, update your config `open ~/.editxt/config.yaml`:
+  ```
+  font:
+    face: Inconsolata
+    size: 14
+  ```
+  and `reload_config`. If you really don't like change you can revert to
+  the old hard-coded font:
+  ```
+  font:
+    face: Monaco
+    size: 10
+    smooth: false
+  ```
+  The new default is the default system fixed width font and size.
+
 ## 2015-01-31 - 1.7.6
 
 - Fix bugs in command parser.

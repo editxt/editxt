@@ -32,45 +32,13 @@ from editxt.controls.textview import TextView
 from editxt.platform.mac.views import CommandView
 
 
-def text_storage_edit_connector(text_storage, on_text_edit):
-    """Connect text storage edit events to on_text_edit
-
-    :param text_storage: NSTextStorage instance.
-    :param on_text_edit: A function that will be called when the text storage
-    processes editing. The function must accept a single argument: the range of
-    text that was edited.
-    """
-    return TextStorageDelegate.alloc().init_callback_(text_storage, on_text_edit)
-
-class TextStorageDelegate(ak.NSObject):
-
-    def init_callback_(self, target, on_text_edit):
-        target.setDelegate_(self)
-        self.target = target
-        self.on_text_edit = on_text_edit
-        return self
-
-    def disconnect(self):
-        self.target.setDelegate_(None)
-        self.target = None
-
-    def dealloc(self):
-        self.target = None
-        self.on_text_edit = None
-        super().dealloc()
-
-    def textStorageDidProcessEditing_(self, notification):
-        store = notification.object()
-        self.on_text_edit(store.editedRange())
-
-
 def setup_main_view(editor, frame):
     """Setup main text view with command view for document
     """
     layout = ak.NSLayoutManager.alloc().init()
     editor.document.text_storage.addLayoutManager_(layout)
     container = ak.NSTextContainer.alloc().initWithContainerSize_(frame.size)
-    container.setLineFragmentPadding_(10) # left margin
+    container.setLineFragmentPadding_(0.0)
     layout.addTextContainer_(container)
 
     scroll = StatusbarScrollView.alloc().initWithFrame_(frame)
@@ -85,15 +53,16 @@ def setup_main_view(editor, frame):
     # setTextContainerInset() with height > 0 causes a strange bug with
     # the movement of the line number ruler (it moves down when
     # scrolling down near the top of the document)
-    text.setTextContainerInset_(fn.NSMakeSize(0, 0)) # width/height
+    attrs = editor.document.default_text_attributes()
+    font = attrs[ak.NSFontAttributeName]
+    half_char = font.advancementForGlyph_(ord("8")).width / 2
+    text.setTextContainerInset_(fn.NSMakeSize(0, half_char)) # width/height
     text.setDrawsBackground_(False)
     text.setSmartInsertDeleteEnabled_(False)
     text.setRichText_(False)
     text.setUsesFontPanel_(False)
     text.setUsesFindPanel_(True)
-    attrs = editor.document.default_text_attributes()
     text.setTypingAttributes_(attrs)
-    font = attrs[ak.NSFontAttributeName]
     text.setFont_(font)
     text.setDefaultParagraphStyle_(attrs[ak.NSParagraphStyleAttributeName])
     scroll.setDocumentView_(text)

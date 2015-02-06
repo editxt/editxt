@@ -49,6 +49,13 @@ class TextView(ak.NSTextView):
 #        self.app = None
 #        super().dealloc()
 
+    def font(self):
+        """Get the document's font
+
+        :returns: NSFont object
+        """
+        return self.editor.font.font
+
     def goto_line(self, num):
         eol = self.editor.document.eol
         assert len(eol) > 0, repr(eol)
@@ -121,12 +128,13 @@ class TextView(ak.NSTextView):
         padding = self.textContainer().lineFragmentPadding()
         color1 = self.app.config["right_margin.line_color"]
         color2 = self.app.config["right_margin.margin_color"]
-        self._marginParams = mp = (charw * nchars + padding, color1, color2)
+        color3 = self.app.config["line_number_color"]
+        self._marginParams = mp = (charw * nchars + padding, color1, color2, color3)
         return mp
 
     def drawViewBackgroundInRect_(self, rect):
         if self.marginParams is not None:
-            guideX, color1, color2 = self.marginParams
+            guideX, color1, color2, color3 = self.marginParams
             ak.NSGraphicsContext.currentContext().saveGraphicsState()
             color1.set()
             ak.NSRectFill(fn.NSMakeRect(guideX, rect.origin.y, 1, rect.size.height))

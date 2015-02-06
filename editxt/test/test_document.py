@@ -708,8 +708,8 @@ def test_TextDocument_close():
         doc = TextDocument(app)
         ts = doc.text_storage
         assert ts is not None
-        assert doc._text_storage_edit_connector is not None
+        assert doc._disable_text_edit_callback is not None
         doc.close()
         eq_(doc.text_storage, None)
-        assert not hasattr(doc, "_text_storage_edit_connector")
+        assert not hasattr(doc, "_disable_text_edit_callback")
         eq_(doc.props, None)

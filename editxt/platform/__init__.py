@@ -34,6 +34,7 @@ def init(platform, use_pdb):
         "document",
         "events",
         "markdown",
+        "text",
         "views",
         "window",
     ]

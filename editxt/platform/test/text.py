@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # EditXT
-# Copyright 2007-2014 Daniel Miller <millerdev@gmail.com>
+# Copyright 2007-2015 Daniel Miller <millerdev@gmail.com>
 #
 # This file is part of EditXT, a programmer's text editor for Mac OS X,
 # which can be found at http://editxt.org/.
@@ -17,21 +17,4 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-
-def setup_main_view(*args):
-    pass
-
-def teardown_main_view(*args):
-    pass
-
-def add_command_view(view, frame, command_bar):
-    class command_view:
-        command = command_bar
-    class main_view:
-        top = view
-        bottom = command_view
-        def frame(self):
-            return frame
-        def become_subview_of(self, view, focus=None):
-            self.parent_view = view
-    return main_view()
+from editxt.platform.mac.text import Text

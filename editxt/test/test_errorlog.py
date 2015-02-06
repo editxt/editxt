@@ -48,7 +48,7 @@ log = logging.getLogger(__name__)
 def test_ErrorLog_init():
     app = type("App", (), {})()
     el = ErrorLog(app)
-    assert isinstance(el.text, ak.NSTextStorage), repr(el.text)
+    assert isinstance(el.text, mod.Text), repr(el.text)
     eq_(el._document, None)
     eq_(el.app, app)
 

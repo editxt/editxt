@@ -22,6 +22,7 @@ from AppKit import NSTextStorage, NSDocument, NSChangeDone, NSChangeCleared
 
 import editxt.constants as const
 from editxt import log as root_log
+from editxt.platform.text import Text
 from editxt.util import WeakProperty
 
 log = logging.getLogger(__name__)
@@ -39,7 +40,7 @@ class ErrorLog(object):
 
     def __init__(self, app):
         self.app = app
-        self.text = NSTextStorage.alloc().initWithString_attributes_("", {})
+        self.text = Text()
         self._document = None
     
     @property
