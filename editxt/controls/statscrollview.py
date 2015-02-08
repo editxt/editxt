@@ -78,8 +78,8 @@ class StatusbarScrollView(ak.NSScrollView):
                     rect.size.width - status_size.width - scrollw,
                     rect.size.height - status_size.height,
                     *status_size)
-                status.setFrame_(fn.NSMakeRect(0, 0, *status_size))
                 self.overlay.updateSize()
+                status.setFrame_(fn.NSMakeRect(0, 0, *status_size))
         else:
             # status | scrollers
             status_rect, hrect = fn.NSDivideRect(
