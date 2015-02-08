@@ -200,6 +200,7 @@ def representedObject(node):
 def get_color(value, cache={}):
     if isinstance(value, ak.NSColor):
         return value
+    value = str(value)
     try:
         return cache[value]
     except KeyError:

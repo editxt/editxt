@@ -25,6 +25,16 @@ https://github.com/editxt/editxt for details of what actually happened.
   The system default fixed width font and size will be used if no font is set
   in the config. To view the current font, type `set font` in the command bar
   and observe the default parameter values.
+- Improve line numbers, including support for correct numbering on soft-wrapped
+  documents. The line number view now uses the same background and border color
+  as the right margin. These colors can be customized in the config:
+  ```
+  line_number_color: 707070
+  right_margin:
+    position: 80
+    line_color: E6E6E6
+    margin_color: F7F7F7
+  ```
 
 ## 2015-01-31 - 1.7.6
 
