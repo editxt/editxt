@@ -91,7 +91,7 @@ class LineNumberView(ak.NSRulerView):
         view = self.textview
         ignore, line_color, margin_color, line_number_color = view.margin_params
         half_char = view.textContainerInset().height
-        line_pos = rect.size.width - half_char
+        line_pos = round(rect.size.width - half_char)
 
         margin_color.set()
         ak.NSRectFill(fn.NSMakeRect(
@@ -107,11 +107,13 @@ class LineNumberView(ak.NSRulerView):
             rect.size.width - line_pos,
             rect.size.height
         ))
-        line_color.setStroke()
-        ak.NSBezierPath.strokeLineFromPoint_toPoint_(
-            fn.NSMakePoint(rect.origin.x + line_pos, rect.origin.y),
-            fn.NSMakePoint(rect.origin.x + line_pos, rect.origin.y + rect.size.height)
-        )
+        line_color.set()
+        ak.NSRectFill(fn.NSMakeRect(
+            rect.origin.x + line_pos,
+            rect.origin.y,
+            1.0,
+            rect.size.height
+        ))
         self.draw_line_numbers(rect, line_number_color)
 
     @font_smoothing
