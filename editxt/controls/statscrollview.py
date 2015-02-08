@@ -27,6 +27,9 @@ from editxt.controls.overlaywindow import OverlayWindow
 
 log = logging.getLogger(__name__)
 
+NSScrollerStyleLegacy = getattr(ak, "NSScrollerStyleLegacy", 0)
+NSScrollerStyleOverlay = getattr(ak, "NSScrollerStyleOverlay", 1)
+
 
 class StatusbarScrollView(ak.NSScrollView):
 
@@ -34,11 +37,11 @@ class StatusbarScrollView(ak.NSScrollView):
         super(StatusbarScrollView, self).initWithFrame_(frame)
         rect = fn.NSMakeRect(0, 0, 0, ak.NSScroller.scrollerWidth())
         self.status_view = StatusView.alloc().initWithFrame_(rect)
-        try:
-            self.scrollerStyle # raises AttributeError on OS X 10.6 or lower
+        scroller_style = getattr(self, "scrollerStyle", lambda:NSScrollerStyleLegacy)()
+        if scroller_style == NSScrollerStyleOverlay:
             self.overlay_bounds = rect
             self.can_overlay_scrollers = True
-        except AttributeError:
+        else:
             self.can_overlay_scrollers = False
             self.addSubview_(self.status_view)
         return self
