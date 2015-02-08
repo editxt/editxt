@@ -88,10 +88,10 @@ class LineNumberView(ak.NSRulerView):
 
     def drawRect_(self, rect):
         # draw background and border line
-        tv = self.textview
-        ignore, line_color, margin_color, line_number_color = tv.marginParams
-        half_char = tv.textContainerInset().height
-        line_pos = rect.size.width - half_char / 2
+        view = self.textview
+        ignore, line_color, margin_color, line_number_color = view.margin_params
+        half_char = view.textContainerInset().height
+        line_pos = rect.size.width - half_char
 
         margin_color.set()
         ak.NSRectFill(fn.NSMakeRect(

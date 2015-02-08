@@ -112,29 +112,40 @@ class TextView(ak.NSTextView):
 
     # Right-margin guide ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    def textContainerOrigin(self):
+        """Remove left margin created by symmetrical textContainerInset
+
+        HACK hard-coded 1.0 : the width of NSTextView's caret. If X is
+        set to zero the caret disappears when it is located before/on
+        the first character in the line (position zero).
+        """
+        origin = super().textContainerOrigin()
+        inset = self.textContainerInset()
+        return ak.NSMakePoint(1.0, origin.y)
+
     @property
-    def marginParams(self):
-        # TODO invalidate the cached value when the document's font is changed
-        try:
-            return self._marginParams
-        except AttributeError:
-            pass
+    def margin_params(self):
+        font = self.editor.font.font
+        if font == getattr(self, "_font_for_margin_params", None):
+            return self._margin_params
+        self._font_for_margin_params = font
         nchars = self.app.config["right_margin.position"]
         if not nchars:
-            self._marginParams = None
+            self._margin_params = None
             return
-        font = self.editor.document.default_text_attributes()[ak.NSFontAttributeName]
-        charw = font.advancementForGlyph_(ord(" ")).width
+        charw = font.advancementForGlyph_(ord("8")).width
+        origin = self.textContainerOrigin()
         padding = self.textContainer().lineFragmentPadding()
         color1 = self.app.config["right_margin.line_color"]
         color2 = self.app.config["right_margin.margin_color"]
         color3 = self.app.config["line_number_color"]
-        self._marginParams = mp = (charw * nchars + padding, color1, color2, color3)
+        margin = charw * nchars + padding #+ origin.x
+        self._margin_params = mp = (margin, color1, color2, color3)
         return mp
 
     def drawViewBackgroundInRect_(self, rect):
-        if self.marginParams is not None:
-            guideX, color1, color2, color3 = self.marginParams
+        if self.margin_params is not None:
+            guideX, color1, color2, color3 = self.margin_params
             ak.NSGraphicsContext.currentContext().saveGraphicsState()
             color1.set()
             ak.NSRectFill(fn.NSMakeRect(guideX, rect.origin.y, 1, rect.size.height))
@@ -156,7 +167,6 @@ class TextView(ak.NSTextView):
                 height = text_height + extra_space
         super(TextView, self).setFrameSize_(fn.NSMakeSize(size.width, height))
 
-    # Disable font smoothing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # TODO add a preference to enable font smoothing at a specific text size
+    # Conditional font smoothing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     drawRect_ = font_smoothing(ak.NSTextView.drawRect_)

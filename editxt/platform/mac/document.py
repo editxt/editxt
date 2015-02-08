@@ -52,11 +52,12 @@ def setup_main_view(editor, frame):
     text.setMaxSize_(fn.NSMakeSize(LARGE_NUMBER_FOR_TEXT, LARGE_NUMBER_FOR_TEXT))
     # setTextContainerInset() with height > 0 causes a strange bug with
     # the movement of the line number ruler (it moves down when
-    # scrolling down near the top of the document)
+    # scrolling down near the top of the document) (OS X 10.6 only?)
     attrs = editor.document.default_text_attributes()
     font = attrs[ak.NSFontAttributeName]
     half_char = font.advancementForGlyph_(ord("8")).width / 2
-    text.setTextContainerInset_(fn.NSMakeSize(0, half_char)) # width/height
+    # the inset width is overridden by our custom TextView.textContainerOrigin()
+    text.setTextContainerInset_(fn.NSMakeSize(half_char, half_char)) # width/height
     text.setDrawsBackground_(False)
     text.setSmartInsertDeleteEnabled_(False)
     text.setRichText_(False)
