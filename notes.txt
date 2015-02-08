@@ -66,6 +66,7 @@ Top priority
 
 Aesthetics
 x  - font size (make easy to adjust)
+  - fix ruler width on open new file
   - syntax highlighting
   - colors (dark theme)
 Pythonic...

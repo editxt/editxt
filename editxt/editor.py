@@ -253,8 +253,8 @@ class Editor(object):
             self.command_view = self.main_view.bottom
             self.text_view = self.scroll_view.documentView() # HACK deep reach
             self.soft_wrap = self.document.app.config["soft_wrap"]
-            self.reset_edit_state()
             self.set_text_attributes()
+            self.reset_edit_state()
             self.on_selection_changed(self.text_view)
             if self._goto_line is not None:
                 self.text_view.goto_line(self._goto_line)
@@ -263,7 +263,6 @@ class Editor(object):
         view.addSubview_(self.main_view)
         window.makeFirstResponder_(self.text_view)
         self.document.update_syntaxer()
-        self.scroll_view.verticalRulerView().invalidateRuleThickness()
         self.document.check_for_external_changes(window)
 
     def set_text_attributes(self, attrs=None):
@@ -276,12 +275,12 @@ class Editor(object):
         view.font_smoothing = ruler.font_smoothing = attrs["font_smoothing"]
         view.setTypingAttributes_(attrs)
         view.setDefaultParagraphStyle_(attrs[ak.NSParagraphStyleAttributeName])
-        view.setNeedsDisplay_(True)
+        del view.margin_params
         font = attrs[ak.NSFontAttributeName]
         half_char = font.advancementForGlyph_(ord("8")).width / 2
+        ruler.invalidateRuleThickness()
         view.setTextContainerInset_(fn.NSMakeSize(half_char, half_char)) # width/height
-        self.scroll_view.verticalRulerView().invalidateRuleThickness()
-        del self.text_view.margin_params
+        view.setNeedsDisplay_(True)
 
     def _get_soft_wrap(self):
         if self.text_view is None or self.text_view.textContainer() is None:
@@ -378,7 +377,7 @@ class Editor(object):
     def _get_edit_state(self):
         if self.text_view is not None:
             sel = self.selection
-            sp = self.scroll_view.contentView().bounds().origin
+            sp = self.scroll_view.documentVisibleRect().origin
             state = dict(
                 selection=[sel.location, sel.length],
                 scrollpoint=[sp.x, sp.y],
@@ -397,13 +396,16 @@ class Editor(object):
     def _set_edit_state(self, state):
         if self.text_view is not None:
             point = state.get("scrollpoint", [0, 0])
+            self.point = point
             sel = state.get("selection", [0, 0])
             self.proxy.soft_wrap = state.get("soft_wrap", const.WRAP_NONE)
-            length = self.document.text_storage.length() - 1
-            if length > 0:
-                # HACK next line does not seem to work without this
-                self.text_view.setSelectedRange_(fn.NSRange(length, 0))
-            self.scroll_view.documentView().scrollPoint_(fn.NSPoint(*point))
+            # HACK text_view.scrollPoint_ does not work without this
+            self.text_view.layoutManager() \
+                .characterIndexForPoint_inTextContainer_fractionOfDistanceBetweenInsertionPoints_(
+                    (0.0, point[1] + self.text_view.bounds().size.height),
+                    self.text_view.textContainer(), None)
+            self.text_view.scrollPoint_(point)
+            length = self.document.text_storage.length()
             if sel[0] < length:
                 if sel[0] + sel[1] > length:
                     sel = (sel[0], length - sel[0])

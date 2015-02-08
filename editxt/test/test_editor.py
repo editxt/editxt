@@ -214,6 +214,7 @@ def test_document_set_main_view_of_window():
         with m.off_the_record():
             editor = Editor(None, document=doc)
         soft_wrap = m.property(editor, "soft_wrap")
+        reset_edit_state = m.method(editor.reset_edit_state)
         set_text_attributes = m.method(editor.set_text_attributes)
         on_selection_changed = m.method(editor.on_selection_changed)
         view = m.mock(ak.NSView)
@@ -233,6 +234,7 @@ def test_document_set_main_view_of_window():
             scroll.documentView() >> text
             soft_wrap.value = doc.app.config["soft_wrap"] >> c.soft_wrap
             set_text_attributes()
+            reset_edit_state()
             on_selection_changed(text)
         else:
             editor.main_view = main
@@ -241,7 +243,6 @@ def test_document_set_main_view_of_window():
             main.setFrame_(frame)
         view.addSubview_(main)
         win.makeFirstResponder_(text)
-        scroll.verticalRulerView().invalidateRuleThickness()
         doc.update_syntaxer()
         doc.check_for_external_changes(win)
         with m:
@@ -426,7 +427,7 @@ def test_get_edit_state():
             sel = m.mock(fn.NSRange)
             sp = m.mock(fn.NSPoint)
             dv.text_view.selectedRange() >> sel
-            dv.scroll_view.contentView().bounds().origin >> sp
+            dv.scroll_view.documentVisibleRect().origin >> sp
             sel.location >> "<sel.location>"
             sel.length >> "<sel.length>"
             sp.x >> "<sp.x>"
@@ -472,13 +473,14 @@ def test_set_edit_state():
             dv.scroll_view = m.mock(ak.NSScrollView)
             proxy = proxy_prop.value >> m.mock(Editor)
             proxy.soft_wrap = eq_state["soft_wrap"]
+            m.off_the_record(dv.text_view.layoutManager)
+            dv.text_view.bounds().size.height >> 10
+            dv.text_view.textContainer()
+            dv.text_view.scrollPoint_(fn.NSPoint(*point))
             doc.text_storage.length() >> ts_len
-            if ts_len - 1 > 0:
-                dv.text_view.setSelectedRange_(fn.NSRange(ts_len - 1, 0))
-            dv.scroll_view.documentView().scrollPoint_(fn.NSPoint(*point))
-            if sel[0] < ts_len - 1:
-                if sel[0] + sel[1] > ts_len - 1:
-                    sel = (sel[0], ts_len - 1 - sel[0])
+            if sel[0] < ts_len:
+                if sel[0] + sel[1] > ts_len:
+                    sel = (sel[0], ts_len - sel[0])
                 dv.text_view.setSelectedRange_(fn.NSRange(*sel))
         with m:
             dv.edit_state = state

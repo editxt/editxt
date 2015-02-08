@@ -114,7 +114,7 @@ def goto_line(editor, opts):
     if opts is None or opts.line is None:
         show_command_bar(editor, None)
         return
-    editor.text_view.goto_line(opts.line)
+    editor.goto_line(opts.line)
 
 
 @command(title="(Un)comment Selected Lines",
