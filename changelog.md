@@ -7,21 +7,24 @@ https://github.com/editxt/editxt for details of what actually happened.
 
 - [Pick a font](http://hivelogic.com/articles/top-10-programming-fonts/)!
   (install if necessary) then `set font YourFavoriteFont` to give it a spin.
-  Finally, update your config `open ~/.editxt/config.yaml`:
+  Finally, `open ~/.editxt/config.yaml` and set your preferred font.
+  For example:
   ```
   font:
     face: Inconsolata
     size: 14
   ```
-  and `reload_config`. If you really don't like change you can revert to
-  the old hard-coded font:
+  Save and `reload_config`. If you really don't like change you can revert to
+  the old font style:
   ```
   font:
     face: Monaco
     size: 10
     smooth: false
   ```
-  The new default is the default system fixed width font and size.
+  The system default fixed width font and size will be used if no font is set
+  in the config. To view the current font, type `set font` in the command bar
+  and observe the default parameter values.
 
 ## 2015-01-31 - 1.7.6
 
