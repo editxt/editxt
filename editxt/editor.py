@@ -281,6 +281,7 @@ class Editor(object):
         half_char = font.advancementForGlyph_(ord("8")).width / 2
         view.setTextContainerInset_(fn.NSMakeSize(half_char, half_char)) # width/height
         self.scroll_view.verticalRulerView().invalidateRuleThickness()
+        del self.text_view.margin_params
 
     def _get_soft_wrap(self):
         if self.text_view is None or self.text_view.textContainer() is None:

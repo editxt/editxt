@@ -125,27 +125,27 @@ class TextView(ak.NSTextView):
 
     @property
     def margin_params(self):
-        font = self.editor.font.font
-        if font == getattr(self, "_font_for_margin_params", None):
+        if hasattr(self, "_margin_params"):
             return self._margin_params
-        self._font_for_margin_params = font
-        nchars = self.app.config["right_margin.position"]
-        if not nchars:
-            self._margin_params = None
-            return
+        font = self.editor.font.font
         charw = font.advancementForGlyph_(ord("8")).width
         origin = self.textContainerOrigin()
         padding = self.textContainer().lineFragmentPadding()
+        nchars = self.app.config["right_margin.position"]
         color1 = self.app.config["right_margin.line_color"]
         color2 = self.app.config["right_margin.margin_color"]
         color3 = self.app.config["line_number_color"]
-        margin = charw * nchars + padding #+ origin.x
+        margin = (charw * nchars + padding + origin.x) if nchars else None
         self._margin_params = mp = (margin, color1, color2, color3)
         return mp
+    @margin_params.deleter
+    def margin_params(self):
+        if hasattr(self, "_margin_params"):
+            del self._margin_params
 
     def drawViewBackgroundInRect_(self, rect):
-        if self.margin_params is not None:
-            guideX, color1, color2, color3 = self.margin_params
+        guideX, color1, color2, color3 = self.margin_params
+        if guideX is not None:
             ak.NSGraphicsContext.currentContext().saveGraphicsState()
             color1.set()
             ak.NSRectFill(fn.NSMakeRect(guideX, rect.origin.y, 1, rect.size.height))
