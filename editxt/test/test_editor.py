@@ -215,6 +215,7 @@ def test_document_set_main_view_of_window():
             editor = Editor(None, document=doc)
         soft_wrap = m.property(editor, "soft_wrap")
         set_text_attributes = m.method(editor.set_text_attributes)
+        on_selection_changed = m.method(editor.on_selection_changed)
         view = m.mock(ak.NSView)
         main = m.mock()
         text = m.mock(ak.NSTextView)
@@ -232,6 +233,7 @@ def test_document_set_main_view_of_window():
             scroll.documentView() >> text
             soft_wrap.value = doc.app.config["soft_wrap"] >> c.soft_wrap
             set_text_attributes()
+            on_selection_changed(text)
         else:
             editor.main_view = main
             editor.text_view = text

@@ -65,20 +65,7 @@ View release stats:
 Top priority
 
 Aesthetics
-  - font size (make easy to adjust)
-x    - remove all hard-coded fonts
-x    - add preference for default font
-x    - fix font wierdness when typing newline as first char in editor
-x      - enter a bunch of newlines, use arrow keys to move up and down...
-x        !!! _NSLayoutTreeLineFragmentRectForGlyphAtIndex invalid glyph index 18446744073709551615
-x    - fix font wierdness on last line of line number view
-x    - fix line numbers in soft wrap mode
-    - Command+Option+= / Command+Option+- / Command+Option+0
-  - fix blank status (line number, etc.) view on create/open new document
-  - fix shift main view:
-    - wide file, add some lines at the end
-    - undo
-    - notice shift to left
+x  - font size (make easy to adjust)
   - syntax highlighting
   - colors (dark theme)
 Pythonic...

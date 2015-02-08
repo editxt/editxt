@@ -255,6 +255,7 @@ class Editor(object):
             self.soft_wrap = self.document.app.config["soft_wrap"]
             self.reset_edit_state()
             self.set_text_attributes()
+            self.on_selection_changed(self.text_view)
             if self._goto_line is not None:
                 self.text_view.goto_line(self._goto_line)
         else:
@@ -489,9 +490,9 @@ class Editor(object):
 
     def on_selection_changed(self, textview):
         text = textview.string()
-        text_length = text.length()
+        length = text.length()
         range = textview.selectedRange()
-        index = range.location if range.location < text_length else (text_length - 1)
+        index = min(range.location, length - 1) if length else 0
         line = self.line_numbers[index]
         i = index
         while i > 0 and text[i - 1] != "\n":
