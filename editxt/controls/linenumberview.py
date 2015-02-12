@@ -67,7 +67,7 @@ class LineNumberView(ak.NSRulerView):
         font = self.textview.font()
         charwidth = font.advancementForGlyph_(ord("8")).width
         lines = self.estimate_line_count(font)
-        return int(max(len(str(lines)) + 2, 4) * charwidth)
+        return int(max(len(str(lines)) + 2.75, 4.75) * charwidth)
 
     def invalidateRuleThickness(self):
         thickness = self.calculate_thickness()
@@ -143,7 +143,7 @@ class LineNumberView(ak.NSRulerView):
                             visible_rect, container)
         first_char = layout.characterIndexForGlyphAtIndex_(glyph_range.location)
 
-        draw_width = rect.size.width - half_char * 2
+        draw_width = rect.size.width - half_char * 3
         draw_rect = fn.NSMakeRect(0, 0, draw_width, 0)
         attr = {
             ak.NSFontAttributeName: font,
