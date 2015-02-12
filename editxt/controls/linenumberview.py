@@ -26,7 +26,6 @@ import Foundation as fn
 from objc import super
 
 from editxt.platform.mac.views.util import font_smoothing
-from editxt.util import untested
 
 log = logging.getLogger(__name__)
 
@@ -52,12 +51,10 @@ class LineNumberView(ak.NSRulerView):
 
     # Line Counting ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    @untested
     def estimate_line_count(self, font):
-        min_count = len(self.textview.editor.line_numbers.lines)
+        min_count = len(self.textview.editor.line_numbers)
         return self.update_line_count(min_count)
 
-    @untested
     def update_line_count(self, value):
         lc = self.line_count
         if lc < value:
@@ -72,17 +69,11 @@ class LineNumberView(ak.NSRulerView):
         lines = self.estimate_line_count(font)
         return int(max(len(str(lines)) + 2, 4) * charwidth)
 
-    def requiredThickness(self):
-        return self.calculate_thickness()
-
-    @untested
     def invalidateRuleThickness(self):
         thickness = self.calculate_thickness()
-        # TODO do not call setNeedsDisplayInRect_ if the (exact) number of lines did not change
-        self.setNeedsDisplayInRect_(self.frame())
+        self.setNeedsDisplay_(True)
         if thickness > self.ruleThickness():
             self.setRuleThickness_(int(thickness))
-            self.scrollView().tile()
 
     line_cache = {}
 
@@ -175,8 +166,10 @@ class LineNumberView(ak.NSRulerView):
             text = fn.NSString.stringWithString_(str(line))
             text.drawWithRect_options_attributes_(draw_rect, 0, attr)
 
-        if lines.newline_at_end and y_pos is not None:
-            line += 1
-            draw_rect.origin.y = y_pos + line_height
-            text = fn.NSString.stringWithString_(str(line))
-            text.drawWithRect_options_attributes_(draw_rect, 0, attr)
+        if y_pos is not None:
+            if lines.newline_at_end and line + 1 == len(lines):
+                draw_rect.origin.y = y_pos + line_height
+                text = fn.NSString.stringWithString_(str(line + 1))
+                text.drawWithRect_options_attributes_(draw_rect, 0, attr)
+            if line > self.line_count:
+                self.invalidateRuleThickness()

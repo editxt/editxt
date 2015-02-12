@@ -80,6 +80,11 @@ EOLS = {
     NEWLINE_MODE_MAC: "\r",
     NEWLINE_MODE_WINDOWS: "\r\n",
     NEWLINE_MODE_UNICODE: "\u2028",
+    "PARAGRAPH SEPARATOR": "\u2029",
+#    "VERTICAL TAB": "\u000b",
+#    "FORM FEED": "\u000c",
+#    "NEXT LINE": "\u0085",
+#    "\x01": "\u0001",
 }
 
 CHARACTER_ENCODINGS = [

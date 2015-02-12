@@ -129,6 +129,40 @@ def test_delitem():
         yield test(17, [14, 18], start=5)
         yield test(18, [18], start=6)
 
+def test_len():
+    @gentest
+    def test(expect, text, iter_to_line=None):
+        text = Text(text)
+        lines = LineNumbers(text)
+        if iter_to_line is not None:
+            for line, index in lines.iter_from(0):
+                if line >= iter_to_line:
+                    break
+        eq_(len(lines), expect)
+    base_test = test
+
+    yield test(1, "")
+    yield test(1, "", 1)
+    yield test(1, "", 2)
+    yield test(1, "a")
+    yield test(1, "a", 1)
+    yield test(1, "a", 2)
+
+    TEXT = (
+        "abc\n"  # 0     3   1
+        "def\n"  # 4     7   2
+        "\n"     # 8     8   3
+        "ghij\n" # 9     13  4
+        "jkl\n"  # 14    17  5
+    )
+    test = partial(base_test, text=TEXT)
+    yield test(1, iter_to_line=0)
+    yield test(1, iter_to_line=1)
+    yield test(3, iter_to_line=3)
+    yield test(4, iter_to_line=4)
+    yield test(5, iter_to_line=5)
+    yield test(6, iter_to_line=6)
+
 def test_iter_from():
     @gentest
     def test(i, output, text, preset=None, start=1):

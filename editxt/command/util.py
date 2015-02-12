@@ -34,7 +34,7 @@ def has_editor(editor):
     return editor is not None
 
 
-_line_splitter = re.compile("([^\n\r\u2028]*(?:%s)?)" % "|".join(
+_line_splitter = re.compile("([^\n\r\u2028\u2029]*(?:%s)?)" % "|".join(
     eol for eol in sorted(const.EOLS.values(), key=len, reverse=True)))
 
 def iterlines(text, range=(0,)):

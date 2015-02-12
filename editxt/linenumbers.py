@@ -43,12 +43,21 @@ class LineNumbers(object):
         return line
 
     def __delitem__(self, index):
+        """Invalidate line numbers beyond the character at index"""
         if index < self.lines[-1]:
             line = max(1, bisect(self.lines, index) - 1)
             del self.lines[line:]
         if self.end is not None:
             self.end = None
             self.newline_at_end = None
+
+    def __len__(self):
+        """Get the highest known line number
+
+        This will always return less than or equal to the total number of
+        lines in text.
+        """
+        return len(self.lines) + (1 if self.newline_at_end else 0)
 
     def iter_from(self, start):
         """Generate `(line_number, char_index)` pairs from start index

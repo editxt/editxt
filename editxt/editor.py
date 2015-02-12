@@ -400,12 +400,15 @@ class Editor(object):
             sel = state.get("selection", [0, 0])
             self.proxy.soft_wrap = state.get("soft_wrap", const.WRAP_NONE)
             # HACK text_view.scrollPoint_ does not work without this
-            self.text_view.layoutManager() \
+            char_index, ignore = self.text_view.layoutManager() \
                 .characterIndexForPoint_inTextContainer_fractionOfDistanceBetweenInsertionPoints_(
                     (0.0, point[1] + self.text_view.bounds().size.height),
                     self.text_view.textContainer(), None)
-            self.text_view.scrollPoint_(point)
             length = self.document.text_storage.length()
+            char_index = min(char_index, length - 1)
+            self.line_numbers[char_index] # count lines for ruler view
+            self.scroll_view.verticalRulerView().invalidateRuleThickness()
+            self.text_view.scrollPoint_(point)
             if sel[0] < length:
                 if sel[0] + sel[1] > length:
                     sel = (sel[0], length - sel[0])

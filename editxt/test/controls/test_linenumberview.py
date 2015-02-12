@@ -66,13 +66,6 @@ def test_create():
         eq_(lnv.textview, tv)
         eq_(lnv.paragraph_style.alignment(), ak.NSRightTextAlignment)
 
-def test_requiredThickness():
-    m = Mocker()
-    lnv = create_lnv()
-    m.method(lnv.calculate_thickness)()
-    with m:
-        lnv.requiredThickness()
-
 def test_calculate_thickness():
     def test(c):
         m = Mocker()
