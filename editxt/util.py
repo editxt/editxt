@@ -17,6 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+import functools
 import logging
 import os
 import random
@@ -118,6 +119,19 @@ def atomicfile(path, mode="w", **kw):
             os.remove(temp)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def noraise(func):
+    """Decorator for functions that should not raise an error
+
+    The decorated function will return None if it raises an exception.
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kw):
+        try:
+            return func(*args, **kw)
+        except Exception:
+            log.exception("unexpected error")
+    return wrapper
 
 def fetch_icon(path, size=fn.NSMakeSize(16, 16), default_type="txt"):
     if path is None or not os.path.exists(path):

@@ -35,7 +35,7 @@ from editxt.document import DocumentController, Error as DocumentError
 from editxt.linenumbers import LineNumbers
 from editxt.platform.document import setup_main_view, teardown_main_view
 from editxt.platform.kvo import KVOList, KVOProxy, KVOLink
-from editxt.util import register_undo_callback, user_path, WeakProperty
+from editxt.util import noraise, register_undo_callback, user_path, WeakProperty
 
 log = logging.getLogger(__name__)
 
@@ -500,16 +500,22 @@ class Editor(object):
             return True
         return False
 
+    @noraise
     def on_selection_changed(self, textview):
         text = textview.string()
         length = text.length()
         range = textview.selectedRange()
-        index = min(range.location, length - 1) if length else 0
-        line = self.line_numbers[index]
-        i = index
-        while i > 0 and text[i - 1] != "\n":
-            i -= 1
-        col = (index - i)
+        index = min(range.location, length) if length else 0
+        lines = self.line_numbers
+        try:
+            line = lines[index]
+            line_index = self.line_numbers.index_of(line)
+        except IndexError:
+            if index != length or not lines.newline_at_end:
+                raise
+            line = len(lines)
+            line_index = index
+        col = max(index - line_index, 0)
         sel = range.length
         self.scroll_view.status_view.updateLine_column_selection_(line, col, sel)
 
