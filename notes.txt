@@ -59,7 +59,7 @@ Build/package EditXT.app::
 
 View release stats:
 
-    curl https://api.github.com/repos/editxt/editxt/releases | grep -E "download_count|name" | less
+    curl https://api.github.com/repos/editxt/editxt/releases | grep -E "download_count|tag_name" | less
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
@@ -67,6 +67,10 @@ Top priority
 Aesthetics
 x  - font size (make easy to adjust)
   - syntax highlighting
+    - make it faster when transitioning to/from a delimited range near the beginning of a large document
+        http://www.stiefels.net/2008/01/22/syntax-highlighting-for-nstextview-with-flex/
+    - more lanugages
+    - better language detection (file extension, shebang line, etc.)
   - colors (dark theme)
 fix bug when pasting many newlines at end of document (scrolls to beginning)
 fix line counting in TextView.goto_line (should recognize all line break chars)
@@ -112,7 +116,6 @@ Fix intermittent freeze on startup
 Fix window title on edge cases (not always up to date)
 Fix window dirty indicator
 Add automatic file move detection
-Improve syntax highlighting
 
 File tree as main project view
 Persistent unsaved docs
@@ -722,12 +725,6 @@ Improve TextCommands
         change case (and variants)
     allow text commands to be added to the context menu
 
-Better syntax highlighting
-    make it faster when transitioning to/from a delimited range near the beginning of a large document
-        http://www.stiefels.net/2008/01/22/syntax-highlighting-for-nstextview-with-flex/
-    more lanugages
-    better language detection (file extension, shebang line, etc.)
-
 Add split view feature (split documents list as well)
 
 Add untitled document to default project on startup.
@@ -778,22 +775,6 @@ NSTreeController and Drag and Drop: http://theocacao.com/document.page/130
 
 Log filtering
     http://stackoverflow.com/questions/1383254/logging-streamhandler-and-standard-streams
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Syntax coloring design - use pygments library
-
-xx syntax elements
-xx     valid identifier characters
-xx     keyword / character string without spaces
-xx     range delimiters
-xx         start delim
-xx         end delim
-xx xx        multi-line: yes/no
-xx xx        type: solid color, embedded highlighting
-xx 
-xx When balancing delimiters such as parens, brackets, etc. scan backward or
-xx     forward (depending on type of bracket) from the current character to the
-xx     end of the characters visible on the screen.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 EditXT Design
