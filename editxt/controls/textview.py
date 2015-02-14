@@ -56,6 +56,9 @@ class TextView(ak.NSTextView):
         """
         return self.editor.font.font
 
+    def focus(self):
+        self.window().makeFirstResponder_(self)
+
     def goto_line(self, line):
         # TODO move this into editor
         if isinstance(line, (tuple, list)):

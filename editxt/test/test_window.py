@@ -307,6 +307,7 @@ def test_set_current_editor():
         dv = (None if c.editor_class is None else m.mock(c.editor_class))
         if c.editor_is_current:
             ed._current_editor = dv
+            dv.focus()
         elif c.editor_class is not None:
             ed.recent.push(dv.id >> m.mock())
             setup = c.editor_class is Editor and not c.view_is_main
@@ -327,6 +328,7 @@ def test_set_current_editor():
         for no_project in (True, False):
             yield test, c(view_is_main=is_main, proj_is_none=no_project)
     yield test, c(editor_class=Project)
+    yield test, c(editor_class=Project, editor_is_current=True)
 
 def test_selected_editor_changed():
     @test_app

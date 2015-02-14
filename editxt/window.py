@@ -272,6 +272,8 @@ class Window(object):
     def _set_current_editor(self, editor):
         self._recent_history = None
         if editor is self._current_editor:
+            if editor is not None:
+                editor.focus()
             return
         self._current_editor = editor
         if editor is not None:

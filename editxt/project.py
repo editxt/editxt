@@ -288,6 +288,10 @@ class Project(object):
             self.command_view = self.main_view.bottom
         self.main_view.become_subview_of(view, focus=self.listview.view)
 
+    def focus(self):
+        if self is not self.window.current_editor:
+            self.window.current_editor = self
+
     def message(self, msg, msg_type=const.INFO):
         """Display a message in the command view"""
         self.command_view.message(msg, msg_type=msg_type)

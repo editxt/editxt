@@ -265,6 +265,12 @@ class Editor(object):
         self.document.update_syntaxer()
         self.document.check_for_external_changes(window)
 
+    def focus(self):
+        if self is not self.project.window.current_editor:
+            self.project.window.current_editor = self
+        elif self.text_view is not None:
+            self.text_view.focus()
+
     def set_text_attributes(self, attrs=None):
         view = self.text_view
         if view is None:
