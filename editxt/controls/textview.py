@@ -74,6 +74,14 @@ class TextView(ak.NSTextView):
         except ValueError:
             beep()
 
+    def scrollRangeToVisible_(self, rng):
+        if rng[0] == self.textStorage().length() and rng[1] == 0:
+            # HACK not sure why this is necessary
+            # The regression it's working around was introduced in
+            # 1ac32effc928b43392982c3b4d39d89639fd56b2 : Fixing line numbers
+            rng = (self.textStorage().length() - 1, 1)
+        super().scrollRangeToVisible_(rng)
+
     # Find panel amd text command interaction ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def performFindPanelAction_(self, sender):

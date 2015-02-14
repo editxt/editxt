@@ -72,11 +72,10 @@ x  - font size (make easy to adjust)
     - more lanugages
     - better language detection (file extension, shebang line, etc.)
   - colors (dark theme)
-fix bug when pasting many newlines at end of document (scrolls to beginning)
-fix line counting in TextView.goto_line (should recognize all line break chars)
+Fix line counting in TextView.goto_line (should recognize all line break chars)
 Pythonic...
-  - TextView wrapper
-  - TreeView wrapper
+  - TextView
+  - TreeView
 Refactor tests to not depend on py2app bundle
   - this is a problem on 10.9+ unless py2app main.c is modified
 Fix stdout/stderr and error output
