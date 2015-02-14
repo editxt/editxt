@@ -62,7 +62,6 @@ def test_create():
         ak.NSTextDidChangeNotification, tv)
     with m:
         lnv = create_lnv(scrollview=sv)
-        eq_(lnv.lines, [])
         eq_(lnv.textview, tv)
         eq_(lnv.paragraph_style.alignment(), ak.NSRightTextAlignment)
 
@@ -71,19 +70,17 @@ def test_calculate_thickness():
         m = Mocker()
         tv = m.mock(TextView)
         lnv = create_lnv(tv)
-        estimate_line_count = m.method(lnv.estimate_line_count)
         ruleThickness = m.method(lnv.ruleThickness)
-        lines = []
+        ruleThickness() >> 200
+        (tv.editor.line_numbers << []).count(0, 1)
         font = tv.font() >> m.mock(ak.NSFont)
-        estimate_line_count(font) >> c.numlines
         cw = font.advancementForGlyph_(ord("8")).width >> 15
         with m:
-            result = lnv.calculate_thickness()
+            result = lnv.calculate_thickness(c.numlines)
             eq_(result, c.result)
-            eq_(lnv.lines, lines)
     c = TestConfig(font_is_none=False)
-    yield test, c(numlines=0, result=15 * 4)
-    yield test, c(numlines=1, result=15 * 4)
-    yield test, c(numlines=20, result=15 * 4)
-    yield test, c(numlines=200, result=15 * 5)
-    yield test, c(numlines=3000, result=15 * 6)
+    yield test, c(numlines=0, result=int(15 * 4.7))
+    yield test, c(numlines=1, result=int(15 * 4.7))
+    yield test, c(numlines=20, result=int(15 * 4.7))
+    yield test, c(numlines=200, result=int(15 * 5.7))
+    yield test, c(numlines=3000, result=int(15 * 6.7))

@@ -64,7 +64,7 @@ class StatusbarScrollView(ak.NSScrollView):
 
         ruler = self.verticalRulerView()
         if ruler:
-            rulew = ruler.calculate_thickness()
+            rulew = ruler.requiredThickness()
             # ruler | content
             rule_rect, crect = fn.NSDivideRect(crect, None, None, rulew, fn.NSMinXEdge)
         else:

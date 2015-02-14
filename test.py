@@ -38,6 +38,144 @@ def eq(v0, v1):
         print()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# contains vs setattr (already copied below)
+
+init = """
+x = {}
+y = {0: 1, 10: 2, 20: 3}
+
+keys = [0, 5, 10, 15, 20, 35]
+
+def empty_contains_setattr():
+    cache = x
+    for i, k in enumerate(keys):
+        if k not in cache:
+            cache[k] = i
+
+def filled_contains_setattr():
+    cache = y
+    for i, k in enumerate(keys):
+        if k not in cache:
+            cache[k] = i
+
+def empty_setattr():
+    cache = x
+    for i, k in enumerate(keys):
+        cache[k] = i
+
+def filled_setattr():
+    cache = y
+    for i, k in enumerate(keys):
+        cache[k] = i
+
+"""
+
+trials = [
+
+'empty_contains_setattr()',
+'filled_contains_setattr()',
+'empty_setattr()',
+'filled_setattr()',
+
+]
+n = 1000000
+
+# trial 0: 0.220976114273
+# trial 1: 0.262070178986
+# trial 2: 0.248097896576
+# trial 3: 0.299978971481
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#try:
+#    exec(init)
+#    v0 = eval(trials[0])
+#    v1 = eval(trials[1])
+#    eq(v0, v1)
+#except Exception:
+#    log.error("trial equality test failed", exc_info=True)
+#    print()
+
+print("# %s iterations" % n)
+for i, trial in enumerate(trials):
+    try:
+        t = timeit.Timer(trial, init)
+        #v1 = min(t.repeat(n, 1)) * n # if setup is needed for each timing
+        v1 = t.timeit(n)
+    except Exception as ex:
+        print("# trial %i failed: %s - %s" % (i, ex, trial))
+        traceback.print_exc()
+    else:
+        print("# trial %i:" % i, v1, '-', trial)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+'''
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# contains vs setattr
+
+init = """
+x = {}
+y = {0: 1, 10: 2, 20: 3}
+
+keys = [0, 5, 10, 15, 20, 35]
+
+def empty_contains_setattr():
+    cache = x
+    for i, k in enumerate(keys):
+        if k not in cache:
+            cache[k] = i
+
+def filled_contains_setattr():
+    cache = y
+    for i, k in enumerate(keys):
+        if k not in cache:
+            cache[k] = i
+
+def empty_setattr():
+    cache = x
+    for i, k in enumerate(keys):
+        cache[k] = i
+
+def filled_setattr():
+    cache = y
+    for i, k in enumerate(keys):
+        cache[k] = i
+
+"""
+
+trials = [
+
+'empty_contains_setattr()',
+'filled_contains_setattr()',
+'empty_setattr()',
+'filled_setattr()',
+
+]
+n = 1000000
+
+# 1000000 iterations
+# trial 0: 2.249958924949169 - empty_contains_setattr()
+# trial 1: 2.1139858290553093 - filled_contains_setattr()
+# trial 2: 1.8919818103313446 - empty_setattr()
+# trial 3: 1.8649734556674957 - filled_setattr()
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+print("# %s iterations" % n)
+for i, trial in enumerate(trials):
+    try:
+        t = timeit.Timer(trial, init)
+        v1 = min(t.repeat(n, 1)) * n
+    except Exception as ex:
+        print("# trial %i failed: %s - %s" % (i, ex, trial))
+        traceback.print_exc()
+    else:
+        print("# trial %i:" % i, v1, '-', trial)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # if x vs try vs if x is y
 
 init = """
@@ -80,31 +218,6 @@ n = 1000000
 # trial 2: 0.248097896576
 # trial 3: 0.299978971481
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-try:
-    exec(init)
-    v0 = eval(trials[0])
-    v1 = eval(trials[1])
-    eq(v0, v1)
-except Exception:
-    log.error("trial equality test failed", exc_info=True)
-    print()
-
-for i, trial in enumerate(trials):
-    try:
-        t = timeit.Timer(trial, init)
-        v1 = t.timeit(n)
-    except Exception as ex:
-        print("# trial %i failed: %s" % (i, ex))
-        traceback.print_exc()
-    else:
-        print("# trial %i:" % i, v1)
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-'''
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # if [] vs if x == ['y']
 

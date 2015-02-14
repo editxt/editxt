@@ -35,7 +35,6 @@ class LineNumberView(ak.NSRulerView):
     def initWithScrollView_orientation_(self, scrollview, orientation):
         super(LineNumberView, self).initWithScrollView_orientation_(scrollview, orientation)
         self.textview = scrollview.documentView()
-        self.lines = []
         self.paragraph_style = ps = ak.NSParagraphStyle.defaultParagraphStyle().mutableCopy()
         ps.setAlignment_(ak.NSRightTextAlignment)
         self.line_count = 1
@@ -49,33 +48,25 @@ class LineNumberView(ak.NSRulerView):
     def denotify(self):
         fn.NSNotificationCenter.defaultCenter().removeObserver_(self)
 
-    # Line Counting ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    def estimate_line_count(self, font):
-        min_count = len(self.textview.editor.line_numbers)
-        return self.update_line_count(min_count)
-
-    def update_line_count(self, value):
-        lc = self.line_count
-        if lc < value:
-            self.line_count = lc = value
-        return lc
-
-    # Rule thickness and drawing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    def calculate_thickness(self):
+    def calculate_thickness(self, min_count=0, display=True):
+        if not min_count:
+            min_count = len(self.textview.editor.line_numbers)
+        lines = self.line_count
+        if lines < min_count:
+            self.line_count = lines = min_count
         font = self.textview.font()
         charwidth = font.advancementForGlyph_(ord("8")).width
-        lines = self.estimate_line_count(font)
-        return int(max(len(str(lines)) + 2.75, 4.75) * charwidth)
+        value = int(max(len(str(lines)) + 2.7, 4.7) * charwidth)
+        if value > self.ruleThickness():
+            self.setRuleThickness_(value)
+            if display:
+                from editxt.platform.events import call_later
+                call_later(0, self.setNeedsDisplay_, True)
+        return value
 
     def invalidateRuleThickness(self):
-        thickness = self.calculate_thickness()
+        self.calculate_thickness(display=False)
         self.setNeedsDisplay_(True)
-        if thickness > self.ruleThickness():
-            self.setRuleThickness_(int(thickness))
-
-    line_cache = {}
 
     def drawRect_(self, rect):
         # draw background and border line
@@ -124,6 +115,7 @@ class LineNumberView(ak.NSRulerView):
         layout = view.layoutManager()
         container = view.textContainer()
         line_height = layout.defaultLineHeightForFont_(font)
+        y_min = rect.origin.y - line_height
         y_max = rect.origin.y + rect.size.height + line_height
         half_char = view.textContainerInset().height
         lines = view.editor.line_numbers
@@ -160,6 +152,8 @@ class LineNumberView(ak.NSRulerView):
             if not n:
                 continue
             y_pos = (convert_point(rects[0].origin, view).y + y_offset)
+            if y_pos < y_min:
+                continue
             if y_pos > y_max:
                 break
             draw_rect.origin.y = y_pos
@@ -167,9 +161,10 @@ class LineNumberView(ak.NSRulerView):
             text.drawWithRect_options_attributes_(draw_rect, 0, attr)
 
         if y_pos is not None:
-            if lines.newline_at_end and line + 1 == len(lines):
+            if y_pos >= y_min and lines.newline_at_end and line + 1 == len(lines):
+                line += 1
                 draw_rect.origin.y = y_pos + line_height
-                text = fn.NSString.stringWithString_(str(line + 1))
+                text = fn.NSString.stringWithString_(str(line))
                 text.drawWithRect_options_attributes_(draw_rect, 0, attr)
             if line > self.line_count:
-                self.invalidateRuleThickness()
+                self.calculate_thickness(line)
