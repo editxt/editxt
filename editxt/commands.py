@@ -454,7 +454,7 @@ def insert_newline(editor, args):
     if textview.shouldChangeTextInRange_replacementString_(sel, eol):
         textview.textStorage().replaceCharactersInRange_withString_(sel, eol)
         textview.didChangeText()
-        textview.scrollRangeToVisible_((sel[0] + len(eol), 0))
+        textview.scrollRangeToVisible_((sel[0], len(eol)))
 
 def move_to_beginning_of_line(editor, args):
     textview = editor.text_view

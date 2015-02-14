@@ -68,6 +68,8 @@ Aesthetics
 x  - font size (make easy to adjust)
   - syntax highlighting
   - colors (dark theme)
+fix bug when pasting many newlines at end of document (scrolls to beginning)
+fix line counting in TextView.goto_line (should recognize all line break chars)
 Pythonic...
   - TextView wrapper
   - TreeView wrapper
