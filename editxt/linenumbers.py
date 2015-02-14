@@ -64,6 +64,9 @@ class LineNumbers(object):
 
         `char_index` in each generated pair is the index of the first
         character of the line at the corresponding `line_number`.
+        This will not generate a line number/index pair for the last
+        line if its length is zero (i.e., if there is a newline at the
+        end of the text).
         """
         lines = self.lines
         index = lines[-1]
@@ -86,3 +89,22 @@ class LineNumbers(object):
                 index = next
             self.end = lines.pop(-1)
             self.newline_at_end = text.endswith(EOLS)
+
+    def index_of(self, line):
+        """Return the character index of the given line number
+
+        :param line: A line number.
+        :returns: Index of the first character of line.
+        :raises: `ValueError` if line is out of bounds (greater or less than
+        the number of lines in the text).
+        """
+        if line < 1:
+            raise ValueError(line)
+        lines = self.lines
+        if len(lines) >= line:
+            return lines[line - 1]
+        for lno, index in self.iter_from(lines[-1]):
+            if line == lno:
+                return index
+            assert lno < line, (line, lno)
+        raise ValueError(line)

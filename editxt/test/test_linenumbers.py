@@ -27,6 +27,14 @@ from editxt.test.util import assert_raises, eq_, gentest
 
 END = Constant("END")
 
+TEXT = (
+    "abc\n"  # 0     3   1
+    "def\n"  # 4     7   2
+    "\n"     # 8     8   3
+    "ghij\n" # 9     13  4
+    "jkl\n"  # 14    17  5
+)
+
 def test_getitem():
     @gentest
     def test(i, line, text, preset=None):
@@ -53,13 +61,6 @@ def test_getitem():
     yield test(2, 1, "abc")
     yield test(3, IndexError, "abc")
 
-    TEXT = (
-        "abc\n"  # 0     3   1
-        "def\n"  # 4     7   2
-        "\n"     # 8     8   3
-        "ghij\n" # 9     13  4
-        "jkl\n"  # 14    17  5
-    )
     for preset in [None, END] + list(range(7, 15)):
         test = partial(base_test, text=TEXT, preset=preset)
         yield test(0, 1)
@@ -107,13 +108,6 @@ def test_delitem():
     yield test(2, [0], "abc")
     yield test(3, [], "abc")
 
-    TEXT = (
-        "abc\n"  # 0     3   1
-        "def\n"  # 4     7   2
-        "\n"     # 8     8   3
-        "ghij\n" # 9     13  4
-        "jkl\n"  # 14    17  5
-    )
     for preset in [None, END] + list(range(7, 15)):
         test = partial(base_test, text=TEXT, preset=preset)
         yield test(0, [0, 4, 8, 9, 14, 18])
@@ -148,13 +142,6 @@ def test_len():
     yield test(1, "a", 1)
     yield test(1, "a", 2)
 
-    TEXT = (
-        "abc\n"  # 0     3   1
-        "def\n"  # 4     7   2
-        "\n"     # 8     8   3
-        "ghij\n" # 9     13  4
-        "jkl\n"  # 14    17  5
-    )
     test = partial(base_test, text=TEXT)
     yield test(1, iter_to_line=0)
     yield test(1, iter_to_line=1)
@@ -187,13 +174,6 @@ def test_iter_from():
 
     yield test(0, [0, 1, 2], "\n\n\n")
 
-    TEXT = (
-        "abc\n"  # 0     3   1
-        "def\n"  # 4     7   2
-        "\n"     # 8     8   3
-        "ghij\n" # 9     13  4
-        "jkl\n"  # 14    17  5
-    )
     for preset in [None, END] + list(range(7, 15)):
         test = partial(base_test, text=TEXT, preset=preset)
         yield test(0, [0, 4, 8, 9, 14])
@@ -228,13 +208,6 @@ def test_newline_at_end():
     yield test(None, "a", 1)
     yield test(False, "a", 2)
 
-    TEXT = (
-        "abc\n"  # 0     3   1
-        "def\n"  # 4     7   2
-        "\n"     # 8     8   3
-        "ghij\n" # 9     13  4
-        "jkl\n"  # 14    17  5
-    )
     test = partial(base_test, text=TEXT)
     yield test(None, iter_to_line=0)
     yield test(None, iter_to_line=1)
@@ -242,3 +215,46 @@ def test_newline_at_end():
     yield test(None, iter_to_line=4)
     yield test(None, iter_to_line=5)
     yield test(True, iter_to_line=6)
+
+def test_index_of_line():
+    LINE = Constant("LINE")
+
+    @gentest
+    def test(num, expect, text, iter_to_line=None):
+        text = Text(text)
+        lines = LineNumbers(text)
+        if iter_to_line is END:
+            list(lines.iter_from(0))
+            assert lines.end is not None
+        elif iter_to_line is not None:
+            if iter_to_line is LINE:
+                iter_to_line = num
+            for line, index in lines.iter_from(0):
+                if line >= iter_to_line:
+                    break
+        if isinstance(expect, int):
+            eq_(lines.index_of(num), expect)
+        else:
+            with assert_raises(expect):
+                lines.index_of(num)
+    base_test = test
+
+    yield test(-1, ValueError, "")
+    yield test(0, ValueError, "")
+    yield test(1, 0, "")
+    yield test(1, 0, "", 1)
+    yield test(1, 0, "", 2)
+    yield test(1, 0, "a")
+    yield test(1, 0, "a", 1)
+    yield test(1, 0, "a", 2)
+    yield test(2, ValueError, "")
+    yield test(2, ValueError, "", 2)
+
+    test = partial(base_test, text=TEXT)
+    for to in [None, 0, LINE, END]:
+        yield test(1, 0, iter_to_line=to)
+        yield test(2, 4, iter_to_line=to)
+        yield test(3, 8, iter_to_line=to)
+        yield test(4, 9, iter_to_line=to)
+        yield test(5, 14, iter_to_line=to)
+        yield test(6, ValueError, iter_to_line=to)

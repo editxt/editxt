@@ -56,29 +56,19 @@ class TextView(ak.NSTextView):
         """
         return self.editor.font.font
 
-    def goto_line(self, num):
-        eol = self.editor.document.eol
-        assert len(eol) > 0, repr(eol)
-        text = self.string()
-        line = 1
-        tlen = len(text)
-        index = 0
-        select_start = 0
-        select_len = 0
-        if isinstance(num, (tuple, list)):
-            num, select_start, select_len = num
-        while line < num:
-            frange = (index, tlen - index)
-            found = text.rangeOfString_options_range_(eol, 0, frange)
-            if not found.length:
-                break
-            index = found.location + found.length
-            line += 1
-        if line == num:
+    def goto_line(self, line):
+        # TODO move this into editor
+        if isinstance(line, (tuple, list)):
+            line, select_start, select_len = line
+        else:
+            select_start = 0
+            select_len = 0
+        try:
+            index = self.editor.line_numbers.index_of(line)
             range = (index + select_start, select_len)
             self.setSelectedRange_(range)
             self.scrollRangeToVisible_(range)
-        else:
+        except ValueError:
             beep()
 
     # Find panel amd text command interaction ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
