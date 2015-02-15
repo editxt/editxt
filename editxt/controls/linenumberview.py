@@ -100,10 +100,11 @@ class LineNumberView(ak.NSRulerView):
         ))
         self.draw_line_numbers(rect, line_number_color)
 
-    def char_index_at_point(self, point):
+    def char_index_at_point(self, point, adjust_x=True):
         view = self.textview
         view_point = self.convertPoint_toView_(point, view)
-        view_point.x = view.textContainerOrigin().x
+        if adjust_x:
+            view_point.x = view.textContainerOrigin().x
         return view.layoutManager() \
             .characterIndexForPoint_inTextContainer_fractionOfDistanceBetweenInsertionPoints_(
                 view_point, view.textContainer(), None)[0]
@@ -183,26 +184,38 @@ class LineNumberView(ak.NSRulerView):
     def mouseDragged_(self, event):
         super().mouseDragged_(event)
         point = self.convertPoint_fromView_(event.locationInWindow(), None)
-        char_index = self.char_index_at_point(point)
-        if self.mouse_down_char_index != char_index:
-            length = self.textview.textStorage().length()
-            if char_index == length - 1:
-                # dragged to or beyond last line
-                lines = self.textview.editor.line_numbers
-                if lines.end and lines.newline_at_end:
-                    char_index = lines.end
-            self.textview.setSelectedRange_((
-                min(self.mouse_down_char_index, char_index),
-                abs(self.mouse_down_char_index - char_index)
-            ))
-            self.mouse_dragged = True
+        if not ak.NSPointInRect(point, self.frame()):
+            view_point = self.convertPoint_toView_(point, self.textview)
+            doc_rect = self.scrollView().documentVisibleRect()
+            if not ak.NSPointInRect(view_point, doc_rect):
+                self.textview.setSelectedRange_(self.original_selection)
+                return
+            char_index = self.char_index_at_point(point, False)
+        else:
+            char_index = self.char_index_at_point(point)
+            if self.mouse_down_char_index != char_index:
+                length = self.textview.textStorage().length()
+                if char_index == length - 1:
+                    # dragged to or beyond last line
+                    lines = self.textview.editor.line_numbers
+                    if lines.end and lines.newline_at_end:
+                        char_index = lines.end
+        self.textview.setSelectedRange_((
+            min(self.mouse_down_char_index, char_index),
+            abs(self.mouse_down_char_index - char_index)
+        ))
+        self.mouse_dragged = True
 
     @noraise
     def mouseUp_(self, event):
         super().mouseUp_(event)
         point = self.convertPoint_fromView_(event.locationInWindow(), None)
         if not ak.NSPointInRect(point, self.frame()):
-            self.textview.setSelectedRange_(self.original_selection)
+            view_point = self.convertPoint_toView_(point, self.textview)
+            doc_rect = self.scrollView().documentVisibleRect()
+            if not ak.NSPointInRect(view_point, doc_rect):
+                self.textview.setSelectedRange_(self.original_selection)
+                return
         elif not self.mouse_dragged:
             # select single line
             view = self.textview
