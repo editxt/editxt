@@ -35,6 +35,7 @@ https://github.com/editxt/editxt for details of what actually happened.
     line_color: E6E6E6
     margin_color: F7F7F7
   ```
+- Select line(s) on click/drag in line number view.
 
 ## 2015-01-31 - 1.7.6
 

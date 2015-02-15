@@ -26,6 +26,7 @@ import Foundation as fn
 from objc import super
 
 from editxt.platform.mac.views.util import font_smoothing
+from editxt.util import noraise
 
 log = logging.getLogger(__name__)
 
@@ -68,6 +69,7 @@ class LineNumberView(ak.NSRulerView):
         self.calculate_thickness(display=False)
         self.setNeedsDisplay_(True)
 
+    @noraise
     def drawRect_(self, rect):
         # draw background and border line
         view = self.textview
@@ -98,6 +100,15 @@ class LineNumberView(ak.NSRulerView):
         ))
         self.draw_line_numbers(rect, line_number_color)
 
+    def char_index_at_point(self, point):
+        view = self.textview
+        view_point = self.convertPoint_toView_(point, view)
+        view_point.x = view.textContainerOrigin().x
+        return view.layoutManager() \
+            .characterIndexForPoint_inTextContainer_fractionOfDistanceBetweenInsertionPoints_(
+                view_point, view.textContainer(), None)[0]
+        return index
+
     @font_smoothing
     def draw_line_numbers(self, rect, color):
         """Draw the line numbers
@@ -122,18 +133,8 @@ class LineNumberView(ak.NSRulerView):
         null_range = (ak.NSNotFound, 0)
         convert_point = self.convertPoint_fromView_
         char_rects = layout.rectArrayForCharacterRange_withinSelectedCharacterRange_inTextContainer_rectCount_
-
-        view_y = self.convertPoint_toView_(rect.origin, view).y
-        visible_rect = self.scrollView().contentView().bounds()
-        view_rect = fn.NSMakeRect(0, view_y, visible_rect.size.width, rect.size.height)
         y_offset = view.textContainerOrigin().y + layout.defaultBaselineOffsetForFont_(font)
-
-        glyph_range = layout.glyphRangeForBoundingRect_inTextContainer_(
-                            view_rect, container)
-        if glyph_range.location == 0 and view_rect.origin.y > 0:
-            glyph_range = layout.glyphRangeForBoundingRect_inTextContainer_(
-                            visible_rect, container)
-        first_char = layout.characterIndexForGlyphAtIndex_(glyph_range.location)
+        first_char = self.char_index_at_point(rect.origin)
 
         draw_width = rect.size.width - half_char * 3
         draw_rect = fn.NSMakeRect(0, 0, draw_width, 0)
@@ -168,3 +169,65 @@ class LineNumberView(ak.NSRulerView):
                 text.drawWithRect_options_attributes_(draw_rect, 0, attr)
             if line > self.line_count:
                 self.calculate_thickness(line)
+
+    @noraise
+    def mouseDown_(self, event):
+        super().mouseDown_(event)
+        point = self.convertPoint_fromView_(event.locationInWindow(), None)
+        char_index = self.char_index_at_point(point)
+        self.original_selection = self.textview.selectedRange()
+        self.mouse_down_char_index = char_index
+        self.mouse_dragged = False
+
+    @noraise
+    def mouseDragged_(self, event):
+        super().mouseDragged_(event)
+        point = self.convertPoint_fromView_(event.locationInWindow(), None)
+        char_index = self.char_index_at_point(point)
+        if self.mouse_down_char_index != char_index:
+            length = self.textview.textStorage().length()
+            if char_index == length - 1:
+                # dragged to or beyond last line
+                lines = self.textview.editor.line_numbers
+                if lines.end and lines.newline_at_end:
+                    char_index = lines.end
+            self.textview.setSelectedRange_((
+                min(self.mouse_down_char_index, char_index),
+                abs(self.mouse_down_char_index - char_index)
+            ))
+            self.mouse_dragged = True
+
+    @noraise
+    def mouseUp_(self, event):
+        super().mouseUp_(event)
+        point = self.convertPoint_fromView_(event.locationInWindow(), None)
+        if not ak.NSPointInRect(point, self.frame()):
+            self.textview.setSelectedRange_(self.original_selection)
+        elif not self.mouse_dragged:
+            # select single line
+            view = self.textview
+            font = view.font()
+            layout = view.layoutManager()
+            line_height = layout.defaultLineHeightForFont_(font)
+
+            char_index = self.char_index_at_point(point)
+            point2 = ak.NSPoint(point.x, point.y + line_height)
+            char_index2 = self.char_index_at_point(point2)
+            length = view.textStorage().length()
+            if char_index == char_index2 and char_index >= length - 1:
+                # clicked below last line
+                view.setSelectedRange_((length, 0))
+            else:
+                lines = view.editor.line_numbers
+                line = lines[char_index]
+                try:
+                    next_index = lines.index_of(line + 1)
+                except ValueError:
+                    next_index = length
+                view.setSelectedRange_((
+                    min(char_index, next_index),
+                    abs(next_index - char_index)
+                ))
+        self.original_selection = None
+        self.mouse_down_char_index = None
+        self.mouse_dragged = None
