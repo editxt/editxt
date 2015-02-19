@@ -107,4 +107,6 @@ class LineNumbers(object):
             if line == lno:
                 return index
             assert lno < line, (line, lno)
+        if self.newline_at_end and len(lines) + 1 == line:
+            return self.end
         raise ValueError(line)

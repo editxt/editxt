@@ -509,12 +509,12 @@ class Editor(object):
         lines = self.line_numbers
         try:
             line = lines[index]
-            line_index = self.line_numbers.index_of(line)
         except IndexError:
-            if index != length or not lines.newline_at_end:
-                raise
+            if index != length or not lines.end:
+                raise ValueError(
+                    (index, length, lines.end, lines.newline_at_end, len(lines)))
             line = len(lines)
-            line_index = index
+        line_index = self.line_numbers.index_of(line)
         col = max(index - line_index, 0)
         sel = range.length
         self.scroll_view.status_view.updateLine_column_selection_(line, col, sel)
@@ -524,4 +524,3 @@ class Editor(object):
             if len(ftext.strip()) < 3 or " " in ftext:
                 ftext = ""
             self.finder.mark_occurrences(ftext)
-

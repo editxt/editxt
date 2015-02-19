@@ -257,4 +257,5 @@ def test_index_of_line():
         yield test(3, 8, iter_to_line=to)
         yield test(4, 9, iter_to_line=to)
         yield test(5, 14, iter_to_line=to)
-        yield test(6, ValueError, iter_to_line=to)
+        yield test(6, 18, iter_to_line=to)
+        yield test(7, ValueError, iter_to_line=to)
