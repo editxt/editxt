@@ -466,7 +466,7 @@ def test_set_edit_state():
             dv.line_numbers = m.mock()
             m.off_the_record(dv.line_numbers)
             eq_state = dict(state)
-            eq_state.setdefault("selection", (0, 0))
+            eq_state.setdefault("selection", [0, 0])
             eq_state.setdefault("scrollpoint", (0, 0))
             eq_state.setdefault("soft_wrap", const.WRAP_NONE)
             point = eq_state["scrollpoint"]
@@ -483,10 +483,11 @@ def test_set_edit_state():
             dv.scroll_view.verticalRulerView().invalidateRuleThickness()
             dv.text_view.scrollPoint_(fn.NSPoint(*point))
             doc.text_storage.length() >> ts_len
-            if sel[0] < ts_len:
-                if sel[0] + sel[1] > ts_len:
-                    sel = (sel[0], ts_len - sel[0])
-                dv.text_view.setSelectedRange_(fn.NSRange(*sel))
+            if sel[0] > ts_len:
+                sel = (ts_len, 0)
+            elif sel[0] + sel[1] > ts_len:
+                sel = (sel[0], ts_len - sel[0])
+            dv.text_view.setSelectedRange_(sel)
         with m:
             dv.edit_state = state
             if not isinstance(state, dict):

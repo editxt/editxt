@@ -415,10 +415,11 @@ class Editor(object):
             self.line_numbers[char_index] # count lines for ruler view
             self.scroll_view.verticalRulerView().invalidateRuleThickness()
             self.text_view.scrollPoint_(point)
-            if sel[0] < length:
-                if sel[0] + sel[1] > length:
-                    sel = (sel[0], length - sel[0])
-                self.text_view.setSelectedRange_(fn.NSRange(*sel))
+            if sel[0] > length:
+                sel = (length, 0)
+            elif sel[0] + sel[1] > length:
+                sel = (sel[0], length - sel[0])
+            self.text_view.setSelectedRange_(sel)
         else:
             self._state = state
     edit_state = property(_get_edit_state, _set_edit_state)
