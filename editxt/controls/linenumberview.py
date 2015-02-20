@@ -148,7 +148,7 @@ class LineNumberView(ak.NSRulerView):
         # draw line numbers
         y_pos = None
         for line, char_index in lines.iter_from(first_char):
-            if char_index < first_char:
+            if char_index < first_char and y_pos:
                 continue
             rects, n = char_rects((char_index, 0), null_range, container, None)
             if not n:
