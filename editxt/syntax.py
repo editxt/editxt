@@ -99,7 +99,7 @@ class SyntaxFactory():
         return PLAIN_TEXT
 
 
-class SyntaxCache(object):
+class Highlighter(object):
 
     def __init__(self):
         self.cache = []

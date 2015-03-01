@@ -633,10 +633,10 @@ def test_makeWindowControllers():
 
 @test_app
 def test_get_syntaxdef(app):
-    from editxt.syntax import SyntaxCache, SyntaxDefinition
+    from editxt.syntax import Highlighter, SyntaxDefinition
     m = Mocker()
     doc = TextDocument(app)
-    syn = doc.syntaxer = m.mock(SyntaxCache)
+    syn = doc.syntaxer = m.mock(Highlighter)
     sd = syn.syntaxdef >> m.mock(SyntaxDefinition)
     with m:
         eq_(doc.syntaxdef, sd)
@@ -653,7 +653,7 @@ def test_set_syntaxdef(app):
         eq_(doc.syntaxer.syntaxdef, sd)
 
 def test_update_syntaxer():
-    from editxt.syntax import SyntaxCache, SyntaxDefinition, SyntaxFactory
+    from editxt.syntax import Highlighter, SyntaxDefinition, SyntaxFactory
     @test_app
     def test(app, c):
         m = Mocker()
@@ -663,7 +663,7 @@ def test_update_syntaxer():
         app.syntax_factory = m.mock(SyntaxFactory)
         m.property(doc, "syntaxdef")
         m.property(doc, "props")
-        syn = doc.syntaxer = m.mock(SyntaxCache)
+        syn = doc.syntaxer = m.mock(Highlighter)
         syn.filename >> "<filename %s>" % ("0" if c.namechange else "1")
         new = doc.file_path = "<filename 1>"
         if c.namechange:
@@ -682,22 +682,22 @@ def test_update_syntaxer():
 
 @test_app
 def test_TextDocument_comment_token(app):
-    from editxt.syntax import SyntaxCache, SyntaxDefinition
+    from editxt.syntax import Highlighter, SyntaxDefinition
     m = Mocker()
     doc = TextDocument(app)
-    syn = doc.syntaxer = m.mock(SyntaxCache)
+    syn = doc.syntaxer = m.mock(Highlighter)
     syn.syntaxdef.comment_token >> "#"
     with m:
         eq_(doc.comment_token, "#")
 
 @test_app
 def test_TextDocument_on_text_edit(app):
-    from editxt.syntax import SyntaxCache
+    from editxt.syntax import Highlighter
     m = Mocker()
     doc = TextDocument(app)
     with m.off_the_record():
         ts = doc.text_storage = m.mock(ak.NSTextStorage)
-    syn = doc.syntaxer = m.mock(SyntaxCache)
+    syn = doc.syntaxer = m.mock(Highlighter)
     range = (0, 20)
     syn.color_text(ts, range)
     with m:

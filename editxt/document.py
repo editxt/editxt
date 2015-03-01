@@ -35,7 +35,7 @@ from editxt.controls.alert import Alert
 from editxt.platform.events import call_later
 from editxt.platform.kvo import KVOLink, KVOProxy
 from editxt.platform.text import Text
-from editxt.syntax import SyntaxCache
+from editxt.syntax import Highlighter
 from editxt.undo import UndoManager
 from editxt.util import (untested, refactor,
     fetch_icon, filestat, WeakProperty)
@@ -111,7 +111,7 @@ class TextDocument(object):
             ak.NSCharacterEncodingDocumentAttribute: fn.NSUTF8StringEncoding,
         }
         self.undo_manager = UndoManager()
-        self.syntaxer = SyntaxCache()
+        self.syntaxer = Highlighter()
         self.props = KVOProxy(self)
         self._kvo = KVOLink([
             (self.undo_manager, "has_unsaved_actions", self.props, "is_dirty"),

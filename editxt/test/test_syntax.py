@@ -30,7 +30,7 @@ from editxt.test.util import TestConfig, untested, check_app_state, tempdir
 
 import editxt.constants as const
 import editxt.syntax as mod
-from editxt.syntax import SyntaxFactory, SyntaxCache, SyntaxDefinition
+from editxt.syntax import SyntaxFactory, Highlighter, SyntaxDefinition
 from editxt.syntax import NoHighlight, PLAIN_TEXT
 
 log = logging.getLogger(__name__)
@@ -168,14 +168,14 @@ def test_SyntaxFactory_get_definition():
     eq_(sf.get_definition("somefile.txt"), "<syntax def>")
     eq_(sf.get_definition("somefile.text"), PLAIN_TEXT)
 
-def test_SyntaxCache_syntaxdef_default():
-    syn = SyntaxCache()
+def test_Highlighter_syntaxdef_default():
+    syn = Highlighter()
     eq_(syn.syntaxdef, PLAIN_TEXT) # check default
     eq_(syn.filename, None) # check default
 
-def test_SyntaxCache_syntaxdef():
+def test_Highlighter_syntaxdef():
     m = Mocker()
-    syn = SyntaxCache()
+    syn = Highlighter()
     syn.cache.append("something")
     sd = m.mock(SyntaxDefinition)
     with m:
