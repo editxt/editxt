@@ -74,7 +74,8 @@ def config_schema(): return {
         "Command+Alt+Right": String(" doc  next"),
         "Command+Alt+Up": String(" doc  up"),
         "Command+Alt+Down": String(" doc  down"),
-    }
+    },
+    "logging_config": Dict({}),
 }
 
 
@@ -89,6 +90,16 @@ class Type(object):
     @property
     def default_string(self):
         return str(self.default)
+
+
+class Dict(Type):
+
+    def validate(self, value, key):
+        if value is NOT_SET:
+            return self.default
+        if isinstance(value, dict):
+            return value
+        raise ValueError("{}: expected dict, got {!r}".format(key, value))
 
 
 class String(Type):

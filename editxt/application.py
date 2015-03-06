@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import glob
 import logging
+import logging.config
 import os
 from contextlib import contextmanager
 from itertools import chain, repeat
@@ -67,6 +68,13 @@ class Application(object):
             self.config_callbacks = WeakValueDictionary()
             self.config = Config(
                 os.path.join(self.profile_path, const.CONFIG_FILENAME))
+            logging_config = self.config["logging_config"]
+            if logging_config:
+                try:
+                    logging.config.dictConfig(logging_config)
+                    log.debug("logging config: %r", logging_config)
+                except Exception:
+                    log.exception("bad logging config: %r", logging_config)
             self.context = ContextMap()
             self.syntax_factory = None
             state_dir = os.path.join(self.profile_path, const.STATE_DIR)
