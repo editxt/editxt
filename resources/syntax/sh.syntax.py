@@ -18,10 +18,10 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
 name = "Shell"
-filepatterns = ["*.sh"]
+file_patterns = ["*.sh"]
 comment_token = "#"
 word_groups = [
-    ("""
+    ("keyword", """
         alias
         break
         case
@@ -44,12 +44,12 @@ word_groups = [
         unset
         until
         while
-    """.split(), "0000CC"),
-    #("&& ||".split(), "000080"),
-    #("== !=".split(), "FF0000"),
+    """.split()),
+    #("operator.logical", "&& ||".split()),
+    #("operator.equal", "== !=".split()),
 ]
 delimited_ranges = [
-    (RE('"'), ['"'], "800080", None),
-    (RE("'"), ["'"], "008080", None),
-    ("#", [RE(r"(?=\n)")], "008000", None),
+    ("string.double-quote", RE('"'), ['"']), # TODO $VARS
+    ("string.single-quote", RE("'"), ["'"]),
+    ("comment", "#", [RE(r"(?=\n)")]),
 ]

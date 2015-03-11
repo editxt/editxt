@@ -17,25 +17,11 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
-
-c = dict(
-    # EditXT colors
-    gray = "505050",
-    blue = "0000CC",
-
-    # named colors commonly used by EditXT
-    midnight = "000080",
-    clover = "008000",
-    plum = "800080",
-    teal = "008080",
-    cayenne = "800000",
-)
-
-name = "Zone"
-filepatterns = ["*.zone"]
+name = "Bind Zone"
+file_patterns = ["*.zone"]
 comment_token = ";"
 word_groups = [
-    ("""
+    ("keyword", """
         A
         AAAA
         AFSDB
@@ -70,14 +56,14 @@ word_groups = [
         TLSA
         TSIG
         TXT
-    """.split(), c["blue"]),
-    ("@ IN".split(), c["plum"]),
+    """.split()),
+    ("operator", "@ IN".split()),
 ]
+# TODO revisit the theme names used for these ranges
 delimited_ranges = [
-    (RE('\$[A-Z]'), [RE(r"(?=\s)")], c["plum"], None),
-    (RE('"'), ['"'], c["teal"], None),                          # TXT-like record values
-    (RE('(?<=\sA\s)'), [RE(r"(?=\n)")], c["cayenne"], None),    # A record values
-    (RE('(?<=\sCNAME\s)'), [RE(r"(?=\n)")], c["teal"], None),   # CNAME record values
-    (";", [RE(r"(?=\n)")], c["clover"], None),
+    ("builtin", RE('\$[A-Z]'), [RE(r"(?=\s)")]), # plum
+    ("string.txt", RE('"'), ['"']),              # teal, TXT-like record values
+    ("value.a-record", RE('(?<=\sA\s)'), [RE(r"(?=\n)")]),      # cayenne, A record values
+    ("string.cname", RE('(?<=\sCNAME\s)'), [RE(r"(?=\n)")]),    # teal, CNAME record values
+    ("comment", ";", [RE(r"(?=\n)")]),
 ]
-del c

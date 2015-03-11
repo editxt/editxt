@@ -55,6 +55,19 @@ def config_schema(): return {
         const.NEWLINE_MODE_WINDOWS,
         const.NEWLINE_MODE_UNICODE,
         default=const.NEWLINE_MODE_UNIX),
+    "theme": {
+        "syntax": {
+            "keyword": Color(get_color("0000CC")),
+            "builtin": Color(get_color("000080")),
+            #"operator": Color(get_color("800000")),
+            "string": Color(get_color("008080")),
+            "comment": Color(get_color("008000")),
+            "tag": Color(get_color("0000CC")),
+            "attribute": Color(get_color("000080")),
+            "value": Color(get_color("008080")),
+#    string.multiline.single-quote: 505050
+        }
+    },
     "line_number_color": Color(default=get_color("707070")),
     "right_margin": {
         "position": Integer(default=const.DEFAULT_RIGHT_MARGIN, minimum=0),

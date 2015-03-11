@@ -18,8 +18,9 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
 
-name = "C"
-filepatterns = [
+name = "C-like"
+code = "c"
+file_patterns = [
     "*.c",      # C
     "*.h",      # [Obj-]C[++] / etc header files
     "*.cpp",    # C++
@@ -31,87 +32,32 @@ comment_token = "//"
 word_groups = [
     # --------------------------------------------------------------------------
     # copied from javascript
-    ("""
-        abstract
-        boolean
-        break
-        byte
-        case
-        catch
-        char
-        class
-        const
-        continue
-        debugger
-        default
-        delete
-        dispatch_block_t
-        do
-        double
-    	else
-        enum
-        export
-        extends
-        final
-        finally
-        float
-        for
-        function
-        goto
-        id
-        if
-        implements
-        in
-        instanceOf
-        int
-        interface
-        long
-        native
-        new
-        null
-        package
-        private
-        protected
-        public
-        release
-        return
-        short
-        signed
-        static
-        super
-        switch
-        synchronized
-        this
-        throw
-        throws
-        transient
-        try
-        typeof
-        uint32_t
-        uint64_t
-        unsigned
-        var
-        volatile
-        while
-        with
-        yield
-    """.split(), "0000CC"),
+    ("keyword", """
+        abstract boolean break byte case catch char class const continue
+        debugger default delete dispatch_block_t do double else enum export
+        extends final finally float for function goto id if implements in
+        instanceOf int interface long native new null package private protected
+        public release return short signed static super switch synchronized this
+        throw throws transient try typeof uint32_t uint64_t unsigned var
+        volatile while with yield
+    """.split()),
     # --------------------------------------------------------------------------
     # added/changed for obj-c
-    ("""
+    ("keyword", """
         autorelease
         extern
         retain
         self
         void
-    """.split(), "0000CC"),
-    ("""
+    """.split()),
+    ("keyword.preprocessor", """
         #define
         #import
         #include
         #undef
-    """.split(), "78492A"),
-    ("""
+    """.split()), # "78492A"
+    # TODO revisit theme name
+    ("builtin", """
         @class
         @defs
         @protocol
@@ -138,14 +84,17 @@ word_groups = [
         @selector
         @encode
         @compatibility_alias
-    """.split(), "BA2DA2"),
-    ("YES NO NULL nil".split(), "000080"),
+    """.split()), # BA2DA2
+    ("builtin", "YES NO NULL nil".split()),
 ]
 delimited_ranges = [
-    (RE('[@]?"'), ['"', RE(r"[^\\]\n")], "D32E1B", None),
-    (RE('\s\<'), [RE('\.h\>'), RE(r"[^\\]\n")], "D32E1B", None),
-    (RE("[@]?'"), ["'", RE(r"[^\\]\n")], "008080", None),
-    ("//", [RE(r"(?=\n)")], "008000", None),
-    ("/*", ["*/"], "505050", None),
-    #(RE("/[^/]"), [RE(r"[^\\]/[img]*"), RE(r"(?=\n)")], "59069b", None),
+    ("string.single-line", RE('@?"'), ['"', RE(r"[^\\]\n")]), # D32E1B
+    ("string.header", RE('\s\<'), [RE('\.h\>'), RE(r"[^\\]\n")]), # D32E1B
+    ("string.char", RE("@?'"), ["'", RE(r"[^\\]\n")]),
+    ("comment.single-line", "//", [RE("$")]),
+    ("comment.multi-line", "/*", ["*/"]),
+    ("regexp", RE("/(?=[^/])"), [
+        RE(r"(?:(?:[^\\]|(?<=/))(?:\\\\)*)/[img]*"),
+        RE(r"$")
+    ]),
 ]

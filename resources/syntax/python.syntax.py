@@ -18,26 +18,32 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
 name = "Python"
-filepatterns = ["*.py", "*.pyw"]
+file_patterns = ["*.py", "*.pyw"]
 comment_token = "#"
+
 word_groups = [
-    ("""
+    ("keyword", """
         and       del       from      not       while    
         as        elif      global    or        with     
         assert    else      if        pass      yield    
         break     except    import    class     in       
         raise     continue  finally   is        return   
         def       for       lambda    try       nonlocal
-    """.split(), "0000CC"),
-    ("self True False None".split(), "000080"),
-    #("== != < > <= >=".split(), "FF0000"),
+    """.split()),
+    ("builtin", "self True False None".split()),
+    ("comment.single-line", [RE("#.*")]),
+    #("operator", "== != < > <= >=".split()),
 ]
+
 delimited_ranges = [
-    (RE('[rub]?"""'), ['"""'], "008080", None),
-    (RE("[rub]?'''"), ["'''"], "505050", None),
-    (RE('[rub]?"'), ['"', RE(r"[^\\]\n")], "008080", None),
-    (RE("[rub]?'"), ["'", RE(r"[^\\]\n")], "008080", None),
-    ("#", [RE(r"(?=\n)")], "008000", None),
+    ("string.multiline.double-quote", RE('(?:br|rb|ur|ru|r|b|u)?"""'), ['"""']),
+    ("string.multiline.single-quote", RE("(?:br|rb|ur|ru|r|b|u)?'''"), ["'''"]),
+    ("string.double-quote", RE('(?:br|rb|ur|ru|r|b|u)?"'), [
+        RE(r'(?:(?:[^\\]|(?<="))(?:\\\\)*)"'),
+        RE(r"(?<!\\)$"),
+    ]),
+    ("string.single-quote", RE("(?:br|rb|ur|ru|r|b|u)?'"), [
+        RE(r"(?:(?:[^\\]|(?<='))(?:\\\\)*)'"),
+        RE(r"(?<!\\)$"),
+    ]),
 ]
-''' abc '''
-# FIX type """ and then <ENTER> (following lines are not highlighted)

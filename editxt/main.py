@@ -56,6 +56,7 @@ DEFAULT_LOGGING_CONFIG = {
     },
     'loggers': {
         'editxt': {'level': 'DEBUG'},
+        'editxt.syntax': {'level': 'INFO'},
         'editxt.test': {'level': 'DEBUG'},
         'editxt.util': {'level': 'INFO'},
     },

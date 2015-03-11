@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
-
 #colors:
 #    505050 (gray)
 #    1BBA03 (green text)
@@ -31,14 +30,14 @@
 #    59069B (purple)
 
 name = "Git Diff"
-filepatterns = ["*.diff", "*.patch"]
+file_patterns = ["*.diff", "*.patch"]
 delimited_ranges = [
-    (RE('(?m)^diff '), [RE(r"(?m)$")], "505050", None),
-    (RE('(?m)^index '), [RE(r"(?m)$")], "505050", None),
+    ("string.diff.header", RE('^diff '), [RE(r"$")]), # 505050
+    ("string.diff.index", RE('^index '), [RE(r"$")]), # 505050
     # Uncomment these if you want something different for the ---/+++ lines
-    (RE(r'(?m)^--- '),  [RE(r"(?m)$")], "59069B", None),
-    (RE(r'(?m)^\+\+\+ '),  [RE(r"(?m)$")], "59069B", None),
-    (RE(r'(?m)^-(?!-- )'),  [RE(r"(?m)$")], "BA0004", None),
-    (RE(r'(?m)^\+(?!\+\+ )'),  [RE(r"(?m)$")], "1BBA03", None),
-    (RE(r'(?m)^@@ [^@\n]+?'),  [RE(r" @@ ")], "19BABA", None),
+    ("diff.removed.file", RE(r'^--- '),  [RE(r"$")]), # 59069B (purple)
+    ("diff.added.file", RE(r'^\+\+\+ '),  [RE(r"$")]), # 59069B (purple)
+    ("diff.removed", RE(r'^-(?!-- )'),  [RE(r"$")]), # BA0004 (red)
+    ("diff.added", RE(r'^\+(?!\+\+ )'),  [RE(r"$")]), # 1BBA03 (green)
+    ("diff.what?", RE(r'^@@ '),  [RE(r" @@ |$")]), # 19BABA (bright cyan)
 ]

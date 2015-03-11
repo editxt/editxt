@@ -17,18 +17,18 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
-name = "Jinja Templates"
-filepatterns = ["*.jn2"]
-comment_token = "{#"
+name = "Jinja Template"
+file_patterns = ["*.jn2"]
+comment_token = "{#" # ("{#", "#}")
 word_groups = []
 delimited_ranges = [
     # xml tags
-    ("<!--", ["-->"], "008000", None),
-    (RE("<(/)?[a-zA-Z]"), [">", RE(r"(?=\{\{ )")], "000080", None),
+    ("comment", "<!--", ["-->"]),
+    ("tag", RE("<(/)?[a-zA-Z]"), [">", RE(r"(?=\{\{ )")]),
     # both (hackish and nasty)
-    (RE(r"(?<= \}\}).+?(?=(>|\{\{ |\n))"), [">", RE(r"(?=\{\{ |\n)")], "000080", None),
+    ("tag.jinja", RE(r"(?<= \}\}).+?(?=(>|\{\{ |\n))"), [">", RE(r"(?=\{\{ |\n)")]),
     # jinja2 syntax
-    (RE(r"\{\%(-)? "), ["}", RE(r"(?=\n)")], "800000", None),
-    ("{{ ", [" }}", RE(r"(?=\n)")], "800000", None),
-    ("{#", ["#}"], "666666", None),
+    ("value.statement", RE(r"\{\%(-)? "), ["}", RE(r"(?=\n)")], "python"), # 800000
+    ("value.expression", "{{ ", [" }}", RE(r"(?=\n)")], "python"), # 800000
+    ("comment.multi-line", "{#", ["#}"]), # 666666
 ]

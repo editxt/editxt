@@ -19,12 +19,12 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
 name = "EditXT Log"
-filepatterns = ["EditXT Log"]
+file_patterns = ["EditXT Log"]
 comment_token = "x"
 word_groups = [
-    ([RE("DEBUG [a-zA-Z.]+ - ")], "808080"),
-    ([RE("INFO [a-zA-Z.]+ - ")], "008080"),
-    ([RE("WARNING [a-zA-Z.]+ - ")], "E89E28"),
-    ([RE("ERROR [a-zA-Z.]+ - ")], "FF0000"),
-    ([RE("CRITICAL [a-zA-Z.]+ - ")], "FF0000"),
+    ("log.debug", [RE("DEBUG [a-zA-Z.]+ - ")]),
+    ("log.info", [RE("INFO [a-zA-Z.]+ - ")]),
+    ("log.warning", [RE("WARNING [a-zA-Z.]+ - ")]),
+    ("log.error", [RE("ERROR [a-zA-Z.]+ - ")]),
+    ("log.critical", [RE("CRITICAL [a-zA-Z.]+ - ")]),
 ]

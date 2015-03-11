@@ -17,20 +17,21 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
-name = "Mako Templates"
-filepatterns = ["*.mako", "*.mak"]
+# TODO rewrite this with nested definitions (or scrap it in favor of markup)
+name = "Mako Template"
+file_patterns = ["*.mako", "*.mak"]
 comment_token = "##"
 word_groups = [
-    ([
+    ("builtin", [
         RE("<%!?\s"), RE("\s%>"),
-    ], "400080"),
+    ]), # 400080
 ]
 delimited_ranges = [
-    ("<%doc>", ["</%doc>"], "008080", None),
-    (RE("<%[a-z]"), [">"], "800000", None),
-    (RE("</%"), [">"], "800000", None),
-    ("<!--", ["-->"], "008000", None),
-    (RE("<[^/%]"), [">"], "000080", None),
-    (RE("</[^%]"), [">"], "000080", None),
-    ("##", [RE(r"(?=\n)")], "008000", None),
+    ("comment.doc", "<%doc>", ["</%doc>"]),
+    ("tag", RE("<%[a-z]"), [">"]),
+    ("tag", RE("</%"), [">"]),
+    ("comment.multi-line", "<!--", ["-->"]),
+    ("tag", RE("<[^/%]"), [">"]),
+    ("tag", RE("</[^%]"), [">"]),
+    ("comment.single-line", "##", [RE(r"(?=\n)")]),
 ]

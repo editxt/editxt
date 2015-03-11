@@ -37,53 +37,73 @@ def eq(v0, v1):
         print(v1)
         print()
 
+a = ("\"abc\"" + '\'def\'' + "" + '' + '\\' + "\\", eq)
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# contains vs setattr (already copied below)
+# 2x + vs str.join() (already copied below)
 
-init = """
-x = {}
-y = {0: 1, 10: 2, 20: 3}
+init = r"""
+import re
 
-keys = [0, 5, 10, 15, 20, 35]
+ws_str = " \r\n\t\u2028\u2029"
+ws_re = re.compile(r"[\s]")
 
-def empty_contains_setattr():
-    cache = x
-    for i, k in enumerate(keys):
-        if k not in cache:
-            cache[k] = i
+a = "copyright"
+b = "objc/_lazyimport.py"
+c = " "
+d = "\u2029"
 
-def filled_contains_setattr():
-    cache = y
-    for i, k in enumerate(keys):
-        if k not in cache:
-            cache[k] = i
+def ta():
+    for char in a:
+        char in ws_str
 
-def empty_setattr():
-    cache = x
-    for i, k in enumerate(keys):
-        cache[k] = i
+def tb():
+    for char in b:
+        char in ws_str
 
-def filled_setattr():
-    cache = y
-    for i, k in enumerate(keys):
-        cache[k] = i
+def tc():
+    for char in c:
+        char in ws_str
+
+def td():
+    for char in d:
+        char in ws_str
+
+def ra():
+    for char in a:
+        ws_re.match(char)
+
+def rb():
+    for char in b:
+        ws_re.match(char)
+
+def rc():
+    for char in c:
+        ws_re.match(char)
+
+def rd():
+    for char in d:
+        ws_re.match(char)
 
 """
 
 trials = [
 
-'empty_contains_setattr()',
-'filled_contains_setattr()',
-'empty_setattr()',
-'filled_setattr()',
+'ta',
+'tb',
+'tc',
+'td',
+'ra',
+'rb',
+'rc',
+'rd',
 
 ]
 n = 1000000
 
-# trial 0: 0.220976114273
-# trial 1: 0.262070178986
-# trial 2: 0.248097896576
-# trial 3: 0.299978971481
+# 1000000 iterations
+# trial 0: 0.430229454068467 - plus_x2()
+# trial 1: 0.4744787639938295 - str_join()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -112,6 +132,33 @@ for i, trial in enumerate(trials):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 '''
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 2x + vs str.join()
+
+init = """
+a = "copyright"
+b = "objc/_lazyimport.py"
+
+def plus_x2():
+    a + " " + b
+
+def str_join():
+    " ".join([a, b])
+
+"""
+
+trials = [
+
+'plus_x2()',
+'str_join()',
+
+]
+n = 1000000
+
+# 1000000 iterations
+# trial 0: 0.430229454068467 - plus_x2()
+# trial 1: 0.4744787639938295 - str_join()
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # contains vs setattr
 

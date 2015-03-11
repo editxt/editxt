@@ -18,75 +18,32 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
 name = "JavaScript"
-filepatterns = ["*.js"]
+file_patterns = ["*.js"]
 comment_token = "//"
 word_groups = [
-    ("""
-        abstract
-        boolean
-        break
-        byte
-        case
-        catch
-        char
-        class
-        const
-        continue
-        debugger
-        default
-        delete
-        do
-        double
-    	else
-        enum
-        export
-        extends
-        final
-        finally
-        float
-        for
-        function
-        goto
-        if
-        implements
-        import
-        in
-        instanceOf
-        int
-        interface
-        long
-        native
-        new
-        null
-        package
-        private
-        protected
-        public
-        return
-        short
-        static
-        super
-        switch
-        synchronized
-        this
-        throw
-        throws
-        transient
-        try
-        typeof
-        var
-        void
-        volatile
-        while
-        with
-        yield
-    """.split(), "0000CC"),
-    ("true false alert".split(), "000080"),
+    ("keyword", """
+        abstract boolean break byte case catch char class const continue
+        debugger default delete do double else enum export extends final finally
+        float for function goto if implements import in instanceOf int interface
+        long native new null package private protected public return short
+        static super switch synchronized this throw throws transient try typeof
+        var void volatile while with yield
+    """.split()),
+    ("builtin", "true false undefined alert".split()),
 ]
 delimited_ranges = [
-    (RE('[ru]?"'), ['"', RE(r"[^\\]\n")], "008080", None),
-    (RE("[ru]?'"), ["'", RE(r"[^\\]\n")], "008080", None),
-    ("//", [RE(r"(?=\n)")], "008000", None),
-    ("/*", ["*/"], "505050", None),
-    (RE("/[^/]"), [RE(r"[^\\]/[img]*"), RE(r"(?=\n)")], "59069b", None),
+    ("string.double-quote", RE('"'), [
+        RE(r'(?:(?:[^\\]|(?<="))(?:\\\\)*)"'),
+        RE(r"$"),
+    ]),
+    ("string.single-quote", RE("'"), [
+        RE(r"(?:(?:[^\\]|(?<='))(?:\\\\)*)'"),
+        RE(r"$"),
+    ]),
+    ("comment", "//", [RE(r"(?=\n)")]),
+    ("comment.multi-line", "/*", ["*/"]),
+    ("regexp", RE("/(?!/)"), [
+        RE(r"(?:(?:[^\\]|(?<=/))(?:\\\\)*)/[img]*"),
+        RE(r"$")
+    ]),
 ]
