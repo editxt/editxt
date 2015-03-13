@@ -116,6 +116,7 @@ class Highlighter(object):
     def __init__(self, app=None):
         self.syntaxdef = PLAIN_TEXT
         self.theme = Theme(app.config.lookup("theme.syntax", True) if app else {})
+        self.langs = None
         self.filename = None
 
     @property
@@ -124,7 +125,7 @@ class Highlighter(object):
     @syntaxdef.setter
     def syntaxdef(self, value):
         self._syntaxdef = value
-        self.langs = {}
+        self.langs = None
 
     def color_text(self, text, minrange=None):
         if text.editedMask() == ak.NSTextStorageEditedAttributes:
@@ -141,7 +142,7 @@ class Highlighter(object):
             return
 
         tlen = text.length()
-        if minrange is not None:
+        if minrange is not None and self.langs is not None:
             start = max(minrange[0] - 1, 0)
             #string = text.string()
             #whitespace = WHITESPACE
@@ -157,6 +158,7 @@ class Highlighter(object):
             minend = sum(minrange)
             #log.debug("%s %s %s %s", start, token, adjrange, minrange)
         else:
+            self.langs = {}
             offset = 0
             minend = tlen
 
@@ -179,21 +181,21 @@ class Highlighter(object):
 
         string = text.string()
         theme = self.theme
+        langs = self.langs
         end = prevend = offset
-        cache = self.langs
-        langs = []
+        stack = []
         state = ""
         null = NULL
         if offset > 0:
             key, ignore = text.attribute_atIndex_effectiveRange_(
                                 x_range, offset, NULL)
             if key:
-                langs.append(lang)
+                stack.append(lang)
                 state = key
-                lang = cache[key]
+                lang = langs[key]
                 while " " in key:
                     key = key.rsplit(" ", 1)[0]
-                    langs.insert(1, cache[key])
+                    stack.insert(1, langs[key])
 
         while True:
             wordinfo = lang.wordinfo
@@ -252,12 +254,12 @@ class Highlighter(object):
                         rem_attribute(x_range, (offset, end - offset))
                     if info.end:
                         state = state.rsplit(" ", 1)[0] if " " in state else ""
-                        lang = langs.pop()
+                        lang = stack.pop()
                     if info.next:
-                        langs.append(lang)
+                        stack.append(lang)
                         lang = info.next
                         state = (state + " " + lang.id) if state else lang.id
-                        cache[state] = lang
+                        langs[state] = lang
                     offset = end
                     break # exit for
             else:
@@ -437,7 +439,7 @@ class SyntaxDefinition(NoHighlight):
                         word = word + r"\b"
                 wordgroup.append(word)
             phrase = "(?P<{}>{})".format(ident, "|".join(wordgroup))
-            yield phrase, ident, MatchInfo(name, end=end)
+            yield phrase, ident, MatchInfo(self.token_name(name), end=end)
 
     def iter_ranges(self, idgen):
         def lookup_syntax(owner, sdef, *unknown, ends=None):
@@ -474,7 +476,7 @@ class SyntaxDefinition(NoHighlight):
                 lines.__name__ = "{}.lines".format(name)
                 sdef = self.make_definition(name, lines, ends)
             phrase = "(?P<{}>{})".format(ident, escape(start))
-            return phrase, ident, MatchInfo(name, sdef)
+            return phrase, ident, MatchInfo(self.token_name(name), sdef)
 
         for name, start, ends, *sdef in self.delimited_ranges:
             try:
@@ -501,11 +503,18 @@ class SyntaxDefinition(NoHighlight):
                 log.error("delimited range error: %s %s %s %s",
                           name, start, ends, sdef, exc_info=True)
 
+    def token_name(self, name):
+        if " " in name:
+            value = name.replace(" ", "_")
+            log.warn("invalid token name: converting %r to %r", name, value)
+            name = value
+        return self.name + " " + name
+
     def make_definition(self, name, rules, ends=None):
         log.debug("make: %s/%s", self.name, rules.__name__)
         NA = object()
         args = {
-            "name": "{}/{}".format(self.name, rules.__name__),
+            "name": self.name,
             "_id": next(self.lang_ids),
             "flags": self.flags,
         }
@@ -548,23 +557,32 @@ class Theme(object):
 
     def __init__(self, data):
         self.data = data
+        self.default = data.get("default")
 
     def get(self, name):
         try:
-            return self.data[name]
+            value = self.default[name]
         except KeyError:
-            next_name = name
-        value = None
-        if name:
-            while "." in next_name:
-                next_name = next_name.rsplit(".", 1)[0]
-                try:
-                    value = self.data[next_name]
-                    break
-                except KeyError:
-                    continue
-        self.data[name] = value
+            lang, token_name = name.rsplit(" ", 1)
+            if token_name:
+                value = self._get(lang, token_name)
+                if value is None:
+                    value = self._get("default", token_name)
+            else:
+                value = None
+            self.default[name] = value
         return value
+
+    def _get(self, lang, name):
+        data = self.data.get(lang)
+        if data:
+            while name:
+                try:
+                    return data[name]
+                except KeyError:
+                    pass
+                name = name.rpartition(".")[0]
+        return None
 
 
 PLAIN_TEXT = NoHighlight("Plain Text", "x")

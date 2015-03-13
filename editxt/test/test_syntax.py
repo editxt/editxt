@@ -181,16 +181,21 @@ def test_Highlighter_color_text():
     from editxt.platform.text import Text as BaseText
     from editxt.syntax import SYNTAX_RANGE, SYNTAX_TOKEN
     theme = Theme({
-        "keyword": "keyword",
-        "builtin": "builtin",
-        "operator": "operator",
-        "string": "string",
-        "string.multiline.single-quote": "string.multiline.single-quote",
-        "comment": "comment",
-        "tag": "tag",
-        "attribute": "attribute",
-        "value": "value",
-        "punctuation": "punctuation",
+        "default": {
+            "keyword": "keyword",
+            "builtin": "builtin",
+            "operator": "operator",
+            "string": "string",
+            "string.multiline.single-quote": "string.multiline.single-quote",
+            "comment": "comment",
+            "tag": "tag",
+            "attribute": "attribute",
+            "value": "value",
+            "punctuation": "punctuation",
+        },
+        "JavaScript": {
+            "string": "js.string"
+        },
     })
 
     class Text(BaseText):
@@ -211,6 +216,7 @@ def test_Highlighter_color_text():
                     attr, attr_range = long_range(SYNTAX_TOKEN, xrng[0], None, full)
                     colr, x = long_range(fg_color, xrng[0], NULL, full)
                     if attr:
+                        print(attr)
                         attr = attr.rsplit(" ", 1)[-1]
                         language = lang if xrng[0] <= attr_range[0] else (" ~" + lang[1:])
                         language = language.replace(attr + ".", "$.")
@@ -295,8 +301,8 @@ def test_Highlighter_color_text():
         '''"""A doc string\nWith multiple lines\n"""''',
         '''
         """A doc string string.multiline.double-quote string
-          With multiple lines string.multiline.double-quote string Python/$.lines
-          """ string.multiline.double-quote string Python/$.lines
+          With multiple lines string.multiline.double-quote string Python
+          """ string.multiline.double-quote string Python
         ''')
     yield from edit("python", "\ndef f(",
         """
@@ -318,7 +324,7 @@ def test_Highlighter_color_text():
         (2, 0, '"'),
         '''
         """ string.multiline.double-quote string
-          def f( string.multiline.double-quote string Python/$.lines
+          def f( string.multiline.double-quote string Python
         ''',
 
         (2, 1, ''),
@@ -343,22 +349,22 @@ def test_Highlighter_color_text():
         """<div tal:wrap='<span>'""",
         """
         <div tag
-          tal:wrap attribute Markup/attributes
-          = punctuation Markup/attributes
-          '<span>' value Markup/attributes
+          tal:wrap attribute Markup
+          = punctuation Markup
+          '<span>' value Markup
         """)
     yield test("markup",
         """<div class='ext' data id="xpr"> </div>""",
         """
         <div tag
-          class attribute Markup/attributes
-          = punctuation Markup/attributes
-          'ext' value Markup/attributes
-          data attribute Markup/attributes
-          id attribute Markup/attributes
-          = punctuation Markup/attributes
-          "xpr" value Markup/attributes
-          > tag Markup/attributes
+          class attribute Markup
+          = punctuation Markup
+          'ext' value Markup
+          data attribute Markup
+          id attribute Markup
+          = punctuation Markup
+          "xpr" value Markup
+          > tag Markup
         </div> tag
         """)
     yield test("markup",
@@ -371,11 +377,11 @@ def test_Highlighter_color_text():
         """<!DOCTYPE html encoding="utf-8">\n<div/>""",
         """
         <!DOCTYPE tag.doctype tag
-          html attribute Markup/attributes
-          encoding attribute Markup/attributes
-          = punctuation Markup/attributes
-          "utf-8" value Markup/attributes
-          > tag.doctype tag Markup/attributes
+          html attribute Markup
+          encoding attribute Markup
+          = punctuation Markup
+          "utf-8" value Markup
+          > tag.doctype tag Markup
         <div/> tag
         """)
     yield test("markup",
@@ -395,23 +401,23 @@ def test_Highlighter_color_text():
         """
         <div> tag
         <![cdata[ tag.cdata tag
-          ]]> tag.cdata tag Markup/cdata
+          ]]> tag.cdata tag Markup
         """)
     yield test("markup",
         "<style attr='value'></style>",
         """
         <style tag
-          attr attribute Markup/style/attributes
-          = punctuation Markup/style/attributes
-          'value' value Markup/style/attributes
-          ></style> tag Markup/style/attributes
+          attr attribute Markup
+          = punctuation Markup
+          'value' value Markup
+          ></style> tag Markup
         """)
     yield test("markup",
         "<script>var x = 'y';</script>",
         """
         <script> tag
           var keyword JavaScript
-          'y' string.single-quote string JavaScript
+          'y' string.single-quote js.string JavaScript
           </script> tag JavaScript
         """)
 #    yield test("markup",
@@ -428,9 +434,17 @@ def test_Highlighter_color_text():
 #          </style> tag css
 #        """)
 
+    yield test("javascript",
+        "var x = 'y';",
+        """
+        var keyword
+        'y' string.single-quote js.string
+        """)
+
     # TODO test and change match.lastgroup ??
 
     class lang:
+        name = "lang"
         class sub:
             word_groups = [("keyword", ["for"])]
         word_groups = [("keyword", ["for", "in"])]
@@ -441,8 +455,8 @@ def test_Highlighter_color_text():
         for keyword
         in keyword
         [ tag
-          for keyword Python/lang/sub
-          ] tag Python/lang/sub
+          for keyword lang
+          ] tag lang
         """,
 
         (9, 1, ""),
@@ -458,17 +472,17 @@ def test_Highlighter_color_text():
         for keyword
         in keyword
         [ tag
-          for keyword Python/lang/sub
-          ] tag Python/lang/sub
+          for keyword lang
+          ] tag lang
         """,
 
         (4, 6, "[x for "),
         """
         for keyword
         [ tag
-          for keyword Python/lang/sub
-          for keyword Python/lang/sub
-          ] tag Python/lang/sub
+          for keyword lang
+          for keyword lang
+          ] tag lang
         """,
         )
 
