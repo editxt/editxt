@@ -119,7 +119,7 @@ class TextDocument(object):
         self.indent_mode = app.config["indent.mode"]
         self.indent_size = app.config["indent.size"] # should come from syntax definition
         self.newline_mode = app.config["newline_mode"]
-        self.highlight_selected_text = app.config["highlight_selected_text.enabled"]
+        self.highlight_selected_text = app.config["theme.highlight_selected_text.enabled"]
 
         app.on_reload_config(self.reset_text_attributes, self)
         #self.save_hooks = []

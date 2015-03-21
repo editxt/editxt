@@ -251,7 +251,7 @@ class Finder(object):
         if last_mark[0] == ftext:
             return last_mark[1]
         if color is None:
-            color = self.app.config["highlight_selected_text.color"]
+            color = self.app.config["theme.highlight_selected_text.color"]
         layout = target.layoutManager()
         full_range = fn.NSMakeRange(0, target.textStorage().length())
         layout.removeTemporaryAttribute_forCharacterRange_(

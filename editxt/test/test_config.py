@@ -75,9 +75,25 @@ def test_Config_reload():
         assert "key" not in conf, conf
 
 def test_Config_schema():
-    def test(data, key, value, errors={}):
+    def configify(data):
+        if isinstance(data, dict):
+            for key, val in list(data.items()):
+                if "." in key:
+                    del data[key]
+                    temp = data
+                    *parts, key = key.split(".")
+                    for part in parts:
+                        assert part not in temp, (part, temp)
+                        temp[part] = temp = {}
+                    temp[key] = val
+                elif isinstance(val, dict):
+                    data[key] = configify(val)
+        return data
+    eq_(configify({"indent.mode": "xyz"}), {"indent": {"mode": "xyz"}})
+    def test(data, key, value, errors={}, stop=[1]):
         config = mod.Config("/tmp/missing.3216546841325465132546514321654")
-        config.data = data
+        config.data = configify(data)
+        config.transform_deprecations()
 
         with CaptureLog(mod) as log:
             if isinstance(value, Exception):
@@ -85,28 +101,33 @@ def test_Config_schema():
                     config[key]
             else:
                 eq_(config[key], value)
-            eq_(log.data, errors)
+            eq_(dict(log.data), errors)
 
     yield test, {}, "unknown", KeyError("unknown")
     yield test, {}, "unknown.sub", KeyError("unknown.sub")
 
-    yield test, {}, "highlight_selected_text.enabled", True
-    yield test, {"highlight_selected_text": {}}, \
-        "highlight_selected_text.enabled", True
-    yield test, {"highlight_selected_text": {"enabled": True}}, \
-        "highlight_selected_text.enabled", True
-    yield test, {"highlight_selected_text": []}, \
-        "highlight_selected_text.enabled", True, \
-        {"error": ["highlight_selected_text: expected dict, got []"]}
-    yield test, {"highlight_selected_text": {"enabled": "treu"}}, \
-        "highlight_selected_text.enabled", True, \
-        {"error": ["highlight_selected_text.enabled: expected boolean, got 'treu'"]}
-    yield test, {"highlight_selected_text": True}, \
-        "highlight_selected_text.enabled", True, \
-        {"error": ["highlight_selected_text: expected dict, got True"]}
-    yield test, {}, "highlight_selected_text.enabled.x", \
-        ValueError("highlight_selected_text.enabled.x: "
-                   "highlight_selected_text.enabled is boolean, not a dict")
+    yield test, {}, "theme.highlight_selected_text.enabled", True
+    yield test, {"theme.highlight_selected_text": {}}, \
+        "theme.highlight_selected_text.enabled", True
+    yield test, {"theme.highlight_selected_text": {"enabled": True}}, \
+        "theme.highlight_selected_text.enabled", True
+    yield test, {"theme.highlight_selected_text": []}, \
+        "theme.highlight_selected_text.enabled", True, \
+        {"error": ["theme.highlight_selected_text: expected dict, got []"]}
+    yield test, {"theme.highlight_selected_text": {"enabled": "treu"}}, \
+        "theme.highlight_selected_text.enabled", True, \
+        {"error": ["theme.highlight_selected_text.enabled: expected boolean, got 'treu'"]}
+    yield test, {"theme.highlight_selected_text": True}, \
+        "theme.highlight_selected_text.enabled", True, \
+        {"error": ["theme.highlight_selected_text: expected dict, got True"]}
+    yield test, {}, "theme.highlight_selected_text.enabled.x", \
+        ValueError("theme.highlight_selected_text.enabled.x: "
+                   "theme.highlight_selected_text.enabled is boolean, not a dict")
+    # deprecated settings should still work
+    yield test, {"highlight_selected_text": {"enabled": False}}, \
+        "theme.highlight_selected_text.enabled", False
+    yield test, {"highlight_selected_text": {"color": get_color("FFEEFF")}}, \
+        "theme.highlight_selected_text.color", get_color("FFEEFF")
 
     yield test, {}, "indent.mode", const.INDENT_MODE_SPACE
     yield test, {"indent": {"mode": "xyz"}}, \
@@ -114,9 +135,9 @@ def test_Config_schema():
         {"error": ["indent.mode: expected one of (space|tab), got 'xyz'"]}
 
     yield test, {}, "indent.size", 4
-    yield test, {"indent": {"size": "two"}}, "indent.size", 4, \
+    yield test, {"indent.size": "two"}, "indent.size", 4, \
         {"error": ["indent.size: expected integer, got 'two'"]}
-    yield test, {"indent": {"size": 0}}, "indent.size", 4, \
+    yield test, {"indent.size": 0}, "indent.size", 4, \
         {"error": ["indent.size: 0 is less than the minimum value (1)"]}
 
     yield test, {}, "newline_mode", const.NEWLINE_MODE_UNIX
@@ -124,14 +145,21 @@ def test_Config_schema():
         "newline_mode", const.NEWLINE_MODE_UNIX, \
         {"error": ["newline_mode: expected one of (LF|CR|CRLF|UNICODE), got 'xyz'"]}
 
-    yield test, {}, "right_margin.position", const.DEFAULT_RIGHT_MARGIN
-    yield test, {"right_margin": {"position": 42}}, "right_margin.position", 42
-    yield test, {"right_margin": {"position": "xyz"}}, \
-        "right_margin.position", const.DEFAULT_RIGHT_MARGIN, \
-        {"error": ["right_margin.position: expected integer, got 'xyz'"]}
+    yield test, {}, "theme.right_margin.position", const.DEFAULT_RIGHT_MARGIN
+    yield test, {"theme.right_margin": {"position": 42}}, "theme.right_margin.position", 42
+    yield test, {"theme.right_margin": {"position": "xyz"}}, \
+        "theme.right_margin.position", const.DEFAULT_RIGHT_MARGIN, \
+        {"error": ["theme.right_margin.position: expected integer, got 'xyz'"]}
+    # deprecated key should still work
+    yield test, {"right_margin": {"position": 42}}, "theme.right_margin.position", 42
 
-    yield test, {}, "right_margin.line_color", get_color("E6E6E6")
-    yield test, {}, "right_margin.margin_color", get_color("F7F7F7")
+    yield test, {}, "theme.right_margin.line_color", get_color("E6E6E6")
+    yield test, {}, "theme.right_margin.margin_color", get_color("F7F7F7")
+    # deprecated key should still work
+    yield test, {"right_margin.line_color": get_color("eeeeee")}, \
+        "theme.right_margin.line_color", get_color("eeeeee")
+    yield test, {"right_margin.margin_color": get_color("eeeeee")}, \
+        "theme.right_margin.margin_color", get_color("eeeeee")
 
     yield test, {}, "soft_wrap", const.WRAP_NONE
     yield test, {"soft_wrap": "xyz"}, \

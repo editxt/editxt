@@ -34,10 +34,6 @@ NOT_SET = object()
 # schema types.
 def config_schema(): return {
     "diff_program": String("opendiff"),
-    "highlight_selected_text": {
-        "enabled": Boolean(default=True),
-        "color": Color(default=get_color("FEFF6B")),
-    },
     "indent": {
         "mode": Enum(
             const.INDENT_MODE_SPACE,
@@ -57,23 +53,28 @@ def config_schema(): return {
         const.NEWLINE_MODE_UNICODE,
         default=const.NEWLINE_MODE_UNIX),
     "theme": {
+        "highlight_selected_text": {
+            "enabled": Boolean(default=True),
+            "color": Color(default=get_color("FEFF6B")),
+        },
+        "line_number_color": Color(default=get_color("707070")),
+        "right_margin": {
+            "position": Integer(default=const.DEFAULT_RIGHT_MARGIN, minimum=0),
+            "line_color": Color(default=get_color("E6E6E6")),
+            "margin_color": Color(default=get_color("F7F7F7")),
+        },
         "syntax": {
-            "keyword": Color(get_color("0000CC")),
-            "builtin": Color(get_color("000080")),
-            #"operator": Color(get_color("800000")),
-            "string": Color(get_color("008080")),
-            "comment": Color(get_color("008000")),
-            "tag": Color(get_color("0000CC")),
-            "attribute": Color(get_color("000080")),
-            "value": Color(get_color("008080")),
-#    string.multiline.single-quote: 505050
+            "default": {
+                "keyword": Color(get_color("0000CC")),
+                "builtin": Color(get_color("000080")),
+                #"operator": Color(get_color("800000")),
+                "string": Color(get_color("008080")),
+                "comment": Color(get_color("008000")),
+                "tag": Color(get_color("0000CC")),
+                "attribute": Color(get_color("000080")),
+                "value": Color(get_color("008080")),
+            }
         }
-    },
-    "line_number_color": Color(default=get_color("707070")),
-    "right_margin": {
-        "position": Integer(default=const.DEFAULT_RIGHT_MARGIN, minimum=0),
-        "line_color": Color(default=get_color("E6E6E6")),
-        "margin_color": Color(default=get_color("F7F7F7")),
     },
     "soft_wrap": Enum(
         const.WRAP_NONE,
@@ -94,6 +95,9 @@ def config_schema(): return {
 
 deprecation_transforms = {
     #"old.config.path": "new.config.path"
+    "highlight_selected_text": "theme.highlight_selected_text",
+    "line_number_color": "theme.line_number_color",
+    "right_margin": "theme.right_margin",
 }
 
 

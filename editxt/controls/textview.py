@@ -132,10 +132,10 @@ class TextView(ak.NSTextView):
         charw = font.advancementForGlyph_(ord("8")).width
         origin = self.textContainerOrigin()
         padding = self.textContainer().lineFragmentPadding()
-        nchars = self.app.config["right_margin.position"]
-        color1 = self.app.config["right_margin.line_color"]
-        color2 = self.app.config["right_margin.margin_color"]
-        color3 = self.app.config["line_number_color"]
+        nchars = self.app.config["theme.right_margin.position"]
+        color1 = self.app.config["theme.right_margin.line_color"]
+        color2 = self.app.config["theme.right_margin.margin_color"]
+        color3 = self.app.config["theme.line_number_color"]
         margin = (charw * nchars + padding + origin.x) if nchars else None
         self._margin_params = mp = (margin, color1, color2, color3)
         return mp
