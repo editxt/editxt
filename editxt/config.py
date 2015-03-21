@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+from functools import partial
 from os.path import exists, join
 
 import editxt.constants as const
@@ -89,6 +90,10 @@ def config_schema(): return {
         "Command+Alt+Down": String(" doc  down"),
     },
     "logging_config": Dict({}),
+}
+
+deprecation_transforms = {
+    #"old.config.path": "new.config.path"
 }
 
 
@@ -240,12 +245,14 @@ class Color(Type):
 
 class Config(object):
 
-    def __init__(self, path, schema=config_schema()):
+    def __init__(self, path, schema=config_schema(),
+                 deprecations=deprecation_transforms):
         self.path = path
         self.data = {}
         self.valid = {}
         self.errors = {}
         self.schema = schema
+        self.deprecations = deprecations
         self.reload()
 
     def reload(self):
@@ -263,12 +270,33 @@ class Config(object):
                     log.error("cannot load %s: root object is a %s, "
                         "expected a dict", self.path, type(data).__name__)
                     return
+            self.transform_deprecations()
             log.info("loaded %s", self.path)
             self.data = data
         else:
             self.data = {}
         self.valid = {}
         self.errors = {}
+
+    def transform_deprecations(self):
+        NA = object()
+        get = partial(self._get, default=NA)
+        data = self.data
+        for old_key, new_key in self.deprecations.items():
+            if get(new_key) is NA:
+                old_value = get(old_key)
+                if old_value is not NA:
+                    new = data
+                    *parts, key = new_key.split(".")
+                    for part in parts:
+                        if not isinstance(new, dict):
+                            break
+                        if part in new:
+                            new = new[part]
+                        else:
+                            new[part] = new = {}
+                    else:
+                        new[key] = old_value
 
     def __contains__(self, name):
         try:
@@ -289,6 +317,17 @@ class Config(object):
             self.errors[name] = err
             raise
         self.valid[name] = value
+        return value
+
+    def _get(self, name, default=None):
+        value = self.data
+        for part in name.split("."):
+            if not isinstance(value, dict):
+                return default
+            try:
+                value = value[part]
+            except KeyError:
+                return default
         return value
 
     def lookup(self, name, as_dict=False):

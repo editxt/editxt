@@ -75,7 +75,9 @@ x  - font size (make easy to adjust)
     - better language detection (file extension, shebang line, etc.)
     - custom language/extension mapping in user config
     - themes
-      - with custom colors per language
+      - custom background color
+      - built-in themes
+x      - with custom colors per language
   - colors (dark theme)
 Fix line counting in TextView.goto_line (should recognize all line break chars)
 Pythonic...
