@@ -156,6 +156,14 @@ def test_register_undo():
     with m:
         register_undo_callback(und, cb)
 
+def test_load_yaml_non_octal_number():
+    from io import StringIO
+    def yaml(data):
+        return mod.load_yaml(StringIO(data))
+    eq_(yaml("num: 010"), {"num": "010"})   # leading zero -> str
+    eq_(yaml("num: 10"), {"num": 10})       # no leading zero -> int
+    eq_(yaml("num: +010"), {"num": 8})      # still possible to get octal
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # editxt.test.util tests
 from editxt.test.util import test_app

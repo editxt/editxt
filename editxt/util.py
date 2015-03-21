@@ -84,6 +84,14 @@ def yaml_dumper_loader():
     except ImportError:
         log.warn('falling back to non-optimized YAML dumper/loader')
         from yaml import SafeDumper as Dumper, SafeLoader as Loader
+
+    # patch yaml parser so it does not parse leading-zero-ints as octal
+    from yaml.resolver import BaseResolver
+    SCALAR = BaseResolver.DEFAULT_SCALAR_TAG
+    ZERO_FIRST_INT = re.compile(r"^0\d+$")
+    # can't use add_implicit_resolver because it adds it as the last resolver
+    Loader.yaml_implicit_resolvers['0'].insert(0, (SCALAR, ZERO_FIRST_INT))
+
     while True:
         yield Dumper, Loader
 yaml_dumper_loader = yaml_dumper_loader()
