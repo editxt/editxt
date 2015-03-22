@@ -243,6 +243,23 @@ def hex_value(color):
         int(color.blueComponent() * 0xFF),
     )
 
+def rgb2gray(color):
+    """Convert RRGGBB color string to grayscale
+
+    This function uses a weighted average combined with a pure average,
+    which happens to convert the Mac OS X selection color (A6CAFE) to
+    the secondary selection color (CACACA).
+    """
+    if len(color) != 6:
+        raise ValueError(color)
+    r = int(color[:2], 16)
+    g = int(color[2:4], 16)
+    b = int(color[4:], 16)
+    wavg = 0.299 * r + 0.587 * g + 0.114 * b
+    avg = (r + b + g) / 3
+    gray = int((wavg + avg) / 2)
+    return "{:02X}".format(gray) * 3
+
 COLOR_RE = re.compile("^#?[0-9a-f]{6}$", re.IGNORECASE)
 
 

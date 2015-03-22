@@ -75,20 +75,6 @@ def test_Config_reload():
         assert "key" not in conf, conf
 
 def test_Config_schema():
-    def configify(data):
-        if isinstance(data, dict):
-            for key, val in list(data.items()):
-                if "." in key:
-                    del data[key]
-                    temp = data
-                    *parts, key = key.split(".")
-                    for part in parts:
-                        assert part not in temp, (part, temp)
-                        temp[part] = temp = {}
-                    temp[key] = val
-                elif isinstance(val, dict):
-                    data[key] = configify(val)
-        return data
     eq_(configify({"indent.mode": "xyz"}), {"indent": {"mode": "xyz"}})
     def test(data, key, value, errors={}, stop=[1]):
         config = mod.Config("/tmp/missing.3216546841325465132546514321654")
@@ -248,3 +234,23 @@ def test_Type_validate():
         ValueError("key: expected RRGGBB hex color string, got 'x'")
 
     yield test, mod.Enum, NOT_SET, NOT_SET
+
+
+def configify(data):
+    """Config data helper
+
+    {"config.name": "value"} -> {"config": {"name": "value"}}
+    """
+    if isinstance(data, dict):
+        for key, val in list(data.items()):
+            if "." in key:
+                del data[key]
+                temp = data
+                *parts, key = key.split(".")
+                for part in parts:
+                    assert part not in temp, (part, temp)
+                    temp[part] = temp = {}
+                temp[key] = val
+            elif isinstance(val, dict):
+                data[key] = configify(val)
+    return data

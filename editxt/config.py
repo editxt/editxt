@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 
 NOT_SET = object()
 
-# The following schema defines the confuration values accepted by the program.
+# The following schema defines the configuration values accepted by the program.
 # Use function to allow config schema to be defined at top of file before
 # schema types.
 def config_schema(): return {
@@ -284,7 +284,7 @@ class Config(object):
 
     def transform_deprecations(self):
         NA = object()
-        get = partial(self._get, default=NA)
+        get = partial(self.get, default=NA)
         data = self.data
         for old_key, new_key in self.deprecations.items():
             if get(new_key) is NA:
@@ -323,15 +323,24 @@ class Config(object):
         self.valid[name] = value
         return value
 
-    def _get(self, name, default=None):
+    def get(self, name, default=None):
         value = self.data
         for part in name.split("."):
             if not isinstance(value, dict):
-                return default
+                value = default
+                break
             try:
                 value = value[part]
             except KeyError:
-                return default
+                value = default
+                break
+        if isinstance(default, Type):
+            if value is default:
+                value = value.default
+                if value is NOT_SET:
+                    raise KeyError(name)
+            else:
+                value = self.validate(default, value, name)
         return value
 
     def lookup(self, name, as_dict=False):
@@ -364,6 +373,9 @@ class Config(object):
             config = Config(None, schema)
             config.data = value
             return config
+        return self.validate(schema, value, name)
+
+    def validate(self, schema, value, name):
         try:
             value = schema.validate(value, name)
         except Exception as err:

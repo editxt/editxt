@@ -111,7 +111,7 @@ class TextDocument(object):
             ak.NSCharacterEncodingDocumentAttribute: fn.NSUTF8StringEncoding,
         }
         self.undo_manager = UndoManager()
-        self.syntaxer = Highlighter(app)
+        self.syntaxer = Highlighter(app.theme)
         self.props = KVOProxy(self)
         self._kvo = KVOLink([
             (self.undo_manager, "has_unsaved_actions", self.props, "is_dirty"),

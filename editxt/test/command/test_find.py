@@ -115,7 +115,7 @@ def test_Finder_mark_occurrences():
         tv._Finder__last_mark = (c.options.find_text, c.count)
         ts = tv.textStorage() >> m.mock(ak.NSTextStorage)
         app = m.mock('editxt.application.Application')
-        app.config["theme.highlight_selected_text.color"] >> "<color>"
+        app.theme["highlight_selected_text.color"] >> "<color>"
         full_range = fn.NSMakeRange(0, ts.length() >> len(text))
         layout = tv.layoutManager()
         layout.removeTemporaryAttribute_forCharacterRange_(

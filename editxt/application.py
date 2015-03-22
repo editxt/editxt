@@ -36,6 +36,7 @@ from editxt.config import Config
 from editxt.document import DocumentController
 from editxt.errorlog import ErrorLog, LogViewHandler
 from editxt.textcommand import CommandHistory, CommandManager
+from editxt.theme import Theme
 from editxt.platform.font import get_font
 from editxt.util import (ContextMap, perform_selector,
     atomicfile, dump_yaml, load_yaml, WeakProperty)
@@ -77,6 +78,7 @@ class Application(object):
                     log.exception("bad logging config: %r", logging_config)
             self.context = ContextMap()
             self.syntax_factory = None
+            self.theme = Theme(self.config)
             state_dir = os.path.join(self.profile_path, const.STATE_DIR)
             command_history = CommandHistory(state_dir)
             self.text_commander = CommandManager(command_history, app=self)
@@ -141,6 +143,7 @@ class Application(object):
 
     def reload_config(self):
         self.config.reload()
+        self.theme.reset()
         for callback in self.config_callbacks:
             callback()
 

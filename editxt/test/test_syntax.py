@@ -32,8 +32,10 @@ from editxt.test.util import TestConfig, gentest, tempdir
 
 import editxt.constants as const
 import editxt.syntax as mod
-from editxt.syntax import SyntaxFactory, Highlighter, SyntaxDefinition, Theme
+from editxt.config import Config, String
+from editxt.syntax import SyntaxFactory, Highlighter, SyntaxDefinition
 from editxt.syntax import NoHighlight, PLAIN_TEXT, RE
+from editxt.theme import Theme
 
 log = logging.getLogger(__name__)
 
@@ -171,7 +173,7 @@ def test_SyntaxFactory_get_definition():
     eq_(sf.get_definition("somefile.text"), PLAIN_TEXT)
 
 def test_Highlighter_syntaxdef_default():
-    syn = Highlighter()
+    syn = Highlighter(None)
     eq_(syn.syntaxdef, PLAIN_TEXT) # check default
     eq_(syn.filename, None) # check default
 
@@ -180,7 +182,10 @@ def test_Highlighter_color_text():
     from textwrap import dedent
     from editxt.platform.text import Text as BaseText
     from editxt.syntax import SYNTAX_RANGE, SYNTAX_TOKEN
-    theme = Theme({
+    config = Config(None, schema={"theme": {
+        "syntax": {}
+    }})
+    config.data = {"theme": {"syntax": {
         "default": {
             "keyword": "keyword",
             "builtin": "builtin",
@@ -196,7 +201,8 @@ def test_Highlighter_color_text():
         "JavaScript": {
             "string": "js.string"
         },
-    })
+    }}}
+    theme = Theme(config)
 
     class Text(BaseText):
         def colors(self, highlighter):
@@ -238,9 +244,8 @@ def test_Highlighter_color_text():
         if isinstance(lang, Highlighter):
             hl = lang
         else:
-            hl = Highlighter()
+            hl = Highlighter(theme)
             hl.syntaxdef = get_syntax_definition(lang)
-            hl.theme = theme
         text = string if isinstance(string, Text) else Text(string)
         if edit:
             start, length, insert = edit
@@ -255,7 +260,7 @@ def test_Highlighter_color_text():
                 unified_diff(b, a, "expected", "actual", lineterm=""))
 
     def edit(lang, string, expect, *pairs):
-        hl = Highlighter()
+        hl = Highlighter(theme)
         hl.syntaxdef = get_syntax_definition(lang)
         hl.theme = theme
         assert len(pairs) % 2 == 0, "got odd number of edit/expect pairs"
@@ -266,7 +271,7 @@ def test_Highlighter_color_text():
             yield test(hl, text, expect, edit)
 
     text = Text("def f(self, x): x # TODO")
-    hl = Highlighter()
+    hl = Highlighter(theme)
     hl.syntaxdef = get_syntax_definition("python")
     hl.theme = theme
     hl.color_text(text)

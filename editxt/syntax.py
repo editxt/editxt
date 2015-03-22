@@ -113,9 +113,9 @@ class SyntaxFactory():
 
 class Highlighter(object):
 
-    def __init__(self, app=None):
+    def __init__(self, theme):
         self.syntaxdef = PLAIN_TEXT
-        self.theme = Theme(app.config.lookup("theme.syntax", True) if app else {})
+        self.theme = theme
         self.langs = None
         self.filename = None
 
@@ -231,7 +231,7 @@ class Highlighter(object):
                                     rem_attribute(x_range, xrng)
                                 return
 
-                    color = theme.get(info)
+                    color = theme.get_syntax_color(info)
                     #log.debug("%s %s %s", rng, name, color)
                     if color:
                         add_attribute(x_token, info, rng)
@@ -551,38 +551,6 @@ class MatchInfo(str):
             "n" if self.next else "",
             "e" if self.end else "",
         ] if x])
-
-
-class Theme(object):
-
-    def __init__(self, data):
-        self.data = data
-        self.default = data.get("default")
-
-    def get(self, name):
-        try:
-            value = self.default[name]
-        except KeyError:
-            lang, token_name = name.rsplit(" ", 1)
-            if token_name:
-                value = self._get(lang, token_name)
-                if value is None:
-                    value = self._get("default", token_name)
-            else:
-                value = None
-            self.default[name] = value
-        return value
-
-    def _get(self, lang, name):
-        data = self.data.get(lang)
-        if data:
-            while name:
-                try:
-                    return data[name]
-                except KeyError:
-                    pass
-                name = name.rpartition(".")[0]
-        return None
 
 
 PLAIN_TEXT = NoHighlight("Plain Text", "x")
