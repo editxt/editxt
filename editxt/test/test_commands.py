@@ -456,6 +456,9 @@ def test_set_variable():
     class editor:
         class project:
             path = os.path.expanduser("~/project")
+        class document:
+            class syntaxdef:
+                name = "Unknown"
         text_view = object
         dirname = lambda:None
         font = Font("Mension", 15.0, False, None)
@@ -471,6 +474,7 @@ def test_set_variable():
             "font",
             "highlight_selected_text",
             "indent",
+            "language",
             "newline_mode",
             "project_path",
             "soft_wrap",
@@ -536,6 +540,30 @@ def test_set_variable():
     yield test, "set indent", 4, const.INDENT_MODE_SPACE
     yield test, "set indent 3", 3, const.INDENT_MODE_SPACE
     yield test, "set indent 8 t", 8, const.INDENT_MODE_TAB
+
+    # set syntax
+    def test(command, name):
+        class factory:
+            definitions = [
+                TestConfig(name="Plain Text", wordinfo=None),
+                TestConfig(name="Python", wordinfo=None),
+            ]
+        if name is not None:
+            for sdef in factory.definitions:
+                if sdef.name == name:
+                    lang = sdef
+                    break
+            else:
+                assert False, "unknown syntax definition: " % name
+        with test_app("editor*") as app:
+            app.syntax_factory = factory
+            editor = app.windows[0].current_editor
+            editor.text_view = TestConfig(textContainer=lambda:None)
+            do = CommandTester(mod.set_variable, editor=editor)
+            do(command)
+            eq_(getattr(editor, "syntaxdef"), lang)
+    yield test, "set language py", "Python"
+    yield test, "set lang plain", "Plain Text"
 
 def test_panel_actions():
     from editxt.editor import Editor

@@ -396,7 +396,7 @@ class Field(object):
             if v != defaults.get(k, NA))
         return '{}({})'.format(type(self).__name__, ', '.join(args))
 
-    def with_context(self, editor):
+    def with_context(self, editor, **kwargs):
         """Return a Field instance with editor context
 
         The returned field object may be the same instance as the original
@@ -407,6 +407,7 @@ class Field(object):
         if callable(self.kwargs.get("default")):
             kw = dict(self.kwargs)
             kw["default"] = kw["default"](editor)
+            kw.update(kwargs)
             return type(self)(*self.args, **kw)
         return self
 
@@ -851,42 +852,56 @@ class File(String):
         return super().arg_string(value)
 
 
-class FontFace(String):
-    """Font face chooser argument type
-    """
+class DynamicList(String):
 
-    @property
-    def system_font_names(self):
-        try:
-            return self._system_font_names
-        except AttributeError:
-            pass
-        from editxt.platform.font import get_system_font_names
-        names = self._system_font_names = get_system_font_names()
-        return names
+    def __init__(self, name, get_items, name_attribute, default=None, _editor=None):
+        self.args = [name]
+        self.kwargs = {
+            "get_items": get_items,
+            "name_attribute": name_attribute,
+            "default": default,
+        }
+        self.get_items = get_items
+        self.name_attribute = name_attribute
+        self.editor = _editor
+        super().__init__(name, default=default)
+
+    def with_context(self, editor):
+        return super().with_context(editor, _editor=editor)
+
+    def iteritems(self):
+        if isinstance(self.name_attribute, str):
+            nameof = lambda item: getattr(item, self.name_attribute)
+        else:
+            nameof = self.name_attribute
+        return ((nameof(item), item) for item in self.get_items(self.editor))
 
     def consume(self, text, index):
         token, end = super().consume(text, index)
         if token is self.default:
             return token, end
+        items = list(self.iteritems())
         if isinstance(token, str):
-            comps = self.get_completions(token, lambda n: n)
+            ltok = str(token).lower()
+            comps = [(name, item)
+                     for name, item in items
+                     if name.lower().startswith(ltok)]
             if len(comps) == 1:
-                return comps[0], end
-            names = ', '.join(n for n in comps)
+                return comps[0][1], end
+            names = ', '.join(c[0] for c in comps)
         else:
             names = ""
         if names:
             msg = '{!r} is ambiguous: {}'.format(token, names)
         else:
             end = index + len(token)
-            names = ', '.join(self.system_font_names)
+            names = ', '.join(name for name, item in items)
             msg = '{!r} does not match any of: {}'.format(token, names)
         raise ParseError(msg, self, index, end)
 
     def get_completions(self, arg, escape=lambda n: n.replace(" ", "\\ ")):
         token = str(arg).lower()
-        names = self.system_font_names
+        names = (name for name, item in self.iteritems())
         return [escape(n) for n in names if n.lower().startswith(token)]
 
     def get_placeholder(self, arg):
@@ -898,6 +913,24 @@ class FontFace(String):
         if len(comps) == 1:
             return comps[0][len(token):]
         return ""
+
+
+class FontFace(DynamicList):
+    """Font face chooser argument type
+    """
+
+    def __init__(self, *args, **kw):
+        kw.pop("_editor", None)
+        String.__init__(self, *args, **kw)
+
+    def iteritems(self):
+        try:
+            return self._system_fonts
+        except AttributeError:
+            pass
+        from editxt.platform.font import get_system_font_names
+        items = self._system_fonts = [(n, n) for n in get_system_font_names()]
+        return items
 
 
 class RegexPattern(str):

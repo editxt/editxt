@@ -25,8 +25,9 @@ import Foundation as fn
 
 import editxt.constants as const
 from editxt.command.base import command, CommandError
-from editxt.command.parser import (Choice, File, Float, FontFace, Int, String,
-    Regex, RegexPattern, VarArgs, CommandParser, Options, SubArgs, SubParser)
+from editxt.command.parser import (Choice, DynamicList, File, Float, FontFace,
+    Int, String, Regex, RegexPattern, VarArgs, CommandParser, Options, SubArgs,
+    SubParser)
 from editxt.command.util import has_editor, has_selection, iterlines
 from editxt.platform.app import beep
 from editxt.platform.font import DEFAULT_FONT, get_font
@@ -305,6 +306,17 @@ def _default_project_path(editor=None):
         return None
     return user_path(editor.project.path)
 
+def set_editor_syntaxdef(editor, command_name, args):
+    set_editor_variable(editor, "syntaxdef", args)
+
+def _get_languages(editor):
+    return [] if editor is None else editor.app.syntax_factory.definitions
+
+def _default_language(editor=None):
+    if editor is None or editor.project is None:
+        return None
+    return editor.document.syntaxdef.name
+
 def set_editor_indent_vars(editor, name, args):
     proxy = editor.proxy
     setattr(proxy, "indent_size", args.size)
@@ -340,6 +352,9 @@ def set_editor_indent_vars(editor, name, args):
                         else editor.indent_mode)
         ),
         setter=set_editor_indent_vars),
+    SubArgs("language",
+        DynamicList("value", _get_languages, "name", default=_default_language),
+        setter=set_editor_syntaxdef),
     SubArgs("newline_mode",
         Choice(
             ("Unix unix LF lf \\n", const.NEWLINE_MODE_UNIX),
