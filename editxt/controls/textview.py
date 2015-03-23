@@ -133,11 +133,13 @@ class TextView(ak.NSTextView):
         origin = self.textContainerOrigin()
         padding = self.textContainer().lineFragmentPadding()
         nchars = self.app.config["theme.right_margin.position"]
-        color1 = self.app.config["theme.right_margin.line_color"]
-        color2 = self.app.config["theme.right_margin.margin_color"]
-        color3 = self.app.config["theme.line_number_color"]
-        margin = (charw * nchars + padding + origin.x) if nchars else None
-        self._margin_params = mp = (margin, color1, color2, color3)
+        class params:
+            background_color = self.app.theme.background_color
+            line_color = self.app.theme["right_margin.line_color"]
+            margin_color = self.app.theme["right_margin.margin_color"]
+            line_number_color = self.app.theme.line_number_color
+            margin = (charw * nchars + padding + origin.x) if nchars else None
+        self._margin_params = mp = params
         return mp
     @margin_params.deleter
     def margin_params(self):
@@ -145,12 +147,13 @@ class TextView(ak.NSTextView):
             del self._margin_params
 
     def drawViewBackgroundInRect_(self, rect):
-        guideX, color1, color2, color3 = self.margin_params
+        params = self.margin_params
+        guideX = params.margin
         if guideX is not None:
             ak.NSGraphicsContext.currentContext().saveGraphicsState()
-            color1.set()
+            params.line_color.set()
             ak.NSRectFill(fn.NSMakeRect(guideX, rect.origin.y, 1, rect.size.height))
-            color2.set()
+            params.margin_color.set()
             ak.NSRectFill(fn.NSMakeRect(guideX + 1, rect.origin.y, 10**7, rect.size.height))
             ak.NSGraphicsContext.currentContext().restoreGraphicsState()
         super(TextView, self).drawViewBackgroundInRect_(rect)
@@ -167,6 +170,17 @@ class TextView(ak.NSTextView):
             if text_height + extra_space > height:
                 height = text_height + extra_space
         super(TextView, self).setFrameSize_(fn.NSMakeSize(size.width, height))
+
+    def setTypingAttributes_(self, attrs):
+        super().setTypingAttributes_(attrs)
+        fg_color = ak.NSForegroundColorAttributeName
+        if fg_color in attrs:
+            theme = self.app.theme
+            self.setInsertionPointColor_(attrs[fg_color])
+            self.setSelectedTextAttributes_({
+                fg_color: attrs[fg_color],
+                ak.NSBackgroundColorAttributeName: theme.selection_color,
+            })
 
     # Conditional font smoothing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

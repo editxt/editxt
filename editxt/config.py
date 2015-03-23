@@ -22,6 +22,7 @@ from functools import partial
 from os.path import exists, join
 
 import editxt.constants as const
+import editxt.platform.constants as platform
 from editxt.platform.font import DEFAULT_FONT
 from editxt.util import get_color, hex_value, load_yaml
 
@@ -53,6 +54,9 @@ def config_schema(): return {
         const.NEWLINE_MODE_UNICODE,
         default=const.NEWLINE_MODE_UNIX),
     "theme": {
+        "text_color": Color(default=platform.COLOR.text_color),
+        "selection_color": Color(default=platform.COLOR.selection_color),
+        "background_color": Color(default=platform.COLOR.background_color),
         "highlight_selected_text": {
             "enabled": Boolean(default=True),
             "color": Color(default=get_color("FEFF6B")),

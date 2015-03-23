@@ -73,32 +73,32 @@ class LineNumberView(ak.NSRulerView):
     def drawRect_(self, rect):
         # draw background and border line
         view = self.textview
-        ignore, line_color, margin_color, line_number_color = view.margin_params
+        colors = view.margin_params
         half_char = view.textContainerInset().height
         line_pos = round(rect.size.width - half_char)
 
-        margin_color.set()
+        colors.margin_color.set()
         ak.NSRectFill(fn.NSMakeRect(
             rect.origin.x,
             rect.origin.y,
             line_pos,
             rect.size.height
         ))
-        ak.NSColor.whiteColor().set()
+        colors.background_color.set()
         ak.NSRectFill(fn.NSMakeRect(
             rect.origin.x + line_pos,
             rect.origin.y,
             rect.size.width - line_pos,
             rect.size.height
         ))
-        line_color.set()
+        colors.line_color.set()
         ak.NSRectFill(fn.NSMakeRect(
             rect.origin.x + line_pos,
             rect.origin.y,
             1.0,
             rect.size.height
         ))
-        self.draw_line_numbers(rect, line_number_color)
+        self.draw_line_numbers(rect, colors.line_number_color)
 
     def char_index_at_point(self, point, adjust_x=True):
         view = self.textview

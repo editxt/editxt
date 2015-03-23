@@ -207,12 +207,13 @@ def test_Editor_save():
     yield test("/missing.txt")
 
 def test_document_set_main_view_of_window():
-    def test(c):
+    @test_app("editor")
+    def test(app, c):
         m = Mocker()
         win = m.mock(ak.NSWindow)
-        doc = m.mock(TextDocument)
-        with m.off_the_record():
-            editor = Editor(None, document=doc)
+        app.config = m.mock()
+        editor = app.windows[0].projects[0].editors[0]
+        editor.document = doc = m.mock(TextDocument)
         soft_wrap = m.property(editor, "soft_wrap")
         reset_edit_state = m.method(editor.reset_edit_state)
         set_text_attributes = m.method(editor.set_text_attributes)
@@ -232,7 +233,7 @@ def test_document_set_main_view_of_window():
             main.top >> scroll
             main.bottom >> m.mock(CommandView)
             scroll.documentView() >> text
-            soft_wrap.value = doc.app.config["soft_wrap"] >> c.soft_wrap
+            soft_wrap.value = app.config["soft_wrap"] >> c.soft_wrap
             set_text_attributes()
             reset_edit_state()
             on_selection_changed(text)

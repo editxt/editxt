@@ -105,3 +105,11 @@ class KEY:
     Find = ak.NSFindFunctionKey
     Help = ak.NSHelpFunctionKey
     ModeSwitch = ak.NSModeSwitchFunctionKey
+
+class COLOR:
+    def _color(name):
+        color = getattr(ak.NSColor, name)()
+        return color.colorUsingColorSpace_(ak.NSColorSpace.deviceRGBColorSpace())
+    text_color = _color("textColor")
+    selection_color = _color("selectedTextBackgroundColor")
+    background_color = _color("controlBackgroundColor")

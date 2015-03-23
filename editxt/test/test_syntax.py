@@ -183,6 +183,7 @@ def test_Highlighter_color_text():
     from editxt.platform.text import Text as BaseText
     from editxt.syntax import SYNTAX_RANGE, SYNTAX_TOKEN
     config = Config(None, schema={"theme": {
+        "text_color": String(default="text_color"),
         "syntax": {}
     }})
     config.data = {"theme": {"syntax": {

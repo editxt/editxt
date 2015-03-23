@@ -181,7 +181,7 @@ def test_TextDocument_reset_text_attributes():
         attrs = {
             ak.NSFontAttributeName: font,
             ak.NSParagraphStyleAttributeName: real_ps,
-            "font_smoothing": app.default_font.smooth
+            ak.NSForegroundColorAttributeName: app.theme.text_color,
         }
         if has_text_storage:
             ts.addAttributes_range_(attrs, fn.NSMakeRange(0, ts.length() >> 20))

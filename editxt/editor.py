@@ -252,7 +252,7 @@ class Editor(object):
             self.scroll_view = self.main_view.top
             self.command_view = self.main_view.bottom
             self.text_view = self.scroll_view.documentView() # HACK deep reach
-            self.soft_wrap = self.document.app.config["soft_wrap"]
+            self.soft_wrap = self.app.config["soft_wrap"]
             self.set_text_attributes()
             self.reset_edit_state()
             self.on_selection_changed(self.text_view)
@@ -278,9 +278,10 @@ class Editor(object):
         if attrs is None:
             attrs = self.document.default_text_attributes()
         ruler = self.scroll_view.verticalRulerView() # HACK deep reach
-        view.font_smoothing = ruler.font_smoothing = attrs["font_smoothing"]
+        view.font_smoothing = ruler.font_smoothing = self.document.font.smooth
         view.setTypingAttributes_(attrs)
         view.setDefaultParagraphStyle_(attrs[ak.NSParagraphStyleAttributeName])
+        self.scroll_view.setBackgroundColor_(self.app.theme.background_color)
         del view.margin_params
         font = attrs[ak.NSFontAttributeName]
         half_char = font.advancementForGlyph_(ord("8")).width / 2
@@ -488,7 +489,7 @@ class Editor(object):
             finder = self._finder = Finder(
                 (lambda:self.text_view),
                 FindOptions(ignore_case=False, wrap_around=False),
-                self.document.app,
+                self.app,
             )
         return finder
 

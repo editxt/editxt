@@ -225,7 +225,7 @@ class TextDocument(object):
         self._text_attributes = attrs = {
             ak.NSFontAttributeName: font,
             ak.NSParagraphStyleAttributeName: ps,
-            "font_smoothing": self.font.smooth,
+            ak.NSForegroundColorAttributeName: self.app.theme.text_color,
         }
         return attrs
 

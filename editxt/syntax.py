@@ -138,7 +138,9 @@ class Highlighter(object):
                 rem_attribute = text.removeAttribute_range_
                 rem_attribute(SYNTAX_TOKEN, rng)
                 rem_attribute(SYNTAX_RANGE, rng)
-                rem_attribute(ak.NSForegroundColorAttributeName, rng)
+                fg_name = ak.NSForegroundColorAttributeName
+                add_attribute = text.addAttribute_value_range_
+                add_attribute(fg_name, self.theme.text_color, rng)
             return
 
         tlen = text.length()
@@ -178,6 +180,7 @@ class Highlighter(object):
         add_attribute = text.addAttribute_value_range_
         rem_attribute = text.removeAttribute_range_
         get_attribute = text.attribute_atIndex_effectiveRange_
+        text_color = self.theme.text_color
 
         string = text.string()
         theme = self.theme
@@ -215,7 +218,7 @@ class Highlighter(object):
                         assert prevend < start, (prevend, start)
                         prevrange = (prevend, start - prevend)
                         rem_attribute(x_token, prevrange)
-                        rem_attribute(fg_name, prevrange)
+                        add_attribute(fg_name, text_color, prevrange)
                     prevend = end
 
                     if end > minend and end + 1 < tlen:
@@ -273,7 +276,7 @@ class Highlighter(object):
             rng = (end, tlen - end)
             rem_attribute(x_range, rng)
             rem_attribute(x_token, rng)
-            rem_attribute(fg_name, rng)
+            add_attribute(fg_name, text_color, rng)
 
 
 class NoHighlight(object):

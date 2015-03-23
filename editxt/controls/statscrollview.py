@@ -96,6 +96,10 @@ class StatusbarScrollView(ak.NSScrollView):
             hscroll.setFrame_(hrect)
             self.setNeedsDisplay_(True)
 
+    def setBackgroundColor_(self, color):
+        super().setBackgroundColor_(color)
+        self.status_view.setBackgroundColor_(color)
+
     @property
     def overlay(self):
         window = self.window()
@@ -133,15 +137,16 @@ class StatusView(ak.NSView):
     def initWithFrame_(self, rect):
         super(StatusView, self).initWithFrame_(rect)
         font = ak.NSFont.labelFontOfSize_(9.0)
+        self.fields = []
         for fname in ["linenumView", "columnView", "selectionView"]:
             field = StatusField.alloc().initWithFrame_(fn.NSZeroRect)
             field.setStringValue_("")
             field.setEditable_(False)
-            field.setBackgroundColor_(ak.NSColor.controlColor())
             field.setFont_(font)
             field.setAlignment_(ak.NSRightTextAlignment)
             self.addSubview_(field)
             setattr(self, fname, field)
+            self.fields.append(field)
         return self
 
     def tile_with_ruler_width(self, width, uniform=False):
@@ -179,6 +184,10 @@ class StatusView(ak.NSView):
             self.selectionView.setIntValue_(sel)
         else:
             self.selectionView.setStringValue_("")
+
+    def setBackgroundColor_(self, color):
+        for field in self.fields:
+            field.setBackgroundColor_(color)
 
 
 class StatusField(ak.NSTextField):

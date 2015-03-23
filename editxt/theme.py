@@ -23,10 +23,12 @@ from editxt.util import get_color, hex_value, rgb2gray
 
 class Theme(object):
 
-    cached = set()
-
     class derived:
         def selection_secondary_color(config):
+            """Unused proof of concept
+
+            Derived theme value that can be overridden in the config
+            """
             value = config.get("theme.selection_secondary_color", Color(None))
             if value is None:
                 color = hex_value(config["theme.selection_color"])
@@ -35,6 +37,7 @@ class Theme(object):
 
     def __init__(self, config):
         self.config = config
+        self.cached = set()
         self.reset()
 
     def reset(self):
@@ -42,7 +45,7 @@ class Theme(object):
         self.default = self.syntax.get("default", {})
         for name in self.cached:
             delattr(self, name)
-        self.cached = set()
+        self.cached.clear()
 
     def __getattr__(self, name):
         try:
