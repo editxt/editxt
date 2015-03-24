@@ -37,6 +37,7 @@ from editxt.document import DocumentController
 from editxt.errorlog import ErrorLog, LogViewHandler
 from editxt.textcommand import CommandHistory, CommandManager
 from editxt.theme import Theme
+from editxt.platform.events import call_later
 from editxt.platform.font import get_font
 from editxt.util import (ContextMap, perform_selector,
     atomicfile, dump_yaml, load_yaml, WeakProperty)
@@ -148,7 +149,10 @@ class Application(object):
         class event:
             theme_changed = self.config.get("theme") != old_theme
         for callback in self.config_callbacks:
-            callback(event=event)
+            # without call_later this could cause
+            # [NSMachPort sendBeforeDate:] destination port invalid
+            # due to forced syntax highlighting taking a long time
+            call_later(0, callback, event=event)
 
     def on_reload_config(self, callback, owner):
         self.config_callbacks[callback] = owner
