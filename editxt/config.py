@@ -362,7 +362,7 @@ class Config(object):
                 if value is NOT_SET:
                     raise KeyError(name)
             else:
-                value = self.validate(default, value, name)
+                value = validate(default, value, name)
         return value
 
     def lookup(self, name, as_dict=False):
@@ -387,28 +387,12 @@ class Config(object):
             so_far.append(part)
 
         if isinstance(schema, dict):
-            if not isinstance(value, dict):
-                log.error("%s: expected dict, got %r", ".".join(so_far), value)
-                value = schema_to_dict(schema)
             if as_dict:
-                return value
+                return schema_to_dict(schema, value, name)
             config = Config(None, schema)
             config.data = value
             return config
-        return self.validate(schema, value, name)
-
-    def validate(self, schema, value, name):
-        try:
-            value = schema.validate(value, name)
-        except Exception as err:
-            if not str(err).startswith(name + ": "):
-                log.error("%s: %s", name, err, exc_info=True)
-            else:
-                log.error(str(err))
-            value = schema.default
-        if value is NOT_SET:
-            raise KeyError(name)
-        return value
+        return validate(schema, value, name)
 
     def extend(self, name, schema, namespace="command"):
         command_schema = self.schema["command"]
@@ -440,10 +424,34 @@ class Config(object):
         return "\n".join(get_lines(self.schema))
 
 
-def value_of(cfg):
-    if isinstance(cfg, dict):
-        return schema_to_dict(cfg)
-    return cfg.default
+def validate(schema, value, name):
+    try:
+        value = schema.validate(value, name)
+    except Exception as err:
+        if not str(err).startswith(name + ": "):
+            log.error("%s: %s", name, err, exc_info=True)
+        else:
+            log.error(str(err))
+        value = schema.default
+    if value is NOT_SET:
+        raise KeyError(name)
+    return value
 
-def schema_to_dict(schema):
-    return {key: value_of(cfg) for key, cfg in schema.items()}
+def value_of(schema, value=NOT_SET, path=""):
+    if isinstance(schema, dict):
+        return schema_to_dict(schema, value, path)
+    if value is NOT_SET:
+        return schema.default
+    return validate(schema, value, path)
+
+def schema_to_dict(schema, value=NOT_SET, path=""):
+    if value is NOT_SET:
+        value = {}
+    elif not isinstance(value, dict):
+        log.error("%s: expected dict, got %r", path, value)
+        value = {}
+    else:
+        value = dict(value)
+    for key, cfg in schema.items():
+        value[key] = value_of(cfg, value.get(key, NOT_SET), path + "." + key)
+    return value

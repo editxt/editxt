@@ -48,7 +48,9 @@ class Theme(object):
 
     def reset(self):
         self.syntax = self.config.lookup("theme.syntax", True)
-        self.default = dict(self.syntax.get("default", {}))
+        self.default = self.syntax.get("default", {})
+        assert self.default is not self.config.get("theme.syntax.default"), \
+            "{!r} will be mutated".format(self.default)
         for name in self.cached:
             delattr(self, name)
         self.cached.clear()

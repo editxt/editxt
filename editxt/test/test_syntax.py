@@ -182,28 +182,6 @@ def test_Highlighter_color_text():
     from textwrap import dedent
     from editxt.platform.text import Text as BaseText
     from editxt.syntax import SYNTAX_RANGE, SYNTAX_TOKEN
-    config = Config(None, schema={"theme": {
-        "text_color": String(default="text_color"),
-        "syntax": {}
-    }})
-    config.data = {"theme": {"syntax": {
-        "default": {
-            "keyword": "keyword",
-            "builtin": "builtin",
-            "operator": "operator",
-            "string": "string",
-            "string.multiline.single-quote": "string.multiline.single-quote",
-            "comment": "comment",
-            "tag": "tag",
-            "attribute": "attribute",
-            "value": "value",
-            "punctuation": "punctuation",
-        },
-        "JavaScript": {
-            "string": "js.string"
-        },
-    }}}
-    theme = editxt.theme.Theme(config)
 
     class Text(BaseText):
         def colors(self, highlighter):
@@ -266,13 +244,34 @@ def test_Highlighter_color_text():
     def edit(lang, string, expect, *pairs):
         hl = Highlighter(theme)
         hl.syntaxdef = get_syntax_definition(lang)
-        hl.theme = theme
         assert len(pairs) % 2 == 0, "got odd number of edit/expect pairs"
         text = Text(string)
         yield test(hl, text, expect)
         for edit, expect in zip(islice(pairs, 0, None, 2),
                                 islice(pairs, 1, None, 2)):
             yield test(hl, text, expect, edit)
+
+    config = Config(None, schema={"theme": {
+        "text_color": String("text_color"),
+        "syntax": {
+            "default": {
+                "keyword": String("keyword"),
+                "builtin": String("builtin"),
+                "operator": String("operator"),
+                "string": String("string"),
+                "string.multiline.single-quote": String("string.multiline.single-quote"),
+                "comment": String("comment"),
+                "tag": String("tag"),
+                "attribute": String("attribute"),
+                "value": String("value"),
+                "punctuation": String("punctuation"),
+            },
+            "JavaScript": {
+                "string": String("js.string")
+            },
+        },
+    }})
+    theme = editxt.theme.Theme(config)
 
     text = Text("def f(self, x): x # TODO")
     hl = Highlighter(theme)

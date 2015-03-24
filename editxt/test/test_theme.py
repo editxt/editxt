@@ -17,12 +17,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-import editxt.constants as const
 import editxt.theme as mod
-from editxt.config import Config
-from editxt.util import get_color
+from editxt.config import Config, ColorString
 from editxt.test.test_config import configify
-from editxt.test.util import assert_raises, CaptureLog, eq_
+from editxt.test.util import assert_raises, eq_, replattr
 
 def test_Theme_selection_secondary_color():
     # currently theme.selection_secondary_color is not used
@@ -46,3 +44,37 @@ def test_Theme_selection_secondary_color():
         theme.reset()
         eq_(mod.hex_value(theme.selection_secondary_color), "CACACA")
     yield test, "derived theme.selection_secondary_color"
+
+def test_Theme_get_syntax_color():
+    config = Config(None, { "theme": {
+        "text_color": ColorString("000000"),
+        "syntax": { "default": {
+            "builtin": ColorString("bbbbbb"),
+            "comment": ColorString("cccccc"),
+            "keyword": ColorString("eeeeee"),
+            "string": ColorString("accafe"),
+        }},
+    }})
+    config.data = {"theme": {"syntax": {
+        "default": {
+            "comment": "112233",
+            "keyword": "445566",
+        },
+        "C": {
+            "builtin": "665544",
+            "keyword": "332211",
+        },
+    }}}
+    theme = mod.Theme(config)
+    get_color = lambda v: v
+    def test(name, color):
+        with replattr(mod, "get_color", get_color, sigcheck=False):
+            eq_(theme.get_syntax_color(name), color)
+    yield test, "A builtin", "bbbbbb"
+    yield test, "A comment", "112233"
+    yield test, "A keyword", "445566"
+    yield test, "A string", "accafe"
+    yield test, "C builtin", "665544"
+    yield test, "C comment", "112233"
+    yield test, "C keyword", "332211"
+    yield test, "C string", "accafe"
