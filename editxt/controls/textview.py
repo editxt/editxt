@@ -178,7 +178,6 @@ class TextView(ak.NSTextView):
             theme = self.app.theme
             self.setInsertionPointColor_(attrs[fg_color])
             self.setSelectedTextAttributes_({
-                fg_color: attrs[fg_color],
                 ak.NSBackgroundColorAttributeName: theme.selection_color,
             })
 
