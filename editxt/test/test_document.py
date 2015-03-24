@@ -161,7 +161,7 @@ def test_TextDocument_default_text_attributes(app):
 
 def test_TextDocument_reset_text_attributes():
     @test_app
-    def test(app, has_text_storage):
+    def test(app, has_text_storage, event=None):
         INDENT_SIZE = 42
         m = Mocker()
         ps_class = m.replace(ak, 'NSParagraphStyle')
@@ -184,17 +184,22 @@ def test_TextDocument_reset_text_attributes():
             ak.NSForegroundColorAttributeName: app.theme.text_color,
         }
         if has_text_storage:
-            ts.addAttributes_range_(attrs, fn.NSMakeRange(0, ts.length() >> 20))
+            no_color = {k: v for k, v in attrs.items()
+                        if k != ak.NSForegroundColorAttributeName}
+            ts.addAttributes_range_(no_color, fn.NSMakeRange(0, ts.length() >> 20))
             ts.setFont_(doc.font.font)
         editors = [m.mock(Editor), m.mock(Editor)]
         m.method(app.iter_editors_of_document)(doc) >> editors
         for editor in editors:
             editor.set_text_attributes(attrs)
         with m:
-            doc.reset_text_attributes(INDENT_SIZE)
+            doc.reset_text_attributes(INDENT_SIZE, event)
             eq_(doc.default_text_attributes(), attrs)
-            eq_(doc.syntax_needs_color, has_text_storage)
+            eq_(doc.syntax_needs_color,
+                has_text_storage and event and event.theme_changed)
     yield test, True
+    yield test, True, TestConfig(theme_changed=True)
+    yield test, True, TestConfig(theme_changed=False)
     yield test, False
 
 @test_app

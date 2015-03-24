@@ -142,10 +142,13 @@ class Application(object):
         return cache[1]
 
     def reload_config(self):
+        old_theme = self.config.get("theme")
         self.config.reload()
         self.theme.reset()
+        class event:
+            theme_changed = self.config.get("theme") != old_theme
         for callback in self.config_callbacks:
-            callback()
+            callback(event=event)
 
     def on_reload_config(self, callback, owner):
         self.config_callbacks[callback] = owner

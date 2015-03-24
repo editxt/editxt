@@ -199,13 +199,15 @@ class TextDocument(object):
         self._font = value
         self.reset_text_attributes()
 
-    def reset_text_attributes(self, indent_size=0):
+    def reset_text_attributes(self, indent_size=0, event=None):
         attrs = self.default_text_attributes(indent_size)
         if self.text_storage is not None:
+            no_color = {k: v for k, v in attrs.items()
+                        if k != ak.NSForegroundColorAttributeName}
             range = fn.NSMakeRange(0, self.text_storage.length())
-            self.text_storage.addAttributes_range_(attrs, range)
+            self.text_storage.addAttributes_range_(no_color, range)
             self.text_storage.setFont_(self.font.font)
-            self.syntax_needs_color = True
+            self.syntax_needs_color = event and event.theme_changed
         for editor in self.app.iter_editors_of_document(self):
             editor.set_text_attributes(attrs)
 

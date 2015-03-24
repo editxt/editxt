@@ -312,7 +312,7 @@ def test_Application_reload_config():
     class Owner: pass
     reloads = 0
     with test_app() as app:
-        def callback():
+        def callback(event):
             nonlocal reloads
             reloads += 1
         owner = Owner()
