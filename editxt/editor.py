@@ -288,6 +288,8 @@ class Editor(object):
         ruler.invalidateRuleThickness()
         view.setTextContainerInset_(fn.NSMakeSize(half_char, half_char)) # width/height
         view.setNeedsDisplay_(True)
+        if self.project.window.current_editor is self:
+            self.document.update_syntaxer()
 
     def _get_soft_wrap(self):
         if self.text_view is None or self.text_view.textContainer() is None:

@@ -193,6 +193,7 @@ def test_TextDocument_reset_text_attributes():
         with m:
             doc.reset_text_attributes(INDENT_SIZE)
             eq_(doc.default_text_attributes(), attrs)
+            eq_(doc.syntax_needs_color, has_text_storage)
     yield test, True
     yield test, False
 
@@ -666,6 +667,7 @@ def test_update_syntaxer():
         syn = doc.syntaxer = m.mock(Highlighter)
         syn.filename >> "<filename %s>" % ("0" if c.namechange else "1")
         new = doc.file_path = "<filename 1>"
+        colored = False
         if c.namechange:
             syn.filename = new
             sdef = app.syntax_factory.get_definition(new) >> m.mock(SyntaxDefinition)
@@ -673,12 +675,19 @@ def test_update_syntaxer():
             if c.newdef:
                 doc.props.syntaxdef = sdef
                 syn.color_text(ts)
+                colored = True
+        doc.syntax_needs_color = c.needs_color
+        if c.needs_color and not colored:
+            syn.color_text(ts)
         with m:
             doc.update_syntaxer()
-    c = TestConfig(namechange=False)
+            eq_(doc.syntax_needs_color, False)
+    c = TestConfig(namechange=False, needs_color=False)
     yield test, c
     yield test, c(namechange=True, newdef=False)
     yield test, c(namechange=True, newdef=True)
+    yield test, c(namechange=True, newdef=True, needs_color=True)
+    yield test, c(needs_color=True)
 
 @test_app
 def test_TextDocument_comment_token(app):

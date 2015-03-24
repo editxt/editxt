@@ -120,6 +120,7 @@ class TextDocument(object):
         self.indent_size = app.config["indent.size"] # should come from syntax definition
         self.newline_mode = app.config["newline_mode"]
         self.highlight_selected_text = app.config["theme.highlight_selected_text.enabled"]
+        self.syntax_needs_color = False
 
         app.on_reload_config(self.reset_text_attributes, self)
         #self.save_hooks = []
@@ -204,6 +205,7 @@ class TextDocument(object):
             range = fn.NSMakeRange(0, self.text_storage.length())
             self.text_storage.addAttributes_range_(attrs, range)
             self.text_storage.setFont_(self.font.font)
+            self.syntax_needs_color = True
         for editor in self.app.iter_editors_of_document(self):
             editor.set_text_attributes(attrs)
 
@@ -496,8 +498,14 @@ class TextDocument(object):
             self.syntaxer.filename = filename
             syntaxdef = self.app.syntax_factory.get_definition(filename)
             if self.syntaxdef is not syntaxdef:
+                self.syntax_needs_color = False
                 self.props.syntaxdef = syntaxdef
                 self.syntaxer.color_text(self.text_storage)
+                return
+        if self.syntax_needs_color:
+            # force re-highlight entire document
+            self.syntax_needs_color = False
+            self.syntaxer.color_text(self.text_storage)
 
     def on_text_edit(self, range):
         self.syntaxer.color_text(self.text_storage, range)
