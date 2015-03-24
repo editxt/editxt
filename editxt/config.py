@@ -24,7 +24,7 @@ from os.path import exists, join
 import editxt.constants as const
 import editxt.platform.constants as platform
 from editxt.platform.font import DEFAULT_FONT
-from editxt.util import get_color, hex_value, load_yaml
+from editxt.util import COLOR_RE, get_color, hex_value, load_yaml
 
 log = logging.getLogger(__name__)
 
@@ -69,14 +69,14 @@ def config_schema(): return {
         },
         "syntax": {
             "default": {
-                "keyword": Color(get_color("0000CC")),
-                "builtin": Color(get_color("000080")),
-                #"operator": Color(get_color("800000")),
-                "string": Color(get_color("008080")),
-                "comment": Color(get_color("008000")),
-                "tag": Color(get_color("0000CC")),
-                "attribute": Color(get_color("000080")),
-                "value": Color(get_color("008080")),
+                "keyword": ColorString("0000CC"),
+                "builtin": ColorString("000080"),
+                "operator": ColorString("000000"),
+                "string": ColorString("008080"),
+                "comment": ColorString("008000"),
+                "tag": ColorString("0000CC"),
+                "attribute": ColorString("000080"),
+                "value": ColorString("008080"),
             }
         }
     },
@@ -249,6 +249,24 @@ class Color(Type):
     @property
     def default_string(self):
         return hex_value(self.default)
+
+
+class ColorString(Type):
+
+    def validate(self, value, key):
+        if value is NOT_SET:
+            value = self.default
+            if value is NOT_SET:
+                return value
+        try:
+            if COLOR_RE.match(value):
+                return value
+            else:
+                return self.default
+        except Exception:
+            log.error("unknown color: %r", value, exc_info=True)
+            raise ValueError("{}: expected RRGGBB hex color string, got {!r}"
+                             .format(key, value))
 
 
 class Config(object):

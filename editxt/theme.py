@@ -17,8 +17,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+import logging
+
+import AppKit as ak
+
 from editxt.config import Color, NOT_SET
 from editxt.util import get_color, hex_value, rgb2gray
+
+log = logging.getLogger(__name__)
 
 
 class Theme(object):
@@ -68,8 +74,19 @@ class Theme(object):
                 value = self._get(lang, token_name)
                 if value is None:
                     value = self._get("default", token_name)
+                if value is not None:
+                    try:
+                        value = get_color(value)
+                    except Exception:
+                        log.warn("unknown color: %s -> %r", name, value)
+                        value = None
+                if value is None:
+                    if "background" in name.lower():
+                        value = self.background_color
+                    else:
+                        value = self.text_color
             else:
-                value = None
+                value = self.text_color
             self.default[name] = value
         return value
 

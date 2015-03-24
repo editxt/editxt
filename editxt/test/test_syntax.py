@@ -28,14 +28,14 @@ import AppKit as ak
 import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
-from editxt.test.util import TestConfig, gentest, tempdir
+from editxt.test.util import TestConfig, gentest, tempdir, replattr
 
+import editxt.theme
 import editxt.constants as const
 import editxt.syntax as mod
 from editxt.config import Config, String
 from editxt.syntax import SyntaxFactory, Highlighter, SyntaxDefinition
 from editxt.syntax import NoHighlight, PLAIN_TEXT, RE
-from editxt.theme import Theme
 
 log = logging.getLogger(__name__)
 
@@ -203,7 +203,7 @@ def test_Highlighter_color_text():
             "string": "js.string"
         },
     }}}
-    theme = Theme(config)
+    theme = editxt.theme.Theme(config)
 
     class Text(BaseText):
         def colors(self, highlighter):
@@ -242,19 +242,22 @@ def test_Highlighter_color_text():
             return lines
     @gentest
     def test(lang, string, expect, edit=None):
+        theme.reset()
         if isinstance(lang, Highlighter):
             hl = lang
         else:
             hl = Highlighter(theme)
             hl.syntaxdef = get_syntax_definition(lang)
         text = string if isinstance(string, Text) else Text(string)
-        if edit:
-            start, length, insert = edit
-            text.replaceCharactersInRange_withAttributedString_(
-                    (start, length), Text(insert).store)
-            hl.color_text(text, (start, len(insert)))
-        else:
-            hl.color_text(text)
+        get_color = lambda value: value
+        with replattr(editxt.theme, "get_color", get_color, sigcheck=False):
+            if edit:
+                start, length, insert = edit
+                text.replaceCharactersInRange_withAttributedString_(
+                        (start, length), Text(insert).store)
+                hl.color_text(text, (start, len(insert)))
+            else:
+                hl.color_text(text)
         a = text.colors(hl)
         b = dedent(expect).strip().split("\n") if expect else []
         assert a == b, "\n" + "\n".join(
@@ -274,7 +277,6 @@ def test_Highlighter_color_text():
     text = Text("def f(self, x): x # TODO")
     hl = Highlighter(theme)
     hl.syntaxdef = get_syntax_definition("python")
-    hl.theme = theme
     hl.color_text(text)
     yield test(mod.PLAIN_TEXT, text, "")
 
