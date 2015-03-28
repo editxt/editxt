@@ -18,8 +18,9 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import AppKit as ak
+import Foundation as fn
+from objc import NULL
 
-from editxt.command.util import iterlines
 
 class Text(object):
 
@@ -36,22 +37,13 @@ class Text(object):
 
     def __getitem__(self, index):
         """Get a string for the given index or slice"""
-        return self.store.string()[index]
+        string = self.store.string()
+        rng = index_to_range(index, string.length())
+        return string.substringWithRange_(rng)
 
     def __setitem__(self, index, value):
-        if not isinstance(index, slice) or index.step is not None:
-            raise NotImplementedError
-        length = len(self)
-        start = min(0 if index.start is None else index.start, length)
-        if start < 0:
-            start = convert_negative_index(start, length, 0)
-        stop = min(length if index.stop is None else index.stop, length)
-        if stop < 0:
-            stop = convert_negative_index(stop, length, 0)
-        if start > stop:
-            raise ValueError(index)
-        range_ = (start, stop - start)
-        self.store.replaceCharactersInRange_withString_(range_, value)
+        rng = index_to_range(index, len(self))
+        self.store.replaceCharactersInRange_withString_(rng, value)
 
     def __len__(self):
         return self.store.length()
@@ -62,10 +54,83 @@ class Text(object):
     def __repr__(self):
         return repr(self.store.string())
 
+    def iter_line_ranges(self, start=0, stop=None):
+        """Generate line ranges
+
+        Start and stop are hexichar (what Apple calls *unichar*)
+        indexes, which are UTF-16-encoded code units.
+        See http://www.objc.io/issue-9/unicode.html for more details
+        on measuring the length of a string.
+
+        :param start: Hexichar index from which to start iterating.
+        The default is zero (0).
+        :param stop: The last hexichar index to consider. The default is
+        the last hexichar index.
+        :yields: Two-tuples `(location, length)`. `location` is the
+        beginning of the line in hexichars, and `length` is the length
+        of the line including newline character(s) in hexichars.
+        """
+        string = self.store.string()
+        index = start
+        if stop is None:
+            stop = string.length()
+        while index < stop:
+            rng = string.lineRangeForRange_((index, 0))
+            yield rng
+            index = sum(rng)
+
     def iterlines(self, start=0, stop=None):
-        """Generate lines of text"""
-        range_ = (start,) if stop is None else (start, stop)
-        return iterlines(self.string(), range_)
+        """Generate lines of text
+
+        See `iter_line_ranges`
+        """
+        store = self.store.string()
+        for rng in self.iter_line_ranges(start, stop):
+            yield store.substringWithRange_(rng)
+
+    def ends_with_newline(self):
+        string = self.store.string()
+        length = string.length()
+        x, end, contents_end = string.getLineStart_end_contentsEnd_forRange_(
+                                            NULL, None, None, (length - 1, 0))
+        return end != contents_end
+
+
+def composed_length(string, enumerate=False):
+    """Get the length of the string as seen by a human
+
+    :param string: A string.
+    :param enumerate: If true, loop over each character (slower, but
+    possibly more accurate).
+    """
+    if enumerate:
+        def block(substring, sub_range, enclosing_range, stop):
+            nonlocal length
+            length += 1
+        length = 0
+        range = (0, string.length())
+        string.enumerateSubstringsInRange_options_usingBlock_(
+            range, ak.NSStringEnumerationByComposedCharacterSequences, block)
+        return length;
+    return len(string.precomposedStringWithCanonicalMapping());
+
+
+def index_to_range(index, length):
+    if isinstance(index, int):
+        return (index, 1)
+    if isinstance(index, (tuple, fn.NSRange)):
+        return index
+    if not isinstance(index, slice) or index.step is not None:
+        raise ValueError("cannot convert {!r} to range".format(index))
+    start = min(0 if index.start is None else index.start, length)
+    if start < 0:
+        start = convert_negative_index(start, length, 0)
+    stop = min(length if index.stop is None else index.stop, length)
+    if stop < 0:
+        stop = convert_negative_index(stop, length, 0)
+    if start > stop:
+        raise ValueError(index)
+    return start, stop - start
 
 
 def convert_negative_index(index, length, underflow=None):

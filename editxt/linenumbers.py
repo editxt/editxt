@@ -19,10 +19,6 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 from bisect import bisect
 
-from editxt.constants import EOLS as _EOLS
-
-EOLS = tuple(_EOLS.values())
-
 
 class LineNumbers(object):
 
@@ -80,15 +76,16 @@ class LineNumbers(object):
             line = len(lines)
             prev_line = line - 1
         if self.end is None or start < self.end:
-            text = ""
-            for line, text in enumerate(self.text.iterlines(index), start=line):
-                next = index + len(text)
+            text = self.text
+            next = 0
+            for line, rng in enumerate(text.iter_line_ranges(index), start=line):
+                index = rng[0]
+                next = sum(rng)
                 if index > start or (next > start and prev_line < line):
                     yield line, index
                 lines.append(next)
-                index = next
-            self.end = lines.pop(-1)
-            self.newline_at_end = text.endswith(EOLS)
+            self.end = lines.pop() if next else 0
+            self.newline_at_end = bool(text) and text.ends_with_newline()
 
     def index_of(self, line):
         """Return the character index of the given line number

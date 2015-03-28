@@ -191,7 +191,7 @@ class Highlighter(object):
         null = NULL
         if offset > 0:
             key, ignore = text.attribute_atIndex_effectiveRange_(
-                                x_range, offset, NULL)
+                                x_range, offset, null)
             if key:
                 stack.append(lang)
                 state = key

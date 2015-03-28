@@ -28,11 +28,11 @@ from editxt.test.util import assert_raises, eq_, gentest
 END = Constant("END")
 
 TEXT = (
-    "abc\n"  # 0     3   1
-    "def\n"  # 4     7   2
-    "\n"     # 8     8   3
-    "ghij\n" # 9     13  4
-    "jkl\n"  # 14    17  5
+    "abc\n"  # 1    0     3
+    "def\n"  # 2    4     7
+    "\n"     # 3    8     8
+    "ghij\n" # 4    9     13
+    "jkl\n"  # 5    14    17
 )
 
 def test_getitem():
@@ -60,6 +60,20 @@ def test_getitem():
     yield test(1, 1, "abc")
     yield test(2, 1, "abc")
     yield test(3, IndexError, "abc")
+
+    def unicode_suite(text, length, breaks={}):
+        eq_(len(Text(text)), length, text)
+        line = 1
+        for i in range(length):
+            if i in breaks:
+                line = breaks[i]
+            yield test(i, line, text);
+        yield test(length, IndexError, text);
+
+    yield from unicode_suite("a\n", 2)
+    yield from unicode_suite("\u00e9\n", 2)
+    yield from unicode_suite("e\u0301\n", 3)
+    yield from unicode_suite("\U0001f612\n", 3)
 
     for preset in [None, END] + list(range(7, 15)):
         test = partial(base_test, text=TEXT, preset=preset)

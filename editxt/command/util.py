@@ -34,24 +34,30 @@ def has_editor(editor):
     return editor is not None
 
 
-_line_splitter = re.compile("([^\n\r\u2028\u2029]*(?:%s)?)" % "|".join(
-    eol for eol in sorted(const.EOLS.values(), key=len, reverse=True)))
+#_line_splitter = re.compile("([^\n\r\u2028\u2029]*(?:%s)?)" % "|".join(
+#    eol for eol in sorted(const.EOLS.values(), key=len, reverse=True)))
 
 def iterlines(text, range=(0,)):
     """iterate over lines of text
 
-    By default this function iterates over all lines in the give text. If the
-    'range' parameter (NSRange or tuple) is given, lines within that range will
-    be yielded.
+    By default this function iterates over all lines in the given text.
+    If the 'range' parameter (NSRange or tuple) is given, lines that
+    intersect with that range will be yielded.
     """
     if not text:
         yield text
     else:
-        if len(list(range)) == 2:
+        if not hasattr(text, "iterlines"):
+            from editxt.platform.text import Text
+            text = Text(text)
+        if len(range) == 2:
             range = (range[0], sum(range))
-        for line in _line_splitter.finditer(text, *range):
-            if line.group():
-                yield line.group()
+        yield from text.iterlines(*range)
+        #if len(list(range)) == 2:
+        #    range = (range[0], sum(range))
+        #for line in _line_splitter.finditer(text, *range):
+        #    if line.group():
+        #        yield line.group()
 
 # def expand_range(text, range):
 #     """expand range to beginning of first selected line and end of last selected line"""

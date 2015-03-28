@@ -506,25 +506,31 @@ class Editor(object):
 
     @noraise
     def on_selection_changed(self, textview):
-        text = textview.string()
-        length = text.length()
+        from editxt.platform.text import composed_length
+        lines = self.line_numbers
+        text = lines.text
+        length = len(text)
         range = textview.selectedRange()
         index = min(range.location, length) if length else 0
-        lines = self.line_numbers
         try:
             line = lines[index]
         except IndexError:
             if index != length or not lines.end:
-                raise ValueError(
-                    (index, length, lines.end, lines.newline_at_end, len(lines)))
+                log.warn("expected index (%s) to equal length (%s) or "
+                         "newline (%s lines)", 
+                        index, length, lines.end,
+                        lines.newline_at_end, len(lines))
             line = len(lines)
         line_index = self.line_numbers.index_of(line)
-        col = max(index - line_index, 0)
-        sel = range.length
+        if line_index < index:
+            col = composed_length(text[line_index:index])
+        else:
+            col = 0
+        sel = composed_length(text[range])
         self.scroll_view.status_view.updateLine_column_selection_(line, col, sel)
 
         if self.document.highlight_selected_text:
-            ftext = text.substringWithRange_(range)
+            ftext = text[range]
             if len(ftext.strip()) < 3 or " " in ftext:
                 ftext = ""
             self.finder.mark_occurrences(ftext)
