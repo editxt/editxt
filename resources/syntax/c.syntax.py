@@ -50,7 +50,7 @@ word_groups = [
         self
         void
     """.split()),
-    ("keyword.preprocessor", """
+    ("preprocessor", """
         #define
         #import
         #include
@@ -88,8 +88,8 @@ word_groups = [
     ("builtin", "YES NO NULL nil".split()),
 ]
 delimited_ranges = [
-    ("string.single-line", RE('@?"'), ['"', RE(r"[^\\]\n")]), # D32E1B
-    ("string.header", RE('\s\<'), [RE('\.h\>'), RE(r"[^\\]\n")]), # D32E1B
+    ("string.single-line", RE('@?"'), ['"', RE(r"[^\\]$")]), # D32E1B
+    ("header", RE('\s\<'), [RE('\.h\>'), RE(r"[^\\]$")]), # D32E1B
     ("string.char", RE("@?'"), ["'", RE(r"[^\\]\n")]),
     ("comment.single-line", "//", [RE("$")]),
     ("comment.multi-line", "/*", ["*/"]),

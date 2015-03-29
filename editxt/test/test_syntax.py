@@ -357,7 +357,7 @@ def test_Highlighter_color_text():
         """
         <div tag
           tal:wrap attribute Markup
-          = punctuation Markup
+          = tag.punctuation tag Markup
           '<span>' value Markup
         """)
     yield test("markup",
@@ -365,11 +365,11 @@ def test_Highlighter_color_text():
         """
         <div tag
           class attribute Markup
-          = punctuation Markup
+          = tag.punctuation tag Markup
           'ext' value Markup
           data attribute Markup
           id attribute Markup
-          = punctuation Markup
+          = tag.punctuation tag Markup
           "xpr" value Markup
           > tag Markup
         </div> tag
@@ -386,7 +386,7 @@ def test_Highlighter_color_text():
         <!DOCTYPE tag.doctype tag
           html attribute Markup
           encoding attribute Markup
-          = punctuation Markup
+          = tag.punctuation tag Markup
           "utf-8" value Markup
           > tag.doctype tag Markup
         <div/> tag
@@ -415,7 +415,7 @@ def test_Highlighter_color_text():
         """
         <style tag
           attr attribute Markup
-          = punctuation Markup
+          = tag.punctuation tag Markup
           'value' value Markup
           ></style> tag Markup
         """)
@@ -432,12 +432,12 @@ def test_Highlighter_color_text():
 #        """
 #        <style> tag
 #          .error class css
-#          { punctuation css
+#          { tag.punctuation tag css
 #          color attribute css
-#          : punctuation css
+#          : tag.punctuation tag css
 #          red value css
-#          ; punctuation css
-#          } punctuation css
+#          ; tag.punctuation tag css
+#          } tag.punctuation tag css
 #          </style> tag css
 #        """)
 

@@ -61,7 +61,7 @@ word_groups = [
 ]
 # TODO revisit the theme names used for these ranges
 delimited_ranges = [
-    ("builtin", RE('\$[A-Z]'), [RE(r"(?=\s)")]), # plum
+    ("variable", RE('\$[A-Z]'), [RE(r"(?=\s)")]), # plum
     ("string.txt", RE('"'), ['"']),              # teal, TXT-like record values
     ("value.a-record", RE('(?<=\sA\s)'), [RE(r"(?=\n)")]),      # cayenne, A record values
     ("string.cname", RE('(?<=\sCNAME\s)'), [RE(r"(?=\n)")]),    # teal, CNAME record values

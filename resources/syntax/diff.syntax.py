@@ -32,12 +32,11 @@
 name = "Git Diff"
 file_patterns = ["*.diff", "*.patch"]
 delimited_ranges = [
-    ("string.diff.header", RE('^diff '), [RE(r"$")]), # 505050
-    ("string.diff.index", RE('^index '), [RE(r"$")]), # 505050
-    # Uncomment these if you want something different for the ---/+++ lines
-    ("diff.removed.file", RE(r'^--- '),  [RE(r"$")]), # 59069B (purple)
-    ("diff.added.file", RE(r'^\+\+\+ '),  [RE(r"$")]), # 59069B (purple)
-    ("diff.removed", RE(r'^-(?!-- )'),  [RE(r"$")]), # BA0004 (red)
-    ("diff.added", RE(r'^\+(?!\+\+ )'),  [RE(r"$")]), # 1BBA03 (green)
-    ("diff.what?", RE(r'^@@ '),  [RE(r" @@ |$")]), # 19BABA (bright cyan)
+    ("navy.diff.header", RE('^diff '), [RE(r"$")]), # 505050
+    ("purple.diff.index", RE('^index '), [RE(r"$")]), # 505050
+    ("red.diff.removed.file", RE(r'^--- '),  [RE(r"$")]), # 59069B (purple)
+    ("red.diff.removed", RE(r'^-(?!-- )'),  [RE(r"$")]), # BA0004 (red)
+    ("green.diff.added.file", RE(r'^\+\+\+ '),  [RE(r"$")]), # 59069B (purple)
+    ("green.diff.added", RE(r'^\+(?!\+\+ )'),  [RE(r"$")]), # 1BBA03 (green)
+    ("brown.diff.what?", RE(r'^@@ '),  [RE(r" @@ |$")]), # 19BABA (bright cyan)
 ]

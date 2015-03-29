@@ -45,11 +45,11 @@ word_groups = [
         until
         while
     """.split()),
-    #("operator.logical", "&& ||".split()),
-    #("operator.equal", "== !=".split()),
+    ("operator.logical", [RE("&&"), RE("\|\|")]),
+    ("operator.equal", [RE("=="), RE("!=")]),
 ]
 delimited_ranges = [
     ("string.double-quote", RE('"'), ['"']), # TODO $VARS
     ("string.single-quote", RE("'"), ["'"]),
-    ("comment", "#", [RE(r"(?=\n)")]),
+    ("comment", "#", [RE("$")]),
 ]

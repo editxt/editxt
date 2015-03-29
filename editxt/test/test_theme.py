@@ -48,12 +48,18 @@ def test_Theme_selection_secondary_color():
 def test_Theme_get_syntax_color():
     config = Config(None, { "theme": {
         "text_color": ColorString("000000"),
-        "syntax": { "default": {
-            "builtin": ColorString("bbbbbb"),
-            "comment": ColorString("cccccc"),
-            "keyword": ColorString("eeeeee"),
-            "string": ColorString("accafe"),
-        }},
+        "syntax": {
+            "default": {
+                "builtin": ColorString("bbbbbb"),
+                "comment": ColorString("cccccc"),
+                "keyword": ColorString("eeeeee"),
+                "string": ColorString("accafe"),
+            },
+            "B": {
+                "builtin": ColorString("BBBBBB"),
+                "keyword": ColorString("EEEEEE"),
+            },
+        },
     }})
     config.data = {"theme": {"syntax": {
         "default": {
@@ -74,6 +80,10 @@ def test_Theme_get_syntax_color():
     yield test, "A comment", "112233"
     yield test, "A keyword", "445566"
     yield test, "A string", "accafe"
+    yield test, "B builtin", "BBBBBB"
+    yield test, "B comment", "112233"
+    yield test, "B keyword", "EEEEEE"
+    yield test, "B string", "accafe"
     yield test, "C builtin", "665544"
     yield test, "C comment", "112233"
     yield test, "C keyword", "332211"

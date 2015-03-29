@@ -22,9 +22,9 @@ name = "EditXT Log"
 file_patterns = ["EditXT Log"]
 comment_token = "x"
 word_groups = [
-    ("log.debug", [RE("DEBUG [a-zA-Z.]+ - ")]),
-    ("log.info", [RE("INFO [a-zA-Z.]+ - ")]),
-    ("log.warning", [RE("WARNING [a-zA-Z.]+ - ")]),
-    ("log.error", [RE("ERROR [a-zA-Z.]+ - ")]),
-    ("log.critical", [RE("CRITICAL [a-zA-Z.]+ - ")]),
+    ("navy.log.debug", [RE("DEBUG [a-zA-Z.]+ - ")]),
+    ("green.log.info", [RE("INFO [a-zA-Z.]+ - ")]),
+    ("orange.log.warning", [RE("WARNING [a-zA-Z.]+ - ")]),
+    ("red.log.error", [RE("ERROR [a-zA-Z.]+ - ")]),
+    ("red.log.critical", [RE("CRITICAL [a-zA-Z.]+ - ")]),
 ]

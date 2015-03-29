@@ -25,11 +25,11 @@ flags = re.IGNORECASE
 
 class attributes:
     word_groups = [
+        ("attribute", [RE(r"[\w.:-]+")]),
+        ("tag.punctuation", "="),
         ("value", [RE(r"(?<==)\s*'[^']*'")]),
         ("value", [RE(r'(?<==)\s*"[^"]*"')]),
         ("value", [RE(r"(?<==)\s*[^\s/>]+")]),
-        ("punctuation", "="),
-        ("attribute", [RE(r"[\w.:-]+")]),
     ]
 
 class cdata:

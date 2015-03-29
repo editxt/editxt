@@ -33,5 +33,5 @@ delimited_ranges = [
     ("comment.multi-line", "<!--", ["-->"]),
     ("tag", RE("<[^/%]"), [">"]),
     ("tag", RE("</[^%]"), [">"]),
-    ("comment.single-line", "##", [RE(r"(?=\n)")]),
+    ("comment.single-line", "##", [RE("$")]),
 ]

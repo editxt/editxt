@@ -22,7 +22,7 @@ file_patterns = ["*.sql"]
 flags = re.IGNORECASE
 comment_token = "--"
 word_groups = [
-    ("builtin", """
+    ("keyword", """
         abort absolute access action add admin after aggregate all also alter
         always analyse analyze and any array as asc assertion assignment
         asymmetric at authorization backward before begin between bigint binary
@@ -70,8 +70,8 @@ word_groups = [
     """.split()),
 ]
 delimited_ranges = [
-    ("string.double-quote", RE('"'), ['"']), # 720E74
-    ("string.single-quote", RE("'"), ["'"]), # 008080
+    ("identifier.quoted", RE('"'), ['"']),
+    ("string.single-quote", RE("'"), ["'"]),
     ("comment.multi-line", "/*", ["*/"]),
     ("comment", "--", [RE(r"$")]),
 ]

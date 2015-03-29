@@ -69,14 +69,30 @@ def config_schema(): return {
         },
         "syntax": {
             "default": {
-                "keyword": ColorString("0000CC"),
+                "attribute": ColorString("004080"),
                 "builtin": ColorString("000080"),
-                "operator": ColorString("000000"),
-                "string": ColorString("008080"),
                 "comment": ColorString("008000"),
-                "tag": ColorString("0000CC"),
-                "attribute": ColorString("000080"),
-                "value": ColorString("008080"),
+                "header": ColorString("D32E1B"),
+                "identifier": ColorString("720E74"),
+                "keyword": ColorString("0000CC"),
+                "operator": ColorString("CC0066"),
+                "preprocessor": ColorString("78492A"),
+                "punctuation": ColorString("606000"),
+                "string": ColorString("008080"),
+                "tag": ColorString("800000"),
+                "regexp": ColorString("804000"),
+                "value": ColorString("400080"),
+                "variable": ColorString("800080"),
+
+                "red": ColorString("CC0000"),
+                "orange": ColorString("EE8000"),
+                "yellow": ColorString("FFFF00"),
+                "green": ColorString("008000"),
+                "blue": ColorString("0000FF"),
+                "navy": ColorString("000080"),
+                "purple": ColorString("800080"),
+                "brown": ColorString("804000"),
+                "gray": ColorString("666666"),
             }
         }
     },
@@ -259,8 +275,9 @@ class ColorString(Type):
             if value is NOT_SET:
                 return value
         try:
-            if COLOR_RE.match(value):
-                return value
+            val = str(value)
+            if COLOR_RE.match(val):
+                return val
             else:
                 return self.default
         except Exception:
