@@ -42,7 +42,7 @@ delimited_ranges = [
     ]),
     ("comment", "//", [RE(r"(?=\n)")]),
     ("comment.multi-line", "/*", ["*/"]),
-    ("regexp", RE("/(?!/)"), [
+    ("regexp", RE("/(?=[^/\r\n]+/)"), [
         RE(r"(?:(?:[^\\]|(?<=/))(?:\\\\)*)/[img]*"),
         RE(r"$")
     ]),
