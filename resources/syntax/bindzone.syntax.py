@@ -63,7 +63,7 @@ word_groups = [
 delimited_ranges = [
     ("variable", RE('\$[A-Z]'), [RE(r"(?=\s)")]), # plum
     ("string.txt", RE('"'), ['"']),              # teal, TXT-like record values
-    ("value.a-record", RE('(?<=\sA\s)'), [RE(r"(?=\n)")]),      # cayenne, A record values
-    ("string.cname", RE('(?<=\sCNAME\s)'), [RE(r"(?=\n)")]),    # teal, CNAME record values
-    ("comment", ";", [RE(r"(?=\n)")]),
+    ("value.a-record", RE('(?<=\sA\s)'), [RE(r"$")]),      # cayenne, A record values
+    ("string.cname", RE('(?<=\sCNAME\s)'), [RE(r"$")]),    # teal, CNAME record values
+    ("comment", ";", [RE(r"$")]),
 ]

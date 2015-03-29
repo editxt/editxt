@@ -51,5 +51,5 @@ word_groups = [
 delimited_ranges = [
     ("string.double-quote", RE('"'), ['"']), # TODO $VARS
     ("string.single-quote", RE("'"), ["'"]),
-    ("comment", "#", [RE("$")]),
+    ("comment", "#", [RE(r"$")]),
 ]

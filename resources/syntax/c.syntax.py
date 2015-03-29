@@ -90,7 +90,7 @@ word_groups = [
 delimited_ranges = [
     ("string.single-line", RE('@?"'), ['"', RE(r"[^\\]$")]), # D32E1B
     ("header", RE('\s\<'), [RE('\.h\>'), RE(r"[^\\]$")]), # D32E1B
-    ("string.char", RE("@?'"), ["'", RE(r"[^\\]\n")]),
+    ("string.char", RE("@?'"), ["'", RE(r"[^\\]$")]),
     ("comment.single-line", "//", [RE("$")]),
     ("comment.multi-line", "/*", ["*/"]),
     ("regexp", RE("/(?=[^/\r\n]+/)"), [

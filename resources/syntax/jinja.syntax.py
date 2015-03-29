@@ -26,9 +26,9 @@ delimited_ranges = [
     ("comment", "<!--", ["-->"]),
     ("tag", RE("<(/)?[a-zA-Z]"), [">", RE(r"(?=\{\{ )")]),
     # both (hackish and nasty)
-    ("tag.jinja", RE(r"(?<= \}\}).+?(?=(>|\{\{ |\n))"), [">", RE(r"(?=\{\{ |\n)")]),
+    ("tag.jinja", RE(r"(?<= \}\}).+?(?=(>|\{\{ |$))"), [">", RE(r"(?=\{\{ |$)")]),
     # jinja2 syntax
-    ("value.statement", RE(r"\{\%(-)? "), ["}", RE(r"(?=\n)")], "python"), # 800000
-    ("value.expression", "{{ ", [" }}", RE(r"(?=\n)")], "python"), # 800000
+    ("value.statement", RE(r"\{\%(-)? "), ["}", RE(r"$")], "python"), # 800000
+    ("value.expression", "{{ ", [" }}", RE(r"$")], "python"), # 800000
     ("comment.multi-line", "{#", ["#}"]), # 666666
 ]
