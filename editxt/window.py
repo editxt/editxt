@@ -35,6 +35,7 @@ from editxt.platform.views import BUTTON_STATE_HOVER, BUTTON_STATE_NORMAL, BUTTO
 from editxt.platform.window import WindowController
 from editxt.project import Project
 from editxt.textcommand import CommandBar
+from editxt.undo import UndoManager
 from editxt.util import (RecentItemStack, load_image, representedObject,
     user_path, WeakProperty)
 
@@ -60,6 +61,7 @@ class Window(object):
         self.recent = self._suspended_recent = RecentItemStack(100)
         self._recent_history = None
         self.window_settings_loaded = False
+        self.no_document_undo_manager = UndoManager()
 
     def window_did_load(self):
         wc = self.wc
@@ -740,5 +742,5 @@ class Window(object):
     def undo_manager(self):
         editor = self.current_editor
         if editor is None:
-            return None
+            return self.no_document_undo_manager
         return editor.undo_manager

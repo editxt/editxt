@@ -30,6 +30,7 @@ from editxt.document import DocumentController, TextDocument
 from editxt.platform.app import add_recent_document
 from editxt.platform.document import add_command_view
 from editxt.platform.kvo import KVOList, KVOProxy
+from editxt.undo import UndoManager
 from editxt.platform.views import ListView
 
 
@@ -62,7 +63,7 @@ class Project(object):
         self.path = None
         self.expanded = True
         self.is_dirty = False
-        self.undo_manager = None
+        self.undo_manager = UndoManager()
         self.editors = KVOList()
         self.recent = KVOList()
         self.main_view = None

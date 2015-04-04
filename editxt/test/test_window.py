@@ -1416,11 +1416,11 @@ def test_undo_manager():
             if has_doc:
                 eq_(result, window.current_editor.undo_manager)
             else:
-                eq_(result, None)
+                eq_(result, window.no_document_undo_manager)
                 if check_editor:
                     eq_(window.current_editor, None)
     yield test("window", has_doc=False)
     yield test("window project", has_doc=False)
-    yield test("window project* editor", has_doc=False, check_editor=False)
+    yield test("window project* editor")
     yield test("window project editor* editor")
     yield test("window project editor editor*")
