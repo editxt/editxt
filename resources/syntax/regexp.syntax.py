@@ -56,7 +56,7 @@ class named_group:
 class charset:
     word_groups = [
         ("operator.range", [
-            RE(r"(?<![\[\\])-(?![\]])")
+            RE(r"(?<![\[^\\])-(?![\]])")
         ]),
         ("operator.class", [
             RE(r"\\[AbBdDsSwWZafnrtv]"),
@@ -74,6 +74,7 @@ class charset:
 
 delimited_ranges = [
     ("group", RE(r"\((?!\?)"), [")"], "regular-expression"),
+    ("keyword.set.inverse", "[^", ["]"], charset),
     ("keyword.set", "[", ["]"], charset),
     ("group.ahead", RE(r"\(\?="), [")"], "regular-expression"),
     ("group.not-ahead", RE(r"\(\?!"), [")"], "regular-expression"),

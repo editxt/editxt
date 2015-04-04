@@ -619,6 +619,17 @@ def test_Highlighter_color_text():
             ] keyword.set keyword Regular Expression
         """)
 
+    yield test("regular-expression",
+        r" [^-\wa-z\-\S-] ",
+        r"""
+        [^ keyword.set.inverse keyword
+            \w operator.class operator Regular Expression
+            - operator.range operator Regular Expression
+            \- operator.escape operator Regular Expression
+            \S operator.class operator Regular Expression
+            ] keyword.set.inverse keyword Regular Expression
+        """)
+
     # TODO test and change match.lastgroup ??
 
     class lang:
