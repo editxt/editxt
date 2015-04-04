@@ -146,13 +146,13 @@ class Highlighter(object):
         tlen = text.length()
         if minrange is not None and self.langs is not None:
             start = max(minrange[0] - 1, 0)
-            #string = text.string()
-            #whitespace = WHITESPACE
-            #start = max(minrange[0] - 1, 0)
-            #while start > 0:
-            #    if string[start] in whitespace:
-            #        break
-            #    start -= 1
+            string = text.string()
+            whitespace = lang.whitespace
+            start = max(minrange[0] - 1, 0)
+            while start > 0:
+                if string[start] in whitespace:
+                    break
+                start -= 1
             long_range = text.attribute_atIndex_longestEffectiveRange_inRange_
             token, adjrange = long_range(SYNTAX_TOKEN, start, None, (0, tlen))
             minrange = NSUnionRange(minrange, adjrange)
@@ -189,6 +189,7 @@ class Highlighter(object):
         stack = []
         state = ""
         null = NULL
+        can_exit_early = False
         if offset > 0:
             key, ignore = text.attribute_atIndex_effectiveRange_(
                                 x_range, offset, null)
@@ -227,12 +228,20 @@ class Highlighter(object):
                         if (info, rng) == long_range(x_token, start, None, rplus):
                             key, ignore = get_attribute(x_range, start, null)
                             if key == (state or None):
-                                xrng = (offset, end - offset)
-                                if state:
-                                    add_attribute(x_range, state, xrng)
+                                # require two token matches before early exit
+                                if can_exit_early:
+                                    xrng = (offset, end - offset)
+                                    if state:
+                                        add_attribute(x_range, state, xrng)
+                                    else:
+                                        rem_attribute(x_range, xrng)
+                                    return
                                 else:
-                                    rem_attribute(x_range, xrng)
-                                return
+                                    can_exit_early = True
+                            else:
+                                can_exit_early = False
+                        else:
+                            can_exit_early = False
 
                     color = theme.get_syntax_color(info)
                     #log.debug("%s %s %s", rng, info, color)
@@ -355,21 +364,25 @@ class SyntaxDefinition(NoHighlight):
         "comment_token",
         "disabled",
         "flags",
+        "whitespace",
         "registry",
     }
 
+    whitespace = " \r\n\t\u2028\u2029"
     registry = WeakProperty()
 
     def __init__(self, filename, name, *, file_patterns=(),
-        word_groups=(), delimited_ranges=(), ends=None,
-        comment_token="", disabled=False, flags=0, registry=None, _id=None):
+            word_groups=(), delimited_ranges=(), ends=None,
+            comment_token="", disabled=False, flags=re.MULTILINE,
+            whitespace=whitespace, registry=None, _id=None):
         super().__init__(name, comment_token, disabled, _id=_id)
         self.filename = filename
         self.file_patterns = set(file_patterns)
         self.word_groups = word_groups
         self.delimited_ranges = delimited_ranges
         self.ends = ends
-        self.flags = flags | re.MULTILINE
+        self.flags = flags
+        self.whitespace = whitespace
         self.registry = registry
         self.lang_ids = (str(i) for i in count())
 
@@ -557,7 +570,6 @@ class MatchInfo(str):
 
 
 PLAIN_TEXT = NoHighlight("Plain Text", "x")
-WHITESPACE = " \r\n\t\u2028\u2029"
 
 
 class RE(object):

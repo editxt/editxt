@@ -376,6 +376,43 @@ def test_Highlighter_color_text():
         def keyword
         """,
         )
+    yield from edit("python", r""" "word" """,
+        """
+        "word" string.double-quote string
+        """,
+        (1, 0, 'r'),
+        """
+        r" string.double-quote string
+            " string.double-quote string Regular Expression
+        """,
+        (1, 1, ''),
+        """
+        "word" string.double-quote string
+        """,
+        )
+    yield from edit("python", r"""r"(?P<xyz>)" """,
+        """
+        r" string.double-quote string
+            (?P< group.named group Regular Expression
+            xyz name Regular Expression
+            >) group.named group Regular Expression
+            " string.double-quote string Regular Expression
+        """,
+        (4, 0, ' '),
+        """
+        r" string.double-quote string
+            ? keyword Regular Expression
+            " string.double-quote string Regular Expression
+        """,
+        (4, 1, ''),
+        """
+        r" string.double-quote string
+            (?P< group.named group Regular Expression
+            xyz name Regular Expression
+            >) group.named group Regular Expression
+            " string.double-quote string Regular Expression
+        """,
+        )
 
     yield test("markup",
         """<div""",
