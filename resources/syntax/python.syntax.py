@@ -36,14 +36,24 @@ word_groups = [
 ]
 
 delimited_ranges = [
-    ("string.multiline.double-quote", RE('(?:br|rb|ur|ru|r|b|u)?"""'), ['"""']),
-    ("string.multiline.single-quote", RE("(?:br|rb|ur|ru|r|b|u)?'''"), ["'''"]),
-    ("string.double-quote", RE('(?:br|rb|ur|ru|r|b|u)?"'), [
+    ("string.multiline.double-quote", RE(r'(?<!r)[bu]?"""'), ['"""']),
+    ("string.multiline.single-quote", RE(r"(?<!r)[bu]?'''"), ["'''"]),
+    ("string.double-quote", RE('(?<!r)[bu]?"'), [
         RE(r'(?:(?:[^\\]|(?<="))(?:\\\\)*)"'),
         RE(r"(?<!\\)$"),
     ]),
-    ("string.single-quote", RE("(?:br|rb|ur|ru|r|b|u)?'"), [
+    ("string.single-quote", RE("(?<!r)[bu]?'"), [
         RE(r"(?:(?:[^\\]|(?<='))(?:\\\\)*)'"),
         RE(r"(?<!\\)$"),
     ]),
+    ("string.multiline.double-quote", RE(r'(?:br|rb|ur|ru|r)"""'), ['"""'], "regular-expression"),
+    ("string.multiline.single-quote", RE(r"(?:br|rb|ur|ru|r)'''"), ["'''"], "regular-expression"),
+    ("string.double-quote", RE('(?:br|rb|ur|ru|r)"'), [
+        RE(r'"'),
+        RE(r"(?<!\\)$"),
+    ], "regular-expression"),
+    ("string.single-quote", RE("(?:br|rb|ur|ru|r)'"), [
+        RE(r"'"),
+        RE(r"(?<!\\)$"),
+    ], "regular-expression"),
 ]

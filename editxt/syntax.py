@@ -235,7 +235,7 @@ class Highlighter(object):
                                 return
 
                     color = theme.get_syntax_color(info)
-                    #log.debug("%s %s %s", rng, name, color)
+                    #log.debug("%s %s %s", rng, info, color)
                     if color:
                         add_attribute(x_token, info, rng)
                         add_attribute(fg_name, color, rng)
@@ -360,7 +360,7 @@ class SyntaxDefinition(NoHighlight):
 
     registry = WeakProperty()
 
-    def __init__(self, filename, name, file_patterns=(),
+    def __init__(self, filename, name, *, file_patterns=(),
         word_groups=(), delimited_ranges=(), ends=None,
         comment_token="", disabled=False, flags=0, registry=None, _id=None):
         super().__init__(name, comment_token, disabled, _id=_id)
@@ -464,7 +464,7 @@ class SyntaxDefinition(NoHighlight):
 
         def compile_range(name, start, ends, sdef):
             ident = next(idgen)
-            ends = list(ends) + [RE("\Z")]
+            ends = list(ends) + [RE(r"\Z")]
             if sdef:
                 sdef = lookup_syntax(name, *sdef, ends=ends)
                 if not sdef:

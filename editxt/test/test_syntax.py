@@ -255,16 +255,19 @@ def test_Highlighter_color_text():
         "text_color": String("text_color"),
         "syntax": {
             "default": {
-                "keyword": String("keyword"),
+                "attribute": String("attribute"),
                 "builtin": String("builtin"),
+                "comment": String("comment"),
+                "group": String("group"),
+                "header": String("header"),
+                "keyword": String("keyword"),
+                "name": String("name"),
                 "operator": String("operator"),
+                "punctuation": String("punctuation"),
                 "string": String("string"),
                 "string.multiline.single-quote": String("string.multiline.single-quote"),
-                "comment": String("comment"),
                 "tag": String("tag"),
-                "attribute": String("attribute"),
                 "value": String("value"),
-                "punctuation": String("punctuation"),
             },
             "JavaScript": {
                 "string": String("js.string")
@@ -297,6 +300,40 @@ def test_Highlighter_color_text():
         """
         " string.double-quote string
         def keyword
+        """)
+    yield test("python",
+        r'''
+        x = "\""
+        y = "\\"
+        z = "\\\""
+        Q = "\\\\\""
+        ''',
+        r"""
+        "\"" string.double-quote string
+        "\\" string.double-quote string
+        "\\\"" string.double-quote string
+        "\\\\\"" string.double-quote string
+        """)
+    yield test("python",
+        r"""
+        x = r"\""
+        y = r"\\"
+        z = r"\\\""
+        Q = r"\\\\\""
+        """,
+        r"""
+        r" string.double-quote string
+            \" operator.escape operator Regular Expression
+            " string.double-quote string Regular Expression
+        r" string.double-quote string
+            \\ operator.escape operator Regular Expression
+            " string.double-quote string Regular Expression
+        r" string.double-quote string
+            \\\" operator.escape operator Regular Expression
+            " string.double-quote string Regular Expression
+        r" string.double-quote string
+            \\\\\" operator.escape operator Regular Expression
+            " string.double-quote string Regular Expression
         """)
     yield test("python",
         "'''    for x",
@@ -446,6 +483,104 @@ def test_Highlighter_color_text():
         """
         var keyword
         'y' string.single-quote js.string
+        """)
+    yield test("javascript",
+        "var regex = /y*/ig;",
+        """
+        var keyword
+        / regexp text_color
+            * keyword Regular Expression
+            /ig regexp text_color Regular Expression
+        """)
+
+    yield test("regular-expression",
+        r"^a(.)c$",
+        """
+        ^ keyword
+        ( group
+            . keyword Regular Expression
+            ) group Regular Expression
+        $ keyword
+        """)
+
+    yield test("regular-expression",
+        r"a(?:(.))c",
+        """
+        (?: group.anon group
+            ( group Regular Expression
+            . keyword Regular Expression
+            ) group Regular Expression
+            ) group.anon group Regular Expression
+        """)
+
+    yield test("regular-expression",
+        r" good (?# junk ) good (?=aft.r)(?!n.t)",
+        """
+        (?# junk ) comment
+        (?= group.ahead group
+            . keyword Regular Expression
+            ) group.ahead group Regular Expression
+        (?! group.not-ahead group
+            . keyword Regular Expression
+            ) group.not-ahead group Regular Expression
+        """)
+
+    yield test("regular-expression",
+        r"(?<=b.hind)(?<!n.t)",
+        """
+        (?<= group.behind group
+            . keyword Regular Expression
+            ) group.behind group Regular Expression
+        (?<! group.not-behind group
+            . keyword Regular Expression
+            ) group.not-behind group Regular Expression
+        """)
+
+    yield test("regular-expression",
+        r"(.)?abc(?(1).|$)",
+        """
+        ( group
+            . keyword Regular Expression
+            ) group Regular Expression
+        ? keyword
+        (?(1) group.conditional group
+            .|$ keyword Regular Expression
+            ) group.conditional group Regular Expression
+        """)
+
+    yield test("regular-expression",
+        r"\1 \01 \7654 \999",
+        r"""
+        \1 group
+        \01 operator.escape.char operator
+        \765 operator.escape.char operator
+        \99 group
+        """)
+
+    yield test("regular-expression",
+        r"\A \b \B \w \W \Z \\ \. \u0a79 \U000167295",
+        r"""
+        \A operator.class operator
+        \b operator.class operator
+        \B operator.class operator
+        \w operator.class operator
+        \W operator.class operator
+        \Z operator.class operator
+        \\ operator.escape operator
+        \. operator.escape operator
+        \u0a79 operator.escape.char operator
+        \U00016729 operator.escape.char operator
+        """)
+
+    yield test("regular-expression",
+        r"[-\wa-z\-\S-]",
+        r"""
+        [ keyword.set keyword
+            \w operator.class operator Regular Expression
+            - operator.range operator Regular Expression
+            \- operator.escape operator Regular Expression
+            \S operator.class operator Regular Expression
+            ] keyword.set keyword Regular Expression
         """)
 
     # TODO test and change match.lastgroup ??
