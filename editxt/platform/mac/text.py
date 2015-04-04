@@ -43,7 +43,12 @@ class Text(object):
 
     def __setitem__(self, index, value):
         rng = index_to_range(index, len(self))
-        self.store.replaceCharactersInRange_withString_(rng, value)
+        if isinstance(value, Text):
+            value = value.store
+        if isinstance(value, ak.NSAttributedString):
+            self.store.replaceCharactersInRange_withAttributedString_(rng, value)
+        else:
+            self.store.replaceCharactersInRange_withString_(rng, value)
 
     def __len__(self):
         return self.store.length()

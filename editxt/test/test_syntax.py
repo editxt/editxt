@@ -231,8 +231,7 @@ def test_Highlighter_color_text():
         with replattr(editxt.theme, "get_color", get_color, sigcheck=False):
             if edit:
                 start, length, insert = edit
-                text.replaceCharactersInRange_withAttributedString_(
-                        (start, length), Text(insert).store)
+                text[(start, length)] = Text(insert)
                 hl.color_text(text, (start, len(insert)))
             else:
                 hl.color_text(text)
