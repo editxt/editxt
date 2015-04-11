@@ -413,23 +413,27 @@ def help(editor, opts):
     editor.project.window.command.show_help(opts.command if opts else "")
 
 
-@command(name='debug',
-    arg_parser=CommandParser(Choice(
-        "mem-profile",
-        "error",
-        "unhandled-error",
-        name="action"
-    )),
-    is_enabled=has_editor)
+@command(name='debug', arg_parser=CommandParser(SubParser("action",
+    SubArgs("mem-profile"),
+    SubArgs("error"),
+    SubArgs("unhandled-error"),
+    SubArgs("exec", VarArgs("command", String("command", default=""))),
+)), is_enabled=has_editor)
 def debug(editor, opts):
-    if opts.action == "mem-profile":
+    if opts.action is None:
+        raise CommandError("please specify a sub command")
+    sub, args = opts.action
+    if sub.name == "mem-profile":
         editor.document.app.open_error_log(set_current=True)
         mem_profile()
-    elif opts.action == "error":
+    elif sub.name == "error":
         raise Exception("raised by debug command")
-    elif opts.action == "unhandled-error":
+    elif sub.name == "unhandled-error":
         class DebugError(BaseException): pass
         raise DebugError("raised by debug command")
+    elif sub.name == "exec":
+        command = " ".join(args.command)
+        return str(eval(command, {"app": editor.app, "editor": editor}))
 
 def mem_profile():
     import gc
