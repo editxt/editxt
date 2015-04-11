@@ -56,12 +56,14 @@ class SyntaxFactory():
 
     def load_definitions(self, path, log_info=True):
         if path and os.path.exists(path):
-            for filename in glob.glob(os.path.join(path, "*" + const.SYNTAX_DEF_EXTENSION)):
+            names = glob.glob(os.path.join(path, "*" + const.SYNTAX_DEF_EXTENSION))
+            for filename in sorted(names):
                 try:
                     sdef = self.load_definition(filename)
+                    file_patterns = sorted(set(sdef.file_patterns))
                     if not sdef.disabled:
                         overrides = []
-                        for pattern in sdef.file_patterns:
+                        for pattern in file_patterns:
                             if pattern in self.registry:
                                 overrides.append(pattern)
                             self.registry[pattern] = sdef
@@ -69,7 +71,7 @@ class SyntaxFactory():
                 except Exception:
                     log.error("error loading syntax definition: %s", filename, exc_info=True)
                 else:
-                    stat = [sdef.name, "[%s]" % ", ".join(sorted(sdef.file_patterns))]
+                    stat = [sdef.name, "[%s]" % ", ".join(file_patterns)]
                     if sdef.disabled:
                         stat.append("DISABLED")
                     elif overrides:
@@ -82,17 +84,25 @@ class SyntaxFactory():
         ns = {
             "re": re,
             "RE": RE,
-            "name": os.path.basename(filename)[:-len(const.SYNTAX_DEF_EXTENSION)],
-            "file_patterns": [],
             "registry": self,
         }
         with open(filename) as fh:
             exec(fh.read(), ns)
-        ns.pop("RE", None)
-        ns.pop("__builtins__", None)
         factory = ns.pop("SyntaxDefinition", SyntaxDefinition)
         kwargs = {a: ns[a] for a in factory.ARGS if a in ns}
-        return factory(filename, **kwargs)
+        base = ns.get("__base__")
+        if base is not None:
+            kwargs.update((a, getattr(base, a))
+                          for a in factory.ARGS if a not in ns)
+        if "name" not in kwargs:
+            kwargs["name"] = os.path.basename(filename)[:-len(const.SYNTAX_DEF_EXTENSION)]
+        sdef = factory(filename, **kwargs)
+        if base is not None and sdef.name == base.name:
+            # drop base definition since a new definition is replacing it
+            for pat in base.file_patterns:
+                if self.registry.get(pat) is base:
+                    del self.registry[pat]
+        return sdef
 
     def index_definitions(self):
         unique = dict((id(sd), sd) for sd in self.registry.values())
@@ -101,8 +111,11 @@ class SyntaxFactory():
         sd = NSValueTransformer.valueTransformerForName_("SyntaxDefTransformer")
         sd.update_definitions(defs)
 
+    def __getitem__(self, id_):
+        return self.by_id[id_.lower().replace(" ", "-")]
+
     def get(self, id_):
-        return self.by_id.get(id_)
+        return self.by_id.get(id_.lower().replace(" ", "-"))
 
     def get_definition(self, filename):
         for pattern, sdef in self.registry.items():
@@ -377,7 +390,7 @@ class SyntaxDefinition(NoHighlight):
             whitespace=whitespace, registry=None, _id=None):
         super().__init__(name, comment_token, disabled, _id=_id)
         self.filename = filename
-        self.file_patterns = set(file_patterns)
+        self.file_patterns = list(file_patterns)
         self.word_groups = word_groups
         self.delimited_ranges = delimited_ranges
         self.ends = ends

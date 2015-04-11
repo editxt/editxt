@@ -76,7 +76,7 @@ def test_SyntaxFactory_load_definitions():
                     raise Exception("incomplete definition: %r" % (data,))
                 data.setdefault("disabled", False)
                 if "file_patterns" in data:
-                    data["file_patterns"] = set(data["file_patterns"])
+                    data["file_patterns"] = data["file_patterns"]
                 return type("sdef", (object,), data)()
             expect(load(ANY)).count(len(info)).call(do)
             for fname, data in sorted(info.items()):
@@ -124,8 +124,6 @@ def test_SyntaxFactory_load_definition():
             if c.error is None:
                 res = sf.load_definition(filename)
                 for name, value in values.items():
-                    if name == "file_patterns":
-                        value = set(value)
                     eq_(getattr(res, name), value, name)
             else:
                 assert_raises(c.error, sf.load_definition, filename)
