@@ -172,15 +172,14 @@ def test_TextDocument_reset_text_attributes():
         else:
             ts = doc.text_storage = None
         font = app.default_font.font
-        spcw = font.screenFontWithRenderingMode_(ak.NSFontDefaultRenderingMode) \
-            .advancementForGlyph_(ord(" ")).width
+        tabw = ak.NSString.stringWithString_("8" * INDENT_SIZE) \
+                 .sizeWithAttributes_({ak.NSFontAttributeName: font}).width
         ps = ps_class.defaultParagraphStyle().mutableCopy() >> m.mock()
         ps.setTabStops_([])
-        ps.setDefaultTabInterval_(spcw * INDENT_SIZE)
-        real_ps = ps.copy() >> "<paragraph style>"
+        ps.setDefaultTabInterval_(tabw)
         attrs = {
             ak.NSFontAttributeName: font,
-            ak.NSParagraphStyleAttributeName: real_ps,
+            ak.NSParagraphStyleAttributeName: ps,
             ak.NSForegroundColorAttributeName: app.theme.text_color,
         }
         if has_text_storage:

@@ -220,12 +220,11 @@ class TextDocument(object):
         if indent_size == 0:
             indent_size = self.indent_size
         font = self.font.font
-        spcw = font.screenFontWithRenderingMode_(ak.NSFontDefaultRenderingMode) \
-            .advancementForGlyph_(ord("8")).width
+        tabw = ak.NSString.stringWithString_("8" * indent_size) \
+                 .sizeWithAttributes_({ak.NSFontAttributeName: font}).width
         ps = ak.NSParagraphStyle.defaultParagraphStyle().mutableCopy()
         ps.setTabStops_([])
-        ps.setDefaultTabInterval_(spcw * indent_size)
-        ps = ps.copy()
+        ps.setDefaultTabInterval_(tabw)
         self._text_attributes = attrs = {
             ak.NSFontAttributeName: font,
             ak.NSParagraphStyleAttributeName: ps,
