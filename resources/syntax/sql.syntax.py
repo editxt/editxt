@@ -19,7 +19,7 @@
 
 name = "SQL"
 file_patterns = ["*.sql"]
-flags = re.IGNORECASE
+flags = re.IGNORECASE | re.MULTILINE
 comment_token = "--"
 word_groups = [
     ("keyword", """

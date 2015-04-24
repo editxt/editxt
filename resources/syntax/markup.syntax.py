@@ -21,7 +21,7 @@ import re
 name = "Markup"
 file_patterns = ["*.html", "*.htm", "*.plist", "*.xml"]
 comment_token = "" #("<!--", "-->")
-flags = re.IGNORECASE
+flags = re.IGNORECASE | re.MULTILINE
 
 class attributes:
     word_groups = [
