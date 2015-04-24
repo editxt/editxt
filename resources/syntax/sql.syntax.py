@@ -73,5 +73,5 @@ delimited_ranges = [
     ("identifier.quoted", RE('"'), ['"']),
     ("string.single-quote", RE("'"), ["'"]),
     ("comment.multi-line", "/*", ["*/"]),
-    ("comment", "--", [RE(r"$")]),
+    ("comment", "--", [RE(r"(?=\n)")]),
 ]
