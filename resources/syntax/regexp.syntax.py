@@ -19,6 +19,7 @@
 
 name = "Regular Expression"
 file_patterns = []
+default_text = DELIMITER
 
 word_groups = [
     ("keyword", list(r".^$*+?|") + [
@@ -72,17 +73,25 @@ class charset:
         ]),
     ]
 
+delimited_ranges = []
+
+class regexp:
+    """Regular Expression definition without `default_text = DELIMITER`"""
+
 delimited_ranges = [
-    ("group", RE(r"\((?!\?)"), [")"], "regular-expression"),
+    ("group", RE(r"\((?!\?)"), [")"], regexp),
     ("keyword.set.inverse", "[^", ["]"], charset),
     ("keyword.set", "[", ["]"], charset),
-    ("group.ahead", RE(r"\(\?="), [")"], "regular-expression"),
-    ("group.not-ahead", RE(r"\(\?!"), [")"], "regular-expression"),
-    ("group.behind", RE(r"\(\?<="), [")"], "regular-expression"),
-    ("group.not-behind", RE(r"\(\?<!"), [")"], "regular-expression"),
-    ("group.anon", RE(r"\(\?:"), [")"], "regular-expression"),
-    ("group.named", named_group, [")"], "regular-expression"),
+    ("group.ahead", RE(r"\(\?="), [")"], regexp),
+    ("group.not-ahead", RE(r"\(\?!"), [")"], regexp),
+    ("group.behind", RE(r"\(\?<="), [")"], regexp),
+    ("group.not-behind", RE(r"\(\?<!"), [")"], regexp),
+    ("group.anon", RE(r"\(\?:"), [")"], regexp),
+    ("group.named", named_group, [")"], regexp),
     ("group.conditional", RE(r"\(\?\((?:[1-9]\d?|[a-zA-Z_]\w*)\)"),
-        [")"], "regular-expression"),
+        [")"], regexp),
     ("comment", RE(r"\(\?#"), [")"]),
 ]
+
+regexp.word_groups = word_groups
+regexp.delimited_ranges = delimited_ranges

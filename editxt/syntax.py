@@ -81,6 +81,7 @@ class SyntaxFactory():
 
     def load_definition(self, filename):
         ns = {
+            "DELIMITER": const.DELIMITER,
             "re": re,
             "RE": RE,
             "registry": self,
@@ -192,7 +193,6 @@ class Highlighter(object):
         add_attribute = text.addAttribute_value_range_
         rem_attribute = text.removeAttribute_range_
         get_attribute = text.attribute_atIndex_effectiveRange_
-        text_color = self.theme.text_color
 
         string = text.string()
         theme = self.theme
@@ -215,6 +215,7 @@ class Highlighter(object):
 
         while True:
             wordinfo = lang.wordinfo
+            text_color = theme.get_syntax_color(lang.default_text_name)
             #log.debug("state=%s offset=%s", state, offset)
             for match in lang.regex.finditer(string, offset):
                 info = wordinfo.get(match.lastgroup)
@@ -308,7 +309,7 @@ class Highlighter(object):
             rng = (end, tlen - end)
             rem_attribute(x_range, rng)
             rem_attribute(x_token, rng)
-            add_attribute(fg_name, text_color, rng)
+            add_attribute(fg_name, self.theme.text_color, rng)
 
 
 class NoHighlight(object):
@@ -419,7 +420,8 @@ class SyntaxDefinition(NoHighlight):
             wordinfo[ident] = info
         self._wordinfo = wordinfo
         self._regex = re.compile("|".join(groups), self.flags)
-        self._default_text_name = self.token_name(self.default_text)
+        self._default_text_name = self.token_name(
+            "" if self.default_text is const.DELIMITER else self.default_text)
         log.debug("file: %s\n"
                   "name: %s\n"
                   "id: %s\n"
@@ -516,6 +518,10 @@ class SyntaxDefinition(NoHighlight):
                 sdef = lookup_syntax(name, *sdef, ends=ends)
                 if not sdef:
                     sdef = self.make_definition(name, unknown, ends)
+                if sdef.default_text is const.DELIMITER:
+                    sdef.default_text = name
+                elif not sdef.default_text:
+                    sdef.default_text = self.default_text
             else:
                 # ranges without nested syntax rules are broken into lines to
                 # minimize the range that needs to be re-highlighted on edit

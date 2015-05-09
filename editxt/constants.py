@@ -128,6 +128,7 @@ CLOSE_DIRTY_SELECTED = "close-dirty-selected.png"
 
 REGEX_HELP_URL = "http://docs.python.org/3/library/re.html#regular-expression-syntax"
 
+DELIMITER = Constant("delimiter")
 
 NEXT = Constant("next")
 PREVIOUS = Constant("previous")
