@@ -36,7 +36,6 @@ from objc import NULL
 
 import editxt.constants as const
 from editxt.datatypes import WeakProperty
-from editxt.util import get_color
 
 log = logging.getLogger(__name__)
 
@@ -235,10 +234,21 @@ class Highlighter(object):
                         add_attribute(fg_name, text_color, prevrange)
                     prevend = end
 
-                    if end > minend and end + 1 < tlen:
+                    if end > minend and end + 1 < tlen and start:
                         # check for early exit (same color & language)
-                        rplus = ((start - 1) if start else 0, end - start + 2)
-                        if (info, rng) == long_range(x_token, start, None, rplus):
+                        rplus = ((start - 1), end - start + 2)
+                        if info.event:
+                            # extend if at beginning or end of delimited range
+                            if info.next and info.next.default_text_name == info:
+                                alt = (info, (rng[0], rng[1] + 1))
+                            elif info.end and lang.default_text_name == info:
+                                alt = (info, (rplus[0], rng[1] + 1))
+                            else:
+                                alt = None
+                        else:
+                            alt = None
+                        info_rng = long_range(x_token, start, None, rplus)
+                        if (info, rng) == info_rng or alt == info_rng:
                             key, ignore = get_attribute(x_range, start, null)
                             if key == (state or None):
                                 # require two token matches before early exit
@@ -378,6 +388,7 @@ class SyntaxDefinition(NoHighlight):
         "disabled",
         "flags",
         "whitespace",
+        "default_text",
         "registry",
     }
 
@@ -387,7 +398,7 @@ class SyntaxDefinition(NoHighlight):
     def __init__(self, filename, name, *, file_patterns=(),
             word_groups=(), delimited_ranges=(), ends=None,
             comment_token="", disabled=False, flags=re.MULTILINE,
-            whitespace=whitespace, registry=None, _id=None):
+            whitespace=whitespace, default_text="", registry=None, _id=None):
         super().__init__(name, comment_token, disabled, _id=_id)
         self.filename = filename
         self.file_patterns = list(file_patterns)
@@ -396,6 +407,7 @@ class SyntaxDefinition(NoHighlight):
         self.ends = ends
         self.flags = flags
         self.whitespace = whitespace
+        self.default_text = default_text
         self.registry = registry
         self.lang_ids = (str(i) for i in count())
 
@@ -407,6 +419,7 @@ class SyntaxDefinition(NoHighlight):
             wordinfo[ident] = info
         self._wordinfo = wordinfo
         self._regex = re.compile("|".join(groups), self.flags)
+        self._default_text_name = self.token_name(self.default_text)
         log.debug("file: %s\n"
                   "name: %s\n"
                   "id: %s\n"
@@ -434,6 +447,14 @@ class SyntaxDefinition(NoHighlight):
         except AttributeError:
             self._init()
         return self._regex
+
+    @property
+    def default_text_name(self):
+        try:
+            return self._default_text_name
+        except AttributeError:
+            self._init()
+        return self._default_text_name
 
     def iter_group_info(self, idgen=None):
         """
@@ -502,6 +523,7 @@ class SyntaxDefinition(NoHighlight):
                 ends = [RE(r".*?(?:{})".format(endxp))]
                 class lines:
                     word_groups = [(name, [RE(r".+?$")])]
+                    default_text = name
                 lines.__name__ = "{}.lines".format(name)
                 sdef = self.make_definition(name, lines, ends)
             phrase = "(?P<{}>{})".format(ident, escape(start))
