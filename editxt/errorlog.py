@@ -98,6 +98,13 @@ def create_error_log_document(app, closefunc):
         class ErrorLogDocument(TextDocument):
             def check_for_external_changes(self, window):
                 self.clear_dirty()
+            def update_syntaxer(self):
+                # optimization work-around: color on set_main_view_of_window
+                self.syntax_needs_color = True
+                super().update_syntaxer()
+            def on_text_edit(self, range):
+                # optimization: do not update syntax color on edit text
+                pass
             def close(self):
                 closefunc()
                 super(ErrorLogDocument, self).close()
