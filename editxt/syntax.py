@@ -506,6 +506,8 @@ class SyntaxDefinition(NoHighlight):
                     log.warn("unknown syntax definition: %r", sdef_name)
                 elif ends:
                     sdef = sdef.clone(owner, ends)
+            elif ends:
+                sdef = sdef.clone(owner, ends)
             return sdef
 
         class unknown:
