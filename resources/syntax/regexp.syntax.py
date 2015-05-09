@@ -35,6 +35,16 @@ word_groups = [
         RE(r"\\([0-7]{3}|0\d{1,2})"),
     ]),
     ("group", [
+        RE(r"\((?!\?)"),
+        ")",
+        "(?=",
+        "(?!",
+        "(?<=",
+        "(?<!",
+        "(?:",
+        RE(r"\(\?\((?:[1-9]\d?|[a-zA-Z_]\w*)\)"),
+    ]),
+    ("group.ref", [
         RE(r"\\[1-9]\d?"),
     ]),
     ("header", [
@@ -46,13 +56,7 @@ word_groups = [
 ]
 
 class name_:
-    word_groups = [("name", [RE(r"[a-zA-Z_]\w+")])]
-
-class named_group:
-    delimited_ranges = [
-        ("group.named", RE(r"\(\?P<(?=[a-zA-Z_]\w+>)"), [">"], name_),
-        ("group.named", RE(r"\(\?P=(?=[a-zA-Z_]\w+\))"), [RE("(?=\))")], name_),
-    ]
+    word_groups = [("name", [RE(r"[a-zA-Z_]\w*")])]
 
 class charset:
     word_groups = [
@@ -73,25 +77,10 @@ class charset:
         ]),
     ]
 
-delimited_ranges = []
-
-class regexp:
-    """Regular Expression definition without `default_text = DELIMITER`"""
-
 delimited_ranges = [
-    ("group", RE(r"\((?!\?)"), [")"], regexp),
     ("keyword.set.inverse", "[^", ["]"], charset),
     ("keyword.set", "[", ["]"], charset),
-    ("group.ahead", RE(r"\(\?="), [")"], regexp),
-    ("group.not-ahead", RE(r"\(\?!"), [")"], regexp),
-    ("group.behind", RE(r"\(\?<="), [")"], regexp),
-    ("group.not-behind", RE(r"\(\?<!"), [")"], regexp),
-    ("group.anon", RE(r"\(\?:"), [")"], regexp),
-    ("group.named", named_group, [")"], regexp),
-    ("group.conditional", RE(r"\(\?\((?:[1-9]\d?|[a-zA-Z_]\w*)\)"),
-        [")"], regexp),
+    ("group.named", RE(r"\(\?P<(?=[a-zA-Z_]\w*>)"), [">"], name_),
+    ("group.ref", RE(r"\(\?P=(?=[a-zA-Z_]\w*\))"), [")"], name_),
     ("comment", RE(r"\(\?#"), [")"]),
 ]
-
-regexp.word_groups = word_groups
-regexp.delimited_ranges = delimited_ranges

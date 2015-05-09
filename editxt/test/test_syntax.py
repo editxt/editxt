@@ -393,13 +393,15 @@ def test_Highlighter_color_text():
         r" string.double-quote string
             (?P< group.named group Regular Expression
             xyz name Regular Expression
-            >) group.named group Regular Expression
+            > group.named group Regular Expression
+            ) group Regular Expression
             " string.double-quote string Regular Expression
         """,
         (4, 0, ' '),
         """
         r" string.double-quote string
             ? keyword Regular Expression
+            ) group Regular Expression
             " string.double-quote string Regular Expression
         """,
         (4, 1, ''),
@@ -407,7 +409,8 @@ def test_Highlighter_color_text():
         r" string.double-quote string
             (?P< group.named group Regular Expression
             xyz name Regular Expression
-            >) group.named group Regular Expression
+            > group.named group Regular Expression
+            ) group Regular Expression
             " string.double-quote string Regular Expression
         """,
         )
@@ -532,63 +535,59 @@ def test_Highlighter_color_text():
         """
         ^ keyword
         ( group
-            . keyword Regular Expression
-            ) group Regular Expression
+        . keyword
+        ) group
         $ keyword
         """)
 
     yield test("regular-expression",
         r"a(?:(.))c",
         """
-        (?: group.anon group
-            ( group Regular Expression
-            . keyword Regular Expression
-            ) group Regular Expression
-            ) group.anon group Regular Expression
+        (?:( group
+        . keyword
+        )) group
         """)
 
     yield test("regular-expression",
         r" good (?# junk ) good (?=aft.r)(?!n.t)",
         """
         (?# junk ) comment
-        (?= group.ahead group
-            . keyword Regular Expression
-            ) group.ahead group Regular Expression
-        (?! group.not-ahead group
-            . keyword Regular Expression
-            ) group.not-ahead group Regular Expression
+        (?= group
+        . keyword
+        )(?! group
+        . keyword
+        ) group
         """)
 
     yield test("regular-expression",
         r"(?<=b.hind)(?<!n.t)",
         """
-        (?<= group.behind group
-            . keyword Regular Expression
-            ) group.behind group Regular Expression
-        (?<! group.not-behind group
-            . keyword Regular Expression
-            ) group.not-behind group Regular Expression
+        (?<= group
+        . keyword
+        )(?<! group
+        . keyword
+        ) group
         """)
 
     yield test("regular-expression",
         r"(.)?abc(?(1).|$)",
         """
         ( group
-            . keyword Regular Expression
-            ) group Regular Expression
+        . keyword
+        ) group
         ? keyword
-        (?(1) group.conditional group
-            .|$ keyword Regular Expression
-            ) group.conditional group Regular Expression
+        (?(1) group
+        .|$ keyword
+        ) group
         """)
 
     yield test("regular-expression",
         r"\1 \01 \7654 \999",
         r"""
-        \1 group
+        \1 group.ref group
         \01 operator.escape.char operator
         \765 operator.escape.char operator
-        \99 group
+        \99 group.ref group
         """)
 
     yield test("regular-expression",
