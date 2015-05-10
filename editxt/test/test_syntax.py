@@ -414,6 +414,39 @@ def test_Highlighter_color_text():
             " string.double-quote string Regular Expression
         """,
         )
+    yield from edit("python", '''
+        r""" [\s] """
+        []
+        ' """ """ '
+        ''',
+        '''
+        r""" string.multiline.double-quote string
+            [ keyword.set keyword Regular Expression
+            \s operator.class operator Regular Expression
+            ] keyword.set keyword Regular Expression
+            """ string.multiline.double-quote string Regular Expression
+        ' """ """ ' string.single-quote string
+        ''',
+        (17, 1, ''),
+        '''
+        r""" string.multiline.double-quote string
+            [ keyword.set keyword Regular Expression
+            \s operator.class operator Regular Expression
+            ] keyword.set keyword Regular Expression
+            """ string.multiline.double-quote string Regular Expression
+        """ ' string.multiline.double-quote string
+                   string.multiline.double-quote string Python
+        ''',
+        (17, 0, ']'),
+        '''
+        r""" string.multiline.double-quote string
+            [ keyword.set keyword Regular Expression
+            \s operator.class operator Regular Expression
+            ] keyword.set keyword Regular Expression
+            """ string.multiline.double-quote string Regular Expression
+        ' """ """ ' string.single-quote string
+        ''',
+        )
 
     yield test("markup",
         """<div""",

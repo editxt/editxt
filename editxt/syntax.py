@@ -171,7 +171,7 @@ class Highlighter(object):
             minrange = NSUnionRange(minrange, adjrange)
             offset = minrange[0]
             minend = sum(minrange)
-            #log.debug("%s %s %s %s", start, token, adjrange, minrange)
+            #log.debug("%s %s %s %s", token, offset, minend, minrange)
         else:
             self.langs = {}
             offset = 0
@@ -203,8 +203,7 @@ class Highlighter(object):
         null = NULL
         can_exit_early = False
         if offset > 0:
-            key, ignore = text.attribute_atIndex_effectiveRange_(
-                                x_range, offset, null)
+            key, ignore = get_attribute(x_range, offset, null)
             if key:
                 stack.append(lang)
                 state = key
@@ -323,7 +322,7 @@ class NoHighlight(object):
         self.disabled = disabled
 
     def __repr__(self):
-        return "<%s : %s>" % (type(self).__name__, self.name)
+        return "<%s : %s %s>" % (type(self).__name__, self.name, self.id)
 
 
 class SyntaxDefinition(NoHighlight):
@@ -399,7 +398,8 @@ class SyntaxDefinition(NoHighlight):
     def __init__(self, filename, name, *, file_patterns=(),
             word_groups=(), delimited_ranges=(), ends=None,
             comment_token="", disabled=False, flags=re.MULTILINE,
-            whitespace=whitespace, default_text="", registry=None, _id=None):
+            whitespace=whitespace, default_text="", registry=None,
+            _id=None, _lang_ids=None):
         super().__init__(name, comment_token, disabled, _id=_id)
         self.filename = filename
         self.file_patterns = list(file_patterns)
@@ -410,7 +410,7 @@ class SyntaxDefinition(NoHighlight):
         self.whitespace = whitespace
         self.default_text = default_text
         self.registry = registry
-        self.lang_ids = (str(i) for i in count())
+        self.lang_ids = _lang_ids or ("%x" % i for i in count())
 
     def _init(self):
         wordinfo = {}
@@ -499,15 +499,15 @@ class SyntaxDefinition(NoHighlight):
                 log.warn("extra delimited range params: %s", unknown)
             if hasattr(sdef, "word_groups") or hasattr(sdef, "delimited_ranges"):
                 sdef = self.make_definition(owner, sdef, ends)
-            elif not hasattr(sdef, "clone"):
+            elif not hasattr(sdef, "make_definition"):
                 sdef_name = sdef
                 sdef = (self.registry or {}).get(sdef_name)
                 if not sdef:
                     log.warn("unknown syntax definition: %r", sdef_name)
                 elif ends:
-                    sdef = sdef.clone(owner, ends)
+                    sdef = self.make_definition(owner, sdef, ends)
             elif ends:
-                sdef = sdef.clone(owner, ends)
+                sdef = self.make_definition(owner, sdef, ends)
             return sdef
 
         class unknown:
@@ -570,26 +570,20 @@ class SyntaxDefinition(NoHighlight):
         return self.name + " " + name
 
     def make_definition(self, name, rules, ends=None):
-        log.debug("make: %s/%s", self.name, rules.__name__)
         NA = object()
         args = {
             "name": self.name,
-            "_id": next(self.lang_ids),
             "flags": self.flags,
+            "_id": next(self.lang_ids),
+            "_lang_ids": self.lang_ids,
         }
-        for attr in self.ARGS:
+        log.debug("make %s/%s %s", self.name, name, args["_id"])
+        for attr in self.ARGS - {"ends"}:
             value = getattr(rules, attr, NA)
             if value is not NA:
                 args[attr] = value
         if ends is not None:
             args["ends"] = (name, ends)
-        return type(self)(self.filename, **args)
-
-    def clone(self, name, ends):
-        log.debug("clone: %s for %s", self.name, name)
-        args = {a: getattr(self, a) for a in self.ARGS - {"ends"}}
-        args["_id"] = next(self.lang_ids)
-        args["ends"] = (name, ends)
         return type(self)(self.filename, **args)
 
 
