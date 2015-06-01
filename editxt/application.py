@@ -21,6 +21,7 @@ import glob
 import logging
 import logging.config
 import os
+import re
 from contextlib import contextmanager
 from itertools import chain, repeat
 from weakref import WeakValueDictionary
@@ -57,6 +58,7 @@ class Application(object):
         assert os.path.isabs(self.profile_path), \
             'profile path cannot be relative (%s)' % self.profile_path
         self.documents = DocumentController(self)
+        self.terminating = False
         self.errlog = ErrorLog(self)
         self.errlog_handler = LogViewHandler(self)
         self.errlog_handler.setLevel(logging.INFO)
@@ -176,6 +178,20 @@ class Application(object):
 
     def create_window(self, state=None):
         from editxt.window import Window
+        if state is None:
+            state_dir = os.path.join(self.profile_path, const.STATE_DIR, const.CLOSED_DIR)
+            for x, path in enumerate_state_paths(state_dir, reverse=True):
+                try:
+                    with open(path, encoding="utf-8") as f:
+                        state = load_yaml(f)
+                except Exception:
+                    log.warn("cannot load editor state: %s", path)
+                    continue
+                try:
+                    os.remove(path)
+                except Exception:
+                    log.exception('cannot remove %s', path)
+                break
         window = Window(self, state)
         self.windows.append(window)
         window.show(self)
@@ -357,6 +373,10 @@ class Application(object):
             self.windows.remove(window)
         except ValueError:
             pass
+        if self.setup_profile(windows=True) and not self.terminating:
+            state_dir = os.path.join(self.profile_path, const.STATE_DIR, const.CLOSED_DIR)
+            ident = next(enumerate_state_paths(state_dir, reverse=True), [-1])[0] + 1
+            self.save_window_state(window, state_dir, ident)
         window.close()
 
     def setup_profile(self, windows=False):
@@ -366,23 +386,21 @@ class Application(object):
 
         :returns: True on success, otherwise False.
         """
-        if not ('.' in self._setup_profile or os.path.isdir(self.profile_path)):
-            try:
-                os.mkdir(self.profile_path)
-            except OSError:
-                log.error('cannot create %s', self.profile_path, exc_info=True)
-                return False
-            self._setup_profile.add('.')
-        if windows and 'editors' not in self._setup_profile:
-            state_path = os.path.join(self.profile_path, const.STATE_DIR)
-            if not os.path.exists(state_path):
+        def setup(path, name):
+            if name not in self._setup_profile and not os.path.isdir(path):
                 try:
-                    os.mkdir(state_path)
+                    os.mkdir(path)
                 except OSError:
-                    log.error('cannot create %s', state_path, exc_info=True)
+                    log.error('cannot create %s', path, exc_info=True)
                     return False
-            self._setup_profile.add('editors')
-        return True
+                self._setup_profile.add(name)
+            return True
+        state_path = os.path.join(self.profile_path, const.STATE_DIR)
+        closed_path = os.path.join(state_path, const.CLOSED_DIR)
+        return setup(self.profile_path, ".") and (
+            not windows or
+            (setup(state_path, "editor") and setup(closed_path, "closed"))
+        )
 
     def _legacy_window_states(self):
         # TODO remove once all users have upraded to new state persistence
@@ -410,15 +428,14 @@ class Application(object):
 
     def iter_saved_window_states(self):
         """Yield saved window states"""
-        state_path = os.path.join(self.profile_path, const.STATE_DIR)
-        if not os.path.exists(state_path):
+        state_dir = os.path.join(self.profile_path, const.STATE_DIR)
+        if not os.path.exists(state_dir):
             if self.profile_path == os.path.expanduser(self.default_profile()):
-                # TODO remove once all users have upraded
+                # TODO remove once all users have upgraded
                 for state in self._legacy_window_states():
                     yield state
             return
-        state_glob = os.path.join(state_path, const.EDITOR_STATE.format('*'))
-        for path in sorted(glob.glob(state_glob)):
+        for x, path in enumerate_state_paths(state_dir):
             try:
                 with open(path) as f:
                     yield load_yaml(f)
@@ -426,23 +443,16 @@ class Application(object):
                 log.error('cannot load %s', path, exc_info=True)
                 yield StateLoadFailure(path)
 
-    def save_window_state(self, window, ident=None):
+    def save_window_state(self, window, state_dir, ident):
         """Save a single window's state
 
         :param window: The window with state to be saved.
-        :param ident: The identifier to use when saving window state. It
-            is assumed that the profile has been setup when this
-            argument is provided; ``window.id`` will be used when
-            not provided.
+        :param state_dir: The directory in which to write the state file.
+        :param ident: The identifier to use when saving window state.
         :returns: The name of the state file.
         """
-        if ident is None:
-            raise NotImplementedError
-            ident = window.id
-        self.setup_profile(windows=True)
         state_name = const.EDITOR_STATE.format(ident)
-        state_file = os.path.join(
-            self.profile_path, const.STATE_DIR, state_name)
+        state_file = os.path.join(state_dir, state_name)
         state = window.state
         try:
             with atomicfile(state_file, encoding="utf-8") as fh:
@@ -453,14 +463,15 @@ class Application(object):
 
     def save_window_states(self):
         """Save all windows' states"""
-        state_path = os.path.join(self.profile_path, const.STATE_DIR)
-        old_glob = os.path.join(state_path, const.EDITOR_STATE.format('*'))
-        old = {os.path.basename(name) for name in glob.glob(old_glob)}
+        state_dir = os.path.join(self.profile_path, const.STATE_DIR)
+        old = {os.path.basename(x[1]) for x in enumerate_state_paths(state_dir)}
         for i, window in enumerate(self.iter_windows()):
-            state_name = self.save_window_state(window, i)
+            if i == 0:
+                self.setup_profile(windows=True)
+            state_name = self.save_window_state(window, state_dir, i)
             old.discard(state_name)
         for name in old:
-            state_file = os.path.join(state_path, name)
+            state_file = os.path.join(state_dir, name)
             try:
                 os.remove(state_file)
             except Exception:
@@ -518,6 +529,7 @@ class Application(object):
         continue_closing()
 
     def will_terminate(self):
+        self.terminating = True
         self.save_window_states()
 
 
@@ -534,6 +546,17 @@ class StateLoadFailure(object):
 
     def __repr__(self):
         return "<{} {}>".format(type(self).__name__, self.path)
+
+
+def enumerate_state_paths(state_dir, reverse=False):
+    expr = const.EDITOR_STATE.replace(".", "\\.").format(r"(\d+)") + "$"
+    regex = re.compile(expr)
+    glob_path = os.path.join(state_dir, const.EDITOR_STATE.format('*'))
+    def paths():
+        for path in glob.glob(glob_path):
+            name = os.path.basename(path)
+            yield int(regex.match(name).group(1)), path
+    yield from iter(sorted(paths(), reverse=reverse))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Open path controller

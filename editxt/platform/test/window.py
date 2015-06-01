@@ -98,6 +98,9 @@ class WindowController(object):
     def windowDidBecomeKey_(self, window):
         raise NotImplementedError
 
+    def showWindow_(self, sender):
+        pass
+
 
 class OutputPanel(object):
 

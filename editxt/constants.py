@@ -42,6 +42,7 @@ TEXT_DOCUMENT = "public.plain-text"
 SYNTAX_DEFS_DIR = "syntax"
 SYNTAX_DEF_EXTENSION = ".syntax.py"
 STATE_DIR = 'state'
+CLOSED_DIR = 'closed'
 EDITOR_STATE = 'editor-{}.yaml'
 LOG_NAME = "EditXT Log"
 

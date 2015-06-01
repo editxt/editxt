@@ -232,13 +232,6 @@ class TextDocument(object):
         }
         return attrs
 
-    def makeWindowControllers(self):
-        # TODO remove this method?
-        window = self.app.current_window()
-        if window is None:
-            window = self.app.create_window()
-        window.insert_items([self])
-
     def _load(self):
         """Load the document's file contents from disk
 

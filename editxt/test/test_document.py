@@ -615,27 +615,6 @@ def test_analyze_content():
     yield test, c(text="  \n   x", imode=SPC, isize=3, eol=const.NEWLINE_MODE_UNIX)
     yield test, c(text="  x\n     x", imode=SPC, isize=2, eol=const.NEWLINE_MODE_UNIX)
 
-def test_makeWindowControllers():
-    "TODO where to move this method?"
-#    import editxt
-#    import editxt.editor
-#    def test(ed_is_none):
-#        doc = TextDocument(None)
-#        m = Mocker()
-#        app = m.mock(Application)
-#        dv_class = m.replace(editxt.editor, 'Editor')
-#        dv = m.mock(Editor)
-#        ed = m.mock(Window)
-#        app.current_window() >> (None if ed_is_none else ed)
-#        if ed_is_none:
-#            app.create_window() >> ed
-#        ed.insert_items([doc])
-#        with m, replattr(editxt, "app", app): # HACK replace global
-#            doc.makeWindowControllers()
-#            eq_(doc.app, app)
-#    yield test, True
-#    yield test, False
-
 @test_app
 def test_get_syntaxdef(app):
     from editxt.syntax import Highlighter, SyntaxDefinition

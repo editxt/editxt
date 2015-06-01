@@ -146,7 +146,8 @@ def test_application_will_finish_launching():
 
 def test_create_window():
     import editxt.window as window #import Window
-    def test(args):
+    @gentest
+    def test(args=()):
         ac = Application()
         m = Mocker()
         ed_class = m.replace(window, 'Window')
@@ -157,8 +158,30 @@ def test_create_window():
         with m:
             result = ac.create_window(*args)
             eq_(result, ed)
-    yield test, ("<serial data>",)
-    yield test, ()
+    yield test(["<serial data>"])
+    yield test()
+
+def test_recent_windows():
+    with test_app("editor(a) window project editor(b)") as app:
+        window_a, window_b = app.windows
+        state_a = window_a.state
+        state_b = window_b.state
+        app.discard_window(window_a)
+        app.discard_window(window_b)
+        # create window -> restore window b state
+        window_c = app.create_window()
+        eq_(window_c.state, state_b)
+        # create window -> restore window a state
+        window_d = app.create_window()
+        eq_(window_d.state, state_a)
+
+def test_window_will_close_after_app_will_terminate():
+    with test_app("editor") as app:
+        window = app.windows[0]
+        app.will_terminate()
+        app.discard_window(window)
+        closed_path = os.path.join(app.profile_path, const.STATE_DIR, const.CLOSED_DIR)
+        eq_(os.listdir(closed_path), [])
 
 def test_open_path_dialog():
     def test(c):
@@ -621,20 +644,10 @@ def test_current_window():
     yield test, [1, 0]
 
 def test_discard_window():
-    def test(c):
-        m = Mocker()
-        app = Application()
-        ed = m.mock(Window)
-        if c.ed_in_eds:
-            app.windows.append(ed)
-        def verify():
-            assert ed not in app.windows, "ed cannot be in app.windows at this point"
-        expect(ed.close()).call(verify)
-        with m:
-            app.discard_window(ed)
-    c = TestConfig(ed_in_eds=True)
-    yield test, c(ed_in_eds=False)
-    yield test, c
+    with test_app("window") as app:
+        window = app.windows[0]
+        app.discard_window(window)
+        assert window not in app.windows, "window should not be in app.windows"
 
 def test_find_windows_with_project():
     PROJ = "the project"
@@ -814,7 +827,8 @@ def test_save_window_state():
             window = TestConfig(state=[42], id=9)
             args = (window.id,) if with_id else ()
             app = Application(tmp)
-            state_name = app.save_window_state(window, *args)
+            app.setup_profile(windows=True)
+            state_name = app.save_window_state(window, state_path, *args)
             if fail:
                 window = window(state="should not be written")
                 def dump_fail(state, fh=None):
@@ -822,7 +836,7 @@ def test_save_window_state():
                         fh.write("should not be seen")
                     raise Exception("dump fail!")
                 with replattr(mod, "dump_yaml", dump_fail, sigcheck=False):
-                    state_name = app.save_window_state(window, *args)
+                    state_name = app.save_window_state(window, state_path, *args)
             assert os.path.isdir(state_path), state_path
             with open(os.path.join(state_path, state_name)) as f:
                 eq_(load_yaml(f), [42])
@@ -854,7 +868,7 @@ def test_save_window_states():
             with m:
                 app.save_window_states()
             assert os.path.isdir(state_path), state_path
-            states = sorted(os.listdir(state_path))
+            states = sorted(set(os.listdir(state_path)) - {const.CLOSED_DIR})
             eq_(len(states), len(c.windows), states)
             for ident, state in zip(c.windows, states):
                 with open(os.path.join(state_path, state)) as f:
