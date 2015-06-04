@@ -577,12 +577,23 @@ class CommandManager(object):
                 editor.project.window.command.execute(text)
             exec.__name__ = text
             return exec
-        for hotkey, text in sorted(shortcuts.items(), key=lambda kv: kv[1]):
+        def sortkey(item):
+            cmd = item[1]
+            if isinstance(cmd, str):
+                return sys.maxsize, cmd.lstrip()
+            name = cmd["name"] if "name" in cmd else cmd["command"].lstrip()
+            return cmd.get("rank", sys.maxsize), name
+        for hotkey, cmd in sorted(shortcuts.items(), key=sortkey):
             key, mask = parse_hotkey(hotkey)
+            if isinstance(cmd, str):
+                text = cmd
+                name = cmd.lstrip()
+            else:
+                text = cmd["command"]
+                name = cmd["name"] if "name" in cmd else text.lstrip()
             command = make_command(text)
             if key is not None and command is not None:
-                title = text.lstrip()
-                tag = self.add_menu_item(menu, title, "doCommand:", key, mask)
+                tag = self.add_menu_item(menu, name, "doCommand:", key, mask)
                 self.commands[tag] = command
             elif key is None:
                 log.warn("unrecognized hotkey: %s", hotkey)

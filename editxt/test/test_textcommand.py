@@ -791,10 +791,10 @@ def test_CommandManager_load_shortcuts():
     menu = const.Constant("menu")
     expect = []
     tags = {doc: doc.name}
-    key = lambda kv: kv[1].default
+    key = lambda kv: kv[1]["rank"].default
     for i, (hotkey, value) in enumerate(sorted(shorts.items(), key=key)):
         hkey = mod.parse_hotkey(hotkey)
-        title = value.default.lstrip()
+        title = value["name"].default
         expect.append((menu, title, "doCommand:") + hkey)
         tags[title] = i
     items = []

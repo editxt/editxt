@@ -108,10 +108,26 @@ def config_schema(): return {
     },
     "shortcuts": {
         # leading space -> not saved in command history
-        "Command+Alt+Left": String(" doc  previous"),
-        "Command+Alt+Right": String(" doc  next"),
-        "Command+Alt+Up": String(" doc  up"),
-        "Command+Alt+Down": String(" doc  down"),
+        "Command+Alt+Left": {
+            "name": String("Previous Document"),
+            "rank": Integer(1000),
+            "command": String(" doc  previous"),
+        },
+        "Command+Alt+Right": {
+            "name": String("Next Document"),
+            "rank": Integer(1010),
+            "command": String(" doc  next"),
+        },
+        "Command+Alt+Up": {
+            "name": String("↑ Document"),
+            "rank": Integer(1020),
+            "command": String(" doc  up"),
+        },
+        "Command+Alt+Down": {
+            "name": String("↓ Document"),
+            "rank": Integer(1030),
+            "command": String(" doc  down"),
+        },
     },
     "logging_config": Dict({}),
 }
