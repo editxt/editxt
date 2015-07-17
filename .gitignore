@@ -6,5 +6,6 @@
 /build
 /dist
 /pages
+/resources/hljs2json/hljs
 /resources/updater/dsa_priv.pem
 /ztemp

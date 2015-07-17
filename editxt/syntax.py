@@ -21,6 +21,7 @@ import glob
 import logging
 import os
 import re
+import runpy
 import string
 from fnmatch import fnmatch
 from itertools import chain, count
@@ -56,7 +57,7 @@ class SyntaxFactory():
     def load_definitions(self, path, log_info=True):
         if path and os.path.exists(path):
             names = glob.glob(os.path.join(path, "*" + const.SYNTAX_DEF_EXTENSION))
-            for filename in sorted(names):
+            for filename in sorted(names, key=lambda n: n.lower()):
                 try:
                     sdef = self.load_definition(filename)
                     file_patterns = sorted(set(sdef.file_patterns))
@@ -86,8 +87,7 @@ class SyntaxFactory():
             "RE": RE,
             "registry": self,
         }
-        with open(filename, encoding="utf-8") as fh:
-            exec(fh.read(), ns)
+        ns = runpy.run_path(filename, ns)
         factory = ns.pop("SyntaxDefinition", SyntaxDefinition)
         kwargs = {a: ns[a] for a in factory.ARGS if a in ns}
         base = ns.get("__base__")
@@ -106,7 +106,7 @@ class SyntaxFactory():
 
     def index_definitions(self):
         unique = dict((id(sd), sd) for sd in self.registry.values())
-        defs = sorted(unique.values(), key=lambda d:(d.name, id(d)))
+        defs = sorted(unique.values(), key=lambda d:(d.name.lower(), id(d)))
         self.definitions[:] = defs
         sd = NSValueTransformer.valueTransformerForName_("SyntaxDefTransformer")
         sd.update_definitions(defs)
