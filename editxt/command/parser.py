@@ -886,17 +886,11 @@ class DynamicList(String):
             comps = [(name, item)
                      for name, item in items
                      if name.lower().startswith(ltok)]
-            if len(comps) == 1:
+            if comps:
                 return comps[0][1], end
-            names = ', '.join(c[0] for c in comps)
-        else:
-            names = ""
-        if names:
-            msg = '{!r} is ambiguous: {}'.format(token, names)
-        else:
-            end = index + len(token)
-            names = ', '.join(name for name, item in items)
-            msg = '{!r} does not match any of: {}'.format(token, names)
+        end = index + len(token)
+        names = ', '.join(name for name, item in items)
+        msg = '{!r} does not match any of: {}'.format(token, names)
         raise ParseError(msg, self, index, end)
 
     def get_completions(self, arg, escape=lambda n: n.replace(" ", "\\ ")):
@@ -910,7 +904,7 @@ class DynamicList(String):
             return default if default else str(self)
         token = str(arg)
         comps = self.get_completions(token, lambda n: n)
-        if len(comps) == 1:
+        if comps:
             return comps[0][len(token):]
         return ""
 

@@ -694,6 +694,46 @@ def test_File():
         yield test, "..", ["../"], 0
         yield test, "../", ["dir"], 3
 
+def test_DynamicList():
+    def get_items(editor):
+        return [
+            "Hammer",
+            "Hammer Drill",
+            "Scewer",
+            "Screw Driver",
+        ]
+    field = mod.DynamicList('tool', get_items, lambda n: n, default="Hammer")
+    eq_(str(field), 'tool')
+    #eq_(repr(field), "DynamicList('tool', default='Hammer')")
+
+    test = make_consume_checker(field)
+    yield test, '', 0, (field.default, 0)
+    yield test, 'a', 0, ParseError(
+        "'a' does not match any of: Hammer, Hammer Drill, Scewer, Screw Driver",
+        field, 0, 1)
+    yield test, 'h', 0, ("Hammer", 2)
+    yield test, 'H', 0, ("Hammer", 2)
+    yield test, 'Ha', 0, ("Hammer", 3)
+    yield test, 's', 0, ("Scewer", 2)
+    yield test, 'Sc', 0, ("Scewer", 3)
+    yield test, ' ', 0, ("Hammer", 1)
+
+    test = make_completions_checker(field)
+    yield test, "", [x.replace(" ", "\\ ") for x in get_items(None)]
+    yield test, "a", []
+    yield test, "h", ["Hammer", "Hammer\\ Drill"]
+    yield test, "H", ["Hammer", "Hammer\\ Drill"]
+
+    test = make_placeholder_checker(field)
+    yield test, "", 0, field.default
+    yield test, "a", 0, ""
+    yield test, "h", 0, "ammer"
+    yield test, "sc", 0, "ewer"
+    yield test, "scr", 0, "ew Driver"
+
+    test = make_arg_string_checker(field)
+    yield test, "Hammer", '"Hammer"', 8
+
 def test_FontFace():
     from editxt.datatypes import Font
     field = mod.FontFace('face', default="Mono Type")
@@ -718,9 +758,7 @@ def test_FontFace():
     yield test, 'c', 0, ("Courier New", 2)
     yield test, 'C', 0, ("Courier New", 2)
     yield test, 'Du', 0, ("Duo Type", 3)
-    yield test, 'm', 0, ParseError(
-        "'m' is ambiguous: Mension, Mono Type",
-        mod.FontFace('face', default='Mono Type'), 0, 2)
+    yield test, 'm', 0, ("Mension", 2)
     yield test, 'me', 0, ("Mension", 3)
     yield test, ' ', 0, ("Mono Type", 1)
 
@@ -733,7 +771,7 @@ def test_FontFace():
     test = make_placeholder_checker(field)
     yield test, "", 0, field.default
     yield test, "a", 0, ""
-    yield test, "m", 0, ""
+    yield test, "m", 0, "ension"
     yield test, "mo", 0, "no Type"
     yield test, "Me", 0, "nsion"
 
