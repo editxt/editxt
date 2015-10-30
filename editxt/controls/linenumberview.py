@@ -217,7 +217,6 @@ class LineNumberView(ak.NSRulerView):
                 self.textview.setSelectedRange_(self.original_selection)
                 return
         elif not self.mouse_dragged:
-            # select single line
             view = self.textview
             font = view.font()
             layout = view.layoutManager()
@@ -227,9 +226,16 @@ class LineNumberView(ak.NSRulerView):
             point2 = ak.NSPoint(point.x, point.y + line_height)
             char_index2 = self.char_index_at_point(point2)
             length = view.textStorage().length()
+            mods = event.modifierFlags() & ak.NSDeviceIndependentModifierFlagsMask
+            extend_selection = mods == ak.NSShiftKeyMask
+
             if char_index == char_index2 and char_index >= length - 1:
                 # clicked below last line
-                view.setSelectedRange_((length, 0))
+                if extend_selection:
+                    start = self.original_selection[0]
+                    rng = (start, length - start)
+                else:
+                    rng = (length, 0)
             else:
                 lines = view.editor.line_numbers
                 line = lines[char_index]
@@ -237,10 +243,22 @@ class LineNumberView(ak.NSRulerView):
                     next_index = lines.index_of(line + 1)
                 except ValueError:
                     next_index = length
-                view.setSelectedRange_((
-                    min(char_index, next_index),
-                    abs(next_index - char_index)
-                ))
+                start = min(char_index, next_index)
+                length = abs(next_index - char_index)
+                if extend_selection:
+                    orig = self.original_selection
+                    if orig[0] < start:
+                        # beginning of original to end of clicked line
+                        length = length + start - orig[0]
+                        start = orig[0]
+                    elif sum(orig) > start + length:
+                        # beginning of clicked line to end of original
+                        length = sum(orig) - start
+                    elif start <= orig[0] and (start + length) > sum(orig):
+                        # beginning of clicked line to end of original on same line
+                        length = sum(orig) - start
+                rng = (start, length)
+            view.setSelectedRange_(rng)
         self.original_selection = None
         self.mouse_down_char_index = None
         self.mouse_dragged = None
