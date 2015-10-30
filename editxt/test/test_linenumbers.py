@@ -137,6 +137,20 @@ def test_delitem():
         yield test(17, [14, 18], start=5)
         yield test(18, [18], start=6)
 
+def test_delitem_len_bug():
+    eq_(list(LineNumbers(Text("\n")).iter_from(0)), [(1, 0)]) # sanity check
+
+    text = Text("\nx")
+    lines = LineNumbers(text)
+    # sanity check
+    eq_(list(lines.iter_from(0)), [(1, 0), (2, 1)])
+    eq_(len(lines), 2, repr(text))
+
+    text[1:] = ""
+    eq_(list(lines.iter_from(0)), [(1, 0)])
+    assert lines.newline_at_end, 'no newline at end: ' + repr(text)
+    eq_(len(lines), 2, repr(text))
+
 def test_len():
     @gentest
     def test(expect, text, iter_to_line=None):

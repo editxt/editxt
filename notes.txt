@@ -64,7 +64,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Extra line number at end of file: new doc, enter, x, backspace
 Shift+Click line number view
 Rescan last found match before replacing text
   esp with regex (with replace groups) and Python replace
@@ -233,18 +232,7 @@ find/replace text processors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Bugs
 
-Bug: error in command: doc in editxt.command.docnav
-  Traceback (most recent call last):
-    File "textcommand.py", line 234, in execute
-    File "command/docnav.py", line 180, in doc
-    File "window.py", line 216, in focus
-    File "window.py", line 180, in focus
-    File "window.py", line 283, in _set_current_editor
-    File "platform/mac/window.py", line 203, in setup_current_editor
-    File "editor.py", line 266, in set_main_view_of_window
-    File "document.py", line 390, in check_for_external_changes
-    File "document.py", line 426, in reload_document
-  IndexError: NSRangeException - *** -[NSConcreteTextStorage attribute:atIndex:longestEffectiveRange:inRange:]: Range or index out of bounds
+Bug: scroll to right on enter after last, longer-than-window-width line
 
 Bug: drag/drop results in errors
   focus document

@@ -44,6 +44,8 @@ class LineNumbers(object):
             line = max(1, bisect(self.lines, index) - 1)
             del self.lines[line:]
         if self.end is not None:
+            if index and index == self.lines[-1]:
+                self.lines.pop()
             self.end = None
             self.newline_at_end = None
 
