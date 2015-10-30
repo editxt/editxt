@@ -157,6 +157,8 @@ class Highlighter(object):
             return
 
         tlen = text.length()
+        if not tlen:
+            return
         if minrange is not None and self.langs is not None:
             start = max(minrange[0] - 1, 0)
             string = text.string()

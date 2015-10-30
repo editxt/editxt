@@ -374,6 +374,14 @@ def test_Highlighter_color_text():
         def keyword
         """,
         )
+    yield from edit("python", "def\n",
+        """
+        def keyword
+        """,
+
+        (0, 4, ''), # bug: error on delete all content
+        "",
+        )
     yield from edit("python", r""" "word" """,
         """
         "word" string.double-quote string
