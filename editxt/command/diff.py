@@ -64,6 +64,7 @@ def external_diff(filepath, text, name, diff_program):
         list2cmdline(command),
         list2cmdline(["rm", "-v", command[-1]]),
     )
-    with open("/dev/null", mode="w") as null:
+    # TODO should use editor encoding?
+    with open("/dev/null", mode="w", encoding="utf-8") as null:
         Popen(cmd, shell=True,
               stdin=None, stdout=null, stderr=null, close_fds=True)

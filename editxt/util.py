@@ -111,8 +111,8 @@ def atomicfile(path, mode="w", **kw):
 
     Atomically overwrites existing file (if any) on exit.
     """
-    assert mode in "wt wb", "invalid mode: {}".format(mode)
-    mode.replace("w", "x")
+    mode = mode.replace("w", "x")
+    assert mode in "xt xb", "invalid mode: {}".format(mode)
     chars = string.ascii_lowercase + string.digits
     ext = "".join(random.choice(chars) for i in range(8))
     temp = path + "-" + ext

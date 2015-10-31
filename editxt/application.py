@@ -437,7 +437,7 @@ class Application(object):
             return
         for x, path in enumerate_state_paths(state_dir):
             try:
-                with open(path) as f:
+                with open(path, encoding="utf-8") as f:
                     yield load_yaml(f)
             except Exception:
                 log.error('cannot load %s', path, exc_info=True)

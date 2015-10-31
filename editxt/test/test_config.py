@@ -45,6 +45,14 @@ def test_Config_init():
         conf = mod.Config(path, SCHEMA)
         eq_(conf["key"], "value")
 
+def test_Config_non_ascii():
+    with tempdir() as tmp:
+        path = join(tmp, const.CONFIG_FILENAME)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("key: ↑ \u4500 ↑\n")
+        conf = mod.Config(path, SCHEMA)
+        eq_(conf["key"], "↑ \u4500 ↑")
+
 def test_Config_init_invalid_config():
     def test(config_data, error):
         with tempdir() as tmp, CaptureLog(mod) as log:

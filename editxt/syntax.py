@@ -86,7 +86,7 @@ class SyntaxFactory():
             "RE": RE,
             "registry": self,
         }
-        with open(filename) as fh:
+        with open(filename, encoding="utf-8") as fh:
             exec(fh.read(), ns)
         factory = ns.pop("SyntaxDefinition", SyntaxDefinition)
         kwargs = {a: ns[a] for a in factory.ARGS if a in ns}
