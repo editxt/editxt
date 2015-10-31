@@ -142,24 +142,28 @@ def test_Finder_mark_occurrences():
     c = c(allow_regex=True)
     yield test, c(options=o(find_text="[t]", regular_expression=True), count=5)
 
-def test_Finder_python_replace():
+def test_Finder():
+    BEEP = const.Constant("BEEP")
     def test(c):
         m = Mocker()
+        beep = m.replace(mod, "beep")
         options = make_options(c)
         tv = m.mock(TextView)
-        tv.selectedRange() >> fn.NSMakeRange(0, 16)
-        tv.string() >> fn.NSString.alloc().initWithString_(c.text)
-        if not isinstance(c.expect, Exception):
-            result = [c.text]
-            def replace(range, value):
-                start, end = range
-                text = result[0]
-                result[0] = text[:start] + value + text[start + end:]
-            tv.shouldChangeTextInRange_replacementString_(ANY, ANY) >> True
-            expect(tv.textStorage().replaceCharactersInRange_withString_(
-                ANY, ANY)).call(replace)
-            tv.didChangeText()
-            tv.setNeedsDisplay_(True)
+        tv.selectedRange() >> fn.NSMakeRange(*c.select)
+        (tv.string() << fn.NSString.alloc().initWithString_(c.text)).count(0, 1)
+        result = [c.text]
+        def replace(range, value):
+            start, end = range
+            result[0] = c.text[:start] + value + c.text[start + end:]
+        (tv.shouldChangeTextInRange_replacementString_(ANY, ANY) << True).count(0, 1)
+        ts = tv.textStorage()
+        expect(ts).count(0, 1)
+        expect(ts.replaceCharactersInRange_withString_(ANY, ANY)).call(replace).count(0, 1)
+        expect(tv.didChangeText()).count(0, 1)
+        expect(tv.setNeedsDisplay_(True)).count(0, 1)
+        if c.expect is BEEP:
+            result = [BEEP]
+            beep()
         finder = Finder((lambda: tv), options, None)
         with m:
             if isinstance(c.expect, Exception):
@@ -171,7 +175,59 @@ def test_Finder_python_replace():
             else:
                 getattr(finder, c.action)(None)
                 eq_(result[0], c.expect)
-    c = TestConfig(search="python-replace", text="The quick Fox is a brown fox")
+    c = TestConfig(text="The quick Fox is a brown fox", select=(0, 16))
+
+    c = c(search="literal", action="replace_one")
+    yield test, c(
+        find="Fox", replace="cat",
+        select=(0, 3),
+        expect=BEEP)
+    yield test, c(
+        find="Fox", replace="cat",
+        select=(10, 0),
+        expect=BEEP)
+    yield test, c(
+        find="Fox", replace="cat",
+        select=(10, 2),
+        expect=BEEP)
+    yield test, c(
+        find="Fox", replace="cat",
+        select=(10, 3),
+        expect="The quick cat is a brown fox")
+    yield test, c(
+        find="", replace="cat",
+        select=(10, 3),
+        expect=BEEP)
+    yield test, c(
+        find="[F]ox", replace="cat",
+        select=(10, 3),
+        expect=BEEP)
+    yield test, c(
+        find="Fox", replace="cat",
+        select=(10, 5),
+        expect="The quick cat is a brown fox")
+
+    c = c(search="python-replace")
+    yield test, c(
+        find="[Ff]ox", replace="match[0].upper()",
+        select=(0, 3),
+        action="replace_one",
+        expect=BEEP)
+    yield test, c(
+        find="[Ff]ox", replace="match[0].upper()",
+        select=(10, 3),
+        action="replace_one",
+        expect="The quick FOX is a brown fox")
+    yield test, c(
+        find="[Ff]ox", replace="match[0].upper()",
+        select=(10, 5),
+        action="replace_one",
+        expect="The quick FOX is a brown fox")
+    yield test, c(
+        find="n [Ff]ox", replace="match[0].upper()",
+        select=(10, 3),
+        action="replace_one",
+        expect=BEEP)
     yield test, c(
         find="[Ff]ox", replace="match[0].lower()",
         action="replace_all",
@@ -353,39 +409,6 @@ def test_FindController_actions():
     yield test, c(meth="find_selected_text_reverse", do=do, saved=False)
 
     def do(m, c, fc, sender):
-        beep = m.replace(mod, 'beep')
-        dobeep = True
-        tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
-        if c.has_tv:
-            options = m.replace(fc.finder, "options")
-            rtext = options.replace_text >> "abc"
-            options.regular_expression >> c.regex
-            FoundRange = make_found_range_factory(FindOptions(regular_expression=False))
-            if c.regex:
-                if c.rfr:
-                    tv._Finder__recently_found_range >> FoundRange(None)
-                elif c.rfr is None:
-                    expect(tv._Finder__recently_found_range).throw(AttributeError)
-                else:
-                    tv._Finder__recently_found_range >> None
-            range = tv.selectedRange() >> m.mock()
-            tv.shouldChangeTextInRange_replacementString_(range, rtext) >> c.act
-            if c.act:
-                tv.textStorage().replaceCharactersInRange_withString_(range, rtext)
-                tv.didChangeText()
-                tv.setNeedsDisplay_(True)
-                dobeep = False
-        if dobeep:
-            beep()
-    cx = c(meth="replace_one", do=do, has_tv=True, regex=True, rfr=True, act=True)
-    yield test, cx
-    yield test, cx(has_tv=False)
-    yield test, cx(regex=False)
-    yield test, cx(rfr=False)
-    yield test, cx(rfr=None)
-    yield test, cx(act=False)
-
-    def do(m, c, fc, sender):
         kw = {"in_selection": True} if c.sel_only else {}
         m.method(fc.finder._replace_all)(**kw)
     yield test, c(meth="replace_all", do=do, sel_only=False)
@@ -460,14 +483,15 @@ def test_FindController_finder_find():
             direction = "<direction>"
             _find = m.method(fc.finder._find)
             tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
-            m.replace(fc.finder, "options").find_text >> c.ftext
-            if c.has_tv and c.ftext:
-                sel = tv.selectedRange() >> (1, 2)
-                range = _find(tv, c.ftext, sel, direction) >> ("<range>" if c.found else None)
-                if c.found:
-                    tv.setSelectedRange_(range)
-                    tv.scrollRangeToVisible_(range)
-                    dobeep = False
+            if c.has_tv:
+                m.replace(fc.finder, "options").find_text >> c.ftext
+                if c.ftext:
+                    found = TestConfig(range="<range>")
+                    _find(tv, direction) >> (found if c.found else None)
+                    if c.found:
+                        tv.setSelectedRange_(found.range)
+                        tv.scrollRangeToVisible_(found.range)
+                        dobeep = False
             if dobeep:
                 beep()
             with m:
@@ -509,57 +533,6 @@ def test_FindController_validate_expression():
     yield test, c(ftext=None)
     yield test, c(ftext="(", search=mod.LITERAL)
     yield test, c(ftext="(", expect=False)
-
-def test_FindController__find():
-    def test(c):
-        with test_app() as app:
-            m = Mocker()
-            fc = FindController(app)
-            tv = m.mock(TextView)
-            regexfind = m.method(fc.finder.regexfinditer)
-            simplefind = m.method(fc.finder.simplefinditer)
-            sel = fn.NSMakeRange(1, 2)
-            direction = "<direction>"
-            options = m.property(fc.finder, "options").value >> m.mock(FindOptions)
-            ftext = "<find>"
-            if options.regular_expression >> c.regex:
-                finditer = regexfind
-            elif options.match_entire_word >> c.mword:
-                finditer = regexfind
-                ftext = "\\b" + re.escape(ftext) + "\\b"
-            else:
-                finditer = simplefind
-            range = fn.NSMakeRange(sel.location, 0)
-            items = []
-            rng = None
-            tv.string() >> "<text>"
-            FoundRange = make_found_range_factory(
-                FindOptions(regular_expression=c.regex, match_entire_word=c.mword))
-            for i, r in enumerate(c.matches):
-                if r is mod.WRAPTOKEN:
-                    items.append(r)
-                    continue
-                found = FoundRange(fn.NSMakeRange(*r))
-                items.append(found)
-                if i == 0 and found.range == sel:
-                    continue
-                tv._Finder__recently_found_range = found
-                rng = found.range
-            finditer("<text>", ftext, range, direction, True) >> items
-            with m:
-                result = fc.finder._find(tv, "<find>", sel, direction)
-                eq_(result, rng)
-    c = TestConfig(regex=False, mword=False, matches=[])
-    yield test, c
-    yield test, c(regex=True)
-    yield test, c(mword=True)
-    yield test, c(matches=[(2, 2)])
-    # test with WRAPTOKEN
-    yield test, c(matches=[mod.WRAPTOKEN])
-    yield test, c(matches=[mod.WRAPTOKEN, (1, 2)])
-    # test with first match being same as selection
-    yield test, c(matches=[(1, 2)])
-    yield test, c(matches=[(1, 2), (2, 2)])
 
 def test_FindController__replace_all():
     def test(c):

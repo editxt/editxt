@@ -64,9 +64,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Rescan last found match before replacing text
-  esp with regex (with replace groups) and Python replace
-
 Aesthetics
   - syntax highlighting
     - more lanugages

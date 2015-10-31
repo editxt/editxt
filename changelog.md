@@ -36,6 +36,8 @@ https://github.com/editxt/editxt for details of what actually happened.
     margin_color: F7F7F7
   ```
 - Select line(s) on click/drag in line number view.
+- Rescan selection on Replace (Command+=), and replace only if the find
+  text/pattern is found in the selection.
 
 ## 2015-01-31 - 1.7.6
 

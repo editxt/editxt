@@ -210,18 +210,15 @@ class Finder(object):
     def replace_one(self, sender):
         target = self.find_target()
         if target is not None:
-            options = self.options
-            rtext = options.replace_text
-            if options.regular_expression:
-                found = getattr(target, "_Finder__recently_found_range", None)
-                if found is not None:
-                    rtext = found.expand(rtext)
-            range = target.selectedRange()
-            if target.shouldChangeTextInRange_replacementString_(range, rtext):
-                target.textStorage().replaceCharactersInRange_withString_(range, rtext)
-                target.didChangeText()
-                target.setNeedsDisplay_(True)
-                return
+            found = self._find(target, FORWARD, constrain_to_selection=True)
+            if found is not None:
+                rng = found.range
+                rtext = found.expand(self.options.replace_text)
+                if target.shouldChangeTextInRange_replacementString_(rng, rtext):
+                    target.textStorage().replaceCharactersInRange_withString_(rng, rtext)
+                    target.didChangeText()
+                    target.setNeedsDisplay_(True)
+                    return
         beep()
 
     def replace_all(self, sender):
@@ -280,19 +277,18 @@ class Finder(object):
 
     def find(self, direction):
         target = self.find_target()
-        ftext = self.options.find_text
-        if target is not None and ftext:
-            selection = target.selectedRange()
-            range = self._find(target, ftext, selection, direction)
-            if range is not None:
-                target.setSelectedRange_(range)
-                target.scrollRangeToVisible_(range)
+        if target is not None and self.options.find_text:
+            found = self._find(target, direction)
+            if found is not None:
+                target.setSelectedRange_(found.range)
+                target.scrollRangeToVisible_(found.range)
                 return
         beep()
 
-    def _find(self, target, ftext, selection, direction):
+    def _find(self, target, direction, constrain_to_selection=False):
         """Return the range of the found text or None if not found"""
         options = self.options
+        ftext = options.find_text
         if options.regular_expression:
             finditer = self.regexfinditer
         elif options.match_entire_word:
@@ -300,18 +296,21 @@ class Finder(object):
             finditer = self.regexfinditer
         else:
             finditer = self.simplefinditer
-        text = target.string()
+        selection = target.selectedRange()
         range = fn.NSMakeRange(selection.location, 0)
+        if constrain_to_selection:
+            if selection.length == 0:
+                return None
+            selection, range = range, selection
+        text = target.string()
         for i, found in enumerate(finditer(text, ftext, range, direction, True)):
             if found is WRAPTOKEN:
                 # TODO show wrap overlay
                 continue
-            range = found.range
-            if i == 0 and range == selection:
+            if i == 0 and found.range == selection:
                 # this is the first match and we found the selected text
                 continue # find next
-            target.__recently_found_range = found
-            return range
+            return found
         return None
 
     def _replace_all(self, in_selection=False):
