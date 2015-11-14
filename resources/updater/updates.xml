@@ -269,5 +269,22 @@ as python code. It does the same thing as <code>python -c CODE</code> in a termi
       <pubDate>Sat, 14 Nov 2015 10:50:57 -0500</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.8.0/EditXT-v1.8.0-71b64f1.zip" sparkle:version="201511141050.71b64f1" sparkle:shortVersionString="1.8.0" sparkle:dsaSignature="MC0CFAJ5wEcoU+4bh+Z21UBpGq6UjQG3AhUAisz5fUtBSBxFmfQQo5ZUKQtGIRk=" length="10516653" type="application/octet-stream" />
     </item>
+    <item>
+      <title>Version 1.8.1</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li>Fix <code>python</code> command in packaged EditXT.app</li>
+</ul>
+
+        ]]>
+      </description>
+      <sparkle:releaseNotesLink>
+        http://htmlpreview.github.io/?https://raw.github.com/editxt/editxt/blob/master/resources/updater/updates.html
+      </sparkle:releaseNotesLink>
+      <pubDate>Sat, 14 Nov 2015 11:37:16 -0500</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.8.1/EditXT-v1.8.1-824f7f0.zip" sparkle:version="201511141137.824f7f0" sparkle:shortVersionString="1.8.1" sparkle:dsaSignature="MCwCFF3IVHZTs/dq7tOKJaaO1RZm/3/JAhQDvywIcI8AtWCZAcVEj1gdgFoCuQ==" length="10516363" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
