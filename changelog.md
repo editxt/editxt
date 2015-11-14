@@ -3,7 +3,7 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
-## ... - 1.8.0
+## 2015-11-14 - 1.8.0
 
 - [Pick a font](http://hivelogic.com/articles/top-10-programming-fonts/)!
   (install if necessary) then `set font YourFavoriteFont` to give it a spin.
@@ -38,6 +38,8 @@ https://github.com/editxt/editxt for details of what actually happened.
 - Select line(s) on click/drag in line number view.
 - Rescan selection on Replace (Command+=), and replace only if the find
   text/pattern is found in the selection.
+- Add `python` command, which executes the current file content or selection
+  as python code. It does the same thing as `python -c CODE` in a terminal.
 
 ## 2015-01-31 - 1.7.6
 
