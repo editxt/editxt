@@ -394,6 +394,7 @@ def test_reload_document():
             # to update change count before _clearUndo is invoked
             call_later(0, doc.clear_dirty)
             tv.setSelectedRange_(fn.NSRange(0, 0)) # TODO remove
+            reset_text_attributes()
             m.method(doc.update_syntaxer)()
             end()
     from editxt.test.util import profile

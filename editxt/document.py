@@ -431,6 +431,7 @@ class TextDocument(object):
             # to update change count before _clearUndo is invoked
             call_later(0, self.clear_dirty)
             textview.setSelectedRange_(fn.NSRange(0, 0))
+            self.reset_text_attributes()
             self.update_syntaxer()
 
     @untested
