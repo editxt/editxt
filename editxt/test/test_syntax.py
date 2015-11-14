@@ -321,16 +321,16 @@ def test_Highlighter_color_text():
         r"""
         r" string.double-quote string
             \" operator.escape operator Regular Expression
-            " string.double-quote string Regular Expression
+        " string.double-quote string
         r" string.double-quote string
             \\ operator.escape operator Regular Expression
-            " string.double-quote string Regular Expression
+        " string.double-quote string
         r" string.double-quote string
             \\\" operator.escape operator Regular Expression
-            " string.double-quote string Regular Expression
+        " string.double-quote string
         r" string.double-quote string
             \\\\\" operator.escape operator Regular Expression
-            " string.double-quote string Regular Expression
+        " string.double-quote string
         """)
     yield test("python",
         "'''    for x",
@@ -343,7 +343,7 @@ def test_Highlighter_color_text():
         '''
         """A doc string string.multiline.double-quote string
           With multiple lines string.multiline.double-quote string Python
-          """ string.multiline.double-quote string Python
+        """ string.multiline.double-quote string
         ''')
     yield from edit("python", "\ndef f(",
         """
@@ -365,7 +365,7 @@ def test_Highlighter_color_text():
         (2, 0, '"'),
         '''
         """ string.multiline.double-quote string
-          def f( string.multiline.double-quote string Python
+        def f( string.multiline.double-quote string
         ''',
 
         (2, 1, ''),
@@ -389,7 +389,7 @@ def test_Highlighter_color_text():
         (1, 0, 'r'),
         """
         r" string.double-quote string
-            " string.double-quote string Regular Expression
+        " string.double-quote string
         """,
         (1, 1, ''),
         """
@@ -403,14 +403,14 @@ def test_Highlighter_color_text():
             xyz name Regular Expression
             > group.named group Regular Expression
             ) group Regular Expression
-            " string.double-quote string Regular Expression
+        " string.double-quote string
         """,
         (4, 0, ' '),
         """
         r" string.double-quote string
             ? keyword Regular Expression
             ) group Regular Expression
-            " string.double-quote string Regular Expression
+        " string.double-quote string
         """,
         (4, 1, ''),
         """
@@ -419,7 +419,7 @@ def test_Highlighter_color_text():
             xyz name Regular Expression
             > group.named group Regular Expression
             ) group Regular Expression
-            " string.double-quote string Regular Expression
+        " string.double-quote string
         """,
         )
     yield from edit("python", '''
@@ -432,7 +432,7 @@ def test_Highlighter_color_text():
             [ keyword.set keyword Regular Expression
             \s operator.class operator Regular Expression
             ] keyword.set keyword Regular Expression
-            """ string.multiline.double-quote string Regular Expression
+        """ string.multiline.double-quote string
         ' """ """ ' string.single-quote string
         ''',
         (17, 1, ''),
@@ -440,10 +440,8 @@ def test_Highlighter_color_text():
         r""" string.multiline.double-quote string
             [ keyword.set keyword Regular Expression
             \s operator.class operator Regular Expression
-            ] keyword.set keyword Regular Expression
-            """ string.multiline.double-quote string Regular Expression
-        """ ' string.multiline.double-quote string
-                   string.multiline.double-quote string Python
+        """ string.multiline.double-quote string
+        ' """ """ ' string.single-quote string
         ''',
         (17, 0, ']'),
         '''
@@ -451,7 +449,7 @@ def test_Highlighter_color_text():
             [ keyword.set keyword Regular Expression
             \s operator.class operator Regular Expression
             ] keyword.set keyword Regular Expression
-            """ string.multiline.double-quote string Regular Expression
+        """ string.multiline.double-quote string
         ' """ """ ' string.single-quote string
         ''',
         )
@@ -486,7 +484,7 @@ def test_Highlighter_color_text():
           id attribute Markup
           = tag.punctuation tag Markup
           "xpr" value Markup
-          > tag Markup
+        > tag
         </div> tag
         """)
     yield test("markup",
@@ -503,7 +501,7 @@ def test_Highlighter_color_text():
           encoding attribute Markup
           = tag.punctuation tag Markup
           "utf-8" value Markup
-          > tag.doctype tag Markup
+        > tag.doctype tag
         <div/> tag
         """)
     yield test("markup",
@@ -523,7 +521,7 @@ def test_Highlighter_color_text():
         """
         <div> tag
         <![cdata[ tag.cdata tag
-          ]]> tag.cdata tag Markup
+        ]]> tag.cdata tag
         """)
     yield test("markup",
         "<style attr='value'></style>",
@@ -532,7 +530,8 @@ def test_Highlighter_color_text():
           attr attribute Markup
           = tag.punctuation tag Markup
           'value' value Markup
-          ></style> tag Markup
+        > tag
+        </style> tag
         """)
     yield test("markup",
         "<script>var x = 'y';</script>",
@@ -540,21 +539,19 @@ def test_Highlighter_color_text():
         <script> tag
           var keyword JavaScript
           'y' string.single-quote js.string JavaScript
-          </script> tag JavaScript
+        </script> tag
         """)
-#    yield test("markup",
-#        "<style>.error { color: red; }</style>",
-#        """
-#        <style> tag
-#          .error class css
-#          { tag.punctuation tag css
-#          color attribute css
-#          : tag.punctuation tag css
-#          red value css
-#          ; tag.punctuation tag css
-#          } tag.punctuation tag css
-#          </style> tag css
-#        """)
+    yield test("markup",
+        "<style>.error { color: red; }</style>",
+        """
+        <style> tag
+          .error class text_color CSS
+          { rules text_color CSS
+          color attribute CSS
+          ; rule text_color CSS
+          } rules text_color CSS
+        </style> tag
+        """)
 
     yield test("javascript",
         "var x = 'y';",
@@ -568,7 +565,16 @@ def test_Highlighter_color_text():
         var keyword
         / regexp text_color
             * keyword Regular Expression
-            /ig regexp text_color Regular Expression
+        /ig regexp text_color
+        """)
+    yield test("javascript",
+        "/[x-z/ig - var;",
+        """
+        / regexp text_color
+            [ keyword.set keyword Regular Expression
+            - operator.range operator Regular Expression
+        /ig regexp text_color
+        var keyword
         """)
 
     yield test("regular-expression",
@@ -654,7 +660,7 @@ def test_Highlighter_color_text():
             - operator.range operator Regular Expression
             \- operator.escape operator Regular Expression
             \S operator.class operator Regular Expression
-            ] keyword.set keyword Regular Expression
+        ] keyword.set keyword
         """)
 
     yield test("regular-expression",
@@ -665,7 +671,7 @@ def test_Highlighter_color_text():
             - operator.range operator Regular Expression
             \- operator.escape operator Regular Expression
             \S operator.class operator Regular Expression
-            ] keyword.set.inverse keyword Regular Expression
+        ] keyword.set.inverse keyword
         """)
 
     # TODO test and change match.lastgroup ??
@@ -683,7 +689,7 @@ def test_Highlighter_color_text():
         in keyword
         [ tag
           for keyword lang
-          ] tag lang
+        ] tag
         """,
 
         (9, 1, ""),
@@ -700,7 +706,7 @@ def test_Highlighter_color_text():
         in keyword
         [ tag
           for keyword lang
-          ] tag lang
+        ] tag
         """,
 
         (4, 6, "[x for "),
@@ -709,7 +715,7 @@ def test_Highlighter_color_text():
         [ tag
           for keyword lang
           for keyword lang
-          ] tag lang
+        ] tag
         """,
         )
 

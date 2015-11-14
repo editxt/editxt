@@ -286,12 +286,17 @@ class Highlighter(object):
                     #log.debug("state=%s offset=%s length=%s %s", 
                     #    state, offset, end - offset, "+" if state else "-")
                     if state:
-                        add_attribute(x_range, state, (offset, end - offset))
+                        add_attribute(x_range, state, (offset, start - offset))
                     else:
-                        rem_attribute(x_range, (offset, end - offset))
+                        rem_attribute(x_range, (offset, start - offset))
                     if info.end:
                         state = state.rsplit(" ", 1)[0] if " " in state else ""
                         lang = stack.pop()
+                    if start != end:
+                        if state:
+                            add_attribute(x_range, state, rng)
+                        else:
+                            rem_attribute(x_range, rng)
                     if info.next:
                         stack.append(lang)
                         lang = info.next
@@ -368,7 +373,10 @@ class SyntaxDefinition(NoHighlight):
         an object with at least one of the attributes `word_groups` or
         `delimited_ranges`. Each token in the start definition (which
         may itself be a delimited range with nested definitions) will
-        immediately transition to the nested syntax defintion.
+        immediately transition to the nested syntax defintion. A
+        `default_text` attribute may be specified to set the default
+        text color for the range; the `DELIMITER` constant signifies
+        the same color as the range delimiter.
 
     :param ends: A two-tuple (<name>, [<end token>, ...])
         For internal use only. If any of these tokens are matched it ends the
@@ -474,8 +482,11 @@ class SyntaxDefinition(NoHighlight):
         idgen = idgen or ("g%i" % i for i in count())
         if self.ends:
             yield from self.iter_words(iter(["end"]), [self.ends], True)
+            endxp = "(?=%s)" % "|".join(escape(e) for e in self.ends[1])
+        else:
+            endxp = r"\Z"
         yield from self.iter_words(idgen, self.word_groups)
-        yield from self.iter_ranges(idgen)
+        yield from self.iter_ranges(idgen, RE(endxp))
 
     def iter_words(self, idgen, word_groups, end=False):
         word_char = re.compile(r"\w")
@@ -495,7 +506,7 @@ class SyntaxDefinition(NoHighlight):
             phrase = "(?P<{}>{})".format(ident, "|".join(wordgroup))
             yield phrase, ident, MatchInfo(self.token_name(name), end=end)
 
-    def iter_ranges(self, idgen):
+    def iter_ranges(self, idgen, parent_end):
         def lookup_syntax(owner, sdef, *unknown, ends=None):
             if unknown:
                 log.warn("extra delimited range params: %s", unknown)
@@ -517,7 +528,6 @@ class SyntaxDefinition(NoHighlight):
 
         def compile_range(name, start, ends, sdef):
             ident = next(idgen)
-            ends = list(ends) + [RE(r"\Z")]
             if sdef:
                 sdef = lookup_syntax(name, *sdef, ends=ends)
                 if not sdef:
@@ -541,10 +551,10 @@ class SyntaxDefinition(NoHighlight):
 
         for name, start, ends, *sdef in self.delimited_ranges:
             try:
+                ends = list(ends) + [parent_end]
                 if isinstance(start, (str, RE)):
                     yield compile_range(name, start, ends, sdef)
                 else:
-                    ends = list(ends) + [RE("\Z")]
                     start_def = lookup_syntax(name, start)
                     assert start_def, (self, name, start, ends, sdef)
                     next_def = lookup_syntax(name, *sdef, ends=ends)
@@ -579,7 +589,7 @@ class SyntaxDefinition(NoHighlight):
             "_id": next(self.lang_ids),
             "_lang_ids": self.lang_ids,
         }
-        log.debug("make %s/%s %s", self.name, name, args["_id"])
+        #log.debug("make %s/%s %s", self.name, name, args["_id"])
         for attr in self.ARGS - {"ends"}:
             value = getattr(rules, attr, NA)
             if value is not NA:
