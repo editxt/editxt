@@ -221,5 +221,53 @@ where EditXT.app is located on your local machine):
       <pubDate>Sat, 31 Jan 2015 11:55:30 -0500</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.7.6/EditXT-v1.7.6-0262d95.zip" sparkle:version="201501311155.0262d95" sparkle:shortVersionString="1.7.6" sparkle:dsaSignature="MCwCFF+DrxyuLDv9H3Mgw4MnZOiyr1sjAhQ8KuRfYiM8GDHvMlPspDYGHVyRdQ==" length="9683151" type="application/octet-stream" />
     </item>
+    <item>
+      <title>Version 1.8.0</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li><a href="http://hivelogic.com/articles/top-10-programming-fonts/">Pick a font</a>!
+(install if necessary) then <code>set font YourFavoriteFont</code> to give it a spin.
+Finally, <code>open ~/.editxt/config.yaml</code> and set your preferred font.
+For example:
+<pre><code>font:
+  face: Inconsolata
+  size: 14
+</code></pre>
+Save and <code>reload_config</code>. If you really don't like change you can revert to
+the old font style:
+<pre><code>font:
+  face: Monaco
+  size: 10
+  smooth: false
+</code></pre>
+The system default fixed width font and size will be used if no font is set
+in the config. To view the current font, type <code>set font</code> in the command bar
+and observe the default parameter values.</li>
+<li>Improve line numbers, including support for correct numbering on soft-wrapped
+documents. The line number view now uses the same background and border color
+as the right margin. These colors can be customized in the config:
+<pre><code>line_number_color: 707070
+right_margin:
+  position: 80
+  line_color: E6E6E6
+  margin_color: F7F7F7
+</code></pre></li>
+<li>Select line(s) on click/drag in line number view.</li>
+<li>Rescan selection on Replace (Command+=), and replace only if the find
+text/pattern is found in the selection.</li>
+<li>Add <code>python</code> command, which executes the current file content or selection
+as python code. It does the same thing as <code>python -c CODE</code> in a terminal.</li>
+</ul>
+
+        ]]>
+      </description>
+      <sparkle:releaseNotesLink>
+        http://htmlpreview.github.io/?https://raw.github.com/editxt/editxt/blob/master/resources/updater/updates.html
+      </sparkle:releaseNotesLink>
+      <pubDate>Sat, 14 Nov 2015 10:50:57 -0500</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.8.0/EditXT-v1.8.0-71b64f1.zip" sparkle:version="201511141050.71b64f1" sparkle:shortVersionString="1.8.0" sparkle:dsaSignature="MC0CFAJ5wEcoU+4bh+Z21UBpGq6UjQG3AhUAisz5fUtBSBxFmfQQo5ZUKQtGIRk=" length="10516653" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
