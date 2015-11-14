@@ -40,6 +40,7 @@ from editxt.command.docnav import doc as docnav
 from editxt.command.find import find
 from editxt.command.grab import grab
 from editxt.command.openfile import open_
+from editxt.command.python import python
 from editxt.command.sortlines import sort_lines
 from editxt.command.wraplines import wrap_at_margin, wrap_lines
 
@@ -69,6 +70,7 @@ def load_commands():
             diff,
             grab,
             open_,
+            python,
             clear_highlighted_text,
             docnav,
             reload_config,

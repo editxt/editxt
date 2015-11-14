@@ -158,7 +158,7 @@ def is_ack_installed(ack_path="ack", recheck=False, result={}):
     return result[ack_path]
 
 
-def exec_shell(command, cwd=None, timeout=60):
+def exec_shell(command, timeout=60, **kw):
     """Execute shell command
 
     :param command: A list of command name and arguments.
@@ -166,7 +166,7 @@ def exec_shell(command, cwd=None, timeout=60):
     output from the command. See `CommandResult` docs for more details.
     """
     try:
-        proc = Popen(command, cwd=cwd, stdout=PIPE, stderr=STDOUT)
+        proc = Popen(command, stdout=PIPE, stderr=STDOUT, **kw)
         out, err = proc.communicate(timeout=timeout)
         returncode = proc.returncode
     except TimeoutExpired:
