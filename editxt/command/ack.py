@@ -158,7 +158,7 @@ def is_ack_installed(ack_path="ack", recheck=False, result={}):
     return result[ack_path]
 
 
-def exec_shell(command, timeout=60, **kw):
+def exec_shell(command, timeout=20, **kw):
     """Execute shell command
 
     :param command: A list of command name and arguments.

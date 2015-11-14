@@ -57,6 +57,16 @@ Build/package EditXT.app::
     # package in a zip file for distribution::
     python setup.py py2app --package
 
+Release process:
+
+- Update change log and version number
+- Run `python setup.py py2app --package`
+- Commit release artifacts (`resources/updater/updates.*`)
+- Create release tag (`X.Y.Z`)
+- Push release tag: `git push --tags github`
+- Create new release on Github with markdown from `changelog.md`
+- IMPORTANT: Push master `git push github master`
+
 View release stats:
 
     curl https://api.github.com/repos/editxt/editxt/releases | grep -E "download_count|tag_name" | less
