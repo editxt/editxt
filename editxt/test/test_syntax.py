@@ -545,11 +545,11 @@ def test_Highlighter_color_text():
         "<style>.error { color: red; }</style>",
         """
         <style> tag
-          .error class text_color CSS
-          { rules text_color CSS
+          .error selector-class text_color CSS
+          { text_color CSS
           color attribute CSS
-          ; rule text_color CSS
-          } rules text_color CSS
+          ; text_color CSS
+          } text_color CSS
         </style> tag
         """)
 

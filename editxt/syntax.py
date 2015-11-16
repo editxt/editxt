@@ -579,6 +579,9 @@ class SyntaxDefinition(NoHighlight):
             value = name.replace(" ", "_")
             log.warn("invalid token name: converting %r to %r", name, value)
             name = value
+        if name.startswith("_"):
+            # token names starting with _ get default text color
+            name = "text_color"
         return self.name + " " + name
 
     def make_definition(self, name, rules, ends=None):
