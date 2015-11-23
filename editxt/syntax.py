@@ -357,31 +357,32 @@ class SyntaxDefinition(NoHighlight):
             (
                 <name>,
                 <start delimiter string, RE, or definition type>,
-                <list of end delimiters>,
+                <list of end delimiters: string, RE, or definition type>,
                 <(optional) syntax definition type or name>,
             ),
             ('comment.multi-line', '<!--', ['-->']),
             ('string.double-quoted', '"', ['"', '\n']),
-            ('tag', '<style(?:\s[^>]*?)?>', ['</style>'], 'css'),
+            ('tag', RE('<style(?:\s[^>]*?)?>'), ['</style>'], 'css'),
         ]
         ```
         Ranges that have a syntax definition will use the associated
         theme color for the delimiters only, while ranges without a
         syntax definition will use the color for the entire range.
-        
-        The start delimiter may be a *syntax definition type*, which is
-        an object with at least one of the attributes `word_groups` or
-        `delimited_ranges`. Each token in the start definition (which
-        may itself be a delimited range with nested definitions) will
-        immediately transition to the nested syntax defintion. A
-        `default_text` attribute may be specified to set the default
-        text color for the range; the `DELIMITER` constant signifies
-        the same color as the range delimiter.
 
-    :param ends: A two-tuple (<name>, [<end token>, ...])
-        For internal use only. If any of these tokens are matched it ends the
-        syntax definition, which is not a supported operation for a top-level
-        definition.
+        Start or end delimiters may be a *syntax definition type*, which
+        is an object with at least one of the attributes `word_groups`
+        or `delimited_ranges`. When a syntax definition type is
+        specified as the start delimiter, any matched token in the
+        definition will immediately transition to the (optional) syntax
+        definition type of the start delimiter's range. When a syntax
+        definition type is specified as an end delimiter, any matched
+        token in the definition will immedately end the range and
+        transition to the end delimiter's nested definitions (if any).
+        A `default_text` attribute may be specified on a syntax
+        definition type to set the default text color for the range; the
+        `DELIMITER` constant signifies the same color as the range
+        delimiter.
+
     :param comment_token: The comment token to use when block-commenting
         a region of text.
     :param disabled: True if this definition is disabled.
@@ -393,7 +394,6 @@ class SyntaxDefinition(NoHighlight):
         "file_patterns",
         "word_groups",
         "delimited_ranges",
-        "ends",
         "comment_token",
         "disabled",
         "flags",
@@ -406,16 +406,16 @@ class SyntaxDefinition(NoHighlight):
     registry = WeakProperty()
 
     def __init__(self, filename, name, *, file_patterns=(),
-            word_groups=(), delimited_ranges=(), ends=None,
+            word_groups=(), delimited_ranges=(),
             comment_token="", disabled=False, flags=re.MULTILINE,
             whitespace=whitespace, default_text="", registry=None,
-            _id=None, _lang_ids=None):
+            _id=None, _lang_ids=None, _ends=None):
         super().__init__(name, comment_token, disabled, _id=_id)
         self.filename = filename
         self.file_patterns = list(file_patterns)
         self.word_groups = word_groups
         self.delimited_ranges = delimited_ranges
-        self.ends = ends
+        self.ends = _ends
         self.flags = flags
         self.whitespace = whitespace
         self.default_text = default_text
@@ -425,7 +425,8 @@ class SyntaxDefinition(NoHighlight):
     def _init(self):
         wordinfo = {}
         groups = []
-        for phrase, ident, info in self.iter_group_info():
+        idgen = ("g%i" % i for i in count())
+        for phrase, ident, info in self.iter_group_info(idgen):
             groups.append(phrase)
             wordinfo[ident] = info
         self._wordinfo = wordinfo
@@ -468,9 +469,9 @@ class SyntaxDefinition(NoHighlight):
             self._init()
         return self._default_text_name
 
-    def iter_group_info(self, idgen=None):
+    def iter_group_info(self, idgen=None, end=False):
         """
-        :yields: Three-tuples like
+        :yields: Three-tuples:
         ```
         (
             <phrase regexp named group>,
@@ -478,35 +479,41 @@ class SyntaxDefinition(NoHighlight):
             <MatchInfo>,
         )
         ```
+        If `idgen` is `None` then the second and third elements in the
+        yielded tuple will be `None`, and only start patterns will be
+        yielded.
         """
-        idgen = idgen or ("g%i" % i for i in count())
-        if self.ends:
-            yield from self.iter_words(iter(["end"]), [self.ends], True)
-            endxp = "(?=%s)" % "|".join(escape(e) for e in self.ends[1])
+        if self.ends and idgen is not None and not end:
+            end_name, ends = self.ends
+            end_keys = ("e%s" % i for i in count())
+            end_tokens = []
+            transitions = []
+            for token in ends:
+                if isinstance(token, Transition):
+                    transitions.append(token)
+                else:
+                    end_tokens.append(token)
+            end_groups = [(end_name, end_tokens)]
+            yield from self.iter_words(end_keys, end_groups, end=True)
+            for transition in transitions:
+                yield from transition(end_keys)
+            endxp = r"(?=%s)" % disjunction(end_tokens + transitions)
         else:
             endxp = r"\Z"
-        yield from self.iter_words(idgen, self.word_groups)
-        yield from self.iter_ranges(idgen, RE(endxp))
+        yield from self.iter_words(idgen, self.word_groups, end)
+        yield from self.iter_ranges(idgen, RE(endxp), end)
 
-    def iter_words(self, idgen, word_groups, end=False):
-        word_char = re.compile(r"\w")
+    def iter_words(self, idgen, word_groups, end):
+        ident = info = None
         for name, tokens in word_groups:
-            ident = next(idgen)
-            wordgroup = []
-            for token in tokens:
-                if hasattr(token, "pattern"):
-                    word = token.pattern
-                else:
-                    word = escape(token)
-                    if word_char.match(token[0]):
-                        word = r"\b" + word
-                    if word_char.match(token[-1]):
-                        word = word + r"\b"
-                wordgroup.append(word)
-            phrase = "(?P<{}>{})".format(ident, "|".join(wordgroup))
-            yield phrase, ident, MatchInfo(self.token_name(name), end=end)
+            phrase = disjunction(tokens)
+            if idgen is not None:
+                ident = next(idgen)
+                phrase = "(?P<{}>{})".format(ident, phrase)
+                info = MatchInfo(self.token_name(name), end=end)
+            yield phrase, ident, info
 
-    def iter_ranges(self, idgen, parent_end):
+    def iter_ranges(self, idgen, parent_end, end):
         def lookup_syntax(owner, sdef, *unknown, ends=None):
             if unknown:
                 log.warn("extra delimited range params: %s", unknown)
@@ -523,11 +530,15 @@ class SyntaxDefinition(NoHighlight):
                 sdef = self.make_definition(owner, sdef, ends)
             return sdef
 
+        def endify(token):
+            if isinstance(token, (str, RE)):
+                return token
+            return Transition(lookup_syntax(self.name, token, ends=[parent_end]))
+
         class unknown:
             word_groups = []
 
         def compile_range(name, start, ends, sdef):
-            ident = next(idgen)
             if sdef:
                 sdef = lookup_syntax(name, *sdef, ends=ends)
                 if not sdef:
@@ -539,6 +550,7 @@ class SyntaxDefinition(NoHighlight):
             else:
                 # ranges without nested syntax rules are broken into lines to
                 # minimize the range that needs to be re-highlighted on edit
+                # TODO handle end transition (syntax definition class)
                 endxp = "|".join(escape(e) for e in ends)
                 ends = [RE(r".*?(?:{})".format(endxp))]
                 class lines:
@@ -546,17 +558,23 @@ class SyntaxDefinition(NoHighlight):
                     default_text = name
                 lines.__name__ = "{}.lines".format(name)
                 sdef = self.make_definition(name, lines, ends)
+            if idgen is None:
+                return escape(start), None, None
+            ident = next(idgen)
             phrase = "(?P<{}>{})".format(ident, escape(start))
-            return phrase, ident, MatchInfo(self.token_name(name), sdef)
+            return phrase, ident, MatchInfo(self.token_name(name), sdef, end)
 
         for name, start, ends, *sdef in self.delimited_ranges:
             try:
-                ends = list(ends) + [parent_end]
+                ends = [endify(e) for e in ends] + [parent_end]
                 if isinstance(start, (str, RE)):
                     yield compile_range(name, start, ends, sdef)
                 else:
                     start_def = lookup_syntax(name, start)
                     assert start_def, (self, name, start, ends, sdef)
+                    if idgen is None or end:
+                        yield from start_def.iter_group_info(idgen, end)
+                        return
                     next_def = lookup_syntax(name, *sdef, ends=ends)
                     if not next_def:
                         next_def = self.make_definition(name, unknown, ends)
@@ -564,10 +582,16 @@ class SyntaxDefinition(NoHighlight):
                         if info.next is None:
                             info.next = next_def
                         else:
-                            end_info = info.next.wordinfo["end"]
-                            assert end_info.next is None, info.next
-                            assert end_info.end, info.next
-                            end_info.next = next_def
+                            for i in count():
+                                try:
+                                    end_info = info.next.wordinfo["e%s" % i]
+                                except KeyError:
+                                    if i == 0:
+                                        raise
+                                    break
+                                assert end_info.next is None, info.next
+                                assert end_info.end, info.next
+                                end_info.next = next_def
                         assert not info.end, (self, name, start_def, phrase, info)
                         yield phrase, ident, info
             except Exception:
@@ -593,12 +617,12 @@ class SyntaxDefinition(NoHighlight):
             "_lang_ids": self.lang_ids,
         }
         #log.debug("make %s/%s %s", self.name, name, args["_id"])
-        for attr in self.ARGS - {"ends"}:
+        for attr in self.ARGS:
             value = getattr(rules, attr, NA)
             if value is not NA:
                 args[attr] = value
         if ends is not None:
-            args["ends"] = (name, ends)
+            args["_ends"] = (name, ends)
         return type(self)(self.filename, **args)
 
 
@@ -631,8 +655,26 @@ class RE(object):
         return "RE(%r)" % (self.pattern,)
 
 
-def escape(token):
+class Transition(object):
+    def __init__(self, sdef):
+        self.syntax = sdef
+        self.pattern = disjunction(t[0] for t in sdef.iter_group_info())
+    def __call__(self, idgen):
+        return self.syntax.iter_group_info(idgen, end=True)
+    def __repr__(self):
+        return "<Transition {}>".format(self.syntax)
+
+
+def escape(token, word_char=None):
     if hasattr(token, "pattern"):
         return token.pattern
     token = re.escape(token)
+    if word_char and token:
+        if word_char.match(token[0]):
+            token = r"\b" + token
+        if word_char.match(token[-1]):
+            token = token + r"\b"
     return token.replace(re.escape("\n"), "\\n")
+
+def disjunction(tokens, word_char=re.compile(r"\w", re.UNICODE)):
+    return "|".join(escape(token, word_char) for token in tokens)

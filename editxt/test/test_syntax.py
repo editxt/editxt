@@ -677,12 +677,11 @@ def test_Highlighter_color_text():
     # TODO test and change match.lastgroup ??
 
     class lang:
-        name = "lang"
         class sub:
             word_groups = [("keyword", ["for"])]
         word_groups = [("keyword", ["for", "in"])]
         delimited_ranges = [("tag", "[", ["]"], sub)]
-    lang = get_syntax_definition("python").make_definition("lang", lang)
+    lang = make_definition(lang)
     yield from edit(lang, "for x in [y for y in z]:",
         """
         for keyword
@@ -719,6 +718,36 @@ def test_Highlighter_color_text():
         """,
         )
 
+    class xkw:
+        word_groups = [("name", ["x"])]
+    class lang:
+        name = "transition"
+        class params:
+            delimited_ranges = [
+                ("group", "(", [")"], xkw),
+            ]
+        class func_name:
+            word_groups = [("name", [RE(r"[a-z]+")])]
+        word_groups = [("keyword", ["end"])]
+        delimited_ranges = [
+            ("keyword", "def", [RE(r"$"), params], func_name),
+            ("tag", RE(r"[a-z]+\("), [")"], xkw),
+        ]
+    lang = make_definition(lang)
+    yield test(lang, "def f(x) x + do(x + 1) end",
+        """
+        def keyword
+          f name transition
+        ( group
+          x name transition
+        ) group
+        do( tag
+          x name transition
+        ) tag
+        end keyword
+        """
+    )
+
 def test_NoHighlight_wordinfo():
     nh = NoHighlight("Test", "")
     eq_(nh.wordinfo, None)
@@ -736,3 +765,13 @@ def get_syntax_definition(name, cache={}):
     loader.load_definitions(join(root, "resources/syntax"), False)
     cache[name] = loader
     return loader.get(name)
+
+def make_definition(rules):
+    NA = object()
+    args = {"name": rules.__name__}
+    for attr in SyntaxDefinition.ARGS:
+        value = getattr(rules, attr, NA)
+        if value is not NA:
+            args[attr] = value
+    return SyntaxDefinition("", **args)
+
