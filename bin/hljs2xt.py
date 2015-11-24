@@ -258,6 +258,7 @@ def transform_end(item, lookahead=False):
     if lookahead and not end.is_look_ahead():
         end = end.look_ahead()
     if "endsParent" in item:
+        # TODO implement this now that we have end-of-range transitions
         # http://highlightjs.readthedocs.org/en/latest/reference.html#endsparent
         raise NotImplementedError("endsParent")
     return end
