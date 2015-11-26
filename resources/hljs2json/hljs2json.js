@@ -63,13 +63,12 @@ function decycle(value, parents, valueName) {
                     parents[parents.length - 1][1].concat([valueName]) : [],
         seen = parents.reduce(function (prev, val) {
             return val[0] === value ? [prev[0] + 1, prev[1] || val[1]] : prev;
-        }, [0, null]),
-        obj;
+        }, [0, null]);
     parents = parents.concat([[value, path]]);
     if (seen[0] && value.contains) {
         return copy(value, "contains");
     } else if (seen[0] > 4) {
-        console.error('omit circular (d > 10)', path);
+        console.error('omit circular (d > 4)', path);
         return undefined;
     }
     return copy(value);

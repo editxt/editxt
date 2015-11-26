@@ -44,7 +44,7 @@ import os
 import re
 import sys
 import traceback
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 from itertools import chain, count
 from os.path import abspath, basename, dirname, exists, isdir, isfile, join, splitext
 from subprocess import check_output, CalledProcessError
@@ -117,6 +117,7 @@ def parse(hljs_file, verbose=False):
         assert flags == "flags", flags
     syntax = transform_syntax(data, definitions)
     assert not syntax.contains_self, syntax
+    assert not syntax.parent_ends, syntax
     aliases = [meta.alias] + data._get("aliases", [])
     return TEMPLATE.format(
         hljs_file=basename(hljs_file),
@@ -151,6 +152,7 @@ def transform_syntax(data, definitions, name=None):
             syntax.contains_self = True
             continue
         if item.get("type") == "CircularRef":
+            raise NotImplementedError
             definitions[tuple(item["path"])]
             continue
         if "variants" in item:
@@ -165,12 +167,18 @@ def transform_syntax(data, definitions, name=None):
         for item in items:
             plain = "className" not in item
             if plain:
-                item = dict(item, className=definitions.get_name())
+                item = dict(item, className=definitions.get_name(item))
             item = DictObj(item, _parent=data)
             if "end" in item or item._get("endsWithParent") \
                     or "contains" in item or "keywords" in item \
                     or "beginKeywords" in item:
-                ranges.append(transform_range(item, definitions))
+                rng = transform_range(item, definitions)
+                if item._get("endsParent"):
+                    end = SyntaxClass(item.className, [], [rng])
+                    end_name = definitions.add(end)
+                    syntax.parent_ends.append(Literal(end_name))
+                else:
+                    ranges.append(rng)
             elif not plain:
                 add_words(item.className, [regex(item.begin)])
     return syntax
@@ -183,14 +191,16 @@ def transform_range(item, definitions):
     end = transform_end(item)
 
     content = ()
+    ends = []
     if "keywords" in item or item._get("contains"):
-#        if item.className in definitions:
-#            content = (Literal(item.className),)
+#        if name in definitions:
+#            content = (Literal(name),)
 #        else:
-        syntax = transform_syntax(item, definitions, item.className)
+        syntax = transform_syntax(item, definitions, name)
         if syntax or syntax.contains_self:
             syntax_name = definitions.add(syntax)
             content = (Literal(syntax_name),)
+        ends.extend(syntax.parent_ends)
     if "subLanguage" in item:
         if item._get("subLanguageMode") == "continuous":
             print("continuous sub-language not implemented")
@@ -201,23 +211,23 @@ def transform_range(item, definitions):
             else:
                 print("auto sub-language detection not implemented")
 
-    if "starts" in item and item.starts:
+    if item._get("starts"):
         start = SyntaxClass(name, [], [(name, begin, [end]) + content])
         start_name = definitions.add(start)
         begin = Literal(start_name)
         end = transform_end(item._parent, lookahead=True)
         if isinstance(item.starts, str):
-            content = Literal(item.starts)
+            content = (Literal(item.starts),)
         else:
             args = {"_parent": item._parent}
             if "className" not in item.starts:
-                args["className"] = definitions.get_name()
+                args["className"] = definitions.get_name(item.starts)
             next_ = DictObj(item.starts, **args)
             sub = transform_syntax(next_, definitions, next_.className)
             sub_name = definitions.add(sub)
             content = (Literal(sub_name),)
 
-    return (name, begin, [end]) + content
+    return (name, begin, [end] + ends) + content
 
 
 def transform_begin(item):
@@ -257,10 +267,6 @@ def transform_end(item, lookahead=False):
 #    elif lookahead and not end.is_look_ahead():
     if lookahead and not end.is_look_ahead():
         end = end.look_ahead()
-    if "endsParent" in item:
-        # TODO implement this now that we have end-of-range transitions
-        # http://highlightjs.readthedocs.org/en/latest/reference.html#endsparent
-        raise NotImplementedError("endsParent")
     return end
 
 
@@ -355,8 +361,8 @@ class Definitions:
         name = self.find(expr)
         if name is not None:
             return name
-        name = self.get_name(expr.name)
-        if name != expr.name:
+        name = self.get_name(expr, expr.name)
+        if name.name != expr.name.name:
             expr.safe_name = name
         self.items[name] = expr
         return name
@@ -364,9 +370,11 @@ class Definitions:
     def get(self, name, default=None):
         return self.items.get(name, default)
 
-    def get_name(self, name=None, exchars=re.compile(r"\W+")):
+    def get_name(self, value, name=None, exchars=re.compile(r"\W+")):
         if not name:
-            return next(self.names)
+            return Name(next(self.names), value)
+        if isinstance(name, Name):
+            name = name.name
         name = exchars.sub("_", name)
         if name[0] in "0123456789":
             name = "_" + name
@@ -374,7 +382,7 @@ class Definitions:
         number = count()
         while name in self or name in PYTHON_KEYWORDS:
             name = temp + str(next(number))
-        return name
+        return Name(name, value)
 
     def find(self, obj):
         for name, item in self.items.items():
@@ -385,8 +393,8 @@ class Definitions:
     def __contains__(self, name):
         return name in self.items
 
-    def __getitem__(self, key):
-        ...
+    #def __getitem__(self, key):
+    #    ...
 
     def __iter__(self):
         return iter(self.items.values())
@@ -394,8 +402,52 @@ class Definitions:
     def __repr__(self):
         if not self.items:
             return ""
-        defs = (repr(expr) for expr in self.items.values())
+        defs = []
+        defined = set()
+        deferred = DeferredItems()
+        for expr in self.items.values():
+            dfr, rep = expr.deferred_repr(defined)
+            defs.append(rep)
+            defined.add(expr.safe_name)
+            deferred.update(dfr)
+            deferred_rep = deferred.repr(defined)
+            if deferred_rep:
+                defs.append(deferred_rep)
+        assert not deferred, "unhandled deferreds:\n" + repr(deferred)
         return "\n" + "\n\n".join(defs)
+
+
+class Name:
+
+    def __init__(self, name, value=None):
+        if isinstance(name, Name):
+            name = name.name
+            assert isinstance(name, str)
+        self.name = name
+        self.value = value if value is not None else object()
+
+    def __bool__(self):
+        return bool(self.name)
+
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self.name == other
+        return isinstance(other, type(self)) and (
+            self.name == other.name or
+            self.value == other.value
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __str__(self):
+        return self.name or ""
+
+    def __repr__(self):
+        return repr(self.__str__())
 
 
 class Literal:
@@ -410,6 +462,8 @@ class Literal:
         return not self == other
 
     def __repr__(self):
+        if isinstance(self.value, Name):
+            return str(self.value)
         return self.value
 
 
@@ -454,12 +508,15 @@ class RE:
 class Assignment:
 
     def __init__(self, name, value):
-        self.safe_name = name
+        self.safe_name = Name(name, value)
         self.value = value
 
     @property
     def name(self):
         return self.safe_name
+
+    def deferred_repr(self, defined):
+        return DeferredItems(), repr(self)
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.value == other.value
@@ -474,18 +531,52 @@ class Assignment:
 class SyntaxClass:
 
     def __init__(self, name, words, ranges):
-        self.name = name
+        self.name = Name(name, self)
         self.words = words
         self.ranges = ranges
-        self.safe_name = None
+        self._safe_name = None
         self.contains_self = False
+        self.parent_ends = []
+
+    @property
+    def safe_name(self):
+        return self._safe_name or self.name
+    @safe_name.setter
+    def safe_name(self, value):
+        self._safe_name = value
+
+    def deferred_repr(self, defined):
+        items = defaultdict(list)
+        for rng in self.ranges:
+            names = set()
+            for name in self._get_names_from_range(rng):
+                if name not in defined:
+                    names.add(name)
+            if names:
+                items[frozenset(names)].append(rng)
+        deferred = DeferredItems()
+        for names, ranges in items.items():
+            deferred.add(names, DeferredRanges(ranges, self))
+        return deferred, self.__repr__(deferred)
+
+    @staticmethod
+    def _get_names_from_range(rng):
+        names = []
+        if isinstance(rng[1], Literal):
+            names.append(rng[1].value)
+        for end in rng[2]:
+            if isinstance(end, Literal):
+                names.append(end.value)
+        if len(rng) > 3 and isinstance(rng[3], Literal):
+            names.append(rng[3].value)
+        return names
 
     def __bool__(self):
         return bool(self.words or self.ranges)
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and (
-            self.name == other.name and
+            #self.name.name == other.name.name and
             self.words == other.words and
             self.ranges == other.ranges
         )
@@ -493,19 +584,70 @@ class SyntaxClass:
     def __ne__(self, other):
         return not self == other
 
-    def __repr__(self):
+    def __repr__(self, deferred=None):
         # by design: name == None -> syntax error
-        lines = ["class {}:".format(self.safe_name or self.name or "")]
+        lines = ["class {}:".format(self.safe_name)]
         lines.append("    default_text = DELIMITER")
         if self.words:
             words = pretty_format(self.words, 4).lstrip()
             lines.append("    word_groups = {}".format(words))
         if self.ranges:
-            ranges = pretty_format(self.ranges, 4).lstrip()
+            ranges = [r for r in self.ranges if r not in deferred]
+            ranges = pretty_format(ranges, 4).lstrip()
             lines.append("    delimited_ranges = {}".format(ranges))
-        if self.safe_name:
+        if self._safe_name:
             lines.append("{}.__name__ = {!r}".format(self.safe_name, self.name))
         return "\n".join(lines)
+
+
+class DeferredRanges:
+
+    def __init__(self, ranges, syntax):
+        self.ranges = ranges
+        self.syntax = syntax
+
+    def __contains__(self, value):
+        return any(value is r for r in self.ranges)
+
+    def __repr__(self):
+        name = self.syntax.safe_name
+        if len(self.ranges) == 1:
+            return "{}.delimited_ranges.append({})".format(name, self.ranges[0])
+        ranges = pretty_format(self.ranges).lstrip()
+        return "{}.delimited_ranges.extend({})".format(name, ranges)
+
+
+class DeferredItems:
+
+    def __init__(self):
+        self.items = defaultdict(list)
+
+    def __bool__(self):
+        return bool(self.items)
+
+    def add(self, dependent_names, item):
+        self.items[dependent_names].append(item)
+
+    def update(self, dfr):
+        for key, values in dfr.items.items():
+            self.items[key].extend(values)
+
+    def __contains__(self, item):
+        return any(item in dfr for dfrs in self.items.values() for dfr in dfrs)
+
+    def repr(self, defined):
+        defs = []
+        for key in list(self.items):
+            if not key - defined:
+                defs.extend(repr(v) for v in self.items.pop(key))
+        return "\n".join(defs)
+
+    def __repr__(self):
+        defs = []
+        for values_list in self.items.values():
+            for value in values_list:
+                defs.append(repr(value))
+        return "\n".join(defs)
 
 
 class Error(Exception): pass
