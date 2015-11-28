@@ -745,8 +745,29 @@ def test_Highlighter_color_text():
           x name transition
         ) tag
         end keyword
+        """)
+
+    class lang:
+        name = "recursive"
+        word_groups = [("keyword", ["def"])]
+        class call:
+            word_groups = [("tag", ["do"])]
+            delimited_ranges = [None]
+        delimited_ranges = [
+            ("group", "(", [")"], call),
+        ]
+    lang.call.delimited_ranges[0] = lang.delimited_ranges[0]
+    lang = make_definition(lang)
+    yield test(lang, "def (def do(do (def)))",
         """
-    )
+        def keyword
+        ( group
+          do tag recursive
+          ( group recursive
+          do tag recursive
+          ( group recursive
+          ))) group recursive
+        """)
 
 def test_NoHighlight_wordinfo():
     nh = NoHighlight("Test", "")

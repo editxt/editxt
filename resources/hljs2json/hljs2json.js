@@ -19,59 +19,43 @@ function exec(path, context, transform) {
 
 function loadLanguage(path, hljs) {
     return exec(path, null, function (data) {
-        return data.replace(/function\s*\(hljs\)/, "function load(hljs)");
+        return data.replace(/function(\s+\w*)?\s*\(hljs\)/, "function load(hljs)");
     }).load(hljs);
 }
 
 /**
- * Remove cycles from value
- *
- * Copy nested value the first time it occurs in a cycle, omit it the second.
+ * Replace cycles in value with RecursiveRef objects
  */
-function decycle(value, parents, valueName) {
-    function copy(value) {
-        var omit = Array.prototype.slice.call(arguments, 1),
-            obj, i, name;
-        if (Object.prototype.toString.apply(value) === '[object Array]') {
-            obj = [];
-            for (i = 0; i < value.length; i++) {
-                if (omit.indexOf(i) === -1) {
-                    obj[i] = decycle(value[i], parents, i);
-                }
-            }
-        } else {
-            obj = {};
-            for (name in value) {
-                if (value.hasOwnProperty(name) && omit.indexOf(name) === -1) {
-                    obj[name] = decycle(value[name], parents, name);
-                }
-            }
-        }
-        return obj;
-    }
-    if (typeof value !== 'object' || value === null || value === undefined ||
-            value instanceof Boolean ||
-            value instanceof Date ||
-            value instanceof Number ||
-            value instanceof RegExp ||
-            value instanceof String ||
-            Object.prototype.toString.call(value) === '[object RegExp]') {
+function decycle(value, path, seen) {
+    if (isSimple(value)) {
         return value;
     }
-    parents = parents || [];
-    var path = parents.length ?
-                    parents[parents.length - 1][1].concat([valueName]) : [],
-        seen = parents.reduce(function (prev, val) {
-            return val[0] === value ? [prev[0] + 1, prev[1] || val[1]] : prev;
-        }, [0, null]);
-    parents = parents.concat([[value, path]]);
-    if (seen[0] && value.contains) {
-        return copy(value, "contains");
-    } else if (seen[0] > 4) {
-        console.error('omit circular (d > 4)', path);
-        return undefined;
+    var i, name, pair;
+    if (!seen) {
+        seen = [];
+        path = [];
+    } else if (path[path.length - 1] === "contains" ||
+               path[path.length - 2] === "contains") {
+        for (i = seen.length - 1; i >= 0; i--) {
+            pair = seen[i];
+            if (pair[0] === value) {
+                return recursiveRef(pair[1], value)
+            }
+        }
     }
-    return copy(value);
+    seen.push([value, path]);
+    if (Object.prototype.toString.apply(value) === '[object Array]') {
+        for (i = 0; i < value.length; i++) {
+            value[i] = decycle(value[i], path.concat([i]), seen);
+        }
+    } else {
+        for (name in value) {
+            if (value.hasOwnProperty(name)) {
+                value[name] = decycle(value[name], path.concat([name]), seen);
+            }
+        }
+    }
+    return value
 }
 
 function str(key, value) {
@@ -79,6 +63,31 @@ function str(key, value) {
         return {type: "RegExp", pattern: value.source};
     }
     return value;
+}
+
+function isSimple(value) {
+    return typeof value !== 'object' || value === null || value === undefined ||
+            value instanceof Boolean ||
+            value instanceof Date ||
+            value instanceof Number ||
+            value instanceof RegExp ||
+            value instanceof String ||
+            Object.prototype.toString.call(value) === '[object RegExp]';
+}
+
+function recursiveRef(path, value) {
+    var name = {};
+    if (Object.prototype.toString.apply(value) === '[object Array]') {
+        name = path.join("-");
+    } else {
+        name = {};
+        for (key in value) {
+            if (value.hasOwnProperty(key) && isSimple(value[key])) {
+                name[key] = value[key];
+            }
+        }
+    }
+    return {type: "RecursiveRef", path: path, name: name}
 }
 
 var fs = require("fs"),
