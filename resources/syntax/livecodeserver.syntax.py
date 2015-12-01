@@ -655,7 +655,7 @@ title = [RE(r"\b([A-Za-z0-9_\-]+)\b")]
 class string:
     default_text = DELIMITER
     rules = [
-        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 number = [RE(r"\b(0b[01]+)")]
@@ -670,7 +670,7 @@ class function:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword1),
-        # {'relevance': 0, 'begin': '\\b[gtps][A-Z]+[A-Za-z0-9_\\-]*\\b|\\$_[A-Z]+'},
+        # {'begin': '\\b[gtps][A-Z]+[A-Za-z0-9_\\-]*\\b|\\$_[A-Z]+', 'relevance': 0},
         ('title', title),
         ('string', RE(r"'"), [RE(r"'")]),
         ('string', RE(r"\""), [RE(r"\"")], string),
@@ -697,7 +697,7 @@ class _group2:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword3),
-        # {'relevance': 0, 'begin': '\\b[gtps][A-Z]+[A-Za-z0-9_\\-]*\\b|\\$_[A-Z]+'},
+        # {'begin': '\\b[gtps][A-Z]+[A-Za-z0-9_\\-]*\\b|\\$_[A-Z]+', 'relevance': 0},
         None,  # ('title', title),
         None,  # function.rules[2],
         None,  # function.rules[3],
@@ -721,7 +721,7 @@ class comment:
 class comment0:
     default_text = DELIMITER
     rules = [
-        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 comment0.__name__ = 'comment'

@@ -395,7 +395,7 @@ string0.__name__ = 'string'
 class string1:
     default_text = DELIMITER
     rules = [
-        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         None,  # string.rules[0],
         None,  # ('variable', variable),
     ]

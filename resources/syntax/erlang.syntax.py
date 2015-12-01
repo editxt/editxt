@@ -53,7 +53,7 @@ class _group2:
 class string:
     default_text = DELIMITER
     rules = [
-        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 number = [RE(r"\b(\d+#[a-fA-F0-9]+|\d+(\.\d+)?([eE][-+]?\d+)?)")]
@@ -95,8 +95,8 @@ class params:
         None,  # _group0.rules[5],
         None,  # ('number', number),
         None,  # _group0.rules[7],
-        # {'relevance': 0, 'begin': '\\b_([A-Z][A-Za-z0-9_]*)?'},
-        # {'relevance': 0, 'begin': '[A-Z][a-zA-Z0-9_]*'},
+        # {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
+        # {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
         None,  # _group0.rules[8],
     ]
 
@@ -157,8 +157,8 @@ rules = [
     None,  # ('number', number),
     None,  # _group0.rules[5],
     None,  # _group0.rules[8],
-    # {'relevance': 0, 'begin': '\\b_([A-Z][A-Za-z0-9_]*)?'},
-    # {'relevance': 0, 'begin': '[A-Z][a-zA-Z0-9_]*'},
+    # {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
+    # {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
     None,  # _group0.rules[7],
 ]
 

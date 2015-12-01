@@ -69,7 +69,7 @@ class _group0:
 class string:
     default_text = DELIMITER
     rules = [
-        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
@@ -81,7 +81,7 @@ class comment:
 class regexp:
     default_text = DELIMITER
     rules = [
-        # {'className': 'subst', 'begin': {'type': 'RegExp', 'pattern': '#\\{'}, 'end': {'type': 'RegExp', 'pattern': '}'}},
+        # {'begin': {'pattern': '#\\{', 'type': 'RegExp'}, 'className': 'subst', 'end': {'pattern': '}', 'type': 'RegExp'}},
         ('comment', RE(r"#"), [RE(r"$")], comment),
     ]
 
@@ -107,7 +107,7 @@ class subst:
 class string0:
     default_text = DELIMITER
     rules = [
-        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         ('subst', RE(r"#\{"), [RE(r"}")], subst),
     ]
 string0.__name__ = 'string'
@@ -115,7 +115,7 @@ string0.__name__ = 'string'
 class string1:
     default_text = DELIMITER
     rules = [
-        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         None,  # string0.rules[0],
     ]
 string1.__name__ = 'string'
@@ -123,7 +123,7 @@ string1.__name__ = 'string'
 class comment0:
     default_text = DELIMITER
     rules = [
-        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 comment0.__name__ = 'comment'

@@ -117,7 +117,7 @@ keyword = [
     'geq',
 ]
 
-variable = [RE(r"%[^ ]|%[^ ]+?%|![^ ]+?!")]
+variable = [RE(r"%%[^ ]|%[^ ]+?%|![^ ]+?!")]
 
 title = [RE(r"([_a-zA-Z]\w*\.)*([_a-zA-Z]\w*:)?[_a-zA-Z]\w*")]
 

@@ -61,7 +61,7 @@ keyword1 = ['from', 'maintainer', 'expose', 'env', 'user', 'onbuild']
 class string:
     default_text = DELIMITER
     rules = [
-        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 number = [RE(r"\b\d+(\.\d+)?")]

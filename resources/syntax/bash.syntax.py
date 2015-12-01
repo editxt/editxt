@@ -159,7 +159,7 @@ variable0 = [RE(r"\$\{(.*?)}")]
 class variable1:
     default_text = DELIMITER
     rules = [
-        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 variable1.__name__ = 'variable'
 

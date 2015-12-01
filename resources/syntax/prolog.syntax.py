@@ -17,14 +17,14 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 class comment:
     default_text = DELIMITER
     rules = [
-        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 
 class string:
     default_text = DELIMITER
     rules = [
-        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 string0 = [RE(r"0\'(\\\'|.)")]
@@ -36,9 +36,9 @@ number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
 class _group1:
     default_text = DELIMITER
     rules = [
-        # {'relevance': 0, 'begin': {'type': 'RegExp', 'pattern': '[a-z][A-Za-z0-9_]*'}},
+        # {'begin': {'pattern': '[a-z][A-Za-z0-9_]*', 'type': 'RegExp'}, 'relevance': 0},
         None,  # ('symbol', symbol0),
-        # {'relevance': 0, 'begin': {'type': 'RegExp', 'pattern': '\\('}, 'end': {'type': 'RegExp', 'pattern': '\\)'}},
+        # {'begin': {'pattern': '\\(', 'type': 'RegExp'}, 'end': {'pattern': '\\)', 'type': 'RegExp'}, 'relevance': 0},
         ('_group2', RE(r"\["), [RE(r"\]")], _group2),
         ('comment', RE(r"%"), [RE(r"$")]),
         ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
@@ -54,7 +54,7 @@ rules = [
     ('symbol', symbol),
     ('symbol', symbol0),
     ('_group1', RE(r"\("), [RE(r"\)")], _group1),
-    # {'begin': {'type': 'RegExp', 'pattern': ':-'}},
+    # {'begin': {'pattern': ':-', 'type': 'RegExp'}},
     None,  # _group1.rules[1],
     None,  # _group1.rules[2],
     None,  # _group1.rules[3],

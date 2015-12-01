@@ -367,7 +367,7 @@ comment0 = [RE(r"\^[a-zA-Z_\-!.?+*=<>&#'][a-zA-Z_\-!.?+*=<>&#'0-9/;:]*")]
 class comment1:
     default_text = DELIMITER
     rules = [
-        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 comment1.__name__ = 'comment'
@@ -401,7 +401,7 @@ class _group0:
     rules = [
         ('comment', RE(r"comment"), [RE(r"\B|\b")], comment),
         ('name', name1, [RE(r"(?=\))")], _group1),
-        # {'relevance': 0, 'endsWithParent': True},
+        # {'endsWithParent': True, 'relevance': 0},
     ]
 
 rules = [

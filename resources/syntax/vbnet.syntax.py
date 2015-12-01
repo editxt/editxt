@@ -189,7 +189,7 @@ literal = ['true', 'false', 'nothing']
 class doctag:
     default_text = DELIMITER
     rules = [
-        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
     ]
 
 doctag0 = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
@@ -199,7 +199,7 @@ class comment:
     rules = [
         ('doctag', RE(r"'''|<!--|-->"), [RE(r"\B|\b")]),
         ('doctag', RE(r"</?"), [RE(r">")], doctag),
-        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag0),
     ]
 

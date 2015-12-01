@@ -481,7 +481,7 @@ literal = ['.False.', '.True.']
 class string:
     default_text = DELIMITER
     rules = [
-        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 keyword0 = ['subroutine', 'function', 'program']

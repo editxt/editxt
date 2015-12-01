@@ -29,14 +29,14 @@ class meta:
 class string:
     default_text = DELIMITER
     rules = [
-        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 class _group2:
     default_text = DELIMITER
     rules = [
         ('string', RE(r"\""), [RE(r"\"")], string),
-        # {'className': 'variable', 'begin': {'type': 'RegExp', 'pattern': '\\$\\('}, 'end': {'type': 'RegExp', 'pattern': '\\)'}},
+        # {'begin': {'pattern': '\\$\\(', 'type': 'RegExp'}, 'className': 'variable', 'end': {'pattern': '\\)', 'type': 'RegExp'}},
     ]
 
 rules = [

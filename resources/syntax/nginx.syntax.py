@@ -68,7 +68,7 @@ class _group5:
 class regexp:
     default_text = DELIMITER
     rules = [
-        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         None,  # ('variable', variable),
     ]
 

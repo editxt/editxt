@@ -2261,7 +2261,7 @@ string = [RE(r"\.[A-Za-z0-9]+")]
 
 symbol = [RE(r"^\s*[A-Za-z._?][A-Za-z0-9_$#@~.?]*(:|\s+label)")]
 
-symbol0 = [RE(r"^\s*%[A-Za-z0-9_$#@~.?]*:")]
+symbol0 = [RE(r"^\s*%%[A-Za-z0-9_$#@~.?]*:")]
 
 subst = [RE(r"%[0-9]+")]
 

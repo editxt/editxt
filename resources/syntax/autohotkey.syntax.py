@@ -15,7 +15,7 @@ built_in = [RE(r"A_[a-zA-Z0-9]+")]
 class string:
     default_text = DELIMITER
     rules = [
-        # {'begin': {'type': 'RegExp', 'pattern': '`[\\s\\S]'}},
+        # {'begin': {'pattern': '`[\\s\\S]', 'type': 'RegExp'}},
     ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
@@ -29,13 +29,13 @@ number = [RE(r"\b\d+(\.\d+)?")]
 class variable:
     default_text = DELIMITER
     rules = [
-        # {'begin': {'type': 'RegExp', 'pattern': '`[\\s\\S]'}},
+        # {'begin': {'pattern': '`[\\s\\S]', 'type': 'RegExp'}},
     ]
 
 class symbol:
     default_text = DELIMITER
     rules = [
-        # {'begin': {'type': 'RegExp', 'pattern': '`[\\s\\S]'}},
+        # {'begin': {'pattern': '`[\\s\\S]', 'type': 'RegExp'}},
     ]
 
 rules = [

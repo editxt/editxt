@@ -86,7 +86,7 @@ variable = [RE(r"(\$\W)|((\$|\@\@?)(\w+))")]
 class regexp:
     default_text = DELIMITER
     rules = [
-        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         None,  # string.rules[0],
     ]
 
