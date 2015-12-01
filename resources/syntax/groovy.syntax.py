@@ -4,8 +4,6 @@
 name = 'Groovy'
 file_patterns = ['*.groovy']
 
-literal = ['true', 'false', 'null']
-
 keyword = [
     'byte',
     'short',
@@ -58,18 +56,35 @@ keyword = [
     'instanceof',
 ]
 
+literal = ['true', 'false', 'null']
+
 doctag = [RE(r"@[A-Za-z]+")]
 
 doctag0 = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag), ('doctag', doctag0)]
+    rules = [('doctag', doctag), ('doctag', doctag0)]
 
 class comment0:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag0)]
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag0),
+    ]
 comment0.__name__ = 'comment'
+
+class regexp:
+    default_text = DELIMITER
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+    ]
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+    ]
 
 number = [RE(r"\b(0b[01]+)")]
 
@@ -79,27 +94,22 @@ title = [RE(r"[a-zA-Z_]\w*")]
 
 class class0:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0), ('title', title)]
-    delimited_ranges = [('_group7', RE(r"\b(extends|implements)"), [RE(r"\B|\b")])]
+    rules = [
+        ('keyword', keyword0),
+        ('_group2', RE(r"\b(extends|implements)"), [RE(r"\B|\b")]),
+        ('title', title),
+    ]
 class0.__name__ = 'class'
 
 number0 = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
 
-string = [RE(r"[^\?]{0}[A-Za-z0-9_$]+ *:")]
+string0 = [RE(r"[^\?]{0}[A-Za-z0-9_$]+ *:")]
 
 symbol = [RE(r"^\s*[A-Za-z0-9_$]+:")]
 
-word_groups = [
-    ('literal', literal),
+rules = [
     ('keyword', keyword),
-    ('number', number),
-    ('number', number0),
-    ('meta', doctag),
-    ('string', string),
-    ('symbol', symbol),
-]
-
-delimited_ranges = [
+    ('literal', literal),
     ('comment', RE(r"/\*\*"), [RE(r"\*/")], comment),
     ('comment', RE(r"//"), [RE(r"$")], comment0),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
@@ -107,9 +117,39 @@ delimited_ranges = [
     ('string', RE(r"'''"), [RE(r"'''")]),
     ('string', RE(r"\$/"), [RE(r"/\$")]),
     ('string', RE(r"'"), [RE(r"'")]),
-    ('regexp', RE(r"~?\/[^\/\n]+\/"), [RE(r"\B|\b")]),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    ('regexp', RE(r"~?\/[^\/\n]+\/"), [RE(r"\B|\b")], regexp),
+    ('string', RE(r"\""), [RE(r"\"")], string),
     ('meta', RE(r"^#!/usr/bin/env"), [RE(r"$")]),
+    ('number', number),
     ('class', RE(r"\b(class|interface|trait|enum)"), [RE(r"{")], class0),
-    ('_group8', RE(r"\?"), [RE(r"\:")]),
+    ('number', number0),
+    ('meta', doctag),
+    ('string', string0),
+    ('_group3', RE(r"\?"), [RE(r"\:")]),
+    ('symbol', symbol),
 ]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

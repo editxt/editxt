@@ -4,91 +4,6 @@
 name = 'C++'
 file_patterns = ['*.cpp', '*.c', '*.cc', '*.h', '*.c++', '*.h++', '*.hpp']
 
-literal = ['true', 'false', 'nullptr', 'NULL']
-
-keyword = [
-    'int',
-    'float',
-    'while',
-    'private',
-    'char',
-    'catch',
-    'export',
-    'virtual',
-    'operator',
-    'sizeof',
-    'dynamic_cast',
-    'typedef',
-    'const_cast',
-    'const',
-    'struct',
-    'for',
-    'static_cast',
-    'union',
-    'namespace',
-    'unsigned',
-    'long',
-    'volatile',
-    'static',
-    'protected',
-    'bool',
-    'template',
-    'mutable',
-    'if',
-    'public',
-    'friend',
-    'do',
-    'goto',
-    'auto',
-    'void',
-    'enum',
-    'else',
-    'break',
-    'extern',
-    'using',
-    'class',
-    'asm',
-    'case',
-    'typeid',
-    'short',
-    'reinterpret_cast',
-    'default',
-    'double',
-    'register',
-    'explicit',
-    'signed',
-    'typename',
-    'try',
-    'this',
-    'switch',
-    'continue',
-    'inline',
-    'delete',
-    'alignof',
-    'constexpr',
-    'decltype',
-    'noexcept',
-    'static_assert',
-    'thread_local',
-    'restrict',
-    '_Bool',
-    'complex',
-    '_Complex',
-    '_Imaginary',
-    'atomic_bool',
-    'atomic_char',
-    'atomic_schar',
-    'atomic_uchar',
-    'atomic_short',
-    'atomic_ushort',
-    'atomic_int',
-    'atomic_uint',
-    'atomic_long',
-    'atomic_ulong',
-    'atomic_llong',
-    'atomic_ullong',
-]
-
 built_in = [
     'std',
     'string',
@@ -192,7 +107,95 @@ built_in = [
     'vfprintf',
     'vprintf',
     'vsprintf',
+    'endl',
+    'initializer_list',
+    'unique_ptr',
 ]
+
+keyword = [
+    'int',
+    'float',
+    'while',
+    'private',
+    'char',
+    'catch',
+    'export',
+    'virtual',
+    'operator',
+    'sizeof',
+    'dynamic_cast',
+    'typedef',
+    'const_cast',
+    'const',
+    'struct',
+    'for',
+    'static_cast',
+    'union',
+    'namespace',
+    'unsigned',
+    'long',
+    'volatile',
+    'static',
+    'protected',
+    'bool',
+    'template',
+    'mutable',
+    'if',
+    'public',
+    'friend',
+    'do',
+    'goto',
+    'auto',
+    'void',
+    'enum',
+    'else',
+    'break',
+    'extern',
+    'using',
+    'class',
+    'asm',
+    'case',
+    'typeid',
+    'short',
+    'reinterpret_cast',
+    'default',
+    'double',
+    'register',
+    'explicit',
+    'signed',
+    'typename',
+    'try',
+    'this',
+    'switch',
+    'continue',
+    'inline',
+    'delete',
+    'alignof',
+    'constexpr',
+    'decltype',
+    'noexcept',
+    'static_assert',
+    'thread_local',
+    'restrict',
+    '_Bool',
+    'complex',
+    '_Complex',
+    '_Imaginary',
+    'atomic_bool',
+    'atomic_char',
+    'atomic_schar',
+    'atomic_uchar',
+    'atomic_short',
+    'atomic_ushort',
+    'atomic_int',
+    'atomic_uint',
+    'atomic_long',
+    'atomic_ulong',
+    'atomic_llong',
+    'atomic_ullong',
+]
+
+literal = ['true', 'false', 'nullptr', 'NULL']
 
 keyword0 = [RE(r"\b[a-z\d_]*_t\b")]
 
@@ -200,13 +203,25 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 number = [RE(r"\b(\d+(\.\d*)?|\.\d+)(u|U|l|L|ul|UL|f|F)")]
 
 number0 = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
 
-keyword1 = [
+class string:
+    default_text = DELIMITER
+    rules = []
+
+meta_keyword = [
     'if',
     'else',
     'elif',
@@ -221,126 +236,133 @@ keyword1 = [
     'ifndef',
 ]
 
-keyword2 = ['include']
+meta_keyword0 = ['include']
 
-class _group5:
+class meta_string:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword2)]
-    delimited_ranges = [
-        ('string', RE(r"((u8?|U)|L)?\""), [RE(r"\"")]),
-        ('string', RE(r"(u8?|U)?R\""), [RE(r"\"")]),
-        ('string', RE(r"'\\?."), [RE(r"'")]),
-        ('string', RE(r"<"), [RE(r">")]),
+    rules = []
+meta_string.__name__ = 'meta-string'
+
+class _group1:
+    default_text = DELIMITER
+    rules = [
+        ('meta-keyword', meta_keyword0),
+        ('string', RE(r"((u8?|U)|L)?\""), [RE(r"\"")], string),
+        ('meta-string', RE(r"(u8?|U)?R\""), [RE(r"\"")], meta_string),
+        ('meta-string', RE(r"'\\?."), [RE(r"'")]),
+        ('meta-string', RE(r"<"), [RE(r">")]),
     ]
 
 class meta:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword1), ('number', number), ('number', number0)]
-    delimited_ranges = [
-        ('_group5', RE(r"\b(include)"), [RE(r"$")], _group5),
-        ('string', RE(r"((u8?|U)|L)?\""), [RE(r"\"")]),
-        ('string', RE(r"(u8?|U)?R\""), [RE(r"\"")]),
-        ('string', RE(r"'\\?."), [RE(r"'")]),
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+    rules = [
+        ('meta-keyword', meta_keyword),
+        ('_group1', RE(r"\b(include)"), [RE(r"$")], _group1),
+        None,  # rules[10],
+        None,  # rules[4],
+        None,  # rules[5],
     ]
 
-class _group12:
+class _group2:
     default_text = DELIMITER
-    word_groups = [
-        ('literal', literal),
-        ('keyword', keyword),
+    rules = [
         ('built_in', built_in),
-        ('keyword', keyword0),
+        ('keyword', keyword),
+        ('literal', literal),
+        None,  # ('keyword', keyword0),
     ]
 
-class _group13:
+class _group3:
     default_text = DELIMITER
-    word_groups = [
-        ('literal', literal),
-        ('keyword', keyword),
+    rules = [
         ('built_in', built_in),
+        ('keyword', keyword),
+        ('literal', literal),
     ]
 
 title = [RE(r"[a-zA-Z]\w*")]
 
-class _group15:
+class _group5:
     default_text = DELIMITER
-    word_groups = [('title', title)]
+    rules = [('title', title)]
 
 class params:
     default_text = DELIMITER
-    word_groups = [
-        ('literal', literal),
-        ('keyword', keyword),
+    rules = [
         ('built_in', built_in),
-        ('number', number),
-        ('number', number0),
+        ('keyword', keyword),
+        ('literal', literal),
+        None,  # rules[4],
+        None,  # rules[5],
+        None,  # rules[10],
+        None,  # ('number', number0),
     ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('string', RE(r"((u8?|U)|L)?\""), [RE(r"\"")]),
-        ('string', RE(r"(u8?|U)?R\""), [RE(r"\"")]),
-        ('string', RE(r"'\\?."), [RE(r"'")]),
-    ]
-
-class _group23:
-    default_text = DELIMITER
-    word_groups = [('keyword', keyword2)]
-    delimited_ranges = [
-        ('string', RE(r"((u8?|U)|L)?\""), [RE(r"\"")]),
-        ('string', RE(r"(u8?|U)?R\""), [RE(r"\"")]),
-        ('string', RE(r"'\\?."), [RE(r"'")]),
-        ('string', RE(r"<"), [RE(r">")]),
-    ]
-
-class meta0:
-    default_text = DELIMITER
-    word_groups = [('keyword', keyword1), ('number', number), ('number', number0)]
-    delimited_ranges = [
-        ('_group23', RE(r"\b(include)"), [RE(r"$")], _group23),
-        ('string', RE(r"((u8?|U)|L)?\""), [RE(r"\"")]),
-        ('string', RE(r"(u8?|U)?R\""), [RE(r"\"")]),
-        ('string', RE(r"'\\?."), [RE(r"'")]),
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ]
-meta0.__name__ = 'meta'
 
 class function:
     default_text = DELIMITER
-    word_groups = [
-        ('literal', literal),
-        ('keyword', keyword),
+    rules = [
         ('built_in', built_in),
-    ]
-    delimited_ranges = [
-        ('_group15', RE(r"(?=[a-zA-Z]\w*\s*\()"), [RE(r"\B|\b")], _group15),
+        ('keyword', keyword),
+        ('literal', literal),
+        ('_group5', RE(r"(?=[a-zA-Z]\w*\s*\()"), [RE(r"\B|\b")], _group5),
         ('params', RE(r"\("), [RE(r"\)")], params),
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('meta', RE(r"#"), [RE(r"$")], meta0),
+        None,  # rules[4],
+        None,  # rules[5],
+        None,  # rules[11],
     ]
 
-word_groups = [
-    ('literal', literal),
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
+    ('keyword', keyword),
+    ('literal', literal),
     ('keyword', keyword0),
+    ('comment', RE(r"//"), [RE(r"$")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
     ('number', number),
     ('number', number0),
-]
-
-delimited_ranges = [
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('string', RE(r"((u8?|U)|L)?\""), [RE(r"\"")]),
-    ('string', RE(r"(u8?|U)?R\""), [RE(r"\"")]),
+    ('string', RE(r"((u8?|U)|L)?\""), [RE(r"\"")], string),
+    ('string', RE(r"(u8?|U)?R\""), [RE(r"\"")], string),
     ('string', RE(r"'\\?."), [RE(r"'")]),
     ('meta', RE(r"#"), [RE(r"$")], meta),
-    ('_group12', RE(r"\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\s*<"), [RE(r">")], _group12),
-    ('_group13', RE(r"[a-zA-Z]\w*::"), [RE(r"\B|\b")], _group13),
-    ('_group14', RE(r"\b(new|throw|return|else)"), [RE(r"\B|\b")]),
+    ('_group2', RE(r"\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\s*<"), [RE(r">")], _group2),
+    ('_group3', RE(r"[a-zA-Z]\w*::"), [RE(r"\B|\b")], _group3),
+    ('_group4', RE(r"\b(new|throw|return|else)"), [RE(r"\B|\b")]),
     ('function', RE(r"(?=([a-zA-Z]\w*[\*&\s]+)+[a-zA-Z]\w*\s*\()"), [RE(r"(?=[{;=])")], function),
 ]
+
+meta.rules[2] = rules[10]
+meta.rules[3] = rules[4]
+meta.rules[4] = rules[5]
+_group2.rules[3] = ('keyword', keyword0)
+params.rules[3] = rules[4]
+params.rules[4] = rules[5]
+params.rules[5] = rules[10]
+params.rules[6] = ('number', number0)
+function.rules[5] = rules[4]
+function.rules[6] = rules[5]
+function.rules[7] = rules[11]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

@@ -4,8 +4,6 @@
 name = 'Scala'
 file_patterns = ['*.scala']
 
-literal = ['true', 'false', 'null']
-
 keyword = [
     'type',
     'yield',
@@ -48,18 +46,38 @@ keyword = [
     'implicit',
 ]
 
+literal = ['true', 'false', 'null']
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 subst = [RE(r"\$[A-Za-z0-9_]+")]
 
 class string:
     default_text = DELIMITER
-    word_groups = [('subst', subst)]
-    delimited_ranges = [('subst', RE(r"\${"), [RE(r"}")])]
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        ('subst', subst),
+        ('subst', RE(r"\${"), [RE(r"}")]),
+    ]
+
+class string0:
+    default_text = DELIMITER
+    rules = [
+        None,  # string.rules[1],
+    ]
+string0.__name__ = 'string'
 
 symbol = [RE(r"'\w[\w\d_]*(?!')")]
 
@@ -73,16 +91,17 @@ title = [
 
 class function:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0), ('title', title)]
+    rules = [('keyword', keyword0), ('title', title)]
 
 keyword1 = ['class', 'object', 'trait', 'type']
 
 class class0:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword1), ('title', title)]
-    delimited_ranges = [
-        ('_group4', RE(r"\b(extends|with)"), [RE(r"\B|\b")]),
+    rules = [
+        ('keyword', keyword1),
+        ('_group1', RE(r"\b(extends|with)"), [RE(r"\B|\b")]),
         ('params', RE(r"\("), [RE(r"\)")]),
+        None,  # ('title', title),
     ]
 class0.__name__ = 'class'
 
@@ -90,22 +109,47 @@ number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
 
 meta = [RE(r"@[A-Za-z]+")]
 
-word_groups = [
-    ('literal', literal),
+rules = [
     ('keyword', keyword),
+    ('literal', literal),
+    ('comment', RE(r"//"), [RE(r"$")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('string', RE(r"\""), [RE(r"\"")]),
+    ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
+    ('string', RE(r"[a-z]+\""), [RE(r"\"")], string),
+    ('string', RE(r"[a-z]+\"\"\""), [RE(r"\"\"\"")], string0),
     ('symbol', symbol),
     ('type', type),
+    ('function', RE(r"\b(def)"), [RE(r"[:={\[(\n;]")], function),
+    ('class', RE(r"\b(class|object|trait|type)"), [RE(r"(?=[:={\[\n;])")], class0),
     ('number', number),
     ('meta', meta),
 ]
 
-delimited_ranges = [
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('string', RE(r"\""), [RE(r"\"")]),
-    ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
-    ('string', RE(r"[a-z]+\""), [RE(r"\"")], string),
-    ('string', RE(r"[a-z]+\"\"\""), [RE(r"\"\"\"")], string),
-    ('function', RE(r"\b(def)"), [RE(r"[:={\[(\n;]")], function),
-    ('class', RE(r"\b(class|object|trait|type)"), [RE(r"(?=[:={\[\n;])")], class0),
-]
+string0.rules[0] = string.rules[1]
+class0.rules[3] = ('title', title)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

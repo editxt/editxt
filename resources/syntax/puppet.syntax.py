@@ -8,30 +8,156 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
 variable = [RE(r"\$([A-Za-z_]|::)(\w|::)*")]
 
 class string:
     default_text = DELIMITER
-    word_groups = [('variable', variable)]
+    rules = [
+        None,  # ('variable', variable),
+    ]
 
 keyword = ['class']
 
 title = [RE(r"([A-Za-z_]|::)(\w|::)*")]
 
-class _group3:
+class _group2:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword), ('title', title)]
-    delimited_ranges = [('comment', RE(r"#"), [RE(r"$")], comment)]
+    rules = [
+        ('keyword', keyword),
+        ('title', title),
+        None,  # rules[0],
+    ]
 
 keyword0 = ['define']
 
 section = [RE(r"[a-zA-Z]\w*")]
 
-class _group5:
+class _group3:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0), ('section', section)]
+    rules = [('keyword', keyword0), ('section', section)]
+
+built_in = [
+    'architecture',
+    'augeasversion',
+    'blockdevices',
+    'boardmanufacturer',
+    'boardproductname',
+    'boardserialnumber',
+    'cfkey',
+    'dhcp_servers',
+    'domain',
+    'ec2_',
+    'ec2_userdata',
+    'facterversion',
+    'filesystems',
+    'ldom',
+    'fqdn',
+    'gid',
+    'hardwareisa',
+    'hardwaremodel',
+    'hostname',
+    'id',
+    'interfaces',
+    'ipaddress',
+    'ipaddress_',
+    'ipaddress6',
+    'ipaddress6_',
+    'iphostnumber',
+    'is_virtual',
+    'kernel',
+    'kernelmajversion',
+    'kernelrelease',
+    'kernelversion',
+    'kernelrelease',
+    'kernelversion',
+    'lsbdistcodename',
+    'lsbdistdescription',
+    'lsbdistid',
+    'lsbdistrelease',
+    'lsbmajdistrelease',
+    'lsbminordistrelease',
+    'lsbrelease',
+    'macaddress',
+    'macaddress_',
+    'macosx_buildversion',
+    'macosx_productname',
+    'macosx_productversion',
+    'macosx_productverson_major',
+    'macosx_productversion_minor',
+    'manufacturer',
+    'memoryfree',
+    'memorysize',
+    'netmask',
+    'metmask_',
+    'network_',
+    'operatingsystem',
+    'operatingsystemmajrelease',
+    'operatingsystemrelease',
+    'osfamily',
+    'partitions',
+    'path',
+    'physicalprocessorcount',
+    'processor',
+    'processorcount',
+    'productname',
+    'ps',
+    'puppetversion',
+    'rubysitedir',
+    'rubyversion',
+    'selinux',
+    'selinux_config_mode',
+    'selinux_config_policy',
+    'selinux_current_mode',
+    'selinux_current_mode',
+    'selinux_enforced',
+    'selinux_policyversion',
+    'serialnumber',
+    'sp_',
+    'sshdsakey',
+    'sshecdsakey',
+    'sshrsakey',
+    'swapencrypted',
+    'swapfree',
+    'swapsize',
+    'timezone',
+    'type',
+    'uniqueid',
+    'uptime',
+    'uptime_days',
+    'uptime_hours',
+    'uptime_seconds',
+    'uuid',
+    'virtual',
+    'vlans',
+    'xendomains',
+    'zfs_version',
+    'zonenae',
+    'zones',
+    'zpool_version',
+]
+
+keyword1 = [
+    'and',
+    'case',
+    'default',
+    'else',
+    'elsif',
+    'false',
+    'if',
+    'in',
+    'import',
+    'enherits',
+    'node',
+    'or',
+    'true',
+    'undef',
+    'unless',
+    'main',
+    'settings',
+    '$string',
+]
 
 literal = [
     'alias',
@@ -228,163 +354,71 @@ literal = [
     'mounted',
 ]
 
-keyword1 = [
-    'and',
-    'case',
-    'default',
-    'else',
-    'elsif',
-    'false',
-    'if',
-    'in',
-    'import',
-    'enherits',
-    'node',
-    'or',
-    'true',
-    'undef',
-    'unless',
-    'main',
-    'settings',
-    '$string',
-]
-
-built_in = [
-    'architecture',
-    'augeasversion',
-    'blockdevices',
-    'boardmanufacturer',
-    'boardproductname',
-    'boardserialnumber',
-    'cfkey',
-    'dhcp_servers',
-    'domain',
-    'ec2_',
-    'ec2_userdata',
-    'facterversion',
-    'filesystems',
-    'ldom',
-    'fqdn',
-    'gid',
-    'hardwareisa',
-    'hardwaremodel',
-    'hostname',
-    'id',
-    'interfaces',
-    'ipaddress',
-    'ipaddress_',
-    'ipaddress6',
-    'ipaddress6_',
-    'iphostnumber',
-    'is_virtual',
-    'kernel',
-    'kernelmajversion',
-    'kernelrelease',
-    'kernelversion',
-    'kernelrelease',
-    'kernelversion',
-    'lsbdistcodename',
-    'lsbdistdescription',
-    'lsbdistid',
-    'lsbdistrelease',
-    'lsbmajdistrelease',
-    'lsbminordistrelease',
-    'lsbrelease',
-    'macaddress',
-    'macaddress_',
-    'macosx_buildversion',
-    'macosx_productname',
-    'macosx_productversion',
-    'macosx_productverson_major',
-    'macosx_productversion_minor',
-    'manufacturer',
-    'memoryfree',
-    'memorysize',
-    'netmask',
-    'metmask_',
-    'network_',
-    'operatingsystem',
-    'operatingsystemmajrelease',
-    'operatingsystemrelease',
-    'osfamily',
-    'partitions',
-    'path',
-    'physicalprocessorcount',
-    'processor',
-    'processorcount',
-    'productname',
-    'ps',
-    'puppetversion',
-    'rubysitedir',
-    'rubyversion',
-    'selinux',
-    'selinux_config_mode',
-    'selinux_config_policy',
-    'selinux_current_mode',
-    'selinux_current_mode',
-    'selinux_enforced',
-    'selinux_policyversion',
-    'serialnumber',
-    'sp_',
-    'sshdsakey',
-    'sshecdsakey',
-    'sshrsakey',
-    'swapencrypted',
-    'swapfree',
-    'swapsize',
-    'timezone',
-    'type',
-    'uniqueid',
-    'uptime',
-    'uptime_days',
-    'uptime_hours',
-    'uptime_seconds',
-    'uuid',
-    'virtual',
-    'vlans',
-    'xendomains',
-    'zfs_version',
-    'zonenae',
-    'zones',
-    'zpool_version',
-]
-
-class _group11:
+class _group6:
     default_text = DELIMITER
-    word_groups = [('attr', section)]
+    rules = [('attr', section)]
 
 number = [
     RE(r"(\b0[0-7_]+)|(\b0x[0-9a-fA-F_]+)|(\b[1-9][0-9_]*(\.[0-9_]+)?)|[0_]\b"),
 ]
 
-class _group7:
+class _group5:
     default_text = DELIMITER
-    word_groups = [
-        ('literal', literal),
-        ('keyword', keyword1),
+    rules = [
         ('built_in', built_in),
+        ('keyword', keyword1),
+        ('literal', literal),
+        None,  # rules[3],
+        None,  # rules[0],
+        ('_group6', RE(r"(?=[a-zA-Z_]+\s*=>)"), [RE(r"=>")], _group6),
         ('number', number),
-        ('variable', variable),
-    ]
-    delimited_ranges = [
-        ('string', RE(r"'"), [RE(r"'")], string),
-        ('string', RE(r"\""), [RE(r"\"")], string),
-        ('comment', RE(r"#"), [RE(r"$")], comment),
-        ('_group11', RE(r"(?=[a-zA-Z_]+\s*=>)"), [RE(r"=>")], _group11),
+        None,  # ('variable', variable),
     ]
 
-class _group6:
+class _group4:
     default_text = DELIMITER
-    word_groups = [('keyword', section)]
-    delimited_ranges = [('_group7', RE(r"\{"), [RE(r"\}")], _group7)]
+    rules = [
+        ('keyword', section),
+        ('_group5', RE(r"\{"), [RE(r"\}")], _group5),
+    ]
 
-word_groups = [('variable', variable)]
-
-delimited_ranges = [
+rules = [
     ('comment', RE(r"#"), [RE(r"$")], comment),
+    ('variable', variable),
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('_group3', RE(r"\b(class)"), [RE(r"\{|;")], _group3),
-    ('_group5', RE(r"\b(define)"), [RE(r"\{")], _group5),
-    ('_group6', RE(r"(?=[a-zA-Z]\w*\s+\{)"), [RE(r"\S")], _group6),
+    ('_group2', RE(r"\b(class)"), [RE(r"\{|;")], _group2),
+    ('_group3', RE(r"\b(define)"), [RE(r"\{")], _group3),
+    ('_group4', RE(r"(?=[a-zA-Z]\w*\s+\{)"), [RE(r"\S")], _group4),
 ]
+
+string.rules[0] = ('variable', variable)
+_group2.rules[2] = rules[0]
+_group5.rules[3] = rules[3]
+_group5.rules[4] = rules[0]
+_group5.rules[7] = ('variable', variable)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

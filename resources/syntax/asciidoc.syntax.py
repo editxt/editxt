@@ -8,7 +8,15 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 title = [RE(r"^\.\w.*$")]
 
@@ -18,9 +26,9 @@ section0 = [RE(r"^[^\[\]\n]+?\n[=\-~\^\+]{2,}$")]
 
 meta = [RE(r"^\[.+?\]$")]
 
-class _group3:
+class _group1:
     default_text = DELIMITER
-    delimited_ranges = [('_group4', RE(r"<"), [RE(r">")], 'xml')]
+    rules = [('_group2', RE(r"<"), [RE(r">")], 'xml')]
 
 bullet = [RE(r"^(\*+|\-+|\.+|[^\n]+?::)\s+")]
 
@@ -32,36 +40,58 @@ string0 = [RE(r"`.+?'")]
 
 code = [RE(r"(`.+?`|\+.+?\+)")]
 
-class _group8:
+class _group6:
     default_text = DELIMITER
-    delimited_ranges = [
+    rules = [
         ('link', RE(r"\w"), [RE(r"[^\[]+")]),
         ('string', RE(r"\["), [RE(r"(?=\])")]),
     ]
 
-word_groups = [
+rules = [
+    ('comment', RE(r"^/{4,}\n"), [RE(r"\n/{4,}$")], comment),
+    ('comment', RE(r"^//"), [RE(r"$")], comment0),
     ('title', title),
+    ('_group0', RE(r"^[=\*]{4,}\n"), [RE(r"\n^[=\*]{4,}$")]),
     ('section', section),
     ('section', section0),
-    ('meta', meta),
-    ('bullet', bullet),
-    ('symbol', symbol),
-    ('string', string),
-    ('string', string0),
-    ('code', code),
-]
-
-delimited_ranges = [
-    ('comment', RE(r"^/{4,}\n"), [RE(r"\n/{4,}$")], comment),
-    ('comment', RE(r"^//"), [RE(r"$")], comment),
-    ('_group2', RE(r"^[=\*]{4,}\n"), [RE(r"\n^[=\*]{4,}$")]),
     ('meta', RE(r"^:.+?:"), [RE(r"(?=\s)")]),
+    ('meta', meta),
     ('quote', RE(r"^_{4,}\n"), [RE(r"\n_{4,}$")]),
     ('code', RE(r"^[\-\.]{4,}\n"), [RE(r"\n[\-\.]{4,}$")]),
-    ('_group3', RE(r"^\+{4,}\n"), [RE(r"\n\+{4,}$")], _group3),
+    ('_group1', RE(r"^\+{4,}\n"), [RE(r"\n\+{4,}$")], _group1),
+    ('bullet', bullet),
+    ('symbol', symbol),
     ('strong', RE(r"\B\*(?![\*\s])"), [RE(r"(\n{2}|\*)")]),
     ('emphasis', RE(r"\B'(?!['\s])"), [RE(r"(\n{2}|')")]),
     ('emphasis', RE(r"_(?![_\s])"), [RE(r"(\n{2}|_)")]),
+    ('string', string),
+    ('string', string0),
+    ('code', code),
     ('code', RE(r"^[ \t]"), [RE(r"$")]),
-    ('_group8', RE(r"(?=(link:)?(http|https|ftp|file|irc|image:?):\S+\[.*?\])"), [RE(r"\B|\b")], _group8),
+    ('_group6', RE(r"(?=(link:)?(http|https|ftp|file|irc|image:?):\S+\[.*?\])"), [RE(r"\B|\b")], _group6),
 ]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

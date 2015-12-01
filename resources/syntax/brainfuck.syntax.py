@@ -8,7 +8,7 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
 title = [RE(r"[\[\]]")]
 
@@ -16,13 +16,41 @@ string = [RE(r"[\.,]")]
 
 literal = [RE(r"[\+\-]")]
 
-class _group1:
+class _group0:
     default_text = DELIMITER
-    word_groups = [('literal', literal)]
+    rules = [('literal', literal)]
 
-word_groups = [('title', title), ('string', string), ('literal', literal)]
-
-delimited_ranges = [
+rules = [
     ('comment', RE(r"[^\[\]\.,\+\-<> \r\n]"), [RE(r"(?=[\[\]\.,\+\-<> \r\n])")], comment),
-    ('_group1', RE(r"(?=\+\+|\-\-)"), [RE(r"\B|\b")], _group1),
+    ('title', title),
+    ('string', string),
+    ('_group0', RE(r"(?=\+\+|\-\-)"), [RE(r"\B|\b")], _group0),
+    None,  # ('literal', literal),
 ]
+
+rules[4] = ('literal', literal)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

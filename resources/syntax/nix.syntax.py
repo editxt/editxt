@@ -4,10 +4,6 @@
 name = 'Nix'
 file_patterns = ['*.nix', '*.nixos']
 
-literal = ['true', 'false', 'or', 'and', 'null']
-
-keyword = ['rec', 'with', 'let', 'in', 'inherit', 'assert', 'if', 'else', 'then']
-
 built_in = [
     'import',
     'abort',
@@ -22,81 +18,79 @@ built_in = [
     'derivation',
 ]
 
+keyword = ['rec', 'with', 'let', 'in', 'inherit', 'assert', 'if', 'else', 'then']
+
+literal = ['true', 'false', 'or', 'and', 'null']
+
 number = [RE(r"\b\d+(\.\d+)?")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
-attr = [RE(r"\S+")]
-
-class _group4:
+class comment0:
     default_text = DELIMITER
-    word_groups = [('attr', attr)]
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 class subst:
     default_text = DELIMITER
-    word_groups = [
-        ('literal', literal),
-        ('keyword', keyword),
+    rules = [
         ('built_in', built_in),
-        ('number', number),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"#"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('string', RE(r"''"), [RE(r"''")]),
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('_group4', RE(r"(?=[a-zA-Z0-9-_]+(\s*=))"), [RE(r"\B|\b")], _group4),
+        ('keyword', keyword),
+        ('literal', literal),
     ]
 
 class string:
     default_text = DELIMITER
-    delimited_ranges = [('subst', RE(r"\$\{"), [RE(r"}")], subst)]
+    rules = [('subst', RE(r"\$\{"), [RE(r"}")], subst)]
 
-class _group7:
+attr = [RE(r"\S+")]
+
+class _group0:
     default_text = DELIMITER
-    word_groups = [('attr', attr)]
+    rules = [('attr', attr)]
 
-class subst0:
-    default_text = DELIMITER
-    word_groups = [
-        ('literal', literal),
-        ('keyword', keyword),
-        ('built_in', built_in),
-        ('number', number),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"#"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('string', RE(r"''"), [RE(r"''")]),
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('_group7', RE(r"(?=[a-zA-Z0-9-_]+(\s*=))"), [RE(r"\B|\b")], _group7),
-    ]
-subst0.__name__ = 'subst'
-
-class string0:
-    default_text = DELIMITER
-    delimited_ranges = [('subst', RE(r"\$\{"), [RE(r"}")], subst0)]
-string0.__name__ = 'string'
-
-class _group8:
-    default_text = DELIMITER
-    word_groups = [('attr', attr)]
-
-word_groups = [
-    ('literal', literal),
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
+    ('keyword', keyword),
+    ('literal', literal),
     ('number', number),
+    ('comment', RE(r"#"), [RE(r"$")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('string', RE(r"''"), [RE(r"''")], string),
+    ('string', RE(r"\""), [RE(r"\"")], string),
+    ('_group0', RE(r"(?=[a-zA-Z0-9-_]+(\s*=))"), [RE(r"\B|\b")], _group0),
 ]
 
-delimited_ranges = [
-    ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('string', RE(r"''"), [RE(r"''")], string),
-    ('string', RE(r"\""), [RE(r"\"")], string0),
-    ('_group8', RE(r"(?=[a-zA-Z0-9-_]+(\s*=))"), [RE(r"\B|\b")], _group8),
-]
+subst.rules.extend(rules)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

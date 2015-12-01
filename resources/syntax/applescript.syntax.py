@@ -4,17 +4,55 @@
 name = 'AppleScript'
 file_patterns = ['*.applescript', '*.osascript']
 
-literal = [
-    'AppleScript',
-    'false',
-    'linefeed',
-    'return',
-    'pi',
-    'quote',
-    'result',
-    'space',
-    'tab',
-    'true',
+built_in = [
+    'alias',
+    'application',
+    'boolean',
+    'class',
+    'constant',
+    'date',
+    'file',
+    'integer',
+    'list',
+    'number',
+    'real',
+    'record',
+    'string',
+    'text',
+    'activate',
+    'beep',
+    'count',
+    'delay',
+    'launch',
+    'log',
+    'offset',
+    'read',
+    'round',
+    'run',
+    'say',
+    'summarize',
+    'write',
+    'character',
+    'characters',
+    'contents',
+    'day',
+    'frontmost',
+    'id',
+    'item',
+    'length',
+    'month',
+    'name',
+    'paragraph',
+    'paragraphs',
+    'rest',
+    'reverse',
+    'running',
+    'time',
+    'version',
+    'weekday',
+    'word',
+    'words',
+    'year',
 ]
 
 keyword = [
@@ -115,55 +153,17 @@ keyword = [
     'without',
 ]
 
-built_in = [
-    'alias',
-    'application',
-    'boolean',
-    'class',
-    'constant',
-    'date',
-    'file',
-    'integer',
-    'list',
-    'number',
-    'real',
-    'record',
-    'string',
-    'text',
-    'activate',
-    'beep',
-    'count',
-    'delay',
-    'launch',
-    'log',
-    'offset',
-    'read',
-    'round',
-    'run',
-    'say',
-    'summarize',
-    'write',
-    'character',
-    'characters',
-    'contents',
-    'day',
-    'frontmost',
-    'id',
-    'item',
-    'length',
-    'month',
-    'name',
-    'paragraph',
-    'paragraphs',
-    'rest',
-    'reverse',
-    'running',
-    'time',
-    'version',
-    'weekday',
-    'word',
-    'words',
-    'year',
+literal = [
+    'AppleScript',
+    'false',
+    'linefeed',
+    'return',
+    'pi',
+    'quote',
+    'result',
+    'space',
+    'tab',
+    'true',
 ]
 
 number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
@@ -184,40 +184,82 @@ title = [RE(r"[a-zA-Z_]\w*")]
 
 class params:
     default_text = DELIMITER
-    word_groups = [('number', number)]
-    delimited_ranges = [('string', RE(r"\""), [RE(r"\"")])]
+    rules = [
+        None,  # ('number', number),
+        None,  # rules[3],
+    ]
 
 class _group1:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword1), ('title', title)]
-    delimited_ranges = [('params', RE(r"\("), [RE(r"\)")], params)]
+    rules = [
+        ('keyword', keyword1),
+        ('title', title),
+        ('params', RE(r"\("), [RE(r"\)")], params),
+    ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
 class comment0:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
-    delimited_ranges = [('comment', RE(r"--"), [RE(r"$")], comment)]
+    rules = [
+        None,  # rules[9],
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
 comment0.__name__ = 'comment'
 
-word_groups = [
-    ('literal', literal),
-    ('keyword', keyword),
+class comment1:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment1.__name__ = 'comment'
+
+rules = [
     ('built_in', built_in),
+    ('keyword', keyword),
+    ('literal', literal),
+    ('string', RE(r"\""), [RE(r"\"")]),
     ('number', number),
     ('built_in', built_in0),
     ('literal', literal0),
     ('keyword', keyword0),
-]
-
-delimited_ranges = [
-    ('string', RE(r"\""), [RE(r"\"")]),
     ('_group1', RE(r"\b(on)"), [RE(r"\B|\b")], _group1),
     ('comment', RE(r"--"), [RE(r"$")], comment),
     ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment0),
-    ('comment', RE(r"#"), [RE(r"$")], comment),
+    ('comment', RE(r"#"), [RE(r"$")], comment1),
 ]
+
+params.rules[0] = ('number', number)
+params.rules[1] = rules[3]
+comment0.rules[0] = rules[9]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

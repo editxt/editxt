@@ -6,31 +6,45 @@ file_patterns = ['*.stylus', '*.styl']
 
 keyword = ['if', 'else', 'for', 'in']
 
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+    ]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 number = [RE(r"#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})")]
 
 selector_class = [RE(r"\.[a-zA-Z][a-zA-Z0-9_-]*")]
 
-class _group4:
+class _group1:
     default_text = DELIMITER
-    word_groups = [('selector-class', selector_class)]
+    rules = [('selector-class', selector_class)]
 
 selector_id = [RE(r"\#[a-zA-Z][a-zA-Z0-9_-]*")]
 
-class _group5:
+class _group2:
     default_text = DELIMITER
-    word_groups = [('selector-id', selector_id)]
+    rules = [('selector-id', selector_id)]
 
 selector_tag = [RE(r"\b[a-zA-Z][a-zA-Z0-9_-]*")]
 
-class _group6:
+class _group3:
     default_text = DELIMITER
-    word_groups = [('selector-tag', selector_tag)]
+    rules = [('selector-tag', selector_tag)]
 
 variable = [RE(r"\$[a-zA-Z]\w*")]
 
@@ -42,42 +56,71 @@ number1 = [RE(r"\b\d+(\.\d+)?")]
 
 class params:
     default_text = DELIMITER
-    word_groups = [
-        ('number', number),
-        ('variable', variable),
-        ('number', number0),
-        ('number', number1),
-    ]
-    delimited_ranges = [
-        ('string', RE(r"'"), [RE(r"'")]),
-        ('string', RE(r"\""), [RE(r"\"")]),
+    rules = [
+        None,  # ('number', number),
+        None,  # ('variable', variable),
+        None,  # rules[2],
+        None,  # ('number', number0),
+        None,  # ('number', number1),
+        None,  # rules[1],
     ]
 
 class function:
     default_text = DELIMITER
-    word_groups = [('title', selector_tag)]
-    delimited_ranges = [('params', RE(r"\("), [RE(r"\)")], params)]
+    rules = [
+        ('title', selector_tag),
+        ('params', RE(r"\("), [RE(r"\)")], params),
+    ]
 
 attribute = [
     RE(r"\b(z-index|word-wrap|word-spacing|word-break|width|widows|white-space|visibility|vertical-align|unicode-bidi|transition-timing-function|transition-property|transition-duration|transition-delay|transition|transform-style|transform-origin|transform|top|text-underline-position|text-transform|text-shadow|text-rendering|text-overflow|text-indent|text-decoration-style|text-decoration-line|text-decoration-color|text-decoration|text-align-last|text-align|table-layout|tab-size|right|resize|quotes|position|pointer-events|perspective-origin|perspective|page-break-inside|page-break-before|page-break-after|padding-top|padding-right|padding-left|padding-bottom|padding|overflow-y|overflow-x|overflow-wrap|overflow|outline-width|outline-style|outline-offset|outline-color|outline|orphans|order|opacity|object-position|object-fit|normal|none|nav-up|nav-right|nav-left|nav-index|nav-down|min-width|min-height|max-width|max-height|mask|marks|margin-top|margin-right|margin-left|margin-bottom|margin|list-style-type|list-style-position|list-style-image|list-style|line-height|letter-spacing|left|justify-content|initial|inherit|ime-mode|image-resolution|image-rendering|image-orientation|icon|hyphens|height|font-weight|font-variant-ligatures|font-variant|font-style|font-stretch|font-size-adjust|font-size|font-language-override|font-kerning|font-feature-settings|font-family|font|float|flex-wrap|flex-shrink|flex-grow|flex-flow|flex-direction|flex-basis|flex|filter|empty-cells|display|direction|cursor|counter-reset|counter-increment|content|columns|column-width|column-span|column-rule-width|column-rule-style|column-rule-color|column-rule|column-gap|column-fill|column-count|color|clip-path|clip|clear|caption-side|break-inside|break-before|break-after|box-sizing|box-shadow|box-decoration-break|bottom|border-width|border-top-width|border-top-style|border-top-right-radius|border-top-left-radius|border-top-color|border-top|border-style|border-spacing|border-right-width|border-right-style|border-right-color|border-right|border-radius|border-left-width|border-left-style|border-left-color|border-left|border-image-width|border-image-source|border-image-slice|border-image-repeat|border-image-outset|border-image|border-color|border-collapse|border-bottom-width|border-bottom-style|border-bottom-right-radius|border-bottom-left-radius|border-bottom-color|border-bottom|border|background-size|background-repeat|background-position|background-origin|background-image|background-color|background-clip|background-attachment|background|backface-visibility|auto|animation-timing-function|animation-play-state|animation-name|animation-iteration-count|animation-fill-mode|animation-duration|animation-direction|animation-delay|animation|align-self|align-items|align-content)\b"),
 ]
 
-word_groups = [
+rules = [
     ('keyword', keyword),
+    ('string', RE(r"\""), [RE(r"\"")]),
+    ('string', RE(r"'"), [RE(r"'")], string),
+    ('comment', RE(r"//"), [RE(r"$")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
     ('number', number),
+    ('_group1', RE(r"(?=\.[a-zA-Z][a-zA-Z0-9_-]*[\.\s\n\[\:,])"), [RE(r"\B|\b")], _group1),
+    ('_group2', RE(r"(?=\#[a-zA-Z][a-zA-Z0-9_-]*[\.\s\n\[\:,])"), [RE(r"\B|\b")], _group2),
+    ('_group3', RE(r"(?=\b(a|abbr|address|article|aside|audio|b|blockquote|body|button|canvas|caption|cite|code|dd|del|details|dfn|div|dl|dt|em|fieldset|figcaption|figure|footer|form|h1|h2|h3|h4|h5|h6|header|hgroup|html|i|iframe|img|input|ins|kbd|label|legend|li|mark|menu|nav|object|ol|p|q|quote|samp|section|span|strong|summary|sup|table|tbody|td|textarea|tfoot|th|thead|time|tr|ul|var|video)[\.\s\n\[\:,])"), [RE(r"\B|\b")], _group3),
     ('variable', variable),
     ('number', number0),
     ('number', number1),
+    ('function', RE(r"(?=^[a-zA-Z][a-zA-Z0-9_-]*\(.*\))"), [RE(r"\B|\b")], function),
     ('attribute', attribute),
 ]
 
-delimited_ranges = [
-    ('string', RE(r"\""), [RE(r"\"")]),
-    ('string', RE(r"'"), [RE(r"'")]),
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('_group4', RE(r"(?=\.[a-zA-Z][a-zA-Z0-9_-]*[\.\s\n\[\:,])"), [RE(r"\B|\b")], _group4),
-    ('_group5', RE(r"(?=\#[a-zA-Z][a-zA-Z0-9_-]*[\.\s\n\[\:,])"), [RE(r"\B|\b")], _group5),
-    ('_group6', RE(r"(?=\b(a|abbr|address|article|aside|audio|b|blockquote|body|button|canvas|caption|cite|code|dd|del|details|dfn|div|dl|dt|em|fieldset|figcaption|figure|footer|form|h1|h2|h3|h4|h5|h6|header|hgroup|html|i|iframe|img|input|ins|kbd|label|legend|li|mark|menu|nav|object|ol|p|q|quote|samp|section|span|strong|summary|sup|table|tbody|td|textarea|tfoot|th|thead|time|tr|ul|var|video)[\.\s\n\[\:,])"), [RE(r"\B|\b")], _group6),
-    ('function', RE(r"(?=^[a-zA-Z][a-zA-Z0-9_-]*\(.*\))"), [RE(r"\B|\b")], function),
-]
+params.rules[0] = ('number', number)
+params.rules[1] = ('variable', variable)
+params.rules[2] = rules[2]
+params.rules[3] = ('number', number0)
+params.rules[4] = ('number', number1)
+params.rules[5] = rules[1]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

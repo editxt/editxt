@@ -6,49 +6,6 @@ file_patterns = ['*.autoit']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-literal = ['True', 'False', 'And', 'Null', 'Not', 'Or']
-
-keyword = [
-    'ByRef',
-    'Case',
-    'Const',
-    'ContinueCase',
-    'ContinueLoop',
-    'Default',
-    'Dim',
-    'Do',
-    'Else',
-    'ElseIf',
-    'EndFunc',
-    'EndIf',
-    'EndSelect',
-    'EndSwitch',
-    'EndWith',
-    'Enum',
-    'Exit',
-    'ExitLoop',
-    'For',
-    'Func',
-    'Global',
-    'If',
-    'In',
-    'Local',
-    'Next',
-    'ReDim',
-    'Return',
-    'Select',
-    'Static',
-    'Step',
-    'Switch',
-    'Then',
-    'To',
-    'Until',
-    'Volatile',
-    'WEnd',
-    'While',
-    'With',
-]
-
 built_in = [
     'Abs',
     'ACos',
@@ -3551,17 +3508,68 @@ built_in = [
     'Word_Quit',
 ]
 
+keyword = [
+    'ByRef',
+    'Case',
+    'Const',
+    'ContinueCase',
+    'ContinueLoop',
+    'Default',
+    'Dim',
+    'Do',
+    'Else',
+    'ElseIf',
+    'EndFunc',
+    'EndIf',
+    'EndSelect',
+    'EndSwitch',
+    'EndWith',
+    'Enum',
+    'Exit',
+    'ExitLoop',
+    'For',
+    'Func',
+    'Global',
+    'If',
+    'In',
+    'Local',
+    'Next',
+    'ReDim',
+    'Return',
+    'Select',
+    'Static',
+    'Step',
+    'Switch',
+    'Then',
+    'To',
+    'Until',
+    'Volatile',
+    'WEnd',
+    'While',
+    'With',
+]
+
+literal = ['True', 'False', 'And', 'Null', 'Not', 'Or']
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 number = [RE(r"\b(0b[01]+)")]
 
 number0 = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
 
-keyword0 = [
+meta_keyword = [
     'include',
     'include-once',
     'NoTrayIcon',
@@ -3628,65 +3636,88 @@ keyword0 = [
     'Region',
 ]
 
-keyword1 = ['include']
+meta_keyword0 = ['include']
 
-class _group7:
+class _group3:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword1)]
-    delimited_ranges = [
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('string', RE(r"'"), [RE(r"'")]),
-        ('string', RE(r"<"), [RE(r">")]),
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('string', RE(r"'"), [RE(r"'")]),
+    rules = [
+        ('meta-keyword', meta_keyword0),
+        # {'className': 'string'},
+        ('meta-string', RE(r"<"), [RE(r">")]),
+        ('meta-string', RE(r"\""), [RE(r"\"")]),
+        ('meta-string', RE(r"'"), [RE(r"'")]),
     ]
 
 class meta:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0)]
-    delimited_ranges = [
-        ('_group7', RE(r"\b(include)"), [RE(r"$")], _group7),
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('string', RE(r"'"), [RE(r"'")]),
-        ('comment', RE(r";"), [RE(r"$")], comment),
-        ('comment', RE(r"#cs"), [RE(r"#ce")], comment),
-        ('comment', RE(r"#comments-start"), [RE(r"#comments-end")], comment),
+    rules = [
+        ('meta-keyword', meta_keyword),
+        ('_group3', RE(r"\b(include)"), [RE(r"$")], _group3),
+        # {'className': 'string'},
+        # {},
     ]
 
 symbol = [RE(r"@[A-z0-9_]+")]
 
-keyword2 = ['Func']
+keyword0 = ['Func']
 
 title = [RE(r"[a-zA-Z_]\w*")]
 
 class params:
     default_text = DELIMITER
-    word_groups = [('number', number), ('number', number0)]
-    delimited_ranges = [
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('string', RE(r"'"), [RE(r"'")]),
+    rules = [
+        # {'begin': '\\$[A-z0-9_]+'},
+        # {'className': 'string'},
+        None,  # ('number', number0),
     ]
 
 class function:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword2), ('title', title)]
-    delimited_ranges = [('params', RE(r"\("), [RE(r"\)")], params)]
+    rules = [
+        ('keyword', keyword0),
+        ('title', title),
+        ('params', RE(r"\("), [RE(r"\)")], params),
+    ]
 
-word_groups = [
-    ('literal', literal),
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
-    ('number', number),
-    ('number', number0),
-    ('symbol', symbol),
-]
-
-delimited_ranges = [
+    ('keyword', keyword),
+    ('literal', literal),
     ('comment', RE(r";"), [RE(r"$")], comment),
-    ('comment', RE(r"#cs"), [RE(r"#ce")], comment),
-    ('comment', RE(r"#comments-start"), [RE(r"#comments-end")], comment),
+    ('comment', RE(r"#cs"), [RE(r"#ce")], comment0),
+    ('comment', RE(r"#comments-start"), [RE(r"#comments-end")], comment0),
     ('string', RE(r"\""), [RE(r"\"")]),
     ('string', RE(r"'"), [RE(r"'")]),
+    ('number', number),
+    ('number', number0),
     ('meta', RE(r"#"), [RE(r"$")], meta),
+    ('symbol', symbol),
     ('function', RE(r"\b(Func)"), [RE(r"$")], function),
 ]
+
+params.rules[0] = ('number', number0)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

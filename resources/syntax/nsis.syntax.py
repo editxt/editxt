@@ -4,36 +4,6 @@
 name = 'NSIS'
 file_patterns = ['*.nsis']
 
-literal = [
-    'admin',
-    'all',
-    'auto',
-    'both',
-    'colored',
-    'current',
-    'false',
-    'force',
-    'hide',
-    'highest',
-    'lastused',
-    'leave',
-    'listonly',
-    'none',
-    'normal',
-    'notset',
-    'off',
-    'on',
-    'open',
-    'print',
-    'show',
-    'silent',
-    'silentlog',
-    'smooth',
-    'textonly',
-    'true',
-    'user',
-]
-
 keyword = [
     'Abort',
     'AddBrandingImage',
@@ -235,11 +205,49 @@ keyword = [
     'XPStyle',
 ]
 
+literal = [
+    'admin',
+    'all',
+    'auto',
+    'both',
+    'colored',
+    'current',
+    'false',
+    'force',
+    'hide',
+    'highest',
+    'lastused',
+    'leave',
+    'listonly',
+    'none',
+    'normal',
+    'notset',
+    'off',
+    'on',
+    'open',
+    'print',
+    'show',
+    'silent',
+    'silentlog',
+    'smooth',
+    'textonly',
+    'true',
+    'user',
+]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 variable = [
     RE(r"\$(ADMINTOOLS|APPDATA|CDBURN_AREA|CMDLINE|COMMONFILES32|COMMONFILES64|COMMONFILES|COOKIES|DESKTOP|DOCUMENTS|EXEDIR|EXEFILE|EXEPATH|FAVORITES|FONTS|HISTORY|HWNDPARENT|INSTDIR|INTERNET_CACHE|LANGUAGE|LOCALAPPDATA|MUSIC|NETHOOD|OUTDIR|PICTURES|PLUGINSDIR|PRINTHOOD|PROFILE|PROGRAMFILES32|PROGRAMFILES64|PROGRAMFILES|QUICKLAUNCH|RECENT|RESOURCES_LOCALIZED|RESOURCES|SENDTO|SMPROGRAMS|SMSTARTUP|STARTMENU|SYSDIR|TEMP|TEMPLATES|VIDEOS|WINDIR)"),
@@ -253,7 +261,7 @@ variable2 = [RE(r"\$+\([a-zA-Z0-9_]+\)")]
 
 class string:
     default_text = DELIMITER
-    word_groups = [
+    rules = [
         ('variable', variable),
         ('variable', variable0),
         ('variable', variable1),
@@ -270,21 +278,47 @@ built_in = [
 
 number = [RE(r"\b\d+(\.\d+)?")]
 
-word_groups = [
-    ('literal', literal),
+rules = [
     ('keyword', keyword),
+    ('literal', literal),
+    ('comment', RE(r"#"), [RE(r"$")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('string', RE(r"\""), [RE(r"\"")], string),
+    ('comment', RE(r";"), [RE(r"$")], comment0),
+    ('function', RE(r"\b(Function|PageEx|Section|SectionGroup|SubSection)"), [RE(r"$")]),
     ('keyword', keyword0),
-    ('variable', variable0),
-    ('variable', variable1),
-    ('variable', variable2),
+    None,  # ('variable', variable0),
+    None,  # ('variable', variable1),
+    None,  # ('variable', variable2),
     ('built_in', built_in),
     ('number', number),
 ]
 
-delimited_ranges = [
-    ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('string', RE(r"\""), [RE(r"\"")], string),
-    ('comment', RE(r";"), [RE(r"$")], comment),
-    ('function', RE(r"\b(Function|PageEx|Section|SectionGroup|SubSection)"), [RE(r"$")]),
-]
+rules[8] = ('variable', variable0)
+rules[9] = ('variable', variable1)
+rules[10] = ('variable', variable2)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

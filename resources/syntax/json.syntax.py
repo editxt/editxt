@@ -10,64 +10,63 @@ number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
 
 class attr:
     default_text = DELIMITER
-    delimited_ranges = [('attr', RE(r"\s*\""), [RE(r"(?=\"\s*:\s*)")])]
-
-class _group7:
-    default_text = DELIMITER
-    word_groups = [('literal', literal), ('number', number)]
-    delimited_ranges = [
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('_group9', RE(r"{"), [RE(r"}")]),
-        ('_group10', RE(r"\["), [RE(r"\]")]),
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
     ]
 
-class _group6:
+class attr0:
     default_text = DELIMITER
-    delimited_ranges = [('_group7', RE(r"\B|\b"), [RE(r"(?=,)")], _group7)]
+    rules = [('attr', RE(r"\s*\""), [RE(r"(?=\"\s*:\s*)")], attr)]
+attr0.__name__ = 'attr'
 
-class _group3:
+class _group2:
     default_text = DELIMITER
-    word_groups = [('literal', literal), ('number', number)]
-    delimited_ranges = [
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('_group5', RE(r"{"), [RE(r"}")]),
-        ('_group6', RE(r"\["), [RE(r"\]")], _group6),
-    ]
+    rules = [('literal', literal)]
 
 class _group1:
     default_text = DELIMITER
-    delimited_ranges = [('attr', attr, [RE(r"(?=})")], _group3)]
+    rules = [('attr', attr0, [RE(r"(?=,)")], _group2)]
 
-class _group16:
+class _group4:
     default_text = DELIMITER
-    word_groups = [('literal', literal), ('number', number)]
-    delimited_ranges = [
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('_group18', RE(r"{"), [RE(r"}")]),
-        ('_group19', RE(r"\["), [RE(r"\]")]),
-    ]
+    rules = [('literal', literal)]
 
-class _group14:
+class _group3:
     default_text = DELIMITER
-    delimited_ranges = [('attr', attr, [RE(r"(?=})")], _group16)]
+    rules = [('_group4', RE(r"\B|\b"), [RE(r"(?=,)")], _group4)]
 
-class _group12:
-    default_text = DELIMITER
-    word_groups = [('literal', literal), ('number', number)]
-    delimited_ranges = [
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('_group14', RE(r"{"), [RE(r"}")], _group14),
-        ('_group20', RE(r"\["), [RE(r"\]")]),
-    ]
-
-class _group11:
-    default_text = DELIMITER
-    delimited_ranges = [('_group12', RE(r"\B|\b"), [RE(r"(?=,)")], _group12)]
-
-word_groups = [('literal', literal), ('number', number)]
-
-delimited_ranges = [
+rules = [
+    ('literal', literal),
     ('string', RE(r"\""), [RE(r"\"")]),
+    ('number', number),
     ('_group1', RE(r"{"), [RE(r"}")], _group1),
-    ('_group11', RE(r"\["), [RE(r"\]")], _group11),
+    ('_group3', RE(r"\["), [RE(r"\]")], _group3),
 ]
+
+_group2.rules.extend(rules)
+_group4.rules.extend(rules)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

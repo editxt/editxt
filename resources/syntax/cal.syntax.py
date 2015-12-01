@@ -6,8 +6,6 @@ file_patterns = ['*.cal']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-literal = ['false', 'true']
-
 keyword = [
     'div',
     'mod',
@@ -36,6 +34,8 @@ keyword = [
     'var',
 ]
 
+literal = ['false', 'true']
+
 string = [RE(r"(#\d+)+")]
 
 number = [RE(r"\b\d+(\.\d+)?(DT|D|T)")]
@@ -48,42 +48,83 @@ keyword0 = ['procedure']
 
 class params:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword), ('string', string)]
-    delimited_ranges = [('string', RE(r"'"), [RE(r"'")])]
+    rules = [
+        ('keyword', keyword),
+        None,  # rules[2],
+        None,  # ('string', string),
+    ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 class function:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0), ('title', title)]
-    delimited_ranges = [
+    rules = [
+        ('keyword', keyword0),
+        None,  # ('title', title),
         ('params', RE(r"\("), [RE(r"\)")], params),
         ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"\{"), [RE(r"\}")], comment),
-        ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment),
+        ('comment', RE(r"\{"), [RE(r"\}")], comment0),
+        ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment0),
     ]
 
 class class0:
     default_text = DELIMITER
-    word_groups = [('title', title)]
-    delimited_ranges = [('function', RE(r"\b(procedure)"), [RE(r"[:;]")], function)]
+    rules = [
+        ('title', title),
+        ('function', RE(r"\b(procedure)"), [RE(r"[:;]")], function),
+    ]
 class0.__name__ = 'class'
 
-word_groups = [
-    ('literal', literal),
+rules = [
     ('keyword', keyword),
+    ('literal', literal),
+    ('string', RE(r"'"), [RE(r"'")]),
     ('string', string),
     ('number', number),
+    ('string', RE(r"\""), [RE(r"\"")]),
     ('number', number0),
+    ('class', RE(r"(?=OBJECT (Table|Form|Report|Dataport|Codeunit|XMLport|MenuSuite|Page|Query) (\d+) ([^\r\n]+))"), [RE(r"\B|\b")], class0),
+    None,  # class0.rules[1],
 ]
 
-delimited_ranges = [
-    ('string', RE(r"'"), [RE(r"'")]),
-    ('string', RE(r"\""), [RE(r"\"")]),
-    ('class', RE(r"(?=OBJECT (Table|Form|Report|Dataport|Codeunit|XMLport|MenuSuite|Page|Query) (\d+) ([^\r\n]+))"), [RE(r"\B|\b")], class0),
-    ('function', RE(r"\b(procedure)"), [RE(r"[:;]")], function),
-]
+function.rules[1] = ('title', title)
+params.rules[1] = rules[2]
+params.rules[2] = ('string', string)
+rules[8] = class0.rules[1]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

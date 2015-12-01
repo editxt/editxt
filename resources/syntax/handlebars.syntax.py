@@ -10,9 +10,9 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
-built_in = [
+builtin_name = [
     'each',
     'in',
     'with',
@@ -33,32 +33,55 @@ built_in = [
 
 class name0:
     default_text = DELIMITER
-    word_groups = [('built_in', built_in)]
+    rules = [('builtin-name', builtin_name)]
 name0.__name__ = 'name'
 
 class name1:
     default_text = DELIMITER
-    delimited_ranges = [('name', RE(r"[a-zA-Z\.-]+"), [RE(r"\B|\b")], name0)]
+    rules = [('name', RE(r"[a-zA-Z\.-]+"), [RE(r"\B|\b")], name0)]
 name1.__name__ = 'name'
 
-class _group1:
+class _group0:
     default_text = DELIMITER
-    delimited_ranges = [('string', RE(r"\""), [RE(r"\"")])]
+    rules = [('string', RE(r"\""), [RE(r"\"")])]
 
 class template_tag:
     default_text = DELIMITER
-    delimited_ranges = [('name', name1, [RE(r"(?=\}\})")], _group1)]
+    rules = [('name', name1, [RE(r"(?=\}\})")], _group0)]
 template_tag.__name__ = 'template-tag'
 
 class template_variable:
     default_text = DELIMITER
-    word_groups = [('built_in', built_in)]
+    rules = [('builtin-name', builtin_name)]
 template_variable.__name__ = 'template-variable'
 
-word_groups = []
-
-delimited_ranges = [
+rules = [
     ('comment', RE(r"{{!(--)?"), [RE(r"(--)?}}")], comment),
     ('template-tag', RE(r"\{\{[#\/]"), [RE(r"\}\}")], template_tag),
     ('template-variable', RE(r"\{\{"), [RE(r"\}\}")], template_variable),
 ]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

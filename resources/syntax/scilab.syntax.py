@@ -4,46 +4,6 @@
 name = 'Scilab'
 file_patterns = ['*.scilab', '*.sci']
 
-literal = [
-    '%f',
-    '%F',
-    '%t',
-    '%T',
-    '%pi',
-    '%eps',
-    '%inf',
-    '%nan',
-    '%e',
-    '%i',
-    '%z',
-    '%s',
-]
-
-keyword = [
-    'abort',
-    'break',
-    'case',
-    'clear',
-    'catch',
-    'continue',
-    'do',
-    'elseif',
-    'else',
-    'endfunction',
-    'end',
-    'for',
-    'function',
-    'global',
-    'if',
-    'pause',
-    'return',
-    'resume',
-    'select',
-    'try',
-    'then',
-    'while',
-]
-
 built_in = [
     'abs',
     'and',
@@ -119,39 +79,106 @@ built_in = [
     'matrix',
 ]
 
+keyword = [
+    'abort',
+    'break',
+    'case',
+    'clear',
+    'catch',
+    'continue',
+    'do',
+    'elseif',
+    'else',
+    'endfunction',
+    'end',
+    'for',
+    'function',
+    'global',
+    'if',
+    'pause',
+    'return',
+    'resume',
+    'select',
+    'try',
+    'then',
+    'while',
+]
+
+literal = [
+    '%f',
+    '%F',
+    '%t',
+    '%T',
+    '%pi',
+    '%eps',
+    '%inf',
+    '%nan',
+    '%e',
+    '%i',
+    '%z',
+    '%s',
+]
+
 keyword0 = ['function']
 
 title = [RE(r"[a-zA-Z_]\w*")]
 
 class function:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0), ('title', title)]
-    delimited_ranges = [('params', RE(r"\("), [RE(r"\)")])]
+    rules = [
+        ('keyword', keyword0),
+        ('title', title),
+        ('params', RE(r"\("), [RE(r"\)")]),
+    ]
 
 number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
 
 class _group1:
     default_text = DELIMITER
-    word_groups = [('number', number)]
-    delimited_ranges = [('string', RE(r"'|\""), [RE(r"'|\"")])]
+    rules = [('number', number), ('string', RE(r"'|\""), [RE(r"'|\"")])]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
-word_groups = [
-    ('literal', literal),
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
-    ('number', number),
-]
-
-delimited_ranges = [
+    ('keyword', keyword),
+    ('literal', literal),
     ('function', RE(r"\b(function)"), [RE(r"$")], function),
     ('_group0', RE(r"[a-zA-Z_][a-zA-Z_0-9]*('+[\.']*|[\.']+)"), [RE(r"\B|\b")]),
     ('_group1', RE(r"\["), [RE(r"\]'*[\.']*")], _group1),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('string', RE(r"'|\""), [RE(r"'|\"")]),
+    None,  # ('number', number),
+    None,  # _group1.rules[1],
 ]
+
+rules[7] = ('number', number)
+rules[8] = _group1.rules[1]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

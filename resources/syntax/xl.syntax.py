@@ -4,39 +4,6 @@
 name = 'XL'
 file_patterns = ['*.xl', '*.tao']
 
-literal = ['true', 'false', 'nil']
-
-keyword = [
-    'if',
-    'then',
-    'else',
-    'do',
-    'while',
-    'until',
-    'for',
-    'loop',
-    'import',
-    'with',
-    'is',
-    'as',
-    'where',
-    'when',
-    'by',
-    'data',
-    'constant',
-    'integer',
-    'real',
-    'text',
-    'name',
-    'boolean',
-    'symbol',
-    'infix',
-    'prefix',
-    'postfix',
-    'block',
-    'tree',
-]
-
 built_in = [
     'in',
     'mod',
@@ -133,45 +100,120 @@ built_in = [
     'Charts',
 ]
 
+keyword = [
+    'if',
+    'then',
+    'else',
+    'do',
+    'while',
+    'until',
+    'for',
+    'loop',
+    'import',
+    'with',
+    'is',
+    'as',
+    'where',
+    'when',
+    'by',
+    'data',
+    'constant',
+    'integer',
+    'real',
+    'text',
+    'name',
+    'boolean',
+    'symbol',
+    'infix',
+    'prefix',
+    'postfix',
+    'block',
+    'tree',
+]
+
+literal = ['true', 'false', 'nil']
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
-title = [RE(r"[a-zA-Z]\w*")]
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
+
+class title:
+    default_text = DELIMITER
+    rules = [('title', RE(r"[a-zA-Z]\w*"), [RE(r"\B|\b")])]
+
+class _group0:
+    default_text = DELIMITER
+    rules = [
+        ('built_in', built_in),
+        ('keyword', keyword),
+        ('literal', literal),
+    ]
 
 class function:
     default_text = DELIMITER
-    word_groups = [('title', title)]
+    rules = [('title', title, [RE(r"(?=->)")], _group0)]
 
-class _group2:
+class _group1:
     default_text = DELIMITER
-    word_groups = [
-        ('literal', literal),
-        ('keyword', keyword),
+    rules = [
         ('built_in', built_in),
+        ('keyword', keyword),
+        ('literal', literal),
+        None,  # rules[5],
     ]
-    delimited_ranges = [('string', RE(r"\""), [RE(r"\"")])]
 
 number = [RE(r"[0-9]+#[0-9A-Z_]+(\.[0-9-A-Z_]+)?#?([Ee][+-]?[0-9]+)?")]
 
 number0 = [RE(r"\b\d+(\.\d+)?")]
 
-word_groups = [
-    ('literal', literal),
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
-    ('number', number),
-    ('number', number0),
-]
-
-delimited_ranges = [
+    ('keyword', keyword),
+    ('literal', literal),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
     ('string', RE(r"\""), [RE(r"\"")]),
     ('string', RE(r"'"), [RE(r"'")]),
     ('string', RE(r"<<"), [RE(r">>")]),
     ('function', RE(r"(?=[a-z][^\n]*->)"), [RE(r"->")], function),
-    ('_group2', RE(r"\b(import)"), [RE(r"$")], _group2),
+    ('_group1', RE(r"\b(import)"), [RE(r"$")], _group1),
+    ('number', number),
+    ('number', number0),
 ]
+
+_group1.rules[3] = rules[5]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

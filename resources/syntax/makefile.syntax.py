@@ -8,27 +8,66 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class _group0:
+    default_text = DELIMITER
+    rules = [('_group0', RE(r"(?=^\w+\s*\W*=)"), [RE(r"\B|\b")])]
+
+class _group1:
+    default_text = DELIMITER
+    rules = []
 
 section = [RE(r"^[\w]+:\s*$")]
 
-keyword = ['.PHONY']
+meta_keyword = ['.PHONY']
 
 class meta:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword)]
+    rules = [('meta-keyword', meta_keyword)]
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+    ]
 
 class _group2:
     default_text = DELIMITER
-    delimited_ranges = [
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('variable', RE(r"\$\("), [RE(r"\)")]),
+    rules = [
+        ('string', RE(r"\""), [RE(r"\"")], string),
+        # {'className': 'variable', 'begin': {'type': 'RegExp', 'pattern': '\\$\\('}, 'end': {'type': 'RegExp', 'pattern': '\\)'}},
     ]
 
-word_groups = [('section', section)]
-
-delimited_ranges = [
+rules = [
     ('comment', RE(r"#"), [RE(r"$")], comment),
+    ('_group0', _group0, [RE(r"(?=\s*\W*=)")], _group1),
+    ('section', section),
     ('meta', RE(r"^\.PHONY:"), [RE(r"$")], meta),
     ('_group2', RE(r"^\t+"), [RE(r"$")], _group2),
 ]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

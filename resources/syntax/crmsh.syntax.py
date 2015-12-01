@@ -6,20 +6,6 @@ file_patterns = ['*.crmsh', '*.crm', '*.pcmk']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-literal = [
-    'Master',
-    'Started',
-    'Slave',
-    'Stopped',
-    'start',
-    'promote',
-    'demote',
-    'stop',
-    'monitor',
-    'true',
-    'false',
-]
-
 keyword = [
     'params',
     'meta',
@@ -57,25 +43,41 @@ keyword = [
     'string',
 ]
 
+literal = [
+    'Master',
+    'Started',
+    'Slave',
+    'Stopped',
+    'start',
+    'promote',
+    'demote',
+    'stop',
+    'monitor',
+    'true',
+    'false',
+]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class _group0:
+    default_text = DELIMITER
+    rules = [('_group0', RE(r"\b(node)"), [RE(r"\B|\b")])]
 
 class _group1:
     default_text = DELIMITER
-    delimited_ranges = [('_group1', RE(r"\b(node)"), [RE(r"\B|\b")])]
+    rules = []
 
 class _group2:
     default_text = DELIMITER
-
-class _group3:
-    default_text = DELIMITER
-    delimited_ranges = [('_group3', RE(r"\b(primitive|rsc_template)"), [RE(r"\B|\b")])]
+    rules = [('_group2', RE(r"\b(primitive|rsc_template)"), [RE(r"\B|\b")])]
 
 class title:
     default_text = DELIMITER
+    rules = []
 
 keyword0 = [
     'group',
@@ -95,21 +97,21 @@ keyword0 = [
     'xml',
 ]
 
+class _group3:
+    default_text = DELIMITER
+    rules = [('keyword', keyword0)]
+
+class _group30:
+    default_text = DELIMITER
+    rules = [
+        ('_group3', RE(r"\b(group|clone|ms|master|location|colocation|order|fencing_topology|rsc_ticket|acl_target|acl_group|user|role|tag|xml)\s+"), [RE(r"\B|\b")], _group3),
+    ]
+_group30.__name__ = '_group3'
+
 class _group4:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0)]
-
-class _group40:
-    default_text = DELIMITER
-    delimited_ranges = [
-        ('_group4', RE(r"\b(group|clone|ms|master|location|colocation|order|fencing_topology|rsc_ticket|acl_target|acl_group|user|role|tag|xml)\s+"), [RE(r"\B|\b")], _group4),
-    ]
-_group40.__name__ = '_group4'
-
-class _group5:
-    default_text = DELIMITER
-    delimited_ranges = [
-        ('_group5', RE(r"\b(property|rsc_defaults|op_defaults)"), [RE(r"\B|\b")]),
+    rules = [
+        ('_group4', RE(r"\b(property|rsc_defaults|op_defaults)"), [RE(r"\B|\b")]),
     ]
 
 meta = [RE(r"(ocf|systemd|service|lsb):[\w_:-]+")]
@@ -120,21 +122,43 @@ literal0 = [RE(r"[-]?(infinity|inf)")]
 
 attr = [RE(r"([A-Za-z\$_\#][\w_-]+)=")]
 
-word_groups = [
-    ('literal', literal),
+rules = [
     ('keyword', keyword),
+    ('literal', literal),
+    ('comment', RE(r"#"), [RE(r"$")], comment),
+    ('_group0', _group0, [RE(r"\s*([\w_-]+:)?")], _group1),
+    ('_group2', _group2, [RE(r"\s*[\$\w_][\w_-]*")], title),
+    ('_group3', _group30, [RE(r"[\$\w_][\w_-]*")], title),
+    ('_group4', _group4, [RE(r"\s*([\w_-]+:)?")], title),
+    ('string', RE(r"\""), [RE(r"\"")]),
     ('meta', meta),
     ('number', number),
     ('literal', literal0),
     ('attr', attr),
-]
-
-delimited_ranges = [
-    ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('_group1', _group1, [RE(r"(?=\B|\b)")], _group2),
-    ('_group3', _group3, [RE(r"(?=\B|\b)")], title),
-    ('_group4', _group40, [RE(r"(?=\B|\b)")], title),
-    ('_group5', _group5, [RE(r"(?=\B|\b)")], title),
-    ('string', RE(r"\""), [RE(r"\"")]),
     ('tag', RE(r"</?"), [RE(r"/?>")]),
 ]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

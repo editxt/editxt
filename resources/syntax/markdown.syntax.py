@@ -18,7 +18,7 @@ code = [RE(r"`.+?`")]
 
 class _group2:
     default_text = DELIMITER
-    delimited_ranges = [
+    rules = [
         ('string', RE(r"\["), [RE(r"(?=\])")]),
         ('link', RE(r"\]\("), [RE(r"(?=\))")]),
         ('symbol', RE(r"\]\["), [RE(r"(?=\])")]),
@@ -26,30 +26,53 @@ class _group2:
 
 class symbol:
     default_text = DELIMITER
-    delimited_ranges = [('symbol', RE(r"\["), [RE(r"(?=\]:)")])]
+    rules = [('symbol', RE(r"\["), [RE(r"(?=\]:)")])]
 
 class link:
     default_text = DELIMITER
+    rules = []
 
 class _group3:
     default_text = DELIMITER
-    delimited_ranges = [('symbol', symbol, [RE(r"(?=\B|\b)")], link)]
+    rules = [('symbol', symbol, [RE(r"$")], link)]
 
-word_groups = [
+rules = [
+    ('section', RE(r"^#{1,6}"), [RE(r"$")]),
     ('section', section),
+    ('_group0', RE(r"<"), [RE(r">")], 'xml'),
     ('bullet', bullet),
     ('strong', strong),
     ('emphasis', emphasis),
     ('emphasis', emphasis0),
-    ('code', code),
-]
-
-delimited_ranges = [
-    ('section', RE(r"^#{1,6}"), [RE(r"$")]),
-    ('_group0', RE(r"<"), [RE(r">")], 'xml'),
     ('quote', RE(r"^>\s+"), [RE(r"$")]),
+    ('code', code),
     ('code', RE(r"^( {4}|	)"), [RE(r"$")]),
     ('_group1', RE(r"^[-\*]{3,}"), [RE(r"$")]),
     ('_group2', RE(r"(?=\[.+?\][\(\[].*?[\)\]])"), [RE(r"\B|\b")], _group2),
     ('_group3', RE(r"(?=^\[.+\]:)"), [RE(r"\B|\b")], _group3),
 ]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

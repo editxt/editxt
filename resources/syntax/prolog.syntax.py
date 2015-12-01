@@ -8,108 +8,97 @@ symbol = [RE(r"[A-Z][a-zA-Z0-9_]*")]
 
 symbol0 = [RE(r"_[A-Za-z0-9_]*")]
 
+class _group2:
+    default_text = DELIMITER
+    rules = []
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
 
-string = [RE(r"0\'(\\\'|.)")]
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+    ]
 
-string0 = [RE(r"0\'\\s")]
+string0 = [RE(r"0\'(\\\'|.)")]
+
+string1 = [RE(r"0\'\\s")]
 
 number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
 
-class _group5:
-    default_text = DELIMITER
-    word_groups = [
-        ('symbol', symbol),
-        ('symbol', symbol0),
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-    ]
-    delimited_ranges = [
-        ('_group7', RE(r"\("), [RE(r"\)")]),
-        ('_group9', RE(r"\["), [RE(r"\]")]),
-        ('comment', RE(r"%"), [RE(r"$")]),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('string', RE(r"'"), [RE(r"'")]),
-        ('string', RE(r"`"), [RE(r"`")]),
-    ]
-
 class _group1:
     default_text = DELIMITER
-    word_groups = [
-        ('symbol', symbol),
-        ('symbol', symbol0),
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-    ]
-    delimited_ranges = [
-        ('_group3', RE(r"\("), [RE(r"\)")]),
-        ('_group5', RE(r"\["), [RE(r"\]")], _group5),
+    rules = [
+        # {'relevance': 0, 'begin': {'type': 'RegExp', 'pattern': '[a-z][A-Za-z0-9_]*'}},
+        None,  # ('symbol', symbol0),
+        # {'relevance': 0, 'begin': {'type': 'RegExp', 'pattern': '\\('}, 'end': {'type': 'RegExp', 'pattern': '\\)'}},
+        ('_group2', RE(r"\["), [RE(r"\]")], _group2),
         ('comment', RE(r"%"), [RE(r"$")]),
         ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
         ('string', RE(r"\""), [RE(r"\"")]),
-        ('string', RE(r"'"), [RE(r"'")]),
-        ('string', RE(r"`"), [RE(r"`")]),
-    ]
-
-class _group23:
-    default_text = DELIMITER
-    word_groups = [
-        ('symbol', symbol),
-        ('symbol', symbol0),
-        ('string', string),
+        ('string', RE(r"'"), [RE(r"'")], string),
+        ('string', RE(r"`"), [RE(r"`")], string),
         ('string', string0),
+        ('string', string1),
         ('number', number),
     ]
-    delimited_ranges = [
-        ('_group25', RE(r"\("), [RE(r"\)")]),
-        ('_group27', RE(r"\["), [RE(r"\]")]),
-        ('comment', RE(r"%"), [RE(r"$")]),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('string', RE(r"'"), [RE(r"'")]),
-        ('string', RE(r"`"), [RE(r"`")]),
-    ]
 
-class _group21:
-    default_text = DELIMITER
-    word_groups = [
-        ('symbol', symbol),
-        ('symbol', symbol0),
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-    ]
-    delimited_ranges = [
-        ('_group23', RE(r"\("), [RE(r"\)")], _group23),
-        ('_group34', RE(r"\["), [RE(r"\]")]),
-        ('comment', RE(r"%"), [RE(r"$")]),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('string', RE(r"'"), [RE(r"'")]),
-        ('string', RE(r"`"), [RE(r"`")]),
-    ]
-
-word_groups = [
+rules = [
     ('symbol', symbol),
     ('symbol', symbol0),
-    ('string', string),
-    ('string', string0),
-    ('number', number),
+    ('_group1', RE(r"\("), [RE(r"\)")], _group1),
+    # {'begin': {'type': 'RegExp', 'pattern': ':-'}},
+    None,  # _group1.rules[1],
+    None,  # _group1.rules[2],
+    None,  # _group1.rules[3],
+    None,  # _group1.rules[4],
+    None,  # _group1.rules[5],
+    None,  # _group1.rules[6],
+    None,  # ('string', string0),
+    None,  # ('string', string1),
+    None,  # ('number', number),
 ]
 
-delimited_ranges = [
-    ('_group1', RE(r"\("), [RE(r"\)")], _group1),
-    ('_group21', RE(r"\["), [RE(r"\]")], _group21),
-    ('comment', RE(r"%"), [RE(r"$")]),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('string', RE(r"\""), [RE(r"\"")]),
-    ('string', RE(r"'"), [RE(r"'")]),
-    ('string', RE(r"`"), [RE(r"`")]),
-]
+_group1.rules[0] = ('symbol', symbol0)
+rules[3] = _group1.rules[1]
+rules[4] = _group1.rules[2]
+rules[5] = _group1.rules[3]
+rules[6] = _group1.rules[4]
+rules[7] = _group1.rules[5]
+rules[8] = _group1.rules[6]
+rules[9] = ('string', string0)
+rules[10] = ('string', string1)
+rules[11] = ('number', number)
+_group2.rules.extend(_group1.rules)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

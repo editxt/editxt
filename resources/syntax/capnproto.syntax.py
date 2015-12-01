@@ -4,28 +4,6 @@
 name = 'Cap’n Proto'
 file_patterns = ['*.capnproto', '*.capnp']
 
-literal = ['true', 'false']
-
-keyword = [
-    'struct',
-    'enum',
-    'interface',
-    'union',
-    'group',
-    'import',
-    'using',
-    'const',
-    'annotation',
-    'extends',
-    'in',
-    'of',
-    'on',
-    'as',
-    'with',
-    'from',
-    'fixed',
-]
-
 built_in = [
     'Void',
     'Bool',
@@ -47,13 +25,35 @@ built_in = [
     'List',
 ]
 
+keyword = [
+    'struct',
+    'enum',
+    'interface',
+    'union',
+    'group',
+    'import',
+    'using',
+    'const',
+    'annotation',
+    'extends',
+    'in',
+    'of',
+    'on',
+    'as',
+    'with',
+    'from',
+    'fixed',
+]
+
+literal = ['true', 'false']
+
 number = [RE(r"\b\d+(\.\d+)?")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
 meta = [RE(r"@0x[\w\d]{16};")]
 
@@ -61,32 +61,64 @@ number0 = [RE(r"@\d+\b")]
 
 keyword0 = ['struct', 'enum']
 
-title = [RE(r"[a-zA-Z]\w*")]
+class title:
+    default_text = DELIMITER
+    rules = [('title', RE(r"[a-zA-Z]\w*"), [RE(r"\B|\b")])]
+
+class _group1:
+    default_text = DELIMITER
+    rules = []
 
 class class0:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0), ('title', title)]
+    rules = [('keyword', keyword0), ('title', title, [RE(r"(?=\{)")], _group1)]
 class0.__name__ = 'class'
 
 keyword1 = ['interface']
 
+class _group2:
+    default_text = DELIMITER
+    rules = []
+
 class class1:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword1), ('title', title)]
+    rules = [('keyword', keyword1), ('title', title, [RE(r"(?=\{)")], _group2)]
 class1.__name__ = 'class'
 
-word_groups = [
-    ('literal', literal),
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
+    ('keyword', keyword),
+    ('literal', literal),
+    ('string', RE(r"\""), [RE(r"\"")]),
     ('number', number),
+    ('comment', RE(r"#"), [RE(r"$")], comment),
     ('meta', meta),
     ('number', number0),
-]
-
-delimited_ranges = [
-    ('string', RE(r"\""), [RE(r"\"")]),
-    ('comment', RE(r"#"), [RE(r"$")], comment),
     ('class', RE(r"\b(struct|enum)"), [RE(r"\{")], class0),
     ('class', RE(r"\b(interface)"), [RE(r"\{")], class1),
 ]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

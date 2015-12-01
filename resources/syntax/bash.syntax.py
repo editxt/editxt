@@ -4,25 +4,7 @@
 name = 'Bash'
 file_patterns = ['*.bash', '*.sh', '*.zsh']
 
-literal = ['true', 'false']
-
 _ = ['-ne', '-eq', '-lt', '-gt', '-f', '-d', '-e', '-s', '-l', '-a']
-
-keyword = [
-    'if',
-    'then',
-    'else',
-    'elif',
-    'fi',
-    'for',
-    'while',
-    'in',
-    'do',
-    'done',
-    'case',
-    'esac',
-    'function',
-]
 
 built_in = [
     'break',
@@ -136,19 +118,37 @@ built_in = [
     'ztcp',
 ]
 
+keyword = [
+    'if',
+    'then',
+    'else',
+    'elif',
+    'fi',
+    'for',
+    'while',
+    'in',
+    'do',
+    'done',
+    'case',
+    'esac',
+    'function',
+]
+
+literal = ['true', 'false']
+
 meta = [RE(r"^#![^\n]+sh\s*$")]
 
 title = [RE(r"\w[\w\d_]*")]
 
 class function:
     default_text = DELIMITER
-    word_groups = [('title', title)]
+    rules = [('title', title)]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
 number = [RE(r"\b\d+(\.\d+)?")]
 
@@ -156,25 +156,58 @@ variable = [RE(r"\$[\w\d#@][\w\d_]*")]
 
 variable0 = [RE(r"\$\{(.*?)}")]
 
+class variable1:
+    default_text = DELIMITER
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+    ]
+variable1.__name__ = 'variable'
+
 class string:
     default_text = DELIMITER
-    word_groups = [('variable', variable), ('variable', variable0)]
-    delimited_ranges = [('variable', RE(r"\$\("), [RE(r"\)")])]
+    rules = [
+        ('variable', variable),
+        ('variable', variable0),
+        ('variable', RE(r"\$\("), [RE(r"\)")], variable1),
+    ]
 
-word_groups = [
-    ('literal', literal),
+rules = [
     ('_', _),
-    ('keyword', keyword),
     ('built_in', built_in),
+    ('keyword', keyword),
+    ('literal', literal),
     ('meta', meta),
-    ('number', number),
-    ('variable', variable),
-    ('variable', variable0),
-]
-
-delimited_ranges = [
     ('function', RE(r"(?=\w[\w\d_]*\s*\(\s*\)\s*\{)"), [RE(r"\B|\b")], function),
     ('comment', RE(r"#"), [RE(r"$")], comment),
+    ('number', number),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"'"), [RE(r"'")]),
+    None,  # ('variable', variable0),
 ]
+
+rules[10] = ('variable', variable0)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

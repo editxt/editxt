@@ -6,7 +6,46 @@ file_patterns = ['*.monkey']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-literal = ['true', 'false', 'null', 'and', 'or', 'shl', 'shr', 'mod']
+built_in = [
+    'DebugLog',
+    'DebugStop',
+    'Error',
+    'Print',
+    'ACos',
+    'ACosr',
+    'ASin',
+    'ASinr',
+    'ATan',
+    'ATan2',
+    'ATan2r',
+    'ATanr',
+    'Abs',
+    'Abs',
+    'Ceil',
+    'Clamp',
+    'Clamp',
+    'Cos',
+    'Cosr',
+    'Exp',
+    'Floor',
+    'Log',
+    'Max',
+    'Max',
+    'Min',
+    'Min',
+    'Pow',
+    'Sgn',
+    'Sgn',
+    'Sin',
+    'Sinr',
+    'Sqrt',
+    'Tan',
+    'Tanr',
+    'Seed',
+    'PI',
+    'HALFPI',
+    'TWOPI',
+]
 
 keyword = [
     'public',
@@ -51,52 +90,21 @@ keyword = [
     'import',
 ]
 
-built_in = [
-    'DebugLog',
-    'DebugStop',
-    'Error',
-    'Print',
-    'ACos',
-    'ACosr',
-    'ASin',
-    'ASinr',
-    'ATan',
-    'ATan2',
-    'ATan2r',
-    'ATanr',
-    'Abs',
-    'Abs',
-    'Ceil',
-    'Clamp',
-    'Clamp',
-    'Cos',
-    'Cosr',
-    'Exp',
-    'Floor',
-    'Log',
-    'Max',
-    'Max',
-    'Min',
-    'Min',
-    'Pow',
-    'Sgn',
-    'Sgn',
-    'Sin',
-    'Sinr',
-    'Sqrt',
-    'Tan',
-    'Tanr',
-    'Seed',
-    'PI',
-    'HALFPI',
-    'TWOPI',
-]
+literal = ['true', 'false', 'null', 'and', 'or', 'shl', 'shr', 'mod']
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 keyword0 = ['function', 'method']
 
@@ -104,52 +112,83 @@ title = [RE(r"[a-zA-Z_]\w*")]
 
 class function:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0), ('title', title)]
+    rules = [('keyword', keyword0), ('title', title)]
 
 keyword1 = ['class', 'interface']
 
 class class0:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword1), ('title', title)]
-    delimited_ranges = [('_group2', RE(r"\b(extends|implements)"), [RE(r"\B|\b")])]
+    rules = [
+        ('keyword', keyword1),
+        ('_group0', RE(r"\b(extends|implements)"), [RE(r"\B|\b")]),
+        None,  # ('title', title),
+    ]
 class0.__name__ = 'class'
 
 built_in0 = [RE(r"\b(self|super)\b")]
 
-keyword2 = ['if', 'else', 'elseif', 'endif', 'end', 'then']
+meta_keyword = ['if', 'else', 'elseif', 'endif', 'end', 'then']
 
 class meta:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword2)]
+    rules = [('meta-keyword', meta_keyword)]
 
 meta0 = [RE(r"^\s*strict\b")]
 
-keyword3 = ['alias']
+keyword2 = ['alias']
 
-class _group3:
+class _group1:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword3), ('title', title)]
+    rules = [
+        ('keyword', keyword2),
+        None,  # ('title', title),
+    ]
 
 number = [RE(r"[$][a-fA-F0-9]+")]
 
 number0 = [RE(r"\b\d+(\.\d+)?")]
 
-word_groups = [
-    ('literal', literal),
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
+    ('keyword', keyword),
+    ('literal', literal),
+    ('comment', RE(r"#rem"), [RE(r"#end")], comment),
+    ('comment', RE(r"'"), [RE(r"$")], comment0),
+    ('function', RE(r"\b(function|method)"), [RE(r"[(=:]|$")], function),
+    ('class', RE(r"\b(class|interface)"), [RE(r"$")], class0),
     ('built_in', built_in0),
+    ('meta', RE(r"\s*#"), [RE(r"$")], meta),
     ('meta', meta0),
+    ('_group1', RE(r"\b(alias)"), [RE(r"=")], _group1),
+    ('string', RE(r"\""), [RE(r"\"")]),
     ('number', number),
     ('number', number0),
 ]
 
-delimited_ranges = [
-    ('comment', RE(r"#rem"), [RE(r"#end")], comment),
-    ('comment', RE(r"'"), [RE(r"$")], comment),
-    ('function', RE(r"\b(function|method)"), [RE(r"[(=:]|$")], function),
-    ('class', RE(r"\b(class|interface)"), [RE(r"$")], class0),
-    ('meta', RE(r"\s*#"), [RE(r"$")], meta),
-    ('_group3', RE(r"\b(alias)"), [RE(r"=")], _group3),
-    ('string', RE(r"\""), [RE(r"\"")]),
-]
+class0.rules[2] = ('title', title)
+_group1.rules[1] = ('title', title)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

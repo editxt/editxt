@@ -6,29 +6,6 @@ file_patterns = ['*.sqf', '*.sqf']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-literal = ['true', 'false', 'nil']
-
-keyword = [
-    'case',
-    'catch',
-    'default',
-    'do',
-    'else',
-    'exit',
-    'exitWith',
-    'for',
-    'forEach',
-    'from',
-    'if',
-    'switch',
-    'then',
-    'throw',
-    'to',
-    'try',
-    'while',
-    'with',
-]
-
 built_in = [
     'or',
     'plus',
@@ -1831,15 +1808,46 @@ built_in = [
     '_x',
 ]
 
+keyword = [
+    'case',
+    'catch',
+    'default',
+    'do',
+    'else',
+    'exit',
+    'exitWith',
+    'for',
+    'forEach',
+    'from',
+    'if',
+    'switch',
+    'then',
+    'throw',
+    'to',
+    'try',
+    'while',
+    'with',
+]
+
+literal = ['true', 'false', 'nil']
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 number = [RE(r"\b\d+(\.\d+)?")]
 
-keyword0 = [
+meta_keyword = [
     'if',
     'else',
     'elif',
@@ -1854,39 +1862,66 @@ keyword0 = [
     'ifndef',
 ]
 
-keyword1 = ['include']
+meta_keyword0 = ['include']
 
-class _group5:
+class _group1:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword1)]
-    delimited_ranges = [
+    rules = [
+        ('meta-keyword', meta_keyword0),
         ('string', RE(r"\""), [RE(r"\"")]),
         ('string', RE(r"'\\?."), [RE(r"'")]),
-        ('string', RE(r"<"), [RE(r">")]),
+        ('meta-string', RE(r"<"), [RE(r">")]),
     ]
 
 class meta:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0), ('number', number)]
-    delimited_ranges = [
-        ('_group5', RE(r"\b(include)"), [RE(r"$")], _group5),
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('string', RE(r"'\\?."), [RE(r"'")]),
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+    rules = [
+        ('meta-keyword', meta_keyword),
+        ('_group1', RE(r"\b(include)"), [RE(r"$")], _group1),
+        None,  # _group1.rules[2],
+        None,  # ('number', number),
+        None,  # rules[3],
+        None,  # rules[4],
     ]
 
-word_groups = [
-    ('literal', literal),
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
-    ('number', number),
-]
-
-delimited_ranges = [
+    ('keyword', keyword),
+    ('literal', literal),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('number', number),
     ('string', RE(r"\""), [RE(r"\"")]),
     ('string', RE(r"'"), [RE(r"'")]),
     ('meta', RE(r"#"), [RE(r"$")], meta),
 ]
+
+meta.rules[2] = _group1.rules[2]
+meta.rules[3] = ('number', number)
+meta.rules[4] = rules[3]
+meta.rules[5] = rules[4]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

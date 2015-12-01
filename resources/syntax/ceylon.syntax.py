@@ -4,8 +4,6 @@
 name = 'Ceylon'
 file_patterns = ['*.ceylon']
 
-meta = ['doc', 'by', 'license', 'see', 'throws', 'tagged']
-
 keyword = [
     'assembly',
     'module',
@@ -65,11 +63,21 @@ keyword = [
     'small',
 ]
 
+meta = ['doc', 'by', 'license', 'see', 'throws', 'tagged']
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 meta0 = [RE(r"@[a-z]\w*(?:\:\"[^\"]*\")?")]
 
@@ -125,28 +133,55 @@ number = [
 
 class subst:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0), ('number', number)]
-    delimited_ranges = [
-        ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
-        ('string', RE(r"\""), [RE(r"\"")]),
+    rules = [
+        ('keyword', keyword0),
+        None,  # rules[5],
+        # {'className': 'string', 'begin': '"', 'end': '"'},
         ('string', RE(r"'"), [RE(r"'")]),
+        ('number', number),
     ]
 
 class string:
     default_text = DELIMITER
-    delimited_ranges = [('subst', RE(r"``"), [RE(r"(?=``)")], subst)]
+    rules = [('subst', RE(r"``"), [RE(r"(?=``)")], subst)]
 
-word_groups = [
-    ('meta', meta),
+rules = [
     ('keyword', keyword),
-    ('meta', meta0),
-    ('number', number),
-]
-
-delimited_ranges = [
+    ('meta', meta),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('meta', meta0),
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('string', RE(r"'"), [RE(r"'")]),
+    None,  # subst.rules[2],
+    None,  # ('number', number),
 ]
+
+subst.rules[1] = rules[5]
+rules[7] = subst.rules[2]
+rules[8] = ('number', number)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

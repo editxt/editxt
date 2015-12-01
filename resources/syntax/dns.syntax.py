@@ -49,7 +49,7 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
 meta = [RE(r"^\$(TTL|GENERATE|INCLUDE|ORIGIN)\b")]
 
@@ -63,12 +63,36 @@ number0 = [
 
 number1 = [RE(r"\b\d+[dhwm]?")]
 
-word_groups = [
+rules = [
     ('keyword', keyword),
+    ('comment', RE(r";"), [RE(r"$")], comment),
     ('meta', meta),
     ('number', number),
     ('number', number0),
     ('number', number1),
 ]
 
-delimited_ranges = [('comment', RE(r";"), [RE(r"$")], comment)]
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

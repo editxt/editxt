@@ -10,17 +10,21 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
-keyword = [
-    RE(r"@(import|media|charset|font-face|(-[a-z]+-)?keyframes|supports|document|namespace|page|viewport|host)\b"),
-]
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
-variable = [RE(r"@[\w-]+\s*:")]
-
-variable0 = [RE(r"@[\w-]+")]
-
-keyword0 = ['when']
+class keyword:
+    default_text = DELIMITER
+    rules = [
+        ('keyword', RE(r"@(import|media|charset|font-face|(-[a-z]+-)?keyframes|supports|document|namespace|page|viewport|host)\b"), [RE(r"\B|\b")]),
+    ]
 
 string = [RE(r"~?'.*?'")]
 
@@ -30,54 +34,124 @@ number = [
     RE(r"\b\d+(\.\d+)?(%|em|ex|ch|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc|px|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx)?"),
 ]
 
+class _group1:
+    default_text = DELIMITER
+    rules = [('_group1', RE(r"(url|data-uri)\("), [RE(r"\B|\b")])]
+
+class string1:
+    default_text = DELIMITER
+    rules = []
+string1.__name__ = 'string'
+
 number0 = [RE(r"#[0-9A-Fa-f]+\b")]
 
-variable1 = [RE(r"@@?[\w-]+")]
+class _group2:
+    default_text = DELIMITER
+    rules = []
 
-variable2 = [RE(r"@{[\w-]+}")]
+variable = [RE(r"@@?[\w-]+")]
+
+variable0 = [RE(r"@{[\w-]+}")]
 
 built_in = [RE(r"~?`[^`]*?`")]
 
 meta = [RE(r"!important")]
 
-class _group10:
+class _group0:
     default_text = DELIMITER
-    word_groups = [
+    rules = [
+        None,  # rules[0],
+        None,  # rules[1],
         ('string', string),
         ('string', string0),
         ('number', number),
+        ('_group1', _group1, [RE(r"(?=[\)\n])")], string1),
         ('number', number0),
-        ('variable', variable1),
-        ('variable', variable2),
+        ('_group2', RE(r"\("), [RE(r"\)")], _group2),
+        ('variable', variable),
+        ('variable', variable0),
         ('built_in', built_in),
+        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
         ('meta', meta),
     ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group14', RE(r"\("), [RE(r"\)")]),
-        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
+
+class variable1:
+    default_text = DELIMITER
+    rules = [('variable', RE(r"@[\w-]+\s*:"), [RE(r"\B|\b")])]
+variable1.__name__ = 'variable'
+
+class _group4:
+    default_text = DELIMITER
+    rules = []
+
+class _group3:
+    default_text = DELIMITER
+    rules = [
+        None,  # rules[0],
+        None,  # rules[1],
+        None,  # ('string', string),
+        None,  # ('string', string0),
+        None,  # ('number', number),
+        None,  # _group0.rules[5],
+        None,  # ('number', number0),
+        None,  # _group0.rules[7],
+        None,  # ('variable', variable),
+        None,  # ('variable', variable0),
+        None,  # ('built_in', built_in),
+        None,  # _group0.rules[11],
+        None,  # ('meta', meta),
+        ('_group4', RE(r"{"), [RE(r"}")], _group4),
     ]
+
+class variable2:
+    default_text = DELIMITER
+    rules = [('variable', RE(r"@[\w-]+"), [RE(r"\B|\b")])]
+variable2.__name__ = 'variable'
 
 class _group5:
     default_text = DELIMITER
-    word_groups = [
-        ('keyword', keyword0),
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-        ('number', number0),
-        ('variable', variable1),
-        ('variable', variable2),
-        ('built_in', built_in),
-        ('meta', meta),
+    rules = []
+
+class _group30:
+    default_text = DELIMITER
+    rules = [
+        None,  # rules[0],
+        None,  # rules[1],
+        None,  # ('string', string),
+        None,  # ('string', string0),
+        None,  # ('number', number),
+        None,  # _group0.rules[5],
+        None,  # ('number', number0),
+        None,  # _group0.rules[7],
+        None,  # ('variable', variable),
+        None,  # ('variable', variable0),
+        None,  # ('built_in', built_in),
+        None,  # _group0.rules[11],
+        None,  # ('meta', meta),
+        ('_group5', RE(r"{"), [RE(r"}")], _group5),
     ]
-    delimited_ranges = [
-        ('_group6', RE(r"\b(and|not)"), [RE(r"\B|\b")]),
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group10', RE(r"\("), [RE(r"\)")], _group10),
-        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
+_group30.__name__ = '_group3'
+
+keyword0 = ['when']
+
+class _group7:
+    default_text = DELIMITER
+    rules = [
+        ('keyword', keyword0),
+        ('_group8', RE(r"\b(and|not)"), [RE(r"\B|\b")]),
+        None,  # rules[0],
+        None,  # rules[1],
+        None,  # ('string', string),
+        None,  # ('string', string0),
+        None,  # ('number', number),
+        None,  # _group0.rules[5],
+        None,  # ('number', number0),
+        None,  # _group0.rules[7],
+        None,  # ('variable', variable),
+        None,  # ('variable', variable0),
+        None,  # ('built_in', built_in),
+        None,  # _group0.rules[11],
+        None,  # ('meta', meta),
     ]
 
 keyword1 = [RE(r"all\b")]
@@ -90,325 +164,183 @@ selector_class = [RE(r"\.([\w-]+|@{[\w-]+})")]
 
 selector_tag0 = [RE(r"&")]
 
-class _group19:
+class _group9:
     default_text = DELIMITER
-    word_groups = [
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-        ('number', number0),
-        ('variable', variable1),
-        ('variable', variable2),
-        ('built_in', built_in),
-        ('meta', meta),
+    rules = []
+
+class _group6:
+    default_text = DELIMITER
+    rules = [
+        None,  # rules[0],
+        None,  # rules[1],
+        ('_group7', RE(r"\b(when)"), [RE(r"")], _group7),
+        ('keyword', keyword1),
+        ('variable', variable0),
+        ('selector-tag', selector_tag),
+        ('selector-id', selector_id),
+        ('selector-class', selector_class),
+        ('selector-tag', selector_tag0),
+        ('selector-attr', RE(r"\["), [RE(r"\]")]),
+        ('_group9', RE(r"\("), [RE(r"\)")], _group9),
     ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group23', RE(r"\("), [RE(r"\)")]),
-        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
+
+class _group11:
+    default_text = DELIMITER
+    rules = [
+        ('keyword', keyword0),
+        ('_group12', RE(r"\b(and|not)"), [RE(r"\B|\b")]),
+        None,  # rules[0],
+        None,  # rules[1],
+        None,  # ('string', string),
+        None,  # ('string', string0),
+        None,  # ('number', number),
+        None,  # _group0.rules[5],
+        None,  # ('number', number0),
+        None,  # _group0.rules[7],
+        None,  # ('variable', variable),
+        None,  # ('variable', variable0),
+        None,  # ('built_in', built_in),
+        None,  # _group0.rules[11],
+        None,  # ('meta', meta),
+    ]
+
+class _group13:
+    default_text = DELIMITER
+    rules = []
+
+class _group10:
+    default_text = DELIMITER
+    rules = [
+        None,  # rules[0],
+        None,  # rules[1],
+        ('_group11', RE(r"\b(when)"), [RE(r"")], _group11),
+        ('keyword', keyword1),
+        ('variable', variable0),
+        ('selector-tag', selector_tag),
+        ('selector-id', selector_id),
+        ('selector-class', selector_class),
+        ('selector-tag', selector_tag0),
+        ('selector-attr', RE(r"\["), [RE(r"\]")]),
+        ('_group13', RE(r"\("), [RE(r"\)")], _group13),
     ]
 
 class attribute:
     default_text = DELIMITER
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+    rules = [
+        None,  # rules[0],
+        None,  # rules[1],
     ]
 
 class attribute0:
     default_text = DELIMITER
-    delimited_ranges = [
+    rules = [
         ('attribute', RE(r"([\w-]+|@{[\w-]+})"), [RE(r"(?=:)")], attribute),
     ]
 attribute0.__name__ = 'attribute'
 
-class _group35:
+class _group14:
     default_text = DELIMITER
-    word_groups = [
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-        ('number', number0),
-        ('variable', variable1),
-        ('variable', variable2),
-        ('built_in', built_in),
-        ('meta', meta),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group39', RE(r"\("), [RE(r"\)")]),
-        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
-    ]
+    rules = []
 
-class _group31:
-    default_text = DELIMITER
-    word_groups = [
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-        ('number', number0),
-        ('variable', variable1),
-        ('variable', variable2),
-        ('built_in', built_in),
-        ('meta', meta),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group35', RE(r"\("), [RE(r"\)")], _group35),
-        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
-    ]
-
-class _group24:
-    default_text = DELIMITER
-    word_groups = [
-        ('keyword', keyword),
-        ('variable', variable),
-        ('variable', variable0),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group27', RE(r"(?=[\.#:&\[])"), [RE(r"(?=[;{}])")]),
-        ('_group28', RE(r"(?=([\w-]+|@{[\w-]+})[^;]*{)"), [RE(r"(?={)")]),
-        ('attribute', attribute0, [RE(r"(?=})")], _group31),
-    ]
-
-class _group15:
-    default_text = DELIMITER
-    word_groups = [
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-        ('number', number0),
-        ('variable', variable1),
-        ('variable', variable2),
-        ('built_in', built_in),
-        ('meta', meta),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group19', RE(r"\("), [RE(r"\)")], _group19),
-        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
-        ('_group24', RE(r"{"), [RE(r"}")], _group24),
-    ]
-
-class _group2:
-    default_text = DELIMITER
-    word_groups = [
-        ('keyword', keyword1),
-        ('variable', variable2),
-        ('selector-tag', selector_tag),
-        ('selector-id', selector_id),
-        ('selector-class', selector_class),
-        ('selector-tag', selector_tag0),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group5', RE(r"\b(when)"), [RE(r"")], _group5),
-        ('selector-attr', RE(r"\["), [RE(r"\]")]),
-        ('_group15', RE(r"\("), [RE(r"\)")], _group15),
-    ]
-
-class _group49:
-    default_text = DELIMITER
-    word_groups = [
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-        ('number', number0),
-        ('variable', variable1),
-        ('variable', variable2),
-        ('built_in', built_in),
-        ('meta', meta),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group53', RE(r"\("), [RE(r"\)")]),
-        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
-    ]
-
-class _group44:
-    default_text = DELIMITER
-    word_groups = [
-        ('keyword', keyword0),
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-        ('number', number0),
-        ('variable', variable1),
-        ('variable', variable2),
-        ('built_in', built_in),
-        ('meta', meta),
-    ]
-    delimited_ranges = [
-        ('_group45', RE(r"\b(and|not)"), [RE(r"\B|\b")]),
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group49', RE(r"\("), [RE(r"\)")], _group49),
-        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
-    ]
-
-class _group58:
-    default_text = DELIMITER
-    word_groups = [
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-        ('number', number0),
-        ('variable', variable1),
-        ('variable', variable2),
-        ('built_in', built_in),
-        ('meta', meta),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group62', RE(r"\("), [RE(r"\)")]),
-        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
-    ]
-
-class _group73:
-    default_text = DELIMITER
-    word_groups = [
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-        ('number', number0),
-        ('variable', variable1),
-        ('variable', variable2),
-        ('built_in', built_in),
-        ('meta', meta),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group77', RE(r"\("), [RE(r"\)")]),
-        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
-    ]
-
-class _group310:
-    default_text = DELIMITER
-    word_groups = [
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-        ('number', number0),
-        ('variable', variable1),
-        ('variable', variable2),
-        ('built_in', built_in),
-        ('meta', meta),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group73', RE(r"\("), [RE(r"\)")], _group73),
-        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
-    ]
-_group310.__name__ = '_group31'
-
-class _group63:
-    default_text = DELIMITER
-    word_groups = [
-        ('keyword', keyword),
-        ('variable', variable),
-        ('variable', variable0),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group66', RE(r"(?=[\.#:&\[])"), [RE(r"(?=[;{}])")]),
-        ('_group67', RE(r"(?=([\w-]+|@{[\w-]+})[^;]*{)"), [RE(r"(?={)")]),
-        ('attribute', attribute0, [RE(r"(?=})")], _group310),
-    ]
-
-class _group54:
-    default_text = DELIMITER
-    word_groups = [
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-        ('number', number0),
-        ('variable', variable1),
-        ('variable', variable2),
-        ('built_in', built_in),
-        ('meta', meta),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group58', RE(r"\("), [RE(r"\)")], _group58),
-        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
-        ('_group63', RE(r"{"), [RE(r"}")], _group63),
-    ]
-
-class _group41:
-    default_text = DELIMITER
-    word_groups = [
-        ('keyword', keyword1),
-        ('variable', variable2),
-        ('selector-tag', selector_tag),
-        ('selector-id', selector_id),
-        ('selector-class', selector_class),
-        ('selector-tag', selector_tag0),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group44', RE(r"\b(when)"), [RE(r"")], _group44),
-        ('selector-attr', RE(r"\["), [RE(r"\]")]),
-        ('_group54', RE(r"\("), [RE(r"\)")], _group54),
-    ]
-
-class _group85:
-    default_text = DELIMITER
-    word_groups = [
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-        ('number', number0),
-        ('variable', variable1),
-        ('variable', variable2),
-        ('built_in', built_in),
-        ('meta', meta),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group89', RE(r"\("), [RE(r"\)")]),
-        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
-    ]
-
-class _group81:
-    default_text = DELIMITER
-    word_groups = [
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-        ('number', number0),
-        ('variable', variable1),
-        ('variable', variable2),
-        ('built_in', built_in),
-        ('meta', meta),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('_group85', RE(r"\("), [RE(r"\)")], _group85),
-        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
-    ]
-
-word_groups = [('keyword', keyword), ('variable', variable), ('variable', variable0)]
-
-delimited_ranges = [
+rules = [
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('_group2', RE(r"(?=[\.#:&\[])"), [RE(r"(?=[;{}])")], _group2),
-    ('_group41', RE(r"(?=([\w-]+|@{[\w-]+})[^;]*{)"), [RE(r"(?={)")], _group41),
-    ('attribute', attribute0, [RE(r"(?=\B|\b)")], _group81),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('keyword', keyword, [RE(r"(?=[;{}])")], _group0),
+    ('variable', variable1, [RE(r"(?=[;}])")], _group3),
+    ('variable', variable2, [RE(r"(?=[;}])")], _group30),
+    ('_group6', RE(r"(?=[\.#:&\[])"), [RE(r"(?=[;{}])")], _group6),
+    ('_group10', RE(r"(?=([\w-]+|@{[\w-]+})[^;]*{)"), [RE(r"(?={)")], _group10),
+    ('attribute', attribute0, [RE(r"(?=[;}])")], _group14),
 ]
+
+_group0.rules[0] = rules[0]
+_group0.rules[1] = rules[1]
+_group3.rules[0] = rules[0]
+_group3.rules[1] = rules[1]
+_group3.rules[2] = ('string', string)
+_group3.rules[3] = ('string', string0)
+_group3.rules[4] = ('number', number)
+_group3.rules[5] = _group0.rules[5]
+_group3.rules[6] = ('number', number0)
+_group3.rules[7] = _group0.rules[7]
+_group3.rules[8] = ('variable', variable)
+_group3.rules[9] = ('variable', variable0)
+_group3.rules[10] = ('built_in', built_in)
+_group3.rules[11] = _group0.rules[11]
+_group3.rules[12] = ('meta', meta)
+_group30.rules[0] = rules[0]
+_group30.rules[1] = rules[1]
+_group30.rules[2] = ('string', string)
+_group30.rules[3] = ('string', string0)
+_group30.rules[4] = ('number', number)
+_group30.rules[5] = _group0.rules[5]
+_group30.rules[6] = ('number', number0)
+_group30.rules[7] = _group0.rules[7]
+_group30.rules[8] = ('variable', variable)
+_group30.rules[9] = ('variable', variable0)
+_group30.rules[10] = ('built_in', built_in)
+_group30.rules[11] = _group0.rules[11]
+_group30.rules[12] = ('meta', meta)
+_group6.rules[0] = rules[0]
+_group6.rules[1] = rules[1]
+_group7.rules[2] = rules[0]
+_group7.rules[3] = rules[1]
+_group7.rules[4] = ('string', string)
+_group7.rules[5] = ('string', string0)
+_group7.rules[6] = ('number', number)
+_group7.rules[7] = _group0.rules[5]
+_group7.rules[8] = ('number', number0)
+_group7.rules[9] = _group0.rules[7]
+_group7.rules[10] = ('variable', variable)
+_group7.rules[11] = ('variable', variable0)
+_group7.rules[12] = ('built_in', built_in)
+_group7.rules[13] = _group0.rules[11]
+_group7.rules[14] = ('meta', meta)
+_group10.rules[0] = rules[0]
+_group10.rules[1] = rules[1]
+_group11.rules[2] = rules[0]
+_group11.rules[3] = rules[1]
+_group11.rules[4] = ('string', string)
+_group11.rules[5] = ('string', string0)
+_group11.rules[6] = ('number', number)
+_group11.rules[7] = _group0.rules[5]
+_group11.rules[8] = ('number', number0)
+_group11.rules[9] = _group0.rules[7]
+_group11.rules[10] = ('variable', variable)
+_group11.rules[11] = ('variable', variable0)
+_group11.rules[12] = ('built_in', built_in)
+_group11.rules[13] = _group0.rules[11]
+_group11.rules[14] = ('meta', meta)
+attribute.rules[0] = rules[0]
+attribute.rules[1] = rules[1]
+_group2.rules.extend(_group0.rules)
+_group4.rules.extend(rules)
+_group5.rules.extend(rules)
+_group9.rules.extend(_group30.rules)
+_group13.rules.extend(_group30.rules)
+_group14.rules.extend(_group0.rules)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

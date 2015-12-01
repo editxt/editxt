@@ -12,7 +12,7 @@ keyword0 = ['facet']
 
 class attribute:
     default_text = DELIMITER
-    delimited_ranges = [('attribute', RE(r"[a-zA-Z-_]+"), [RE(r"(?=\s*:)")])]
+    rules = [('attribute', RE(r"[a-zA-Z-_]+"), [RE(r"(?=\s*:)")])]
 
 variable = [RE(r"\.[a-zA-Z-_]+")]
 
@@ -20,19 +20,19 @@ keyword1 = [RE(r"\(optional\)")]
 
 class _group1:
     default_text = DELIMITER
-    word_groups = [('variable', variable), ('keyword', keyword1)]
+    rules = [('variable', variable), ('keyword', keyword1)]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
 class _group0:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0)]
-    delimited_ranges = [
-        ('attribute', attribute, [RE(r"(?=})")], _group1),
+    rules = [
+        ('keyword', keyword0),
+        ('attribute', attribute, [RE(r";")], _group1),
         ('comment', RE(r"#"), [RE(r"$")], comment),
     ]
 
@@ -46,34 +46,56 @@ keyword2 = [
     'of',
 ]
 
-class _group4:
+class _group2:
     default_text = DELIMITER
-    word_groups = [('variable', variable), ('keyword', keyword1)]
+    rules = [
+        ('keyword', keyword2),
+        None,  # _group0.rules[1],
+        None,  # _group0.rules[2],
+    ]
 
 class _group3:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword2)]
-    delimited_ranges = [
-        ('attribute', attribute, [RE(r"(?=})")], _group4),
-        ('comment', RE(r"#"), [RE(r"$")], comment),
+    rules = [
+        None,  # _group0.rules[1],
+        None,  # _group0.rules[2],
     ]
 
-class _group7:
-    default_text = DELIMITER
-    word_groups = [('variable', variable), ('keyword', keyword1)]
-
-class _group6:
-    default_text = DELIMITER
-    delimited_ranges = [
-        ('attribute', attribute, [RE(r"(?=})")], _group7),
-        ('comment', RE(r"#"), [RE(r"$")], comment),
-    ]
-
-word_groups = [('keyword', keyword)]
-
-delimited_ranges = [
+rules = [
+    ('keyword', keyword),
     ('_group0', RE(r"^facet [a-zA-Z-_][^\n{]+\{"), [RE(r"}")], _group0),
-    ('_group3', RE(r"^\s*instance of [a-zA-Z-_][^\n{]+\{"), [RE(r"}")], _group3),
-    ('_group6', RE(r"^[a-zA-Z-_][^\n{]+\{"), [RE(r"}")], _group6),
-    ('comment', RE(r"#"), [RE(r"$")], comment),
+    ('_group2', RE(r"^\s*instance of [a-zA-Z-_][^\n{]+\{"), [RE(r"}")], _group2),
+    ('_group3', RE(r"^[a-zA-Z-_][^\n{]+\{"), [RE(r"}")], _group3),
+    None,  # _group0.rules[2],
 ]
+
+_group2.rules[1] = _group0.rules[1]
+_group2.rules[2] = _group0.rules[2]
+_group3.rules[0] = _group0.rules[1]
+_group3.rules[1] = _group0.rules[2]
+rules[4] = _group0.rules[2]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

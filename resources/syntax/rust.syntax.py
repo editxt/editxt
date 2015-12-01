@@ -4,72 +4,6 @@
 name = 'Rust'
 file_patterns = ['*.rust', '*.rs']
 
-keyword = [
-    'alignof',
-    'as',
-    'be',
-    'box',
-    'break',
-    'const',
-    'continue',
-    'crate',
-    'do',
-    'else',
-    'enum',
-    'extern',
-    'false',
-    'fn',
-    'for',
-    'if',
-    'impl',
-    'in',
-    'let',
-    'loop',
-    'match',
-    'mod',
-    'mut',
-    'offsetof',
-    'once',
-    'priv',
-    'proc',
-    'pub',
-    'pure',
-    'ref',
-    'return',
-    'self',
-    'Self',
-    'sizeof',
-    'static',
-    'struct',
-    'super',
-    'trait',
-    'true',
-    'type',
-    'typeof',
-    'unsafe',
-    'unsized',
-    'use',
-    'virtual',
-    'while',
-    'where',
-    'yield',
-    'int',
-    'i8',
-    'i16',
-    'i32',
-    'i64',
-    'uint',
-    'u8',
-    'u32',
-    'u64',
-    'float',
-    'f32',
-    'f64',
-    'str',
-    'char',
-    'bool',
-]
-
 built_in = [
     'Copy',
     'Send',
@@ -140,11 +74,85 @@ built_in = [
     'writeln!',
 ]
 
+keyword = [
+    'alignof',
+    'as',
+    'be',
+    'box',
+    'break',
+    'const',
+    'continue',
+    'crate',
+    'do',
+    'else',
+    'enum',
+    'extern',
+    'false',
+    'fn',
+    'for',
+    'if',
+    'impl',
+    'in',
+    'let',
+    'loop',
+    'match',
+    'mod',
+    'mut',
+    'offsetof',
+    'once',
+    'priv',
+    'proc',
+    'pub',
+    'pure',
+    'ref',
+    'return',
+    'self',
+    'Self',
+    'sizeof',
+    'static',
+    'struct',
+    'super',
+    'trait',
+    'true',
+    'type',
+    'typeof',
+    'unsafe',
+    'unsized',
+    'use',
+    'virtual',
+    'while',
+    'where',
+    'yield',
+    'int',
+    'i8',
+    'i16',
+    'i32',
+    'i64',
+    'uint',
+    'u8',
+    'u32',
+    'u64',
+    'float',
+    'f32',
+    'f64',
+    'str',
+    'char',
+    'bool',
+]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 string = [RE(r"r(#*)\".*?\"\1(?!#)")]
 
@@ -168,25 +176,35 @@ title = [RE(r"[a-zA-Z_]\w*")]
 
 class function:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0), ('title', title)]
+    rules = [('keyword', keyword0), ('title', title)]
 
 keyword1 = ['type']
 
 class class0:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword1), ('title', title)]
+    rules = [
+        ('keyword', keyword1),
+        None,  # ('title', title),
+    ]
 class0.__name__ = 'class'
 
 keyword2 = ['trait', 'enum']
 
 class class1:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword2), ('title', title)]
+    rules = [('keyword', keyword2), ('title', title)]
 class1.__name__ = 'class'
 
-word_groups = [
-    ('keyword', keyword),
+class _group1:
+    default_text = DELIMITER
+    rules = [('built_in', built_in)]
+
+rules = [
     ('built_in', built_in),
+    ('keyword', keyword),
+    ('comment', RE(r"//"), [RE(r"$")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('string', RE(r"\""), [RE(r"\"")]),
     ('string', string),
     ('string', string0),
     ('symbol', symbol),
@@ -194,14 +212,36 @@ word_groups = [
     ('number', number0),
     ('number', number1),
     ('number', number2),
-]
-
-delimited_ranges = [
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('string', RE(r"\""), [RE(r"\"")]),
     ('function', RE(r"\b(fn)"), [RE(r"(?=(\(|<))")], function),
     ('meta', RE(r"#\!?\["), [RE(r"\]")]),
     ('class', RE(r"\b(type)"), [RE(r"(=|<)")], class0),
     ('class', RE(r"\b(trait|enum)"), [RE(r"{")], class1),
+    ('_group1', RE(r"[a-zA-Z]\w*::"), [RE(r"\B|\b")], _group1),
 ]
+
+class0.rules[1] = ('title', title)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

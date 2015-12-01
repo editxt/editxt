@@ -8,13 +8,13 @@ flags = re.IGNORECASE | re.MULTILINE
 
 class meta:
     default_text = DELIMITER
-    delimited_ranges = [('_group0', RE(r"\["), [RE(r"\]")])]
+    rules = [('_group0', RE(r"\["), [RE(r"\]")])]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
 name0 = ['style']
 
@@ -22,142 +22,105 @@ attr = [RE(r"[A-Za-z0-9\._:-]+")]
 
 class string:
     default_text = DELIMITER
-    delimited_ranges = [('_group6', RE(r"<\?(php)?(?!\w)"), [RE(r"\?>")], 'php')]
-
-class string0:
-    default_text = DELIMITER
-    delimited_ranges = [('_group7', RE(r"<\?(php)?(?!\w)"), [RE(r"\?>")], 'php')]
-string0.__name__ = 'string'
-
-class string1:
-    default_text = DELIMITER
-    delimited_ranges = [('_group8', RE(r"<\?(php)?(?!\w)"), [RE(r"\?>")], 'php')]
-string1.__name__ = 'string'
-
-class _group5:
-    default_text = DELIMITER
-    delimited_ranges = [
-        ('string', RE(r"\""), [RE(r"\"")], string),
-        ('string', RE(r"'"), [RE(r"'")], string0),
-        ('string', RE(r"[^\s\/>]+"), [RE(r"\B|\b")], string1),
+    rules = [
+        None,  # _group2.rules[0],
     ]
 
-class _group3:
+class _group4:
     default_text = DELIMITER
-    word_groups = [('attr', attr)]
-    delimited_ranges = [
-        ('_group4', RE(r"<\?(php)?(?!\w)"), [RE(r"\?>")], 'php'),
-        ('_group5', RE(r"="), [RE(r"\B|\b")], _group5),
+    rules = [
+        ('string', RE(r"\""), [RE(r"\"")], string),
+        ('string', RE(r"'"), [RE(r"'")], string),
+        ('string', RE(r"[^\s\/>]+"), [RE(r"\B|\b")], string),
+    ]
+
+class _group2:
+    default_text = DELIMITER
+    rules = [
+        ('_group3', RE(r"<\?(php)?(?!\w)"), [RE(r"\?>")], 'php'),
+        ('attr', attr),
+        ('_group4', RE(r"="), [RE(r"\B|\b")], _group4),
     ]
 
 class tag:
     default_text = DELIMITER
-    word_groups = [('name', name0)]
-    delimited_ranges = [('_group3', RE(r"\B|\b"), [RE(r"")], _group3)]
+    rules = [('name', name0), ('_group2', RE(r"\B|\b"), [RE(r"")], _group2)]
 
 class tag0:
     default_text = DELIMITER
-    delimited_ranges = [('tag', RE(r"<style(?=\s|>|$)"), [RE(r">")], tag)]
+    rules = [('tag', RE(r"<style(?=\s|>|$)"), [RE(r">")], tag)]
 tag0.__name__ = 'tag'
 
-class _group9:
+class _group5:
     default_text = DELIMITER
+    rules = []
 
 name1 = ['script']
 
-class string2:
-    default_text = DELIMITER
-    delimited_ranges = [('_group13', RE(r"<\?(php)?(?!\w)"), [RE(r"\?>")], 'php')]
-string2.__name__ = 'string'
-
-class string3:
-    default_text = DELIMITER
-    delimited_ranges = [('_group14', RE(r"<\?(php)?(?!\w)"), [RE(r"\?>")], 'php')]
-string3.__name__ = 'string'
-
-class string4:
-    default_text = DELIMITER
-    delimited_ranges = [('_group15', RE(r"<\?(php)?(?!\w)"), [RE(r"\?>")], 'php')]
-string4.__name__ = 'string'
-
-class _group12:
-    default_text = DELIMITER
-    delimited_ranges = [
-        ('string', RE(r"\""), [RE(r"\"")], string2),
-        ('string', RE(r"'"), [RE(r"'")], string3),
-        ('string', RE(r"[^\s\/>]+"), [RE(r"\B|\b")], string4),
-    ]
-
-class _group10:
-    default_text = DELIMITER
-    word_groups = [('attr', attr)]
-    delimited_ranges = [
-        ('_group11', RE(r"<\?(php)?(?!\w)"), [RE(r"\?>")], 'php'),
-        ('_group12', RE(r"="), [RE(r"\B|\b")], _group12),
-    ]
-
 class tag1:
     default_text = DELIMITER
-    word_groups = [('name', name1)]
-    delimited_ranges = [('_group10', RE(r"\B|\b"), [RE(r"")], _group10)]
+    rules = [
+        ('name', name1),
+        None,  # tag.rules[1],
+    ]
 tag1.__name__ = 'tag'
 
 class tag2:
     default_text = DELIMITER
-    delimited_ranges = [('tag', RE(r"<script(?=\s|>|$)"), [RE(r">")], tag1)]
+    rules = [('tag', RE(r"<script(?=\s|>|$)"), [RE(r">")], tag1)]
 tag2.__name__ = 'tag'
 
-class _group16:
+class _group6:
     default_text = DELIMITER
+    rules = []
 
-name2 = [RE(r"[^ \/><\n\t]+")]
-
-class string5:
-    default_text = DELIMITER
-    delimited_ranges = [('_group21', RE(r"<\?(php)?(?!\w)"), [RE(r"\?>")], 'php')]
-string5.__name__ = 'string'
-
-class string6:
-    default_text = DELIMITER
-    delimited_ranges = [('_group22', RE(r"<\?(php)?(?!\w)"), [RE(r"\?>")], 'php')]
-string6.__name__ = 'string'
-
-class string7:
-    default_text = DELIMITER
-    delimited_ranges = [('_group23', RE(r"<\?(php)?(?!\w)"), [RE(r"\?>")], 'php')]
-string7.__name__ = 'string'
-
-class _group20:
-    default_text = DELIMITER
-    delimited_ranges = [
-        ('string', RE(r"\""), [RE(r"\"")], string5),
-        ('string', RE(r"'"), [RE(r"'")], string6),
-        ('string', RE(r"[^\s\/>]+"), [RE(r"\B|\b")], string7),
-    ]
-
-class _group18:
-    default_text = DELIMITER
-    word_groups = [('attr', attr)]
-    delimited_ranges = [
-        ('_group19', RE(r"<\?(php)?(?!\w)"), [RE(r"\?>")], 'php'),
-        ('_group20', RE(r"="), [RE(r"\B|\b")], _group20),
-    ]
+name2 = [RE(r"[^\/><\s]+")]
 
 class tag3:
     default_text = DELIMITER
-    word_groups = [('name', name2)]
-    delimited_ranges = [('_group18', RE(r"\B|\b"), [RE(r"")], _group18)]
+    rules = [
+        ('name', name2),
+        None,  # tag.rules[1],
+    ]
 tag3.__name__ = 'tag'
 
-word_groups = []
-
-delimited_ranges = [
+rules = [
     ('meta', RE(r"<!DOCTYPE"), [RE(r">")], meta),
     ('comment', RE(r"<!--"), [RE(r"-->")], comment),
-    ('_group2', RE(r"<\!\[CDATA\["), [RE(r"\]\]>")]),
-    ('tag', tag0, [RE(r"(?=\B|\b)")], _group9),
-    ('tag', tag2, [RE(r"(?=\B|\b)")], _group16),
-    ('_group17', RE(r"<\?(php)?(?!\w)"), [RE(r"\?>")], 'php'),
+    ('_group1', RE(r"<\!\[CDATA\["), [RE(r"\]\]>")]),
+    ('tag', tag0, [RE(r"(?=</style>)")], _group5),
+    ('tag', tag2, [RE(r"(?=</script>)")], _group6),
+    None,  # _group2.rules[0],
     ('meta', RE(r"<\?\w+"), [RE(r"\?>")]),
     ('tag', RE(r"</?"), [RE(r"/?>")], tag3),
 ]
+
+string.rules[0] = _group2.rules[0]
+tag1.rules[1] = tag.rules[1]
+rules[5] = _group2.rules[0]
+tag3.rules[1] = tag.rules[1]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

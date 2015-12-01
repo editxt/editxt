@@ -4,7 +4,16 @@
 name = 'pf'
 file_patterns = ['*.pf', '*.pf.conf']
 
-literal = ['all', 'any', 'no-route', 'self', 'urpf-failed', 'egress', 'unknown']
+built_in = [
+    'block',
+    'match',
+    'pass',
+    'load',
+    'anchor',
+    'antispoof',
+    'set',
+    'table',
+]
 
 keyword = [
     'in',
@@ -93,37 +102,50 @@ keyword = [
     'random-id',
 ]
 
-built_in = [
-    'block',
-    'match',
-    'pass',
-    'load',
-    'anchor',
-    'antispoof',
-    'set',
-    'table',
-]
+literal = ['all', 'any', 'no-route', 'self', 'urpf-failed', 'egress', 'unknown']
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
 number = [RE(r"\b\d+(\.\d+)?")]
 
 variable = [RE(r"\$[\w\d#@][\w\d_]*")]
 
-word_groups = [
-    ('literal', literal),
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
-    ('number', number),
-    ('variable', variable),
-]
-
-delimited_ranges = [
+    ('keyword', keyword),
+    ('literal', literal),
     ('comment', RE(r"#"), [RE(r"$")], comment),
+    ('number', number),
     ('string', RE(r"\""), [RE(r"\"")]),
+    ('variable', variable),
     ('variable', RE(r"<"), [RE(r">")]),
 ]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

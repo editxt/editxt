@@ -4,53 +4,25 @@
 name = 'Mercury'
 file_patterns = ['*.mercury', '*.m', '*.moo']
 
-meta = [
-    'inline',
-    'no_inline',
-    'type_spec',
-    'source_file',
-    'fact_table',
-    'obsolete',
-    'memo',
-    'loop_check',
-    'minimal_model',
-    'terminates',
-    'does_not_terminate',
-    'check_termination',
-    'promise_equivalent_clauses',
-    'foreign_proc',
-    'foreign_decl',
-    'foreign_code',
-    'foreign_type',
-    'foreign_import_module',
-    'foreign_export_enum',
-    'foreign_export',
-    'foreign_enum',
-    'may_call_mercury',
-    'will_not_call_mercury',
-    'thread_safe',
-    'not_thread_safe',
-    'maybe_thread_safe',
-    'promise_pure',
-    'promise_semipure',
-    'tabled_for_io',
-    'local',
-    'untrailed',
-    'trailed',
-    'attach_to_io_state',
-    'can_pass_as_mercury_type',
-    'stable',
-    'will_not_throw_exception',
-    'may_modify_trail',
-    'will_not_modify_trail',
-    'may_duplicate',
-    'may_not_duplicate',
-    'affects_liveness',
-    'does_not_affect_liveness',
-    'doesnt_affect_liveness',
-    'no_sharing',
-    'unknown_sharing',
-    'sharing',
+built_in = [
+    'some',
+    'all',
+    'not',
+    'if',
+    'then',
+    'else',
+    'true',
+    'fail',
+    'false',
+    'try',
+    'catch',
+    'catch_any',
+    'semidet_true',
+    'semidet_false',
+    'semidet_fail',
+    'impure_true',
+    'impure',
+    'semipure',
 ]
 
 keyword = [
@@ -103,25 +75,53 @@ keyword = [
     'require_failure',
 ]
 
-built_in = [
-    'some',
-    'all',
-    'not',
-    'if',
-    'then',
-    'else',
-    'true',
-    'fail',
-    'false',
-    'try',
-    'catch',
-    'catch_any',
-    'semidet_true',
-    'semidet_false',
-    'semidet_fail',
-    'impure_true',
-    'impure',
-    'semipure',
+meta = [
+    'inline',
+    'no_inline',
+    'type_spec',
+    'source_file',
+    'fact_table',
+    'obsolete',
+    'memo',
+    'loop_check',
+    'minimal_model',
+    'terminates',
+    'does_not_terminate',
+    'check_termination',
+    'promise_equivalent_clauses',
+    'foreign_proc',
+    'foreign_decl',
+    'foreign_code',
+    'foreign_type',
+    'foreign_import_module',
+    'foreign_export_enum',
+    'foreign_export',
+    'foreign_enum',
+    'may_call_mercury',
+    'will_not_call_mercury',
+    'thread_safe',
+    'not_thread_safe',
+    'maybe_thread_safe',
+    'promise_pure',
+    'promise_semipure',
+    'tabled_for_io',
+    'local',
+    'untrailed',
+    'trailed',
+    'attach_to_io_state',
+    'can_pass_as_mercury_type',
+    'stable',
+    'will_not_throw_exception',
+    'may_modify_trail',
+    'will_not_modify_trail',
+    'may_duplicate',
+    'may_not_duplicate',
+    'affects_liveness',
+    'does_not_affect_liveness',
+    'doesnt_affect_liveness',
+    'no_sharing',
+    'unknown_sharing',
+    'sharing',
 ]
 
 built_in0 = [RE(r"<=>")]
@@ -142,22 +142,35 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 number = [RE(r"0'.\|0[box][0-9a-fA-F]*")]
 
 number0 = [RE(r"\b\d+(\.\d+)?")]
 
-subst = [RE(r"\\[abfnrtv]\|\\x[0-9a-fA-F]*\\\|%[-+# *.0-9]*[dioxXucsfeEgGp]")]
+subst = [
+    RE(r"\\[abfnrtv]\|\\x[0-9a-fA-F]*\\\|%[-+# *.0-9]*[dioxXucsfeEgGp]"),
+]
 
 class string:
     default_text = DELIMITER
-    word_groups = [('subst', subst)]
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        ('subst', subst),
+    ]
 
-word_groups = [
-    ('meta', meta),
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
+    ('keyword', keyword),
+    ('meta', meta),
     ('built_in', built_in0),
     ('built_in', built_in1),
     ('built_in', built_in2),
@@ -165,13 +178,35 @@ word_groups = [
     ('built_in', built_in4),
     ('built_in', built_in5),
     ('built_in', built_in6),
+    ('comment', RE(r"%"), [RE(r"$")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
     ('number', number),
     ('number', number0),
-]
-
-delimited_ranges = [
-    ('comment', RE(r"%"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('string', RE(r"'"), [RE(r"'")]),
     ('string', RE(r"\""), [RE(r"\"")], string),
 ]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

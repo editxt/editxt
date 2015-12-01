@@ -6,7 +6,44 @@ file_patterns = ['*.vbnet', '*.vb']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-literal = ['true', 'false', 'nothing']
+built_in = [
+    'boolean',
+    'byte',
+    'cbool',
+    'cbyte',
+    'cchar',
+    'cdate',
+    'cdec',
+    'cdbl',
+    'char',
+    'cint',
+    'clng',
+    'cobj',
+    'csbyte',
+    'cshort',
+    'csng',
+    'cstr',
+    'ctype',
+    'date',
+    'decimal',
+    'directcast',
+    'double',
+    'gettype',
+    'getxmlnamespace',
+    'iif',
+    'integer',
+    'long',
+    'object',
+    'sbyte',
+    'short',
+    'single',
+    'string',
+    'trycast',
+    'typeof',
+    'uinteger',
+    'ulong',
+    'ushort',
+]
 
 keyword = [
     'addhandler',
@@ -147,72 +184,64 @@ keyword = [
     'xor',
 ]
 
-built_in = [
-    'boolean',
-    'byte',
-    'cbool',
-    'cbyte',
-    'cchar',
-    'cdate',
-    'cdec',
-    'cdbl',
-    'char',
-    'cint',
-    'clng',
-    'cobj',
-    'csbyte',
-    'cshort',
-    'csng',
-    'cstr',
-    'ctype',
-    'date',
-    'decimal',
-    'directcast',
-    'double',
-    'gettype',
-    'getxmlnamespace',
-    'iif',
-    'integer',
-    'long',
-    'object',
-    'sbyte',
-    'short',
-    'single',
-    'string',
-    'trycast',
-    'typeof',
-    'uinteger',
-    'ulong',
-    'ushort',
-]
+literal = ['true', 'false', 'nothing']
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+class doctag:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+    ]
+
+doctag0 = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
-    delimited_ranges = [
+    rules = [
         ('doctag', RE(r"'''|<!--|-->"), [RE(r"\B|\b")]),
-        ('doctag', RE(r"</?"), [RE(r">")]),
+        ('doctag', RE(r"</?"), [RE(r">")], doctag),
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag0),
     ]
 
 number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
 
-keyword0 = ['if', 'else', 'elseif', 'end', 'region', 'externalsource']
+meta_keyword = ['if', 'else', 'elseif', 'end', 'region', 'externalsource']
 
 class meta:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0)]
+    rules = [('meta-keyword', meta_keyword)]
 
-word_groups = [
-    ('literal', literal),
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
-    ('number', number),
-]
-
-delimited_ranges = [
+    ('keyword', keyword),
+    ('literal', literal),
     ('string', RE(r"\""), [RE(r"\"")]),
     ('comment', RE(r"(?=')"), [RE(r"$")], comment),
+    ('number', number),
     ('meta', RE(r"#"), [RE(r"$")], meta),
 ]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

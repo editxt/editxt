@@ -4,55 +4,6 @@
 name = 'TypeScript'
 file_patterns = ['*.typescript', '*.ts']
 
-literal = ['true', 'false', 'null', 'undefined', 'NaN', 'Infinity']
-
-keyword = [
-    'in',
-    'if',
-    'for',
-    'while',
-    'finally',
-    'var',
-    'new',
-    'function',
-    'do',
-    'return',
-    'void',
-    'else',
-    'break',
-    'catch',
-    'instanceof',
-    'with',
-    'throw',
-    'case',
-    'default',
-    'try',
-    'this',
-    'switch',
-    'continue',
-    'typeof',
-    'delete',
-    'let',
-    'yield',
-    'const',
-    'class',
-    'public',
-    'private',
-    'protected',
-    'get',
-    'set',
-    'super',
-    'static',
-    'implements',
-    'enum',
-    'export',
-    'import',
-    'declare',
-    'type',
-    'namespace',
-    'abstract',
-]
-
 built_in = [
     'eval',
     'isFinite',
@@ -109,17 +60,84 @@ built_in = [
     'void',
 ]
 
+keyword = [
+    'in',
+    'if',
+    'for',
+    'while',
+    'finally',
+    'var',
+    'new',
+    'function',
+    'do',
+    'return',
+    'void',
+    'else',
+    'break',
+    'catch',
+    'instanceof',
+    'with',
+    'throw',
+    'case',
+    'default',
+    'try',
+    'this',
+    'switch',
+    'continue',
+    'typeof',
+    'delete',
+    'let',
+    'yield',
+    'const',
+    'class',
+    'public',
+    'private',
+    'protected',
+    'get',
+    'set',
+    'super',
+    'static',
+    'implements',
+    'enum',
+    'export',
+    'import',
+    'declare',
+    'type',
+    'namespace',
+    'abstract',
+]
+
+literal = ['true', 'false', 'null', 'undefined', 'NaN', 'Infinity']
+
 meta = [RE(r"^\s*['\"]use strict['\"]")]
 
 class string:
     default_text = DELIMITER
-    delimited_ranges = [('subst', RE(r"\$\{"), [RE(r"\}")])]
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+    ]
+
+class string0:
+    default_text = DELIMITER
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        ('subst', RE(r"\$\{"), [RE(r"\}")]),
+    ]
+string0.__name__ = 'string'
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 number = [RE(r"\b(0[bB][01]+)")]
 
@@ -129,16 +147,25 @@ number1 = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
 
 keyword0 = ['return', 'throw', 'case']
 
+class _group2:
+    default_text = DELIMITER
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+    ]
+
 class regexp:
     default_text = DELIMITER
-    delimited_ranges = [('_group9', RE(r"\["), [RE(r"\]")])]
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        ('_group2', RE(r"\["), [RE(r"\]")], _group2),
+    ]
 
-class _group5:
+class _group1:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0)]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+    rules = [
+        ('keyword', keyword0),
+        None,  # rules[7],
+        None,  # rules[8],
         ('regexp', RE(r"\/"), [RE(r"\/[gimuy]*")], regexp),
     ]
 
@@ -146,51 +173,76 @@ title = [RE(r"[A-Za-z$_][0-9A-Za-z$_]*")]
 
 class params:
     default_text = DELIMITER
-    word_groups = [
-        ('literal', literal),
-        ('keyword', keyword),
+    rules = [
         ('built_in', built_in),
-    ]
-    delimited_ranges = [
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+        ('keyword', keyword),
+        ('literal', literal),
+        None,  # rules[7],
+        None,  # rules[8],
     ]
 
 class function:
     default_text = DELIMITER
-    word_groups = [
-        ('literal', literal),
-        ('keyword', keyword),
+    rules = [
         ('built_in', built_in),
+        ('keyword', keyword),
+        ('literal', literal),
         ('title', title),
+        ('params', RE(r"\("), [RE(r"(?=\))")], params),
     ]
-    delimited_ranges = [('params', RE(r"\("), [RE(r"(?=\))")], params)]
 
 keyword1 = ['interface', 'extends']
 
-class _group15:
+class _group5:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword1)]
+    rules = [('keyword', keyword1)]
 
-word_groups = [
-    ('literal', literal),
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
+    ('keyword', keyword),
+    ('literal', literal),
     ('meta', meta),
+    ('string', RE(r"'"), [RE(r"'")]),
+    ('string', RE(r"\""), [RE(r"\"")], string),
+    ('string', RE(r"`"), [RE(r"`")], string0),
+    ('comment', RE(r"//"), [RE(r"$")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
     ('number', number),
     ('number', number0),
     ('number', number1),
+    ('_group1', RE(r"(!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~|\b(case|return|throw)\b)\s*"), [RE(r"\B|\b")], _group1),
+    ('function', RE(r"function"), [RE(r"(?=[\{;])")], function),
+    ('_group3', RE(r"\b(constructor)"), [RE(r"(?=\{)")]),
+    ('_group4', RE(r"\b(module)"), [RE(r"(?=\{)")]),
+    ('_group5', RE(r"\b(interface)"), [RE(r"(?=\{)")], _group5),
 ]
 
-delimited_ranges = [
-    ('string', RE(r"'"), [RE(r"'")]),
-    ('string', RE(r"\""), [RE(r"\"")]),
-    ('string', RE(r"`"), [RE(r"`")], string),
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('_group5', RE(r"(!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~|\b(case|return|throw)\b)\s*"), [RE(r"\B|\b")], _group5),
-    ('function', RE(r"function"), [RE(r"(?=[\{;])")], function),
-    ('_group13', RE(r"\b(constructor)"), [RE(r"(?=\{)")]),
-    ('_group14', RE(r"\b(module)"), [RE(r"(?=\{)")]),
-    ('_group15', RE(r"\b(interface)"), [RE(r"(?=\{)")], _group15),
-]
+_group1.rules[1] = rules[7]
+_group1.rules[2] = rules[8]
+params.rules[3] = rules[7]
+params.rules[4] = rules[8]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

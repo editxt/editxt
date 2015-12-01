@@ -6,11 +6,18 @@ file_patterns = ['*.dust', '*.dst']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-name0 = [RE(r"[a-zA-Z\.-]+")]
+class name0:
+    default_text = DELIMITER
+    rules = [('name', RE(r"[a-zA-Z\.-]+"), [RE(r"\B|\b")])]
+name0.__name__ = 'name'
+
+class _group0:
+    default_text = DELIMITER
+    rules = [('string', RE(r"\""), [RE(r"\"")])]
 
 class template_tag:
     default_text = DELIMITER
-    word_groups = [('name', name0)]
+    rules = [('name', name0, [RE(r"(?=\})")], _group0)]
 template_tag.__name__ = 'template-tag'
 
 keyword = [
@@ -29,12 +36,35 @@ keyword = [
 
 class template_variable:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword)]
+    rules = [('keyword', keyword)]
 template_variable.__name__ = 'template-variable'
 
-word_groups = []
-
-delimited_ranges = [
+rules = [
     ('template-tag', RE(r"\{[#\/]"), [RE(r"\}")], template_tag),
     ('template-variable', RE(r"\{"), [RE(r"\}")], template_variable),
 ]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

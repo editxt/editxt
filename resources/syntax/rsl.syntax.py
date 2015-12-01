@@ -4,24 +4,6 @@
 name = 'RenderMan RSL'
 file_patterns = ['*.rsl']
 
-keyword = [
-    'float',
-    'color',
-    'point',
-    'normal',
-    'vector',
-    'matrix',
-    'while',
-    'for',
-    'if',
-    'do',
-    'return',
-    'else',
-    'break',
-    'extern',
-    'continue',
-]
-
 built_in = [
     'abs',
     'acos',
@@ -100,22 +82,80 @@ built_in = [
     'zcomp',
 ]
 
+keyword = [
+    'float',
+    'color',
+    'point',
+    'normal',
+    'vector',
+    'matrix',
+    'while',
+    'for',
+    'if',
+    'do',
+    'return',
+    'else',
+    'break',
+    'extern',
+    'continue',
+]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+    ]
 
 number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
 
-word_groups = [('keyword', keyword), ('built_in', built_in), ('number', number)]
-
-delimited_ranges = [
+rules = [
+    ('built_in', built_in),
+    ('keyword', keyword),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
     ('string', RE(r"\""), [RE(r"\"")]),
-    ('string', RE(r"'"), [RE(r"'")]),
+    ('string', RE(r"'"), [RE(r"'")], string),
+    ('number', number),
     ('meta', RE(r"#"), [RE(r"$")]),
     ('class', RE(r"\b(surface|displacement|light|volume|imager)"), [RE(r"\(")]),
-    ('_group4', RE(r"\b(illuminate|illuminance|gather)"), [RE(r"\(")]),
+    ('_group1', RE(r"\b(illuminate|illuminance|gather)"), [RE(r"\(")]),
 ]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

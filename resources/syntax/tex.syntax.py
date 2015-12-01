@@ -4,29 +4,92 @@
 name = 'TeX'
 file_patterns = ['*.tex']
 
-name0 = [RE(r"[a-zA-Zа-яА-я]+[*]?")]
+class name0:
+    default_text = DELIMITER
+    rules = [('name', RE(r"[a-zA-Zа-яА-я]+[*]?"), [RE(r"\B|\b")])]
+name0.__name__ = 'name'
 
-name1 = [RE(r"[^a-zA-Zа-яА-я0-9]")]
+number = [RE(r"-?\d*\.?\d+(pt|pc|mm|cm|in|dd|cc|ex|em)?")]
+
+class _group1:
+    default_text = DELIMITER
+    rules = [('number', number)]
+
+class _group0:
+    default_text = DELIMITER
+    rules = [
+        ('string', RE(r"\["), [RE(r"\]")]),
+        ('string', RE(r"\{"), [RE(r"\}")]),
+        ('_group1', RE(r"\s*=\s*"), [RE(r"")], _group1),
+    ]
+
+class name1:
+    default_text = DELIMITER
+    rules = [('name', RE(r"[^a-zA-Zа-яА-я0-9]"), [RE(r"\B|\b")])]
+name1.__name__ = 'name'
+
+class _group2:
+    default_text = DELIMITER
+    rules = [('number', number)]
+
+class _group00:
+    default_text = DELIMITER
+    rules = [
+        ('string', RE(r"\["), [RE(r"\]")]),
+        ('string', RE(r"\{"), [RE(r"\}")]),
+        ('_group2', RE(r"\s*=\s*"), [RE(r"")], _group2),
+    ]
+_group00.__name__ = '_group0'
 
 class tag:
     default_text = DELIMITER
-    word_groups = [('name', name0), ('name', name1)]
+    rules = [
+        ('name', name0, [RE(r"(?=\B|\b)")], _group0),
+        ('name', name1, [RE(r"(?=\B|\b)")], _group00),
+    ]
 
 class formula:
     default_text = DELIMITER
-    delimited_ranges = [('tag', RE(r"\\"), [RE(r"\B|\b")], tag)]
+    rules = [
+        None,  # rules[0],
+    ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
-word_groups = []
-
-delimited_ranges = [
+rules = [
     ('tag', RE(r"\\"), [RE(r"\B|\b")], tag),
     ('formula', RE(r"\$\$"), [RE(r"\$\$")], formula),
     ('formula', RE(r"\$"), [RE(r"\$")], formula),
     ('comment', RE(r"%"), [RE(r"$")], comment),
 ]
+
+formula.rules[0] = rules[0]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

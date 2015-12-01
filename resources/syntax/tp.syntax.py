@@ -4,19 +4,6 @@
 name = 'TP'
 file_patterns = ['*.tp']
 
-literal = [
-    'ON',
-    'OFF',
-    'max_speed',
-    'LPOS',
-    'JPOS',
-    'ENABLE',
-    'DISABLE',
-    'START',
-    'STOP',
-    'RESET',
-]
-
 keyword = [
     'ABORT',
     'ACC',
@@ -88,18 +75,34 @@ keyword = [
     'POS',
 ]
 
+literal = [
+    'ON',
+    'OFF',
+    'max_speed',
+    'LPOS',
+    'JPOS',
+    'ENABLE',
+    'DISABLE',
+    'START',
+    'STOP',
+    'RESET',
+]
+
 number = [RE(r"[1-9][0-9]*")]
 
 symbol = [RE(r":[^\]]+")]
 
 class built_in:
     default_text = DELIMITER
-    word_groups = [('number', number), ('symbol', symbol)]
+    rules = [('number', number), ('symbol', symbol)]
 
 class built_in0:
     default_text = DELIMITER
-    word_groups = [('number', number), ('symbol', symbol)]
-    delimited_ranges = [('string', RE(r"\""), [RE(r"\"")])]
+    rules = [
+        None,  # ('number', number),
+        ('string', RE(r"\""), [RE(r"\"")]),
+        None,  # ('symbol', symbol),
+    ]
 built_in0.__name__ = 'built_in'
 
 keyword0 = [RE(r"/(PROG|ATTR|MN|POS|END)\b")]
@@ -114,29 +117,63 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 number1 = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
 
 variable = [RE(r"\$[A-Za-z0-9_]+")]
 
-word_groups = [
-    ('literal', literal),
+rules = [
     ('keyword', keyword),
+    ('literal', literal),
+    ('built_in', RE(r"(AR|P|PAYLOAD|PR|R|SR|RSR|LBL|VR|UALM|MESSAGE|UTOOL|UFRAME|TIMER|    TIMER_OVERFLOW|JOINT_MAX_SPEED|RESUME_PROG|DIAG_REC)\["), [RE(r"\]")], built_in),
+    ('built_in', RE(r"(AI|AO|DI|DO|F|RI|RO|UI|UO|GI|GO|SI|SO)\["), [RE(r"\]")], built_in0),
     ('keyword', keyword0),
     ('keyword', keyword1),
     ('keyword', keyword2),
     ('number', number0),
+    ('comment', RE(r"//"), [RE(r"[;$]")], comment),
+    ('comment', RE(r"!"), [RE(r"[;$]")], comment0),
+    ('comment', RE(r"--eg:"), [RE(r"$")], comment0),
+    None,  # built_in0.rules[1],
+    ('string', RE(r"'"), [RE(r"'")]),
     ('number', number1),
     ('variable', variable),
 ]
 
-delimited_ranges = [
-    ('built_in', RE(r"(AR|P|PAYLOAD|PR|R|SR|RSR|LBL|VR|UALM|MESSAGE|UTOOL|UFRAME|TIMER|    TIMER_OVERFLOW|JOINT_MAX_SPEED|RESUME_PROG|DIAG_REC)\["), [RE(r"\]")], built_in),
-    ('built_in', RE(r"(AI|AO|DI|DO|F|RI|RO|UI|UO|GI|GO|SI|SO)\["), [RE(r"\]")], built_in0),
-    ('comment', RE(r"//"), [RE(r"[;$]")], comment),
-    ('comment', RE(r"!"), [RE(r"[;$]")], comment),
-    ('comment', RE(r"--eg:"), [RE(r"$")], comment),
-    ('string', RE(r"\""), [RE(r"\"")]),
-    ('string', RE(r"'"), [RE(r"'")]),
-]
+built_in0.rules[0] = ('number', number)
+built_in0.rules[2] = ('symbol', symbol)
+rules[11] = built_in0.rules[1]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

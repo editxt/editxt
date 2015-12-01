@@ -36,11 +36,25 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 number = [
     RE(r"([-+]?([0-9]*\.?[0-9]+\.?))|(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"),
 ]
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+    ]
 
 name0 = [RE(r"([G])([0-9]+\.?[0-9]?)")]
 
@@ -48,23 +62,45 @@ name1 = [RE(r"([M])([0-9]+\.?[0-9]?)")]
 
 attr = [RE(r"(VZOFX|VZOFY|VZOFZ)")]
 
-word_groups = [
+rules = [
     ('keyword', keyword),
     ('meta', meta),
     ('meta', meta0),
+    ('comment', RE(r"//"), [RE(r"$")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('comment', RE(r"\("), [RE(r"\)")], comment0),
     ('number', number),
+    ('string', RE(r"'"), [RE(r"'")]),
+    ('string', RE(r"\""), [RE(r"\"")], string),
     ('name', name0),
     ('name', name1),
-    ('attr', attr),
-]
-
-delimited_ranges = [
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('comment', RE(r"\("), [RE(r"\)")], comment),
-    ('string', RE(r"'"), [RE(r"'")]),
-    ('string', RE(r"\""), [RE(r"\"")]),
     ('attr', RE(r"(VC|VS|#)"), [RE(r"(\d+)")]),
+    ('attr', attr),
     ('built_in', RE(r"(ATAN|ABS|ACOS|ASIN|SIN|COS|EXP|FIX|FUP|ROUND|LN|TAN)(\[)"), [RE(r"([-+]?([0-9]*\.?[0-9]+\.?))(\])")]),
     ('symbol', RE(r"N"), [RE(r"\d+")]),
 ]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

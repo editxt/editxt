@@ -6,41 +6,6 @@ file_patterns = ['*.1c']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-keyword = [
-    'возврат',
-    'дата',
-    'для',
-    'если',
-    'и',
-    'или',
-    'иначе',
-    'иначеесли',
-    'исключение',
-    'конецесли',
-    'конецпопытки',
-    'конецпроцедуры',
-    'конецфункции',
-    'конеццикла',
-    'константа',
-    'не',
-    'перейти',
-    'перем',
-    'перечисление',
-    'по',
-    'пока',
-    'попытка',
-    'прервать',
-    'продолжить',
-    'процедура',
-    'строка',
-    'тогда',
-    'фс',
-    'функция',
-    'цикл',
-    'число',
-    'экспорт',
-]
-
 built_in = [
     'ansitooem',
     'oemtoansi',
@@ -177,57 +142,128 @@ built_in = [
     'шаблон',
 ]
 
+keyword = [
+    'возврат',
+    'дата',
+    'для',
+    'если',
+    'и',
+    'или',
+    'иначе',
+    'иначеесли',
+    'исключение',
+    'конецесли',
+    'конецпопытки',
+    'конецпроцедуры',
+    'конецфункции',
+    'конеццикла',
+    'константа',
+    'не',
+    'перейти',
+    'перем',
+    'перечисление',
+    'по',
+    'пока',
+    'попытка',
+    'прервать',
+    'продолжить',
+    'процедура',
+    'строка',
+    'тогда',
+    'фс',
+    'функция',
+    'цикл',
+    'число',
+    'экспорт',
+]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
 number = [RE(r"\b\d+(\.\d+)?")]
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '""'},
+    ]
 
 keyword0 = ['процедура', 'функция']
 
 keyword1 = ['экспорт']
 
-class _group3:
+class _group0:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword1)]
-    delimited_ranges = [('comment', RE(r"//"), [RE(r"$")], comment)]
+    rules = [
+        ('keyword', keyword1),
+        None,  # rules[2],
+    ]
 
 keyword2 = ['знач']
 
 class params:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword2)]
-    delimited_ranges = [
-        ('string', RE(r"\""), [RE(r"\"|$")]),
-        ('string', RE(r"\|"), [RE(r"\"|$")]),
+    rules = [
+        ('keyword', keyword2),
+        None,  # rules[4],
+        None,  # rules[5],
     ]
 
 title = [RE(r"[a-zA-Zа-яА-Я][a-zA-Z0-9_а-яА-Я]*")]
 
 class function:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0), ('title', title)]
-    delimited_ranges = [
-        ('_group3', RE(r"экспорт"), [RE(r"")], _group3),
+    rules = [
+        ('keyword', keyword0),
+        ('_group0', RE(r"экспорт"), [RE(r"")], _group0),
         ('params', RE(r"\("), [RE(r"\)")], params),
-        ('comment', RE(r"//"), [RE(r"$")], comment),
+        None,  # rules[2],
+        ('title', title),
     ]
 
 number0 = [RE(r"'\d{2}\.\d{2}\.(\d{2}|\d{4})'")]
 
-word_groups = [
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
+    ('keyword', keyword),
+    ('comment', RE(r"//"), [RE(r"$")], comment),
     ('number', number),
+    ('string', RE(r"\""), [RE(r"\"|$")]),
+    ('string', RE(r"\|"), [RE(r"\"|$")], string),
+    ('function', RE(r"(процедура|функция)"), [RE(r"$")], function),
+    ('meta', RE(r"#"), [RE(r"$")]),
     ('number', number0),
 ]
 
-delimited_ranges = [
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('string', RE(r"\""), [RE(r"\"|$")]),
-    ('string', RE(r"\|"), [RE(r"\"|$")]),
-    ('function', RE(r"(процедура|функция)"), [RE(r"$")], function),
-    ('meta', RE(r"#"), [RE(r"$")]),
-]
+_group0.rules[1] = rules[2]
+params.rules[1] = rules[4]
+params.rules[2] = rules[5]
+function.rules[3] = rules[2]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

@@ -4,20 +4,6 @@
 name = 'OpenSCAD'
 file_patterns = ['*.openscad', '*.scad']
 
-literal = ['false', 'true', 'PI', 'undef']
-
-keyword = [
-    'function',
-    'module',
-    'include',
-    'use',
-    'for',
-    'intersection_for',
-    'if',
-    'else',
-    '\\%',
-]
-
 built_in = [
     'circle',
     'square',
@@ -86,50 +72,105 @@ built_in = [
     'assign',
 ]
 
+keyword = [
+    'function',
+    'module',
+    'include',
+    'use',
+    'for',
+    'intersection_for',
+    'if',
+    'else',
+    '\\%',
+]
+
+literal = ['false', 'true', 'PI', 'undef']
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 number = [RE(r"\b\d+(\.\d+)?(e-?\d+)?")]
 
-keyword0 = ['include', 'use']
+meta_keyword = ['include', 'use']
 
 class meta:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0)]
+    rules = [('meta-keyword', meta_keyword)]
 
-keyword1 = [RE(r"\$(f[asn]|t|vp[rtd]|children)")]
+keyword0 = [RE(r"\$(f[asn]|t|vp[rtd]|children)")]
 
-keyword2 = ['module', 'function']
+keyword1 = ['module', 'function']
 
 literal0 = [RE(r"false|true|PI|undef")]
 
 class params:
     default_text = DELIMITER
-    word_groups = [('number', number), ('keyword', keyword1), ('literal', literal0)]
-    delimited_ranges = [('string', RE(r"\""), [RE(r"\"")])]
+    rules = [
+        None,  # ('number', number),
+        None,  # rules[7],
+        None,  # ('keyword', keyword0),
+        ('literal', literal0),
+    ]
 
 title = [RE(r"[a-zA-Z_]\w*")]
 
 class function:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword2), ('title', title)]
-    delimited_ranges = [('params', RE(r"\("), [RE(r"\)")], params)]
+    rules = [
+        ('keyword', keyword1),
+        ('params', RE(r"\("), [RE(r"\)")], params),
+        ('title', title),
+    ]
 
-word_groups = [
-    ('literal', literal),
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
-    ('number', number),
-    ('keyword', keyword1),
-]
-
-delimited_ranges = [
+    ('keyword', keyword),
+    ('literal', literal),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('number', number),
     ('meta', RE(r"include|use <"), [RE(r">")], meta),
     ('string', RE(r"\""), [RE(r"\"")]),
+    ('keyword', keyword0),
     ('function', RE(r"\b(module|function)"), [RE(r"\=|\{")], function),
 ]
+
+params.rules[0] = ('number', number)
+params.rules[1] = rules[7]
+params.rules[2] = ('keyword', keyword0)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

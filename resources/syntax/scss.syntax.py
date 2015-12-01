@@ -10,7 +10,15 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 selector_id = [RE(r"\#[A-Za-z0-9_-]+")]
 
@@ -32,19 +40,23 @@ number0 = [
     RE(r"\b\d+(\.\d+)?(%|em|ex|ch|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc|px|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx)?"),
 ]
 
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+    ]
+
 meta = [RE(r"!important")]
 
-class _group5:
+class _group0:
     default_text = DELIMITER
-    word_groups = [
-        ('variable', variable),
+    rules = [
+        None,  # ('variable', variable),
         ('number', number),
         ('number', number0),
-        ('meta', meta),
-    ]
-    delimited_ranges = [
         ('string', RE(r"\""), [RE(r"\"")]),
-        ('string', RE(r"'"), [RE(r"'")]),
+        ('string', RE(r"'"), [RE(r"'")], string),
+        ('meta', meta),
     ]
 
 keyword = [
@@ -67,31 +79,58 @@ keyword = [
     'warn',
 ]
 
-class _group8:
+class _group2:
     default_text = DELIMITER
-    word_groups = [
+    rules = [
         ('keyword', keyword),
-        ('variable', variable),
-        ('number', number),
-        ('number', number0),
-    ]
-    delimited_ranges = [
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('string', RE(r"'"), [RE(r"'")]),
+        None,  # ('variable', variable),
+        None,  # _group0.rules[3],
+        None,  # _group0.rules[4],
+        None,  # ('number', number),
+        None,  # ('number', number0),
     ]
 
-word_groups = [
+rules = [
+    ('comment', RE(r"//"), [RE(r"$")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
     ('selector-id', selector_id),
     ('selector-class', selector_class),
+    ('selector-attr', RE(r"\["), [RE(r"\]")]),
     ('selector-tag', selector_tag),
     ('variable', variable),
     ('attribute', attribute),
+    ('_group0', RE(r":"), [RE(r";")], _group0),
+    ('_group2', RE(r"@"), [RE(r"[{;]")], _group2),
 ]
 
-delimited_ranges = [
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('selector-attr', RE(r"\["), [RE(r"\]")]),
-    ('_group5', RE(r":"), [RE(r";")], _group5),
-    ('_group8', RE(r"@"), [RE(r"[{;]")], _group8),
-]
+_group0.rules[0] = ('variable', variable)
+_group2.rules[1] = ('variable', variable)
+_group2.rules[2] = _group0.rules[3]
+_group2.rules[3] = _group0.rules[4]
+_group2.rules[4] = ('number', number)
+_group2.rules[5] = ('number', number0)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

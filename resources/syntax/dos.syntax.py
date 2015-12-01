@@ -6,27 +6,6 @@ file_patterns = ['*.dos', '*.bat', '*.cmd']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-keyword = [
-    'if',
-    'else',
-    'goto',
-    'for',
-    'in',
-    'do',
-    'call',
-    'exit',
-    'not',
-    'exist',
-    'errorlevel',
-    'defined',
-    'equ',
-    'neq',
-    'lss',
-    'leq',
-    'gtr',
-    'geq',
-]
-
 built_in = [
     'prn',
     'nul',
@@ -117,6 +96,27 @@ built_in = [
     'del',
 ]
 
+keyword = [
+    'if',
+    'else',
+    'goto',
+    'for',
+    'in',
+    'do',
+    'call',
+    'exit',
+    'not',
+    'exist',
+    'errorlevel',
+    'defined',
+    'equ',
+    'neq',
+    'lss',
+    'leq',
+    'gtr',
+    'geq',
+]
+
 variable = [RE(r"%[^ ]|%[^ ]+?%|![^ ]+?!")]
 
 title = [RE(r"([_a-zA-Z]\w*\.)*([_a-zA-Z]\w*:)?[_a-zA-Z]\w*")]
@@ -125,23 +125,49 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
 class function:
     default_text = DELIMITER
-    word_groups = [('title', title)]
-    delimited_ranges = [('comment', RE(r"@?rem\b"), [RE(r"$")], comment)]
+    rules = [
+        ('title', title),
+        ('comment', RE(r"@?rem\b"), [RE(r"$")], comment),
+    ]
 
 number = [RE(r"\b\d+")]
 
-word_groups = [
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
+    ('keyword', keyword),
     ('variable', variable),
+    ('function', RE(r"^\s*[A-Za-z._?][A-Za-z0-9_$#@~.?]*(:|\s+label)"), [RE(r"goto:eof")], function),
     ('number', number),
+    None,  # function.rules[1],
 ]
 
-delimited_ranges = [
-    ('function', RE(r"^\s*[A-Za-z._?][A-Za-z0-9_$#@~.?]*(:|\s+label)"), [RE(r"goto:eof")], function),
-    ('comment', RE(r"@?rem\b"), [RE(r"$")], comment),
-]
+rules[5] = function.rules[1]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

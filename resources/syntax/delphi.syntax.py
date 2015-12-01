@@ -102,40 +102,85 @@ number = [RE(r"\b\d+(\.\d+)?")]
 
 title = [RE(r"[a-zA-Z]\w*")]
 
-class _group1:
+class _group0:
     default_text = DELIMITER
-    word_groups = [('title', title)]
+    rules = [('title', title)]
 
 keyword0 = ['function', 'constructor', 'destructor', 'procedure']
 
 class params:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword), ('string', string)]
-    delimited_ranges = [('string', RE(r"'"), [RE(r"'")])]
+    rules = [
+        ('keyword', keyword),
+        None,  # rules[1],
+        None,  # ('string', string),
+    ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
+
+class comment0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'type': 'RegExp', 'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b"}},
+        ('doctag', doctag),
+    ]
+comment0.__name__ = 'comment'
 
 class function:
     default_text = DELIMITER
-    word_groups = [('keyword', keyword0), ('title', title)]
-    delimited_ranges = [
+    rules = [
+        ('keyword', keyword0),
+        None,  # ('title', title),
         ('params', RE(r"\("), [RE(r"\)")], params),
         ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"\{"), [RE(r"\}")], comment),
-        ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment),
+        ('comment', RE(r"\{"), [RE(r"\}")], comment0),
+        ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment0),
     ]
 
-word_groups = [('keyword', keyword), ('string', string), ('number', number)]
-
-delimited_ranges = [
+rules = [
+    ('keyword', keyword),
     ('string', RE(r"'"), [RE(r"'")]),
-    ('_group1', RE(r"(?=[a-zA-Z]\w*\s*=\s*class\s*\()"), [RE(r"\B|\b")], _group1),
+    ('string', string),
+    ('number', number),
+    ('_group0', RE(r"(?=[a-zA-Z]\w*\s*=\s*class\s*\()"), [RE(r"\B|\b")], _group0),
     ('function', RE(r"\b(function|constructor|destructor|procedure)"), [RE(r"[:;]")], function),
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"\{"), [RE(r"\}")], comment),
-    ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment),
+    None,  # function.rules[3],
+    None,  # function.rules[4],
+    None,  # function.rules[5],
 ]
+
+function.rules[1] = ('title', title)
+params.rules[1] = rules[1]
+params.rules[2] = ('string', string)
+rules[6] = function.rules[3]
+rules[7] = function.rules[4]
+rules[8] = function.rules[5]
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup

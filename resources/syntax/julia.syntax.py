@@ -4,105 +4,6 @@
 name = 'Julia'
 file_patterns = ['*.julia']
 
-literal = [
-    'true',
-    'false',
-    'ARGS',
-    'CPU_CORES',
-    'C_NULL',
-    'DL_LOAD_PATH',
-    'DevNull',
-    'ENDIAN_BOM',
-    'ENV',
-    'I',
-    'Inf',
-    'Inf16',
-    'Inf32',
-    'InsertionSort',
-    'JULIA_HOME',
-    'LOAD_PATH',
-    'MS_ASYNC',
-    'MS_INVALIDATE',
-    'MS_SYNC',
-    'MergeSort',
-    'NaN',
-    'NaN16',
-    'NaN32',
-    'OS_NAME',
-    'QuickSort',
-    'RTLD_DEEPBIND',
-    'RTLD_FIRST',
-    'RTLD_GLOBAL',
-    'RTLD_LAZY',
-    'RTLD_LOCAL',
-    'RTLD_NODELETE',
-    'RTLD_NOLOAD',
-    'RTLD_NOW',
-    'RoundDown',
-    'RoundFromZero',
-    'RoundNearest',
-    'RoundToZero',
-    'RoundUp',
-    'STDERR',
-    'STDIN',
-    'STDOUT',
-    'VERSION',
-    'WORD_SIZE',
-    'catalan',
-    'cglobal',
-    'e',
-    'eu',
-    'eulergamma',
-    'golden',
-    'im',
-    'nothing',
-    'pi',
-    'γ',
-    'π',
-    'φ',
-    'Inf64',
-    'NaN64',
-    'RoundNearestTiesAway',
-    'RoundNearestTiesUp',
-]
-
-keyword = [
-    'in',
-    'abstract',
-    'baremodule',
-    'begin',
-    'bitstype',
-    'break',
-    'catch',
-    'ccall',
-    'const',
-    'continue',
-    'do',
-    'else',
-    'elseif',
-    'end',
-    'export',
-    'finally',
-    'for',
-    'function',
-    'global',
-    'if',
-    'immutable',
-    'import',
-    'importall',
-    'let',
-    'local',
-    'macro',
-    'module',
-    'quote',
-    'return',
-    'try',
-    'type',
-    'typealias',
-    'using',
-    'while',
-]
-
 built_in = [
     'ANY',
     'ASCIIString',
@@ -364,6 +265,105 @@ built_in = [
     'Vector',
 ]
 
+keyword = [
+    'in',
+    'abstract',
+    'baremodule',
+    'begin',
+    'bitstype',
+    'break',
+    'catch',
+    'ccall',
+    'const',
+    'continue',
+    'do',
+    'else',
+    'elseif',
+    'end',
+    'export',
+    'finally',
+    'for',
+    'function',
+    'global',
+    'if',
+    'immutable',
+    'import',
+    'importall',
+    'let',
+    'local',
+    'macro',
+    'module',
+    'quote',
+    'return',
+    'try',
+    'type',
+    'typealias',
+    'using',
+    'while',
+]
+
+literal = [
+    'true',
+    'false',
+    'ARGS',
+    'CPU_CORES',
+    'C_NULL',
+    'DL_LOAD_PATH',
+    'DevNull',
+    'ENDIAN_BOM',
+    'ENV',
+    'I',
+    'Inf',
+    'Inf16',
+    'Inf32',
+    'InsertionSort',
+    'JULIA_HOME',
+    'LOAD_PATH',
+    'MS_ASYNC',
+    'MS_INVALIDATE',
+    'MS_SYNC',
+    'MergeSort',
+    'NaN',
+    'NaN16',
+    'NaN32',
+    'OS_NAME',
+    'QuickSort',
+    'RTLD_DEEPBIND',
+    'RTLD_FIRST',
+    'RTLD_GLOBAL',
+    'RTLD_LAZY',
+    'RTLD_LOCAL',
+    'RTLD_NODELETE',
+    'RTLD_NOLOAD',
+    'RTLD_NOW',
+    'RoundDown',
+    'RoundFromZero',
+    'RoundNearest',
+    'RoundToZero',
+    'RoundUp',
+    'STDERR',
+    'STDIN',
+    'STDOUT',
+    'VERSION',
+    'WORD_SIZE',
+    'catalan',
+    'cglobal',
+    'e',
+    'eu',
+    'eulergamma',
+    'golden',
+    'im',
+    'nothing',
+    'pi',
+    'γ',
+    'π',
+    'φ',
+    'Inf64',
+    'NaN64',
+    'RoundNearestTiesAway',
+    'RoundNearestTiesUp',
+]
+
 number = [
     RE(r"(\b0x[\d_]*(\.[\d_]*)?|0x\.\d[\d_]*)p[-+]?\d+|\b0[box][a-fA-F0-9][a-fA-F0-9_]*|(\b\d[\d_]*(\.[\d_]*)?|\.\d[\d_]*)([eEfF][-+]?\d+)?"),
 ]
@@ -376,19 +376,30 @@ type0 = [RE(r"<:")]
 
 class subst:
     default_text = DELIMITER
-    word_groups = [
-        ('literal', literal),
-        ('keyword', keyword),
+    rules = [
         ('built_in', built_in),
+        ('keyword', keyword),
+        ('literal', literal),
     ]
 
 variable = [RE(r"\$[A-Za-z_\u00A1-\uFFFF][A-Za-z_0-9\u00A1-\uFFFF]*")]
 
 class string0:
     default_text = DELIMITER
-    word_groups = [('variable', variable)]
-    delimited_ranges = [('subst', RE(r"\$\("), [RE(r"\)")], subst)]
+    rules = [
+        ('subst', RE(r"\$\("), [RE(r"\)")], subst),
+        ('variable', variable),
+    ]
 string0.__name__ = 'string'
+
+class string1:
+    default_text = DELIMITER
+    rules = [
+        # {'relevance': 0, 'begin': '\\\\[\\s\\S]'},
+        None,  # string.rules[0],
+        None,  # ('variable', variable),
+    ]
+string1.__name__ = 'string'
 
 meta = [RE(r"@[A-Za-z_\u00A1-\uFFFF][A-Za-z_0-9\u00A1-\uFFFF]*")]
 
@@ -396,80 +407,50 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    word_groups = [('doctag', doctag)]
+    rules = [('doctag', doctag)]
 
-class subst0:
-    default_text = DELIMITER
-    word_groups = [
-        ('literal', literal),
-        ('keyword', keyword),
-        ('built_in', built_in),
-        ('number', number),
-        ('string', string),
-        ('type', type),
-        ('type', type0),
-        ('meta', meta),
-    ]
-    delimited_ranges = [
-        ('string', RE(r"\w*\""), [RE(r"\"\w*")]),
-        ('string', RE(r"\w*\"\"\""), [RE(r"\"\"\"\w*")]),
-        ('string', RE(r"`"), [RE(r"`")], string0),
-        ('comment', RE(r"#="), [RE(r"=#")]),
-        ('comment', RE(r"#"), [RE(r"$")]),
-        ('comment', RE(r"#"), [RE(r"$")], comment),
-    ]
-subst0.__name__ = 'subst'
-
-class string1:
-    default_text = DELIMITER
-    word_groups = [('variable', variable)]
-    delimited_ranges = [('subst', RE(r"\$\("), [RE(r"\)")], subst0)]
-string1.__name__ = 'string'
-
-class subst1:
-    default_text = DELIMITER
-    word_groups = [
-        ('literal', literal),
-        ('keyword', keyword),
-        ('built_in', built_in),
-        ('number', number),
-        ('string', string),
-        ('type', type),
-        ('type', type0),
-        ('meta', meta),
-    ]
-    delimited_ranges = [
-        ('string', RE(r"\w*\""), [RE(r"\"\w*")], string0),
-        ('string', RE(r"\w*\"\"\""), [RE(r"\"\"\"\w*")], string0),
-        ('string', RE(r"`"), [RE(r"`")]),
-        ('comment', RE(r"#="), [RE(r"=#")]),
-        ('comment', RE(r"#"), [RE(r"$")]),
-        ('comment', RE(r"#"), [RE(r"$")], comment),
-    ]
-subst1.__name__ = 'subst'
-
-class string2:
-    default_text = DELIMITER
-    word_groups = [('variable', variable)]
-    delimited_ranges = [('subst', RE(r"\$\("), [RE(r"\)")], subst1)]
-string2.__name__ = 'string'
-
-word_groups = [
-    ('literal', literal),
-    ('keyword', keyword),
+rules = [
     ('built_in', built_in),
+    ('keyword', keyword),
+    ('literal', literal),
     ('number', number),
     ('string', string),
     ('type', type),
     ('type', type0),
+    ('string', RE(r"\w*\"\"\""), [RE(r"\"\"\"\w*")], string0),
+    ('string', RE(r"\w*\""), [RE(r"\"\w*")], string0),
+    ('string', RE(r"`"), [RE(r"`")], string1),
     ('meta', meta),
-]
-
-delimited_ranges = [
-    ('string', RE(r"\w*\""), [RE(r"\"\w*")], string1),
-    ('string', RE(r"\w*\"\"\""), [RE(r"\"\"\"\w*")], string1),
-    ('string', RE(r"`"), [RE(r"`")], string2),
     ('comment', RE(r"#="), [RE(r"=#")]),
     ('comment', RE(r"#"), [RE(r"$")]),
     ('comment', RE(r"#"), [RE(r"$")], comment),
 ]
+
+string1.rules[0] = string0.rules[0]
+string1.rules[1] = ('variable', variable)
+subst.rules.extend(rules)
+
+# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
+assert "__obj" not in globals()
+assert "__fixup" not in globals()
+def __fixup(obj):
+    groups = []
+    ranges = []
+    rules = getattr(obj, "rules", [])
+    for i, rng in reversed(list(enumerate(rules))):
+        if len(rng) == 2:
+            groups.append(rng)
+        else:
+            assert len(rng) > 2, rng
+            ranges.append(rng)
+    return groups, ranges
+
+class __obj:
+    rules = globals().get("rules", [])
+word_groups, delimited_ranges = __fixup(__obj)
+
+for __obj in globals().values():
+    if hasattr(__obj, "rules"):
+        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
+
+del __obj, __fixup
