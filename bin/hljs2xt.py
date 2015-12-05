@@ -338,37 +338,6 @@ def regex(obj):
     raise Error("unknown regex type: {}".format(obj))
 
 
-class DictObj:
-
-    def __init__(self, _data=None, **data):
-        if _data is None:
-            _data = data
-        elif data:
-            _data.update(data)
-        self._data = _data
-
-    def __contains__(self, name):
-        return name in self._data
-
-    def __getattr__(self, name):
-        try:
-            return self._data[name]
-        except KeyError:
-            raise AttributeError("{!r} not in {!r}".format(
-                name,
-                list(self._data)
-            ))
-
-    def __getitem__(self, name):
-        return self._data[name]
-
-    def __repr__(self):
-        return repr(self._data)
-
-    def _get(self, name, default=None):
-        return self._data.get(name, default)
-
-
 class Definitions:
 
     def __init__(self):
@@ -660,6 +629,37 @@ class SyntaxClass:
         if self._safe_name:
             lines.append("{}.__name__ = {!r}".format(self.safe_name, self.name))
         return "\n".join(lines)
+
+
+class DictObj:
+
+    def __init__(self, _data=None, **data):
+        if _data is None:
+            _data = data
+        elif data:
+            _data.update(data)
+        self._data = _data
+
+    def __contains__(self, name):
+        return name in self._data
+
+    def __getattr__(self, name):
+        try:
+            return self._data[name]
+        except KeyError:
+            raise AttributeError("{!r} not in {!r}".format(
+                name,
+                list(self._data)
+            ))
+
+    def __getitem__(self, name):
+        return self._data[name]
+
+    def __repr__(self):
+        return repr(self._data)
+
+    def _get(self, name, default=None):
+        return self._data.get(name, default)
 
 
 def pretty_format(obj, indent=0, width=72):
