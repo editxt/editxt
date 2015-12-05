@@ -148,16 +148,16 @@ def test_create_window():
     import editxt.window as window #import Window
     @gentest
     def test(args=()):
-        ac = Application()
-        m = Mocker()
-        ed_class = m.replace(window, 'Window')
-        ed = ed_class(ac, args[0] if args else None) >> m.mock(window.Window)
-        with m.order():
-            ac.windows.append(ed)
-            ed.show(ac)
-        with m:
-            result = ac.create_window(*args)
-            eq_(result, ed)
+        with test_app() as ac:
+            m = Mocker()
+            ed_class = m.replace(window, 'Window')
+            ed = ed_class(ac, args[0] if args else None) >> m.mock(window.Window)
+            with m.order():
+                ac.windows.append(ed)
+                ed.show(ac)
+            with m:
+                result = ac.create_window(*args)
+                eq_(result, ed)
     yield test(["<serial data>"])
     yield test()
 
