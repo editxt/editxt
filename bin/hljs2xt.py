@@ -186,6 +186,7 @@ def transform_syntax(data, definitions, path, name=None):
             syntax.contains_self = True
             continue
         if not set(item) - SKIP_ITEM_KEYS:
+            rules.append(Comment("# {}".format(ordered_repr(item))))
             continue  # skip
         if item.get("type") == "RecursiveRef":
             syntax.recursive_refs += 1
@@ -216,6 +217,7 @@ def transform_syntax(data, definitions, path, name=None):
         else:
             items = [(item, base_path)]
         for item, item_path in items:
+            original = item
             plain = "className" not in item
             if plain:
                 item = dict(item, className=definitions.get_name(item))
@@ -236,6 +238,8 @@ def transform_syntax(data, definitions, path, name=None):
                     rules.append(rng)
             elif not plain and "begin" in item:
                 add_words(item.className, [regex(item.begin)], item_path)
+            else:
+                rules.append(Comment("# {}".format(ordered_repr(original))))
     return syntax
 
 
@@ -507,6 +511,15 @@ class RecursiveRef(Literal):
         self.args["expr"] = expr
         self.value = self.template.format(**self.args)
 
+    def __eq__(self, other):
+        expr = self.args["expr"]
+        if isinstance(other, tuple) and repr(self).startswith("("):
+            ns = {expr.safe_name: Literal(expr.safe_name)}
+        else:
+            ns = {expr.safe_name: expr}
+        obj = eval(repr(self), {}, ns)
+        return obj == other or super().__eq__(other)
+
 
 def expr_ref(name, attribute):
     if name is None:
@@ -518,6 +531,9 @@ class Comment(Literal):
 
     def update(self, expr):
         pass
+
+    def __eq__(self, other):
+        return isinstance(other, type(self))
 
 
 class RE:
