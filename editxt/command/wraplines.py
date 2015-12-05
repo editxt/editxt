@@ -91,11 +91,14 @@ def wrap_selected_lines(textview, options):
         textview.didChangeText()
         textview.setSelectedRange_((sel[0], len(output)))
 
-def wraplines(lines, options, textview):
+def wraplines(lines, options, textview=None):
     width = options.wrap_column
     regexp = WHITESPACE
     if options.indent:
-        token = re.escape(textview.editor.document.comment_token)
+        if textview is not None:
+            token = re.escape(textview.editor.document.comment_token)
+        else:
+            token = ""
         if token:
             regexp = re.compile(r"^[ \t]*(?:%s *)?" % token)
     for frag in lines:

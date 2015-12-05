@@ -430,7 +430,10 @@ class SyntaxDefinition(NoHighlight):
             groups.append(phrase)
             wordinfo[ident] = info
         self._wordinfo = wordinfo
-        self._regex = re.compile("|".join(groups), self.flags)
+        try:
+            self._regex = re.compile("|".join(groups), self.flags)
+        except re.error:
+            raise Error("cannot compile groups for %s: %r" % (self.name, groups))
         self._default_text_name = self.token_name(
             "" if self.default_text is const.DELIMITER else self.default_text)
         log.debug("file: %s\n"
