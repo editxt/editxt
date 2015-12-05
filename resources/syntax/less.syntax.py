@@ -10,20 +10,15 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 class keyword:
     default_text = DELIMITER
     rules = [
-        ('keyword', RE(r"@(import|media|charset|font-face|(-[a-z]+-)?keyframes|supports|document|namespace|page|viewport|host)\b"), [RE(r"\B|\b")]),
+        ('keyword', RE(r"@(?:import|media|charset|font-face|(?:-[a-z]+-)?keyframes|supports|document|namespace|page|viewport|host)\b"), [RE(r"\B\b")]),
     ]
 
 string = [RE(r"~?'.*?'")]
@@ -31,17 +26,21 @@ string = [RE(r"~?'.*?'")]
 string0 = [RE(r"~?\".*?\"")]
 
 number = [
-    RE(r"\b\d+(\.\d+)?(%|em|ex|ch|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc|px|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx)?"),
+    RE(r"\b\d+(?:\.\d+)?(?:%|em|ex|ch|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc|px|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx)?"),
 ]
 
 class _group1:
     default_text = DELIMITER
-    rules = [('_group1', RE(r"(url|data-uri)\("), [RE(r"\B|\b")])]
+    rules = [('_group1', RE(r"(?:url|data-uri)\("), [RE(r"\B\b")])]
 
 class string1:
     default_text = DELIMITER
     rules = []
 string1.__name__ = 'string'
+
+class _string:
+    default_text = DELIMITER
+    rules = [('_string', RE(r"[\)\n]"), [RE(r'\b|\B')])]
 
 number0 = [RE(r"#[0-9A-Fa-f]+\b")]
 
@@ -55,6 +54,10 @@ variable0 = [RE(r"@{[\w-]+}")]
 
 built_in = [RE(r"~?`[^`]*?`")]
 
+class _attribute:
+    default_text = DELIMITER
+    rules = [('_attribute', RE(r":"), [RE(r'\b|\B')])]
+
 meta = [RE(r"!important")]
 
 class _group0:
@@ -65,19 +68,19 @@ class _group0:
         ('string', string),
         ('string', string0),
         ('number', number),
-        ('_group1', _group1, [RE(r"(?=[\)\n])")], string1),
+        ('_group1', _group1, [_string], string1),
         ('number', number0),
         ('_group2', RE(r"\("), [RE(r"\)")], _group2),
         ('variable', variable),
         ('variable', variable0),
         ('built_in', built_in),
-        ('attribute', RE(r"(?=[\w-]+\s*:)"), [RE(r"(?=:)")]),
+        ('attribute', RE(r"(?=[\w-]+\s*:)"), [_attribute]),
         ('meta', meta),
     ]
 
 class variable1:
     default_text = DELIMITER
-    rules = [('variable', RE(r"@[\w-]+\s*:"), [RE(r"\B|\b")])]
+    rules = [('variable', RE(r"@[\w-]+\s*:"), [RE(r"\B\b")])]
 variable1.__name__ = 'variable'
 
 class _group4:
@@ -89,23 +92,23 @@ class _group3:
     rules = [
         None,  # rules[0],
         None,  # rules[1],
-        None,  # ('string', string),
-        None,  # ('string', string0),
-        None,  # ('number', number),
-        None,  # _group0.rules[5],
-        None,  # ('number', number0),
-        None,  # _group0.rules[7],
-        None,  # ('variable', variable),
-        None,  # ('variable', variable0),
-        None,  # ('built_in', built_in),
-        None,  # _group0.rules[11],
-        None,  # ('meta', meta),
+        ('string', string),
+        ('string', string0),
+        ('number', number),
+        _group0.rules[5],
+        ('number', number0),
+        _group0.rules[7],
+        ('variable', variable),
+        ('variable', variable0),
+        ('built_in', built_in),
+        _group0.rules[11],
+        ('meta', meta),
         ('_group4', RE(r"{"), [RE(r"}")], _group4),
     ]
 
 class variable2:
     default_text = DELIMITER
-    rules = [('variable', RE(r"@[\w-]+"), [RE(r"\B|\b")])]
+    rules = [('variable', RE(r"@[\w-]+"), [RE(r"\B\b")])]
 variable2.__name__ = 'variable'
 
 class _group5:
@@ -117,17 +120,17 @@ class _group30:
     rules = [
         None,  # rules[0],
         None,  # rules[1],
-        None,  # ('string', string),
-        None,  # ('string', string0),
-        None,  # ('number', number),
-        None,  # _group0.rules[5],
-        None,  # ('number', number0),
-        None,  # _group0.rules[7],
-        None,  # ('variable', variable),
-        None,  # ('variable', variable0),
-        None,  # ('built_in', built_in),
-        None,  # _group0.rules[11],
-        None,  # ('meta', meta),
+        ('string', string),
+        ('string', string0),
+        ('number', number),
+        _group0.rules[5],
+        ('number', number0),
+        _group0.rules[7],
+        ('variable', variable),
+        ('variable', variable0),
+        ('built_in', built_in),
+        _group0.rules[11],
+        ('meta', meta),
         ('_group5', RE(r"{"), [RE(r"}")], _group5),
     ]
 _group30.__name__ = '_group3'
@@ -138,29 +141,29 @@ class _group7:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword0),
-        ('_group8', RE(r"\b(and|not)"), [RE(r"\B|\b")]),
+        ('_group8', RE(r"\b(?:and|not)"), [RE(r"\B\b")]),
         None,  # rules[0],
         None,  # rules[1],
-        None,  # ('string', string),
-        None,  # ('string', string0),
-        None,  # ('number', number),
-        None,  # _group0.rules[5],
-        None,  # ('number', number0),
-        None,  # _group0.rules[7],
-        None,  # ('variable', variable),
-        None,  # ('variable', variable0),
-        None,  # ('built_in', built_in),
-        None,  # _group0.rules[11],
-        None,  # ('meta', meta),
+        ('string', string),
+        ('string', string0),
+        ('number', number),
+        _group0.rules[5],
+        ('number', number0),
+        _group0.rules[7],
+        ('variable', variable),
+        ('variable', variable0),
+        ('built_in', built_in),
+        _group0.rules[11],
+        ('meta', meta),
     ]
 
 keyword1 = [RE(r"all\b")]
 
-selector_tag = [RE(r"([\w-]+|@{[\w-]+})%?")]
+selector_tag = [RE(r"(?:[\w-]+|@{[\w-]+})%?")]
 
-selector_id = [RE(r"#([\w-]+|@{[\w-]+})")]
+selector_id = [RE(r"#(?:[\w-]+|@{[\w-]+})")]
 
-selector_class = [RE(r"\.([\w-]+|@{[\w-]+})")]
+selector_class = [RE(r"\.(?:[\w-]+|@{[\w-]+})")]
 
 selector_tag0 = [RE(r"&")]
 
@@ -173,7 +176,7 @@ class _group6:
     rules = [
         None,  # rules[0],
         None,  # rules[1],
-        ('_group7', RE(r"\b(when)"), [RE(r"")], _group7),
+        ('_group7', RE(r"\b(?:when)"), [RE(r"\B\b")], _group7),
         ('keyword', keyword1),
         ('variable', variable0),
         ('selector-tag', selector_tag),
@@ -182,26 +185,27 @@ class _group6:
         ('selector-tag', selector_tag0),
         ('selector-attr', RE(r"\["), [RE(r"\]")]),
         ('_group9', RE(r"\("), [RE(r"\)")], _group9),
+        # {'begin': '!important'},
     ]
 
 class _group11:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword0),
-        ('_group12', RE(r"\b(and|not)"), [RE(r"\B|\b")]),
+        ('_group12', RE(r"\b(?:and|not)"), [RE(r"\B\b")]),
         None,  # rules[0],
         None,  # rules[1],
-        None,  # ('string', string),
-        None,  # ('string', string0),
-        None,  # ('number', number),
-        None,  # _group0.rules[5],
-        None,  # ('number', number0),
-        None,  # _group0.rules[7],
-        None,  # ('variable', variable),
-        None,  # ('variable', variable0),
-        None,  # ('built_in', built_in),
-        None,  # _group0.rules[11],
-        None,  # ('meta', meta),
+        ('string', string),
+        ('string', string0),
+        ('number', number),
+        _group0.rules[5],
+        ('number', number0),
+        _group0.rules[7],
+        ('variable', variable),
+        ('variable', variable0),
+        ('built_in', built_in),
+        _group0.rules[11],
+        ('meta', meta),
     ]
 
 class _group13:
@@ -213,7 +217,7 @@ class _group10:
     rules = [
         None,  # rules[0],
         None,  # rules[1],
-        ('_group11', RE(r"\b(when)"), [RE(r"")], _group11),
+        ('_group11', RE(r"\b(?:when)"), [RE(r"\B\b")], _group11),
         ('keyword', keyword1),
         ('variable', variable0),
         ('selector-tag', selector_tag),
@@ -222,6 +226,7 @@ class _group10:
         ('selector-tag', selector_tag0),
         ('selector-attr', RE(r"\["), [RE(r"\]")]),
         ('_group13', RE(r"\("), [RE(r"\)")], _group13),
+        # {'begin': '!important'},
     ]
 
 class attribute:
@@ -234,7 +239,7 @@ class attribute:
 class attribute0:
     default_text = DELIMITER
     rules = [
-        ('attribute', RE(r"([\w-]+|@{[\w-]+})"), [RE(r"(?=:)")], attribute),
+        ('attribute', RE(r"(?:[\w-]+|@{[\w-]+})"), [_attribute], attribute),
     ]
 attribute0.__name__ = 'attribute'
 
@@ -244,12 +249,12 @@ class _group14:
 
 rules = [
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('keyword', keyword, [RE(r"(?=[;{}])")], _group0),
     ('variable', variable1, [RE(r"(?=[;}])")], _group3),
     ('variable', variable2, [RE(r"(?=[;}])")], _group30),
     ('_group6', RE(r"(?=[\.#:&\[])"), [RE(r"(?=[;{}])")], _group6),
-    ('_group10', RE(r"(?=([\w-]+|@{[\w-]+})[^;]*{)"), [RE(r"(?={)")], _group10),
+    ('_group10', RE(r"(?=(?:[\w-]+|@{[\w-]+})[^;]*{)"), [RE(r"(?={)")], _group10),
     ('attribute', attribute0, [RE(r"(?=[;}])")], _group14),
 ]
 
@@ -257,68 +262,21 @@ _group0.rules[0] = rules[0]
 _group0.rules[1] = rules[1]
 _group3.rules[0] = rules[0]
 _group3.rules[1] = rules[1]
-_group3.rules[2] = ('string', string)
-_group3.rules[3] = ('string', string0)
-_group3.rules[4] = ('number', number)
-_group3.rules[5] = _group0.rules[5]
-_group3.rules[6] = ('number', number0)
-_group3.rules[7] = _group0.rules[7]
-_group3.rules[8] = ('variable', variable)
-_group3.rules[9] = ('variable', variable0)
-_group3.rules[10] = ('built_in', built_in)
-_group3.rules[11] = _group0.rules[11]
-_group3.rules[12] = ('meta', meta)
 _group30.rules[0] = rules[0]
 _group30.rules[1] = rules[1]
-_group30.rules[2] = ('string', string)
-_group30.rules[3] = ('string', string0)
-_group30.rules[4] = ('number', number)
-_group30.rules[5] = _group0.rules[5]
-_group30.rules[6] = ('number', number0)
-_group30.rules[7] = _group0.rules[7]
-_group30.rules[8] = ('variable', variable)
-_group30.rules[9] = ('variable', variable0)
-_group30.rules[10] = ('built_in', built_in)
-_group30.rules[11] = _group0.rules[11]
-_group30.rules[12] = ('meta', meta)
-_group6.rules[0] = rules[0]
-_group6.rules[1] = rules[1]
 _group7.rules[2] = rules[0]
 _group7.rules[3] = rules[1]
-_group7.rules[4] = ('string', string)
-_group7.rules[5] = ('string', string0)
-_group7.rules[6] = ('number', number)
-_group7.rules[7] = _group0.rules[5]
-_group7.rules[8] = ('number', number0)
-_group7.rules[9] = _group0.rules[7]
-_group7.rules[10] = ('variable', variable)
-_group7.rules[11] = ('variable', variable0)
-_group7.rules[12] = ('built_in', built_in)
-_group7.rules[13] = _group0.rules[11]
-_group7.rules[14] = ('meta', meta)
-_group10.rules[0] = rules[0]
-_group10.rules[1] = rules[1]
+_group6.rules[0] = rules[0]
+_group6.rules[1] = rules[1]
 _group11.rules[2] = rules[0]
 _group11.rules[3] = rules[1]
-_group11.rules[4] = ('string', string)
-_group11.rules[5] = ('string', string0)
-_group11.rules[6] = ('number', number)
-_group11.rules[7] = _group0.rules[5]
-_group11.rules[8] = ('number', number0)
-_group11.rules[9] = _group0.rules[7]
-_group11.rules[10] = ('variable', variable)
-_group11.rules[11] = ('variable', variable0)
-_group11.rules[12] = ('built_in', built_in)
-_group11.rules[13] = _group0.rules[11]
-_group11.rules[14] = ('meta', meta)
+_group10.rules[0] = rules[0]
+_group10.rules[1] = rules[1]
 attribute.rules[0] = rules[0]
 attribute.rules[1] = rules[1]
 _group2.rules.extend(_group0.rules)
 _group4.rules.extend(rules)
 _group5.rules.extend(rules)
-_group9.rules.extend(_group30.rules)
-_group13.rules.extend(_group30.rules)
-_group14.rules.extend(_group0.rules)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

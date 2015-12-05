@@ -4,82 +4,18 @@
 name = 'AspectJ'
 file_patterns = ['*.aspectj']
 
-keyword = [
-    'false',
-    'synchronized',
-    'int',
-    'abstract',
-    'float',
-    'private',
-    'char',
-    'boolean',
-    'static',
-    'null',
-    'if',
-    'const',
-    'for',
-    'true',
-    'while',
-    'long',
-    'throw',
-    'strictfp',
-    'finally',
-    'protected',
-    'import',
-    'native',
-    'final',
-    'return',
-    'void',
-    'enum',
-    'else',
-    'extends',
-    'implements',
-    'break',
-    'transient',
-    'new',
-    'catch',
-    'instanceof',
-    'byte',
-    'super',
-    'volatile',
-    'case',
-    'assert',
-    'short',
-    'package',
-    'default',
-    'double',
-    'public',
-    'try',
-    'this',
-    'switch',
-    'continue',
-    'throws',
-    'privileged',
-    'aspectOf',
-    'adviceexecution',
-    'proceed',
-    'cflowbelow',
-    'cflow',
-    'initialization',
-    'preinitialization',
-    'staticinitialization',
-    'withincode',
-    'target',
-    'within',
-    'execution',
-    'getWithinTypeName',
-    'handler',
-    'thisJoinPoint',
-    'thisJoinPointStaticPart',
-    'thisEnclosingJoinPointStaticPart',
-    'declare',
-    'parents',
-    'warning',
-    'error',
-    'soft',
-    'precedence',
-    'thisAspectInstance',
-]
+keyword = """
+    false synchronized int abstract float private char boolean static
+    null if const for true while long throw strictfp finally protected
+    import native final return void enum else extends implements break
+    transient new catch instanceof byte super volatile case assert short
+    package default double public try this switch continue throws
+    privileged aspectOf adviceexecution proceed cflowbelow cflow
+    initialization preinitialization staticinitialization withincode
+    target within execution getWithinTypeName handler thisJoinPoint
+    thisJoinPointStaticPart thisEnclosingJoinPointStaticPart declare
+    parents warning error soft precedence thisAspectInstance
+    """.split()
 
 doctag = [RE(r"@[A-Za-z]+")]
 
@@ -87,7 +23,12 @@ doctag0 = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag), ('doctag', doctag0)]
+    rules = [
+        # {'begin': {'pattern': '\\w+@', 'type': 'RegExp'}, 'relevance': 0},
+        ('doctag', doctag),
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag0),
+    ]
 
 class comment0:
     default_text = DELIMITER
@@ -103,90 +44,27 @@ class string:
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
+class _class:
+    default_text = DELIMITER
+    rules = [('_class', RE(r"[{;=]"), [RE(r'\b|\B')])]
+
 keyword0 = ['aspect']
 
 title = [RE(r"[a-zA-Z_]\w*")]
 
-keyword1 = [
-    'false',
-    'synchronized',
-    'int',
-    'abstract',
-    'float',
-    'private',
-    'char',
-    'boolean',
-    'static',
-    'null',
-    'if',
-    'const',
-    'for',
-    'true',
-    'while',
-    'long',
-    'throw',
-    'strictfp',
-    'finally',
-    'protected',
-    'import',
-    'native',
-    'final',
-    'return',
-    'void',
-    'enum',
-    'else',
-    'extends',
-    'implements',
-    'break',
-    'transient',
-    'new',
-    'catch',
-    'instanceof',
-    'byte',
-    'super',
-    'volatile',
-    'case',
-    'assert',
-    'short',
-    'package',
-    'default',
-    'double',
-    'public',
-    'try',
-    'this',
-    'switch',
-    'continue',
-    'throws',
-    'privileged',
-    'aspectOf',
-    'adviceexecution',
-    'proceed',
-    'cflowbelow',
-    'cflow',
-    'initialization',
-    'preinitialization',
-    'staticinitialization',
-    'withincode',
-    'target',
-    'within',
-    'execution',
-    'getWithinTypeName',
-    'handler',
-    'thisJoinPoint',
-    'thisJoinPointStaticPart',
-    'thisEnclosingJoinPointStaticPart',
-    'declare',
-    'parents',
-    'warning',
-    'error',
-    'soft',
-    'precedence',
-    'thisAspectInstance',
-    'get',
-    'set',
-    'args',
-    'call',
-]
+keyword1 = """
+    false synchronized int abstract float private char boolean static
+    null if const for true while long throw strictfp finally protected
+    import native final return void enum else extends implements break
+    transient new catch instanceof byte super volatile case assert short
+    package default double public try this switch continue throws
+    privileged aspectOf adviceexecution proceed cflowbelow cflow
+    initialization preinitialization staticinitialization withincode
+    target within execution getWithinTypeName handler thisJoinPoint
+    thisJoinPointStaticPart thisEnclosingJoinPointStaticPart declare
+    parents warning error soft precedence thisAspectInstance get set
+    args call
+    """.split()
 
 class _group3:
     default_text = DELIMITER
@@ -196,7 +74,7 @@ class class0:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword0),
-        ('_group2', RE(r"\b(extends|implements|pertypewithin|perthis|pertarget|percflowbelow|percflow|issingleton)"), [RE(r"\B|\b")]),
+        ('_group2', RE(r"\b(?:extends|implements|pertypewithin|perthis|pertarget|percflowbelow|percflow|issingleton)"), [RE(r"\B\b")]),
         ('title', title),
         ('_group3', RE(r"\([^\)]*"), [RE(r"[)]+")], _group3),
     ]
@@ -208,8 +86,8 @@ class class1:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword2),
-        ('_group4', RE(r"\b(extends|implements)"), [RE(r"\B|\b")]),
-        None,  # ('title', title),
+        ('_group4', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('title', title),
     ]
 class1.__name__ = 'class'
 
@@ -217,15 +95,13 @@ keyword3 = ['pointcut', 'after', 'before', 'around', 'throwing', 'returning']
 
 class _group6:
     default_text = DELIMITER
-    rules = [
-        None,  # ('title', title),
-    ]
+    rules = [('title', title)]
 
 class _group5:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword3),
-        ('_group6', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B|\b")], _group6),
+        ('_group6', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B\b")], _group6),
     ]
 
 class _group8:
@@ -236,17 +112,21 @@ class _group7:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword),
-        ('_group8', RE(r"[a-zA-Z_]\w*\s*\("), [RE(r"\B|\b")], _group8),
+        ('_group8', RE(r"[a-zA-Z_]\w*\s*\("), [RE(r"\B\b")], _group8),
         None,  # rules[5],
     ]
 
+class _function:
+    default_text = DELIMITER
+    rules = [('_function', RE(r"[{;=]"), [RE(r'\b|\B')])]
+
 class _group10:
     default_text = DELIMITER
-    rules = [
-        None,  # ('title', title),
-    ]
+    rules = [('title', title)]
 
-number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 class params:
     default_text = DELIMITER
@@ -262,7 +142,7 @@ class function:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword),
-        ('_group10', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B|\b")], _group10),
+        ('_group10', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B\b")], _group10),
         ('params', RE(r"\("), [RE(r"\)")], params),
         None,  # rules[2],
         None,  # rules[3],
@@ -273,28 +153,24 @@ rules = [
     ('comment', RE(r"/\*\*"), [RE(r"\*/")], comment),
     ('comment', RE(r"//"), [RE(r"$")], comment0),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
-    ('string', RE(r"'"), [RE(r"'")]),
+    ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('class', RE(r"\b(aspect)"), [RE(r"(?=[{;=])")], class0),
-    ('class', RE(r"\b(class|interface)"), [RE(r"(?=[{;=])")], class1),
-    ('_group5', RE(r"\b(pointcut|after|before|around|throwing|returning)"), [RE(r"[)]")], _group5),
+    ('class', RE(r"\b(?:aspect)"), [_class], class0),
+    ('class', RE(r"\b(?:class|interface)"), [_class], class1),
+    ('_group5', RE(r"\b(?:pointcut|after|before|around|throwing|returning)"), [RE(r"[)]")], _group5),
     ('_group7', RE(r"(?=[:])"), [RE(r"[{;]")], _group7),
-    ('_group9', RE(r"\b(new|throw)"), [RE(r"\B|\b")]),
-    ('function', RE(r"(?=\w+ +\w+(\.)?\w+\s*\([^\)]*\)\s*((throws)[\w\s,]+)?[\{;])"), [RE(r"(?=[{;=])")], function),
-    None,  # ('number', number),
+    ('_group9', RE(r"\b(?:new|throw)"), [RE(r"\B\b")]),
+    ('function', RE(r"(?=\w+ +\w+(?:\.)?\w+\s*\([^\)]*\)\s*(?:(throws)[\w\s,]+)?[\{;])"), [_function], function),
+    ('number', number),
     ('meta', doctag),
 ]
 
-class1.rules[2] = ('title', title)
-_group6.rules[0] = ('title', title)
 _group7.rules[2] = rules[5]
-_group10.rules[0] = ('title', title)
 params.rules[1] = rules[4]
 params.rules[2] = rules[5]
 params.rules[4] = rules[3]
 function.rules[3] = rules[2]
 function.rules[4] = rules[3]
-rules[12] = ('number', number)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

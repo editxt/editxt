@@ -4,41 +4,11 @@
 name = 'Elixir'
 file_patterns = ['*.elixir']
 
-keyword = [
-    'and',
-    'false',
-    'then',
-    'defined',
-    'module',
-    'in',
-    'return',
-    'redo',
-    'retry',
-    'end',
-    'for',
-    'true',
-    'self',
-    'when',
-    'next',
-    'until',
-    'do',
-    'begin',
-    'unless',
-    'nil',
-    'break',
-    'not',
-    'case',
-    'cond',
-    'alias',
-    'while',
-    'ensure',
-    'or',
-    'include',
-    'use',
-    'alias',
-    'fn',
-    'quote',
-]
+keyword = """
+    and false then defined module in return redo retry end for true self
+    when next until do begin unless nil break not case cond alias while
+    ensure or include use alias fn quote
+    """.split()
 
 class subst:
     default_text = DELIMITER
@@ -46,17 +16,23 @@ class subst:
 
 class string:
     default_text = DELIMITER
-    rules = [('subst', RE(r"#\{"), [RE(r"}")], subst)]
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        ('subst', RE(r"#\{"), [RE(r"}")], subst),
+    ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 keyword0 = ['defmodule', 'defrecord']
 
-title = [RE(r"[a-zA-Z_][a-zA-Z0-9_]*(\!|\?)?")]
+title = [RE(r"[a-zA-Z_][a-zA-Z0-9_]*(?:\!|\?)?")]
 
 class class0:
     default_text = DELIMITER
@@ -73,21 +49,22 @@ class symbol:
     default_text = DELIMITER
     rules = [
         None,  # rules[2],
+        # {'begin': '[a-zA-Z_]\\w*[!?=]?|[-+~]\\@|<<|>>|=~|===?|<=>|[<>]=?|\\*\\*|[-/+%^&*~`|]|\\[\\]=?'},
     ]
 
-symbol0 = [RE(r"[a-zA-Z_][a-zA-Z0-9_]*(\!|\?)?:")]
+symbol0 = [RE(r"[a-zA-Z_][a-zA-Z0-9_]*(?:\!|\?)?:")]
 
 number = [
-    RE(r"(\b0[0-7_]+)|(\b0x[0-9a-fA-F_]+)|(\b[1-9][0-9_]*(\.[0-9_]+)?)|[0_]\b"),
+    RE(r"(?:\b0[0-7_]+)|(?:\b0x[0-9a-fA-F_]+)|(?:\b[1-9][0-9_]*(?:\.[0-9_]+)?)|[0_]\b"),
 ]
 
-variable = [RE(r"(\$\W)|((\$|\@\@?)(\w+))")]
+variable = [RE(r"(?:\$\W)|(?:(\$|\@\@?)(?:\w+))")]
 
 class regexp:
     default_text = DELIMITER
     rules = [
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        None,  # string.rules[0],
+        string.rules[0],
     ]
 
 class _group2:
@@ -103,20 +80,19 @@ rules = [
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('class', RE(r"\b(defmodule|defrecord)"), [RE(r"\bdo\b|$|;")], class0),
-    ('function', RE(r"\b(def|defp|defmacro)"), [RE(r"\B\b")], function),
-    ('symbol', RE(r":"), [RE(r"\B|\b")], symbol),
+    ('class', RE(r"\b(?:defmodule|defrecord)"), [RE(r"\bdo\b|$|;")], class0),
+    ('function', RE(r"\b(?:def|defp|defmacro)"), [RE(r"\B\b")], function),
+    ('symbol', RE(r":"), [RE(r"\B\b")], symbol),
     ('symbol', symbol0),
     ('number', number),
     ('variable', variable),
-    ('_group2', RE(r"(!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B|\b")], _group2),
+    # {'begin': '->'},
+    ('_group2', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B\b")], _group2),
 ]
 
 symbol.rules[0] = rules[2]
 _group2.rules[0] = rules[3]
-regexp.rules[0] = string.rules[0]
 subst.rules.extend(rules)
-function.rules.extend(class0.rules)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

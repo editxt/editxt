@@ -8,7 +8,10 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 keyword = [RE(r"\s*\.end\s[a-zA-Z0-9]*")]
 
@@ -17,22 +20,22 @@ keyword0 = [RE(r"^[ ]*\.[a-zA-Z]*")]
 keyword1 = [RE(r"\s:[a-zA-Z_0-9]*")]
 
 keyword2 = [
-    RE(r"\s(transient|constructor|abstract|final|synthetic|public|private|protected|static|bridge|system)"),
+    RE(r"\s(?:transient|constructor|abstract|final|synthetic|public|private|protected|static|bridge|system)"),
 ]
 
 built_in = [
-    RE(r"\s(add|and|cmp|cmpg|cmpl|const|div|double|float|goto|if|int|long|move|mul|neg|new|nop|not|or|rem|return|shl|shr|sput|sub|throw|ushr|xor)\s"),
+    RE(r"\s(?:add|and|cmp|cmpg|cmpl|const|div|double|float|goto|if|int|long|move|mul|neg|new|nop|not|or|rem|return|shl|shr|sput|sub|throw|ushr|xor)\s"),
 ]
 
 built_in0 = [
-    RE(r"\s(add|and|cmp|cmpg|cmpl|const|div|double|float|goto|if|int|long|move|mul|neg|new|nop|not|or|rem|return|shl|shr|sput|sub|throw|ushr|xor)((\-|/)[a-zA-Z0-9]+)+\s"),
+    RE(r"\s(?:add|and|cmp|cmpg|cmpl|const|div|double|float|goto|if|int|long|move|mul|neg|new|nop|not|or|rem|return|shl|shr|sput|sub|throw|ushr|xor)(?:(\-|/)[a-zA-Z0-9]+)+\s"),
 ]
 
 built_in1 = [
-    RE(r"\s(aget|aput|array|check|execute|fill|filled|goto/16|goto/32|iget|instance|invoke|iput|monitor|packed|sget|sparse)((\-|/)[a-zA-Z0-9]+)*\s"),
+    RE(r"\s(?:aget|aput|array|check|execute|fill|filled|goto/16|goto/32|iget|instance|invoke|iput|monitor|packed|sget|sparse)(?:(\-|/)[a-zA-Z0-9]+)*\s"),
 ]
 
-class0 = [RE(r"L[^(;:\n]*;")]
+class0 = [RE(r"L[^(?:;:\n]*;")]
 
 rules = [
     ('string', RE(r"\""), [RE(r"\"")]),
@@ -45,6 +48,7 @@ rules = [
     ('built_in', built_in0),
     ('built_in', built_in1),
     ('class', class0),
+    # {'begin': '[vp][0-9]+'},
 ]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax

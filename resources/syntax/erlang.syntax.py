@@ -4,35 +4,10 @@
 name = 'Erlang'
 file_patterns = ['*.erlang', '*.erl']
 
-keyword = [
-    'after',
-    'and',
-    'andalso',
-    'band',
-    'begin',
-    'bnot',
-    'bor',
-    'bsl',
-    'bzr',
-    'bxor',
-    'case',
-    'catch',
-    'cond',
-    'div',
-    'end',
-    'fun',
-    'if',
-    'let',
-    'not',
-    'of',
-    'orelse',
-    'query',
-    'receive',
-    'rem',
-    'try',
-    'when',
-    'xor',
-]
+keyword = """
+    after and andalso band begin bnot bor bsl bzr bxor case catch cond
+    div end fun if let not of orelse query receive rem try when xor
+    """.split()
 
 literal = ['false', 'true']
 
@@ -40,15 +15,28 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class _group4:
-    default_text = DELIMITER
-    rules = []
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 class _group2:
     default_text = DELIMITER
-    rules = [('_group4', RE(r"\("), [RE(r"(?=\))")], _group4)]
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+_group2.__name__ = ''
+
+class _group5:
+    default_text = DELIMITER
+    rules = []
+
+class _group3:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': "([a-z'][a-zA-Z0-9_']*:[a-z'][a-zA-Z0-9_']*|[a-z'][a-zA-Z0-9_']*)", 'relevance': 0},
+        ('_group5', RE(r"\("), [RE(r"(?=\))")], _group5),
+    ]
 
 class string:
     default_text = DELIMITER
@@ -56,19 +44,22 @@ class string:
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-number = [RE(r"\b(\d+#[a-fA-F0-9]+|\d+(\.\d+)?([eE][-+]?\d+)?)")]
+number = [RE(r"\b(?:\d+#[a-fA-F0-9]+|\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)")]
 
-class _group5:
+class _group6:
     default_text = DELIMITER
     rules = []
 
-class _group10:
+class _group11:
     default_text = DELIMITER
     rules = []
 
-class _group8:
+class _group9:
     default_text = DELIMITER
-    rules = [('_group10', RE(r"{"), [RE(r"}")], _group10)]
+    rules = [
+        # {'begin': '#[a-zA-Z_]\\w*', 'relevance': 0},
+        ('_group11', RE(r"{"), [RE(r"}")], _group11),
+    ]
 
 class _group0:
     default_text = DELIMITER
@@ -77,27 +68,30 @@ class _group0:
         ('literal', literal),
         None,  # params.rules[0],
         # {'begin': "fun\\s+[a-z'][a-zA-Z0-9_']*/\\d+"},
-        ('', RE(r"'"), [RE(r"'")]),
+        ('', RE(r"'"), [RE(r"'")], _group2),
         # {'beginKeywords': 'fun receive if try case', 'end': 'end'},
-        ('_group2', RE(r"(?=([a-z'][a-zA-Z0-9_']*:[a-z'][a-zA-Z0-9_']*|[a-z'][a-zA-Z0-9_']*)\()"), [RE(r"\)")], _group2),
+        ('_group3', RE(r"(?=(?:[a-z'][a-zA-Z0-9_']*:[a-z'][a-zA-Z0-9_']*|[a-z'][a-zA-Z0-9_']*)\()"), [RE(r"\)")], _group3),
         ('string', RE(r"\""), [RE(r"\"")], string),
         ('number', number),
-        ('_group5', RE(r"{"), [RE(r"}")], _group5),
-        ('_group8', RE(r"(?=#[a-zA-Z_]\w*)"), [RE(r"\B|\b")], _group8),
+        ('_group6', RE(r"{"), [RE(r"}")], _group6),
+        # {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
+        # {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
+        ('_group9', RE(r"(?=#[a-zA-Z_]\w*)"), [RE(r"\B\b")], _group9),
     ]
 
 class params:
     default_text = DELIMITER
     rules = [
         ('comment', RE(r"%"), [RE(r"$")], comment),
-        ('_group0', RE(r"\b(fun|receive|if|try|case)"), [RE(r"end")], _group0),
-        None,  # _group0.rules[4],
-        None,  # _group0.rules[5],
-        None,  # ('number', number),
-        None,  # _group0.rules[7],
+        # {'begin': "fun\\s+[a-z'][a-zA-Z0-9_']*/\\d+"},
+        ('_group0', RE(r"\b(?:fun|receive|if|try|case)"), [RE(r"end")], _group0),
+        _group0.rules[4],
+        _group0.rules[5],
+        ('number', number),
+        _group0.rules[7],
         # {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
         # {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
-        None,  # _group0.rules[8],
+        _group0.rules[8],
     ]
 
 title = [RE(r"[a-z'][a-zA-Z0-9_']*")]
@@ -113,70 +107,38 @@ class function0:
     ]
 function0.__name__ = 'function'
 
-class _group11:
+class _group12:
     default_text = DELIMITER
     rules = [('keyword', keyword), ('literal', literal)]
 
-keyword0 = [
-    '-module',
-    '-record',
-    '-undef',
-    '-export',
-    '-ifdef',
-    '-ifndef',
-    '-author',
-    '-copyright',
-    '-doc',
-    '-vsn',
-    '-import',
-    '-include',
-    '-include_lib',
-    '-compile',
-    '-define',
-    '-else',
-    '-endif',
-    '-file',
-    '-behaviour',
-    '-behavior',
-    '-spec',
-]
+keyword0 = """
+    -module -record -undef -export -ifdef -ifndef -author -copyright
+    -doc -vsn -import -include -include_lib -compile -define -else
+    -endif -file -behaviour -behavior -spec
+    """.split()
 
-class _group12:
+class _group13:
     default_text = DELIMITER
-    rules = [
-        ('keyword', keyword0),
-        None,  # function.rules[0],
-    ]
+    rules = [('keyword', keyword0), function.rules[0]]
 
 rules = [
     ('keyword', keyword),
     ('literal', literal),
-    ('function', function0, [RE(r";|\.")], _group11),
-    None,  # params.rules[0],
-    ('_group12', RE(r"(?=^-)"), [RE(r"(?=\.)")], _group12),
-    None,  # ('number', number),
-    None,  # _group0.rules[5],
-    None,  # _group0.rules[8],
+    ('function', function0, [RE(r";|\.")], _group12),
+    params.rules[0],
+    ('_group13', RE(r"(?=^-)"), [RE(r"\.")], _group13),
+    ('number', number),
+    _group0.rules[5],
+    _group0.rules[8],
     # {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
     # {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
-    None,  # _group0.rules[7],
+    _group0.rules[7],
+    # {'begin': {'pattern': '\\.$', 'type': 'RegExp'}},
 ]
 
 _group0.rules[2] = params.rules[0]
-params.rules[2] = _group0.rules[4]
-params.rules[3] = _group0.rules[5]
-params.rules[4] = ('number', number)
-params.rules[5] = _group0.rules[7]
-params.rules[6] = _group0.rules[8]
-rules[3] = params.rules[0]
-_group12.rules[1] = function.rules[0]
-rules[5] = ('number', number)
-rules[6] = _group0.rules[5]
-rules[7] = _group0.rules[8]
-rules[8] = _group0.rules[7]
-_group4.rules.extend(params.rules)
 _group5.rules.extend(params.rules)
-_group10.rules.extend(params.rules)
+_group6.rules.extend(params.rules)
 _group11.rules.extend(params.rules)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax

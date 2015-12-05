@@ -8,11 +8,14 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 class _group0:
     default_text = DELIMITER
-    rules = [('_group0', RE(r"(?=^\w+\s*\W*=)"), [RE(r"\B|\b")])]
+    rules = [('_group0', RE(r"(?=^\w+\s*\W*=)"), [RE(r"\B\b")])]
 
 class _group1:
     default_text = DELIMITER
@@ -41,7 +44,7 @@ class _group2:
 
 rules = [
     ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('_group0', _group0, [RE(r"(?=\s*\W*=)")], _group1),
+    ('_group0', _group0, [RE(r"\s*\W*=")], _group1),
     ('section', section),
     ('meta', RE(r"^\.PHONY:"), [RE(r"$")], meta),
     ('_group2', RE(r"^\t+"), [RE(r"$")], _group2),

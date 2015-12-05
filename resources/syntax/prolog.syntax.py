@@ -12,14 +12,21 @@ class _group2:
     default_text = DELIMITER
     rules = []
 
+class comment:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+    ]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
-class comment:
+class comment0:
     default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
+comment0.__name__ = 'comment'
 
 class string:
     default_text = DELIMITER
@@ -27,22 +34,25 @@ class string:
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-string0 = [RE(r"0\'(\\\'|.)")]
+string0 = [RE(r"0\'(?:\\\'|.)")]
 
 string1 = [RE(r"0\'\\s")]
 
-number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 class _group1:
     default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': '[a-z][A-Za-z0-9_]*', 'type': 'RegExp'}, 'relevance': 0},
-        None,  # ('symbol', symbol0),
+        ('symbol', symbol0),
         # {'begin': {'pattern': '\\(', 'type': 'RegExp'}, 'end': {'pattern': '\\)', 'type': 'RegExp'}, 'relevance': 0},
+        # {'begin': {'pattern': ':-', 'type': 'RegExp'}},
         ('_group2', RE(r"\["), [RE(r"\]")], _group2),
-        ('comment', RE(r"%"), [RE(r"$")]),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('string', RE(r"\""), [RE(r"\"")]),
+        ('comment', RE(r"%"), [RE(r"$")], comment),
+        ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+        ('string', RE(r"\""), [RE(r"\"")], string),
         ('string', RE(r"'"), [RE(r"'")], string),
         ('string', RE(r"`"), [RE(r"`")], string),
         ('string', string0),
@@ -51,31 +61,23 @@ class _group1:
     ]
 
 rules = [
+    # {'begin': {'pattern': '[a-z][A-Za-z0-9_]*', 'type': 'RegExp'}, 'relevance': 0},
     ('symbol', symbol),
     ('symbol', symbol0),
     ('_group1', RE(r"\("), [RE(r"\)")], _group1),
     # {'begin': {'pattern': ':-', 'type': 'RegExp'}},
-    None,  # _group1.rules[1],
-    None,  # _group1.rules[2],
-    None,  # _group1.rules[3],
-    None,  # _group1.rules[4],
-    None,  # _group1.rules[5],
-    None,  # _group1.rules[6],
-    None,  # ('string', string0),
-    None,  # ('string', string1),
-    None,  # ('number', number),
+    _group1.rules[1],
+    _group1.rules[2],
+    _group1.rules[3],
+    _group1.rules[4],
+    _group1.rules[5],
+    _group1.rules[6],
+    ('string', string0),
+    ('string', string1),
+    ('number', number),
+    # {'begin': {'pattern': '\\.$', 'type': 'RegExp'}},
 ]
 
-_group1.rules[0] = ('symbol', symbol0)
-rules[3] = _group1.rules[1]
-rules[4] = _group1.rules[2]
-rules[5] = _group1.rules[3]
-rules[6] = _group1.rules[4]
-rules[7] = _group1.rules[5]
-rules[8] = _group1.rules[6]
-rules[9] = ('string', string0)
-rules[10] = ('string', string1)
-rules[11] = ('number', number)
 _group2.rules.extend(_group1.rules)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax

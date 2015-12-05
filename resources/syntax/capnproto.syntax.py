@@ -4,56 +4,34 @@
 name = 'Cap’n Proto'
 file_patterns = ['*.capnproto', '*.capnp']
 
-built_in = [
-    'Void',
-    'Bool',
-    'Int8',
-    'Int16',
-    'Int32',
-    'Int64',
-    'UInt8',
-    'UInt16',
-    'UInt32',
-    'UInt64',
-    'Float32',
-    'Float64',
-    'Text',
-    'Data',
-    'AnyPointer',
-    'AnyStruct',
-    'Capability',
-    'List',
-]
+built_in = """
+    Void Bool Int8 Int16 Int32 Int64 UInt8 UInt16 UInt32 UInt64 Float32
+    Float64 Text Data AnyPointer AnyStruct Capability List
+    """.split()
 
-keyword = [
-    'struct',
-    'enum',
-    'interface',
-    'union',
-    'group',
-    'import',
-    'using',
-    'const',
-    'annotation',
-    'extends',
-    'in',
-    'of',
-    'on',
-    'as',
-    'with',
-    'from',
-    'fixed',
-]
+keyword = """
+    struct enum interface union group import using const annotation
+    extends in of on as with from fixed
+    """.split()
 
 literal = ['true', 'false']
 
-number = [RE(r"\b\d+(\.\d+)?")]
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+
+number = [RE(r"\b\d+(?:\.\d+)?")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 meta = [RE(r"@0x[\w\d]{16};")]
 
@@ -63,7 +41,7 @@ keyword0 = ['struct', 'enum']
 
 class title:
     default_text = DELIMITER
-    rules = [('title', RE(r"[a-zA-Z]\w*"), [RE(r"\B|\b")])]
+    rules = [('title', RE(r"[a-zA-Z]\w*"), [RE(r"\B\b")])]
 
 class _group1:
     default_text = DELIMITER
@@ -89,13 +67,13 @@ rules = [
     ('built_in', built_in),
     ('keyword', keyword),
     ('literal', literal),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('meta', meta),
     ('number', number0),
-    ('class', RE(r"\b(struct|enum)"), [RE(r"\{")], class0),
-    ('class', RE(r"\b(interface)"), [RE(r"\{")], class1),
+    ('class', RE(r"\b(?:struct|enum)"), [RE(r"\{")], class0),
+    ('class', RE(r"\b(?:interface)"), [RE(r"\{")], class1),
 ]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax

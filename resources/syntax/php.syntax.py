@@ -6,101 +6,31 @@ file_patterns = ['*.php', '*.php3', '*.php4', '*.php5', '*.php6']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-keyword = [
-    'and',
-    'include_once',
-    'list',
-    'abstract',
-    'global',
-    'private',
-    'echo',
-    'interface',
-    'as',
-    'static',
-    'endswitch',
-    'array',
-    'null',
-    'if',
-    'endwhile',
-    'or',
-    'const',
-    'for',
-    'endforeach',
-    'self',
-    'var',
-    'while',
-    'isset',
-    'public',
-    'protected',
-    'exit',
-    'foreach',
-    'throw',
-    'elseif',
-    'include',
-    '__FILE__',
-    'empty',
-    'require_once',
-    'do',
-    'xor',
-    'return',
-    'parent',
-    'clone',
-    'use',
-    '__CLASS__',
-    '__LINE__',
-    'else',
-    'break',
-    'print',
-    'eval',
-    'new',
-    'catch',
-    '__METHOD__',
-    'case',
-    'exception',
-    'default',
-    'die',
-    'require',
-    '__FUNCTION__',
-    'enddeclare',
-    'final',
-    'try',
-    'switch',
-    'continue',
-    'endfor',
-    'endif',
-    'declare',
-    'unset',
-    'true',
-    'false',
-    'trait',
-    'goto',
-    'instanceof',
-    'insteadof',
-    '__DIR__',
-    '__NAMESPACE__',
-    'yield',
-    'finally',
-]
+keyword = """
+    and include_once list abstract global private echo interface as
+    static endswitch array null if endwhile or const for endforeach self
+    var while isset public protected exit foreach throw elseif include
+    __FILE__ empty require_once do xor return parent clone use __CLASS__
+    __LINE__ else break print eval new catch __METHOD__ case exception
+    default die require __FUNCTION__ enddeclare final try switch
+    continue endfor endif declare unset true false trait goto instanceof
+    insteadof __DIR__ __NAMESPACE__ yield finally
+    """.split()
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 doctag0 = [RE(r"@[A-Za-z]+")]
 
-meta = [RE(r"<\?(php)?|\?>")]
+meta = [RE(r"<\?(?:php)?|\?>")]
 
-class comment1:
+class comment0:
     default_text = DELIMITER
     rules = [
         ('doctag', doctag0),
@@ -108,24 +38,32 @@ class comment1:
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment1.__name__ = 'comment'
+comment0.__name__ = 'comment'
 
 keyword0 = ['__halt_compiler']
 
-class comment2:
+class comment1:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword0),
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment2.__name__ = 'comment'
+comment1.__name__ = 'comment'
 
 subst = [RE(r"\$\w+")]
 
 class string:
     default_text = DELIMITER
-    rules = [('subst', subst), ('subst', RE(r"\{\$"), [RE(r"\}")])]
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        ('subst', subst),
+        ('subst', RE(r"\{\$"), [RE(r"\}")]),
+    ]
+
+class _function:
+    default_text = DELIMITER
+    rules = [('_function', RE(r"[;{]"), [RE(r'\b|\B')])]
 
 keyword1 = ['function']
 
@@ -135,7 +73,7 @@ class string0:
     default_text = DELIMITER
     rules = [
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        None,  # ('meta', meta),
+        ('meta', meta),
     ]
 string0.__name__ = 'string'
 
@@ -146,15 +84,17 @@ class string1:
     ]
 string1.__name__ = 'string'
 
-number = [RE(r"\b(0b[01]+)")]
+number = [RE(r"\b(?:0b[01]+)")]
 
-number0 = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number0 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 class params:
     default_text = DELIMITER
     rules = [
         # {'begin': '\\$+[a-zA-Z_\x7f-ÿ][a-zA-Z0-9_\x7f-ÿ]*'},
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
         ('string', RE(r"b\""), [RE(r"\"")], string0),
         ('string', RE(r"b'"), [RE(r"'")], string0),
         ('string', RE(r"'"), [RE(r"'")], string1),
@@ -171,14 +111,18 @@ class function:
         ('params', RE(r"\("), [RE(r"\)")], params),
     ]
 
+class _class:
+    default_text = DELIMITER
+    rules = [('_class', RE(r"{"), [RE(r'\b|\B')])]
+
 keyword2 = ['class', 'interface']
 
 class class0:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword2),
-        ('_group1', RE(r"\b(extends|implements)"), [RE(r"\B|\b")]),
-        None,  # ('title', title),
+        ('_group1', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('title', title),
     ]
 class0.__name__ = 'class'
 
@@ -186,43 +130,32 @@ keyword3 = ['namespace']
 
 class _group2:
     default_text = DELIMITER
-    rules = [
-        ('keyword', keyword3),
-        None,  # ('title', title),
-    ]
+    rules = [('keyword', keyword3), ('title', title)]
 
 keyword4 = ['use']
 
 class _group3:
     default_text = DELIMITER
-    rules = [
-        ('keyword', keyword4),
-        None,  # ('title', title),
-    ]
+    rules = [('keyword', keyword4), ('title', title)]
 
 rules = [
     ('keyword', keyword),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"#"), [RE(r"$")], comment0),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment1),
-    ('comment', RE(r"__halt_compiler.+?;"), [RE(r"")], comment2),
+    ('comment', RE(r"#"), [RE(r"$")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('comment', RE(r"__halt_compiler.+?;"), [RE(r"\B\b")], comment1),
     ('string', RE(r"<<<['\"]?\w+['\"]?$"), [RE(r"^\w+;?$")], string),
-    None,  # ('meta', meta),
-    ('function', RE(r"\b(function)"), [RE(r"(?=[;{])")], function),
-    ('class', RE(r"\b(class|interface)"), [RE(r"(?={)")], class0),
-    ('_group2', RE(r"\b(namespace)"), [RE(r";")], _group2),
-    ('_group3', RE(r"\b(use)"), [RE(r";")], _group3),
-    None,  # params.rules[2],
-    None,  # ('number', number0),
+    ('meta', meta),
+    # {'begin': '\\$+[a-zA-Z_\x7f-ÿ][a-zA-Z0-9_\x7f-ÿ]*'},
+    # {'begin': {'pattern': '(::|->)+[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*', 'type': 'RegExp'}},
+    ('function', RE(r"\b(?:function)"), [_function], function),
+    ('class', RE(r"\b(?:class|interface)"), [_class], class0),
+    ('_group2', RE(r"\b(?:namespace)"), [RE(r";")], _group2),
+    ('_group3', RE(r"\b(?:use)"), [RE(r";")], _group3),
+    # {'begin': '=>'},
+    params.rules[2],
+    ('number', number0),
 ]
-
-rules[6] = ('meta', meta)
-string0.rules[0] = ('meta', meta)
-class0.rules[2] = ('title', title)
-_group2.rules[1] = ('title', title)
-_group3.rules[1] = ('title', title)
-rules[11] = params.rules[2]
-rules[12] = ('number', number0)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

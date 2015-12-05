@@ -6,41 +6,24 @@ file_patterns = ['*.cal']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-keyword = [
-    'div',
-    'mod',
-    'in',
-    'and',
-    'or',
-    'not',
-    'xor',
-    'asserterror',
-    'begin',
-    'case',
-    'do',
-    'downto',
-    'else',
-    'end',
-    'exit',
-    'for',
-    'if',
-    'of',
-    'repeat',
-    'then',
-    'to',
-    'until',
-    'while',
-    'with',
-    'var',
-]
+keyword = """
+    div mod in and or not xor asserterror begin case do downto else end
+    exit for if of repeat then to until while with var
+    """.split()
 
 literal = ['false', 'true']
 
-string = [RE(r"(#\d+)+")]
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'pattern': "''", 'type': 'RegExp'}},
+    ]
 
-number = [RE(r"\b\d+(\.\d+)?(DT|D|T)")]
+string0 = [RE(r"(?:#\d+)+")]
 
-number0 = [RE(r"\b\d+(\.\d+)?")]
+number = [RE(r"\b\d+(?:\.\d+)?(?:DT|D|T)")]
+
+number0 = [RE(r"\b\d+(?:\.\d+)?")]
 
 title = [RE(r"[a-zA-Z]\w*")]
 
@@ -51,58 +34,50 @@ class params:
     rules = [
         ('keyword', keyword),
         None,  # rules[2],
-        None,  # ('string', string),
+        ('string', string0),
     ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 class function:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword0),
-        None,  # ('title', title),
+        ('title', title),
         ('params', RE(r"\("), [RE(r"\)")], params),
         ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"\{"), [RE(r"\}")], comment0),
-        ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment0),
+        ('comment', RE(r"\{"), [RE(r"\}")], comment),
+        ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment),
     ]
 
 class class0:
     default_text = DELIMITER
     rules = [
         ('title', title),
-        ('function', RE(r"\b(procedure)"), [RE(r"[:;]")], function),
+        ('function', RE(r"\b(?:procedure)"), [RE(r"[:;]")], function),
     ]
 class0.__name__ = 'class'
 
 rules = [
     ('keyword', keyword),
     ('literal', literal),
-    ('string', RE(r"'"), [RE(r"'")]),
-    ('string', string),
+    ('string', RE(r"'"), [RE(r"'")], string),
+    ('string', string0),
     ('number', number),
     ('string', RE(r"\""), [RE(r"\"")]),
     ('number', number0),
-    ('class', RE(r"(?=OBJECT (Table|Form|Report|Dataport|Codeunit|XMLport|MenuSuite|Page|Query) (\d+) ([^\r\n]+))"), [RE(r"\B|\b")], class0),
-    None,  # class0.rules[1],
+    ('class', RE(r"(?=OBJECT (?:Table|Form|Report|Dataport|Codeunit|XMLport|MenuSuite|Page|Query) (?:\d+) (?:[^\r\n]+))"), [RE(r"\B\b")], class0),
+    class0.rules[1],
 ]
 
-function.rules[1] = ('title', title)
 params.rules[1] = rules[2]
-params.rules[2] = ('string', string)
-rules[8] = class0.rules[1]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

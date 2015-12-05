@@ -6,83 +6,19 @@ file_patterns = ['*.gams', '*.gms']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-keyword = [
-    'abort',
-    'acronym',
-    'acronyms',
-    'alias',
-    'all',
-    'and',
-    'assign',
-    'binary',
-    'card',
-    'diag',
-    'display',
-    'else1',
-    'eps',
-    'eq',
-    'equation',
-    'equations',
-    'file',
-    'files',
-    'for1',
-    'free',
-    'ge',
-    'gt',
-    'if',
-    'inf',
-    'integer',
-    'le',
-    'loop',
-    'lt',
-    'maximizing',
-    'minimizing',
-    'model',
-    'models',
-    'na',
-    'ne',
-    'negative',
-    'no',
-    'not',
-    'option',
-    'options',
-    'or',
-    'ord',
-    'parameter',
-    'parameters',
-    'positive',
-    'prod',
-    'putpage',
-    'puttl',
-    'repeat',
-    'sameas',
-    'scalar',
-    'scalars',
-    'semicont',
-    'semiint',
-    'set1',
-    'sets',
-    'smax',
-    'smin',
-    'solve',
-    'sos1',
-    'sos2',
-    'sum',
-    'system',
-    'table',
-    'then',
-    'until',
-    'using',
-    'variable',
-    'variables',
-    'while1',
-    'xor',
-    'yes',
-]
+keyword = """
+    abort acronym acronyms alias all and assign binary card diag display
+    else1 eps eq equation equations file files for1 free ge gt if inf
+    integer le loop lt maximizing minimizing model models na ne negative
+    no not option options or ord parameter parameters positive prod
+    putpage puttl repeat sameas scalar scalars semicont semiint set1
+    sets smax smin solve sos1 sos2 sum system table then until using
+    variable variables while1 xor yes
+    """.split()
 
 keyword0 = ['sets', 'parameters', 'variables', 'equations']
 
-number = [RE(r"\b\d+(\.\d+)?")]
+number = [RE(r"\b\d+(?:\.\d+)?")]
 
 class _group1:
     default_text = DELIMITER
@@ -96,13 +32,11 @@ number0 = [RE(r"\$[a-zA-Z0-9]+")]
 
 rules = [
     ('keyword', keyword),
-    ('_group0', RE(r"\b(sets|parameters|variables|equations)"), [RE(r";")], _group0),
+    ('_group0', RE(r"\b(?:sets|parameters|variables|equations)"), [RE(r";")], _group0),
     ('string', RE(r"\*{3}"), [RE(r"\*{3}")]),
-    None,  # ('number', number),
+    ('number', number),
     ('number', number0),
 ]
-
-rules[3] = ('number', number)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

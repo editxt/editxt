@@ -4,79 +4,35 @@
 name = 'F#'
 file_patterns = ['*.fsharp', '*.fs']
 
-keyword = [
-    'abstract',
-    'and',
-    'as',
-    'assert',
-    'base',
-    'begin',
-    'class',
-    'default',
-    'delegate',
-    'do',
-    'done',
-    'downcast',
-    'downto',
-    'elif',
-    'else',
-    'end',
-    'exception',
-    'extern',
-    'false',
-    'finally',
-    'for',
-    'fun',
-    'function',
-    'global',
-    'if',
-    'in',
-    'inherit',
-    'inline',
-    'interface',
-    'internal',
-    'lazy',
-    'let',
-    'match',
-    'member',
-    'module',
-    'mutable',
-    'namespace',
-    'new',
-    'null',
-    'of',
-    'open',
-    'or',
-    'override',
-    'private',
-    'public',
-    'rec',
-    'return',
-    'sig',
-    'static',
-    'struct',
-    'then',
-    'to',
-    'true',
-    'try',
-    'type',
-    'upcast',
-    'use',
-    'val',
-    'void',
-    'when',
-    'while',
-    'with',
-    'yield',
-]
+keyword = """
+    abstract and as assert base begin class default delegate do done
+    downcast downto elif else end exception extern false finally for fun
+    function global if in inherit inline interface internal lazy let
+    match member module mutable namespace new null of open or override
+    private public rec return sig static struct then to true try type
+    upcast use val void when while with yield
+    """.split()
 
-keyword0 = [RE(r"\b(yield|return|let|do)!")]
+keyword0 = [RE(r"\b(?:yield|return|let|do)!")]
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '""'},
+    ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
+
+class _class:
+    default_text = DELIMITER
+    rules = [('_class', RE(r"\(|=|$"), [RE(r'\b|\B')])]
 
 keyword1 = ['type']
 
@@ -97,32 +53,26 @@ class class0:
     ]
 class0.__name__ = 'class'
 
-class comment0:
-    default_text = DELIMITER
-    rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-comment0.__name__ = 'comment'
-
-class string:
+class symbol:
     default_text = DELIMITER
     rules = [
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 rules = [
     ('keyword', keyword),
     ('keyword', keyword0),
-    ('string', RE(r"@\""), [RE(r"\"")]),
+    ('string', RE(r"@\""), [RE(r"\"")], string),
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
     ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment),
-    ('class', RE(r"\b(type)"), [RE(r"(?=\(|=|$)")], class0),
+    ('class', RE(r"\b(?:type)"), [_class], class0),
     ('meta', RE(r"\[<"), [RE(r">\]")]),
-    ('symbol', RE(r"\B('[A-Za-z])\b"), [RE(r"\B|\b")]),
-    ('comment', RE(r"//"), [RE(r"$")], comment0),
+    ('symbol', RE(r"\B(?:'[A-Za-z])\b"), [RE(r"\B\b")], symbol),
+    ('comment', RE(r"//"), [RE(r"$")], comment),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),
 ]

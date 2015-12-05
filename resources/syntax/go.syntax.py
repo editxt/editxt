@@ -4,70 +4,18 @@
 name = 'Go'
 file_patterns = ['*.go', '*.golang']
 
-built_in = [
-    'append',
-    'cap',
-    'close',
-    'complex',
-    'copy',
-    'imag',
-    'len',
-    'make',
-    'new',
-    'panic',
-    'print',
-    'println',
-    'real',
-    'recover',
-    'delete',
-]
+built_in = """
+    append cap close complex copy imag len make new panic print println
+    real recover delete
+    """.split()
 
-keyword = [
-    'break',
-    'default',
-    'func',
-    'interface',
-    'select',
-    'case',
-    'map',
-    'struct',
-    'chan',
-    'else',
-    'goto',
-    'package',
-    'switch',
-    'const',
-    'fallthrough',
-    'if',
-    'range',
-    'type',
-    'continue',
-    'for',
-    'import',
-    'return',
-    'var',
-    'go',
-    'defer',
-    'bool',
-    'byte',
-    'complex64',
-    'complex128',
-    'float32',
-    'float64',
-    'int8',
-    'int16',
-    'int32',
-    'int64',
-    'string',
-    'uint8',
-    'uint16',
-    'uint32',
-    'uint64',
-    'int',
-    'uint',
-    'uintptr',
-    'rune',
-]
+keyword = """
+    break default func interface select case map struct chan else goto
+    package switch const fallthrough if range type continue for import
+    return var go defer bool byte complex64 complex128 float32 float64
+    int8 int16 int32 int64 string uint8 uint16 uint32 uint64 int uint
+    uintptr rune
+    """.split()
 
 literal = ['true', 'false', 'iota', 'nil']
 
@@ -75,29 +23,32 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
 
 number = [
-    RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)[dflsi]?"),
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)[dflsi]?"),
 ]
 
-number0 = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number0 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
     ('literal', literal),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+    ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"'"), [RE(r"[^\\]'")]),
     ('string', RE(r"`"), [RE(r"`")]),
     ('number', number),

@@ -10,26 +10,15 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
-builtin_name = [
-    'each',
-    'in',
-    'with',
-    'if',
-    'else',
-    'unless',
-    'bindattr',
-    'action',
-    'collection',
-    'debugger',
-    'log',
-    'outlet',
-    'template',
-    'unbound',
-    'view',
-    'yield',
-]
+builtin_name = """
+    each in with if else unless bindattr action collection debugger log
+    outlet template unbound view yield
+    """.split()
 
 class name0:
     default_text = DELIMITER
@@ -38,12 +27,18 @@ name0.__name__ = 'name'
 
 class name1:
     default_text = DELIMITER
-    rules = [('name', RE(r"[a-zA-Z\.-]+"), [RE(r"\B|\b")], name0)]
+    rules = [('name', RE(r"[a-zA-Z\.-]+"), [RE(r"\B\b")], name0)]
 name1.__name__ = 'name'
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
 
 class _group0:
     default_text = DELIMITER
-    rules = [('string', RE(r"\""), [RE(r"\"")])]
+    rules = [('string', RE(r"\""), [RE(r"\"")], string)]
 
 class template_tag:
     default_text = DELIMITER
@@ -56,7 +51,7 @@ class template_variable:
 template_variable.__name__ = 'template-variable'
 
 rules = [
-    ('comment', RE(r"{{!(--)?"), [RE(r"(--)?}}")], comment),
+    ('comment', RE(r"{{!(?:--)?"), [RE(r"(?:--)?}}")], comment),
     ('template-tag', RE(r"\{\{[#\/]"), [RE(r"\}\}")], template_tag),
     ('template-variable', RE(r"\{\{"), [RE(r"\}\}")], template_variable),
 ]

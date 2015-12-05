@@ -4,50 +4,16 @@
 name = 'Haskell'
 file_patterns = ['*.haskell', '*.hs']
 
-keyword = [
-    'let',
-    'in',
-    'if',
-    'then',
-    'else',
-    'case',
-    'of',
-    'where',
-    'do',
-    'module',
-    'import',
-    'hiding',
-    'qualified',
-    'type',
-    'data',
-    'newtype',
-    'deriving',
-    'class',
-    'instance',
-    'as',
-    'default',
-    'infix',
-    'infixl',
-    'infixr',
-    'foreign',
-    'export',
-    'ccall',
-    'stdcall',
-    'cplusplus',
-    'jvm',
-    'dotnet',
-    'safe',
-    'unsafe',
-    'family',
-    'forall',
-    'mdo',
-    'proc',
-    'rec',
-]
+keyword = """
+    let in if then else case of where do module import hiding qualified
+    type data newtype deriving class instance as default infix infixl
+    infixr foreign export ccall stdcall cplusplus jvm dotnet safe unsafe
+    family forall mdo proc rec
+    """.split()
 
 keyword0 = ['module', 'where']
 
-type = [RE(r"\b[A-Z][\w]*(\((\.\.|,|\w+)\))?")]
+type = [RE(r"\b[A-Z][\w]*(?:\((?:\.\.|,|\w+)\))?")]
 
 title = [RE(r"[_a-z][\w']*")]
 
@@ -55,15 +21,10 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 class _group1:
     default_text = DELIMITER
@@ -73,7 +34,7 @@ class _group1:
         ('type', type),
         ('title', title),
         ('comment', RE(r"--"), [RE(r"$")], comment),
-        ('comment', RE(r"{-"), [RE(r"-}")], comment0),
+        ('comment', RE(r"{-"), [RE(r"-}")], comment),
     ]
 
 class _group0:
@@ -90,7 +51,7 @@ class _group2:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword1),
-        None,  # _group0.rules[1],
+        _group0.rules[1],
         # {},
     ]
 
@@ -103,7 +64,7 @@ class class0:
     rules = [
         ('keyword', keyword2),
         ('type', type0),
-        None,  # _group0.rules[1],
+        _group0.rules[1],
         # {},
     ]
 class0.__name__ = 'class'
@@ -118,9 +79,9 @@ class class1:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword3),
-        None,  # _group1.rules[0],
-        None,  # ('type', type0),
-        None,  # _group0.rules[1],
+        _group1.rules[0],
+        ('type', type0),
+        _group0.rules[1],
         ('_group3', RE(r"{"), [RE(r"}")], _group3),
         # {},
     ]
@@ -132,14 +93,16 @@ class _group4:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword4),
-        None,  # ('type', type0),
-        None,  # _group0.rules[1],
+        ('type', type0),
+        _group0.rules[1],
         # {},
     ]
 
 keyword5 = ['infix', 'infixl', 'infixr']
 
-number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 class _group5:
     default_text = DELIMITER
@@ -149,25 +112,22 @@ class _group5:
         # {},
     ]
 
-keyword6 = [
-    'foreign',
-    'import',
-    'export',
-    'ccall',
-    'stdcall',
-    'cplusplus',
-    'jvm',
-    'dotnet',
-    'safe',
-    'unsafe',
-]
+keyword6 = """
+    foreign import export ccall stdcall cplusplus jvm dotnet safe unsafe
+    """.split()
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
 
 class _group6:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword6),
-        None,  # ('type', type0),
-        ('string', RE(r"\""), [RE(r"\"")]),
+        ('type', type0),
+        ('string', RE(r"\""), [RE(r"\"")], string),
         # {},
     ]
 
@@ -175,37 +135,23 @@ title0 = [RE(r"^[_a-z][\w']*")]
 
 rules = [
     ('keyword', keyword),
-    ('_group0', RE(r"\b(module)"), [RE(r"where")], _group0),
+    ('_group0', RE(r"\b(?:module)"), [RE(r"where")], _group0),
     ('_group2', RE(r"\bimport\b"), [RE(r"$")], _group2),
-    ('class', RE(r"^(\s*)?(class|instance)\b"), [RE(r"where")], class0),
-    ('class', RE(r"\b(data|(new)?type)\b"), [RE(r"$")], class1),
-    ('_group4', RE(r"\b(default)"), [RE(r"$")], _group4),
-    ('_group5', RE(r"\b(infix|infixl|infixr)"), [RE(r"$")], _group5),
+    ('class', RE(r"^(?:\s*)?(?:class|instance)\b"), [RE(r"where")], class0),
+    ('class', RE(r"\b(?:data|(?:new)?type)\b"), [RE(r"$")], class1),
+    ('_group4', RE(r"\b(?:default)"), [RE(r"$")], _group4),
+    ('_group5', RE(r"\b(?:infix|infixl|infixr)"), [RE(r"$")], _group5),
     ('_group6', RE(r"\bforeign\b"), [RE(r"$")], _group6),
     ('meta', RE(r"#!\/usr\/bin\/env runhaskell"), [RE(r"$")]),
-    None,  # _group1.rules[0],
-    None,  # _group1.rules[1],
-    None,  # _group6.rules[2],
-    None,  # ('number', number),
-    None,  # ('type', type0),
+    _group1.rules[0],
+    _group1.rules[1],
+    _group6.rules[2],
+    ('number', number),
+    ('type', type0),
     ('title', title0),
     # {},
+    # {'begin': '->|<-'},
 ]
-
-_group2.rules[1] = _group0.rules[1]
-class0.rules[2] = _group0.rules[1]
-class1.rules[1] = _group1.rules[0]
-class1.rules[2] = ('type', type0)
-class1.rules[3] = _group0.rules[1]
-_group4.rules[1] = ('type', type0)
-_group4.rules[2] = _group0.rules[1]
-_group6.rules[1] = ('type', type0)
-rules[9] = _group1.rules[0]
-rules[10] = _group1.rules[1]
-rules[11] = _group6.rules[2]
-rules[12] = ('number', number)
-rules[13] = ('type', type0)
-_group3.rules.extend(_group1.rules)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

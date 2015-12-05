@@ -6,66 +6,30 @@ file_patterns = ['*.crmsh', '*.crm', '*.pcmk']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-keyword = [
-    'params',
-    'meta',
-    'operations',
-    'op',
-    'rule',
-    'attributes',
-    'utilization',
-    'read',
-    'write',
-    'deny',
-    'defined',
-    'not_defined',
-    'in_range',
-    'date',
-    'spec',
-    'in',
-    'ref',
-    'reference',
-    'attribute',
-    'type',
-    'xpath',
-    'version',
-    'and',
-    'or',
-    'lt',
-    'gt',
-    'tag',
-    'lte',
-    'gte',
-    'eq',
-    'ne',
-    '\\',
-    'number',
-    'string',
-]
+keyword = """
+    params meta operations op rule attributes utilization read write
+    deny defined not_defined in_range date spec in ref reference
+    attribute type xpath version and or lt gt tag lte gte eq ne \ number
+    string
+    """.split()
 
-literal = [
-    'Master',
-    'Started',
-    'Slave',
-    'Stopped',
-    'start',
-    'promote',
-    'demote',
-    'stop',
-    'monitor',
-    'true',
-    'false',
-]
+literal = """
+    Master Started Slave Stopped start promote demote stop monitor true
+    false
+    """.split()
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 class _group0:
     default_text = DELIMITER
-    rules = [('_group0', RE(r"\b(node)"), [RE(r"\B|\b")])]
+    rules = [('_group0', RE(r"\b(?:node)"), [RE(r"\B\b")])]
 
 class _group1:
     default_text = DELIMITER
@@ -73,29 +37,16 @@ class _group1:
 
 class _group2:
     default_text = DELIMITER
-    rules = [('_group2', RE(r"\b(primitive|rsc_template)"), [RE(r"\B|\b")])]
+    rules = [('_group2', RE(r"\b(?:primitive|rsc_template)"), [RE(r"\B\b")])]
 
 class title:
     default_text = DELIMITER
     rules = []
 
-keyword0 = [
-    'group',
-    'clone',
-    'ms',
-    'master',
-    'location',
-    'colocation',
-    'order',
-    'fencing_topology',
-    'rsc_ticket',
-    'acl_target',
-    'acl_group',
-    'user',
-    'role',
-    'tag',
-    'xml',
-]
+keyword0 = """
+    group clone ms master location colocation order fencing_topology
+    rsc_ticket acl_target acl_group user role tag xml
+    """.split()
 
 class _group3:
     default_text = DELIMITER
@@ -104,33 +55,39 @@ class _group3:
 class _group30:
     default_text = DELIMITER
     rules = [
-        ('_group3', RE(r"\b(group|clone|ms|master|location|colocation|order|fencing_topology|rsc_ticket|acl_target|acl_group|user|role|tag|xml)\s+"), [RE(r"\B|\b")], _group3),
+        ('_group3', RE(r"\b(?:group|clone|ms|master|location|colocation|order|fencing_topology|rsc_ticket|acl_target|acl_group|user|role|tag|xml)\s+"), [RE(r"\B\b")], _group3),
     ]
 _group30.__name__ = '_group3'
 
 class _group4:
     default_text = DELIMITER
     rules = [
-        ('_group4', RE(r"\b(property|rsc_defaults|op_defaults)"), [RE(r"\B|\b")]),
+        ('_group4', RE(r"\b(?:property|rsc_defaults|op_defaults)"), [RE(r"\B\b")]),
     ]
 
-meta = [RE(r"(ocf|systemd|service|lsb):[\w_:-]+")]
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
 
-number = [RE(r"\b\d+(\.\d+)?(ms|s|h|m)?")]
+meta = [RE(r"(?:ocf|systemd|service|lsb):[\w_:-]+")]
 
-literal0 = [RE(r"[-]?(infinity|inf)")]
+number = [RE(r"\b\d+(?:\.\d+)?(?:ms|s|h|m)?")]
 
-attr = [RE(r"([A-Za-z\$_\#][\w_-]+)=")]
+literal0 = [RE(r"[-]?(?:infinity|inf)")]
+
+attr = [RE(r"(?:[A-Za-z\$_\#][\w_-]+)=")]
 
 rules = [
     ('keyword', keyword),
     ('literal', literal),
     ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('_group0', _group0, [RE(r"\s*([\w_-]+:)?")], _group1),
+    ('_group0', _group0, [RE(r"\s*(?:[\w_-]+:)?")], _group1),
     ('_group2', _group2, [RE(r"\s*[\$\w_][\w_-]*")], title),
     ('_group3', _group30, [RE(r"[\$\w_][\w_-]*")], title),
-    ('_group4', _group4, [RE(r"\s*([\w_-]+:)?")], title),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    ('_group4', _group4, [RE(r"\s*(?:[\w_-]+:)?")], title),
+    ('string', RE(r"\""), [RE(r"\"")], string),
     ('meta', meta),
     ('number', number),
     ('literal', literal0),

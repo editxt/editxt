@@ -4,77 +4,30 @@
 name = 'SML'
 file_patterns = ['*.sml', '*.ml']
 
-built_in = [
-    'array',
-    'bool',
-    'char',
-    'exn',
-    'int',
-    'list',
-    'option',
-    'order',
-    'real',
-    'ref',
-    'string',
-    'substring',
-    'vector',
-    'unit',
-    'word',
-]
+built_in = """
+    array bool char exn int list option order real ref string substring
+    vector unit word
+    """.split()
 
-keyword = [
-    'abstype',
-    'and',
-    'andalso',
-    'as',
-    'case',
-    'datatype',
-    'do',
-    'else',
-    'end',
-    'eqtype',
-    'exception',
-    'fn',
-    'fun',
-    'functor',
-    'handle',
-    'if',
-    'in',
-    'include',
-    'infix',
-    'infixr',
-    'let',
-    'local',
-    'nonfix',
-    'of',
-    'op',
-    'open',
-    'orelse',
-    'raise',
-    'rec',
-    'sharing',
-    'sig',
-    'signature',
-    'struct',
-    'structure',
-    'then',
-    'type',
-    'val',
-    'with',
-    'withtype',
-    'where',
-    'while',
-]
+keyword = """
+    abstype and andalso as case datatype do else end eqtype exception fn
+    fun functor handle if in include infix infixr let local nonfix of op
+    open orelse raise rec sharing sig signature struct structure then
+    type val with withtype where while
+    """.split()
 
 literal = ['true', 'false', 'NONE', 'SOME', 'LESS', 'EQUAL', 'GREATER', 'nil']
 
-literal0 = [RE(r"\[(\|\|)?\]|\(\)")]
+literal0 = [RE(r"\[(?:\|\|)?\]|\(\)")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 symbol = [RE(r"'[A-Za-z_](?!')[\w']*")]
 
@@ -89,7 +42,7 @@ class string:
     ]
 
 number = [
-    RE(r"\b(0[xX][a-fA-F0-9_]+[Lln]?|0[oO][0-7_]+[Lln]?|0[bB][01_]+[Lln]?|[0-9][0-9_]*([Lln]|(\.[0-9_]*)?([eE][-+]?[0-9_]+)?)?)"),
+    RE(r"\b(?:0[xX][a-fA-F0-9_]+[Lln]?|0[oO][0-7_]+[Lln]?|0[bB][01_]+[Lln]?|[0-9][0-9_]*(?:[Lln]|(?:\.[0-9_]*)?(?:[eE][-+]?[0-9_]+)?)?)"),
 ]
 
 rules = [
@@ -101,9 +54,11 @@ rules = [
     ('symbol', symbol),
     ('type', type),
     ('type', type0),
-    ('string', RE(r"'"), [RE(r"'")]),
+    # {'begin': "[a-z_]\\w*'[\\w']*"},
+    ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),
+    # {'begin': {'pattern': '[-=]>', 'type': 'RegExp'}},
 ]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax

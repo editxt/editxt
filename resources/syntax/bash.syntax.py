@@ -6,133 +6,24 @@ file_patterns = ['*.bash', '*.sh', '*.zsh']
 
 _ = ['-ne', '-eq', '-lt', '-gt', '-f', '-d', '-e', '-s', '-l', '-a']
 
-built_in = [
-    'break',
-    'cd',
-    'continue',
-    'eval',
-    'exec',
-    'exit',
-    'export',
-    'getopts',
-    'hash',
-    'pwd',
-    'readonly',
-    'return',
-    'shift',
-    'test',
-    'times',
-    'trap',
-    'umask',
-    'unset',
-    'alias',
-    'bind',
-    'builtin',
-    'caller',
-    'command',
-    'declare',
-    'echo',
-    'enable',
-    'help',
-    'let',
-    'local',
-    'logout',
-    'mapfile',
-    'printf',
-    'read',
-    'readarray',
-    'source',
-    'type',
-    'typeset',
-    'ulimit',
-    'unalias',
-    'set',
-    'shopt',
-    'autoload',
-    'bg',
-    'bindkey',
-    'bye',
-    'cap',
-    'chdir',
-    'clone',
-    'comparguments',
-    'compcall',
-    'compctl',
-    'compdescribe',
-    'compfiles',
-    'compgroups',
-    'compquote',
-    'comptags',
-    'comptry',
-    'compvalues',
-    'dirs',
-    'disable',
-    'disown',
-    'echotc',
-    'echoti',
-    'emulate',
-    'fc',
-    'fg',
-    'float',
-    'functions',
-    'getcap',
-    'getln',
-    'history',
-    'integer',
-    'jobs',
-    'kill',
-    'limit',
-    'log',
-    'noglob',
-    'popd',
-    'print',
-    'pushd',
-    'pushln',
-    'rehash',
-    'sched',
-    'setcap',
-    'setopt',
-    'stat',
-    'suspend',
-    'ttyctl',
-    'unfunction',
-    'unhash',
-    'unlimit',
-    'unsetopt',
-    'vared',
-    'wait',
-    'whence',
-    'where',
-    'which',
-    'zcompile',
-    'zformat',
-    'zftp',
-    'zle',
-    'zmodload',
-    'zparseopts',
-    'zprof',
-    'zpty',
-    'zregexparse',
-    'zsocket',
-    'zstyle',
-    'ztcp',
-]
+built_in = """
+    break cd continue eval exec exit export getopts hash pwd readonly
+    return shift test times trap umask unset alias bind builtin caller
+    command declare echo enable help let local logout mapfile printf
+    read readarray source type typeset ulimit unalias set shopt autoload
+    bg bindkey bye cap chdir clone comparguments compcall compctl
+    compdescribe compfiles compgroups compquote comptags comptry
+    compvalues dirs disable disown echotc echoti emulate fc fg float
+    functions getcap getln history integer jobs kill limit log noglob
+    popd print pushd pushln rehash sched setcap setopt stat suspend
+    ttyctl unfunction unhash unlimit unsetopt vared wait whence where
+    which zcompile zformat zftp zle zmodload zparseopts zprof zpty
+    zregexparse zsocket zstyle ztcp
+    """.split()
 
-keyword = [
-    'if',
-    'then',
-    'else',
-    'elif',
-    'fi',
-    'for',
-    'while',
-    'in',
-    'do',
-    'done',
-    'case',
-    'esac',
-    'function',
-]
+keyword = """
+    if then else elif fi for while in do done case esac function
+    """.split()
 
 literal = ['true', 'false']
 
@@ -148,13 +39,16 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
-number = [RE(r"\b\d+(\.\d+)?")]
+number = [RE(r"\b\d+(?:\.\d+)?")]
 
 variable = [RE(r"\$[\w\d#@][\w\d_]*")]
 
-variable0 = [RE(r"\$\{(.*?)}")]
+variable0 = [RE(r"\$\{(?:.*?)}")]
 
 class variable1:
     default_text = DELIMITER
@@ -166,6 +60,7 @@ variable1.__name__ = 'variable'
 class string:
     default_text = DELIMITER
     rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         ('variable', variable),
         ('variable', variable0),
         ('variable', RE(r"\$\("), [RE(r"\)")], variable1),
@@ -177,15 +72,13 @@ rules = [
     ('keyword', keyword),
     ('literal', literal),
     ('meta', meta),
-    ('function', RE(r"(?=\w[\w\d_]*\s*\(\s*\)\s*\{)"), [RE(r"\B|\b")], function),
+    ('function', RE(r"(?=\w[\w\d_]*\s*\(\s*\)\s*\{)"), [RE(r"\B\b")], function),
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('number', number),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"'"), [RE(r"'")]),
-    None,  # ('variable', variable0),
+    ('variable', variable0),
 ]
-
-rules[10] = ('variable', variable0)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

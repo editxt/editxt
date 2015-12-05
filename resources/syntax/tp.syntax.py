@@ -4,89 +4,18 @@
 name = 'TP'
 file_patterns = ['*.tp']
 
-keyword = [
-    'ABORT',
-    'ACC',
-    'ADJUST',
-    'AND',
-    'AP_LD',
-    'BREAK',
-    'CALL',
-    'CNT',
-    'COL',
-    'CONDITION',
-    'CONFIG',
-    'DA',
-    'DB',
-    'DIV',
-    'DETECT',
-    'ELSE',
-    'END',
-    'ENDFOR',
-    'ERR_NUM',
-    'ERROR_PROG',
-    'FINE',
-    'FOR',
-    'GP',
-    'GUARD',
-    'INC',
-    'IF',
-    'JMP',
-    'LINEAR_MAX_SPEED',
-    'LOCK',
-    'MOD',
-    'MONITOR',
-    'OFFSET',
-    'Offset',
-    'OR',
-    'OVERRIDE',
-    'PAUSE',
-    'PREG',
-    'PTH',
-    'RT_LD',
-    'RUN',
-    'SELECT',
-    'SKIP',
-    'Skip',
-    'TA',
-    'TB',
-    'TO',
-    'TOOL_OFFSET',
-    'Tool_Offset',
-    'UF',
-    'UT',
-    'UFRAME_NUM',
-    'UTOOL_NUM',
-    'UNLOCK',
-    'WAIT',
-    'X',
-    'Y',
-    'Z',
-    'W',
-    'P',
-    'R',
-    'STRLEN',
-    'SUBSTR',
-    'FINDSTR',
-    'VOFFSET',
-    'PROG',
-    'ATTR',
-    'MN',
-    'POS',
-]
+keyword = """
+    ABORT ACC ADJUST AND AP_LD BREAK CALL CNT COL CONDITION CONFIG DA DB
+    DIV DETECT ELSE END ENDFOR ERR_NUM ERROR_PROG FINE FOR GP GUARD INC
+    IF JMP LINEAR_MAX_SPEED LOCK MOD MONITOR OFFSET Offset OR OVERRIDE
+    PAUSE PREG PTH RT_LD RUN SELECT SKIP Skip TA TB TO TOOL_OFFSET
+    Tool_Offset UF UT UFRAME_NUM UTOOL_NUM UNLOCK WAIT X Y Z W P R
+    STRLEN SUBSTR FINDSTR VOFFSET PROG ATTR MN POS
+    """.split()
 
-literal = [
-    'ON',
-    'OFF',
-    'max_speed',
-    'LPOS',
-    'JPOS',
-    'ENABLE',
-    'DISABLE',
-    'START',
-    'STOP',
-    'RESET',
-]
+literal = """
+    ON OFF max_speed LPOS JPOS ENABLE DISABLE START STOP RESET
+    """.split()
 
 number = [RE(r"[1-9][0-9]*")]
 
@@ -96,62 +25,61 @@ class built_in:
     default_text = DELIMITER
     rules = [('number', number), ('symbol', symbol)]
 
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+
 class built_in0:
     default_text = DELIMITER
     rules = [
-        None,  # ('number', number),
-        ('string', RE(r"\""), [RE(r"\"")]),
-        None,  # ('symbol', symbol),
+        ('number', number),
+        ('string', RE(r"\""), [RE(r"\"")], string),
+        ('symbol', symbol),
     ]
 built_in0.__name__ = 'built_in'
 
-keyword0 = [RE(r"/(PROG|ATTR|MN|POS|END)\b")]
+keyword0 = [RE(r"/(?:PROG|ATTR|MN|POS|END)\b")]
 
-keyword1 = [RE(r"(CALL|RUN|POINT_LOGIC|LBL)\b")]
+keyword1 = [RE(r"(?:CALL|RUN|POINT_LOGIC|LBL)\b")]
 
-keyword2 = [RE(r"\b(ACC|CNT|Skip|Offset|PSPD|RT_LD|AP_LD|Tool_Offset)")]
+keyword2 = [RE(r"\b(?:ACC|CNT|Skip|Offset|PSPD|RT_LD|AP_LD|Tool_Offset)")]
 
-number0 = [RE(r"\d+(sec|msec|mm/sec|cm/min|inch/min|deg/sec|mm|in|cm)?\b")]
+number0 = [RE(r"\d+(?:sec|msec|mm/sec|cm/min|inch/min|deg/sec|mm|in|cm)?\b")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
-number1 = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number1 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 variable = [RE(r"\$[A-Za-z0-9_]+")]
 
 rules = [
     ('keyword', keyword),
     ('literal', literal),
-    ('built_in', RE(r"(AR|P|PAYLOAD|PR|R|SR|RSR|LBL|VR|UALM|MESSAGE|UTOOL|UFRAME|TIMER|    TIMER_OVERFLOW|JOINT_MAX_SPEED|RESUME_PROG|DIAG_REC)\["), [RE(r"\]")], built_in),
-    ('built_in', RE(r"(AI|AO|DI|DO|F|RI|RO|UI|UO|GI|GO|SI|SO)\["), [RE(r"\]")], built_in0),
+    ('built_in', RE(r"(?:AR|P|PAYLOAD|PR|R|SR|RSR|LBL|VR|UALM|MESSAGE|UTOOL|UFRAME|TIMER|    TIMER_OVERFLOW|JOINT_MAX_SPEED|RESUME_PROG|DIAG_REC)\["), [RE(r"\]")], built_in),
+    ('built_in', RE(r"(?:AI|AO|DI|DO|F|RI|RO|UI|UO|GI|GO|SI|SO)\["), [RE(r"\]")], built_in0),
     ('keyword', keyword0),
     ('keyword', keyword1),
     ('keyword', keyword2),
     ('number', number0),
     ('comment', RE(r"//"), [RE(r"[;$]")], comment),
-    ('comment', RE(r"!"), [RE(r"[;$]")], comment0),
-    ('comment', RE(r"--eg:"), [RE(r"$")], comment0),
-    None,  # built_in0.rules[1],
+    ('comment', RE(r"!"), [RE(r"[;$]")], comment),
+    ('comment', RE(r"--eg:"), [RE(r"$")], comment),
+    built_in0.rules[1],
     ('string', RE(r"'"), [RE(r"'")]),
     ('number', number1),
     ('variable', variable),
 ]
-
-built_in0.rules[0] = ('number', number)
-built_in0.rules[2] = ('symbol', symbol)
-rules[11] = built_in0.rules[1]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

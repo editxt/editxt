@@ -8,31 +8,27 @@ flags = re.IGNORECASE | re.MULTILINE
 
 class name0:
     default_text = DELIMITER
-    rules = [('name', RE(r"[a-zA-Z\.-]+"), [RE(r"\B|\b")])]
+    rules = [('name', RE(r"[a-zA-Z\.-]+"), [RE(r"\B\b")])]
 name0.__name__ = 'name'
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
 
 class _group0:
     default_text = DELIMITER
-    rules = [('string', RE(r"\""), [RE(r"\"")])]
+    rules = [('string', RE(r"\""), [RE(r"\"")], string)]
 
 class template_tag:
     default_text = DELIMITER
     rules = [('name', name0, [RE(r"(?=\})")], _group0)]
 template_tag.__name__ = 'template-tag'
 
-keyword = [
-    'if',
-    'eq',
-    'ne',
-    'lt',
-    'lte',
-    'gt',
-    'gte',
-    'select',
-    'default',
-    'math',
-    'sep',
-]
+keyword = """
+    if eq ne lt lte gt gte select default math sep
+    """.split()
 
 class template_variable:
     default_text = DELIMITER

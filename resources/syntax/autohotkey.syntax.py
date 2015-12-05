@@ -22,9 +22,12 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
-number = [RE(r"\b\d+(\.\d+)?")]
+number = [RE(r"\b\d+(?:\.\d+)?")]
 
 class variable:
     default_text = DELIMITER
@@ -42,13 +45,15 @@ rules = [
     ('keyword', keyword),
     ('literal', literal),
     ('built_in', built_in),
-    ('built_in', RE(r"\b(ComSpec|Clipboard|ClipboardAll|ErrorLevel)"), [RE(r"\B|\b")]),
+    ('built_in', RE(r"\b(?:ComSpec|Clipboard|ClipboardAll|ErrorLevel)"), [RE(r"\B\b")]),
+    # {'begin': {'pattern': '`[\\s\\S]', 'type': 'RegExp'}},
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('comment', RE(r";"), [RE(r"$")], comment),
     ('number', number),
     ('variable', RE(r"%"), [RE(r"%")], variable),
-    ('symbol', RE(r"^[^\n\";]+::(?!=)"), [RE(r"\B|\b")], symbol),
-    ('symbol', RE(r"^[^\n\";]+:(?!=)"), [RE(r"\B|\b")], symbol),
+    ('symbol', RE(r"^[^\n\";]+::(?!=)"), [RE(r"\B\b")], symbol),
+    ('symbol', RE(r"^[^\n\";]+:(?!=)"), [RE(r"\B\b")], symbol),
+    # {'begin': ',\\s*,'},
 ]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax

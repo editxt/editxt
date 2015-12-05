@@ -14,7 +14,10 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 name0 = ['style']
 
@@ -31,20 +34,23 @@ class _group4:
     rules = [
         ('string', RE(r"\""), [RE(r"\"")], string),
         ('string', RE(r"'"), [RE(r"'")], string),
-        ('string', RE(r"[^\s\/>]+"), [RE(r"\B|\b")], string),
+        ('string', RE(r"[^\s\/>]+"), [RE(r"\B\b")], string),
     ]
 
 class _group2:
     default_text = DELIMITER
     rules = [
-        ('_group3', RE(r"<\?(php)?(?!\w)"), [RE(r"\?>")], 'php'),
+        ('_group3', RE(r"<\?(?:php)?(?!\w)"), [RE(r"\?>")], 'php'),
         ('attr', attr),
-        ('_group4', RE(r"="), [RE(r"\B|\b")], _group4),
+        ('_group4', RE(r"="), [RE(r"\B\b")], _group4),
     ]
 
 class tag:
     default_text = DELIMITER
-    rules = [('name', name0), ('_group2', RE(r"\B|\b"), [RE(r"")], _group2)]
+    rules = [
+        ('name', name0),
+        ('_group2', RE(r"\B|\b"), [RE(r"\B\b")], _group2),
+    ]
 
 class tag0:
     default_text = DELIMITER
@@ -59,10 +65,7 @@ name1 = ['script']
 
 class tag1:
     default_text = DELIMITER
-    rules = [
-        ('name', name1),
-        None,  # tag.rules[1],
-    ]
+    rules = [('name', name1), tag.rules[1]]
 tag1.__name__ = 'tag'
 
 class tag2:
@@ -78,10 +81,7 @@ name2 = [RE(r"[^\/><\s]+")]
 
 class tag3:
     default_text = DELIMITER
-    rules = [
-        ('name', name2),
-        None,  # tag.rules[1],
-    ]
+    rules = [('name', name2), tag.rules[1]]
 tag3.__name__ = 'tag'
 
 rules = [
@@ -90,15 +90,12 @@ rules = [
     ('_group1', RE(r"<\!\[CDATA\["), [RE(r"\]\]>")]),
     ('tag', tag0, [RE(r"(?=</style>)")], _group5),
     ('tag', tag2, [RE(r"(?=</script>)")], _group6),
-    None,  # _group2.rules[0],
+    _group2.rules[0],
     ('meta', RE(r"<\?\w+"), [RE(r"\?>")]),
     ('tag', RE(r"</?"), [RE(r"/?>")], tag3),
 ]
 
 string.rules[0] = _group2.rules[0]
-tag1.rules[1] = tag.rules[1]
-rules[5] = _group2.rules[0]
-tag3.rules[1] = tag.rules[1]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

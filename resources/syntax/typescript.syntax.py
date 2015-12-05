@@ -4,108 +4,24 @@
 name = 'TypeScript'
 file_patterns = ['*.typescript', '*.ts']
 
-built_in = [
-    'eval',
-    'isFinite',
-    'isNaN',
-    'parseFloat',
-    'parseInt',
-    'decodeURI',
-    'decodeURIComponent',
-    'encodeURI',
-    'encodeURIComponent',
-    'escape',
-    'unescape',
-    'Object',
-    'Function',
-    'Boolean',
-    'Error',
-    'EvalError',
-    'InternalError',
-    'RangeError',
-    'ReferenceError',
-    'StopIteration',
-    'SyntaxError',
-    'TypeError',
-    'URIError',
-    'Number',
-    'Math',
-    'Date',
-    'String',
-    'RegExp',
-    'Array',
-    'Float32Array',
-    'Float64Array',
-    'Int16Array',
-    'Int32Array',
-    'Int8Array',
-    'Uint16Array',
-    'Uint32Array',
-    'Uint8Array',
-    'Uint8ClampedArray',
-    'ArrayBuffer',
-    'DataView',
-    'JSON',
-    'Intl',
-    'arguments',
-    'require',
-    'module',
-    'console',
-    'window',
-    'document',
-    'any',
-    'number',
-    'boolean',
-    'string',
-    'void',
-]
+built_in = """
+    eval isFinite isNaN parseFloat parseInt decodeURI decodeURIComponent
+    encodeURI encodeURIComponent escape unescape Object Function Boolean
+    Error EvalError InternalError RangeError ReferenceError
+    StopIteration SyntaxError TypeError URIError Number Math Date String
+    RegExp Array Float32Array Float64Array Int16Array Int32Array
+    Int8Array Uint16Array Uint32Array Uint8Array Uint8ClampedArray
+    ArrayBuffer DataView JSON Intl arguments require module console
+    window document any number boolean string void
+    """.split()
 
-keyword = [
-    'in',
-    'if',
-    'for',
-    'while',
-    'finally',
-    'var',
-    'new',
-    'function',
-    'do',
-    'return',
-    'void',
-    'else',
-    'break',
-    'catch',
-    'instanceof',
-    'with',
-    'throw',
-    'case',
-    'default',
-    'try',
-    'this',
-    'switch',
-    'continue',
-    'typeof',
-    'delete',
-    'let',
-    'yield',
-    'const',
-    'class',
-    'public',
-    'private',
-    'protected',
-    'get',
-    'set',
-    'super',
-    'static',
-    'implements',
-    'enum',
-    'export',
-    'import',
-    'declare',
-    'type',
-    'namespace',
-    'abstract',
-]
+keyword = """
+    in if for while finally var new function do return void else break
+    catch instanceof with throw case default try this switch continue
+    typeof delete let yield const class public private protected get set
+    super static implements enum export import declare type namespace
+    abstract
+    """.split()
 
 literal = ['true', 'false', 'null', 'undefined', 'NaN', 'Infinity']
 
@@ -129,21 +45,18 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
-number = [RE(r"\b(0[bB][01]+)")]
+number = [RE(r"\b(?:0[bB][01]+)")]
 
-number0 = [RE(r"\b(0[oO][0-7]+)")]
+number0 = [RE(r"\b(?:0[oO][0-7]+)")]
 
-number1 = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number1 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 keyword0 = ['return', 'throw', 'case']
 
@@ -169,9 +82,13 @@ class _group1:
         ('regexp', RE(r"\/"), [RE(r"\/[gimuy]*")], regexp),
     ]
 
+class _function:
+    default_text = DELIMITER
+    rules = [('_function', RE(r"[\{;]"), [RE(r'\b|\B')])]
+
 title = [RE(r"[A-Za-z$_][0-9A-Za-z$_]*")]
 
-class params:
+class _params:
     default_text = DELIMITER
     rules = [
         ('built_in', built_in),
@@ -188,7 +105,7 @@ class function:
         ('keyword', keyword),
         ('literal', literal),
         ('title', title),
-        ('params', RE(r"\("), [RE(r"(?=\))")], params),
+        ('_params', RE(r"\("), [RE(r"\)")], _params),
     ]
 
 keyword1 = ['interface', 'extends']
@@ -202,25 +119,27 @@ rules = [
     ('keyword', keyword),
     ('literal', literal),
     ('meta', meta),
-    ('string', RE(r"'"), [RE(r"'")]),
+    ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"`"), [RE(r"`")], string0),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('number', number),
     ('number', number0),
     ('number', number1),
-    ('_group1', RE(r"(!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~|\b(case|return|throw)\b)\s*"), [RE(r"\B|\b")], _group1),
-    ('function', RE(r"function"), [RE(r"(?=[\{;])")], function),
-    ('_group3', RE(r"\b(constructor)"), [RE(r"(?=\{)")]),
-    ('_group4', RE(r"\b(module)"), [RE(r"(?=\{)")]),
-    ('_group5', RE(r"\b(interface)"), [RE(r"(?=\{)")], _group5),
+    ('_group1', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~|\b(?:case|return|throw)\b)\s*"), [RE(r"\B\b")], _group1),
+    ('function', RE(r"function"), [_function], function),
+    ('_group3', RE(r"\b(?:constructor)"), [RE(r"\{")]),
+    ('_group4', RE(r"\b(?:module)"), [RE(r"\{")]),
+    ('_group5', RE(r"\b(?:interface)"), [RE(r"\{")], _group5),
+    # {'begin': {'pattern': '\\$[(.]', 'type': 'RegExp'}},
+    # {'begin': '\\.[a-zA-Z]\\w*', 'relevance': 0},
 ]
 
 _group1.rules[1] = rules[7]
 _group1.rules[2] = rules[8]
-params.rules[3] = rules[7]
-params.rules[4] = rules[8]
+_params.rules[3] = rules[7]
+_params.rules[4] = rules[8]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

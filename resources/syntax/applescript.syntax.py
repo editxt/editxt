@@ -4,178 +4,48 @@
 name = 'AppleScript'
 file_patterns = ['*.applescript', '*.osascript']
 
-built_in = [
-    'alias',
-    'application',
-    'boolean',
-    'class',
-    'constant',
-    'date',
-    'file',
-    'integer',
-    'list',
-    'number',
-    'real',
-    'record',
-    'string',
-    'text',
-    'activate',
-    'beep',
-    'count',
-    'delay',
-    'launch',
-    'log',
-    'offset',
-    'read',
-    'round',
-    'run',
-    'say',
-    'summarize',
-    'write',
-    'character',
-    'characters',
-    'contents',
-    'day',
-    'frontmost',
-    'id',
-    'item',
-    'length',
-    'month',
-    'name',
-    'paragraph',
-    'paragraphs',
-    'rest',
-    'reverse',
-    'running',
-    'time',
-    'version',
-    'weekday',
-    'word',
-    'words',
-    'year',
-]
+built_in = """
+    alias application boolean class constant date file integer list
+    number real record string text activate beep count delay launch log
+    offset read round run say summarize write character characters
+    contents day frontmost id item length month name paragraph
+    paragraphs rest reverse running time version weekday word words year
+    """.split()
 
-keyword = [
-    'about',
-    'above',
-    'after',
-    'against',
-    'and',
-    'around',
-    'as',
-    'at',
-    'back',
-    'before',
-    'beginning',
-    'behind',
-    'below',
-    'beneath',
-    'beside',
-    'between',
-    'but',
-    'by',
-    'considering',
-    'contain',
-    'contains',
-    'continue',
-    'copy',
-    'div',
-    'does',
-    'eighth',
-    'else',
-    'end',
-    'equal',
-    'equals',
-    'error',
-    'every',
-    'exit',
-    'fifth',
-    'first',
-    'for',
-    'fourth',
-    'from',
-    'front',
-    'get',
-    'given',
-    'global',
-    'if',
-    'ignoring',
-    'in',
-    'into',
-    'is',
-    'it',
-    'its',
-    'last',
-    'local',
-    'me',
-    'middle',
-    'mod',
-    'my',
-    'ninth',
-    'not',
-    'of',
-    'on',
-    'onto',
-    'or',
-    'over',
-    'prop',
-    'property',
-    'put',
-    'ref',
-    'reference',
-    'repeat',
-    'returning',
-    'script',
-    'second',
-    'set',
-    'seventh',
-    'since',
-    'sixth',
-    'some',
-    'tell',
-    'tenth',
-    'that',
-    'the',
-    'then',
-    'third',
-    'through',
-    'thru',
-    'timeout',
-    'times',
-    'to',
-    'transaction',
-    'try',
-    'until',
-    'where',
-    'while',
-    'whose',
-    'with',
-    'without',
-]
+keyword = """
+    about above after against and around as at back before beginning
+    behind below beneath beside between but by considering contain
+    contains continue copy div does eighth else end equal equals error
+    every exit fifth first for fourth from front get given global if
+    ignoring in into is it its last local me middle mod my ninth not of
+    on onto or over prop property put ref reference repeat returning
+    script second set seventh since sixth some tell tenth that the then
+    third through thru timeout times to transaction try until where
+    while whose with without
+    """.split()
 
-literal = [
-    'AppleScript',
-    'false',
-    'linefeed',
-    'return',
-    'pi',
-    'quote',
-    'result',
-    'space',
-    'tab',
-    'true',
-]
+literal = """
+    AppleScript false linefeed return pi quote result space tab true
+    """.split()
 
-number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 built_in0 = [
-    RE(r"\b(clipboard info|the clipboard|info for|list (disks|folder)|mount volume|path to|(close|open for) access|(get|set) eof|current date|do shell script|get volume settings|random number|set volume|system attribute|system info|time to GMT|(load|run|store) script|scripting components|ASCII (character|number)|localized string|choose (application|color|file|file name|folder|from list|remote application|URL)|display (alert|dialog))\b|^\s*return\b"),
+    RE(r"\b(?:clipboard info|the clipboard|info for|list (?:disks|folder)|mount volume|path to|(?:close|open for) access|(?:get|set) eof|current date|do shell script|get volume settings|random number|set volume|system attribute|system info|time to GMT|(?:load|run|store) script|scripting components|ASCII (?:character|number)|localized string|choose (?:application|color|file|file name|folder|from list|remote application|URL)|display (?:alert|dialog))\b|^\s*return\b"),
 ]
 
-literal0 = [RE(r"\b(text item delimiters|current application|missing value)\b")]
+literal0 = [RE(r"\b(?:text item delimiters|current application|missing value)\b")]
 
 keyword0 = [
-    RE(r"\b(apart from|aside from|instead of|out of|greater than|isn't|(doesn't|does not) (equal|come before|come after|contain)|(greater|less) than( or equal)?|(starts?|ends|begins?) with|contained by|comes (before|after)|a (ref|reference)|POSIX file|POSIX path|(date|time) string|quoted form)\b"),
+    RE(r"\b(?:apart from|aside from|instead of|out of|greater than|isn't|(?:doesn't|does not) (?:equal|come before|come after|contain)|(?:greater|less) than(?: or equal)?|(?:starts?|ends|begins?) with|contained by|comes (?:before|after)|a (?:ref|reference)|POSIX file|POSIX path|(?:date|time) string|quoted form)\b"),
 ]
 
 keyword1 = ['on']
@@ -185,7 +55,7 @@ title = [RE(r"[a-zA-Z_]\w*")]
 class params:
     default_text = DELIMITER
     rules = [
-        None,  # ('number', number),
+        ('number', number),
         None,  # rules[3],
     ]
 
@@ -201,7 +71,10 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 class comment0:
     default_text = DELIMITER
@@ -212,30 +85,21 @@ class comment0:
     ]
 comment0.__name__ = 'comment'
 
-class comment1:
-    default_text = DELIMITER
-    rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-comment1.__name__ = 'comment'
-
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
     ('literal', literal),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),
     ('built_in', built_in0),
     ('literal', literal0),
     ('keyword', keyword0),
-    ('_group1', RE(r"\b(on)"), [RE(r"\B|\b")], _group1),
+    ('_group1', RE(r"\b(?:on)"), [RE(r"\B\b")], _group1),
     ('comment', RE(r"--"), [RE(r"$")], comment),
     ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment0),
-    ('comment', RE(r"#"), [RE(r"$")], comment1),
+    ('comment', RE(r"#"), [RE(r"$")], comment),
 ]
 
-params.rules[0] = ('number', number)
 params.rules[1] = rules[3]
 comment0.rules[0] = rules[9]
 

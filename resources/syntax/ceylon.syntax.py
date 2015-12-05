@@ -4,64 +4,14 @@
 name = 'Ceylon'
 file_patterns = ['*.ceylon']
 
-keyword = [
-    'assembly',
-    'module',
-    'package',
-    'import',
-    'alias',
-    'class',
-    'interface',
-    'object',
-    'given',
-    'value',
-    'assign',
-    'void',
-    'function',
-    'new',
-    'of',
-    'extends',
-    'satisfies',
-    'abstracts',
-    'in',
-    'out',
-    'return',
-    'break',
-    'continue',
-    'throw',
-    'assert',
-    'dynamic',
-    'if',
-    'else',
-    'switch',
-    'case',
-    'for',
-    'while',
-    'try',
-    'catch',
-    'finally',
-    'then',
-    'let',
-    'this',
-    'outer',
-    'super',
-    'is',
-    'exists',
-    'nonempty',
-    'shared',
-    'abstract',
-    'formal',
-    'default',
-    'actual',
-    'variable',
-    'late',
-    'native',
-    'deprecatedfinal',
-    'sealed',
-    'annotation',
-    'suppressWarnings',
-    'small',
-]
+keyword = """
+    assembly module package import alias class interface object given
+    value assign void function new of extends satisfies abstracts in out
+    return break continue throw assert dynamic if else switch case for
+    while try catch finally then let this outer super is exists nonempty
+    shared abstract formal default actual variable late native
+    deprecatedfinal sealed annotation suppressWarnings small
+    """.split()
 
 meta = ['doc', 'by', 'license', 'see', 'throws', 'tagged']
 
@@ -69,69 +19,25 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 meta0 = [RE(r"@[a-z]\w*(?:\:\"[^\"]*\")?")]
 
-keyword0 = [
-    'assembly',
-    'module',
-    'package',
-    'import',
-    'alias',
-    'class',
-    'interface',
-    'object',
-    'given',
-    'value',
-    'assign',
-    'void',
-    'function',
-    'new',
-    'of',
-    'extends',
-    'satisfies',
-    'abstracts',
-    'in',
-    'out',
-    'return',
-    'break',
-    'continue',
-    'throw',
-    'assert',
-    'dynamic',
-    'if',
-    'else',
-    'switch',
-    'case',
-    'for',
-    'while',
-    'try',
-    'catch',
-    'finally',
-    'then',
-    'let',
-    'this',
-    'outer',
-    'super',
-    'is',
-    'exists',
-    'nonempty',
-]
+keyword0 = """
+    assembly module package import alias class interface object given
+    value assign void function new of extends satisfies abstracts in out
+    return break continue throw assert dynamic if else switch case for
+    while try catch finally then let this outer super is exists nonempty
+    """.split()
 
 number = [
     RE(r"#[0-9a-fA-F_]+|\$[01_]+|[0-9_]+(?:\.[0-9_](?:[eE][+-]?\d+)?)?[kMGTPmunpf]?"),
 ]
 
-class subst:
+class _subst:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword0),
@@ -143,23 +49,21 @@ class subst:
 
 class string:
     default_text = DELIMITER
-    rules = [('subst', RE(r"``"), [RE(r"(?=``)")], subst)]
+    rules = [('_subst', RE(r"``"), [RE(r"``")], _subst)]
 
 rules = [
     ('keyword', keyword),
     ('meta', meta),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('meta', meta0),
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    None,  # subst.rules[2],
-    None,  # ('number', number),
+    _subst.rules[2],
+    ('number', number),
 ]
 
-subst.rules[1] = rules[5]
-rules[7] = subst.rules[2]
-rules[8] = ('number', number)
+_subst.rules[1] = rules[5]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

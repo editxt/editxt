@@ -6,99 +6,27 @@ file_patterns = ['*.delphi']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-keyword = [
-    'exports',
-    'register',
-    'file',
-    'shl',
-    'array',
-    'record',
-    'property',
-    'for',
-    'mod',
-    'while',
-    'set',
-    'ally',
-    'label',
-    'uses',
-    'raise',
-    'not',
-    'stored',
-    'class',
-    'safecall',
-    'var',
-    'interface',
-    'or',
-    'private',
-    'static',
-    'exit',
-    'index',
-    'inherited',
-    'to',
-    'else',
-    'stdcall',
-    'override',
-    'shr',
-    'asm',
-    'far',
-    'resourcestring',
-    'finalization',
-    'packed',
-    'virtual',
-    'out',
-    'and',
-    'protected',
-    'library',
-    'do',
-    'xorwrite',
-    'goto',
-    'near',
-    'function',
-    'end',
-    'div',
-    'overload',
-    'object',
-    'unit',
-    'begin',
-    'string',
-    'on',
-    'inline',
-    'repeat',
-    'until',
-    'destructor',
-    'write',
-    'message',
-    'program',
-    'with',
-    'read',
-    'initialization',
-    'except',
-    'default',
-    'nil',
-    'if',
-    'case',
-    'cdecl',
-    'in',
-    'downto',
-    'threadvar',
-    'of',
-    'try',
-    'pascal',
-    'const',
-    'external',
-    'constructor',
-    'type',
-    'public',
-    'then',
-    'implementation',
-    'finally',
-    'published',
-    'procedure',
-]
+keyword = """
+    exports register file shl array record property for mod while set
+    ally label uses raise not stored class safecall var interface or
+    private static exit index inherited to else stdcall override shr asm
+    far resourcestring finalization packed virtual out and protected
+    library do xorwrite goto near function end div overload object unit
+    begin string on inline repeat until destructor write message program
+    with read initialization except default nil if case cdecl in downto
+    threadvar of try pascal const external constructor type public then
+    implementation finally published procedure
+    """.split()
 
-string = [RE(r"(#\d+)+")]
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'pattern': "''", 'type': 'RegExp'}},
+    ]
 
-number = [RE(r"\b\d+(\.\d+)?")]
+string0 = [RE(r"(?:#\d+)+")]
+
+number = [RE(r"\b\d+(?:\.\d+)?")]
 
 title = [RE(r"[a-zA-Z]\w*")]
 
@@ -113,52 +41,42 @@ class params:
     rules = [
         ('keyword', keyword),
         None,  # rules[1],
-        None,  # ('string', string),
+        ('string', string0),
     ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 class function:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword0),
-        None,  # ('title', title),
+        ('title', title),
         ('params', RE(r"\("), [RE(r"\)")], params),
         ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"\{"), [RE(r"\}")], comment0),
-        ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment0),
+        ('comment', RE(r"\{"), [RE(r"\}")], comment),
+        ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment),
     ]
 
 rules = [
     ('keyword', keyword),
-    ('string', RE(r"'"), [RE(r"'")]),
-    ('string', string),
+    ('string', RE(r"'"), [RE(r"'")], string),
+    ('string', string0),
     ('number', number),
-    ('_group0', RE(r"(?=[a-zA-Z]\w*\s*=\s*class\s*\()"), [RE(r"\B|\b")], _group0),
-    ('function', RE(r"\b(function|constructor|destructor|procedure)"), [RE(r"[:;]")], function),
-    None,  # function.rules[3],
-    None,  # function.rules[4],
-    None,  # function.rules[5],
+    ('_group0', RE(r"(?=[a-zA-Z]\w*\s*=\s*class\s*\()"), [RE(r"\B\b")], _group0),
+    ('function', RE(r"\b(?:function|constructor|destructor|procedure)"), [RE(r"[:;]")], function),
+    function.rules[3],
+    function.rules[4],
+    function.rules[5],
 ]
 
-function.rules[1] = ('title', title)
 params.rules[1] = rules[1]
-params.rules[2] = ('string', string)
-rules[6] = function.rules[3]
-rules[7] = function.rules[4]
-rules[8] = function.rules[5]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

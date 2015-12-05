@@ -8,21 +8,20 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 title = [RE(r"^\.\w.*$")]
 
-section = [RE(r"^(={1,5}) .+?( \1)?$")]
+section = [RE(r"^(?:={1,5}) .+?(?: \1)?$")]
 
 section0 = [RE(r"^[^\[\]\n]+?\n[=\-~\^\+]{2,}$")]
+
+class _meta:
+    default_text = DELIMITER
+    rules = [('_meta', RE(r"\s"), [RE(r'\b|\B')])]
 
 meta = [RE(r"^\[.+?\]$")]
 
@@ -30,45 +29,59 @@ class _group1:
     default_text = DELIMITER
     rules = [('_group2', RE(r"<"), [RE(r">")], 'xml')]
 
-bullet = [RE(r"^(\*+|\-+|\.+|[^\n]+?::)\s+")]
+bullet = [RE(r"^(?:\*+|\-+|\.+|[^\n]+?::)\s+")]
 
-symbol = [RE(r"^(NOTE|TIP|IMPORTANT|WARNING|CAUTION):\s+")]
+symbol = [RE(r"^(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION):\s+")]
+
+class strong:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\*\\w', 'relevance': 0},
+    ]
+
+class emphasis:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': "\\\\'\\w", 'relevance': 0},
+    ]
 
 string = [RE(r"``.+?''")]
 
 string0 = [RE(r"`.+?'")]
 
-code = [RE(r"(`.+?`|\+.+?\+)")]
+code = [RE(r"(?:`.+?`|\+.+?\+)")]
 
 class _group6:
     default_text = DELIMITER
     rules = [
+        # {'begin': '(link|image:?):', 'relevance': 0},
         ('link', RE(r"\w"), [RE(r"[^\[]+")]),
-        ('string', RE(r"\["), [RE(r"(?=\])")]),
+        ('_string', RE(r"\["), [RE(r"\]")]),
     ]
 
 rules = [
     ('comment', RE(r"^/{4,}\n"), [RE(r"\n/{4,}$")], comment),
-    ('comment', RE(r"^//"), [RE(r"$")], comment0),
+    ('comment', RE(r"^//"), [RE(r"$")], comment),
     ('title', title),
     ('_group0', RE(r"^[=\*]{4,}\n"), [RE(r"\n^[=\*]{4,}$")]),
     ('section', section),
     ('section', section0),
-    ('meta', RE(r"^:.+?:"), [RE(r"(?=\s)")]),
+    ('meta', RE(r"^:.+?:"), [_meta]),
     ('meta', meta),
     ('quote', RE(r"^_{4,}\n"), [RE(r"\n_{4,}$")]),
     ('code', RE(r"^[\-\.]{4,}\n"), [RE(r"\n[\-\.]{4,}$")]),
     ('_group1', RE(r"^\+{4,}\n"), [RE(r"\n\+{4,}$")], _group1),
     ('bullet', bullet),
     ('symbol', symbol),
-    ('strong', RE(r"\B\*(?![\*\s])"), [RE(r"(\n{2}|\*)")]),
-    ('emphasis', RE(r"\B'(?!['\s])"), [RE(r"(\n{2}|')")]),
-    ('emphasis', RE(r"_(?![_\s])"), [RE(r"(\n{2}|_)")]),
+    ('strong', RE(r"\B\*(?![\*\s])"), [RE(r"(?:\n{2}|\*)")], strong),
+    ('emphasis', RE(r"\B'(?!['\s])"), [RE(r"(?:\n{2}|')")], emphasis),
+    ('emphasis', RE(r"_(?![_\s])"), [RE(r"(?:\n{2}|_)")]),
     ('string', string),
     ('string', string0),
     ('code', code),
     ('code', RE(r"^[ \t]"), [RE(r"$")]),
-    ('_group6', RE(r"(?=(link:)?(http|https|ftp|file|irc|image:?):\S+\[.*?\])"), [RE(r"\B|\b")], _group6),
+    # {'begin': "^'{3,}[ \\t]*$", 'relevance': 10},
+    ('_group6', RE(r"(?=(?:link:)?(?:http|https|ftp|file|irc|image:?):\S+\[.*?\])"), [RE(r"\B\b")], _group6),
 ]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax

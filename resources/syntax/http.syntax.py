@@ -14,11 +14,19 @@ keyword = [RE(r"[A-Z]+")]
 
 class _group1:
     default_text = DELIMITER
-    rules = [('string', RE(r" "), [RE(r"(?= )")]), ('keyword', keyword)]
+    rules = [
+        ('_string', RE(r" "), [RE(r" ")]),
+        # {'begin': 'HTTP/[0-9\\.]+'},
+        ('keyword', keyword),
+    ]
+
+class _attribute:
+    default_text = DELIMITER
+    rules = [('_attribute', RE(r": "), [RE(r'\b|\B')])]
 
 class attribute:
     default_text = DELIMITER
-    rules = [('attribute', RE(r"^\w"), [RE(r"(?=: )")])]
+    rules = [('attribute', RE(r"^\w"), [_attribute])]
 
 class _group2:
     default_text = DELIMITER
@@ -26,7 +34,7 @@ class _group2:
 
 class _group3:
     default_text = DELIMITER
-    rules = [('_group3', RE(r"\n\n"), [RE(r"\B|\b")])]
+    rules = [('_group3', RE(r"\n\n"), [RE(r"\B\b")])]
 
 class _group4:
     default_text = DELIMITER
@@ -34,9 +42,9 @@ class _group4:
 
 rules = [
     ('_group0', RE(r"^HTTP/[0-9\.]+"), [RE(r"$")], _group0),
-    ('_group1', RE(r"(?=^[A-Z]+ (.*?) HTTP/[0-9\.]+$)"), [RE(r"$")], _group1),
+    ('_group1', RE(r"(?=^[A-Z]+ (?:.*?) HTTP/[0-9\.]+$)"), [RE(r"$")], _group1),
     ('attribute', attribute, [RE(r"$")], _group2),
-    ('_group3', _group3, [RE(r"(?=\B|\b)")], _group4),
+    ('_group3', _group3, [RE(r"(?=\B\b)")], _group4),
 ]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax

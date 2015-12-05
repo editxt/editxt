@@ -4,148 +4,43 @@
 name = 'Tcl'
 file_patterns = ['*.tcl', '*.tk']
 
-keyword = [
-    'after',
-    'append',
-    'apply',
-    'array',
-    'auto_execok',
-    'auto_import',
-    'auto_load',
-    'auto_mkindex',
-    'auto_mkindex_old',
-    'auto_qualify',
-    'auto_reset',
-    'bgerror',
-    'binary',
-    'break',
-    'catch',
-    'cd',
-    'chan',
-    'clock',
-    'close',
-    'concat',
-    'continue',
-    'dde',
-    'dict',
-    'encoding',
-    'eof',
-    'error',
-    'eval',
-    'exec',
-    'exit',
-    'expr',
-    'fblocked',
-    'fconfigure',
-    'fcopy',
-    'file',
-    'fileevent',
-    'filename',
-    'flush',
-    'for',
-    'foreach',
-    'format',
-    'gets',
-    'glob',
-    'global',
-    'history',
-    'http',
-    'if',
-    'incr',
-    'info',
-    'interp',
-    'join',
-    'lappend',
-    'lassign',
-    'lindex',
-    'linsert',
-    'list',
-    'llength',
-    'load',
-    'lrange',
-    'lrepeat',
-    'lreplace',
-    'lreverse',
-    'lsearch',
-    'lset',
-    'lsort',
-    'mathfunc',
-    'mathop',
-    'memory',
-    'msgcat',
-    'namespace',
-    'open',
-    'package',
-    'parray',
-    'pid',
-    'pkg::create',
-    'pkg_mkIndex',
-    'platform',
-    'platform::shell',
-    'proc',
-    'puts',
-    'pwd',
-    'read',
-    'refchan',
-    'regexp',
-    'registry',
-    'regsub',
-    'rename',
-    'return',
-    'safe',
-    'scan',
-    'seek',
-    'set',
-    'socket',
-    'source',
-    'split',
-    'string',
-    'subst',
-    'switch',
-    'tcl_endOfWord',
-    'tcl_findLibrary',
-    'tcl_startOfNextWord',
-    'tcl_startOfPreviousWord',
-    'tcl_wordBreakAfter',
-    'tcl_wordBreakBefore',
-    'tcltest',
-    'tclvars',
-    'tell',
-    'time',
-    'tm',
-    'trace',
-    'unknown',
-    'unload',
-    'unset',
-    'update',
-    'uplevel',
-    'upvar',
-    'variable',
-    'vwait',
-    'while',
-]
+keyword = """
+    after append apply array auto_execok auto_import auto_load
+    auto_mkindex auto_mkindex_old auto_qualify auto_reset bgerror binary
+    break catch cd chan clock close concat continue dde dict encoding
+    eof error eval exec exit expr fblocked fconfigure fcopy file
+    fileevent filename flush for foreach format gets glob global history
+    http if incr info interp join lappend lassign lindex linsert list
+    llength load lrange lrepeat lreplace lreverse lsearch lset lsort
+    mathfunc mathop memory msgcat namespace open package parray pid
+    pkg::create pkg_mkIndex platform platform::shell proc puts pwd read
+    refchan regexp registry regsub rename return safe scan seek set
+    socket source split string subst switch tcl_endOfWord
+    tcl_findLibrary tcl_startOfNextWord tcl_startOfPreviousWord
+    tcl_wordBreakAfter tcl_wordBreakBefore tcltest tclvars tell time tm
+    trace unknown unload unset update uplevel upvar variable vwait while
+    """.split()
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 keyword0 = ['proc']
+
+class _title:
+    default_text = DELIMITER
+    rules = [('_title', RE(r"[ \t\n\r]"), [RE(r'\b|\B')])]
 
 class _group0:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword0),
-        ('title', RE(r"[ \t\n\r]+(::)?[a-zA-Z_]((::)?[a-zA-Z0-9_])*"), [RE(r"(?=[ \t\n\r])")]),
+        ('title', RE(r"[ \t\n\r]+(?:::)?[a-zA-Z_](?:(::)?[a-zA-Z0-9_])*"), [_title]),
     ]
 
 class string:
@@ -154,17 +49,19 @@ class string:
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-number = [RE(r"\b(0b[01]+)")]
+number = [RE(r"\b(?:0b[01]+)")]
 
-number0 = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number0 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 rules = [
     ('keyword', keyword),
     ('comment', RE(r";[ \t]*#"), [RE(r"$")], comment),
-    ('comment', RE(r"^[ \t]*#"), [RE(r"$")], comment0),
-    ('_group0', RE(r"\b(proc)"), [RE(r"(?=[\{])")], _group0),
-    ('_group1', RE(r"\$(\{)?(::)?[a-zA-Z_]((::)?[a-zA-Z0-9_])*\(([a-zA-Z0-9_])*\)"), [RE(r"(?=[^a-zA-Z0-9_\}\$])")]),
-    ('_group2', RE(r"\$(\{)?(::)?[a-zA-Z_]((::)?[a-zA-Z0-9_])*"), [RE(r"(?=(\))?[^a-zA-Z0-9_\}\$])")]),
+    ('comment', RE(r"^[ \t]*#"), [RE(r"$")], comment),
+    ('_group0', RE(r"\b(?:proc)"), [RE(r"[\{]")], _group0),
+    ('_group1', RE(r"\$(?:\{)?(?:::)?[a-zA-Z_](?:(::)?[a-zA-Z0-9_])*\((?:[a-zA-Z0-9_])*\)"), [RE(r"[^a-zA-Z0-9_\}\$]")]),
+    ('_group2', RE(r"\$(?:\{)?(?:::)?[a-zA-Z_](?:(::)?[a-zA-Z0-9_])*"), [RE(r"(?:\))?[^a-zA-Z0-9_\}\$]")]),
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),

@@ -6,191 +6,44 @@ file_patterns = ['*.oxygene']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-keyword = [
-    'abstract',
-    'add',
-    'and',
-    'array',
-    'as',
-    'asc',
-    'aspect',
-    'assembly',
-    'async',
-    'begin',
-    'break',
-    'block',
-    'by',
-    'case',
-    'class',
-    'concat',
-    'const',
-    'copy',
-    'constructor',
-    'continue',
-    'create',
-    'default',
-    'delegate',
-    'desc',
-    'distinct',
-    'div',
-    'do',
-    'downto',
-    'dynamic',
-    'each',
-    'else',
-    'empty',
-    'end',
-    'ensure',
-    'enum',
-    'equals',
-    'event',
-    'except',
-    'exit',
-    'extension',
-    'external',
-    'false',
-    'final',
-    'finalize',
-    'finalizer',
-    'finally',
-    'flags',
-    'for',
-    'forward',
-    'from',
-    'function',
-    'future',
-    'global',
-    'group',
-    'has',
-    'if',
-    'implementation',
-    'implements',
-    'implies',
-    'in',
-    'index',
-    'inherited',
-    'inline',
-    'interface',
-    'into',
-    'invariants',
-    'is',
-    'iterator',
-    'join',
-    'locked',
-    'locking',
-    'loop',
-    'matching',
-    'method',
-    'mod',
-    'module',
-    'namespace',
-    'nested',
-    'new',
-    'nil',
-    'not',
-    'notify',
-    'nullable',
-    'of',
-    'old',
-    'on',
-    'operator',
-    'or',
-    'order',
-    'out',
-    'override',
-    'parallel',
-    'params',
-    'partial',
-    'pinned',
-    'private',
-    'procedure',
-    'property',
-    'protected',
-    'public',
-    'queryable',
-    'raise',
-    'read',
-    'readonly',
-    'record',
-    'reintroduce',
-    'remove',
-    'repeat',
-    'require',
-    'result',
-    'reverse',
-    'sealed',
-    'select',
-    'self',
-    'sequence',
-    'set',
-    'shl',
-    'shr',
-    'skip',
-    'static',
-    'step',
-    'soft',
-    'take',
-    'then',
-    'to',
-    'true',
-    'try',
-    'tuple',
-    'type',
-    'union',
-    'unit',
-    'unsafe',
-    'until',
-    'uses',
-    'using',
-    'var',
-    'virtual',
-    'raises',
-    'volatile',
-    'where',
-    'while',
-    'with',
-    'write',
-    'xor',
-    'yield',
-    'await',
-    'mapped',
-    'deprecated',
-    'stdcall',
-    'cdecl',
-    'pascal',
-    'register',
-    'safecall',
-    'overload',
-    'library',
-    'platform',
-    'reference',
-    'packed',
-    'strict',
-    'published',
-    'autoreleasepool',
-    'selector',
-    'strong',
-    'weak',
-    'unretained',
-]
+keyword = """
+    abstract add and array as asc aspect assembly async begin break
+    block by case class concat const copy constructor continue create
+    default delegate desc distinct div do downto dynamic each else empty
+    end ensure enum equals event except exit extension external false
+    final finalize finalizer finally flags for forward from function
+    future global group has if implementation implements implies in
+    index inherited inline interface into invariants is iterator join
+    locked locking loop matching method mod module namespace nested new
+    nil not notify nullable of old on operator or order out override
+    parallel params partial pinned private procedure property protected
+    public queryable raise read readonly record reintroduce remove
+    repeat require result reverse sealed select self sequence set shl
+    shr skip static step soft take then to true try tuple type union
+    unit unsafe until uses using var virtual raises volatile where while
+    with write xor yield await mapped deprecated stdcall cdecl pascal
+    register safecall overload library platform reference packed strict
+    published autoreleasepool selector strong weak unretained
+    """.split()
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
-string = [RE(r"(#\d+)+")]
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': "''"},
+    ]
 
-number = [RE(r"\b\d+(\.\d+)?")]
+string0 = [RE(r"(?:#\d+)+")]
+
+number = [RE(r"\b\d+(?:\.\d+)?")]
 
 keyword0 = ['function', 'constructor', 'destructor', 'procedure', 'method']
 
@@ -201,7 +54,7 @@ class params:
     rules = [
         ('keyword', keyword),
         None,  # rules[4],
-        None,  # ('string', string),
+        ('string', string0),
     ]
 
 class function:
@@ -219,7 +72,7 @@ class class0:
     rules = [
         ('keyword', keyword),
         None,  # rules[4],
-        None,  # ('string', string),
+        ('string', string0),
         None,  # rules[1],
         None,  # rules[2],
         None,  # rules[3],
@@ -230,21 +83,19 @@ class0.__name__ = 'class'
 rules = [
     ('keyword', keyword),
     ('comment', RE(r"{"), [RE(r"}")], comment),
-    ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment0),
-    ('comment', RE(r"//"), [RE(r"$")], comment0),
-    ('string', RE(r"'"), [RE(r"'")]),
-    ('string', string),
+    ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment),
+    ('comment', RE(r"//"), [RE(r"$")], comment),
+    ('string', RE(r"'"), [RE(r"'")], string),
+    ('string', string0),
     ('number', number),
-    ('function', RE(r"\b(function|constructor|destructor|procedure|method)"), [RE(r"[:;]")], function),
+    ('function', RE(r"\b(?:function|constructor|destructor|procedure|method)"), [RE(r"[:;]")], function),
     ('class', RE(r"=\bclass\b"), [RE(r"end;")], class0),
 ]
 
 params.rules[1] = rules[4]
-params.rules[2] = ('string', string)
 function.rules[3] = rules[1]
 function.rules[4] = rules[2]
 class0.rules[1] = rules[4]
-class0.rules[2] = ('string', string)
 class0.rules[3] = rules[1]
 class0.rules[4] = rules[2]
 class0.rules[5] = rules[3]

@@ -4,47 +4,12 @@
 name = 'Scala'
 file_patterns = ['*.scala']
 
-keyword = [
-    'type',
-    'yield',
-    'lazy',
-    'override',
-    'def',
-    'with',
-    'val',
-    'var',
-    'sealed',
-    'abstract',
-    'private',
-    'trait',
-    'object',
-    'if',
-    'forSome',
-    'for',
-    'while',
-    'throw',
-    'finally',
-    'protected',
-    'extends',
-    'import',
-    'final',
-    'return',
-    'else',
-    'break',
-    'new',
-    'catch',
-    'super',
-    'class',
-    'case',
-    'package',
-    'default',
-    'try',
-    'this',
-    'match',
-    'continue',
-    'throws',
-    'implicit',
-]
+keyword = """
+    type yield lazy override def with val var sealed abstract private
+    trait object if forSome for while throw finally protected extends
+    import final return else break new catch super class case package
+    default try this match continue throws implicit
+    """.split()
 
 literal = ['true', 'false', 'null']
 
@@ -52,32 +17,32 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
 
 subst = [RE(r"\$[A-Za-z0-9_]+")]
 
-class string:
+class string0:
     default_text = DELIMITER
     rules = [
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         ('subst', subst),
         ('subst', RE(r"\${"), [RE(r"}")]),
     ]
-
-class string0:
-    default_text = DELIMITER
-    rules = [
-        None,  # string.rules[1],
-    ]
 string0.__name__ = 'string'
+
+class string1:
+    default_text = DELIMITER
+    rules = [string0.rules[1]]
+string1.__name__ = 'string'
 
 symbol = [RE(r"'\w[\w\d_]*(?!')")]
 
@@ -86,12 +51,16 @@ type = [RE(r"\b[A-Z][A-Za-z0-9_]*")]
 keyword0 = ['def']
 
 title = [
-    RE(r"[^0-9\n\t \"'(),.`{}\[\]:;][^\n\t \"'(),.`{}\[\]:;]+|[^0-9\n\t \"'(),.`{}\[\]:;=]"),
+    RE(r"[^0-9\n\t \"'(?:),.`{}\[\]:;][^\n\t \"'(?:),.`{}\[\]:;]+|[^0-9\n\t \"'(?:),.`{}\[\]:;=]"),
 ]
 
 class function:
     default_text = DELIMITER
     rules = [('keyword', keyword0), ('title', title)]
+
+class _class:
+    default_text = DELIMITER
+    rules = [('_class', RE(r"[:={\[\n;]"), [RE(r'\b|\B')])]
 
 keyword1 = ['class', 'object', 'trait', 'type']
 
@@ -99,13 +68,15 @@ class class0:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword1),
-        ('_group1', RE(r"\b(extends|with)"), [RE(r"\B|\b")]),
+        ('_group1', RE(r"\b(?:extends|with)"), [RE(r"\B\b")]),
         ('params', RE(r"\("), [RE(r"\)")]),
-        None,  # ('title', title),
+        ('title', title),
     ]
 class0.__name__ = 'class'
 
-number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 meta = [RE(r"@[A-Za-z]+")]
 
@@ -113,21 +84,18 @@ rules = [
     ('keyword', keyword),
     ('literal', literal),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+    ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
-    ('string', RE(r"[a-z]+\""), [RE(r"\"")], string),
-    ('string', RE(r"[a-z]+\"\"\""), [RE(r"\"\"\"")], string0),
+    ('string', RE(r"[a-z]+\""), [RE(r"\"")], string0),
+    ('string', RE(r"[a-z]+\"\"\""), [RE(r"\"\"\"")], string1),
     ('symbol', symbol),
     ('type', type),
-    ('function', RE(r"\b(def)"), [RE(r"[:={\[(\n;]")], function),
-    ('class', RE(r"\b(class|object|trait|type)"), [RE(r"(?=[:={\[\n;])")], class0),
+    ('function', RE(r"\b(?:def)"), [RE(r"[:={\[(?:\n;]")], function),
+    ('class', RE(r"\b(?:class|object|trait|type)"), [_class], class0),
     ('number', number),
     ('meta', meta),
 ]
-
-string0.rules[0] = string.rules[1]
-class0.rules[3] = ('title', title)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

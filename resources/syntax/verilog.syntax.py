@@ -6,128 +6,34 @@ file_patterns = ['*.verilog', '*.v']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-keyword = [
-    'always',
-    'and',
-    'assign',
-    'begin',
-    'buf',
-    'bufif0',
-    'bufif1',
-    'case',
-    'casex',
-    'casez',
-    'cmos',
-    'deassign',
-    'default',
-    'defparam',
-    'disable',
-    'edge',
-    'else',
-    'end',
-    'endcase',
-    'endfunction',
-    'endmodule',
-    'endprimitive',
-    'endspecify',
-    'endtable',
-    'endtask',
-    'event',
-    'for',
-    'force',
-    'forever',
-    'fork',
-    'function',
-    'if',
-    'ifnone',
-    'initial',
-    'inout',
-    'input',
-    'join',
-    'macromodule',
-    'module',
-    'nand',
-    'negedge',
-    'nmos',
-    'nor',
-    'not',
-    'notif0',
-    'notif1',
-    'or',
-    'output',
-    'parameter',
-    'pmos',
-    'posedge',
-    'primitive',
-    'pulldown',
-    'pullup',
-    'rcmos',
-    'release',
-    'repeat',
-    'rnmos',
-    'rpmos',
-    'rtran',
-    'rtranif0',
-    'rtranif1',
-    'specify',
-    'specparam',
-    'table',
-    'task',
-    'timescale',
-    'tran',
-    'tranif0',
-    'tranif1',
-    'wait',
-    'while',
-    'xnor',
-    'xor',
-    'highz0',
-    'highz1',
-    'integer',
-    'large',
-    'medium',
-    'pull0',
-    'pull1',
-    'real',
-    'realtime',
-    'reg',
-    'scalared',
-    'signed',
-    'small',
-    'strong0',
-    'strong1',
-    'supply0',
-    'supply0',
-    'supply1',
-    'supply1',
-    'time',
-    'tri',
-    'tri0',
-    'tri1',
-    'triand',
-    'trior',
-    'trireg',
-    'vectored',
-    'wand',
-    'weak0',
-    'weak1',
-    'wire',
-    'wor',
-]
+keyword = """
+    always and assign begin buf bufif0 bufif1 case casex casez cmos
+    deassign default defparam disable edge else end endcase endfunction
+    endmodule endprimitive endspecify endtable endtask event for force
+    forever fork function if ifnone initial inout input join macromodule
+    module nand negedge nmos nor not notif0 notif1 or output parameter
+    pmos posedge primitive pulldown pullup rcmos release repeat rnmos
+    rpmos rtran rtranif0 rtranif1 specify specparam table task timescale
+    tran tranif0 tranif1 wait while xnor xor highz0 highz1 integer large
+    medium pull0 pull1 real realtime reg scalared signed small strong0
+    strong1 supply0 supply0 supply1 supply1 time tri tri0 tri1 triand
+    trior trireg vectored wand weak0 weak1 wire wor
+    """.split()
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
 
 class number:
     default_text = DELIMITER
@@ -140,9 +46,9 @@ variable = [RE(r"#\((?!parameter).+\)")]
 rules = [
     ('keyword', keyword),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('comment', RE(r"//"), [RE(r"$")], comment0),
-    ('string', RE(r"\""), [RE(r"\"")]),
-    ('number', RE(r"\b(\d+'(b|h|o|d|B|H|O|D))?[0-9xzXZ]+"), [RE(r"\B|\b")], number),
+    ('comment', RE(r"//"), [RE(r"$")], comment),
+    ('string', RE(r"\""), [RE(r"\"")], string),
+    ('number', RE(r"\b(?:\d+'(?:b|h|o|d|B|H|O|D))?[0-9xzXZ]+"), [RE(r"\B\b")], number),
     ('variable', variable),
 ]
 

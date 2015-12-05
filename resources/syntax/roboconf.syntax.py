@@ -10,9 +10,13 @@ keyword = ['import']
 
 keyword0 = ['facet']
 
+class _attribute:
+    default_text = DELIMITER
+    rules = [('_attribute', RE(r"\s*:"), [RE(r'\b|\B')])]
+
 class attribute:
     default_text = DELIMITER
-    rules = [('attribute', RE(r"[a-zA-Z-_]+"), [RE(r"(?=\s*:)")])]
+    rules = [('attribute', RE(r"[a-zA-Z-_]+"), [_attribute])]
 
 variable = [RE(r"\.[a-zA-Z-_]+")]
 
@@ -26,7 +30,10 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 class _group0:
     default_text = DELIMITER
@@ -36,44 +43,25 @@ class _group0:
         ('comment', RE(r"#"), [RE(r"$")], comment),
     ]
 
-keyword2 = [
-    'name',
-    'count',
-    'channels',
-    'instance-data',
-    'instance-state',
-    'instance',
-    'of',
-]
+keyword2 = """
+    name count channels instance-data instance-state instance of
+    """.split()
 
 class _group2:
     default_text = DELIMITER
-    rules = [
-        ('keyword', keyword2),
-        None,  # _group0.rules[1],
-        None,  # _group0.rules[2],
-    ]
+    rules = [('keyword', keyword2), _group0.rules[1], _group0.rules[2]]
 
 class _group3:
     default_text = DELIMITER
-    rules = [
-        None,  # _group0.rules[1],
-        None,  # _group0.rules[2],
-    ]
+    rules = [_group0.rules[1], _group0.rules[2]]
 
 rules = [
     ('keyword', keyword),
     ('_group0', RE(r"^facet [a-zA-Z-_][^\n{]+\{"), [RE(r"}")], _group0),
     ('_group2', RE(r"^\s*instance of [a-zA-Z-_][^\n{]+\{"), [RE(r"}")], _group2),
     ('_group3', RE(r"^[a-zA-Z-_][^\n{]+\{"), [RE(r"}")], _group3),
-    None,  # _group0.rules[2],
+    _group0.rules[2],
 ]
-
-_group2.rules[1] = _group0.rules[1]
-_group2.rules[2] = _group0.rules[2]
-_group3.rules[0] = _group0.rules[1]
-_group3.rules[1] = _group0.rules[2]
-rules[4] = _group0.rules[2]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

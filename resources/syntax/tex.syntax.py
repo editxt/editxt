@@ -6,10 +6,10 @@ file_patterns = ['*.tex']
 
 class name0:
     default_text = DELIMITER
-    rules = [('name', RE(r"[a-zA-Zа-яА-я]+[*]?"), [RE(r"\B|\b")])]
+    rules = [('name', RE(r"[a-zA-Zа-яА-я]+[*]?"), [RE(r"\B\b")])]
 name0.__name__ = 'name'
 
-number = [RE(r"-?\d*\.?\d+(pt|pc|mm|cm|in|dd|cc|ex|em)?")]
+number = [RE(r"-?\d*\.?\d+(?:pt|pc|mm|cm|in|dd|cc|ex|em)?")]
 
 class _group1:
     default_text = DELIMITER
@@ -20,12 +20,12 @@ class _group0:
     rules = [
         ('string', RE(r"\["), [RE(r"\]")]),
         ('string', RE(r"\{"), [RE(r"\}")]),
-        ('_group1', RE(r"\s*=\s*"), [RE(r"")], _group1),
+        ('_group1', RE(r"\s*=\s*"), [RE(r"\B\b")], _group1),
     ]
 
 class name1:
     default_text = DELIMITER
-    rules = [('name', RE(r"[^a-zA-Zа-яА-я0-9]"), [RE(r"\B|\b")])]
+    rules = [('name', RE(r"[^a-zA-Zа-яА-я0-9]"), [RE(r"\B\b")])]
 name1.__name__ = 'name'
 
 class _group2:
@@ -37,15 +37,15 @@ class _group00:
     rules = [
         ('string', RE(r"\["), [RE(r"\]")]),
         ('string', RE(r"\{"), [RE(r"\}")]),
-        ('_group2', RE(r"\s*=\s*"), [RE(r"")], _group2),
+        ('_group2', RE(r"\s*=\s*"), [RE(r"\B\b")], _group2),
     ]
 _group00.__name__ = '_group0'
 
 class tag:
     default_text = DELIMITER
     rules = [
-        ('name', name0, [RE(r"(?=\B|\b)")], _group0),
-        ('name', name1, [RE(r"(?=\B|\b)")], _group00),
+        ('name', name0, [RE(r"(?=\B\b)")], _group0),
+        ('name', name1, [RE(r"(?=\B\b)")], _group00),
     ]
 
 class formula:
@@ -58,10 +58,13 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 rules = [
-    ('tag', RE(r"\\"), [RE(r"\B|\b")], tag),
+    ('tag', RE(r"\\"), [RE(r"\B\b")], tag),
     ('formula', RE(r"\$\$"), [RE(r"\$\$")], formula),
     ('formula', RE(r"\$"), [RE(r"\$")], formula),
     ('comment', RE(r"%"), [RE(r"$")], comment),

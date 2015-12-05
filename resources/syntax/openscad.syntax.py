@@ -4,85 +4,20 @@
 name = 'OpenSCAD'
 file_patterns = ['*.openscad', '*.scad']
 
-built_in = [
-    'circle',
-    'square',
-    'polygon',
-    'text',
-    'sphere',
-    'cube',
-    'cylinder',
-    'polyhedron',
-    'translate',
-    'rotate',
-    'scale',
-    'resize',
-    'mirror',
-    'multmatrix',
-    'color',
-    'offset',
-    'hull',
-    'minkowski',
-    'union',
-    'difference',
-    'intersection',
-    'abs',
-    'sign',
-    'sin',
-    'cos',
-    'tan',
-    'acos',
-    'asin',
-    'atan',
-    'atan2',
-    'floor',
-    'round',
-    'ceil',
-    'ln',
-    'log',
-    'pow',
-    'sqrt',
-    'exp',
-    'rands',
-    'min',
-    'max',
-    'concat',
-    'lookup',
-    'str',
-    'chr',
-    'search',
-    'version',
-    'version_num',
-    'norm',
-    'cross',
-    'parent_module',
-    'echo',
-    'import',
-    'import_dxf',
-    'dxf_linear_extrude',
-    'linear_extrude',
-    'rotate_extrude',
-    'surface',
-    'projection',
-    'render',
-    'children',
-    'dxf_cross',
-    'dxf_dim',
-    'let',
-    'assign',
-]
+built_in = """
+    circle square polygon text sphere cube cylinder polyhedron translate
+    rotate scale resize mirror multmatrix color offset hull minkowski
+    union difference intersection abs sign sin cos tan acos asin atan
+    atan2 floor round ceil ln log pow sqrt exp rands min max concat
+    lookup str chr search version version_num norm cross parent_module
+    echo import import_dxf dxf_linear_extrude linear_extrude
+    rotate_extrude surface projection render children dxf_cross dxf_dim
+    let assign
+    """.split()
 
-keyword = [
-    'function',
-    'module',
-    'include',
-    'use',
-    'for',
-    'intersection_for',
-    'if',
-    'else',
-    '\\%',
-]
+keyword = """
+    function module include use for intersection_for if else \%
+    """.split()
 
 literal = ['false', 'true', 'PI', 'undef']
 
@@ -90,17 +25,12 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
-number = [RE(r"\b\d+(\.\d+)?(e-?\d+)?")]
+number = [RE(r"\b\d+(?:\.\d+)?(?:e-?\d+)?")]
 
 meta_keyword = ['include', 'use']
 
@@ -108,7 +38,13 @@ class meta:
     default_text = DELIMITER
     rules = [('meta-keyword', meta_keyword)]
 
-keyword0 = [RE(r"\$(f[asn]|t|vp[rtd]|children)")]
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+
+keyword0 = [RE(r"\$(?:f[asn]|t|vp[rtd]|children)")]
 
 keyword1 = ['module', 'function']
 
@@ -117,9 +53,9 @@ literal0 = [RE(r"false|true|PI|undef")]
 class params:
     default_text = DELIMITER
     rules = [
-        None,  # ('number', number),
+        ('number', number),
         None,  # rules[7],
-        None,  # ('keyword', keyword0),
+        ('keyword', keyword0),
         ('literal', literal0),
     ]
 
@@ -138,17 +74,16 @@ rules = [
     ('keyword', keyword),
     ('literal', literal),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('number', number),
     ('meta', RE(r"include|use <"), [RE(r">")], meta),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    ('string', RE(r"\""), [RE(r"\"")], string),
     ('keyword', keyword0),
-    ('function', RE(r"\b(module|function)"), [RE(r"\=|\{")], function),
+    # {'begin': '[*!#%]', 'relevance': 0},
+    ('function', RE(r"\b(?:module|function)"), [RE(r"\=|\{")], function),
 ]
 
-params.rules[0] = ('number', number)
 params.rules[1] = rules[7]
-params.rules[2] = ('keyword', keyword0)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

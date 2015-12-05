@@ -4,103 +4,18 @@
 name = 'C#'
 file_patterns = ['*.cs', '*.csharp']
 
-keyword = [
-    'abstract',
-    'as',
-    'base',
-    'bool',
-    'break',
-    'byte',
-    'case',
-    'catch',
-    'char',
-    'checked',
-    'const',
-    'continue',
-    'decimal',
-    'dynamic',
-    'default',
-    'delegate',
-    'do',
-    'double',
-    'else',
-    'enum',
-    'event',
-    'explicit',
-    'extern',
-    'false',
-    'finally',
-    'fixed',
-    'float',
-    'for',
-    'foreach',
-    'goto',
-    'if',
-    'implicit',
-    'in',
-    'int',
-    'interface',
-    'internal',
-    'is',
-    'lock',
-    'long',
-    'null',
-    'when',
-    'object',
-    'operator',
-    'out',
-    'override',
-    'params',
-    'private',
-    'protected',
-    'public',
-    'readonly',
-    'ref',
-    'sbyte',
-    'sealed',
-    'short',
-    'sizeof',
-    'stackalloc',
-    'static',
-    'string',
-    'struct',
-    'switch',
-    'this',
-    'true',
-    'try',
-    'typeof',
-    'uint',
-    'ulong',
-    'unchecked',
-    'unsafe',
-    'ushort',
-    'using',
-    'virtual',
-    'volatile',
-    'void',
-    'while',
-    'async',
-    'protected',
-    'public',
-    'private',
-    'internal',
-    'ascending',
-    'descending',
-    'from',
-    'get',
-    'group',
-    'into',
-    'join',
-    'let',
-    'orderby',
-    'partial',
-    'select',
-    'set',
-    'value',
-    'var',
-    'where',
-    'yield',
-]
+keyword = """
+    abstract as base bool break byte case catch char checked const
+    continue decimal dynamic default delegate do double else enum event
+    explicit extern false finally fixed float for foreach goto if
+    implicit in int interface internal is lock long null when object
+    operator out override params private protected public readonly ref
+    sbyte sealed short sizeof stackalloc static string struct switch
+    this true try typeof uint ulong unchecked unsafe ushort using
+    virtual volatile void while async protected public private internal
+    ascending descending from get group into join let orderby partial
+    select set value var where yield
+    """.split()
 
 doctag = [RE(r"///")]
 
@@ -114,6 +29,7 @@ class comment:
         ('doctag', doctag),
         ('doctag', doctag0),
         ('doctag', RE(r"</?"), [RE(r">")]),
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag1),
     ]
 
@@ -125,21 +41,10 @@ class comment0:
     ]
 comment0.__name__ = 'comment'
 
-meta_keyword = [
-    'if',
-    'else',
-    'elif',
-    'endif',
-    'define',
-    'undef',
-    'warning',
-    'error',
-    'line',
-    'region',
-    'endregion',
-    'pragma',
-    'checksum',
-]
+meta_keyword = """
+    if else elif endif define undef warning error line region endregion
+    pragma checksum
+    """.split()
 
 class meta:
     default_text = DELIMITER
@@ -148,10 +53,12 @@ class meta:
 class string:
     default_text = DELIMITER
     rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # {'begin': '""'},
     ]
 
-number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 keyword0 = ['class', 'interface']
 
@@ -168,7 +75,7 @@ class _group1:
 
 keyword1 = ['namespace']
 
-title0 = [RE(r"[a-zA-Z](\.?\w)*")]
+title0 = [RE(r"[a-zA-Z](?:\.?\w)*")]
 
 class _group2:
     default_text = DELIMITER
@@ -179,19 +86,21 @@ class _group2:
         None,  # rules[3],
     ]
 
+class _function:
+    default_text = DELIMITER
+    rules = [('_function', RE(r"[{;=]"), [RE(r'\b|\B')])]
+
 class _group4:
     default_text = DELIMITER
-    rules = [
-        None,  # ('title', title),
-    ]
+    rules = [('title', title)]
 
-class params:
+class _params:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword),
         None,  # rules[6],
         None,  # rules[7],
-        None,  # ('number', number),
+        ('number', number),
         None,  # rules[3],
     ]
 
@@ -199,8 +108,8 @@ class function:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword),
-        ('_group4', RE(r"(?=[a-zA-Z]\w*\s*\()"), [RE(r"\B|\b")], _group4),
-        ('params', RE(r"\("), [RE(r"(?=\))")], params),
+        ('_group4', RE(r"(?=[a-zA-Z]\w*\s*\()"), [RE(r"\B\b")], _group4),
+        ('_params', RE(r"\("), [RE(r"\)")], _params),
         None,  # rules[2],
         None,  # rules[3],
     ]
@@ -211,25 +120,23 @@ rules = [
     ('comment', RE(r"//"), [RE(r"$")], comment0),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
     ('meta', RE(r"#"), [RE(r"$")], meta),
-    ('string', RE(r"@\""), [RE(r"\"")]),
-    ('string', RE(r"'"), [RE(r"'")]),
+    ('string', RE(r"@\""), [RE(r"\"")], string),
+    ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),
-    ('_group1', RE(r"\b(class|interface)"), [RE(r"[{;=]")], _group1),
-    ('_group2', RE(r"\b(namespace)"), [RE(r"[{;=]")], _group2),
-    ('_group3', RE(r"\b(new|return|throw|await)"), [RE(r"\B|\b")]),
-    ('function', RE(r"(?=([a-zA-Z]\w*(<[a-zA-Z]\w*>)?\s+)+[a-zA-Z]\w*\s*\()"), [RE(r"(?=[{;=])")], function),
+    ('_group1', RE(r"\b(?:class|interface)"), [RE(r"[{;=]")], _group1),
+    ('_group2', RE(r"\b(?:namespace)"), [RE(r"[{;=]")], _group2),
+    ('_group3', RE(r"\b(?:new|return|throw|await)"), [RE(r"\B\b")]),
+    ('function', RE(r"(?=(?:[a-zA-Z]\w*(?:<[a-zA-Z]\w*>)?\s+)+[a-zA-Z]\w*\s*\()"), [_function], function),
 ]
 
 _group1.rules[2] = rules[2]
 _group1.rules[3] = rules[3]
 _group2.rules[2] = rules[2]
 _group2.rules[3] = rules[3]
-_group4.rules[0] = ('title', title)
-params.rules[1] = rules[6]
-params.rules[2] = rules[7]
-params.rules[3] = ('number', number)
-params.rules[4] = rules[3]
+_params.rules[1] = rules[6]
+_params.rules[2] = rules[7]
+_params.rules[4] = rules[3]
 function.rules[3] = rules[2]
 function.rules[4] = rules[3]
 

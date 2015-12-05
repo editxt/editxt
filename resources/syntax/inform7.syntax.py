@@ -6,31 +6,11 @@ file_patterns = ['*.inform7', '*.i7']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-keyword = [
-    'thing',
-    'room',
-    'person',
-    'man',
-    'woman',
-    'animal',
-    'container',
-    'supporter',
-    'backdrop',
-    'door',
-    'scenery',
-    'open',
-    'closed',
-    'locked',
-    'inside',
-    'gender',
-    'is',
-    'are',
-    'say',
-    'understand',
-    'kind',
-    'of',
-    'rule',
-]
+keyword = """
+    thing room person man woman animal container supporter backdrop door
+    scenery open closed locked inside gender is are say understand kind
+    of rule
+    """.split()
 
 class string:
     default_text = DELIMITER
@@ -47,8 +27,8 @@ class comment:
 rules = [
     ('keyword', keyword),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('section', RE(r"^(Volume|Book|Part|Chapter|Section|Table)\b"), [RE(r"$")]),
-    ('_group0', RE(r"^(Check|Carry out|Report|Instead of|To|Rule|When|Before|After)\b"), [RE(r":")], _group0),
+    ('section', RE(r"^(?:Volume|Book|Part|Chapter|Section|Table)\b"), [RE(r"$")]),
+    ('_group0', RE(r"^(?:Check|Carry out|Report|Instead of|To|Rule|When|Before|After)\b"), [RE(r":")], _group0),
     ('comment', RE(r"\["), [RE(r"\]")], comment),
 ]
 

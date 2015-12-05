@@ -6,126 +6,34 @@ file_patterns = ['*.dos', '*.bat', '*.cmd']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-built_in = [
-    'prn',
-    'nul',
-    'lpt3',
-    'lpt2',
-    'lpt1',
-    'con',
-    'com4',
-    'com3',
-    'com2',
-    'com1',
-    'aux',
-    'shift',
-    'cd',
-    'dir',
-    'echo',
-    'setlocal',
-    'endlocal',
-    'set',
-    'pause',
-    'copy',
-    'append',
-    'assoc',
-    'at',
-    'attrib',
-    'break',
-    'cacls',
-    'cd',
-    'chcp',
-    'chdir',
-    'chkdsk',
-    'chkntfs',
-    'cls',
-    'cmd',
-    'color',
-    'comp',
-    'compact',
-    'convert',
-    'date',
-    'dir',
-    'diskcomp',
-    'diskcopy',
-    'doskey',
-    'erase',
-    'fs',
-    'find',
-    'findstr',
-    'format',
-    'ftype',
-    'graftabl',
-    'help',
-    'keyb',
-    'label',
-    'md',
-    'mkdir',
-    'mode',
-    'more',
-    'move',
-    'path',
-    'pause',
-    'print',
-    'popd',
-    'pushd',
-    'promt',
-    'rd',
-    'recover',
-    'rem',
-    'rename',
-    'replace',
-    'restore',
-    'rmdir',
-    'shiftsort',
-    'start',
-    'subst',
-    'time',
-    'title',
-    'tree',
-    'type',
-    'ver',
-    'verify',
-    'vol',
-    'ping',
-    'net',
-    'ipconfig',
-    'taskkill',
-    'xcopy',
-    'ren',
-    'del',
-]
+built_in = """
+    prn nul lpt3 lpt2 lpt1 con com4 com3 com2 com1 aux shift cd dir echo
+    setlocal endlocal set pause copy append assoc at attrib break cacls
+    cd chcp chdir chkdsk chkntfs cls cmd color comp compact convert date
+    dir diskcomp diskcopy doskey erase fs find findstr format ftype
+    graftabl help keyb label md mkdir mode more move path pause print
+    popd pushd promt rd recover rem rename replace restore rmdir
+    shiftsort start subst time title tree type ver verify vol ping net
+    ipconfig taskkill xcopy ren del
+    """.split()
 
-keyword = [
-    'if',
-    'else',
-    'goto',
-    'for',
-    'in',
-    'do',
-    'call',
-    'exit',
-    'not',
-    'exist',
-    'errorlevel',
-    'defined',
-    'equ',
-    'neq',
-    'lss',
-    'leq',
-    'gtr',
-    'geq',
-]
+keyword = """
+    if else goto for in do call exit not exist errorlevel defined equ
+    neq lss leq gtr geq
+    """.split()
 
 variable = [RE(r"%%[^ ]|%[^ ]+?%|![^ ]+?!")]
 
-title = [RE(r"([_a-zA-Z]\w*\.)*([_a-zA-Z]\w*:)?[_a-zA-Z]\w*")]
+title = [RE(r"(?:[_a-zA-Z]\w*\.)*(?:[_a-zA-Z]\w*:)?[_a-zA-Z]\w*")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 class function:
     default_text = DELIMITER
@@ -140,12 +48,10 @@ rules = [
     ('built_in', built_in),
     ('keyword', keyword),
     ('variable', variable),
-    ('function', RE(r"^\s*[A-Za-z._?][A-Za-z0-9_$#@~.?]*(:|\s+label)"), [RE(r"goto:eof")], function),
+    ('function', RE(r"^\s*[A-Za-z._?][A-Za-z0-9_$#@~.?]*(?::|\s+label)"), [RE(r"goto:eof")], function),
     ('number', number),
-    None,  # function.rules[1],
+    function.rules[1],
 ]
-
-rules[5] = function.rules[1]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

@@ -4,21 +4,32 @@
 name = 'Lisp'
 file_patterns = ['*.lisp']
 
-number = [RE(r"(\-|\+)?\d+(\.\d+|\/\d+)?((d|e|f|l|s|D|E|F|L|S)(\+|\-)?\d+)?")]
+number = [
+    RE(r"(?:\-|\+)?\d+(?:\.\d+|\/\d+)?(?:(d|e|f|l|s|D|E|F|L|S)(?:\+|\-)?\d+)?"),
+]
 
-number0 = [RE(r"#(b|B)[0-1]+(/[0-1]+)?")]
+number0 = [RE(r"#(?:b|B)[0-1]+(?:/[0-1]+)?")]
 
-number1 = [RE(r"#(o|O)[0-7]+(/[0-7]+)?")]
+number1 = [RE(r"#(?:o|O)[0-7]+(?:/[0-7]+)?")]
 
-number2 = [RE(r"#(x|X)[0-9a-fA-F]+(/[0-9a-fA-F]+)?")]
+number2 = [RE(r"#(?:x|X)[0-9a-fA-F]+(?:/[0-9a-fA-F]+)?")]
 
-literal = [RE(r"\b(t{1}|nil)\b")]
+literal = [RE(r"\b(?:t{1}|nil)\b")]
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 symbol = [
     RE(r"[:&][a-zA-Z_\-\+\*\/\<\=\>\&\#][a-zA-Z0-9_\-\+\*\/\<\=\>\&\#!]*"),
@@ -27,9 +38,10 @@ symbol = [
 class _group3:
     default_text = DELIMITER
     rules = [
-        None,  # ('literal', literal),
+        ('literal', literal),
         None,  # rules[7],
         None,  # rules[4],
+        # {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
     ]
 
 class _group1:
@@ -48,9 +60,10 @@ name0 = ['quote']
 class _group7:
     default_text = DELIMITER
     rules = [
-        None,  # ('literal', literal),
+        ('literal', literal),
         None,  # rules[7],
         None,  # rules[4],
+        # {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
     ]
 
 class _group5:
@@ -68,9 +81,10 @@ class _group5:
 class _group11:
     default_text = DELIMITER
     rules = [
-        None,  # ('literal', literal),
+        ('literal', literal),
         None,  # rules[7],
         None,  # rules[4],
+        # {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
     ]
 
 class _group9:
@@ -94,12 +108,13 @@ class _group16:
         None,  # rules[11],
         # {},
         # {'begin': '\\(\\s*', 'end': '\\)'},
-        None,  # ('literal', literal),
+        ('literal', literal),
         None,  # rules[4],
         None,  # rules[7],
         None,  # rules[8],
-        None,  # _group9.rules[2],
-        None,  # ('symbol', symbol),
+        _group9.rules[2],
+        ('symbol', symbol),
+        # {'begin': '\\|[^]*?\\|'},
         # {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
     ]
 
@@ -108,7 +123,7 @@ class _group15:
     rules = [
         ('name', name1),
         ('name', name2),
-        ('_group16', RE(r"\B|\b"), [RE(r"")], _group16),
+        ('_group16', RE(r"\B|\b"), [RE(r"\B\b")], _group16),
     ]
 
 rules = [
@@ -116,40 +131,36 @@ rules = [
     ('number', number0),
     ('number', number1),
     ('number', number2),
-    ('number', RE(r"#(c|C)\((\-|\+)?\d+(\.\d+|\/\d+)?((d|e|f|l|s|D|E|F|L|S)(\+|\-)?\d+)? +(\-|\+)?\d+(\.\d+|\/\d+)?((d|e|f|l|s|D|E|F|L|S)(\+|\-)?\d+)?"), [RE(r"\)")]),
+    ('number', RE(r"#(?:c|C)\((?:\-|\+)?\d+(?:\.\d+|\/\d+)?(?:(d|e|f|l|s|D|E|F|L|S)(?:\+|\-)?\d+)? +(?:\-|\+)?\d+(?:\.\d+|\/\d+)?(?:(d|e|f|l|s|D|E|F|L|S)(?:\+|\-)?\d+)?"), [RE(r"\)")]),
     ('meta', RE(r"^#!"), [RE(r"$")]),
     ('literal', literal),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    ('string', RE(r"\""), [RE(r"\"")], string),
     ('comment', RE(r";"), [RE(r"$")], comment),
     ('_group1', RE(r"['`]\("), [RE(r"\)")], _group1),
     ('_group5', RE(r"\(quote "), [RE(r"\)")], _group5),
-    ('_group9', RE(r"'\|[^]*?\|"), [RE(r"\B|\b")], _group9),
+    ('_group9', RE(r"'\|[^]*?\|"), [RE(r"\B\b")], _group9),
+    # {'begin': "'[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*", 'variants': [{'begin': ...}, {'begin': "#'[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*(::[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*)*"}]},
+    # {'begin': "#'[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*(::[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*)*", 'variants': [{'begin': "'[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*"}, {'begin': ...}]},
     ('_group15', RE(r"\(\s*"), [RE(r"\)")], _group15),
     # {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
 ]
 
-_group1.rules[0] = rules[4]
-_group1.rules[1] = rules[7]
-_group3.rules[0] = ('literal', literal)
 _group3.rules[1] = rules[7]
 _group3.rules[2] = rules[4]
-_group5.rules[1] = rules[4]
-_group5.rules[2] = rules[7]
-_group7.rules[0] = ('literal', literal)
+_group1.rules[0] = rules[4]
+_group1.rules[1] = rules[7]
 _group7.rules[1] = rules[7]
 _group7.rules[2] = rules[4]
-_group9.rules[0] = rules[4]
-_group9.rules[1] = rules[7]
-_group11.rules[0] = ('literal', literal)
+_group5.rules[1] = rules[4]
+_group5.rules[2] = rules[7]
 _group11.rules[1] = rules[7]
 _group11.rules[2] = rules[4]
+_group9.rules[0] = rules[4]
+_group9.rules[1] = rules[7]
 _group16.rules[0] = rules[11]
-_group16.rules[1] = ('literal', literal)
 _group16.rules[2] = rules[4]
 _group16.rules[3] = rules[7]
 _group16.rules[4] = rules[8]
-_group16.rules[5] = _group9.rules[2]
-_group16.rules[6] = ('symbol', symbol)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

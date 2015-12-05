@@ -4,103 +4,25 @@
 name = 'pf'
 file_patterns = ['*.pf', '*.pf.conf']
 
-built_in = [
-    'block',
-    'match',
-    'pass',
-    'load',
-    'anchor',
-    'antispoof',
-    'set',
-    'table',
-]
+built_in = """
+    block match pass load anchor antispoof set table
+    """.split()
 
-keyword = [
-    'in',
-    'out',
-    'log',
-    'quick',
-    'on',
-    'rdomain',
-    'inet',
-    'inet6',
-    'proto',
-    'from',
-    'port',
-    'os',
-    'to',
-    'routeallow-opts',
-    'divert-packet',
-    'divert-reply',
-    'divert-to',
-    'flags',
-    'group',
-    'icmp-typeicmp6-type',
-    'label',
-    'once',
-    'probability',
-    'recieved-on',
-    'rtable',
-    'prio',
-    'queuetos',
-    'tag',
-    'tagged',
-    'user',
-    'keep',
-    'fragment',
-    'for',
-    'os',
-    'dropaf-to',
-    'binat-to',
-    'nat-to',
-    'rdr-to',
-    'bitmask',
-    'least-stats',
-    'random',
-    'round-robinsource-hash',
-    'static-portdup-to',
-    'reply-to',
-    'route-toparent',
-    'bandwidth',
-    'default',
-    'min',
-    'max',
-    'qlimitblock-policy',
-    'debug',
-    'fingerprints',
-    'hostid',
-    'limit',
-    'loginterface',
-    'optimizationreassemble',
-    'ruleset-optimization',
-    'basic',
-    'none',
-    'profile',
-    'skip',
-    'state-defaultsstate-policy',
-    'timeoutconst',
-    'counters',
-    'persistno',
-    'modulate',
-    'synproxy',
-    'state',
-    'floating',
-    'if-bound',
-    'no-sync',
-    'pflow',
-    'sloppysource-track',
-    'global',
-    'rule',
-    'max-src-nodes',
-    'max-src-states',
-    'max-src-connmax-src-conn-rate',
-    'overload',
-    'flushscrub',
-    'max-mss',
-    'min-ttl',
-    'no-df',
-    'random-id',
-]
+keyword = """
+    in out log quick on rdomain inet inet6 proto from port os to
+    routeallow-opts divert-packet divert-reply divert-to flags group
+    icmp-typeicmp6-type label once probability recieved-on rtable prio
+    queuetos tag tagged user keep fragment for os dropaf-to binat-to
+    nat-to rdr-to bitmask least-stats random round-robinsource-hash
+    static-portdup-to reply-to route-toparent bandwidth default min max
+    qlimitblock-policy debug fingerprints hostid limit loginterface
+    optimizationreassemble ruleset-optimization basic none profile skip
+    state-defaultsstate-policy timeoutconst counters persistno modulate
+    synproxy state floating if-bound no-sync pflow sloppysource-track
+    global rule max-src-nodes max-src-states
+    max-src-connmax-src-conn-rate overload flushscrub max-mss min-ttl
+    no-df random-id
+    """.split()
 
 literal = ['all', 'any', 'no-route', 'self', 'urpf-failed', 'egress', 'unknown']
 
@@ -108,9 +30,18 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
-number = [RE(r"\b\d+(\.\d+)?")]
+number = [RE(r"\b\d+(?:\.\d+)?")]
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
 
 variable = [RE(r"\$[\w\d#@][\w\d_]*")]
 
@@ -120,7 +51,7 @@ rules = [
     ('literal', literal),
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('number', number),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    ('string', RE(r"\""), [RE(r"\"")], string),
     ('variable', variable),
     ('variable', RE(r"<"), [RE(r">")]),
 ]

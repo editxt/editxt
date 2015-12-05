@@ -6,7 +6,7 @@ file_patterns = ['*.clojure-repl']
 
 class meta:
     default_text = DELIMITER
-    rules = [('meta', RE(r"^([\w.-]+|\s*#_)=>"), [RE(r"\B|\b")])]
+    rules = [('meta', RE(r"^(?:[\w.-]+|\s*#_)=>"), [RE(r"\B\b")])]
 
 class _group0:
     default_text = DELIMITER

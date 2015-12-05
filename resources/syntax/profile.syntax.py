@@ -4,7 +4,9 @@
 name = 'Python profile'
 file_patterns = ['*.profile']
 
-number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 keyword = ['ncalls', 'tottime', 'cumtime', 'filename']
 
@@ -14,9 +16,7 @@ class _group1:
 
 class _group2:
     default_text = DELIMITER
-    rules = [
-        None,  # ('number', number),
-    ]
+    rules = [('number', number)]
 
 class string:
     default_text = DELIMITER
@@ -26,15 +26,13 @@ class string:
 
 rules = [
     ('number', number),
-    ('_group0', RE(r"[a-zA-Z_][\da-zA-Z_]+\.[\da-zA-Z_]{1,3}"), [RE(r"(?=:)")]),
-    ('_group1', RE(r"(ncalls|tottime|cumtime)"), [RE(r"$")], _group1),
+    ('_group0', RE(r"[a-zA-Z_][\da-zA-Z_]+\.[\da-zA-Z_]{1,3}"), [RE(r":")]),
+    ('_group1', RE(r"(?:ncalls|tottime|cumtime)"), [RE(r"$")], _group1),
     ('_group2', RE(r"function calls"), [RE(r"$")], _group2),
-    ('string', RE(r"'"), [RE(r"'")]),
+    ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('string', RE(r"\("), [RE(r"(?=\)$)")]),
+    ('_string', RE(r"\("), [RE(r"\)$")]),
 ]
-
-_group2.rules[0] = ('number', number)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

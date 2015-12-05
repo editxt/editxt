@@ -4,50 +4,13 @@
 name = 'Haxe'
 file_patterns = ['*.haxe', '*.hx']
 
-keyword = [
-    'break',
-    'callback',
-    'case',
-    'cast',
-    'catch',
-    'class',
-    'continue',
-    'default',
-    'do',
-    'dynamic',
-    'else',
-    'enum',
-    'extends',
-    'extern',
-    'for',
-    'function',
-    'here',
-    'if',
-    'implements',
-    'import',
-    'in',
-    'inline',
-    'interface',
-    'never',
-    'new',
-    'override',
-    'package',
-    'private',
-    'public',
-    'return',
-    'static',
-    'super',
-    'switch',
-    'this',
-    'throw',
-    'trace',
-    'try',
-    'typedef',
-    'untyped',
-    'using',
-    'var',
-    'while',
-]
+keyword = """
+    break callback case cast catch class continue default do dynamic
+    else enum extends extern for function here if implements import in
+    inline interface never new override package private public return
+    static super switch this throw trace try typedef untyped using var
+    while
+    """.split()
 
 literal = ['true', 'false', 'null']
 
@@ -61,17 +24,18 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
-number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+class _class:
+    default_text = DELIMITER
+    rules = [('_class', RE(r"{"), [RE(r'\b|\B')])]
 
 keyword0 = ['class', 'interface']
 
@@ -81,7 +45,7 @@ class class0:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword0),
-        ('_group1', RE(r"\b(extends|implements)"), [RE(r"\B|\b")]),
+        ('_group1', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
         ('title', title),
     ]
 class0.__name__ = 'class'
@@ -91,6 +55,10 @@ meta_keyword = ['if', 'else', 'elseif', 'end', 'error']
 class meta:
     default_text = DELIMITER
     rules = [('meta-keyword', meta_keyword)]
+
+class _function:
+    default_text = DELIMITER
+    rules = [('_function', RE(r"[{;]"), [RE(r'\b|\B')])]
 
 keyword1 = ['function']
 
@@ -107,24 +75,24 @@ class function:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword1),
-        None,  # ('title', title),
+        ('title', title),
         ('params', RE(r"\("), [RE(r"\)")], params),
+        # {'begin': ':\\s*([*]|[a-zA-Z_$][a-zA-Z0-9_$]*)'},
     ]
 
 rules = [
     ('keyword', keyword),
     ('literal', literal),
-    ('string', RE(r"'"), [RE(r"'")]),
+    ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('number', number),
-    ('class', RE(r"\b(class|interface)"), [RE(r"(?={)")], class0),
+    ('class', RE(r"\b(?:class|interface)"), [_class], class0),
     ('meta', RE(r"#"), [RE(r"$")], meta),
-    ('function', RE(r"\b(function)"), [RE(r"(?=[{;])")], function),
+    ('function', RE(r"\b(?:function)"), [_function], function),
 ]
 
-function.rules[1] = ('title', title)
 params.rules[0] = rules[2]
 params.rules[1] = rules[3]
 params.rules[2] = rules[4]

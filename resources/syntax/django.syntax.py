@@ -10,77 +10,23 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
-name0 = [
-    'comment',
-    'endcomment',
-    'load',
-    'templatetag',
-    'ifchanged',
-    'endifchanged',
-    'if',
-    'endif',
-    'firstof',
-    'for',
-    'endfor',
-    'ifnotequal',
-    'endifnotequal',
-    'widthratio',
-    'extends',
-    'include',
-    'spaceless',
-    'endspaceless',
-    'regroup',
-    'ifequal',
-    'endifequal',
-    'ssi',
-    'now',
-    'with',
-    'cycle',
-    'url',
-    'filter',
-    'endfilter',
-    'debug',
-    'block',
-    'endblock',
-    'else',
-    'autoescape',
-    'endautoescape',
-    'csrf_token',
-    'empty',
-    'elif',
-    'endwith',
-    'static',
-    'trans',
-    'blocktrans',
-    'endblocktrans',
-    'get_static_prefix',
-    'get_media_prefix',
-    'plural',
-    'get_current_language',
-    'language',
-    'get_available_languages',
-    'get_current_language_bidi',
-    'get_language_info',
-    'get_language_info_list',
-    'localize',
-    'endlocalize',
-    'localtime',
-    'endlocaltime',
-    'timezone',
-    'endtimezone',
-    'get_current_timezone',
-    'verbatim',
-]
+name0 = """
+    comment endcomment load templatetag ifchanged endifchanged if endif
+    firstof for endfor ifnotequal endifnotequal widthratio extends
+    include spaceless endspaceless regroup ifequal endifequal ssi now
+    with cycle url filter endfilter debug block endblock else autoescape
+    endautoescape csrf_token empty elif endwith static trans blocktrans
+    endblocktrans get_static_prefix get_media_prefix plural
+    get_current_language language get_available_languages
+    get_current_language_bidi get_language_info get_language_info_list
+    localize endlocalize localtime endlocaltime timezone endtimezone
+    get_current_timezone verbatim
+    """.split()
 
 class name1:
     default_text = DELIMITER
@@ -89,75 +35,22 @@ name1.__name__ = 'name'
 
 class name2:
     default_text = DELIMITER
-    rules = [('name', RE(r"\w+"), [RE(r"\B|\b")], name1)]
+    rules = [('name', RE(r"\w+"), [RE(r"\B\b")], name1)]
 name2.__name__ = 'name'
 
 keyword = ['in', 'by', 'as']
 
-name3 = [
-    'truncatewords',
-    'removetags',
-    'linebreaksbr',
-    'yesno',
-    'get_digit',
-    'timesince',
-    'random',
-    'striptags',
-    'filesizeformat',
-    'escape',
-    'linebreaks',
-    'length_is',
-    'ljust',
-    'rjust',
-    'cut',
-    'urlize',
-    'fix_ampersands',
-    'title',
-    'floatformat',
-    'capfirst',
-    'pprint',
-    'divisibleby',
-    'add',
-    'make_list',
-    'unordered_list',
-    'urlencode',
-    'timeuntil',
-    'urlizetrunc',
-    'wordcount',
-    'stringformat',
-    'linenumbers',
-    'slice',
-    'date',
-    'dictsort',
-    'dictsortreversed',
-    'default_if_none',
-    'pluralize',
-    'lower',
-    'join',
-    'center',
-    'default',
-    'truncatewords_html',
-    'upper',
-    'length',
-    'phone2numeric',
-    'wordwrap',
-    'time',
-    'addslashes',
-    'slugify',
-    'first',
-    'escapejs',
-    'force_escape',
-    'iriencode',
-    'last',
-    'safe',
-    'safeseq',
-    'truncatechars',
-    'localize',
-    'unlocalize',
-    'localtime',
-    'utc',
-    'timezone',
-]
+name3 = """
+    truncatewords removetags linebreaksbr yesno get_digit timesince
+    random striptags filesizeformat escape linebreaks length_is ljust
+    rjust cut urlize fix_ampersands title floatformat capfirst pprint
+    divisibleby add make_list unordered_list urlencode timeuntil
+    urlizetrunc wordcount stringformat linenumbers slice date dictsort
+    dictsortreversed default_if_none pluralize lower join center default
+    truncatewords_html upper length phone2numeric wordwrap time
+    addslashes slugify first escapejs force_escape iriencode last safe
+    safeseq truncatechars localize unlocalize localtime utc timezone
+    """.split()
 
 class string:
     default_text = DELIMITER
@@ -169,7 +62,7 @@ class _group1:
     default_text = DELIMITER
     rules = [
         ('name', name3),
-        ('string', RE(r"\""), [RE(r"\"")]),
+        ('string', RE(r"\""), [RE(r"\"")], string),
         ('string', RE(r"'"), [RE(r"'")], string),
     ]
 
@@ -177,7 +70,7 @@ class _group0:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword),
-        ('_group1', RE(r"\|[A-Za-z]+:?"), [RE(r"\B|\b")], _group1),
+        ('_group1', RE(r"\|[A-Za-z]+:?"), [RE(r"\B\b")], _group1),
     ]
 
 class template_tag:
@@ -187,19 +80,15 @@ template_tag.__name__ = 'template-tag'
 
 class template_variable:
     default_text = DELIMITER
-    rules = [
-        None,  # _group0.rules[1],
-    ]
+    rules = [_group0.rules[1]]
 template_variable.__name__ = 'template-variable'
 
 rules = [
     ('comment', RE(r"\{%\s*comment\s*%}"), [RE(r"\{%\s*endcomment\s*%}")], comment),
-    ('comment', RE(r"\{#"), [RE(r"#}")], comment0),
+    ('comment', RE(r"\{#"), [RE(r"#}")], comment),
     ('template-tag', RE(r"\{%"), [RE(r"%}")], template_tag),
     ('template-variable', RE(r"\{\{"), [RE(r"}}")], template_variable),
 ]
-
-template_variable.rules[0] = _group0.rules[1]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

@@ -6,90 +6,31 @@ file_patterns = ['*.cos', '*.cos', '*.cls']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-keyword = [
-    'break',
-    'catch',
-    'close',
-    'continue',
-    'do',
-    'd',
-    'else',
-    'elseif',
-    'for',
-    'goto',
-    'halt',
-    'hang',
-    'h',
-    'if',
-    'job',
-    'j',
-    'kill',
-    'k',
-    'lock',
-    'l',
-    'merge',
-    'new',
-    'open',
-    'quit',
-    'q',
-    'read',
-    'r',
-    'return',
-    'set',
-    's',
-    'tcommit',
-    'throw',
-    'trollback',
-    'try',
-    'tstart',
-    'use',
-    'view',
-    'while',
-    'write',
-    'w',
-    'xecute',
-    'x',
-    'zkill',
-    'znspace',
-    'zn',
-    'ztrap',
-    'zwrite',
-    'zw',
-    'zzdump',
-    'zzwrite',
-    'print',
-    'zbreak',
-    'zinsert',
-    'zload',
-    'zprint',
-    'zremove',
-    'zsave',
-    'zzprint',
-    'mv',
-    'mvcall',
-    'mvcrt',
-    'mvdim',
-    'mvprint',
-    'zquit',
-    'zsync',
-    'ascii',
-]
+keyword = """
+    break catch close continue do d else elseif for goto halt hang h if
+    job j kill k lock l merge new open quit q read r return set s
+    tcommit throw trollback try tstart use view while write w xecute x
+    zkill znspace zn ztrap zwrite zw zzdump zzwrite print zbreak zinsert
+    zload zprint zremove zsave zzprint mv mvcall mvcrt mvdim mvprint
+    zquit zsync ascii
+    """.split()
 
-number = [RE(r"\b(\d+(\.\d*)?|\.\d+)")]
+number = [RE(r"\b(?:\d+(?:\.\d*)?|\.\d+)")]
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '""', 'relevance': 0},
+    ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 built_in = [RE(r"\$\$?[a-zA-Z]+")]
 
@@ -102,15 +43,15 @@ keyword1 = [RE(r"##class")]
 rules = [
     ('keyword', keyword),
     ('number', number),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    ('string', RE(r"\""), [RE(r"\"")], string),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('built_in', built_in),
     ('keyword', keyword0),
     ('symbol', symbol),
     ('keyword', keyword1),
-    ('_group1', RE(r"&sql\("), [RE(r"(?=\))")], 'sql'),
-    ('_group2', RE(r"&(js|jscript|javascript)<"), [RE(r"(?=>)")], 'javascript'),
+    ('_group1', RE(r"&sql\("), [RE(r"\)")], 'sql'),
+    ('_group2', RE(r"&(?:js|jscript|javascript)<"), [RE(r">")], 'javascript'),
     ('_group3', RE(r"&html<\s*<"), [RE(r">\s*>")], 'xml'),
 ]
 

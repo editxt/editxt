@@ -6,19 +6,9 @@ file_patterns = ['*.yaml', '*.yml', '*.YAML', '*.yaml']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-literal = [
-    '{',
-    '}',
-    'true',
-    'false',
-    'yes',
-    'no',
-    'Yes',
-    'No',
-    'True',
-    'False',
-    'null',
-]
+literal = """
+    { } true false yes no Yes No True False null
+    """.split()
 
 attr = [RE(r"^[ \-]*[a-zA-Z_][\w\-]*:")]
 
@@ -31,6 +21,7 @@ meta = [RE(r"^---s*$")]
 class string:
     default_text = DELIMITER
     rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         ('template-variable', RE(r"{{"), [RE(r"}}")]),
         ('template-variable', RE(r"%{"), [RE(r"}")]),
     ]
@@ -52,9 +43,14 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
-number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 rules = [
     ('literal', literal),
@@ -63,7 +59,7 @@ rules = [
     ('attr', attr1),
     ('meta', meta),
     ('string', RE(r"[\|>] *$"), [RE(r"(?=^[ \-]*[a-zA-Z_][\w\-]*:)")], string),
-    ('_group1', RE(r"<%[%=-]?"), [RE(r"(?=[%-]?%>)")], 'ruby'),
+    ('_group1', RE(r"<%[%=-]?"), [RE(r"[%-]?%>")], 'ruby'),
     ('type', type),
     ('meta', meta0),
     ('meta', meta1),
@@ -73,8 +69,6 @@ rules = [
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('number', number),
 ]
-
-string0.rules.extend(string.rules)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

@@ -4,186 +4,44 @@
 name = 'Swift'
 file_patterns = ['*.swift']
 
-built_in = [
-    'abs',
-    'advance',
-    'alignof',
-    'alignofValue',
-    'anyGenerator',
-    'assert',
-    'assertionFailure',
-    'bridgeFromObjectiveC',
-    'bridgeFromObjectiveCUnconditional',
-    'bridgeToObjectiveC',
-    'bridgeToObjectiveCUnconditional',
-    'c',
-    'contains',
-    'count',
-    'countElements',
-    'countLeadingZeros',
-    'debugPrint',
-    'debugPrintln',
-    'distance',
-    'dropFirst',
-    'dropLast',
-    'dump',
-    'encodeBitsAsWords',
-    'enumerate',
-    'equal',
-    'fatalError',
-    'filter',
-    'find',
-    'getBridgedObjectiveCType',
-    'getVaList',
-    'indices',
-    'insertionSort',
-    'isBridgedToObjectiveC',
-    'isBridgedVerbatimToObjectiveC',
-    'isUniquelyReferenced',
-    'isUniquelyReferencedNonObjC',
-    'join',
-    'lazy',
-    'lexicographicalCompare',
-    'map',
-    'max',
-    'maxElement',
-    'min',
-    'minElement',
-    'numericCast',
-    'overlaps',
-    'partition',
-    'posix',
-    'precondition',
-    'preconditionFailure',
-    'print',
-    'println',
-    'quickSort',
-    'readLine',
-    'reduce',
-    'reflect',
-    'reinterpretCast',
-    'reverse',
-    'roundUpToAlignment',
-    'sizeof',
-    'sizeofValue',
-    'sort',
-    'split',
-    'startsWith',
-    'stride',
-    'strideof',
-    'strideofValue',
-    'swap',
-    'toString',
-    'transcode',
-    'underestimateCount',
-    'unsafeAddressOf',
-    'unsafeBitCast',
-    'unsafeDowncast',
-    'unsafeUnwrap',
-    'unsafeReflect',
-    'withExtendedLifetime',
-    'withObjectAtPlusZero',
-    'withUnsafePointer',
-    'withUnsafePointerToObject',
-    'withUnsafeMutablePointer',
-    'withUnsafeMutablePointers',
-    'withUnsafePointer',
-    'withUnsafePointers',
-    'withVaList',
-    'zip',
-]
+built_in = """
+    abs advance alignof alignofValue anyGenerator assert
+    assertionFailure bridgeFromObjectiveC
+    bridgeFromObjectiveCUnconditional bridgeToObjectiveC
+    bridgeToObjectiveCUnconditional c contains count countElements
+    countLeadingZeros debugPrint debugPrintln distance dropFirst
+    dropLast dump encodeBitsAsWords enumerate equal fatalError filter
+    find getBridgedObjectiveCType getVaList indices insertionSort
+    isBridgedToObjectiveC isBridgedVerbatimToObjectiveC
+    isUniquelyReferenced isUniquelyReferencedNonObjC join lazy
+    lexicographicalCompare map max maxElement min minElement numericCast
+    overlaps partition posix precondition preconditionFailure print
+    println quickSort readLine reduce reflect reinterpretCast reverse
+    roundUpToAlignment sizeof sizeofValue sort split startsWith stride
+    strideof strideofValue swap toString transcode underestimateCount
+    unsafeAddressOf unsafeBitCast unsafeDowncast unsafeUnwrap
+    unsafeReflect withExtendedLifetime withObjectAtPlusZero
+    withUnsafePointer withUnsafePointerToObject withUnsafeMutablePointer
+    withUnsafeMutablePointers withUnsafePointer withUnsafePointers
+    withVaList zip
+    """.split()
 
-keyword = [
-    '__COLUMN__',
-    '__FILE__',
-    '__FUNCTION__',
-    '__LINE__',
-    'as',
-    'as!',
-    'as?',
-    'associativity',
-    'break',
-    'case',
-    'catch',
-    'class',
-    'continue',
-    'convenience',
-    'default',
-    'defer',
-    'deinit',
-    'didSet',
-    'do',
-    'dynamic',
-    'dynamicType',
-    'else',
-    'enum',
-    'extension',
-    'fallthrough',
-    'false',
-    'final',
-    'for',
-    'func',
-    'get',
-    'guard',
-    'if',
-    'import',
-    'in',
-    'indirect',
-    'infix',
-    'init',
-    'inout',
-    'internal',
-    'is',
-    'lazy',
-    'left',
-    'let',
-    'mutating',
-    'nil',
-    'none',
-    'nonmutating',
-    'operator',
-    'optional',
-    'override',
-    'postfix',
-    'precedence',
-    'prefix',
-    'private',
-    'protocol',
-    'Protocol',
-    'public',
-    'repeat',
-    'required',
-    'rethrows',
-    'return',
-    'right',
-    'self',
-    'Self',
-    'set',
-    'static',
-    'struct',
-    'subscript',
-    'super',
-    'switch',
-    'throw',
-    'throws',
-    'true',
-    'try',
-    'try!',
-    'try?',
-    'Type',
-    'typealias',
-    'unowned',
-    'var',
-    'weak',
-    'where',
-    'while',
-    'willSet',
-]
+keyword = """
+    __COLUMN__ __FILE__ __FUNCTION__ __LINE__ as as! as? associativity
+    break case catch class continue convenience default defer deinit
+    didSet do dynamic dynamicType else enum extension fallthrough false
+    final for func get guard if import in indirect infix init inout
+    internal is lazy left let mutating nil none nonmutating operator
+    optional override postfix precedence prefix private protocol
+    Protocol public repeat required rethrows return right self Self set
+    static struct subscript super switch throw throws true try try! try?
+    Type typealias unowned var weak where while willSet
+    """.split()
 
 literal = ['true', 'false', 'nil']
 
 number = [
-    RE(r"\b([\d_]+(\.[\deE_]+)?|0x[a-fA-F0-9_]+(\.[a-fA-F0-9p_]+)?|0b[01_]+|0o[0-7_]+)\b"),
+    RE(r"\b(?:[\d_]+(?:\.[\deE_]+)?|0x[a-fA-F0-9_]+(?:\.[a-fA-F0-9p_]+)?|0b[01_]+|0o[0-7_]+)\b"),
 ]
 
 class subst:
@@ -197,23 +55,25 @@ class subst:
 
 class string:
     default_text = DELIMITER
-    rules = [('subst', RE(r"\\\("), [RE(r"\)")], subst)]
+    rules = [
+        ('subst', RE(r"\\\("), [RE(r"\)")], subst),
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 type = [RE(r"\b[A-Z][\w']*")]
+
+class _function:
+    default_text = DELIMITER
+    rules = [('_function', RE(r"{"), [RE(r'\b|\B')])]
 
 keyword0 = ['func']
 
@@ -225,9 +85,10 @@ class params:
         ('built_in', built_in),
         ('keyword', keyword),
         ('literal', literal),
-        None,  # ('number', number),
+        ('number', number),
         None,  # rules[3],
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+        # {'begin': ':'},
     ]
 
 class params0:
@@ -243,6 +104,10 @@ class function:
         ('_group1', RE(r"<"), [RE(r">")]),
     ]
 
+class _class:
+    default_text = DELIMITER
+    rules = [('_class', RE(r"\{"), [RE(r'\b|\B')])]
+
 class class0:
     default_text = DELIMITER
     rules = [
@@ -254,7 +119,7 @@ class class0:
 class0.__name__ = 'class'
 
 meta = [
-    RE(r"(@warn_unused_result|@exported|@lazy|@noescape|@NSCopying|@NSManaged|@objc|@convention|@required|@noreturn|@IBAction|@IBDesignable|@IBInspectable|@IBOutlet|@infix|@prefix|@postfix|@autoclosure|@testable|@available|@nonobjc|@NSApplicationMain|@UIApplicationMain)"),
+    RE(r"(?:@warn_unused_result|@exported|@lazy|@noescape|@NSCopying|@NSManaged|@objc|@convention|@required|@noreturn|@IBAction|@IBDesignable|@IBInspectable|@IBOutlet|@infix|@prefix|@postfix|@autoclosure|@testable|@available|@nonobjc|@NSApplicationMain|@UIApplicationMain)"),
 ]
 
 keyword1 = ['import']
@@ -273,17 +138,15 @@ rules = [
     ('literal', literal),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('type', type),
-    None,  # ('number', number),
-    ('function', RE(r"\b(func)"), [RE(r"(?={)"), params0], function),
-    ('class', RE(r"\b(struct|protocol|class|extension|enum)"), [RE(r"(?=\{)")], class0),
+    ('number', number),
+    ('function', RE(r"\b(?:func)"), [_function, params0], function),
+    ('class', RE(r"\b(?:struct|protocol|class|extension|enum)"), [_class], class0),
     ('meta', meta),
-    ('_group3', RE(r"\b(import)"), [RE(r"$")], _group3),
+    ('_group3', RE(r"\b(?:import)"), [RE(r"$")], _group3),
 ]
 
-rules[7] = ('number', number)
-params.rules[3] = ('number', number)
 params.rules[4] = rules[3]
 _group3.rules[1] = rules[4]
 _group3.rules[2] = rules[5]

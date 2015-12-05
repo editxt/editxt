@@ -6,7 +6,7 @@ file_patterns = ['*.markdown', '*.md', '*.mkdown', '*.mkd']
 
 section = [RE(r"^.+?\n[=-]{2,}$")]
 
-bullet = [RE(r"^([*+-]|(\d+\.))\s+")]
+bullet = [RE(r"^(?:[*+-]|(?:\d+\.))\s+")]
 
 strong = [RE(r"[*_]{2}.+?[*_]{2}")]
 
@@ -16,17 +16,21 @@ emphasis0 = [RE(r"_.+?_")]
 
 code = [RE(r"`.+?`")]
 
+class _string:
+    default_text = DELIMITER
+    rules = [('_string', RE(r"\["))]
+
 class _group2:
     default_text = DELIMITER
     rules = [
-        ('string', RE(r"\["), [RE(r"(?=\])")]),
-        ('link', RE(r"\]\("), [RE(r"(?=\))")]),
-        ('symbol', RE(r"\]\["), [RE(r"(?=\])")]),
+        ('string', _string, [RE(r"(?=\])")]),
+        ('_link', RE(r"\]\("), [RE(r"\)")]),
+        ('_symbol', RE(r"\]\["), [RE(r"\]")]),
     ]
 
-class symbol:
+class _symbol:
     default_text = DELIMITER
-    rules = [('symbol', RE(r"\["), [RE(r"(?=\]:)")])]
+    rules = [('_symbol', RE(r"\["), [RE(r"\]:")])]
 
 class link:
     default_text = DELIMITER
@@ -34,7 +38,7 @@ class link:
 
 class _group3:
     default_text = DELIMITER
-    rules = [('symbol', symbol, [RE(r"$")], link)]
+    rules = [('_symbol', _symbol, [RE(r"$")], link)]
 
 rules = [
     ('section', RE(r"^#{1,6}"), [RE(r"$")]),
@@ -46,10 +50,10 @@ rules = [
     ('emphasis', emphasis0),
     ('quote', RE(r"^>\s+"), [RE(r"$")]),
     ('code', code),
-    ('code', RE(r"^( {4}|	)"), [RE(r"$")]),
+    ('code', RE(r"^(?: {4}|	)"), [RE(r"$")]),
     ('_group1', RE(r"^[-\*]{3,}"), [RE(r"$")]),
-    ('_group2', RE(r"(?=\[.+?\][\(\[].*?[\)\]])"), [RE(r"\B|\b")], _group2),
-    ('_group3', RE(r"(?=^\[.+\]:)"), [RE(r"\B|\b")], _group3),
+    ('_group2', RE(r"(?=\[.+?\][\(\[].*?[\)\]])"), [RE(r"\B\b")], _group2),
+    ('_group3', RE(r"(?=^\[.+\]:)"), [RE(r"\B\b")], _group3),
 ]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax

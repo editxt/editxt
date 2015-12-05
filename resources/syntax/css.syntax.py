@@ -10,13 +10,16 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 selector_id = [RE(r"#[A-Za-z0-9_-]+")]
 
 selector_class = [RE(r"\.[A-Za-z0-9_-]+")]
 
-selector_pseudo = [RE(r":(:)?[a-zA-Z0-9\_\-\+\(\)\"']+")]
+selector_pseudo = [RE(r":(?::)?[a-zA-Z0-9\_\-\+\(\)\"']+")]
 
 keyword = ['font-face', 'page']
 
@@ -33,26 +36,33 @@ class string:
     ]
 
 number = [
-    RE(r"\b\d+(\.\d+)?(%|em|ex|ch|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc|px|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx)?"),
+    RE(r"\b\d+(?:\.\d+)?(?:%|em|ex|ch|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc|px|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx)?"),
 ]
 
 class _group2:
     default_text = DELIMITER
     rules = [
-        ('string', RE(r"'"), [RE(r"'")]),
+        ('string', RE(r"'"), [RE(r"'")], string),
         ('string', RE(r"\""), [RE(r"\"")], string),
         ('number', number),
     ]
 
 class _group1:
     default_text = DELIMITER
-    rules = [('keyword', keyword0), ('_group2', RE(r"\s"), [RE(r"")], _group2)]
+    rules = [
+        ('keyword', keyword0),
+        ('_group2', RE(r"\s"), [RE(r"\B\b")], _group2),
+    ]
 
 selector_tag = [RE(r"[a-zA-Z-][a-zA-Z0-9_-]*")]
 
+class _attribute:
+    default_text = DELIMITER
+    rules = [('_attribute', RE(r":"), [RE(r'\b|\B')])]
+
 class attribute:
     default_text = DELIMITER
-    rules = [('attribute', RE(r"\S"), [RE(r"(?=:)")])]
+    rules = [('attribute', RE(r"\S"), [_attribute])]
 
 number0 = [RE(r"#[0-9A-Fa-f]+")]
 
@@ -61,9 +71,9 @@ meta = [RE(r"!important")]
 class _group6:
     default_text = DELIMITER
     rules = [
-        None,  # ('number', number),
-        None,  # _group2.rules[1],
-        None,  # _group2.rules[0],
+        ('number', number),
+        _group2.rules[1],
+        _group2.rules[0],
         None,  # rules[0],
         ('number', number0),
         ('meta', meta),
@@ -86,17 +96,14 @@ rules = [
     ('selector-class', selector_class),
     ('selector-attr', RE(r"\["), [RE(r"\]")]),
     ('selector-pseudo', selector_pseudo),
-    ('_group0', RE(r"@(font-face|page)"), [RE(r"\B|\b")], _group0),
+    ('_group0', RE(r"@(?:font-face|page)"), [RE(r"\B\b")], _group0),
     ('_group1', RE(r"@"), [RE(r"[{;]")], _group1),
     ('selector-tag', selector_tag),
     ('_group4', RE(r"{"), [RE(r"}")], _group4),
 ]
 
-_group4.rules[0] = rules[0]
-_group6.rules[0] = ('number', number)
-_group6.rules[1] = _group2.rules[1]
-_group6.rules[2] = _group2.rules[0]
 _group6.rules[3] = rules[0]
+_group4.rules[0] = rules[0]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

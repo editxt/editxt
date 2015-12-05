@@ -4,95 +4,26 @@
 name = 'Dart'
 file_patterns = ['*.dart']
 
-built_in = [
-    'print',
-    'Comparable',
-    'DateTime',
-    'Duration',
-    'Function',
-    'Iterable',
-    'Iterator',
-    'List',
-    'Map',
-    'Match',
-    'Null',
-    'Object',
-    'Pattern',
-    'RegExp',
-    'Set',
-    'Stopwatch',
-    'String',
-    'StringBuffer',
-    'StringSink',
-    'Symbol',
-    'Type',
-    'Uri',
-    'bool',
-    'double',
-    'int',
-    'num',
-    'document',
-    'window',
-    'querySelector',
-    'querySelectorAll',
-    'Element',
-    'ElementList',
-]
+built_in = """
+    print Comparable DateTime Duration Function Iterable Iterator List
+    Map Match Null Object Pattern RegExp Set Stopwatch String
+    StringBuffer StringSink Symbol Type Uri bool double int num document
+    window querySelector querySelectorAll Element ElementList
+    """.split()
 
-keyword = [
-    'assert',
-    'break',
-    'case',
-    'catch',
-    'class',
-    'const',
-    'continue',
-    'default',
-    'do',
-    'else',
-    'enum',
-    'extends',
-    'false',
-    'final',
-    'finally',
-    'for',
-    'if',
-    'in',
-    'is',
-    'new',
-    'null',
-    'rethrow',
-    'return',
-    'super',
-    'switch',
-    'this',
-    'throw',
-    'true',
-    'try',
-    'var',
-    'void',
-    'while',
-    'with',
-    'abstract',
-    'as',
-    'dynamic',
-    'export',
-    'external',
-    'factory',
-    'get',
-    'implements',
-    'import',
-    'library',
-    'operator',
-    'part',
-    'set',
-    'static',
-    'typedef',
-]
+keyword = """
+    assert break case catch class const continue default do else enum
+    extends false final finally for if in is new null rethrow return
+    super switch this throw true try var void while with abstract as
+    dynamic export external factory get implements import library
+    operator part set static typedef
+    """.split()
 
 keyword0 = ['true', 'false', 'null', 'this', 'is', 'new', 'super']
 
-number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 class subst:
     default_text = DELIMITER
@@ -104,13 +35,16 @@ class subst:
 
 class string:
     default_text = DELIMITER
-    rules = [('subst', RE(r"\$\{"), [RE(r"}")], subst)]
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        ('subst', RE(r"\$\{"), [RE(r"}")], subst),
+    ]
 
 class string0:
     default_text = DELIMITER
     rules = [
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        None,  # string.rules[0],
+        string.rules[0],
     ]
 string0.__name__ = 'string'
 
@@ -118,15 +52,14 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
+
+class _class:
+    default_text = DELIMITER
+    rules = [('_class', RE(r"{"), [RE(r'\b|\B')])]
 
 keyword1 = ['class', 'interface']
 
@@ -136,7 +69,7 @@ class class0:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword1),
-        ('_group1', RE(r"\b(extends|implements)"), [RE(r"\B|\b")]),
+        ('_group1', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
         ('title', title),
     ]
 class0.__name__ = 'class'
@@ -156,16 +89,15 @@ rules = [
     ('string', RE(r"\""), [RE(r"\"")], string0),
     ('comment', RE(r"/\*\*"), [RE(r"\*/")], 'markdown'),
     ('comment', RE(r"///"), [RE(r"$")], 'markdown'),
-    ('comment', RE(r"//"), [RE(r"$")], comment0),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
-    ('class', RE(r"\b(class|interface)"), [RE(r"(?={)")], class0),
-    None,  # ('number', number),
+    ('comment', RE(r"//"), [RE(r"$")], comment),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+    ('class', RE(r"\b(?:class|interface)"), [_class], class0),
+    ('number', number),
     ('meta', meta),
+    # {'begin': '=>'},
 ]
 
 subst.rules[2] = rules[5]
-string0.rules[0] = string.rules[0]
-rules[15] = ('number', number)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

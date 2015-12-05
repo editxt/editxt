@@ -10,15 +10,10 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 attr = [RE(r"[a-z0-9\[\]_-]+")]
 
@@ -26,11 +21,17 @@ literal = [RE(r"\bon|off|true|false|yes|no\b")]
 
 variable = [RE(r"\$[\w\d\"][\w\d_]*")]
 
-variable0 = [RE(r"\$\{(.*?)}")]
+variable0 = [RE(r"\$\{(?:.*?)}")]
 
-number = [RE(r"([\+\-]+)?[\d]+_[\d_]+")]
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
 
-number0 = [RE(r"\b\d+(\.\d+)?")]
+number = [RE(r"(?:[\+\-]+)?[\d]+_[\d_]+")]
+
+number0 = [RE(r"\b\d+(?:\.\d+)?")]
 
 class _group1:
     default_text = DELIMITER
@@ -38,21 +39,21 @@ class _group1:
         ('literal', literal),
         ('variable', variable),
         ('variable', variable0),
-        ('string', RE(r"'''"), [RE(r"'''")]),
-        ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
-        ('string', RE(r"\""), [RE(r"\"")]),
-        ('string', RE(r"'"), [RE(r"'")]),
+        ('string', RE(r"'''"), [RE(r"'''")], string),
+        ('string', RE(r"\"\"\""), [RE(r"\"\"\"")], string),
+        ('string', RE(r"\""), [RE(r"\"")], string),
+        ('string', RE(r"'"), [RE(r"'")], string),
         ('number', number),
         ('number', number0),
     ]
 
 class _group0:
     default_text = DELIMITER
-    rules = [('attr', attr), ('_group1', RE(r"="), [RE(r"")], _group1)]
+    rules = [('attr', attr), ('_group1', RE(r"="), [RE(r"\B\b")], _group1)]
 
 rules = [
     ('comment', RE(r";"), [RE(r"$")], comment),
-    ('comment', RE(r"#"), [RE(r"$")], comment0),
+    ('comment', RE(r"#"), [RE(r"$")], comment),
     ('section', RE(r"^\s*\[+"), [RE(r"\]+")]),
     ('_group0', RE(r"(?=^[a-z0-9\[\]_-]+\s*=\s*)"), [RE(r"$")], _group0),
 ]

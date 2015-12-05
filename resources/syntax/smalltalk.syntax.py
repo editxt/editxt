@@ -10,41 +10,56 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
 
 type = [RE(r"\b[A-Z][A-Za-z0-9_]*")]
 
-number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 symbol = [RE(r"#[a-zA-Z_]\w*")]
 
-string = [RE(r"\$.{1}")]
+string0 = [RE(r"\$.{1}")]
+
+class _group2:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '(\\|[ ]*)?[a-z][a-zA-Z0-9_]*'},
+    ]
 
 class _group3:
     default_text = DELIMITER
     rules = [
         None,  # rules[2],
-        None,  # ('string', string),
-        None,  # ('number', number),
-        None,  # ('symbol', symbol),
+        ('string', string0),
+        ('number', number),
+        ('symbol', symbol),
     ]
 
 rules = [
     ('keyword', keyword),
     ('comment', RE(r"\""), [RE(r"\"")], comment),
-    ('string', RE(r"'"), [RE(r"'")]),
+    ('string', RE(r"'"), [RE(r"'")], string),
     ('type', type),
+    # {'begin': '[a-z][a-zA-Z0-9_]*:', 'relevance': 0},
     ('number', number),
     ('symbol', symbol),
-    ('string', string),
-    ('_group2', RE(r"(?=\|[ ]*[a-z][a-zA-Z0-9_]*([ ]+[a-z][a-zA-Z0-9_]*)*[ ]*\|)"), [RE(r"\|")]),
+    ('string', string0),
+    ('_group2', RE(r"(?=\|[ ]*[a-z][a-zA-Z0-9_]*(?:[ ]+[a-z][a-zA-Z0-9_]*)*[ ]*\|)"), [RE(r"\|")], _group2),
     ('_group3', RE(r"\#\("), [RE(r"\)")], _group3),
 ]
 
 _group3.rules[0] = rules[2]
-_group3.rules[1] = ('string', string)
-_group3.rules[2] = ('number', number)
-_group3.rules[3] = ('symbol', symbol)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

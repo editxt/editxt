@@ -6,48 +6,26 @@ file_patterns = ['*.gcode', '*.nc']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-keyword = [
-    'IF',
-    'DO',
-    'WHILE',
-    'ENDWHILE',
-    'CALL',
-    'ENDIF',
-    'SUB',
-    'ENDSUB',
-    'GOTO',
-    'REPEAT',
-    'ENDREPEAT',
-    'EQ',
-    'LT',
-    'GT',
-    'NE',
-    'GE',
-    'LE',
-    'OR',
-    'XOR',
-]
+keyword = """
+    IF DO WHILE ENDWHILE CALL ENDIF SUB ENDSUB GOTO REPEAT ENDREPEAT EQ
+    LT GT NE GE LE OR XOR
+    """.split()
 
 meta = [RE(r"\%")]
 
-meta0 = [RE(r"([O])([0-9]+)")]
+meta0 = [RE(r"(?:[O])(?:[0-9]+)")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 number = [
-    RE(r"([-+]?([0-9]*\.?[0-9]+\.?))|(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"),
+    RE(r"(?:[-+]?(?:[0-9]*\.?[0-9]+\.?))|(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
 class string:
@@ -56,27 +34,27 @@ class string:
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-name0 = [RE(r"([G])([0-9]+\.?[0-9]?)")]
+name0 = [RE(r"(?:[G])(?:[0-9]+\.?[0-9]?)")]
 
-name1 = [RE(r"([M])([0-9]+\.?[0-9]?)")]
+name1 = [RE(r"(?:[M])(?:[0-9]+\.?[0-9]?)")]
 
-attr = [RE(r"(VZOFX|VZOFY|VZOFZ)")]
+attr = [RE(r"(?:VZOFX|VZOFY|VZOFZ)")]
 
 rules = [
     ('keyword', keyword),
     ('meta', meta),
     ('meta', meta0),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
-    ('comment', RE(r"\("), [RE(r"\)")], comment0),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+    ('comment', RE(r"\("), [RE(r"\)")], comment),
     ('number', number),
-    ('string', RE(r"'"), [RE(r"'")]),
+    ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('name', name0),
     ('name', name1),
-    ('attr', RE(r"(VC|VS|#)"), [RE(r"(\d+)")]),
+    ('attr', RE(r"(?:VC|VS|#)"), [RE(r"(?:\d+)")]),
     ('attr', attr),
-    ('built_in', RE(r"(ATAN|ABS|ACOS|ASIN|SIN|COS|EXP|FIX|FUP|ROUND|LN|TAN)(\[)"), [RE(r"([-+]?([0-9]*\.?[0-9]+\.?))(\])")]),
+    ('built_in', RE(r"(?:ATAN|ABS|ACOS|ASIN|SIN|COS|EXP|FIX|FUP|ROUND|LN|TAN)(?:\[)"), [RE(r"(?:[-+]?(?:[0-9]*\.?[0-9]+\.?))(?:\])")]),
     ('symbol', RE(r"N"), [RE(r"\d+")]),
 ]
 

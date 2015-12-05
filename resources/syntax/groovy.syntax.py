@@ -4,57 +4,13 @@
 name = 'Groovy'
 file_patterns = ['*.groovy']
 
-keyword = [
-    'byte',
-    'short',
-    'char',
-    'int',
-    'long',
-    'boolean',
-    'float',
-    'double',
-    'void',
-    'def',
-    'as',
-    'in',
-    'assert',
-    'trait',
-    'super',
-    'this',
-    'abstract',
-    'static',
-    'volatile',
-    'transient',
-    'public',
-    'private',
-    'protected',
-    'synchronized',
-    'final',
-    'class',
-    'interface',
-    'enum',
-    'if',
-    'else',
-    'for',
-    'while',
-    'switch',
-    'case',
-    'break',
-    'default',
-    'continue',
-    'throw',
-    'throws',
-    'try',
-    'catch',
-    'finally',
-    'implements',
-    'extends',
-    'new',
-    'import',
-    'package',
-    'return',
-    'instanceof',
-]
+keyword = """
+    byte short char int long boolean float double void def as in assert
+    trait super this abstract static volatile transient public private
+    protected synchronized final class interface enum if else for while
+    switch case break default continue throw throws try catch finally
+    implements extends new import package return instanceof
+    """.split()
 
 literal = ['true', 'false', 'null']
 
@@ -64,7 +20,12 @@ doctag0 = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag), ('doctag', doctag0)]
+    rules = [
+        # {'begin': {'pattern': '\\w+@', 'type': 'RegExp'}, 'relevance': 0},
+        ('doctag', doctag),
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag0),
+    ]
 
 class comment0:
     default_text = DELIMITER
@@ -74,19 +35,19 @@ class comment0:
     ]
 comment0.__name__ = 'comment'
 
-class regexp:
-    default_text = DELIMITER
-    rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-
 class string:
     default_text = DELIMITER
     rules = [
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-number = [RE(r"\b(0b[01]+)")]
+class regexp:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+
+number = [RE(r"\b(?:0b[01]+)")]
 
 keyword0 = ['class', 'interface', 'trait', 'enum']
 
@@ -96,12 +57,14 @@ class class0:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword0),
-        ('_group2', RE(r"\b(extends|implements)"), [RE(r"\B|\b")]),
+        ('_group2', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
         ('title', title),
     ]
 class0.__name__ = 'class'
 
-number0 = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number0 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 string0 = [RE(r"[^\?]{0}[A-Za-z0-9_$]+ *:")]
 
@@ -116,12 +79,12 @@ rules = [
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
     ('string', RE(r"'''"), [RE(r"'''")]),
     ('string', RE(r"\$/"), [RE(r"/\$")]),
-    ('string', RE(r"'"), [RE(r"'")]),
-    ('regexp', RE(r"~?\/[^\/\n]+\/"), [RE(r"\B|\b")], regexp),
+    ('string', RE(r"'"), [RE(r"'")], string),
+    ('regexp', RE(r"~?\/[^\/\n]+\/"), [RE(r"\B\b")], regexp),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('meta', RE(r"^#!/usr/bin/env"), [RE(r"$")]),
     ('number', number),
-    ('class', RE(r"\b(class|interface|trait|enum)"), [RE(r"{")], class0),
+    ('class', RE(r"\b(?:class|interface|trait|enum)"), [RE(r"{")], class0),
     ('number', number0),
     ('meta', doctag),
     ('string', string0),

@@ -4,51 +4,30 @@
 name = 'Elm'
 file_patterns = ['*.elm']
 
-keyword = [
-    'let',
-    'in',
-    'if',
-    'then',
-    'else',
-    'case',
-    'of',
-    'where',
-    'module',
-    'import',
-    'exposing',
-    'type',
-    'alias',
-    'as',
-    'infix',
-    'infixl',
-    'infixr',
-    'port',
-]
+keyword = """
+    let in if then else case of where module import exposing type alias
+    as infix infixl infixr port
+    """.split()
 
 keyword0 = ['module', 'where']
 
-type = [RE(r"\b[A-Z][\w]*(\((\.\.|,|\w+)\))?")]
+type = [RE(r"\b[A-Z][\w]*(?:\((?:\.\.|,|\w+)\))?")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 class _group1:
     default_text = DELIMITER
     rules = [
         ('type', type),
         ('comment', RE(r"--"), [RE(r"$")], comment),
-        ('comment', RE(r"{-"), [RE(r"-}")], comment0),
+        ('comment', RE(r"{-"), [RE(r"-}")], comment),
     ]
 
 class _group0:
@@ -65,7 +44,7 @@ class _group2:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword1),
-        None,  # _group0.rules[1],
+        _group0.rules[1],
         # {},
     ]
 
@@ -82,14 +61,16 @@ class _group3:
     rules = [
         ('keyword', keyword2),
         ('type', type0),
-        None,  # _group0.rules[1],
+        _group0.rules[1],
         ('_group4', RE(r"{"), [RE(r"}")], _group4),
         # {},
     ]
 
 keyword3 = ['infix', 'infixl', 'infixr']
 
-number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 class _group5:
     default_text = DELIMITER
@@ -108,27 +89,28 @@ class _group6:
         # {},
     ]
 
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+
 title = [RE(r"^[_a-z][\w']*")]
 
 rules = [
     ('keyword', keyword),
-    ('_group0', RE(r"\b(module)"), [RE(r"where")], _group0),
+    ('_group0', RE(r"\b(?:module)"), [RE(r"where")], _group0),
     ('_group2', RE(r"import"), [RE(r"$")], _group2),
     ('_group3', RE(r"type"), [RE(r"$")], _group3),
-    ('_group5', RE(r"\b(infix|infixl|infixr)"), [RE(r"$")], _group5),
+    ('_group5', RE(r"\b(?:infix|infixl|infixr)"), [RE(r"$")], _group5),
     ('_group6', RE(r"port"), [RE(r"$")], _group6),
-    ('string', RE(r"\""), [RE(r"\"")]),
-    None,  # ('number', number),
-    None,  # ('type', type0),
+    ('string', RE(r"\""), [RE(r"\"")], string),
+    ('number', number),
+    ('type', type0),
     ('title', title),
     # {},
+    # {'begin': '->|<-'},
 ]
-
-_group2.rules[1] = _group0.rules[1]
-_group3.rules[2] = _group0.rules[1]
-rules[7] = ('number', number)
-rules[8] = ('type', type0)
-_group4.rules.extend(_group1.rules)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

@@ -8,7 +8,10 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 section = [RE(r"[a-zA-Z_]\w*")]
 
@@ -18,34 +21,13 @@ class _group0:
 
 class attribute:
     default_text = DELIMITER
-    rules = [('attribute', RE(r"[a-zA-Z_]\w*"), [RE(r"\B|\b")])]
+    rules = [('attribute', RE(r"[a-zA-Z_]\w*"), [RE(r"\B\b")])]
 
-literal = [
-    'on',
-    'off',
-    'yes',
-    'no',
-    'true',
-    'false',
-    'none',
-    'blocked',
-    'debug',
-    'info',
-    'notice',
-    'warn',
-    'error',
-    'crit',
-    'select',
-    'break',
-    'last',
-    'permanent',
-    'redirect',
-    'kqueue',
-    'rtsig',
-    'epoll',
-    'poll',
-    '/dev/poll',
-]
+literal = """
+    on off yes no true false none blocked debug info notice warn error
+    crit select break last permanent redirect kqueue rtsig epoll poll
+    /dev/poll
+    """.split()
 
 variable = [RE(r"\$\d+")]
 
@@ -54,6 +36,7 @@ variable0 = [RE(r"[\$\@][a-zA-Z_]\w*")]
 class string:
     default_text = DELIMITER
     rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         ('variable', variable),
         ('variable', RE(r"\$\{"), [RE(r"}")]),
         ('variable', variable0),
@@ -61,18 +44,16 @@ class string:
 
 class _group5:
     default_text = DELIMITER
-    rules = [
-        None,  # ('variable', variable),
-    ]
+    rules = [('variable', variable0)]
 
 class regexp:
     default_text = DELIMITER
     rules = [
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        None,  # ('variable', variable),
+        ('variable', variable0),
     ]
 
-number = [RE(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(:\d{1,5})?\b")]
+number = [RE(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d{1,5})?\b")]
 
 number0 = [RE(r"\b\d+[kKmMgGdshdwy]*\b")]
 
@@ -83,14 +64,14 @@ class _group2:
         None,  # rules[0],
         ('string', RE(r"\""), [RE(r"\"")], string),
         ('string', RE(r"'"), [RE(r"'")], string),
-        ('_group5', RE(r"([a-z]+):/"), [RE(r"(?=\s)")], _group5),
+        ('_group5', RE(r"(?:[a-z]+):/"), [RE(r"\s")], _group5),
         ('regexp', RE(r"\s\^"), [RE(r"(?=\s|{|;)")], regexp),
         ('regexp', RE(r"~\*?\s+"), [RE(r"(?=\s|{|;)")], regexp),
-        ('regexp', RE(r"\*(\.[a-z\-]+)+"), [RE(r"\B|\b")], regexp),
-        ('regexp', RE(r"([a-z\-]+\.)+\*"), [RE(r"\B|\b")], regexp),
+        ('regexp', RE(r"\*(?:\.[a-z\-]+)+"), [RE(r"\B\b")], regexp),
+        ('regexp', RE(r"(?:[a-z\-]+\.)+\*"), [RE(r"\B\b")], regexp),
         ('number', number),
         ('number', number0),
-        None,  # ('variable', variable),
+        ('variable', variable0),
     ]
 
 class _group1:
@@ -104,9 +85,6 @@ rules = [
 ]
 
 _group2.rules[1] = rules[0]
-_group5.rules[0] = ('variable', variable0)
-regexp.rules[0] = ('variable', variable0)
-_group2.rules[11] = ('variable', variable0)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

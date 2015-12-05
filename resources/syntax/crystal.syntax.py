@@ -4,61 +4,14 @@
 name = 'Crystal'
 file_patterns = ['*.crystal', '*.cr']
 
-keyword = [
-    'abstract',
-    'alias',
-    'as',
-    'asm',
-    'begin',
-    'break',
-    'case',
-    'class',
-    'def',
-    'do',
-    'else',
-    'elsif',
-    'end',
-    'ensure',
-    'enum',
-    'extend',
-    'for',
-    'fun',
-    'if',
-    'ifdef',
-    'include',
-    'instance_sizeof',
-    'is_a?',
-    'lib',
-    'macro',
-    'module',
-    'next',
-    'of',
-    'out',
-    'pointerof',
-    'private',
-    'protected',
-    'rescue',
-    'responds_to?',
-    'return',
-    'require',
-    'self',
-    'sizeof',
-    'struct',
-    'super',
-    'then',
-    'type',
-    'typeof',
-    'union',
-    'unless',
-    'until',
-    'when',
-    'while',
-    'with',
-    'yield',
-    '__DIR__',
-    '__FILE__',
-    '__LINE__',
-]
+keyword = """
+    abstract alias as asm begin break case class def do else elsif end
+    ensure enum extend for fun if ifdef include instance_sizeof is_a?
+    lib macro module next of out pointerof private protected rescue
+    responds_to? return require self sizeof struct super then type
+    typeof union unless until when while with yield __DIR__ __FILE__
+    __LINE__
+    """.split()
 
 literal = ['false', 'nil', 'true']
 
@@ -68,7 +21,10 @@ class subst:
 
 class string:
     default_text = DELIMITER
-    rules = [('subst', RE(r"#{"), [RE(r"}")], subst)]
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        ('subst', RE(r"#{"), [RE(r"}")], subst),
+    ]
 
 class _group3:
     default_text = DELIMITER
@@ -110,7 +66,7 @@ class regexp:
     default_text = DELIMITER
     rules = [
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        None,  # string.rules[0],
+        string.rules[0],
     ]
 
 class _group12:
@@ -207,11 +163,14 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 keyword0 = ['class', 'module', 'struct']
 
-title = [RE(r"[A-Za-z_]\w*(::\w+)*(\?|\!)?")]
+title = [RE(r"[A-Za-z_]\w*(?:::\w+)*(?:\?|\!)?")]
 
 class class0:
     default_text = DELIMITER
@@ -219,6 +178,7 @@ class class0:
         ('keyword', keyword0),
         None,  # template-variable.rules[23],
         ('title', title),
+        # {'begin': '<'},
     ]
 class0.__name__ = 'class'
 
@@ -250,23 +210,24 @@ class function0:
     rules = [('keyword', keyword3), ('title', title0)]
 function0.__name__ = 'function'
 
-symbol = [RE(r"[a-zA-Z_]\w*(\!|\?)?:")]
+symbol = [RE(r"[a-zA-Z_]\w*(?:\!|\?)?:")]
 
 class symbol0:
     default_text = DELIMITER
     rules = [
         None,  # template-variable.rules[12],
+        # {'begin': '[a-zA-Z_]\\w*[!?=]?|[-+~]\\@|<<|>>|=~|===?|<=>|[<>]=?|\\*\\*|[-/+%^&*~`|]|\\[\\][=?]?'},
     ]
 symbol0.__name__ = 'symbol'
 
-number = [RE(r"\b0b([01_]*[01])(_[uif](8|16|32|64))?")]
+number = [RE(r"\b0b(?:[01_]*[01])(?:_[uif](?:8|16|32|64))?")]
 
-number0 = [RE(r"\b0o([0-7_]*[0-7])(_[uif](8|16|32|64))?")]
+number0 = [RE(r"\b0o(?:[0-7_]*[0-7])(?:_[uif](?:8|16|32|64))?")]
 
-number1 = [RE(r"\b0x([A-Fa-f0-9_]*[A-Fa-f0-9])(_[uif](8|16|32|64))?")]
+number1 = [RE(r"\b0x(?:[A-Fa-f0-9_]*[A-Fa-f0-9])(?:_[uif](?:8|16|32|64))?")]
 
 number2 = [
-    RE(r"\b(([0-9][0-9_]*[0-9]|[0-9])(\.[0-9_]*[0-9])?([eE][+-]?[0-9_]*[0-9])?)(_[uif](8|16|32|64))?"),
+    RE(r"\b(?:([0-9][0-9_]*[0-9]|[0-9])(?:\.[0-9_]*[0-9])?(?:[eE][+-]?[0-9_]*[0-9])?)(?:_[uif](?:8|16|32|64))?"),
 ]
 
 class template_variable:
@@ -285,7 +246,7 @@ class template_variable:
         ('string', RE(r"%w?%"), [RE(r"%")], string),
         ('string', RE(r"%w?-"), [RE(r"-")], string),
         ('string', RE(r"%w?\|"), [RE(r"\|")], string),
-        ('_group11', RE(r"(!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B|\b")], _group11),
+        ('_group11', RE(r"(?:!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B\b")], _group11),
         ('regexp', RE(r"%r\("), [RE(r"\)")], regexp4),
         ('regexp', RE(r"%r\["), [RE(r"\]")], regexp5),
         ('regexp', RE(r"%r{"), [RE(r"}")], regexp6),
@@ -296,12 +257,12 @@ class template_variable:
         ('regexp', RE(r"%r\|"), [RE(r"\|")], regexp),
         ('meta', RE(r"@\["), [RE(r"\]")], meta),
         ('comment', RE(r"#"), [RE(r"$")], comment),
-        ('class', RE(r"\b(class|module|struct)"), [RE(r"$|;")], class0),
-        ('class', RE(r"\b(lib|enum|union)"), [RE(r"$|;")], class1),
-        ('function', RE(r"\b(def)"), [RE(r"\B\b")], function),
-        ('function', RE(r"\b(fun|macro)"), [RE(r"\B\b")], function0),
+        ('class', RE(r"\b(?:class|module|struct)"), [RE(r"$|;")], class0),
+        ('class', RE(r"\b(?:lib|enum|union)"), [RE(r"$|;")], class1),
+        ('function', RE(r"\b(?:def)"), [RE(r"\B\b")], function),
+        ('function', RE(r"\b(?:fun|macro)"), [RE(r"\B\b")], function0),
         ('symbol', symbol),
-        ('symbol', RE(r":"), [RE(r"\B|\b")], symbol0),
+        ('symbol', RE(r":"), [RE(r"\B\b")], symbol0),
         ('number', number),
         ('number', number0),
         ('number', number1),
@@ -447,7 +408,7 @@ class template_variable0:
         ('string', RE(r"%w?%"), [RE(r"%")], string),
         ('string', RE(r"%w?-"), [RE(r"-")], string),
         ('string', RE(r"%w?\|"), [RE(r"\|")], string),
-        ('_group31', RE(r"(!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B|\b")], _group31),
+        ('_group31', RE(r"(?:!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B\b")], _group31),
         ('regexp', RE(r"%r\("), [RE(r"\)")], regexp12),
         ('regexp', RE(r"%r\["), [RE(r"\]")], regexp13),
         ('regexp', RE(r"%r{"), [RE(r"}")], regexp14),
@@ -458,12 +419,12 @@ class template_variable0:
         ('regexp', RE(r"%r\|"), [RE(r"\|")], regexp),
         ('meta', RE(r"@\["), [RE(r"\]")], meta),
         ('comment', RE(r"#"), [RE(r"$")], comment),
-        ('class', RE(r"\b(class|module|struct)"), [RE(r"$|;")], class0),
-        ('class', RE(r"\b(lib|enum|union)"), [RE(r"$|;")], class1),
-        ('function', RE(r"\b(def)"), [RE(r"\B\b")], function),
-        ('function', RE(r"\b(fun|macro)"), [RE(r"\B\b")], function0),
+        ('class', RE(r"\b(?:class|module|struct)"), [RE(r"$|;")], class0),
+        ('class', RE(r"\b(?:lib|enum|union)"), [RE(r"$|;")], class1),
+        ('function', RE(r"\b(?:def)"), [RE(r"\B\b")], function),
+        ('function', RE(r"\b(?:fun|macro)"), [RE(r"\B\b")], function0),
         ('symbol', symbol),
-        ('symbol', RE(r":"), [RE(r"\B|\b")], symbol0),
+        ('symbol', RE(r":"), [RE(r"\B\b")], symbol0),
         ('number', number),
         ('number', number0),
         ('number', number1),
@@ -476,36 +437,23 @@ rules = [
     ('literal', literal),
     ('template-variable', RE(r"\{\{"), [RE(r"\}\}")], template_variable),
     ('template-variable', RE(r"\{%"), [RE(r"%\}")], template_variable0),
-    None,  # template_variable0.rules[12],
-    None,  # template_variable0.rules[13],
-    None,  # template_variable0.rules[21],
-    None,  # template_variable0.rules[22],
-    None,  # template_variable0.rules[23],
-    None,  # template_variable0.rules[24],
-    None,  # template_variable0.rules[25],
-    None,  # template_variable0.rules[26],
-    None,  # template_variable0.rules[27],
-    None,  # ('symbol', symbol),
-    None,  # template_variable0.rules[29],
-    None,  # ('number', number),
+    template_variable0.rules[12],
+    template_variable0.rules[13],
+    template_variable0.rules[21],
+    template_variable0.rules[22],
+    template_variable0.rules[23],
+    template_variable0.rules[24],
+    template_variable0.rules[25],
+    template_variable0.rules[26],
+    template_variable0.rules[27],
+    ('symbol', symbol),
+    template_variable0.rules[29],
+    ('number', number2),
 ]
 
-regexp.rules[0] = string.rules[0]
 class0.rules[1] = template_variable0.rules[23]
 class1.rules[1] = template_variable0.rules[23]
 symbol0.rules[0] = template_variable0.rules[12]
-rules[4] = template_variable0.rules[12]
-rules[5] = template_variable0.rules[13]
-rules[6] = template_variable0.rules[21]
-rules[7] = template_variable0.rules[22]
-rules[8] = template_variable0.rules[23]
-rules[9] = template_variable0.rules[24]
-rules[10] = template_variable0.rules[25]
-rules[11] = template_variable0.rules[26]
-rules[12] = template_variable0.rules[27]
-rules[13] = ('symbol', symbol)
-rules[14] = template_variable0.rules[29]
-rules[15] = ('number', number2)
 subst.rules.extend(rules)
 _group3.rules.extend(string4.rules)
 _group4.rules.extend(string5.rules)

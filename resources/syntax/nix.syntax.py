@@ -4,39 +4,25 @@
 name = 'Nix'
 file_patterns = ['*.nix', '*.nixos']
 
-built_in = [
-    'import',
-    'abort',
-    'baseNameOf',
-    'dirOf',
-    'isNull',
-    'builtins',
-    'map',
-    'removeAttrs',
-    'throw',
-    'toString',
-    'derivation',
-]
+built_in = """
+    import abort baseNameOf dirOf isNull builtins map removeAttrs throw
+    toString derivation
+    """.split()
 
 keyword = ['rec', 'with', 'let', 'in', 'inherit', 'assert', 'if', 'else', 'then']
 
 literal = ['true', 'false', 'or', 'and', 'null']
 
-number = [RE(r"\b\d+(\.\d+)?")]
+number = [RE(r"\b\d+(?:\.\d+)?")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 class subst:
     default_text = DELIMITER
@@ -62,10 +48,10 @@ rules = [
     ('literal', literal),
     ('number', number),
     ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('string', RE(r"''"), [RE(r"''")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('_group0', RE(r"(?=[a-zA-Z0-9-_]+(\s*=))"), [RE(r"\B|\b")], _group0),
+    ('_group0', RE(r"(?=[a-zA-Z0-9-_]+(?:\s*=))"), [RE(r"\B\b")], _group0),
 ]
 
 subst.rules.extend(rules)

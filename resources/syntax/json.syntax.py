@@ -6,18 +6,26 @@ file_patterns = ['*.json']
 
 literal = ['true', 'false', 'null']
 
-number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
-
-class attr:
+class string:
     default_text = DELIMITER
     rules = [
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-class attr0:
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+class _attr:
     default_text = DELIMITER
-    rules = [('attr', RE(r"\s*\""), [RE(r"(?=\"\s*:\s*)")], attr)]
-attr0.__name__ = 'attr'
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+
+class _attr0:
+    default_text = DELIMITER
+    rules = [('_attr', RE(r"\s*\""), [RE(r"\"\s*:\s*")], _attr)]
+_attr0.__name__ = '_attr'
 
 class _group2:
     default_text = DELIMITER
@@ -25,7 +33,7 @@ class _group2:
 
 class _group1:
     default_text = DELIMITER
-    rules = [('attr', attr0, [RE(r"(?=,)")], _group2)]
+    rules = [('_attr', _attr0, [RE(r",")], _group2)]
 
 class _group4:
     default_text = DELIMITER
@@ -33,11 +41,11 @@ class _group4:
 
 class _group3:
     default_text = DELIMITER
-    rules = [('_group4', RE(r"\B|\b"), [RE(r"(?=,)")], _group4)]
+    rules = [('_group4', RE(r"\B|\b"), [RE(r",")], _group4)]
 
 rules = [
     ('literal', literal),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),
     ('_group1', RE(r"{"), [RE(r"}")], _group1),
     ('_group3', RE(r"\["), [RE(r"\]")], _group3),

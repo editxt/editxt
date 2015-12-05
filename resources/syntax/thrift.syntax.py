@@ -6,46 +6,35 @@ file_patterns = ['*.thrift']
 
 built_in = ['bool', 'byte', 'i16', 'i32', 'i64', 'double', 'string', 'binary']
 
-keyword = [
-    'namespace',
-    'const',
-    'typedef',
-    'struct',
-    'enum',
-    'service',
-    'exception',
-    'void',
-    'oneway',
-    'set',
-    'list',
-    'map',
-    'required',
-    'optional',
-]
+keyword = """
+    namespace const typedef struct enum service exception void oneway
+    set list map required optional
+    """.split()
 
 literal = ['true', 'false']
 
-number = [RE(r"\b\d+(\.\d+)?")]
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+
+number = [RE(r"\b\d+(?:\.\d+)?")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 keyword0 = ['struct', 'enum', 'service', 'exception']
 
 class title:
     default_text = DELIMITER
-    rules = [('title', RE(r"[a-zA-Z]\w*"), [RE(r"\B|\b")])]
+    rules = [('title', RE(r"[a-zA-Z]\w*"), [RE(r"\B\b")])]
 
 class _group1:
     default_text = DELIMITER
@@ -64,12 +53,12 @@ rules = [
     ('built_in', built_in),
     ('keyword', keyword),
     ('literal', literal),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
-    ('class', RE(r"\b(struct|enum|service|exception)"), [RE(r"\{")], class0),
-    ('_group2', RE(r"\b(set|list|map)\s*<"), [RE(r">")], _group2),
+    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+    ('class', RE(r"\b(?:struct|enum|service|exception)"), [RE(r"\{")], class0),
+    ('_group2', RE(r"\b(?:set|list|map)\s*<"), [RE(r">")], _group2),
 ]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax

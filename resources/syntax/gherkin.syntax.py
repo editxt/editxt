@@ -4,25 +4,10 @@
 name = 'Gherkin'
 file_patterns = ['*.gherkin', '*.feature']
 
-keyword = [
-    'Feature',
-    'Background',
-    'Ability',
-    'Business',
-    'Need',
-    'Scenario',
-    'Scenarios',
-    'Scenario',
-    'Outline',
-    'Scenario',
-    'Template',
-    'Examples',
-    'Given',
-    'And',
-    'Then',
-    'But',
-    'When',
-]
+keyword = """
+    Feature Background Ability Business Need Scenario Scenarios Scenario
+    Outline Scenario Template Examples Given And Then But When
+    """.split()
 
 keyword0 = [RE(r"\*")]
 
@@ -38,7 +23,17 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
+
+class string0:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+string0.__name__ = 'string'
 
 rules = [
     ('keyword', keyword),
@@ -48,7 +43,7 @@ rules = [
     ('variable', RE(r"<"), [RE(r">")]),
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    ('string', RE(r"\""), [RE(r"\"")], string0),
 ]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax

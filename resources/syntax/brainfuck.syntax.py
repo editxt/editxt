@@ -8,7 +8,10 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 title = [RE(r"[\[\]]")]
 
@@ -24,11 +27,9 @@ rules = [
     ('comment', RE(r"[^\[\]\.,\+\-<> \r\n]"), [RE(r"(?=[\[\]\.,\+\-<> \r\n])")], comment),
     ('title', title),
     ('string', string),
-    ('_group0', RE(r"(?=\+\+|\-\-)"), [RE(r"\B|\b")], _group0),
-    None,  # ('literal', literal),
+    ('_group0', RE(r"(?=\+\+|\-\-)"), [RE(r"\B\b")], _group0),
+    ('literal', literal),
 ]
-
-rules[4] = ('literal', literal)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

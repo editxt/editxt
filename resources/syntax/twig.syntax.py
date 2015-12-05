@@ -10,44 +10,18 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
-keyword = [
-    'autoescape',
-    'block',
-    'do',
-    'embed',
-    'extends',
-    'filter',
-    'flush',
-    'for',
-    'if',
-    'import',
-    'include',
-    'macro',
-    'sandbox',
-    'set',
-    'spaceless',
-    'use',
-    'verbatim',
-    'endautoescape',
-    'endblock',
-    'enddo',
-    'endembed',
-    'endextends',
-    'endfilter',
-    'endflush',
-    'endfor',
-    'endif',
-    'endimport',
-    'endinclude',
-    'endmacro',
-    'endsandbox',
-    'endset',
-    'endspaceless',
-    'enduse',
-    'endverbatim',
-]
+keyword = """
+    autoescape block do embed extends filter flush for if import include
+    macro sandbox set spaceless use verbatim endautoescape endblock
+    enddo endembed endextends endfilter endflush endfor endif endimport
+    endinclude endmacro endsandbox endset endspaceless enduse
+    endverbatim
+    """.split()
 
 class name0:
     default_text = DELIMITER
@@ -56,59 +30,20 @@ name0.__name__ = 'name'
 
 class name1:
     default_text = DELIMITER
-    rules = [('name', RE(r"\w+"), [RE(r"\B|\b")], name0)]
+    rules = [('name', RE(r"\w+"), [RE(r"\B\b")], name0)]
 name1.__name__ = 'name'
 
-keyword0 = [
-    'abs',
-    'batch',
-    'capitalize',
-    'convert_encoding',
-    'date',
-    'date_modify',
-    'default',
-    'escape',
-    'first',
-    'format',
-    'join',
-    'json_encode',
-    'keys',
-    'last',
-    'length',
-    'lower',
-    'merge',
-    'nl2br',
-    'number_format',
-    'raw',
-    'replace',
-    'reverse',
-    'round',
-    'slice',
-    'sort',
-    'split',
-    'striptags',
-    'title',
-    'trim',
-    'upper',
-    'url_encode',
-]
+keyword0 = """
+    abs batch capitalize convert_encoding date date_modify default
+    escape first format join json_encode keys last length lower merge
+    nl2br number_format raw replace reverse round slice sort split
+    striptags title trim upper url_encode
+    """.split()
 
-name2 = [
-    'attribute',
-    'block',
-    'constant',
-    'cycle',
-    'date',
-    'dump',
-    'include',
-    'max',
-    'min',
-    'parent',
-    'random',
-    'range',
-    'source',
-    'template_from_string',
-]
+name2 = """
+    attribute block constant cycle date dump include max min parent
+    random range source template_from_string
+    """.split()
 
 class _group2:
     default_text = DELIMITER
@@ -118,14 +53,14 @@ class _group1:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword0),
-        ('_group2', RE(r"\b(attribute|block|constant|cycle|date|dump|include|max|min|parent|random|range|source|template_from_string)"), [RE(r"\B|\b")], _group2),
+        ('_group2', RE(r"\b(?:attribute|block|constant|cycle|date|dump|include|max|min|parent|random|range|source|template_from_string)"), [RE(r"\B\b")], _group2),
     ]
 
 class _group0:
     default_text = DELIMITER
     rules = [
-        ('_group1', RE(r"\|[A-Za-z_]+:?"), [RE(r"\B|\b")], _group1),
-        None,  # _group1.rules[1],
+        ('_group1', RE(r"\|[A-Za-z_]+:?"), [RE(r"\B\b")], _group1),
+        _group1.rules[1],
     ]
 
 class template_tag:
@@ -135,10 +70,7 @@ template_tag.__name__ = 'template-tag'
 
 class template_variable:
     default_text = DELIMITER
-    rules = [
-        None,  # _group0.rules[0],
-        None,  # _group1.rules[1],
-    ]
+    rules = [_group0.rules[0], _group1.rules[1]]
 template_variable.__name__ = 'template-variable'
 
 rules = [
@@ -146,10 +78,6 @@ rules = [
     ('template-tag', RE(r"\{%"), [RE(r"%}")], template_tag),
     ('template-variable', RE(r"\{\{"), [RE(r"}}")], template_variable),
 ]
-
-_group0.rules[1] = _group1.rules[1]
-template_variable.rules[0] = _group0.rules[0]
-template_variable.rules[1] = _group1.rules[1]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

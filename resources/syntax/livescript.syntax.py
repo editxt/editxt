@@ -4,101 +4,29 @@
 name = 'LiveScript'
 file_patterns = ['*.livescript', '*.ls']
 
-built_in = [
-    'npm',
-    'require',
-    'console',
-    'print',
-    'module',
-    'global',
-    'window',
-    'document',
-]
+built_in = """
+    npm require console print module global window document
+    """.split()
 
-keyword = [
-    'in',
-    'if',
-    'for',
-    'while',
-    'finally',
-    'new',
-    'do',
-    'return',
-    'else',
-    'break',
-    'catch',
-    'instanceof',
-    'throw',
-    'try',
-    'this',
-    'switch',
-    'continue',
-    'typeof',
-    'delete',
-    'debugger',
-    'case',
-    'default',
-    'function',
-    'var',
-    'with',
-    'then',
-    'unless',
-    'until',
-    'loop',
-    'of',
-    'by',
-    'when',
-    'and',
-    'or',
-    'is',
-    'isnt',
-    'not',
-    'it',
-    'that',
-    'otherwise',
-    'from',
-    'to',
-    'til',
-    'fallthrough',
-    'super',
-    'case',
-    'default',
-    'function',
-    'var',
-    'void',
-    'const',
-    'let',
-    'enum',
-    'export',
-    'import',
-    'native',
-    '__hasProp',
-    '__extends',
-    '__slice',
-    '__bind',
-    '__indexOf',
-]
+keyword = """
+    in if for while finally new do return else break catch instanceof
+    throw try this switch continue typeof delete debugger case default
+    function var with then unless until loop of by when and or is isnt
+    not it that otherwise from to til fallthrough super case default
+    function var void const let enum export import native __hasProp
+    __extends __slice __bind __indexOf
+    """.split()
 
-literal = [
-    'true',
-    'false',
-    'null',
-    'undefined',
-    'yes',
-    'no',
-    'on',
-    'off',
-    'it',
-    'that',
-    'void',
-]
+literal = """
+    true false null undefined yes no on off it that void
+    """.split()
 
-number = [RE(r"\b(0b[01]+)")]
+number = [RE(r"\b(?:0b[01]+)")]
 
 class number0:
     default_text = DELIMITER
     rules = [
-        ('number', RE(r"(\b0[xX][a-fA-F0-9_]+)|(\b\d(\d|_\d)*(\.(\d(\d|_\d)*)?)?(_*[eE]([-+]\d(_\d|\d)*)?)?[_a-z]*)"), [RE(r"\B|\b")]),
+        ('number', RE(r"(?:\b0[xX][a-fA-F0-9_]+)|(?:\b\d(?:\d|_\d)*(?:\.(?:\d(?:\d|_\d)*)?)?(?:_*[eE](?:[-+]\d(?:_\d|\d)*)?)?[_a-z]*)"), [RE(r"\B\b")]),
     ]
 number0.__name__ = 'number'
 
@@ -116,7 +44,10 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 class regexp:
     default_text = DELIMITER
@@ -125,7 +56,7 @@ class regexp:
         ('comment', RE(r"#"), [RE(r"$")], comment),
     ]
 
-regexp0 = [RE(r"\/(?![ *])(\\\/|.)*?\/[gim]*(?=\W|$)")]
+regexp0 = [RE(r"\/(?![ *])(?:\\\/|.)*?\/[gim]*(?=\W|$)")]
 
 class subst:
     default_text = DELIMITER
@@ -133,12 +64,13 @@ class subst:
         ('built_in', built_in),
         ('keyword', keyword),
         ('literal', literal),
-        None,  # ('number', number),
+        ('number', number),
         None,  # rules[4],
         # {'className': 'string'},
         ('regexp', RE(r"//"), [RE(r"//[gim]*")], regexp),
         ('regexp', regexp0),
-        ('_group2', RE(r"``"), [RE(r"(?=``)")], 'javascript'),
+        # {'begin': '@[A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*'},
+        ('_group2', RE(r"``"), [RE(r"``")], 'javascript'),
     ]
 
 class subst0:
@@ -163,18 +95,14 @@ class string1:
     default_text = DELIMITER
     rules = [
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        None,  # string0.rules[0],
-        None,  # string0.rules[1],
+        string0.rules[0],
+        string0.rules[1],
     ]
 string1.__name__ = 'string'
 
-class comment0:
+class _string:
     default_text = DELIMITER
-    rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-comment0.__name__ = 'comment'
+    rules = [('_string', RE(r"(?:\s|$)"), [RE(r'\b|\B')])]
 
 title = [RE(r"[A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*")]
 
@@ -184,12 +112,12 @@ class _group3:
         ('built_in', built_in),
         ('keyword', keyword),
         ('literal', literal),
-        None,  # ('number', number),
+        ('number', number),
         None,  # rules[4],
         None,  # rules[9],
-        None,  # ('regexp', regexp0),
+        ('regexp', regexp0),
         # {'begin': '@[A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*'},
-        None,  # subst.rules[7],
+        subst.rules[7],
     ]
 
 class params:
@@ -200,7 +128,7 @@ class function:
     default_text = DELIMITER
     rules = [
         ('title', title),
-        ('params', RE(r"(?=\()"), [RE(r"\B|\b")], params),
+        ('params', RE(r"(?=\()"), [RE(r"\B\b")], params),
     ]
 
 class _group4:
@@ -209,12 +137,12 @@ class _group4:
         ('built_in', built_in),
         ('keyword', keyword),
         ('literal', literal),
-        None,  # ('number', number),
+        ('number', number),
         None,  # rules[4],
         None,  # rules[9],
-        None,  # ('regexp', regexp0),
+        ('regexp', regexp0),
         # {'begin': '@[A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*'},
-        None,  # subst.rules[7],
+        subst.rules[7],
     ]
 
 class params0:
@@ -226,7 +154,7 @@ class function0:
     default_text = DELIMITER
     rules = [
         ('title', title),
-        ('params', RE(r"(?=\()"), [RE(r"\B|\b")], params0),
+        ('params', RE(r"(?=\()"), [RE(r"\B\b")], params0),
     ]
 function0.__name__ = 'function'
 
@@ -236,12 +164,12 @@ class _group5:
         ('built_in', built_in),
         ('keyword', keyword),
         ('literal', literal),
-        None,  # ('number', number),
+        ('number', number),
         None,  # rules[4],
         None,  # rules[9],
-        None,  # ('regexp', regexp0),
+        ('regexp', regexp0),
         # {'begin': '@[A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*'},
-        None,  # subst.rules[7],
+        subst.rules[7],
     ]
 
 class params1:
@@ -253,7 +181,7 @@ class function1:
     default_text = DELIMITER
     rules = [
         ('title', title),
-        ('params', RE(r"(?=\()"), [RE(r"\B|\b")], params1),
+        ('params', RE(r"(?=\()"), [RE(r"\B\b")], params1),
     ]
 function1.__name__ = 'function'
 
@@ -263,17 +191,14 @@ keyword1 = ['extends']
 
 class _group6:
     default_text = DELIMITER
-    rules = [
-        ('keyword', keyword1),
-        None,  # ('title', title),
-    ]
+    rules = [('keyword', keyword1), ('title', title)]
 
 class class0:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword0),
-        ('_group6', RE(r"\b(extends)"), [RE(r"")], _group6),
-        None,  # ('title', title),
+        ('_group6', RE(r"\b(?:extends)"), [RE(r"\B\b")], _group6),
+        ('title', title),
     ]
 class0.__name__ = 'class'
 
@@ -282,48 +207,31 @@ rules = [
     ('keyword', keyword),
     ('literal', literal),
     ('number', number),
-    ('number', number0, [RE(r"(\s*/)?")], _group0),
-    ('string', RE(r"'''"), [RE(r"'''")]),
+    ('number', number0, [RE(r"(?:\s*/)?")], _group0),
+    ('string', RE(r"'''"), [RE(r"'''")], string),
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")], string0),
     ('string', RE(r"\""), [RE(r"\"")], string1),
-    ('string', RE(r"\\"), [RE(r"(?=(\s|$))")]),
-    None,  # ('regexp', regexp0),
+    ('string', RE(r"\\"), [_string]),
+    ('regexp', regexp0),
     # {'begin': '@[A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*'},
-    None,  # subst.rules[7],
-    ('comment', RE(r"\/\*"), [RE(r"\*\/")], comment0),
-    None,  # regexp.rules[0],
-    ('function', RE(r"(?=([A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*\s*(?:=|:=)\s*)?(\(.*\))?\s*\B\->\*?)"), [RE(r"\->\*?")], function),
-    ('function', RE(r"(?=([A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*\s*(?:=|:=)\s*)?!?(\(.*\))?\s*\B[-~]{1,2}>\*?)"), [RE(r"[-~]{1,2}>\*?")], function0),
-    ('function', RE(r"(?=([A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*\s*(?:=|:=)\s*)?(\(.*\))?\s*\B!?[-~]{1,2}>\*?)"), [RE(r"!?[-~]{1,2}>\*?")], function1),
-    ('class', RE(r"\b(class)"), [RE(r"$")], class0),
+    subst.rules[7],
+    ('comment', RE(r"\/\*"), [RE(r"\*\/")], comment),
+    regexp.rules[0],
+    ('function', RE(r"(?=(?:[A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*\s*(?:=|:=)\s*)?(?:\(.*\))?\s*\B\->\*?)"), [RE(r"\->\*?")], function),
+    ('function', RE(r"(?=(?:[A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*\s*(?:=|:=)\s*)?!?(?:\(.*\))?\s*\B[-~]{1,2}>\*?)"), [RE(r"[-~]{1,2}>\*?")], function0),
+    ('function', RE(r"(?=(?:[A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*\s*(?:=|:=)\s*)?(?:\(.*\))?\s*\B!?[-~]{1,2}>\*?)"), [RE(r"!?[-~]{1,2}>\*?")], function1),
+    ('class', RE(r"\b(?:class)"), [RE(r"$")], class0),
     ('_group7', RE(r"(?=[A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*:)"), [RE(r"(?=:)")]),
 ]
 
-subst.rules[3] = ('number', number)
 subst.rules[4] = rules[4]
-string1.rules[0] = string0.rules[0]
-string1.rules[1] = string0.rules[1]
-rules[10] = ('regexp', regexp0)
-rules[11] = subst.rules[7]
-rules[13] = regexp.rules[0]
-_group3.rules[3] = ('number', number)
 _group3.rules[4] = rules[4]
 _group3.rules[5] = rules[9]
-_group3.rules[6] = ('regexp', regexp0)
-_group3.rules[7] = subst.rules[7]
-_group4.rules[3] = ('number', number)
 _group4.rules[4] = rules[4]
 _group4.rules[5] = rules[9]
-_group4.rules[6] = ('regexp', regexp0)
-_group4.rules[7] = subst.rules[7]
-_group5.rules[3] = ('number', number)
 _group5.rules[4] = rules[4]
 _group5.rules[5] = rules[9]
-_group5.rules[6] = ('regexp', regexp0)
-_group5.rules[7] = subst.rules[7]
-_group6.rules[1] = ('title', title)
-class0.rules[2] = ('title', title)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

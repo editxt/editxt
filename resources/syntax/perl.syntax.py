@@ -4,251 +4,41 @@
 name = 'Perl'
 file_patterns = ['*.perl', '*.pl']
 
-keyword = [
-    'getpwent',
-    'getservent',
-    'quotemeta',
-    'msgrcv',
-    'scalar',
-    'kill',
-    'dbmclose',
-    'undef',
-    'lc',
-    'ma',
-    'syswrite',
-    'tr',
-    'send',
-    'umask',
-    'sysopen',
-    'shmwrite',
-    'vec',
-    'qx',
-    'utime',
-    'local',
-    'oct',
-    'semctl',
-    'localtime',
-    'readpipe',
-    'do',
-    'return',
-    'format',
-    'read',
-    'sprintf',
-    'dbmopen',
-    'pop',
-    'getpgrp',
-    'not',
-    'getpwnam',
-    'rewinddir',
-    'qqfileno',
-    'qw',
-    'endprotoent',
-    'wait',
-    'sethostent',
-    'bless',
-    's',
-    'opendir',
-    'continue',
-    'each',
-    'sleep',
-    'endgrent',
-    'shutdown',
-    'dump',
-    'chomp',
-    'connect',
-    'getsockname',
-    'die',
-    'socketpair',
-    'close',
-    'flock',
-    'exists',
-    'index',
-    'shmgetsub',
-    'for',
-    'endpwent',
-    'redo',
-    'lstat',
-    'msgctl',
-    'setpgrp',
-    'abs',
-    'exit',
-    'select',
-    'print',
-    'ref',
-    'gethostbyaddr',
-    'unshift',
-    'fcntl',
-    'syscall',
-    'goto',
-    'getnetbyaddr',
-    'join',
-    'gmtime',
-    'symlink',
-    'semget',
-    'splice',
-    'x',
-    'getpeername',
-    'recv',
-    'log',
-    'setsockopt',
-    'cos',
-    'last',
-    'reverse',
-    'gethostbyname',
-    'getgrnam',
-    'study',
-    'formline',
-    'endhostent',
-    'times',
-    'chop',
-    'length',
-    'gethostent',
-    'getnetent',
-    'pack',
-    'getprotoent',
-    'getservbyname',
-    'rand',
-    'mkdir',
-    'pos',
-    'chmod',
-    'y',
-    'substr',
-    'endnetent',
-    'printf',
-    'next',
-    'open',
-    'msgsnd',
-    'readdir',
-    'use',
-    'unlink',
-    'getsockopt',
-    'getpriority',
-    'rindex',
-    'wantarray',
-    'hex',
-    'system',
-    'getservbyport',
-    'endservent',
-    'int',
-    'chr',
-    'untie',
-    'rmdir',
-    'prototype',
-    'tell',
-    'listen',
-    'fork',
-    'shmread',
-    'ucfirst',
-    'setprotoent',
-    'else',
-    'sysseek',
-    'link',
-    'getgrgid',
-    'shmctl',
-    'waitpid',
-    'unpack',
-    'getnetbyname',
-    'reset',
-    'chdir',
-    'grep',
-    'split',
-    'require',
-    'caller',
-    'lcfirst',
-    'until',
-    'warn',
-    'while',
-    'values',
-    'shift',
-    'telldir',
-    'getpwuid',
-    'my',
-    'getprotobynumber',
-    'delete',
-    'and',
-    'sort',
-    'uc',
-    'defined',
-    'srand',
-    'accept',
-    'package',
-    'seekdir',
-    'getprotobyname',
-    'semop',
-    'our',
-    'rename',
-    'seek',
-    'if',
-    'q',
-    'chroot',
-    'sysread',
-    'setpwent',
-    'no',
-    'crypt',
-    'getc',
-    'chown',
-    'sqrt',
-    'write',
-    'setnetent',
-    'setpriority',
-    'foreach',
-    'tie',
-    'sin',
-    'msgget',
-    'map',
-    'stat',
-    'getlogin',
-    'unless',
-    'elsif',
-    'truncate',
-    'exec',
-    'keys',
-    'glob',
-    'tied',
-    'closedirioctl',
-    'socket',
-    'readlink',
-    'eval',
-    'xor',
-    'readline',
-    'binmode',
-    'setservent',
-    'eof',
-    'ord',
-    'bind',
-    'alarm',
-    'pipe',
-    'atan2',
-    'getgrent',
-    'exp',
-    'time',
-    'push',
-    'setgrent',
-    'gt',
-    'lt',
-    'or',
-    'ne',
-    'm',
-    'break',
-    'given',
-    'say',
-    'state',
-    'when',
-]
+keyword = """
+    getpwent getservent quotemeta msgrcv scalar kill dbmclose undef lc
+    ma syswrite tr send umask sysopen shmwrite vec qx utime local oct
+    semctl localtime readpipe do return format read sprintf dbmopen pop
+    getpgrp not getpwnam rewinddir qqfileno qw endprotoent wait
+    sethostent bless s opendir continue each sleep endgrent shutdown
+    dump chomp connect getsockname die socketpair close flock exists
+    index shmgetsub for endpwent redo lstat msgctl setpgrp abs exit
+    select print ref gethostbyaddr unshift fcntl syscall goto
+    getnetbyaddr join gmtime symlink semget splice x getpeername recv
+    log setsockopt cos last reverse gethostbyname getgrnam study
+    formline endhostent times chop length gethostent getnetent pack
+    getprotoent getservbyname rand mkdir pos chmod y substr endnetent
+    printf next open msgsnd readdir use unlink getsockopt getpriority
+    rindex wantarray hex system getservbyport endservent int chr untie
+    rmdir prototype tell listen fork shmread ucfirst setprotoent else
+    sysseek link getgrgid shmctl waitpid unpack getnetbyname reset chdir
+    grep split require caller lcfirst until warn while values shift
+    telldir getpwuid my getprotobynumber delete and sort uc defined
+    srand accept package seekdir getprotobyname semop our rename seek if
+    q chroot sysread setpwent no crypt getc chown sqrt write setnetent
+    setpriority foreach tie sin msgget map stat getlogin unless elsif
+    truncate exec keys glob tied closedirioctl socket readlink eval xor
+    readline binmode setservent eof ord bind alarm pipe atan2 getgrent
+    exp time push setgrent gt lt or ne m break given say state when
+    """.split()
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 class _group3:
     default_text = DELIMITER
@@ -261,6 +51,7 @@ class subst:
 class string:
     default_text = DELIMITER
     rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         ('subst', RE(r"[$@]\{"), [RE(r"\}")], subst),
         # {},
     ]
@@ -273,12 +64,12 @@ class string0:
 string0.__name__ = 'string'
 
 number = [
-    RE(r"(\b0[0-7_]+)|(\b0x[0-9a-fA-F_]+)|(\b[1-9][0-9_]*(\.[0-9_]+)?)|[0_]\b"),
+    RE(r"(?:\b0[0-7_]+)|(?:\b0x[0-9a-fA-F_]+)|(?:\b[1-9][0-9_]*(?:\.[0-9_]+)?)|[0_]\b"),
 ]
 
 keyword0 = ['split', 'return', 'print', 'reverse', 'grep']
 
-regexp = [RE(r"(s|tr|y)/(\\.|[^/])*/(\\.|[^/])*/[a-z]*")]
+regexp = [RE(r"(?:s|tr|y)/(?:\\.|[^/])*/(?:\\.|[^/])*/[a-z]*")]
 
 class regexp0:
     default_text = DELIMITER
@@ -293,8 +84,12 @@ class _group11:
         ('keyword', keyword0),
         None,  # rules[1],
         ('regexp', regexp),
-        ('regexp', RE(r"(m|qr)?/"), [RE(r"/[a-z]*")], regexp0),
+        ('regexp', RE(r"(?:m|qr)?/"), [RE(r"/[a-z]*")], regexp0),
     ]
+
+class _function:
+    default_text = DELIMITER
+    rules = [('_function', RE(r"(?:\s*\(.*?\))?[;{]"), [RE(r'\b|\B')])]
 
 keyword1 = ['sub']
 
@@ -310,8 +105,11 @@ class _group13:
 
 rules = [
     ('keyword', keyword),
+    # {'begin': {'pattern': '\\$\\d', 'type': 'RegExp'}, 'variants': [{'begin': ...}, {'begin': {'pattern': '[\\$%@](\\^\\w\\b|#\\w+(::\\w+)*|{\\w+}|\\w+(::\\w*)*)', 'type': 'RegExp'}}, {'begin': {'pattern': '[\\$%@][^\\s\\w{]', 'type': 'RegExp'}, 'relevance': 0}]},
+    # {'begin': {'pattern': '[\\$%@](\\^\\w\\b|#\\w+(::\\w+)*|{\\w+}|\\w+(::\\w*)*)', 'type': 'RegExp'}, 'variants': [{'begin': {'pattern': '\\$\\d', 'type': 'RegExp'}}, {'begin': ...}, {'begin': {'pattern': '[\\$%@][^\\s\\w{]', 'type': 'RegExp'}, 'relevance': 0}]},
+    # {'begin': {'pattern': '[\\$%@][^\\s\\w{]', 'type': 'RegExp'}, 'relevance': 0, 'variants': [{'begin': {'pattern': '\\$\\d', 'type': 'RegExp'}}, {'begin': {'pattern': '[\\$%@](\\^\\w\\b|#\\w+(::\\w+)*|{\\w+}|\\w+(::\\w*)*)', 'type': 'RegExp'}}, {'begin': ..., 'relevance': ...}]},
     ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('comment', RE(r"^\=\w"), [RE(r"\=cut")], comment0),
+    ('comment', RE(r"^\=\w"), [RE(r"\=cut")], comment),
     ('_group3', RE(r"->{"), [RE(r"}")], _group3),
     ('string', RE(r"q[qwxr]?\s*\("), [RE(r"\)")], string),
     ('string', RE(r"q[qwxr]?\s*\["), [RE(r"\]")], string),
@@ -322,11 +120,12 @@ rules = [
     ('string', RE(r"'"), [RE(r"'")], string0),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"`"), [RE(r"`")], string0),
-    ('string', RE(r"{\w+}"), [RE(r"\B|\b")]),
-    ('string', RE(r"-?\w+\s*\=\>"), [RE(r"\B|\b")]),
+    ('string', RE(r"{\w+}"), [RE(r"\B\b")]),
+    ('string', RE(r"-?\w+\s*\=\>"), [RE(r"\B\b")]),
     ('number', number),
-    ('_group11', RE(r"(\/\/|!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~|\b(split|return|print|reverse|grep)\b)\s*"), [RE(r"\B|\b")], _group11),
-    ('function', RE(r"\b(sub)"), [RE(r"(?=(\s*\(.*?\))?[;{])")], function),
+    ('_group11', RE(r"(?:\/\/|!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~|\b(?:split|return|print|reverse|grep)\b)\s*"), [RE(r"\B\b")], _group11),
+    ('function', RE(r"\b(?:sub)"), [_function], function),
+    # {'begin': '-\\w\\b', 'relevance': 0},
     ('_group13', RE(r"^__DATA__$"), [RE(r"^__END__$")], 'mojolicious'),
 ]
 

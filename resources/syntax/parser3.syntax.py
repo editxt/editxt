@@ -8,24 +8,19 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 class comment0:
     default_text = DELIMITER
     rules = [
+        ('comment', RE(r"{"), [RE(r"}")], comment),
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 comment0.__name__ = 'comment'
-
-class comment1:
-    default_text = DELIMITER
-    rules = [
-        ('comment', RE(r"{"), [RE(r"}")], comment0),
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-comment1.__name__ = 'comment'
 
 meta = [RE(r"^@(?:BASE|USE|CLASS|OPTIONS)$")]
 
@@ -37,11 +32,13 @@ keyword = [RE(r"\^[\w\-\.\:]+")]
 
 number = [RE(r"\^#[0-9a-fA-F]+")]
 
-number0 = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number0 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 rules = [
     ('comment', RE(r"^#"), [RE(r"$")], comment),
-    ('comment', RE(r"\^rem{"), [RE(r"}")], comment1),
+    ('comment', RE(r"\^rem{"), [RE(r"}")], comment0),
     ('meta', meta),
     ('title', title),
     ('variable', variable),

@@ -10,26 +10,16 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
-nomarkup = [
-    'order',
-    'deny',
-    'allow',
-    'setenv',
-    'rewriterule',
-    'rewriteengine',
-    'rewritecond',
-    'documentroot',
-    'sethandler',
-    'errordocument',
-    'loadmodule',
-    'options',
-    'header',
-    'listen',
-    'serverroot',
-    'servername',
-]
+nomarkup = """
+    order deny allow setenv rewriterule rewriteengine rewritecond
+    documentroot sethandler errordocument loadmodule options header
+    listen serverroot servername
+    """.split()
 
 class attribute:
     default_text = DELIMITER
@@ -37,7 +27,7 @@ class attribute:
 
 class attribute0:
     default_text = DELIMITER
-    rules = [('attribute', RE(r"\w+"), [RE(r"\B|\b")], attribute)]
+    rules = [('attribute', RE(r"\w+"), [RE(r"\B\b")], attribute)]
 attribute0.__name__ = 'attribute'
 
 literal = ['on', 'off', 'all']
@@ -48,14 +38,20 @@ class variable:
     default_text = DELIMITER
     rules = [('number', number)]
 
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+
 class _group0:
     default_text = DELIMITER
     rules = [
         ('literal', literal),
         ('meta', RE(r"\s\["), [RE(r"\]$")]),
         ('variable', RE(r"[\$%]\{"), [RE(r"\}")], variable),
-        None,  # ('number', number),
-        ('string', RE(r"\""), [RE(r"\"")]),
+        ('number', number),
+        ('string', RE(r"\""), [RE(r"\"")], string),
     ]
 
 rules = [
@@ -63,8 +59,6 @@ rules = [
     ('section', RE(r"</?"), [RE(r">")]),
     ('attribute', attribute0, [RE(r"$")], _group0),
 ]
-
-_group0.rules[3] = ('number', number)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

@@ -6,89 +6,18 @@ file_patterns = ['*.monkey']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-built_in = [
-    'DebugLog',
-    'DebugStop',
-    'Error',
-    'Print',
-    'ACos',
-    'ACosr',
-    'ASin',
-    'ASinr',
-    'ATan',
-    'ATan2',
-    'ATan2r',
-    'ATanr',
-    'Abs',
-    'Abs',
-    'Ceil',
-    'Clamp',
-    'Clamp',
-    'Cos',
-    'Cosr',
-    'Exp',
-    'Floor',
-    'Log',
-    'Max',
-    'Max',
-    'Min',
-    'Min',
-    'Pow',
-    'Sgn',
-    'Sgn',
-    'Sin',
-    'Sinr',
-    'Sqrt',
-    'Tan',
-    'Tanr',
-    'Seed',
-    'PI',
-    'HALFPI',
-    'TWOPI',
-]
+built_in = """
+    DebugLog DebugStop Error Print ACos ACosr ASin ASinr ATan ATan2
+    ATan2r ATanr Abs Abs Ceil Clamp Clamp Cos Cosr Exp Floor Log Max Max
+    Min Min Pow Sgn Sgn Sin Sinr Sqrt Tan Tanr Seed PI HALFPI TWOPI
+    """.split()
 
-keyword = [
-    'public',
-    'private',
-    'property',
-    'continue',
-    'exit',
-    'extern',
-    'new',
-    'try',
-    'catch',
-    'eachin',
-    'not',
-    'abstract',
-    'final',
-    'select',
-    'case',
-    'default',
-    'const',
-    'local',
-    'global',
-    'field',
-    'end',
-    'if',
-    'then',
-    'else',
-    'elseif',
-    'endif',
-    'while',
-    'wend',
-    'repeat',
-    'until',
-    'forever',
-    'for',
-    'to',
-    'step',
-    'next',
-    'return',
-    'module',
-    'inline',
-    'throw',
-    'import',
-]
+keyword = """
+    public private property continue exit extern new try catch eachin
+    not abstract final select case default const local global field end
+    if then else elseif endif while wend repeat until forever for to
+    step next return module inline throw import
+    """.split()
 
 literal = ['true', 'false', 'null', 'and', 'or', 'shl', 'shr', 'mod']
 
@@ -96,15 +25,10 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
-
-class comment0:
-    default_text = DELIMITER
     rules = [
         # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-comment0.__name__ = 'comment'
 
 keyword0 = ['function', 'method']
 
@@ -120,12 +44,12 @@ class class0:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword1),
-        ('_group0', RE(r"\b(extends|implements)"), [RE(r"\B|\b")]),
-        None,  # ('title', title),
+        ('_group0', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('title', title),
     ]
 class0.__name__ = 'class'
 
-built_in0 = [RE(r"\b(self|super)\b")]
+built_in0 = [RE(r"\b(?:self|super)\b")]
 
 meta_keyword = ['if', 'else', 'elseif', 'endif', 'end', 'then']
 
@@ -139,34 +63,34 @@ keyword2 = ['alias']
 
 class _group1:
     default_text = DELIMITER
+    rules = [('keyword', keyword2), ('title', title)]
+
+class string:
+    default_text = DELIMITER
     rules = [
-        ('keyword', keyword2),
-        None,  # ('title', title),
+        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 number = [RE(r"[$][a-fA-F0-9]+")]
 
-number0 = [RE(r"\b\d+(\.\d+)?")]
+number0 = [RE(r"\b\d+(?:\.\d+)?")]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
     ('literal', literal),
     ('comment', RE(r"#rem"), [RE(r"#end")], comment),
-    ('comment', RE(r"'"), [RE(r"$")], comment0),
-    ('function', RE(r"\b(function|method)"), [RE(r"[(=:]|$")], function),
-    ('class', RE(r"\b(class|interface)"), [RE(r"$")], class0),
+    ('comment', RE(r"'"), [RE(r"$")], comment),
+    ('function', RE(r"\b(?:function|method)"), [RE(r"[(?:=:]|$")], function),
+    ('class', RE(r"\b(?:class|interface)"), [RE(r"$")], class0),
     ('built_in', built_in0),
     ('meta', RE(r"\s*#"), [RE(r"$")], meta),
     ('meta', meta0),
-    ('_group1', RE(r"\b(alias)"), [RE(r"=")], _group1),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    ('_group1', RE(r"\b(?:alias)"), [RE(r"=")], _group1),
+    ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),
     ('number', number0),
 ]
-
-class0.rules[2] = ('title', title)
-_group1.rules[1] = ('title', title)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

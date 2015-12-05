@@ -4,113 +4,55 @@
 name = 'Nimrod'
 file_patterns = ['*.nimrod', '*.nim']
 
-keyword = [
-    'addr',
-    'and',
-    'as',
-    'asm',
-    'bind',
-    'block',
-    'break',
-    'case',
-    'cast',
-    'const',
-    'continue',
-    'converter',
-    'discard',
-    'distinct',
-    'div',
-    'do',
-    'elif',
-    'else',
-    'end',
-    'enum',
-    'except',
-    'export',
-    'finally',
-    'for',
-    'from',
-    'generic',
-    'if',
-    'import',
-    'in',
-    'include',
-    'interface',
-    'is',
-    'isnot',
-    'iterator',
-    'let',
-    'macro',
-    'method',
-    'mixin',
-    'mod',
-    'nil',
-    'not',
-    'notin',
-    'object',
-    'of',
-    'or',
-    'out',
-    'proc',
-    'ptr',
-    'raise',
-    'ref',
-    'return',
-    'shl',
-    'shr',
-    'static',
-    'template',
-    'try',
-    'tuple',
-    'type',
-    'using',
-    'var',
-    'when',
-    'while',
-    'with',
-    'without',
-    'xor',
-    'yield',
-]
+keyword = """
+    addr and as asm bind block break case cast const continue converter
+    discard distinct div do elif else end enum except export finally for
+    from generic if import in include interface is isnot iterator let
+    macro method mixin mod nil not notin object of or out proc ptr raise
+    ref return shl shr static template try tuple type using var when
+    while with without xor yield
+    """.split()
 
-literal = [
-    'shared',
-    'guarded',
-    'stdin',
-    'stdout',
-    'stderr',
-    'result',
-    'true',
-    'false',
-]
+literal = """
+    shared guarded stdin stdout stderr result true false
+    """.split()
+
+class string:
+    default_text = DELIMITER
+    rules = [
+        # {'begin': {'pattern': '""', 'type': 'RegExp'}},
+    ]
 
 type = [RE(r"\b[A-Z]\w+\b")]
 
 built_in = [
-    RE(r"\b(int|int8|int16|int32|int64|uint|uint8|uint16|uint32|uint64|float|float32|float64|bool|char|string|cstring|pointer|expr|stmt|void|auto|any|range|array|openarray|varargs|seq|set|clong|culong|cchar|cschar|cshort|cint|csize|clonglong|cfloat|cdouble|clongdouble|cuchar|cushort|cuint|culonglong|cstringarray|semistatic)\b"),
+    RE(r"\b(?:int|int8|int16|int32|int64|uint|uint8|uint16|uint32|uint64|float|float32|float64|bool|char|string|cstring|pointer|expr|stmt|void|auto|any|range|array|openarray|varargs|seq|set|clong|culong|cchar|cschar|cshort|cint|csize|clonglong|cfloat|cdouble|clongdouble|cuchar|cushort|cuint|culonglong|cstringarray|semistatic)\b"),
 ]
 
-number = [RE(r"\b(0[xX][0-9a-fA-F][_0-9a-fA-F]*)('?[iIuU](8|16|32|64))?")]
+number = [RE(r"\b(?:0[xX][0-9a-fA-F][_0-9a-fA-F]*)(?:'?[iIuU](?:8|16|32|64))?")]
 
-number0 = [RE(r"\b(0o[0-7][_0-7]*)('?[iIuUfF](8|16|32|64))?")]
+number0 = [RE(r"\b(?:0o[0-7][_0-7]*)(?:'?[iIuUfF](?:8|16|32|64))?")]
 
-number1 = [RE(r"\b(0(b|B)[01][_01]*)('?[iIuUfF](8|16|32|64))?")]
+number1 = [RE(r"\b(?:0(?:b|B)[01][_01]*)(?:'?[iIuUfF](?:8|16|32|64))?")]
 
-number2 = [RE(r"\b(\d[_\d]*)('?[iIuUfF](8|16|32|64))?")]
+number2 = [RE(r"\b(?:\d[_\d]*)(?:'?[iIuUfF](?:8|16|32|64))?")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 rules = [
     ('keyword', keyword),
     ('literal', literal),
     ('meta', RE(r"{\."), [RE(r"\.}")]),
-    ('string', RE(r"[a-zA-Z]\w*\""), [RE(r"\"")]),
-    ('string', RE(r"([a-zA-Z]\w*)?\"\"\""), [RE(r"\"\"\"")]),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    ('string', RE(r"[a-zA-Z]\w*\""), [RE(r"\"")], string),
+    ('string', RE(r"(?:[a-zA-Z]\w*)?\"\"\""), [RE(r"\"\"\"")]),
+    ('string', RE(r"\""), [RE(r"\"")], string),
     ('type', type),
     ('built_in', built_in),
     ('number', number),

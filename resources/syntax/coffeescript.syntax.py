@@ -4,61 +4,24 @@
 name = 'CoffeeScript'
 file_patterns = ['*.coffeescript', '*.coffee', '*.cson', '*.iced']
 
-built_in = [
-    'npm',
-    'require',
-    'console',
-    'print',
-    'module',
-    'global',
-    'window',
-    'document',
-]
+built_in = """
+    npm require console print module global window document
+    """.split()
 
-keyword = [
-    'in',
-    'if',
-    'for',
-    'while',
-    'finally',
-    'new',
-    'do',
-    'return',
-    'else',
-    'break',
-    'catch',
-    'instanceof',
-    'throw',
-    'try',
-    'this',
-    'switch',
-    'continue',
-    'typeof',
-    'delete',
-    'debugger',
-    'super',
-    'then',
-    'unless',
-    'until',
-    'loop',
-    'of',
-    'by',
-    'when',
-    'and',
-    'or',
-    'is',
-    'isnt',
-    'not',
-]
+keyword = """
+    in if for while finally new do return else break catch instanceof
+    throw try this switch continue typeof delete debugger super then
+    unless until loop of by when and or is isnt not
+    """.split()
 
 literal = ['true', 'false', 'null', 'undefined', 'yes', 'no', 'on', 'off']
 
-number = [RE(r"\b(0b[01]+)")]
+number = [RE(r"\b(?:0b[01]+)")]
 
 class number0:
     default_text = DELIMITER
     rules = [
-        ('number', RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)"), [RE(r"\B|\b")]),
+        ('number', RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"), [RE(r"\B\b")]),
     ]
 number0.__name__ = 'number'
 
@@ -76,7 +39,10 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 class regexp:
     default_text = DELIMITER
@@ -87,7 +53,7 @@ class regexp:
 
 regexp0 = [RE(r"//[gim]*")]
 
-regexp1 = [RE(r"\/(?![ *])(\\\/|.)*?\/[gim]*(?=\W|$)")]
+regexp1 = [RE(r"\/(?![ *])(?:\\\/|.)*?\/[gim]*(?=\W|$)")]
 
 class subst:
     default_text = DELIMITER
@@ -95,13 +61,14 @@ class subst:
         ('built_in', built_in),
         ('keyword', keyword),
         ('literal', literal),
-        None,  # ('number', number),
+        ('number', number),
         None,  # rules[4],
         # {'className': 'string'},
         ('regexp', RE(r"///"), [RE(r"///")], regexp),
         ('regexp', regexp0),
         ('regexp', regexp1),
-        ('_group2', RE(r"`"), [RE(r"(?=`)")], 'javascript'),
+        # {'begin': '@[A-Za-z$_][0-9A-Za-z$_]*'},
+        ('_group2', RE(r"`"), [RE(r"`")], 'javascript'),
     ]
 
 class string0:
@@ -116,17 +83,9 @@ class string1:
     default_text = DELIMITER
     rules = [
         # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        None,  # string0.rules[0],
+        string0.rules[0],
     ]
 string1.__name__ = 'string'
-
-class comment0:
-    default_text = DELIMITER
-    rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-comment0.__name__ = 'comment'
 
 title = [RE(r"[A-Za-z$_][0-9A-Za-z$_]*")]
 
@@ -136,12 +95,12 @@ class _group3:
         ('built_in', built_in),
         ('keyword', keyword),
         ('literal', literal),
-        None,  # ('number', number),
+        ('number', number),
         None,  # rules[4],
         # {'className': 'string'},
-        None,  # ('regexp', regexp1),
+        ('regexp', regexp1),
         # {'begin': '@[A-Za-z$_][0-9A-Za-z$_]*'},
-        None,  # subst.rules[8],
+        subst.rules[8],
     ]
 
 class params:
@@ -152,20 +111,18 @@ class function:
     default_text = DELIMITER
     rules = [
         ('title', title),
-        ('params', RE(r"(?=\([^\(])"), [RE(r"\B|\b")], params),
+        ('params', RE(r"(?=\([^\(])"), [RE(r"\B\b")], params),
     ]
 
 class function0:
     default_text = DELIMITER
-    rules = [
-        None,  # function.rules[1],
-    ]
+    rules = [function.rules[1]]
 function0.__name__ = 'function'
 
 class _group4:
     default_text = DELIMITER
     rules = [
-        ('function', RE(r"(?=(\(.*\))?\s*\B[-=]>)"), [RE(r"[-=]>")], function0),
+        ('function', RE(r"(?=(?:\(.*\))?\s*\B[-=]>)"), [RE(r"[-=]>")], function0),
     ]
 
 keyword0 = ['class']
@@ -174,17 +131,14 @@ keyword1 = ['extends']
 
 class _group5:
     default_text = DELIMITER
-    rules = [
-        ('keyword', keyword1),
-        None,  # ('title', title),
-    ]
+    rules = [('keyword', keyword1), ('title', title)]
 
 class class0:
     default_text = DELIMITER
     rules = [
         ('keyword', keyword0),
-        ('_group5', RE(r"\b(extends)"), [RE(r"")], _group5),
-        None,  # ('title', title),
+        ('_group5', RE(r"\b(?:extends)"), [RE(r"\B\b")], _group5),
+        ('title', title),
     ]
 class0.__name__ = 'class'
 
@@ -193,35 +147,24 @@ rules = [
     ('keyword', keyword),
     ('literal', literal),
     ('number', number),
-    ('number', number0, [RE(r"(\s*/)?")], _group0),
-    ('string', RE(r"'''"), [RE(r"'''")]),
+    ('number', number0, [RE(r"(?:\s*/)?")], _group0),
+    ('string', RE(r"'''"), [RE(r"'''")], string),
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")], string0),
     ('string', RE(r"\""), [RE(r"\"")], string1),
-    None,  # ('regexp', regexp1),
+    ('regexp', regexp1),
     # {'begin': '@[A-Za-z$_][0-9A-Za-z$_]*'},
-    None,  # subst.rules[8],
-    ('comment', RE(r"###"), [RE(r"###")], comment0),
-    None,  # regexp.rules[0],
-    ('function', RE(r"(?=^\s*[A-Za-z$_][0-9A-Za-z$_]*\s*=\s*(\(.*\))?\s*\B[-=]>)"), [RE(r"[-=]>")], function),
-    ('_group4', RE(r"[:\(,=]\s*"), [RE(r"\B|\b")], _group4),
-    ('class', RE(r"\b(class)"), [RE(r"$")], class0),
+    subst.rules[8],
+    ('comment', RE(r"###"), [RE(r"###")], comment),
+    regexp.rules[0],
+    ('function', RE(r"(?=^\s*[A-Za-z$_][0-9A-Za-z$_]*\s*=\s*(?:\(.*\))?\s*\B[-=]>)"), [RE(r"[-=]>")], function),
+    ('_group4', RE(r"[:\(,=]\s*"), [RE(r"\B\b")], _group4),
+    ('class', RE(r"\b(?:class)"), [RE(r"$")], class0),
     ('_group6', RE(r"(?=[A-Za-z$_][0-9A-Za-z$_]*:)"), [RE(r"(?=:)")]),
 ]
 
-subst.rules[3] = ('number', number)
 subst.rules[4] = rules[4]
-string1.rules[0] = string0.rules[0]
-rules[9] = ('regexp', regexp1)
-rules[10] = subst.rules[8]
-rules[12] = regexp.rules[0]
-_group3.rules[3] = ('number', number)
 _group3.rules[4] = rules[4]
-_group3.rules[5] = ('regexp', regexp1)
-_group3.rules[6] = subst.rules[8]
-function0.rules[0] = function.rules[1]
-_group5.rules[1] = ('title', title)
-class0.rules[2] = ('title', title)
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

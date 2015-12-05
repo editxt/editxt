@@ -9,12 +9,12 @@ flags = re.IGNORECASE | re.MULTILINE
 class _group0:
     default_text = DELIMITER
     rules = [
-        ('attr', RE(r"([^\u2401\u0001=]+)"), [RE(r"(?==([^\u2401\u0001=]+))")]),
-        ('string', RE(r"="), [RE(r"(?=([\u2401\u0001]))")]),
+        ('attr', RE(r"(?:[^\u2401\u0001=]+)"), [RE(r"(?==(?:[^\u2401\u0001=]+))")]),
+        ('_string', RE(r"="), [RE(r"(?:[\u2401\u0001])")]),
     ]
 
 rules = [
-    ('_group0', RE(r"(?=[^\u2401\u0001]+)"), [RE(r"(?=[\u2401\u0001])")], _group0),
+    ('_group0', RE(r"(?=[^\u2401\u0001]+)"), [RE(r"[\u2401\u0001]")], _group0),
 ]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax

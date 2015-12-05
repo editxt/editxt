@@ -6,36 +6,10 @@ file_patterns = ['*.erlang-repl']
 
 built_in = ['spawn', 'spawn_link', 'self']
 
-keyword = [
-    'after',
-    'and',
-    'andalso',
-    'band',
-    'begin',
-    'bnot',
-    'bor',
-    'bsl',
-    'bsr',
-    'bxor',
-    'case',
-    'catch',
-    'cond',
-    'div',
-    'end',
-    'fun',
-    'if',
-    'let',
-    'not',
-    'of',
-    'or',
-    'orelse',
-    'query',
-    'receive',
-    'rem',
-    'try',
-    'when',
-    'xor',
-]
+keyword = """
+    after and andalso band begin bnot bor bsl bsr bxor case catch cond
+    div end fun if let not of or orelse query receive rem try when xor
+    """.split()
 
 meta = [RE(r"^[0-9]+> ")]
 
@@ -43,9 +17,12 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
-number = [RE(r"\b(\d+#[a-fA-F0-9]+|\d+(\.\d+)?([eE][-+]?\d+)?)")]
+number = [RE(r"\b(?:\d+#[a-fA-F0-9]+|\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)")]
 
 class string:
     default_text = DELIMITER
@@ -59,8 +36,14 @@ rules = [
     ('meta', meta),
     ('comment', RE(r"%"), [RE(r"$")], comment),
     ('number', number),
-    ('string', RE(r"'"), [RE(r"'")]),
+    ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
+    # {'begin': '\\?(::)?([A-Z]\\w*(::)?)+'},
+    # {'begin': '->'},
+    # {'begin': 'ok'},
+    # {'begin': '!'},
+    # {'begin': "(\\b[a-z'][a-zA-Z0-9_']*:[a-z'][a-zA-Z0-9_']*)|(\\b[a-z'][a-zA-Z0-9_']*)", 'relevance': 0},
+    # {'begin': "[A-Z][a-zA-Z0-9_']*", 'relevance': 0},
 ]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax

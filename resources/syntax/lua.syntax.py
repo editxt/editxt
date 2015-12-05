@@ -4,74 +4,27 @@
 name = 'Lua'
 file_patterns = ['*.lua']
 
-built_in = [
-    '_G',
-    '_VERSION',
-    'assert',
-    'collectgarbage',
-    'dofile',
-    'error',
-    'getfenv',
-    'getmetatable',
-    'ipairs',
-    'load',
-    'loadfile',
-    'loadstring',
-    'module',
-    'next',
-    'pairs',
-    'pcall',
-    'print',
-    'rawequal',
-    'rawget',
-    'rawset',
-    'require',
-    'select',
-    'setfenv',
-    'setmetatable',
-    'tonumber',
-    'tostring',
-    'type',
-    'unpack',
-    'xpcall',
-    'coroutine',
-    'debug',
-    'io',
-    'math',
-    'os',
-    'package',
-    'string',
-    'table',
-]
+built_in = """
+    _G _VERSION assert collectgarbage dofile error getfenv getmetatable
+    ipairs load loadfile loadstring module next pairs pcall print
+    rawequal rawget rawset require select setfenv setmetatable tonumber
+    tostring type unpack xpcall coroutine debug io math os package
+    string table
+    """.split()
 
-keyword = [
-    'and',
-    'break',
-    'do',
-    'else',
-    'elseif',
-    'end',
-    'false',
-    'for',
-    'if',
-    'in',
-    'local',
-    'nil',
-    'not',
-    'or',
-    'repeat',
-    'return',
-    'then',
-    'true',
-    'until',
-    'while',
-]
+keyword = """
+    and break do else elseif end false for if in local nil not or repeat
+    return then true until while
+    """.split()
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 class _group0:
     default_text = DELIMITER
@@ -88,7 +41,7 @@ comment0.__name__ = 'comment'
 
 keyword0 = ['function']
 
-title = [RE(r"([_a-zA-Z]\w*\.)*([_a-zA-Z]\w*:)?[_a-zA-Z]\w*")]
+title = [RE(r"(?:[_a-zA-Z]\w*\.)*(?:[_a-zA-Z]\w*:)?[_a-zA-Z]\w*")]
 
 class params:
     default_text = DELIMITER
@@ -102,12 +55,14 @@ class function:
     rules = [
         ('keyword', keyword0),
         ('title', title),
-        ('params', RE(r"\("), [RE(r"")], params),
+        ('params', RE(r"\("), [RE(r"\B\b")], params),
         None,  # rules[2],
         None,  # rules[3],
     ]
 
-number = [RE(r"(\b0[xX][a-fA-F0-9]+|(\b\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?)")]
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 class string:
     default_text = DELIMITER
@@ -117,9 +72,7 @@ class string:
 
 class string0:
     default_text = DELIMITER
-    rules = [
-        None,  # comment0.rules[0],
-    ]
+    rules = [comment0.rules[0]]
 string0.__name__ = 'string'
 
 rules = [
@@ -127,9 +80,9 @@ rules = [
     ('keyword', keyword),
     ('comment', RE(r"--(?!\[=*\[)"), [RE(r"$")], comment),
     ('comment', RE(r"--\[=*\["), [RE(r"\]=*\]")], comment0),
-    ('function', RE(r"\b(function)"), [RE(r"\)")], function),
+    ('function', RE(r"\b(?:function)"), [RE(r"\)")], function),
     ('number', number),
-    ('string', RE(r"'"), [RE(r"'")]),
+    ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"\[=*\["), [RE(r"\]=*\]")], string0),
 ]
@@ -138,7 +91,6 @@ params.rules[0] = rules[2]
 params.rules[1] = rules[3]
 function.rules[3] = rules[2]
 function.rules[4] = rules[3]
-string0.rules[0] = comment0.rules[0]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()

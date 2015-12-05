@@ -6,17 +6,22 @@ file_patterns = ['*.haml']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-meta = [RE(r"^!!!( (5|1\.1|Strict|Frameset|Basic|Mobile|RDFa|XML\b.*))?$")]
+meta = [
+    RE(r"^!!!(?: (?:5|1\.1|Strict|Frameset|Basic|Mobile|RDFa|XML\b.*))?$"),
+]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text = DELIMITER
-    rules = [('doctag', doctag)]
+    rules = [
+        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 class _group0:
     default_text = DELIMITER
-    rules = [('_group0', RE(r"^\s*(-|=|!=)(?!#)"), [RE(r"\B|\b")])]
+    rules = [('_group0', RE(r"^\s*(?:-|=|!=)(?!#)"), [RE(r"\B\b")])]
 
 class _group1:
     default_text = DELIMITER
@@ -40,8 +45,9 @@ class _group3:
     default_text = DELIMITER
     rules = [
         ('attr', attr),
-        ('string', RE(r"'"), [RE(r"'")]),
+        ('string', RE(r"'"), [RE(r"'")], string),
         ('string', RE(r"\""), [RE(r"\"")], string),
+        # {'begin': '\\w+', 'relevance': 0},
     ]
 
 class _group2:
@@ -52,8 +58,9 @@ class _group7:
     default_text = DELIMITER
     rules = [
         ('attr', selector_tag),
-        None,  # _group3.rules[1],
-        None,  # _group3.rules[2],
+        _group3.rules[1],
+        _group3.rules[2],
+        # {'begin': '\\w+', 'relevance': 0},
     ]
 
 class _group6:
@@ -67,12 +74,12 @@ class tag:
         ('selector-id', selector_id),
         ('selector-class', selector_class),
         ('_group2', RE(r"{\s*"), [RE(r"\s*}")], _group2),
-        ('_group6', RE(r"\(\s*"), [RE(r"(?=\s*\))")], _group6),
+        ('_group6', RE(r"\(\s*"), [RE(r"\s*\)")], _group6),
     ]
 
 class _group9:
     default_text = DELIMITER
-    rules = [('_group9', RE(r"#{"), [RE(r"\B|\b")])]
+    rules = [('_group9', RE(r"#{"), [RE(r"\B\b")])]
 
 class _group10:
     default_text = DELIMITER
@@ -80,14 +87,12 @@ class _group10:
 
 rules = [
     ('meta', meta),
-    ('comment', RE(r"^\s*(!=#|=#|-#|/).*$"), [RE(r"\B|\b")], comment),
+    ('comment', RE(r"^\s*(?:!=#|=#|-#|/).*$"), [RE(r"\B\b")], comment),
     ('_group0', _group0, [RE(r"\n")], _group1),
-    ('tag', RE(r"^\s*%"), [RE(r"\B|\b")], tag),
+    ('tag', RE(r"^\s*%"), [RE(r"\B\b")], tag),
+    # {'begin': '^\\s*[=~]\\s*'},
     ('_group9', _group9, [RE(r"}")], _group10),
 ]
-
-_group7.rules[1] = _group3.rules[1]
-_group7.rules[2] = _group3.rules[2]
 
 # TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
 assert "__obj" not in globals()
