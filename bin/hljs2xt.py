@@ -135,6 +135,18 @@ def parse(hljs_file, verbose=False):
     )
 
 
+def parse_metadata(hljs_file):
+    lang = re.compile(r"Language: (.+)$", re.MULTILINE)
+    with open(hljs_file, encoding="utf-8") as fh:
+        data = fh.read()
+    assert "Language" in data
+    language = lang.search(data).group(1)
+    return DictObj(
+        Language=language,
+        alias=basename(hljs_file).rsplit(".", 1)[0].lower(),
+    )
+
+
 def transform_syntax(data, definitions, path, name=None):
     def add_words(name_, value, path=None):
         if isinstance(value, str):
@@ -331,42 +343,6 @@ def regex(obj):
     raise Error("unknown regex type: {}".format(obj))
 
 
-def parse_metadata(hljs_file):
-    lang = re.compile(r"Language: (.+)$", re.MULTILINE)
-    with open(hljs_file, encoding="utf-8") as fh:
-        data = fh.read()
-    assert "Language" in data
-    language = lang.search(data).group(1)
-    return DictObj(
-        Language=language,
-        alias=basename(hljs_file).rsplit(".", 1)[0].lower(),
-    )
-
-
-def pretty_format(obj, indent=0, width=72):
-    rep = repr(obj)
-    if len(rep) < width - indent and not rep.startswith("#") and "# " not in rep:
-        return rep
-    if type(obj) in ITEM_FORMATS:
-        return format_items(obj, indent, width)
-    return rep
-
-def format_items(obj, indent, width):
-    open, format, close, iteritems = ITEM_FORMATS[type(obj)]
-    prefix = " " * indent
-    item_prefix = prefix + "    "
-    parts = [prefix + open]
-    parts.extend(item_prefix + format(i, indent + 4).lstrip() + ","
-                 for i in iteritems(obj))
-    parts.append(prefix + close)
-    return "\n".join(parts)
-
-ITEM_FORMATS = {
-    list: ("[", pretty_format, "]", lambda obj: obj),
-    #tuple: ("(", pretty_format, ")", lambda obj: obj),
-}
-
-
 class DictObj:
 
     def __init__(self, _data=None, **data):
@@ -425,7 +401,7 @@ class Definitions:
             self.recursive_refs.append((key, name, template, args))
             ref_template, ref_args = self.paths[key]
             return Literal("None,  # " + ref_template.format(**ref_args))
-        return Comment("# {}".format(name))
+        return Comment("# {}".format(ordered_repr(name)))
 
     def get_recursive_refs(self):
         def deref(args):
@@ -650,6 +626,46 @@ class SyntaxClass:
         if self._safe_name:
             lines.append("{}.__name__ = {!r}".format(self.safe_name, self.name))
         return "\n".join(lines)
+
+
+def pretty_format(obj, indent=0, width=72):
+    rep = repr(obj)
+    if len(rep) < width - indent and not rep.startswith("#") and "# " not in rep:
+        return rep
+    if type(obj) in ITEM_FORMATS:
+        return format_items(obj, indent, width)
+    return rep
+
+def format_items(obj, indent, width):
+    open, format, close, iteritems = ITEM_FORMATS[type(obj)]
+    prefix = " " * indent
+    item_prefix = prefix + "    "
+    parts = [prefix + open]
+    parts.extend(item_prefix + format(i, indent + 4).lstrip() + ","
+                 for i in iteritems(obj))
+    parts.append(prefix + close)
+    return "\n".join(parts)
+
+ITEM_FORMATS = {
+    list: ("[", pretty_format, "]", lambda obj: obj),
+    #tuple: ("(", pretty_format, ")", lambda obj: obj),
+}
+
+def ordered_repr(obj, seen=None):
+    if seen is None:
+        seen = set()
+    if id(obj) in seen:
+        return "..."
+    seen.add(id(obj))
+    if isinstance(obj, dict):
+        items = ("%r: %s" % (k, ordered_repr(v, seen))
+                 for k, v in sorted(obj.items()))
+        return "{%s}" % ", ".join(items)
+    if isinstance(obj, list):
+        return "[%s]" % ", ".join(ordered_repr(v, seen) for v in obj)
+    if isinstance(obj, tuple):
+        return "(%s)" % ", ".join(ordered_repr(v, seen) for v in obj)
+    return repr(obj)
 
 
 class Error(Exception): pass
