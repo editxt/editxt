@@ -557,8 +557,11 @@ class RE:
             return RE(self.pattern + "|" + other.pattern)
         return self
 
-    def __repr__(self):
-        return 'RE(r"{}")'.format(self.pattern.replace('"', '\\"'))
+    def __repr__(self, paren=re.compile(r"(^|[^\\](?:\\\\)*)\((?!\?)"),
+                       group=re.compile(r"\$\d")):
+        pattern = paren.sub(r"\1(?:", self.pattern) # paren -> non-capturing paren
+        assert not group.search(pattern), "illegal group ref: " + self.pattern
+        return 'RE(r"{}")'.format(pattern.replace('"', '\\"'))
 
     def is_look_ahead(self):
         # WARNING returns wrong result for /(?=\))/
