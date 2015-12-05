@@ -122,6 +122,7 @@ def parse(hljs_file, verbose=False):
         flags = definitions.add(flags)
         assert flags == "flags", flags
     syntax = transform_syntax(data, definitions, ())
+    definitions.update_recursive_refs(syntax)
     assert not syntax.contains_self, syntax
     assert not syntax.parent_ends, syntax
     aliases = [meta.alias] + data._get("aliases", [])
@@ -151,12 +152,12 @@ def transform_syntax(data, definitions, path, name=None):
     def add_words(name_, value, path=None):
         if isinstance(value, str):
             value = [k.split("|")[0] for k in value.split()]
-        named = Assignment(name_, value)
-        ref = definitions.add(named)
+        assignment = Assignment(name_, value)
+        ref = definitions.add(assignment)
         rules.append((name_, Literal(ref)))
         if path is not None:
-            ref  = "({name!r}, {assn.safe_name})"
-            definitions.add_ref(path, ref, name=name_, assn=named)
+            ref  = "({name!r}, {expr.safe_name})"
+            definitions.add_ref(path, ref, name=name_, expr=assignment)
 
     rules = []
     syntax = SyntaxClass(name, rules)
@@ -173,12 +174,12 @@ def transform_syntax(data, definitions, path, name=None):
         definitions.add_recursive_ref(
             contains["path"],
             contains["name"],
-            syntax_ref(name, "rules.extend({ref})"),
-            syntax=syntax,
+            expr_ref(name, "rules.extend({ref})"),
+            expr=syntax,
         )
         return syntax
-    ref = syntax_ref(name, "rules")
-    definitions.add_ref(path + ("contains",), ref, syntax=syntax)
+    ref = expr_ref(name, "rules")
+    definitions.add_ref(path + ("contains",), ref, expr=syntax)
     for i, item in enumerate(contains):
         if item == "self":
             assert name is not None, repr(syntax)
@@ -191,8 +192,8 @@ def transform_syntax(data, definitions, path, name=None):
             rules.append(definitions.add_recursive_ref(
                 item["path"],
                 item["name"],
-                syntax_ref(name, "rules[{i}] = {ref}"),
-                syntax=syntax,
+                expr_ref(name, "rules[{i}] = {ref}"),
+                expr=syntax,
                 i=sum(1 for r in rules if not isinstance(r, Comment)),
             ))
             continue
@@ -229,9 +230,9 @@ def transform_syntax(data, definitions, path, name=None):
                     end_name = definitions.add(end)
                     syntax.parent_ends.append(Literal(end_name))
                 else:
-                    ref = syntax_ref(name, "rules[{i}]")
+                    ref = expr_ref(name, "rules[{i}]")
                     index = sum(1 for r in rules if not isinstance(r, Comment))
-                    definitions.add_ref(item_path, ref, syntax=syntax, i=index)
+                    definitions.add_ref(item_path, ref, expr=syntax, i=index)
                     rules.append(rng)
             elif not plain and "begin" in item:
                 add_words(item.className, [regex(item.begin)], item_path)
@@ -329,12 +330,6 @@ def transform_end(item, lookahead=False):
     return end
 
 
-def syntax_ref(name, attribute):
-    if name is None:
-        return attribute
-    return "{syntax.safe_name}." + attribute
-
-
 def regex(obj):
     if isinstance(obj, str):
         return RE(obj)
@@ -380,9 +375,11 @@ class Definitions:
         self.items = OrderedDict()
         self.names = ("_group{}".format(i) for i in count())
         self.paths = {}
+        self.deferred_refs = defaultdict(list)
         self.recursive_refs = []
 
     def add(self, expr):
+        self.update_recursive_refs(expr)
         name = self.find(expr)
         if name is not None:
             return name
@@ -396,20 +393,31 @@ class Definitions:
         self.paths[path] = (template, args)
 
     def add_recursive_ref(self, path, name, template, **args):
-        key = tuple(path)
-        if key in self.paths:
-            self.recursive_refs.append((key, name, template, args))
-            ref_template, ref_args = self.paths[key]
-            return Literal("None,  # " + ref_template.format(**ref_args))
-        return Comment("# {}".format(ordered_repr(name)))
+        path = tuple(path)
+        if path not in self.paths:
+            return Comment("# {}".format(ordered_repr(name)))
+        ref_template, ref_args = self.paths[path]
+        ref = RecursiveRef(ref_template, ref_args)
+        deferred = (ref, path, name, template, args)
+        self.deferred_refs[id(args["expr"])].append(deferred)
+        return ref
+
+    def update_recursive_refs(self, expr):
+        if id(expr) not in self.deferred_refs:
+            return
+        for ref, path, name, template, args in self.deferred_refs[id(expr)]:
+            expr = self.find_item(ref.args["expr"])
+            if expr is not None:
+                ref.update(expr)
+            else:
+                assert path in self.paths, (path, name, template, args)
+                self.recursive_refs.append((path, name, template, args))
 
     def get_recursive_refs(self):
         def deref(args):
             def find(obj):
-                for found in self:
-                    if obj == found:
-                        return found
-                return obj
+                found = self.find_item(obj)
+                return obj if found is None else found
             return {k: find(v) for k, v in args.items()}
         defs = []
         for path, name, template, args in self.recursive_refs:
@@ -445,6 +453,12 @@ class Definitions:
         for name, item in self.items.items():
             if obj == item:
                 return name
+        return None
+
+    def find_item(self, obj):
+        for item in self:
+            if obj == item:
+                return item
         return None
 
     def __contains__(self, name):
@@ -512,9 +526,29 @@ class Literal:
         return self.value
 
 
+class RecursiveRef(Literal):
+
+    def __init__(self, template, args):
+        self.value = "None,  # " + template.format(**args)
+        self.template = template
+        self.args = args
+
+    def update(self, expr):
+        assert "expr" in self.args, self.args
+        self.args["expr"] = expr
+        self.value = self.template.format(**self.args)
+
+
+def expr_ref(name, attribute):
+    if name is None:
+        return attribute
+    return "{expr.safe_name}." + attribute
+
+
 class Comment(Literal):
 
-    pass
+    def update(self, expr):
+        pass
 
 
 class RE:
