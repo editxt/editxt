@@ -661,7 +661,8 @@ class RE(object):
 class Transition(object):
     def __init__(self, sdef):
         self.syntax = sdef
-        self.pattern = disjunction(t[0] for t in sdef.iter_group_info())
+        pattern = disjunction(t[0] for t in sdef.iter_group_info())
+        self.pattern = r"(?={})".format(pattern)
     def __call__(self, idgen):
         return self.syntax.iter_group_info(idgen, end=True)
     def __repr__(self):

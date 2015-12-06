@@ -250,9 +250,15 @@ def transform_syntax(data, definitions, path, name=None):
 
 def transform_range(item, definitions, path):
     name = item.className
+    undername = str(name).startswith("_")
+    if undername or item._get("excludeBegin") and item._get("excludeEnd"):
+        if not undername:
+            assert name, item - {"contains", "_parent"}
+            name = "_" + str(name)
+        item = item - {"excludeBegin", "excludeEnd"}
 
-    begin = transform_begin(item)
-    end = transform_end(item)
+    begin = transform_begin(item, definitions)
+    end = transform_end(item, definitions)
 
     content = ()
     ends = []
@@ -281,7 +287,7 @@ def transform_range(item, definitions, path):
         begin = Literal(start_name)
         if isinstance(item.starts, str):
             content = (Literal(item.starts),)
-            end = transform_end(item._parent, lookahead=True)
+            end = transform_end(item._parent, definitions, lookahead=True)
         else:
             args = {"_parent": item._parent}
             if "className" not in item.starts:
@@ -292,49 +298,45 @@ def transform_range(item, definitions, path):
             sub_name = definitions.add(sub)
             content = (Literal(sub_name),)
             if "end" in next_:
-                end = transform_end(next_)
+                end = transform_end(next_, definitions)
             else:
-                end = transform_end(item._parent, lookahead=True)
+                end = transform_end(item._parent, definitions, lookahead=True)
 
     return (name, begin, [end] + ends) + content
 
 
-def transform_begin(item):
+def transform_begin(item, definitions):
     if "beginKeywords" in item:
         begin = regex(r"\b(" + "|".join(item.beginKeywords.split()) + ")")
     elif "begin" in item:
         begin = regex(item.begin)
     else:
         begin = RE(r"\B|\b")
-    if item._get("excludeBegin"):
-        # http://highlightjs.readthedocs.org/en/latest/reference.html#excludebegin-excludeend
-        pass
+    if item._get("excludeBegin") and begin != RE(r"\B|\b"):
+        assert not item._get("returnBegin"), item - {"contains", "_parent"}
+        rules = [Literal("('_{}', {!r})".format(item.className, begin))]
+        syntax = SyntaxClass("_{}".format(item.className), rules)
+        begin = Literal(definitions.add(syntax))
     if item._get("returnBegin"):
         begin = RE(r"(?={})".format(begin.pattern))
     return begin
 
 
-def transform_end(item, lookahead=False):
-    if "end" in item and item.end:
+def transform_end(item, definitions, lookahead=False):
+    lookahead = lookahead or item._get("end") and item._get("returnEnd")
+    if item._get("end"):
         end = regex(item.end)
-    elif not item._get("endsWithParent"):
-        end = RE(r"\B|\b")
+        if item._get("excludeEnd") \
+                and not str(item.className).startswith("_") \
+                and not lookahead \
+                and not end.pattern.startswith("(?="):
+            rules = [Literal("('_{}', {!r}, [RE(r'\\b|\\B')])".format(item.className, end))]
+            syntax = SyntaxClass("_{}".format(item.className), rules)
+            return Literal(definitions.add(syntax))
     else:
-        end = RE("")
-    lookahead = lookahead or (
-        end and (item._get("excludeEnd") or item._get("returnEnd"))
-    )
-# TODO check if highlighting still works correctly without including parent
-# end pattern here (I think default behavior for EditXT highlighting is to
-# end with parent). This adds an extra "rule0" definition to the css.syntax.py
-#    if item._get("endsWithParent") and "end" in item._parent:
-#        import bug; bug.trace()
-#        if lookahead:
-#            end = (end | regex(item._parent.end).non_look_ahead()).look_ahead()
-#        else:
-#            end = end | regex(item._parent.end).look_ahead()
-#    elif lookahead and not end.is_look_ahead():
-    if lookahead and not end.is_look_ahead():
+        # matches nothing -> end with parent
+        end = RE(r"\B\b")
+    if lookahead and not end.is_lookahead():
         end = end.look_ahead()
     return end
 
@@ -568,8 +570,8 @@ class RE:
         assert not group.search(pattern), "illegal group ref: " + self.pattern
         return 'RE(r"{}")'.format(pattern.replace('"', '\\"'))
 
-    def is_look_ahead(self):
-        # WARNING returns wrong result for /(?=\))/
+    def is_lookahead(self):
+        # WARNING returns wrong result (False) for /(?=\))/
         return self.pattern.startswith("(?=") and self.pattern.endswith(")") \
                 and ")" not in self.pattern[3:-1]
 
@@ -577,7 +579,7 @@ class RE:
         return RE(r"(?={})".format(self.pattern))
 
     def non_look_ahead(self):
-        if self.is_look_ahead():
+        if self.is_lookahead():
             return RE(self.pattern[3:-1])
         return self
 
@@ -681,6 +683,10 @@ class DictObj:
 
     def __repr__(self):
         return repr(self._data)
+
+    def __sub__(self, other):
+        items = {k: v for k, v in self._data.items() if k not in other}
+        return DictObj(**items)
 
     def _get(self, name, default=None):
         return self._data.get(name, default)
