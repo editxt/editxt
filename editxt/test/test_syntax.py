@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+import re
 from contextlib import closing
 from difflib import unified_diff
 from itertools import islice
@@ -29,6 +30,7 @@ import Foundation as fn
 from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
 from nose.tools import *
 from editxt.test.util import TestConfig, gentest, tempdir, replattr
+from testil import CaptureLogging, Regex
 
 import editxt.theme
 import editxt.constants as const
@@ -768,6 +770,26 @@ def test_Highlighter_color_text():
           ( group recursive
           ))) group recursive
         """)
+
+    def test_err(msg, *args):
+        with CaptureLogging(mod) as log:
+            test.test(*args)
+            eq_(log.data["exception"], [Regex(msg)])
+
+    class lang:
+        name = "non-advancing-range"
+        delimited_ranges = [
+            ("group", RE(r"(?=.)"), [RE(r"\b|\B")]),
+        ]
+    lang = make_definition(lang)
+    yield test_err, "non-advancing range: index=0 ", lang, "a", ""
+
+    class lang:
+        name = "infinite-language-recursion"
+        delimited_ranges = []
+    lang.delimited_ranges.append(("group", RE(r"(?=.)"), [RE(r"x")], lang))
+    lang = make_definition(lang)
+    yield test_err, "max recursion exceeded", lang, "a", ""
 
 def test_NoHighlight_wordinfo():
     nh = NoHighlight("Test", "")

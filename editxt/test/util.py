@@ -91,6 +91,7 @@ def gentest(test):
             visible_kw = {k: v for k, v in kw.items() if not k.startswith("_")}
             display_args += (KeywordArgs(visible_kw),)
         return (run_test_with,) + display_args
+    assemble_test_args.test = test
     return assemble_test_args
 
 

@@ -207,12 +207,12 @@ class Highlighter(object):
         if offset > 0:
             key, ignore = get_attribute(x_range, offset, null)
             if key:
-                stack.append(lang)
+                stack.append((lang, offset))
                 state = key
                 lang = langs[key]
                 while " " in key:
                     key = key.rsplit(" ", 1)[0]
-                    stack.insert(1, langs[key])
+                    stack.insert(1, (langs[key], offset))
 
         while True:
             wordinfo = lang.wordinfo
@@ -274,14 +274,14 @@ class Highlighter(object):
                         add_attribute(x_token, info, rng)
                         add_attribute(fg_name, color, rng)
 
-                else:
-                    assert info.event, "non-advancing match: " \
-                        "index={} group={} {} {}".format(
-                            start,
-                            match.lastgroup,
-                            lang.regex,
-                            lang,
-                        )
+                elif not info.event:
+                    raise Error("non-advancing match: "
+                                "index={} group={} {} {}".format(
+                                    start,
+                                    match.lastgroup,
+                                    lang.regex,
+                                    lang,
+                                ))
                 if info.event:
                     #log.debug("state=%s offset=%s length=%s %s", 
                     #    state, offset, end - offset, "+" if state else "-")
@@ -290,18 +290,29 @@ class Highlighter(object):
                     else:
                         rem_attribute(x_range, (offset, start - offset))
                     if info.end:
+                        if end == stack[-1][1]:
+                            raise Error("non-advancing range: "
+                                        "index={} group={} {} {}".format(
+                                            start,
+                                            match.lastgroup,
+                                            lang.regex,
+                                            lang,
+                                        ))
                         state = state.rsplit(" ", 1)[0] if " " in state else ""
-                        lang = stack.pop()
+                        lang, ignore = stack.pop()
                     if start != end:
                         if state:
                             add_attribute(x_range, state, rng)
                         else:
                             rem_attribute(x_range, rng)
                     if info.next:
-                        stack.append(lang)
+                        stack.append((lang, start))
                         lang = info.next
                         state = (state + " " + lang.id) if state else lang.id
                         langs[state] = lang
+                        if len(state) > 200:
+                            raise Error("max recursion exceeded: "
+                                        "{}".format(list(langs.values())))
                     offset = end
                     break # exit for
             else:
