@@ -250,12 +250,6 @@ def transform_syntax(data, definitions, path, name=None):
 
 def transform_range(item, definitions, path):
     name = item.className
-    undername = str(name).startswith("_")
-    if undername or item._get("excludeBegin") and item._get("excludeEnd"):
-        if not undername:
-            assert name, item - {"contains", "_parent"}
-            name = "_" + str(name)
-        item = item - {"excludeBegin", "excludeEnd"}
 
     begin = transform_begin(item, definitions)
     end = transform_end(item, definitions)
@@ -312,13 +306,15 @@ def transform_begin(item, definitions):
         begin = regex(item.begin)
     else:
         begin = RE(r"\B|\b")
-    if item._get("excludeBegin") and begin != RE(r"\B|\b"):
-        assert not item._get("returnBegin"), item - {"contains", "_parent"}
-        rules = [Literal("('_{}', {!r})".format(item.className, begin))]
-        syntax = SyntaxClass("_{}".format(item.className), rules)
-        begin = Literal(definitions.add(syntax))
-    if item._get("returnBegin"):
-        begin = RE(r"(?={})".format(begin.pattern))
+    if begin != RE(r"\B|\b") and not begin.pattern.startswith(("(?=", "(?<=")):
+        if item._get("excludeBegin") and not str(item.className).startswith("_"):
+            assert not item._get("returnBegin"), item - {"contains", "_parent"}
+            #begin = RE(r"(?<={})".format(begin.pattern))
+            rules = [Literal("('_{}', [{!r}])".format(item.className, begin))]
+            syntax = SyntaxClass("_{}".format(item.className), rules)
+            begin = Literal(definitions.add(syntax))
+        elif item._get("returnBegin"):
+            begin = RE(r"(?={})".format(begin.pattern))
     return begin
 
 
@@ -330,15 +326,15 @@ def transform_end(item, definitions, lookahead=False):
                 and not str(item.className).startswith("_") \
                 and not lookahead \
                 and not end.pattern.startswith("(?="):
-            rules = [Literal("('_{}', {!r}, [RE(r'\\b|\\B')])".format(item.className, end))]
+            #end = end.lookahead()
+            rules = [Literal("('_{}', [{!r}])".format(item.className, end))]
             syntax = SyntaxClass("_{}".format(item.className), rules)
             return Literal(definitions.add(syntax))
-    else:
-        # matches nothing -> end with parent
-        end = RE(r"\B\b")
-    if lookahead and not end.is_lookahead():
-        end = end.look_ahead()
-    return end
+        elif lookahead and not end.is_lookahead():
+            end = end.lookahead()
+        return end
+    # matches nothing -> end with parent
+    return RE(r"\B\b")
 
 
 def regex(obj):
@@ -575,13 +571,8 @@ class RE:
         return self.pattern.startswith("(?=") and self.pattern.endswith(")") \
                 and ")" not in self.pattern[3:-1]
 
-    def look_ahead(self):
+    def lookahead(self):
         return RE(r"(?={})".format(self.pattern))
-
-    def non_look_ahead(self):
-        if self.is_lookahead():
-            return RE(self.pattern[3:-1])
-        return self
 
 
 class Assignment:

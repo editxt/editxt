@@ -200,14 +200,15 @@ def test_Highlighter_color_text():
                 while True:
                     attr, attr_range = long_range(SYNTAX_TOKEN, xrng[0], None, full)
                     colr, x = long_range(fg_color, xrng[0], NULL, full)
-                    if attr:
-                        print(attr)
-                        attr = attr.rsplit(" ", 1)[-1]
+                    text = self[attr_range[0]: sum(attr_range)]
+                    if attr or colr and colr != "text_color" and text.strip():
+                        print(attr or colr)
+                        attr = attr.rsplit(" ", 1)[-1] if attr else colr
                         language = lang if xrng[0] <= attr_range[0] else (" ~" + lang[1:])
                         language = language.replace(attr + ".", "$.")
                         lines.append("{}{} {}{}".format(
                             "  " * level,
-                            self[attr_range[0]: sum(attr_range)],
+                            text,
                             attr if attr == colr else "{} {}".format(attr, colr),
                             language,
                         ))
@@ -226,7 +227,7 @@ def test_Highlighter_color_text():
         else:
             hl = Highlighter(theme)
             hl.syntaxdef = get_syntax_definition(lang)
-        text = string if isinstance(string, Text) else Text(string)
+        text = string if isinstance(string, Text) else Text(dedent(string))
         get_color = lambda value: value
         with replattr(editxt.theme, "get_color", get_color, sigcheck=False):
             if edit:
@@ -391,6 +392,7 @@ def test_Highlighter_color_text():
         (1, 0, 'r'),
         """
         r" string.double-quote string
+            word string Regular Expression
         " string.double-quote string
         """,
         (1, 1, ''),
@@ -410,7 +412,9 @@ def test_Highlighter_color_text():
         (4, 0, ' '),
         """
         r" string.double-quote string
+            ( string Regular Expression
             ? keyword Regular Expression
+             P<xyz> string Regular Expression
             ) group Regular Expression
         " string.double-quote string
         """,
@@ -553,6 +557,20 @@ def test_Highlighter_color_text():
           ; text_color CSS
           } text_color CSS
         </style> tag
+        """)
+
+    yield test("markdown",
+        """
+        ```Python
+        def inc(arg):
+            return arg + 1
+        ```
+        """,
+        """
+        ``` code text_color
+          def keyword Python
+          return keyword Python
+        ``` code text_color
         """)
 
     yield test("javascript",
@@ -769,6 +787,27 @@ def test_Highlighter_color_text():
           do tag recursive
           ( group recursive
           ))) group recursive
+        """)
+
+    class lang:
+        name = "start-end-lang-no-body"
+        word_groups = [("keyword", ["def"])]
+        default_text = const.DELIMITER
+        class _lparen:
+            word_groups = [("_lparen", ["("])]
+        class _rparen:
+            word_groups = [("_rparen", [")"])]
+        delimited_ranges = [
+            ("group", _lparen, [_rparen]),
+        ]
+    lang = make_definition(lang)
+    yield test(lang, "def (do def) def",
+        """
+        def keyword
+        ( text_color
+          do def group start-end-lang-no-body
+        ) text_color
+        def keyword
         """)
 
     def test_err(msg, *args):

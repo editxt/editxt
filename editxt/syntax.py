@@ -83,6 +83,7 @@ class SyntaxFactory():
     def load_definition(self, filename):
         ns = {
             "DELIMITER": const.DELIMITER,
+            "DynamicRange": DynamicRange,
             "re": re,
             "RE": RE,
             "registry": self,
@@ -308,6 +309,8 @@ class Highlighter(object):
                     if info.next:
                         stack.append((lang, start))
                         lang = info.next
+                        if callable(lang):
+                            lang, end = lang(string, end)
                         state = (state + " " + lang.id) if state else lang.id
                         langs[state] = lang
                         if len(state) > 200:
@@ -540,6 +543,8 @@ class SyntaxDefinition(NoHighlight):
                     log.warn("unknown syntax definition: %r", sdef_name)
                 elif ends:
                     sdef = self.make_definition(owner, sdef, ends)
+            elif isinstance(sdef, DynamicRange):
+                return sdef.make_definition(self, lookup_syntax, name, ends)
             elif ends:
                 sdef = self.make_definition(owner, sdef, ends)
             return sdef
@@ -589,12 +594,20 @@ class SyntaxDefinition(NoHighlight):
                     if idgen is None or end:
                         yield from start_def.iter_group_info(idgen, end)
                         return
-                    next_def = lookup_syntax(name, *sdef, ends=ends)
+                    if sdef:
+                        next_def = lookup_syntax(name, *sdef, ends=ends)
+                    else:
+                        class delim_color:
+                            default_text = name
+                            word_groups = []
+                        delim_color.__name__ = name
+                        next_def = self.make_definition(name, delim_color, ends)
                     if not next_def:
                         next_def = self.make_definition(name, unknown, ends)
                     for phrase, ident, info in start_def.iter_group_info(idgen):
                         if info.next is None:
                             info.next = next_def
+                            info.event = True
                         else:
                             for i in count():
                                 try:
@@ -667,6 +680,37 @@ class RE(object):
         self.pattern = pattern
     def __repr__(self):
         return "RE(%r)" % (self.pattern,)
+
+
+class DynamicRange:
+    default_text = None
+    def __init__(self, lang_pattern):
+        if isinstance(lang_pattern, str):
+            lang_pattern = re.compile(lang_pattern, re.MULTILINE)
+        self.lang_pattern = lang_pattern
+    def make_definition(self, parent, lookup_syntax, name, ends):
+        sdef = DynamicRange(self.lang_pattern)
+        sdef.parent = parent
+        sdef.lookup_syntax = lookup_syntax
+        sdef.name = name
+        sdef.ends = ends
+        class none:
+            default_text = const.DELIMITER
+            word_groups = []
+        sdef.none = parent.make_definition(name, none, ends)
+        return sdef
+    @property
+    def default_text_name(self):
+        return self.parent.default_text_name
+    def __call__(self, string, offset):
+        match = self.lang_pattern.match(string, offset)
+        if match:
+            name = match.group(0).strip()
+            if name:
+                sdef = self.lookup_syntax(self.name, name, ends=self.ends)
+                if sdef is not None:
+                    return sdef, match.end()
+        return self.none, offset
 
 
 class Transition(object):

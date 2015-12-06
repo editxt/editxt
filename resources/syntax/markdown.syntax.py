@@ -14,23 +14,51 @@ emphasis = [RE(r"\*.+?\*")]
 
 emphasis0 = [RE(r"_.+?_")]
 
-code = [RE(r"`.+?`")]
+code = [RE(r"`[^`\r\n]+?`")]
 
 class _string:
     default_text = DELIMITER
-    rules = [('_string', RE(r"\["))]
+    rules = [('_string', [RE(r"\[")])]
+
+class _link:
+    default_text = DELIMITER
+    rules = [('_link', [RE(r"\]\(")])]
+
+class _link0:
+    default_text = DELIMITER
+    rules = [('_link', [RE(r"\)")])]
+_link0.__name__ = '_link'
+
+class _symbol:
+    default_text = DELIMITER
+    rules = [('_symbol', [RE(r"\]\[")])]
+
+class _symbol0:
+    default_text = DELIMITER
+    rules = [('_symbol', [RE(r"\]")])]
+_symbol0.__name__ = '_symbol'
 
 class _group2:
     default_text = DELIMITER
     rules = [
         ('string', _string, [RE(r"(?=\])")]),
-        ('_link', RE(r"\]\("), [RE(r"\)")]),
-        ('_symbol', RE(r"\]\["), [RE(r"\]")]),
+        ('link', _link, [_link0]),
+        ('symbol', _symbol, [_symbol0]),
     ]
 
-class _symbol:
+class _symbol1:
     default_text = DELIMITER
-    rules = [('_symbol', RE(r"\["), [RE(r"\]:")])]
+    rules = [('_symbol', [RE(r"\[")])]
+_symbol1.__name__ = '_symbol'
+
+class _symbol2:
+    default_text = DELIMITER
+    rules = [('_symbol', [RE(r"\]:")])]
+_symbol2.__name__ = '_symbol'
+
+class symbol:
+    default_text = DELIMITER
+    rules = [('symbol', _symbol1, [_symbol2])]
 
 class link:
     default_text = DELIMITER
@@ -38,7 +66,7 @@ class link:
 
 class _group3:
     default_text = DELIMITER
-    rules = [('_symbol', _symbol, [RE(r"$")], link)]
+    rules = [('symbol', symbol, [RE(r"$")], link)]
 
 rules = [
     ('section', RE(r"^#{1,6}"), [RE(r"$")]),
@@ -50,6 +78,7 @@ rules = [
     ('emphasis', emphasis0),
     ('quote', RE(r"^>\s+"), [RE(r"$")]),
     ('code', code),
+    ('code', "```", ["```"], DynamicRange(r"\S+\s*?$")),
     ('code', RE(r"^(?: {4}|	)"), [RE(r"$")]),
     ('_group1', RE(r"^[-\*]{3,}"), [RE(r"$")]),
     ('_group2', RE(r"(?=\[.+?\][\(\[].*?[\)\]])"), [RE(r"\B\b")], _group2),
