@@ -270,31 +270,44 @@ def transform_range(item, definitions, path):
             if content:
                 print("WARNING discarding range rules for sub language")
                 print(syntax)
-            if item.subLanguage:
-                content = (item.subLanguage,)
-            else:
+            elif not item.subLanguage:
                 print("auto sub-language detection not implemented")
+            else:
+                assert isinstance(item.subLanguage, str), item.subLanguage
+                content = (item.subLanguage,)
 
     if item._get("starts"):
-        start = SyntaxClass(name, [(name, begin, [end]) + content])
-        start_name = definitions.add(start)
-        begin = Literal(start_name)
-        if isinstance(item.starts, str):
-            content = (Literal(item.starts),)
-            end = transform_end(item._parent, definitions, lookahead=True)
+        if "subLanguage" in item.starts and ("end" not in item or "end" not in item.starts):
+            if content:
+                print("WARNING discarding range rules for sub language")
+                print(content)
+            if item.starts["subLanguage"]:
+                content = (transform_sublanguage(item.starts["subLanguage"]),)
+            if "end" in item.starts:
+                assert "end" not in item, item - {"contains", "_parent"}
+                end = transform_end(DictObj(item.starts), definitions)
         else:
-            args = {"_parent": item._parent}
-            if "className" not in item.starts:
-                args["className"] = definitions.get_name(item.starts)
-            next_ = DictObj(item.starts, **args)
-            sub_path = path + ("starts",)
-            sub = transform_syntax(next_, definitions, sub_path, next_.className)
-            sub_name = definitions.add(sub)
-            content = (Literal(sub_name),)
-            if "end" in next_:
-                end = transform_end(next_, definitions)
+            start = SyntaxClass(name, [(name, begin, [end]) + content])
+            start_name = definitions.add(start)
+            begin = Literal(start_name)
+            if isinstance(item.starts, str):
+                content = (Literal(item.starts),)
+                end = transform_end(item.starts, definitions, lookahead=True)
+            elif "subLanguage" in item.starts and "end" not in item.starts:
+                content = (transform_sublanguage(item.starts["subLanguage"]),)
             else:
-                end = transform_end(item._parent, definitions, lookahead=True)
+                args = {"_parent": item._parent}
+                if "className" not in item.starts:
+                    args["className"] = definitions.get_name(item.starts)
+                next_ = DictObj(item.starts, **args)
+                sub_path = path + ("starts",)
+                sub = transform_syntax(next_, definitions, sub_path, next_.className)
+                sub_name = definitions.add(sub)
+                content = (Literal(sub_name),)
+                if "end" in next_:
+                    end = transform_end(next_, definitions)
+                else:
+                    end = RE(r"\B\b") # guess, needs testing
 
     return (name, begin, [end] + ends) + content
 
@@ -335,6 +348,14 @@ def transform_end(item, definitions, lookahead=False):
         return end
     # matches nothing -> end with parent
     return RE(r"\B\b")
+
+
+def transform_sublanguage(lang):
+    if isinstance(lang, str):
+        return lang
+    print("WARNING auto-language detection not implemented: {}".format(lang))
+    assert isinstance(lang, list), lang
+    return "javascript" if "javascript" in lang else lang[0]
 
 
 def regex(obj):
