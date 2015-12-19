@@ -192,25 +192,27 @@ def test_Highlighter_color_text():
             fg_color = ak.NSForegroundColorAttributeName
             long_range = self.attribute_atIndex_longestEffectiveRange_inRange_
             while rng[1] > 0:
-                lang, xrng = long_range(SYNTAX_RANGE, rng[0], None, rng)
-                lang = (" " + highlighter.langs[lang].name) if lang else ""
-                #print(lang, xrng)
-                level = len(lang.split()) if lang else 0
+                key, xrng = long_range(SYNTAX_RANGE, rng[0], None, rng)
+                lang = (highlighter.langs[key].name if key else "")
+                if lang == highlighter.syntaxdef.name:
+                    lang = ""
+                #print(lang.strip(), xrng)
+                level = 1 if lang else 0
                 xend = sum(xrng)
                 while True:
                     attr, attr_range = long_range(SYNTAX_TOKEN, xrng[0], None, full)
                     colr, x = long_range(fg_color, xrng[0], NULL, full)
                     text = self[attr_range[0]: sum(attr_range)]
                     if attr or colr and colr != "text_color" and text.strip():
-                        print(attr or colr)
+                        print((attr or colr).ljust(30), repr(text)[1:-1][:40])
                         attr = attr.rsplit(" ", 1)[-1] if attr else colr
-                        language = lang if xrng[0] <= attr_range[0] else (" ~" + lang[1:])
+                        language = lang if xrng[0] <= attr_range[0] else ("~" + lang)
                         language = language.replace(attr + ".", "$.")
                         lines.append("{}{} {}{}".format(
                             "  " * level,
                             text,
                             attr if attr == colr else "{} {}".format(attr, colr),
-                            language,
+                            (" " + language) if language else "",
                         ))
                     start = sum(attr_range)
                     if start >= xend:
@@ -229,13 +231,16 @@ def test_Highlighter_color_text():
             hl.syntaxdef = get_syntax_definition(lang)
         text = string if isinstance(string, Text) else Text(dedent(string))
         get_color = lambda value: value
-        with replattr(editxt.theme, "get_color", get_color, sigcheck=False):
+        with replattr(editxt.theme, "get_color", get_color, sigcheck=False), \
+            CaptureLogging(mod) as log:
             if edit:
                 start, length, insert = edit
                 text[(start, length)] = Text(insert)
                 hl.color_text(text, (start, len(insert)))
             else:
                 hl.color_text(text)
+        errors = log.data.get("error")
+        assert not errors, "Errors logged:\n" + "\n---\n\n".join(errors)
         a = text.colors(hl)
         b = dedent(expect).strip().split("\n") if expect else []
         assert a == b, "\n" + "\n".join(
@@ -323,16 +328,16 @@ def test_Highlighter_color_text():
         """,
         r"""
         r" string.double-quote string
-            \" operator.escape operator Regular Expression
+          \" operator.escape operator Regular Expression
         " string.double-quote string
         r" string.double-quote string
-            \\ operator.escape operator Regular Expression
+          \\ operator.escape operator Regular Expression
         " string.double-quote string
         r" string.double-quote string
-            \\\" operator.escape operator Regular Expression
+          \\\" operator.escape operator Regular Expression
         " string.double-quote string
         r" string.double-quote string
-            \\\\\" operator.escape operator Regular Expression
+          \\\\\" operator.escape operator Regular Expression
         " string.double-quote string
         """)
     yield test("python",
@@ -345,7 +350,7 @@ def test_Highlighter_color_text():
         '''"""A doc string\nWith multiple lines\n"""''',
         '''
         """A doc string string.multiline.double-quote string
-          With multiple lines string.multiline.double-quote string Python
+        With multiple lines string.multiline.double-quote string
         """ string.multiline.double-quote string
         ''')
     yield from edit("python", "\ndef f(",
@@ -392,7 +397,7 @@ def test_Highlighter_color_text():
         (1, 0, 'r'),
         """
         r" string.double-quote string
-            word string Regular Expression
+          word string Regular Expression
         " string.double-quote string
         """,
         (1, 1, ''),
@@ -403,28 +408,28 @@ def test_Highlighter_color_text():
     yield from edit("python", r"""r"(?P<xyz>)" """,
         """
         r" string.double-quote string
-            (?P< group.named group Regular Expression
-            xyz name Regular Expression
-            > group.named group Regular Expression
-            ) group Regular Expression
+          (?P< group.named group Regular Expression
+          xyz name Regular Expression
+          > group.named group Regular Expression
+          ) group Regular Expression
         " string.double-quote string
         """,
         (4, 0, ' '),
         """
         r" string.double-quote string
-            ( string Regular Expression
-            ? keyword Regular Expression
-             P<xyz> string Regular Expression
-            ) group Regular Expression
+          ( string Regular Expression
+          ? keyword Regular Expression
+           P<xyz> string Regular Expression
+          ) group Regular Expression
         " string.double-quote string
         """,
         (4, 1, ''),
         """
         r" string.double-quote string
-            (?P< group.named group Regular Expression
-            xyz name Regular Expression
-            > group.named group Regular Expression
-            ) group Regular Expression
+          (?P< group.named group Regular Expression
+          xyz name Regular Expression
+          > group.named group Regular Expression
+          ) group Regular Expression
         " string.double-quote string
         """,
         )
@@ -435,26 +440,26 @@ def test_Highlighter_color_text():
         ''',
         '''
         r""" string.multiline.double-quote string
-            [ keyword.set keyword Regular Expression
-            \s operator.class operator Regular Expression
-            ] keyword.set keyword Regular Expression
+          [ keyword.set keyword Regular Expression
+          \s operator.class operator Regular Expression
+          ] keyword.set keyword Regular Expression
         """ string.multiline.double-quote string
         ' """ """ ' string.single-quote string
         ''',
         (17, 1, ''),
         '''
         r""" string.multiline.double-quote string
-            [ keyword.set keyword Regular Expression
-            \s operator.class operator Regular Expression
+          [ keyword.set keyword Regular Expression
+          \s operator.class operator Regular Expression
         """ string.multiline.double-quote string
         ' """ """ ' string.single-quote string
         ''',
         (17, 0, ']'),
         '''
         r""" string.multiline.double-quote string
-            [ keyword.set keyword Regular Expression
-            \s operator.class operator Regular Expression
-            ] keyword.set keyword Regular Expression
+          [ keyword.set keyword Regular Expression
+          \s operator.class operator Regular Expression
+          ] keyword.set keyword Regular Expression
         """ string.multiline.double-quote string
         ' """ """ ' string.single-quote string
         ''',
@@ -475,21 +480,21 @@ def test_Highlighter_color_text():
         """<div tal:wrap='<span>'""",
         """
         <div tag
-          tal:wrap attribute Markup
-          = tag.punctuation tag Markup
-          '<span>' value Markup
+        tal:wrap attribute
+        = tag.punctuation tag
+        '<span>' value
         """)
     yield test("markup",
         """<div class='ext' data id="xpr"> </div>""",
         """
         <div tag
-          class attribute Markup
-          = tag.punctuation tag Markup
-          'ext' value Markup
-          data attribute Markup
-          id attribute Markup
-          = tag.punctuation tag Markup
-          "xpr" value Markup
+        class attribute
+        = tag.punctuation tag
+        'ext' value
+        data attribute
+        id attribute
+        = tag.punctuation tag
+        "xpr" value
         > tag
         </div> tag
         """)
@@ -503,10 +508,10 @@ def test_Highlighter_color_text():
         """<!DOCTYPE html encoding="utf-8">\n<div/>""",
         """
         <!DOCTYPE tag.doctype tag
-          html attribute Markup
-          encoding attribute Markup
-          = tag.punctuation tag Markup
-          "utf-8" value Markup
+        html attribute
+        encoding attribute
+        = tag.punctuation tag
+        "utf-8" value
         > tag.doctype tag
         <div/> tag
         """)
@@ -533,11 +538,10 @@ def test_Highlighter_color_text():
         "<style attr='value'></style>",
         """
         <style tag
-          attr attribute Markup
-          = tag.punctuation tag Markup
-          'value' value Markup
-        > tag
-        </style> tag
+        attr attribute
+        = tag.punctuation tag
+        'value' value
+        ></style> tag
         """)
     yield test("markup",
         "<script>var x = 'y';</script>",
@@ -573,6 +577,44 @@ def test_Highlighter_color_text():
         ``` code text_color
         """)
 
+    yield test("markdown",
+        """
+        *Clojure REPL*
+
+        ```clojure-repl
+        user=> (defn f [x y]
+          #_=>   (+ x y))
+        #'user/f
+        user=> (f 5 7)
+        12
+        user=> nil
+        nil
+        ```
+
+        *Clojure*
+        """,
+        """
+        *Clojure REPL* emphasis text_color
+        ``` code text_color
+          user=> meta text_color Clojure REPL
+          ( text_color Clojure
+          defn name Clojure
+            #_=> meta text_color Clojure REPL
+          ( text_color Clojure
+          + name Clojure
+          )) text_color Clojure
+          user=> meta text_color Clojure REPL
+          ( text_color Clojure
+          f name Clojure
+          5 number Clojure
+          7 number Clojure
+          ) text_color Clojure
+          user=> meta text_color Clojure REPL
+          nil literal text_color Clojure
+        ``` code text_color
+        *Clojure* emphasis text_color
+        """)
+
     yield test("javascript",
         "var x = 'y';",
         """
@@ -584,7 +626,7 @@ def test_Highlighter_color_text():
         """
         var keyword
         / regexp text_color
-            * keyword Regular Expression
+          * keyword Regular Expression
         /ig regexp text_color
         """)
     yield test("javascript",
@@ -855,5 +897,5 @@ def make_definition(rules):
         value = getattr(rules, attr, NA)
         if value is not NA:
             args[attr] = value
-    return SyntaxDefinition("", **args)
+    return SyntaxDefinition("", registry={}, **args)
 
