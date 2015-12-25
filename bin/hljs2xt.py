@@ -409,12 +409,11 @@ class Definitions:
     def add(self, expr):
         self.update_recursive_refs(expr)
         name = self.find(expr)
-        if name is not None:
-            return name
-        name = self.get_name(expr, expr.name)
-        if name.name != expr.name.name:
-            expr.safe_name = name
-        self.items[name] = expr
+        if name is None:
+            name = self.get_name(expr, expr.name)
+            if name.name != expr.name.name:
+                expr.safe_name = name
+            self.items[name] = expr
         return name
 
     def add_ref(self, path, template, **args):
@@ -436,8 +435,8 @@ class Definitions:
         if id(expr) not in self.deferred_refs:
             return
         for ref, path, name, template, args in self.deferred_refs[id(expr)]:
-            expr = self.find_item(ref.args["expr"])
-            if expr is not None:
+            expr = ref.args["expr"] #self.find_item(ref.args["expr"])
+            if any(expr is obj for obj in self):
                 ref.update(expr)
             else:
                 assert path in self.paths, (path, name, template, args)
@@ -559,14 +558,18 @@ class Literal:
 class RecursiveRef(Literal):
 
     def __init__(self, template, args):
-        self.value = "None,  # " + template.format(**args)
         self.template = template
         self.args = args
+        self.defined = False
+
+    @property
+    def value(self):
+        prefix = "" if self.defined else "None,  # "
+        return prefix + self.template.format(**self.args)
 
     def update(self, expr):
-        assert "expr" in self.args, self.args
-        self.args["expr"] = expr
-        self.value = self.template.format(**self.args)
+        assert self.args.get("expr") is expr, (self.args, expr)
+        self.defined = True
 
     def __eq__(self, other):
         expr = self.args["expr"]
