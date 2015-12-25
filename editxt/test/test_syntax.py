@@ -204,7 +204,12 @@ def test_Highlighter_color_text():
                     colr, x = long_range(fg_color, xrng[0], NULL, full)
                     text = self[attr_range[0]: sum(attr_range)]
                     if attr or colr and colr != "text_color" and text.strip():
-                        print((attr or colr).ljust(30), repr(text)[1:-1][:40])
+                        if attr:
+                            attr_name = attr
+                        else:
+                            # default text color, not a matched token
+                            attr_name = "{} {} -".format(lang, colr)
+                        print(attr_name.ljust(30), repr(text)[1:-1][:40])
                         attr = attr.rsplit(" ", 1)[-1] if attr else colr
                         language = lang if xrng[0] <= attr_range[0] else ("~" + lang)
                         language = language.replace(attr + ".", "$.")
@@ -558,6 +563,7 @@ def test_Highlighter_color_text():
           .error selector-class text_color CSS
           { text_color CSS
           color attribute CSS
+          : text_color CSS
           ; text_color CSS
           } text_color CSS
         </style> tag
@@ -598,16 +604,18 @@ def test_Highlighter_color_text():
         ``` code text_color
           user=> meta text_color Clojure REPL
           ( text_color Clojure
-          defn name Clojure
+          defn builtin-name text_color Clojure
+          [ text_color Clojure
+          ] text_color Clojure
             #_=> meta text_color Clojure REPL
           ( text_color Clojure
-          + name Clojure
-          )) text_color Clojure
+          + builtin-name text_color Clojure
+          ) text_color Clojure
           user=> meta text_color Clojure REPL
           ( text_color Clojure
           f name Clojure
-          5 number Clojure
-          7 number Clojure
+          5 number text_color Clojure
+          7 number text_color Clojure
           ) text_color Clojure
           user=> meta text_color Clojure REPL
           nil literal text_color Clojure
@@ -633,8 +641,8 @@ def test_Highlighter_color_text():
         "/[x-z/ig - var;",
         """
         / regexp text_color
-            [ keyword.set keyword Regular Expression
-            - operator.range operator Regular Expression
+          [ keyword.set keyword Regular Expression
+          - operator.range operator Regular Expression
         /ig regexp text_color
         var keyword
         """)
@@ -718,10 +726,10 @@ def test_Highlighter_color_text():
         r"[-\wa-z\-\S-]",
         r"""
         [ keyword.set keyword
-            \w operator.class operator Regular Expression
-            - operator.range operator Regular Expression
-            \- operator.escape operator Regular Expression
-            \S operator.class operator Regular Expression
+        \w operator.class operator
+        - operator.range operator
+        \- operator.escape operator
+        \S operator.class operator
         ] keyword.set keyword
         """)
 
@@ -729,10 +737,10 @@ def test_Highlighter_color_text():
         r" [^-\wa-z\-\S-] ",
         r"""
         [^ keyword.set.inverse keyword
-            \w operator.class operator Regular Expression
-            - operator.range operator Regular Expression
-            \- operator.escape operator Regular Expression
-            \S operator.class operator Regular Expression
+        \w operator.class operator
+        - operator.range operator
+        \- operator.escape operator
+        \S operator.class operator
         ] keyword.set.inverse keyword
         """)
 
@@ -749,7 +757,7 @@ def test_Highlighter_color_text():
         for keyword
         in keyword
         [ tag
-          for keyword lang
+        for keyword
         ] tag
         """,
 
@@ -766,7 +774,7 @@ def test_Highlighter_color_text():
         for keyword
         in keyword
         [ tag
-          for keyword lang
+        for keyword
         ] tag
         """,
 
@@ -774,8 +782,8 @@ def test_Highlighter_color_text():
         """
         for keyword
         [ tag
-          for keyword lang
-          for keyword lang
+        for keyword
+        for keyword
         ] tag
         """,
         )
@@ -799,12 +807,12 @@ def test_Highlighter_color_text():
     yield test(lang, "def f(x) x + do(x + 1) end",
         """
         def keyword
-          f name transition
+        f name
         ( group
-          x name transition
+        x name
         ) group
         do( tag
-          x name transition
+        x name
         ) tag
         end keyword
         """)
@@ -824,11 +832,11 @@ def test_Highlighter_color_text():
         """
         def keyword
         ( group
-          do tag recursive
-          ( group recursive
-          do tag recursive
-          ( group recursive
-          ))) group recursive
+        do tag
+        ( group
+        do tag
+        ( group
+        ))) group
         """)
 
     class lang:
@@ -847,7 +855,7 @@ def test_Highlighter_color_text():
         """
         def keyword
         ( text_color
-          do def group start-end-lang-no-body
+        do def group
         ) text_color
         def keyword
         """)
@@ -897,5 +905,10 @@ def make_definition(rules):
         value = getattr(rules, attr, NA)
         if value is not NA:
             args[attr] = value
-    return SyntaxDefinition("", registry={}, **args)
+    reg = WeakrefableDict()
+    sdef = SyntaxDefinition("", registry=reg, **args)
+    sdef.root_registry = reg # maintain reference from root definition
+    return sdef
 
+
+class WeakrefableDict(dict): pass

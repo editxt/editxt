@@ -221,7 +221,7 @@ class Highlighter(object):
             xkey, ignore = get_attribute(x_range, offset, null)
             if xkey:
                 key = xkey
-                lang = langs[xkey]
+                lang, ignore = langs[xkey]
 
         while lang is not None:
             wordinfo = lang.wordinfo
@@ -235,15 +235,17 @@ class Highlighter(object):
                     log.error("invalid syntax match: %r", match)
                     continue
                 start, end = match.span()
+
+                if prevend != start:
+                    # clear unhighlighted range
+                    assert prevend < start, (prevend, start)
+                    prevrange = (prevend, start - prevend)
+                    rem_attribute(x_token, prevrange)
+                    add_attribute(fg_name, text_color, prevrange)
+                prevend = end
+
                 if start != end:
                     rng = (start, end - start)
-                    if prevend != start:
-                        # clear unhighlighted range
-                        assert prevend < start, (prevend, start)
-                        prevrange = (prevend, start - prevend)
-                        rem_attribute(x_token, prevrange)
-                        add_attribute(fg_name, text_color, prevrange)
-                    prevend = end
 
                     if end > minend and end + 1 < tlen and start:
                         # check for early exit (same color & language)
@@ -299,20 +301,27 @@ class Highlighter(object):
                     else:
                         rem_attribute(x_range, (offset, start - offset))
 
+                    lang = info.next
                     if start != end:
                         xkey = info.lang.key if info.lang else key
                         if xkey:
                             if info.lang and xkey not in langs:
-                                langs[xkey] = info.lang
+                                langs[xkey] = (info.lang, start)
                             add_attribute(x_range, xkey, rng)
                         else:
                             rem_attribute(x_range, rng)
+                    elif lang and langs.get(lang.key, (None, end - 1))[1] == end:
+                        # FIXME could hit this due to self.langs holding stale start value?
+                        raise Error("non-advancing range: index={} {} {}".format(
+                            start,
+                            match,
+                            info.next.regex,
+                        ))
 
-                    lang = info.next
                     if lang is not None:
                         if callable(lang):
                             lang, end = lang(string, end)
-                        langs[lang.key] = lang
+                        langs[lang.key] = (lang, start)
                         key = lang.key
                     else:
                         key = ''
@@ -533,6 +542,7 @@ class SyntaxDefinition(NoHighlight):
                 phrase = "(?P<{}>{})".format(ident, end.pattern)
                 info_name = (end.lang or self).token_name(end.name)
                 info = MatchInfo(info_name, end.next, True, end.lang)
+                #print(end.pattern, (info, end.lang))
                 yield phrase, ident, info
             parent_ends = self.ends
         else:
@@ -549,6 +559,7 @@ class SyntaxDefinition(NoHighlight):
                 phrase = "(?P<{}>{})".format(ident, phrase)
                 info = MatchInfo(self.token_name(name), self.next)
             else:
+                phrase = lookahead(phrase)
                 info = self.token_name(name)
             yield phrase, ident, info
 
@@ -586,14 +597,17 @@ class SyntaxDefinition(NoHighlight):
                     token = next(token)
                     sdef = lookup_syntax(self.name, token, parent_ends, next_def)
                     for phrase, ident, info in sdef.iter_group_info():
-                        print(phrase, sdef, info)
+                        #print(phrase, sdef, info)
                         yield End(phrase, sdef, info, sdef)
 
         class unknown:
             word_groups = []
 
         def compile_range(name, start, ends, sdef):
+            if idgen is None:
+                return lookahead(escape(start)), None, self.token_name(name)
             if sdef:
+                expanded_ends = False
                 sdef = lookup_syntax(name, sdef, ends)
                 if not sdef:
                     sdef = self.make_definition(name, unknown, ends)
@@ -612,9 +626,6 @@ class SyntaxDefinition(NoHighlight):
                     default_text = name
                 lines.__name__ = "{}.lines".format(name)
                 sdef = self.make_definition(name, lines, ends)
-            if idgen is None:
-                # TODO possibly return End(start, self.next, name, self)
-                return escape(start), None, self.token_name(name)
             ident = "r%s" % next(idgen)
             phrase = "(?P<{}>{})".format(ident, escape(start))
             info = MatchInfo(self.token_name(name), sdef, lang=self)
@@ -629,7 +640,7 @@ class SyntaxDefinition(NoHighlight):
                     sdef = sdef[0]
                 else:
                     sdef = None
-                ends = list(endify(name, ends)) + parent_ends
+                ends = list(unique(list(endify(name, ends)) + parent_ends))
                 if isinstance(start, (str, RE)):
                     yield compile_range(name, start, ends, sdef)
                 else:
@@ -647,6 +658,8 @@ class SyntaxDefinition(NoHighlight):
                     start_def = lookup_syntax(name, start, parent_ends, ndef)
                     assert start_def, (self, name, start, ends, ndef)
                     yield from start_def.iter_group_info(idgen)
+            except Error:
+                raise
             except Exception:
                 log.error("delimited range error: %s %s %s %s",
                           name, start, ends, sdef, exc_info=True)
@@ -662,15 +675,10 @@ class SyntaxDefinition(NoHighlight):
         return self.name + " " + name
 
     def make_definition(self, name, other_definition, ends, next_def=None):
-        seen = set()
         end_key = (self.next,) if self.next else ()
         end_key += (next_def,) if next_def else ()
-        def_key = ((name, other_definition) + end_key
-            + tuple(e for e in ends if e not in seen and not seen.add(e)))
+        def_key = (name, other_definition) + end_key + tuple(unique(ends))
         sdef = self.registry.get(def_key)
-#        print(def_key)
-#        if stop:
-#            import bug; bug.trace()
         if sdef is None:
             NA = object()
             args = {
@@ -790,12 +798,12 @@ class End(RE):
         return hash((End, self.pattern, self.next, self.name))
 
 
-def lookahead(expr):
-    if getattr(expr, "lookahead", False):
-        return expr
-    new = RE(r"(?=%s)" % escape(expr, WORD_CHAR))
-    new.lookahead = True
-    return new
+def lookahead(pattern):
+    # could return wrong result sometimes, probaby doesn't matter
+    if pattern.startswith("(?=") and pattern.endswith(")"):
+            # and ")" not in pattern[3:-1]:
+        return pattern
+    return r"(?={})".format(pattern)
 
 def escape(token, word_char=None):
     if hasattr(token, "pattern"):
@@ -813,3 +821,7 @@ def disjunction(tokens):
 
 def may_match(token, patterns=[r"\b\B", r"\B\b"]):
     return escape(token) not in patterns
+
+def unique(items):
+    seen = set()
+    return (item for item in items if item not in seen and not seen.add(item))

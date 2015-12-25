@@ -156,10 +156,9 @@ def parse_metadata(hljs_file):
 
 
 def transform_syntax(data, definitions, path, name=None):
-    def add_words(name_, value, path=None):
-        if isinstance(value, str):
-            value = [k.split("|")[0] for k in value.split()]
-        assignment = Assignment(name_, value)
+    def add_words(name_, words, path=None):
+        assert isinstance(name_, str), name_
+        assignment = Assignment(name_, words)
         ref = definitions.add(assignment)
         rules.append((name_, Literal(ref)))
         if path is not None:
@@ -168,13 +167,11 @@ def transform_syntax(data, definitions, path, name=None):
 
     rules = []
     syntax = SyntaxClass(name, rules)
-    keywords = data._get("keywords") or data._get("beginKeywords")
-    if keywords:
-        if isinstance(keywords, str):
-            add_words("keyword", keywords)
-        else:
-            for word_name, value in sorted(keywords.items()):
-                add_words(word_name, value)
+    if data._get("keywords"):
+        for word_name, value in iter_keyword_sets(data.keywords):
+            add_words(word_name, value)
+    if data._get("beginKeywords"):
+        add_words("keyword", split_keywords(data.beginKeywords))
     contains = data._get("contains", [])
     if hasattr(contains, "get") and contains.get("type") == "RecursiveRef":
         syntax.recursive_refs += 1
@@ -289,7 +286,17 @@ def transform_range(item, definitions, path):
                 assert "end" not in item, item - {"contains", "_parent"}
                 end = transform_end(DictObj(item.starts), definitions)
         else:
-            start = SyntaxClass(name, [(name, begin, [end]) + content])
+            rules = []
+            if "keywords" in item and "begin" in item:
+                begin_re = re.compile(begin.pattern + "$")
+                for word_name, words in iter_keyword_sets(item.keywords):
+                    words = [w for w in words if begin_re.match(w)]
+                    if words:
+                        assignment = Assignment(word_name, words)
+                        ref = definitions.add(assignment)
+                        rules.append((word_name, Literal(ref)))
+            rules.append((name, begin, [end]) + content)
+            start = SyntaxClass(name, rules)
             start_name = definitions.add(start)
             begin = Literal(start_name)
             if isinstance(item.starts, str):
@@ -298,12 +305,15 @@ def transform_range(item, definitions, path):
             elif "subLanguage" in item.starts and "end" not in item.starts:
                 content = (transform_sublanguage(item.starts["subLanguage"]),)
             else:
+                # TODO figure out how to definitions.add_ref
                 args = {"_parent": item._parent}
                 if "className" not in item.starts:
                     args["className"] = definitions.get_name(item.starts)
                 next_ = DictObj(item.starts, **args)
                 sub_path = path + ("starts",)
                 sub = transform_syntax(next_, definitions, sub_path, next_.className)
+                ref = "('{expr.name}', {expr.safe_name}, [RE(r'\\B\\b')], {expr.safe_name})"
+                definitions.add_ref(sub_path, ref, expr=sub)
                 sub_name = definitions.add(sub)
                 content = (Literal(sub_name),)
                 if "end" in next_:
@@ -316,6 +326,7 @@ def transform_range(item, definitions, path):
 
 def transform_begin(item, definitions):
     if "beginKeywords" in item:
+        #assert "begin" not in item, item - {"contains", "_parent"}
         begin = regex(r"\b(" + "|".join(item.beginKeywords.split()) + ")")
     elif "begin" in item:
         begin = regex(item.begin)
@@ -329,7 +340,7 @@ def transform_begin(item, definitions):
             syntax = SyntaxClass("_{}".format(item.className), rules)
             begin = Literal(definitions.add(syntax))
         elif item._get("returnBegin"):
-            begin = RE(r"(?={})".format(begin.pattern))
+            begin = begin if begin.is_lookahead() else begin.lookahead()
     return begin
 
 
@@ -348,8 +359,26 @@ def transform_end(item, definitions, lookahead=False):
         elif lookahead and not end.is_lookahead():
             end = end.lookahead()
         return end
+    elif "starts" in item and "begin" in item and "keywords" in item:
+        # hopefully this works when begin is a lexeme-like pattern that
+        # matches keywords (and other tokens). The range should end
+        # after matching a single token.
+        return RE(r"\B|\b")
     # matches nothing -> end with parent
     return RE(r"\B\b")
+
+
+def iter_keyword_sets(keywords):
+    if isinstance(keywords, str):
+        yield "keyword", split_keywords(keywords)
+    else:
+        for word_name, words in sorted(keywords.items()):
+            yield word_name, split_keywords(words)
+
+def split_keywords(words):
+    if isinstance(words, str):
+        return [k.split("|")[0] for k in words.split()]
+    return words
 
 
 def transform_sublanguage(lang):
@@ -394,6 +423,8 @@ class Definitions:
     def add_recursive_ref(self, path, name, template, **args):
         path = tuple(path)
         if path not in self.paths:
+#            print(path, ordered_repr(name), "\n ",
+#                  "\n  ".join(str(k) for k in sorted(self.paths)))
             return Comment("# {} {}".format(path, ordered_repr(name)))
         ref_template, ref_args = self.paths[path]
         ref = RecursiveRef(ref_template, ref_args)
@@ -773,8 +804,7 @@ assert "__fixup" not in globals()
 def __fixup(obj):
     groups = []
     ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
+    for rng in getattr(obj, "rules", []):
         if len(rng) == 2:
             groups.append(rng)
         else:
