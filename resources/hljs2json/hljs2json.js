@@ -82,8 +82,8 @@ function recursiveRef(path, value) {
     } else {
         name = {};
         for (key in value) {
-            if (value.hasOwnProperty(key) && isSimple(value[key])) {
-                name[key] = value[key];
+            if (value.hasOwnProperty(key)) {
+                name[key] = isSimple(value[key]) ? value[key] : "...";
             }
         }
     }

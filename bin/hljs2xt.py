@@ -175,12 +175,13 @@ def transform_syntax(data, definitions, path, name=None):
     contains = data._get("contains", [])
     if hasattr(contains, "get") and contains.get("type") == "RecursiveRef":
         syntax.recursive_refs += 1
-        definitions.add_recursive_ref(
+        refs = definitions.add_recursive_ref(
             contains["path"],
             contains["name"],
             expr_ref(name, "rules.extend({ref})"),
             expr=syntax,
         )
+        assert len(refs) == 1, (contains, refs)
         return syntax
     ref = expr_ref(name, "rules")
     definitions.add_ref(path + ("contains",), ref, expr=syntax)
@@ -194,7 +195,7 @@ def transform_syntax(data, definitions, path, name=None):
             continue  # skip
         if item.get("type") == "RecursiveRef":
             syntax.recursive_refs += 1
-            rules.append(definitions.add_recursive_ref(
+            rules.extend(definitions.add_recursive_ref(
                 item["path"],
                 item["name"],
                 expr_ref(name, "rules[{i}] = {ref}"),
@@ -217,7 +218,11 @@ def transform_syntax(data, definitions, path, name=None):
                     else:
                         var_path = ()
                     yield var, base_path + var_path
-            items = iteritems(item)
+            items = list(iteritems(item))
+            ref = expr_ref(name, "rules[{i}]")
+            offset = sum(1 for r in rules if not isinstance(r, Comment))
+            variants_ref = VariantsRef(offset, len(items), ref, expr=syntax)
+            definitions.add_ref(base_path, variants_ref, expr=syntax)
         else:
             items = [(item, base_path)]
         for item, item_path in items:
@@ -305,7 +310,6 @@ def transform_range(item, definitions, path):
             elif "subLanguage" in item.starts and "end" not in item.starts:
                 content = (transform_sublanguage(item.starts["subLanguage"]),)
             else:
-                # TODO figure out how to definitions.add_ref
                 args = {"_parent": item._parent}
                 if "className" not in item.starts:
                     args["className"] = definitions.get_name(item.starts)
@@ -422,22 +426,28 @@ class Definitions:
     def add_recursive_ref(self, path, name, template, **args):
         path = tuple(path)
         if path not in self.paths:
-#            print(path, ordered_repr(name), "\n ",
-#                  "\n  ".join(str(k) for k in sorted(self.paths)))
-            return Comment("# {} {}".format(path, ordered_repr(name)))
+            assert not (set(name) - IGNORE_ITEM_KEYS), name
+            return [Comment("# {} {}".format(path, ordered_repr(name)))]
         ref_template, ref_args = self.paths[path]
-        ref = RecursiveRef(ref_template, ref_args)
-        deferred = (ref, path, name, template, args)
-        self.deferred_refs[id(args["expr"])].append(deferred)
-        return ref
+        refs = []
+        if isinstance(ref_template, VariantsRef):
+            items = ref_template.items
+        else:
+            items = [(ref_template, ref_args)]
+        for ref_template, ref_args in items:
+            ref = RecursiveRef(ref_template, ref_args)
+            deferred = (ref, path, name, template, args)
+            self.deferred_refs[id(args["expr"])].append(deferred)
+            refs.append(ref)
+        return refs
 
     def update_recursive_refs(self, expr):
         if id(expr) not in self.deferred_refs:
             return
         for ref, path, name, template, args in self.deferred_refs[id(expr)]:
-            expr = ref.args["expr"] #self.find_item(ref.args["expr"])
-            if any(expr is obj for obj in self):
-                ref.update(expr)
+            exp = ref.args["expr"] #self.find_item(ref.args["expr"])
+            if any(exp is obj for obj in self):
+                ref.update(exp)
             else:
                 assert path in self.paths, (path, name, template, args)
                 self.recursive_refs.append((path, name, template, args))
@@ -451,10 +461,17 @@ class Definitions:
         defs = []
         for path, name, template, args in self.recursive_refs:
             ref_template, ref_args = self.paths[path]
-            ref = ref_template.format(**deref(ref_args))
-            assignment = template.format(ref=ref, **deref(args))
-            if assignment not in defs:
-                defs.append(assignment)
+            if isinstance(ref_template, VariantsRef):
+                items = ref_template.items
+            else:
+                items = [(ref_template, ref_args)]
+            for i, (ref_template, ref_args) in enumerate(items):
+                ref = ref_template.format(**deref(ref_args))
+                ith_args = dict(args)
+                ith_args['i'] += i  # TODO assert this references the correct rule
+                assignment = template.format(ref=ref, **deref(ith_args))
+                if assignment not in defs:
+                    defs.append(assignment)
         if defs:
             defs.sort(key=lambda x: 1 if ".extend(" in x else 0)
             defs.insert(0, "")
@@ -579,6 +596,15 @@ class RecursiveRef(Literal):
             ns = {expr.safe_name: expr}
         obj = eval(repr(self), {}, ns)
         return obj == other or super().__eq__(other)
+
+
+class VariantsRef:
+
+    def __init__(self, offset, length, template, **args):
+        assert 'i' not in args, args
+        self.items = []
+        for i in range(length):
+            self.items.append((template, dict(args, i=offset + i)))
 
 
 def expr_ref(name, attribute):
