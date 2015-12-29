@@ -43,6 +43,67 @@ a = ("\"abc\"" + '\'def\'' + "" + '' + '\\' + "\\", eq)
 # isinstance vs callable
 
 init = r"""
+import re
+from string import ascii_letters
+
+body = "!@#$%^&*()_+=-" * 100000
+
+r0 = re.compile("(?=%s)" % "|".join(c + '123' for c in ascii_letters))
+r1 = re.compile("|".join("(?=%s123)" % c for c in ascii_letters))
+r0.search(body)
+r1.search(body)
+
+def lookahead_or():
+    r0.search(body)
+
+def or_lookahead():
+    r1.search(body)
+
+"""
+
+trials = [
+
+'lookahead_or',
+'or_lookahead',
+
+]
+n = 1000000
+
+# 1000000 iterations
+# trial 0: 0.02432469598716125 - lookahead_or
+# trial 1: 0.02439560100901872 - or_lookahead
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#try:
+#    exec(init)
+#    v0 = eval(trials[0])
+#    v1 = eval(trials[1])
+#    eq(v0, v1)
+#except Exception:
+#    log.error("trial equality test failed", exc_info=True)
+#    print()
+
+print("# %s iterations" % n)
+for i, trial in enumerate(trials):
+    try:
+        t = timeit.Timer(trial, init)
+        #v1 = min(t.repeat(n, 1)) * n # if setup is needed for each timing
+        v1 = t.timeit(n)
+    except Exception as ex:
+        print("# trial %i failed: %s - %s" % (i, ex, trial))
+        traceback.print_exc()
+    else:
+        print("# trial %i:" % i, v1, '-', trial)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+'''
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# isinstance vs callable
+
+init = r"""
 
 class Yes:
     def __call__(self):
@@ -84,35 +145,11 @@ trials = [
 n = 1000000
 
 # 1000000 iterations
-#...
+# trial 0: 0.026139621972106397 - check_isinstance_no
+# trial 1: 0.025082350010052323 - check_isinstance_yes
+# trial 2: 0.02559216000372544 - check_callable_no
+# trial 3: 0.025074468983802944 - check_callable_yes
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-#try:
-#    exec(init)
-#    v0 = eval(trials[0])
-#    v1 = eval(trials[1])
-#    eq(v0, v1)
-#except Exception:
-#    log.error("trial equality test failed", exc_info=True)
-#    print()
-
-print("# %s iterations" % n)
-for i, trial in enumerate(trials):
-    try:
-        t = timeit.Timer(trial, init)
-        #v1 = min(t.repeat(n, 1)) * n # if setup is needed for each timing
-        v1 = t.timeit(n)
-    except Exception as ex:
-        print("# trial %i failed: %s - %s" % (i, ex, trial))
-        traceback.print_exc()
-    else:
-        print("# trial %i:" % i, v1, '-', trial)
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-'''
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 2x + vs str.join() (already copied below)
 

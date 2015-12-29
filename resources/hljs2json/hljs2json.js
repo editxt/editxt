@@ -30,7 +30,7 @@ function decycle(value, path, seen) {
     if (isSimple(value)) {
         return value;
     }
-    var i, name, pair;
+    var i, name, pair, copy;
     if (!seen) {
         seen = [];
         path = [];
@@ -39,23 +39,25 @@ function decycle(value, path, seen) {
         for (i = seen.length - 1; i >= 0; i--) {
             pair = seen[i];
             if (pair[0] === value) {
-                return recursiveRef(pair[1], value)
+                return recursiveRef(pair[1], value, path)
             }
         }
     }
     seen.push([value, path]);
     if (Object.prototype.toString.apply(value) === '[object Array]') {
+        copy = [];
         for (i = 0; i < value.length; i++) {
-            value[i] = decycle(value[i], path.concat([i]), seen);
+            copy.push(decycle(value[i], path.concat([i]), seen));
         }
     } else {
+        copy = {};
         for (name in value) {
             if (value.hasOwnProperty(name)) {
-                value[name] = decycle(value[name], path.concat([name]), seen);
+                copy[name] = decycle(value[name], path.concat([name]), seen);
             }
         }
     }
-    return value
+    return copy;
 }
 
 function str(key, value) {
@@ -75,10 +77,10 @@ function isSimple(value) {
             Object.prototype.toString.call(value) === '[object RegExp]';
 }
 
-function recursiveRef(path, value) {
+function recursiveRef(path, value, thisPath) {
     var name = {};
     if (Object.prototype.toString.apply(value) === '[object Array]') {
-        name = path.join("-");
+        name = thisPath.join("-");
     } else {
         name = {};
         for (key in value) {

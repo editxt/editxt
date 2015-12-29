@@ -14,7 +14,7 @@ index 9171d33..979009f 100644
  emphasis0 = [RE(r"_.+?_")]
  
 -code = [RE(r"`.+?`")]
-+code = [RE(r"`[^`\n]+`")]
++code = [RE(r"``[^`\n]+``"), RE(r"`[^`\n]+`")]
  
  class _string:
      default_text = DELIMITER

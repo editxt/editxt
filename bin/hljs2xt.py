@@ -156,6 +156,7 @@ def parse_metadata(hljs_file):
 
 
 def transform_syntax(data, definitions, path, name=None):
+    #print("transyn", path, name)
     def add_words(name_, words, path=None):
         assert isinstance(name_, str), name_
         assignment = Assignment(name_, words)
@@ -163,6 +164,7 @@ def transform_syntax(data, definitions, path, name=None):
         rules.append((name_, Literal(ref)))
         if path is not None:
             ref  = "({name!r}, {expr.safe_name})"
+            #print('add_ref', path)
             definitions.add_ref(path, ref, name=name_, expr=assignment)
 
     rules = []
@@ -172,6 +174,7 @@ def transform_syntax(data, definitions, path, name=None):
             add_words(word_name, value)
     if data._get("beginKeywords"):
         add_words("keyword", split_keywords(data.beginKeywords))
+
     contains = data._get("contains", [])
     if hasattr(contains, "get") and contains.get("type") == "RecursiveRef":
         syntax.recursive_refs += 1
@@ -183,7 +186,9 @@ def transform_syntax(data, definitions, path, name=None):
         )
         assert len(refs) == 1, (contains, refs)
         return syntax
+
     ref = expr_ref(name, "rules")
+    #print('add_ref', path + ("contains",), name)
     definitions.add_ref(path + ("contains",), ref, expr=syntax)
     for i, item in enumerate(contains):
         if item == "self":
@@ -213,31 +218,40 @@ def transform_syntax(data, definitions, path, name=None):
                 for j, variant in enumerate(item["variants"]):
                     var = item.copy()
                     var.update(variant)
-                    if "contains" in variant:
-                        var_path = ("variants", j)
+                    var_path = base_path + ("variants", j)
+                    if "contains" in item and "contains" not in variant:
+                        assert "starts" not in item, \
+                            DictObj(item) - {"contains", "variants", "keywords"}
+                        child_path = base_path
+                    elif "starts" in item and "starts" not in variant:
+                        assert "contains" not in item, \
+                            DictObj(item) - {"contains", "variants", "keywords"}
+                        child_path = base_path
                     else:
-                        var_path = ()
-                    yield var, base_path + var_path
+                        child_path = var_path
+                    yield var, var_path, child_path
             items = list(iteritems(item))
+            #print('add_ref', base_path, DictObj(item) - {"contains", "variants", "keywords"})
             ref = expr_ref(name, "rules[{i}]")
             offset = sum(1 for r in rules if not isinstance(r, Comment))
             variants_ref = VariantsRef(offset, len(items), ref, expr=syntax)
             definitions.add_ref(base_path, variants_ref, expr=syntax)
         else:
-            items = [(item, base_path)]
-        for item, item_path in items:
+            items = [(item, base_path, base_path)]
+        for item, item_path, child_path in items:
             original = item
             plain = "className" not in item
             if plain:
                 item = dict(item, className=definitions.get_name(item))
-            item = DictObj(item, _parent=data)
+            item = DictObj(item)
             if "end" in item or item._get("endsWithParent") \
                     or "contains" in item or "keywords" in item \
                     or "beginKeywords" in item or "starts" in item:
                 ref = expr_ref(name, "rules[{i}]")
                 index = sum(1 for r in rules if not isinstance(r, Comment))
+                #print('add_ref', item_path, item - {"contains", "variants", "keywords"})
                 definitions.add_ref(item_path, ref, expr=syntax, i=index)
-                rng = transform_range(item, definitions, item_path)
+                rng = transform_range(item, definitions, child_path)
                 if item._get("endsParent"):
                     end_name = definitions.get_name(rng)
                     end = SyntaxClass(item.className, [rng])
@@ -259,7 +273,7 @@ def transform_range(item, definitions, path):
     end = transform_end(item, definitions)
 
     content = ()
-    ends = []
+    ends = [end]
     if "keywords" in item or item._get("contains"):
         syntax = transform_syntax(item, definitions, path, name)
         if syntax or syntax.contains_self:
@@ -271,66 +285,56 @@ def transform_range(item, definitions, path):
         if item._get("subLanguageMode") == "continuous":
             print("continuous sub-language not implemented")
         else:
-            if content:
-                print("WARNING discarding range rules for sub language")
-                print(syntax)
-            elif not item.subLanguage:
-                print("auto sub-language detection not implemented")
+            if item.subLanguage:
+                if content:
+                    print("WARNING discarding range rules for sub language")
+                    print(syntax)
+                content = (transform_sublanguage(item.subLanguage),)
             else:
-                assert isinstance(item.subLanguage, str), item.subLanguage
-                content = (item.subLanguage,)
+                print("auto sub-language detection not implemented")
 
     if item._get("starts"):
-        if "subLanguage" in item.starts and ("end" not in item or "end" not in item.starts):
-            if content:
-                print("WARNING discarding range rules for sub language")
-                print(content)
-            if item.starts["subLanguage"]:
-                content = (transform_sublanguage(item.starts["subLanguage"]),)
-            if "end" in item.starts:
-                assert "end" not in item, item - {"contains", "_parent"}
-                end = transform_end(DictObj(item.starts), definitions)
+        rules = []
+        if "keywords" in item and "begin" in item and "end" not in item:
+            begin_re = re.compile(begin.pattern + "$")
+            for word_name, words in iter_keyword_sets(item.keywords):
+                words = [w for w in words if begin_re.match(w)]
+                if words:
+                    assignment = Assignment(word_name, words)
+                    ref = definitions.add(assignment)
+                    rules.append((word_name, Literal(ref)))
+        rules.append((name, begin, ends) + content)
+        begin_syntax = SyntaxClass(name, rules)
+        begin = Literal(definitions.add(begin_syntax))
+        ends = []
+        if isinstance(item.starts, str):
+            content = (Literal(item.starts),)
+            raise NotImplementedError("how to end? {}".format(
+                    item - {"contains", "variants", "keywords"}))
         else:
-            rules = []
-            if "keywords" in item and "begin" in item:
-                begin_re = re.compile(begin.pattern + "$")
-                for word_name, words in iter_keyword_sets(item.keywords):
-                    words = [w for w in words if begin_re.match(w)]
-                    if words:
-                        assignment = Assignment(word_name, words)
-                        ref = definitions.add(assignment)
-                        rules.append((word_name, Literal(ref)))
-            rules.append((name, begin, [end]) + content)
-            start = SyntaxClass(name, rules)
-            start_name = definitions.add(start)
-            begin = Literal(start_name)
-            if isinstance(item.starts, str):
-                content = (Literal(item.starts),)
-                end = transform_end(item.starts, definitions, lookahead=True)
-            elif "subLanguage" in item.starts and "end" not in item.starts:
-                content = (transform_sublanguage(item.starts["subLanguage"]),)
-            else:
-                args = {"_parent": item._parent}
-                if "className" not in item.starts:
-                    args["className"] = definitions.get_name(item.starts)
-                next_ = DictObj(item.starts, **args)
-                sub_path = path + ("starts",)
-                sub = transform_syntax(next_, definitions, sub_path, next_.className)
-                ref = "('{expr.name}', {expr.safe_name}, [RE(r'\\B\\b')], {expr.safe_name})"
-                definitions.add_ref(sub_path, ref, expr=sub)
-                sub_name = definitions.add(sub)
-                content = (Literal(sub_name),)
-                if "end" in next_:
-                    end = transform_end(next_, definitions)
-                else:
-                    end = RE(r"\B\b") # guess, needs testing
+            next_args = {"_parent_starts": begin}
+            if "className" not in item.starts:
+                next_args["className"] = definitions.get_name(item.starts)
+            next_item = DictObj(item.starts, **next_args)
+            next_path = path + ("starts",)
+            rng = transform_range(next_item, definitions, next_path)
+            #print('add_ref', next_path)
+            definitions.add_ref(next_path, "{expr}", expr=Literal(repr(rng)))
+            if next_item._get("starts"):
+                begin = rng[1]
+            ends = rng[2]
+            content = (rng[3],) if len(rng) > 3 else ()
 
-    return (name, begin, [end] + ends) + content
+    return (name, begin, ends) + content
 
 
 def transform_begin(item, definitions):
+    if "_parent_starts" in item:
+        assert "begin" not in item and "beginKeywords" not in item, \
+            item - {"contains", "variants", "starts"}
+        return item._parent_starts
     if "beginKeywords" in item:
-        #assert "begin" not in item, item - {"contains", "_parent"}
+        #assert "begin" not in item, item - {"contains"}
         begin = regex(r"\b(" + "|".join(item.beginKeywords.split()) + ")")
     elif "begin" in item:
         begin = regex(item.begin)
@@ -338,7 +342,7 @@ def transform_begin(item, definitions):
         begin = RE(r"\B|\b")
     if begin != RE(r"\B|\b") and not begin.pattern.startswith(("(?=", "(?<=")):
         if item._get("excludeBegin") and not str(item.className).startswith("_"):
-            assert not item._get("returnBegin"), item - {"contains", "_parent"}
+            assert not item._get("returnBegin"), item - {"contains"}
             #begin = RE(r"(?<={})".format(begin.pattern))
             rules = [Literal("('_{}', [{!r}])".format(item.className, begin))]
             syntax = SyntaxClass("_{}".format(item.className), rules)
@@ -363,10 +367,9 @@ def transform_end(item, definitions, lookahead=False):
         elif lookahead and not end.is_lookahead():
             end = end.lookahead()
         return end
-    elif "starts" in item and "begin" in item and "keywords" in item:
-        # hopefully this works when begin is a lexeme-like pattern that
-        # matches keywords (and other tokens). The range should end
-        # after matching a single token.
+    elif "starts" in item:
+        # The range with "starts" and no "end" should end after matching a
+        # single token.
         return RE(r"\B|\b")
     # matches nothing -> end with parent
     return RE(r"\B\b")
@@ -426,7 +429,9 @@ class Definitions:
     def add_recursive_ref(self, path, name, template, **args):
         path = tuple(path)
         if path not in self.paths:
-            assert not (set(name) - IGNORE_ITEM_KEYS), name
+            if set(name) - IGNORE_ITEM_KEYS:
+                import bug; bug.trace()
+            assert not (set(name) - IGNORE_ITEM_KEYS), (path, name)
             return [Comment("# {} {}".format(path, ordered_repr(name)))]
         ref_template, ref_args = self.paths[path]
         refs = []
@@ -467,8 +472,11 @@ class Definitions:
                 items = [(ref_template, ref_args)]
             for i, (ref_template, ref_args) in enumerate(items):
                 ref = ref_template.format(**deref(ref_args))
-                ith_args = dict(args)
-                ith_args['i'] += i  # TODO assert this references the correct rule
+                if len(items) > 1:
+                    ith_args = dict(args)
+                    ith_args['i'] += i  # TODO assert this references the correct rule
+                else:
+                    ith_args = args
                 assignment = template.format(ref=ref, **deref(ith_args))
                 if assignment not in defs:
                     defs.append(assignment)

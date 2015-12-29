@@ -193,7 +193,7 @@ def test_Highlighter_color_text():
             long_range = self.attribute_atIndex_longestEffectiveRange_inRange_
             while rng[1] > 0:
                 key, xrng = long_range(SYNTAX_RANGE, rng[0], None, rng)
-                lang = (highlighter.langs[key].name if key else "")
+                lang = (highlighter.langs[key][0].name if key else "")
                 if lang == highlighter.syntaxdef.name:
                     lang = ""
                 #print(lang.strip(), xrng)
