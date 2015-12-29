@@ -35,7 +35,7 @@ def main(args):
     if options.debug_osascript:
         print(script)
 
-    if filenames and os.fork() != 0:
+    if filenames and os.fork() == 0:
         # HACK send stdout to /dev/null to suppress "missing value" message
         with open('/dev/null', 'w') as devnull:
             try:
