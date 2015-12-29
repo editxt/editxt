@@ -34,6 +34,7 @@ from editxt.command.util import has_selection, iterlines
 log = logging.getLogger(__name__)
 
 WHITESPACE = re.compile(r"[ \t]*")
+POS_WHITESPACE = re.compile(r"[ \t]+")
 
 
 @command(name='wrap', title="Hard Wrap...",
@@ -157,7 +158,9 @@ def get_line(frag, lines, width, regexp, ws=" \t"):
             while i < fraglen and frag[i] not in ws:
                 i += 1
         line, frag = frag[:i].rstrip(), frag[i:].lstrip()
-        if len(line) + len(WHITESPACE.split(frag, 1)[0]) < width:
+        match = POS_WHITESPACE.search(frag)
+        split = frag.split(match.group(), 1)[0] if match else frag
+        if len(line) + len(split) < width:
             frag = line + " " + frag
             continue
         return line, frag

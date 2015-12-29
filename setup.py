@@ -215,16 +215,18 @@ prepare_build(
     },
 )
 
-if dev and hasattr(sys, 'real_prefix'):
-    # HACK patch __boot__.py to work with virtualenv
-    bootfile = join("dist", appname + ".app",
-        "Contents/Resources/__boot__.py")
-    with open(bootfile, "rb") as file:
-        original = file.read()
-    sitepaths = [p for p in sys.path if p.startswith(sys.real_prefix)]
-    bootfunc = "import sys; sys.path[:0] = %r\n\n" % sitepaths
-    with open(bootfile, "wb") as file:
-        file.write(bootfunc.encode('utf-8') + original)
+def fix_virtualenv_boot():
+    # TODO remove this unused function
+    if dev and hasattr(sys, 'real_prefix'):
+        # HACK patch __boot__.py to work with virtualenv
+        bootfile = join("dist", appname + ".app",
+            "Contents/Resources/__boot__.py")
+        with open(bootfile, "rb") as file:
+            original = file.read()
+        sitepaths = [p for p in sys.path if p.startswith(sys.real_prefix)]
+        bootfunc = "import sys; sys.path[:0] = %r\n\n" % sitepaths
+        with open(bootfile, "wb") as file:
+            file.write(bootfunc.encode('utf-8') + original)
 
 def prepare_sparkle_update(zip_path):
     sig = check_output([

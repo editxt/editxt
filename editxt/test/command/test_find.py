@@ -266,7 +266,8 @@ def test_Finder():
     yield test, c(
         find="(", replace="match[0].lower()",
         action="replace_all",
-        expect=mod.CommandError("cannot compile regex '(' : unbalanced parenthesis"))
+        expect=mod.CommandError(
+            "cannot compile regex '(' : missing ), unterminated subpattern at position 0"))
 
 def test_FindController_shared_controller():
     with test_app() as app:

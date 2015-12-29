@@ -33,6 +33,12 @@ Python environment setup. RECOMMENDED: use a virtualenv
 
     pip install --requirement=requires.txt
 
+    # Fix py2app console output on Mac OS X 10.9+
+    cp resources/py2app-modified-main.c `find $VIRTUAL_ENV -name py2app`/apptemplate/src/main.c
+    cd `find $VIRTUAL_ENV -name py2app`/apptemplate
+    mv prebuilt prebuilt.old
+    python setup.py
+
 Build development/test bundle (EditXTDev.app, necessary for ./xt script)::
 
     python setup.py py2app -A
@@ -237,6 +243,14 @@ find/replace text processors
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Bugs
+
+Bug: error in log on toggle System Preferences > Accessibility > Display > Reduce Contrast
+ERROR editxt - *** Python exception discarded!
+Traceback (most recent call last):
+  File "/Users/SharedSSD/Applications/EditXT.app/Contents/Resources/lib/python3.4/editxt/controls/statscrollview.py", line 67, in tile
+  File "/Users/SharedSSD/Applications/EditXT.app/Contents/Resources/lib/python3.4/editxt/controls/linenumberview.py", line 58, in calculate_thickness
+  File "/Users/SharedSSD/Applications/EditXT.app/Contents/Resources/lib/python3.4/editxt/controls/textview.py", line 57, in font
+AttributeError: 'NoneType' object has no attribute 'font'
 
 Bug: scroll to right on enter after last, longer-than-window-width line
 
