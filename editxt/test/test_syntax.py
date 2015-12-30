@@ -108,8 +108,7 @@ def test_SyntaxFactory_load_definition():
     import builtins
     defaults = dict(
         comment_token="",
-        word_groups=(),
-        delimited_ranges=(),
+        rules=[],
     )
     def test(c):
         with tempdir() as tmp:
@@ -763,9 +762,11 @@ def test_Highlighter_color_text():
 
     class lang:
         class sub:
-            word_groups = [("keyword", ["for"])]
-        word_groups = [("keyword", ["for", "in"])]
-        delimited_ranges = [("tag", "[", ["]"], sub)]
+            rules = [("keyword", ["for"])]
+        rules = [
+            ("keyword", ["for", "in"]),
+            ("tag", "[", ["]"], sub)
+        ]
     lang = make_definition(lang)
     yield from edit(lang, "for x in [y for y in z]:",
         """
@@ -804,17 +805,17 @@ def test_Highlighter_color_text():
         )
 
     class xkw:
-        word_groups = [("name", ["x"])]
+        rules = [("name", ["x"])]
     class lang:
         name = "transition"
         class params:
-            delimited_ranges = [
+            rules = [
                 ("group", "(", [")"], xkw),
             ]
         class func_name:
-            word_groups = [("name", [RE(r"[a-z]+")])]
-        word_groups = [("keyword", ["end"])]
-        delimited_ranges = [
+            rules = [("name", [RE(r"[a-z]+")])]
+        rules = [
+            ("keyword", ["end"]),
             ("keyword", "def", [RE(r"$"), params], func_name),
             ("tag", RE(r"[a-z]+\("), [")"], xkw),
         ]
@@ -834,14 +835,13 @@ def test_Highlighter_color_text():
 
     class lang:
         name = "recursive"
-        word_groups = [("keyword", ["def"])]
         class call:
-            word_groups = [("tag", ["do"])]
-            delimited_ranges = [None]
-        delimited_ranges = [
+            rules = [("tag", ["do"])]
+        rules = [
+            ("keyword", ["def"]),
             ("group", "(", [")"], call),
         ]
-    lang.call.delimited_ranges[0] = lang.delimited_ranges[0]
+    lang.call.rules.append(lang.rules[1])
     lang = make_definition(lang)
     yield test(lang, "def (def do(do (def)))",
         """
@@ -856,13 +856,13 @@ def test_Highlighter_color_text():
 
     class lang:
         name = "start-end-lang-no-body"
-        word_groups = [("keyword", ["def"])]
         default_text = const.DELIMITER
         class _lparen:
-            word_groups = [("_lparen", ["("])]
+            rules = [("_lparen", ["("])]
         class _rparen:
-            word_groups = [("_rparen", [")"])]
-        delimited_ranges = [
+            rules = [("_rparen", [")"])]
+        rules = [
+            ("keyword", ["def"]),
             ("group", _lparen, [_rparen]),
         ]
     lang = make_definition(lang)
@@ -882,7 +882,7 @@ def test_Highlighter_color_text():
 
     class lang:
         name = "non-advancing-range"
-        delimited_ranges = [
+        rules = [
             ("group", RE(r"(?=.)"), [RE(r"\b|\B")]),
         ]
     lang = make_definition(lang)
@@ -890,8 +890,8 @@ def test_Highlighter_color_text():
 
     class lang:
         name = "infinite-language-recursion"
-        delimited_ranges = []
-    lang.delimited_ranges.append(("group", RE(r"(?=.)"), [RE(r"x")], lang))
+        rules = []
+    lang.rules.append(("group", RE(r"(?=.)"), [RE(r"x")], lang))
     lang = make_definition(lang)
     yield test_err, "max recursion exceeded", lang, "a", ""
 

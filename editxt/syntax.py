@@ -361,21 +361,16 @@ class SyntaxDefinition(NoHighlight):
     :param filename: The filename from which this definition was loaded.
     :param name: Human-readable name.
     :param file_patterns: Globbing patterns for matching filenames.
-    :param word_groups: a sequence of two-tuples associating word-tokens
-        with a color:
+    :param rules: a list of two-, three-, or four-tuples:
         ```
         [
-            (<name>, ['word1', 'word2']),
-            ...
-        ]
-        ```
-        Use `RE` objects in place of words for more complex patterns.
-    :param delimited_ranges: a list of four-tuples associating a set of
-        delimiters with a color and optional syntax definition:
-        ```
-        [
+            # word group : two-tuple
+            (<color name>, <list of words: str or RE objects>),
+            ('keyword', ['true', 'false', 'undefined', 'alert']),
+
+            # delimited range : three-tuple or four-tuple
             (
-                <name>,
+                <color name>,
                 <start delimiter string, RE, or definition type>,
                 <list of end delimiters: string, RE, or definition type>,
                 <(optional) syntax definition type or name>,
@@ -385,78 +380,71 @@ class SyntaxDefinition(NoHighlight):
             ('tag', RE('<style(?:\s[^>]*?)?>'), ['</style>'], 'css'),
         ]
         ```
-        Ranges that have a syntax definition will use the associated
-        theme color for the delimiters only, while ranges without a
-        syntax definition will use the color for the entire range.
+        Word groups are two-tuples consisting of a color name and a list
+        of words (literal or `RE` objects for more complex patterns).
 
-        Start or end delimiters may be a *syntax definition type*, which
-        is an object with at least one of the attributes `word_groups`
-        or `delimited_ranges`. When a syntax definition type is
+        Delimited ranges are three- or four-tuples. Start or end
+        delimiters may be a *syntax definition type*, which is an object
+        with a `rules` attribute. When a syntax definition type is
         specified as the start delimiter, any matched token in the
         definition will immediately transition to the (optional) syntax
         definition type of the start delimiter's range. When a syntax
         definition type is specified as an end delimiter, any matched
         token in the definition will immedately end the range and
-        transition to the end delimiter's nested definitions (if any).
-        A `default_text` attribute may be specified on a syntax
-        definition type to set the default text color for the range; the
+        transition to the end delimiter's nested definitions (if any). A
+        `default_text` attribute may be specified on a syntax definition
+        type to set the default text color for the range; the
         `DELIMITER` constant signifies the same color as the range
         delimiter.
 
+        Color names are strings like 'keyword', 'string.single-quoted',
+        etc., and are defined in themes. They are mapped to actual
+        colors during syntax highlighting. Dotted color names are
+        matched to the most specific color found in the theme, starting
+        with the left-most part of the name. So 'string.single-quoted'
+        may match the full string or simply 'string'. If no match is
+        found then the default text color will be used.
     :param comment_token: The comment token to use when block-commenting
         a region of text.
     :param disabled: True if this definition is disabled.
     :param flags: Regular expression flags for this language.
     """
 
-    # TODO merge "word_groups" and "delimited_ranges" into "rules"
-    #
-    #    rules = [
-    #        # word group : 2-tuple
-    #        ("<name>", <list: string literals or RE objects>),
-    #
-    #        # delimited range : 3-tuple
-    #        (
-    #            <name>,
-    #            <start delimiter string, RE, or definition type>,
-    #            <list of end delimiters: string, RE, or definition type>,
-    #        ),
-    #
-    #        # delimited range with sub-definitions : 4-tuple
-    #        (
-    #            <name>,
-    #            <start delimiter string, RE, or definition type>,
-    #            <list of end delimiters: string, RE, or definition type>,
-    #            <syntax definition type or name>,
-    #        ),
-    #    ]
-
     ARGS = {
         "name",
         "file_patterns",
-        "word_groups",
-        "delimited_ranges",
+        "rules",
         "comment_token",
         "disabled",
         "flags",
         "whitespace",
         "default_text",
         "registry",
+
+        # deprecated
+        "word_groups",
+        "delimited_ranges",
     }
 
     whitespace = " \r\n\t\u2028\u2029"
     registry = WeakProperty()
 
     def __init__(self, filename, name, *, file_patterns=(),
-            word_groups=(), delimited_ranges=(),
+            rules=(), word_groups=(), delimited_ranges=(),
             comment_token="", disabled=False, flags=re.MULTILINE,
             whitespace=whitespace, default_text="", registry=None,
             _id=None, _lang_ids=None, _ends=None, _next=None, _key=""):
         super().__init__(name, comment_token, disabled, _id=_id)
         self.filename = filename
         self.file_patterns = list(file_patterns)
-        self.word_groups = word_groups
-        self.delimited_ranges = delimited_ranges
+        if rules:
+            self.rules = rules
+            if word_groups or delimited_ranges:
+                log.warn("%s %s: `word_groups` and `delimited_ranges` are "
+                    "deprecated and should not be used with `rules`",
+                    filename, name)
+        else:
+            self.rules = list(word_groups) + list(delimited_ranges)
         self.ends = _ends
         self.next = _next
         self.key = _key
@@ -543,29 +531,20 @@ class SyntaxDefinition(NoHighlight):
         else:
             color = self.get_color("text_color")
             parent_ends = [End("\Z", self.next, color, None)]
-        yield from self.iter_words(idgen, self.word_groups)
-        yield from self.iter_ranges(idgen, parent_ends)
+        yield from self.iter_groups(idgen, parent_ends)
 
-    def iter_words(self, idgen, word_groups):
-        ident = None
-        for name, tokens in word_groups:
-            phrase = disjunction(tokens)
-            if idgen is not None:
-                ident = "w%s" % next(idgen)
-                phrase = "(?P<{}>{})".format(ident, phrase)
-                info = MatchInfo(self.get_color(name), self.next)
-            else:
-                phrase = lookahead(phrase)
-                info = self.get_color(name)
-            yield phrase, ident, info
-
-    def iter_ranges(self, idgen, parent_ends):
+    def iter_groups(self, idgen, parent_ends):
         def lookup_syntax(owner, sdef, ends, ndef=None):
-            if hasattr(sdef, "word_groups") or hasattr(sdef, "delimited_ranges"):
+            if hasattr(sdef, "rules") \
+                    or hasattr(sdef, "word_groups") \
+                    or hasattr(sdef, "delimited_ranges"):
                 sdef = self.make_definition(owner, sdef, ends, ndef)
             elif not hasattr(sdef, "make_definition"):
                 sdef_name = sdef
-                sdef = self.registry.get(sdef_name)
+                try:
+                    sdef = self.registry.get(sdef_name)
+                except Exception:
+                    sdef = None
                 if not sdef:
                     log.debug("unknown syntax definition: %r", sdef_name)
                 elif ends or ndef:
@@ -597,7 +576,7 @@ class SyntaxDefinition(NoHighlight):
                         yield End(phrase, sdef, color_, sdef)
 
         class unknown:
-            word_groups = []
+            rules = []
 
         def compile_range(name, start, ends, sdef):
             if idgen is None:
@@ -618,7 +597,7 @@ class SyntaxDefinition(NoHighlight):
                 ends = [End(r".*?{}".format(e.pattern), e.next, color, self)
                         for e in ends]
                 class lines:
-                    word_groups = [(name, [RE(r".+?$")])]
+                    rules = [(name, [RE(r".+?$")])]
                     default_text = name
                 lines.__name__ = "{}.lines".format(name)
                 sdef = self.make_definition(name, lines, ends)
@@ -627,12 +606,28 @@ class SyntaxDefinition(NoHighlight):
             info = MatchInfo(self.get_color(name), sdef, self)
             return phrase, ident, info
 
-        for name, start, ends, *sdef in self.delimited_ranges:
+        for rule in self.rules:
             try:
+                if len(rule) < 3:
+                    # word group
+                    name, tokens = rule
+                    ident = None
+                    phrase = disjunction(tokens)
+                    if idgen is not None:
+                        ident = "w%s" % next(idgen)
+                        phrase = "(?P<{}>{})".format(ident, phrase)
+                        info = MatchInfo(self.get_color(name), self.next)
+                    else:
+                        phrase = lookahead(phrase)
+                        info = self.get_color(name)
+                    yield phrase, ident, info
+                    continue
+
+                # delimited range
+                name, start, ends, *sdef = rule
                 if sdef:
                     if len(sdef) > 1:
-                        log.warn("malformed delimited range: %r",
-                                 (name, start, ends) + sdef)
+                        log.warn("malformed delimited range: %r", rule)
                     sdef = sdef[0]
                 else:
                     sdef = None
@@ -645,7 +640,7 @@ class SyntaxDefinition(NoHighlight):
                     else:
                         class delim_color:
                             default_text = name
-                            word_groups = []
+                            rules = []
                         delim_color.__name__ = name
                         ndef = self.make_definition(name, delim_color, ends)
                     if not ndef:
@@ -657,8 +652,7 @@ class SyntaxDefinition(NoHighlight):
             except Error:
                 raise
             except Exception:
-                log.error("delimited range error: %s %s %s %s",
-                          name, start, ends, sdef, exc_info=True)
+                log.error("rule error: %s", rule, exc_info=True)
 
     def get_color(self, name):
         if " " in name:
@@ -728,7 +722,7 @@ class DynamicRange:
     default_text = None
     class _none:
         default_text = const.DELIMITER
-        word_groups = []
+        rules = []
     def __init__(self, lang_pattern, color=None):
         if isinstance(lang_pattern, str):
             lang_pattern = re.compile(lang_pattern, re.MULTILINE)
