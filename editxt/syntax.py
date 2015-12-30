@@ -254,8 +254,6 @@ class Highlighter(object):
                             # extend if at beginning or end of delimited range
                             if info.next and info.next.default_text_name == info:
                                 alt = (info, (rng[0], rng[1] + 1))
-                            elif info.end and lang.default_text_name == info:
-                                alt = (info, (rplus[0], rng[1] + 1))
                             else:
                                 alt = None
                         else:
@@ -482,7 +480,7 @@ class SyntaxDefinition(NoHighlight):
             msg = "cannot compile groups for %s: %s\n%r" % (self.name, err, groups)
             log.warn(msg, exc_info=True)
             raise Error(msg)
-        self._default_text_name = self.token_name(
+        self._default_text_name = self.get_color(
             "" if self.default_text is const.DELIMITER else self.default_text)
         log.debug("file: %s\n"
                   "name: %s\n"
@@ -538,12 +536,12 @@ class SyntaxDefinition(NoHighlight):
                 assert end.next is not None or r'\Z' in end.pattern, end
                 ident = "e%s" % next(idgen)
                 phrase = "(?P<{}>{})".format(ident, end.pattern)
-                info = MatchInfo(end.name, end.next, True, end.lang)
+                info = MatchInfo(end.name, end.next, end.lang)
                 #print(end.pattern, (info, end.lang))
                 yield phrase, ident, info
             parent_ends = self.ends
         else:
-            color = self.token_name("text_color")
+            color = self.get_color("text_color")
             parent_ends = [End("\Z", self.next, color, None)]
         yield from self.iter_words(idgen, self.word_groups)
         yield from self.iter_ranges(idgen, parent_ends)
@@ -555,10 +553,10 @@ class SyntaxDefinition(NoHighlight):
             if idgen is not None:
                 ident = "w%s" % next(idgen)
                 phrase = "(?P<{}>{})".format(ident, phrase)
-                info = MatchInfo(self.token_name(name), self.next)
+                info = MatchInfo(self.get_color(name), self.next)
             else:
                 phrase = lookahead(phrase)
-                info = self.token_name(name)
+                info = self.get_color(name)
             yield phrase, ident, info
 
     def iter_ranges(self, idgen, parent_ends):
@@ -580,7 +578,7 @@ class SyntaxDefinition(NoHighlight):
 
         def endify(name, tokens):
             next_def = self.next or self
-            color = self.token_name(name)
+            color = self.get_color(name)
             def keyfunc(t, transition_key=count(start=1)):
                 return 0 if isinstance(t, (str, RE)) else next(transition_key)
             for transition, token in groupby(tokens, key=keyfunc):
@@ -603,7 +601,7 @@ class SyntaxDefinition(NoHighlight):
 
         def compile_range(name, start, ends, sdef):
             if idgen is None:
-                return lookahead(escape(start)), None, self.token_name(name)
+                return lookahead(escape(start)), None, self.get_color(name)
             if sdef:
                 expanded_ends = False
                 sdef = lookup_syntax(name, sdef, ends)
@@ -616,7 +614,7 @@ class SyntaxDefinition(NoHighlight):
             else:
                 # ranges without nested syntax rules are broken into lines to
                 # minimize the range that needs to be re-highlighted on edit
-                color = self.token_name(name)
+                color = self.get_color(name)
                 ends = [End(r".*?{}".format(e.pattern), e.next, color, self)
                         for e in ends]
                 class lines:
@@ -626,7 +624,7 @@ class SyntaxDefinition(NoHighlight):
                 sdef = self.make_definition(name, lines, ends)
             ident = "r%s" % next(idgen)
             phrase = "(?P<{}>{})".format(ident, escape(start))
-            info = MatchInfo(self.token_name(name), sdef, lang=self)
+            info = MatchInfo(self.get_color(name), sdef, self)
             return phrase, ident, info
 
         for name, start, ends, *sdef in self.delimited_ranges:
@@ -662,13 +660,13 @@ class SyntaxDefinition(NoHighlight):
                 log.error("delimited range error: %s %s %s %s",
                           name, start, ends, sdef, exc_info=True)
 
-    def token_name(self, name):
+    def get_color(self, name):
         if " " in name:
             value = name.replace(" ", "_")
-            log.warn("invalid token name: converting %r to %r", name, value)
+            log.warn("invalid color name: converting %r to %r", name, value)
             name = value
         if name.startswith("_"):
-            # token names starting with _ get default text color
+            # color names starting with _ get default text color
             name = "text_color"
         return self.name + " " + name
 
@@ -708,22 +706,17 @@ class SyntaxDefinition(NoHighlight):
 
 class MatchInfo(str):
 
-    __slots__ = ('event', 'next', 'end', 'lang')
+    __slots__ = ('event', 'next', 'lang')
 
-    def __new__(cls, value, next=None, end=False, lang=None):
+    def __new__(cls, value, next=None, lang=None):
         info = super().__new__(cls, value)
-        info.event = end or next is not None
+        info.event = next is not None
         info.next = next
-        info.end = end
         info.lang = lang
         return info
 
     def __repr__(self):
-        return "".join([x for x in [
-            super().__repr__(),
-            "n" if self.next else "",
-            "e" if self.end else "",
-        ] if x])
+        return super().__repr__() + ("n" if self.next else "")
 
 
 PLAIN_TEXT = NoHighlight("Plain Text", "x")
@@ -751,8 +744,8 @@ class DynamicRange:
         sdef.name = name
         sdef.ends = ends
         sdef.next = next_def
-        sdef.color_token = parent.token_name(self.color)
-        sdef.none = MatchInfo(parent.token_name("_none"), none, lang=parent)
+        sdef.color_token = parent.get_color(self.color)
+        sdef.none = MatchInfo(parent.get_color("_none"), none, parent)
         return sdef
     @property
     def regex(self):
@@ -777,7 +770,7 @@ class DynamicRange:
         if name:
             sdef = self.lookup_syntax(self.name, name, self.ends, self.next)
             if sdef is not None:
-                return MatchInfo(self.color_token, sdef, lang=self.parent)
+                return MatchInfo(self.color_token, sdef, self.parent)
         return self.none
 
 
