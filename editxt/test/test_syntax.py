@@ -578,8 +578,22 @@ def test_Highlighter_color_text():
         """,
         """
         ``` code text_color
+        Python tag
           def keyword Python
           return keyword Python
+        ``` code text_color
+        """)
+
+    yield test("markdown",
+        """
+        ```unknown-language-name
+        def inc(arg):
+            return arg + 1
+        ```
+        """,
+        """
+        ``` code text_color
+        unknown-language-name text_color
         ``` code text_color
         """)
 
@@ -602,6 +616,7 @@ def test_Highlighter_color_text():
         """
         *Clojure REPL* emphasis text_color
         ``` code text_color
+        clojure-repl tag
           user=> meta text_color Clojure REPL
           ( text_color Clojure
           defn builtin-name text_color Clojure

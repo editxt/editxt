@@ -319,8 +319,6 @@ class Highlighter(object):
                         ))
 
                     if lang is not None:
-                        if callable(lang):
-                            lang, end = lang(string, end)
                         langs[lang.key] = (lang, start)
                         key = lang.key
                     else:
@@ -571,7 +569,7 @@ class SyntaxDefinition(NoHighlight):
                 sdef_name = sdef
                 sdef = self.registry.get(sdef_name)
                 if not sdef:
-                    log.warn("unknown syntax definition: %r", sdef_name)
+                    log.debug("unknown syntax definition: %r", sdef_name)
                 elif ends or ndef:
                     sdef = self.make_definition(owner, sdef, ends, ndef)
             elif isinstance(sdef, DynamicRange):
@@ -729,6 +727,8 @@ class MatchInfo(str):
 
 
 PLAIN_TEXT = NoHighlight("Plain Text", "x")
+EMPTY_REGEX = re.compile("")
+WORD_CHAR = re.compile(r"\w", re.UNICODE)
 
 
 class DynamicRange:
@@ -736,34 +736,49 @@ class DynamicRange:
     class _none:
         default_text = const.DELIMITER
         word_groups = []
-    def __init__(self, lang_pattern):
+    def __init__(self, lang_pattern, color=None):
         if isinstance(lang_pattern, str):
             lang_pattern = re.compile(lang_pattern, re.MULTILINE)
         self.lang_pattern = lang_pattern
+        self.color = color
     def make_definition(self, parent, lookup_syntax, name, ends, next_def=None):
-        sdef = DynamicRange(self.lang_pattern)
+        ident = next(parent.lang_ids)
+        none = parent.make_definition(name, self._none, ends, next_def)
+        sdef = type(self)(self.lang_pattern, self.color)
+        sdef.key = (parent.key + " " + ident) if parent.key else ident
         sdef.parent = parent
         sdef.lookup_syntax = lookup_syntax
         sdef.name = name
         sdef.ends = ends
         sdef.next = next_def
-        sdef.none = parent.make_definition(name, DynamicRange._none, ends, next_def)
+        sdef.color_token = parent.token_name(self.color)
+        sdef.none = MatchInfo(parent.token_name("_none"), none, lang=parent)
         return sdef
+    @property
+    def regex(self):
+        return self
+    @property
+    def wordinfo(self):
+        return self
     @property
     def default_text_name(self):
         return self.parent.default_text_name
-    def __call__(self, string, offset):
+    def finditer(self, string, offset):
         match = self.lang_pattern.match(string, offset)
         if match:
-            name = match.group(0).strip()
-            if name:
-                sdef = self.lookup_syntax(self.name, name, self.ends, self.next)
-                if sdef is not None:
-                    return sdef, match.end()
-        return self.none, offset
-
-
-WORD_CHAR = re.compile(r"\w", re.UNICODE)
+            self.last_match_value = match.group(0).strip()
+        else:
+            self.last_match_value = ""
+            match = EMPTY_REGEX.match(string, offset)
+        return [match]
+    def get(self, key):
+        # HACK must be called after `finditer` as in `Highlighter.scan`
+        name = self.last_match_value
+        if name:
+            sdef = self.lookup_syntax(self.name, name, self.ends, self.next)
+            if sdef is not None:
+                return MatchInfo(self.color_token, sdef, lang=self.parent)
+        return self.none
 
 
 class RE(object):
