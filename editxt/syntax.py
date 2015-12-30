@@ -538,13 +538,13 @@ class SyntaxDefinition(NoHighlight):
                 assert end.next is not None or r'\Z' in end.pattern, end
                 ident = "e%s" % next(idgen)
                 phrase = "(?P<{}>{})".format(ident, end.pattern)
-                info_name = (end.lang or self).token_name(end.name)
-                info = MatchInfo(info_name, end.next, True, end.lang)
+                info = MatchInfo(end.name, end.next, True, end.lang)
                 #print(end.pattern, (info, end.lang))
                 yield phrase, ident, info
             parent_ends = self.ends
         else:
-            parent_ends = [End("\Z", self.next, "text_color", None)]
+            color = self.token_name("text_color")
+            parent_ends = [End("\Z", self.next, color, None)]
         yield from self.iter_words(idgen, self.word_groups)
         yield from self.iter_ranges(idgen, parent_ends)
 
@@ -580,6 +580,7 @@ class SyntaxDefinition(NoHighlight):
 
         def endify(name, tokens):
             next_def = self.next or self
+            color = self.token_name(name)
             def keyfunc(t, transition_key=count(start=1)):
                 return 0 if isinstance(t, (str, RE)) else next(transition_key)
             for transition, token in groupby(tokens, key=keyfunc):
@@ -590,13 +591,12 @@ class SyntaxDefinition(NoHighlight):
                             token = escape(token[0])
                         else:
                             token = r"(?:{})".format(disjunction(token))
-                        yield End(token, next_def, name, self)
+                        yield End(token, next_def, color, self)
                 else:
                     token = next(token)
                     sdef = lookup_syntax(self.name, token, parent_ends, next_def)
-                    for phrase, ident, info in sdef.iter_group_info():
-                        #print(phrase, sdef, info)
-                        yield End(phrase, sdef, info, sdef)
+                    for phrase, ident, color_ in sdef.iter_group_info():
+                        yield End(phrase, sdef, color_, sdef)
 
         class unknown:
             word_groups = []
@@ -616,8 +616,8 @@ class SyntaxDefinition(NoHighlight):
             else:
                 # ranges without nested syntax rules are broken into lines to
                 # minimize the range that needs to be re-highlighted on edit
-                # TODO what if `<End>.name != name`?
-                ends = [End(r".*?{}".format(e.pattern), e.next, name, self)
+                color = self.token_name(name)
+                ends = [End(r".*?{}".format(e.pattern), e.next, color, self)
                         for e in ends]
                 class lines:
                     word_groups = [(name, [RE(r".+?$")])]
