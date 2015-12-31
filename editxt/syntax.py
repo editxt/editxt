@@ -94,7 +94,8 @@ class SyntaxFactory():
         base = ns.get("__base__")
         if base is not None:
             kwargs.update((a, getattr(base, a))
-                          for a in factory.ARGS if a not in ns)
+                          for a in factory.ARGS
+                          if a not in ns and hasattr(base, a))
         if "name" not in kwargs:
             kwargs["name"] = os.path.basename(filename)[:-len(const.SYNTAX_DEF_EXTENSION)]
         sdef = factory(filename, **kwargs)
