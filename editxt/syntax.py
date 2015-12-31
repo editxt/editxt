@@ -285,6 +285,9 @@ class Highlighter(object):
                         add_attribute(fg_name, color, rng)
 
                 elif not info.event:
+                    if start == tlen:
+                        lang = None
+                        break
                     raise Error("non-advancing match: "
                                 "index={} group={} {} {}".format(
                                     start,
@@ -528,11 +531,10 @@ class SyntaxDefinition(NoHighlight):
                 ident = "e%s" % next(idgen)
                 phrase = "(?P<{}>{})".format(ident, end.pattern)
                 info = MatchInfo(end.name, end.next, end.lang)
-                #print(end.pattern, (info, end.lang))
                 yield phrase, ident, info
             parent_ends = self.ends
         else:
-            parent_ends = [End("\Z", self.next, self.get_color(), None)]
+            parent_ends = [End(r"\Z", self.next, self.get_color(), self)]
         yield from self.iter_groups(idgen, parent_ends)
 
     def iter_groups(self, idgen, parent_ends):
@@ -628,7 +630,7 @@ class SyntaxDefinition(NoHighlight):
                     sdef = sdef[0]
                 else:
                     sdef = None
-                ends = list(unique(list(endify(name, ends)) + parent_ends))
+                ends = list(unique(chain(endify(name, ends), parent_ends)))
                 if isinstance(start, (str, RE)):
                     yield compile_range(name, start, ends, sdef)
                 else:
