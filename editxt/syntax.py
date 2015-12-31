@@ -125,8 +125,8 @@ class SyntaxFactory():
     def __getitem__(self, id_):
         return self.by_id[self.lang_key(id_)]
 
-    def get(self, id_):
-        return self.by_id.get(self.lang_key(id_))
+    def get(self, id_, default=None):
+        return self.by_id.get(self.lang_key(id_), default)
 
     def get_definition(self, filename):
         for pattern, sdef in self.registry.items():
@@ -535,25 +535,18 @@ class SyntaxDefinition(NoHighlight):
         yield from self.iter_groups(idgen, parent_ends)
 
     def iter_groups(self, idgen, parent_ends):
-        def lookup_syntax(owner, sdef, ends, ndef=None):
-            if hasattr(sdef, "rules") \
-                    or hasattr(sdef, "word_groups") \
-                    or hasattr(sdef, "delimited_ranges"):
-                sdef = self.make_definition(owner, sdef, ends, ndef)
+        def lookup_syntax(sdef, owner, ends, ndef=None, **kw):
+            if is_syntax_class(sdef):
+                sdef = self.make_definition(sdef, owner, ends, ndef, **kw)
             elif not hasattr(sdef, "make_definition"):
-                sdef_name = sdef
-                try:
-                    sdef = self.registry.get(sdef_name)
-                except Exception:
-                    sdef = None
-                if not sdef:
-                    log.debug("unknown syntax definition: %r", sdef_name)
-                elif ends or ndef:
-                    sdef = self.make_definition(owner, sdef, ends, ndef)
+                sdef = self.get_compiled_definition(sdef)
+                if sdef is not None and (ends or ndef or kw):
+                    sdef = self.make_definition(sdef, owner, ends, ndef, **kw)
             elif isinstance(sdef, DynamicRange):
-                sdef = sdef.make_definition(self, lookup_syntax, name, ends, ndef)
-            elif ends:
-                sdef = self.make_definition(owner, sdef, ends, ndef)
+                sdef = sdef.make_definition(
+                            self, lookup_syntax, name, ends, ndef, **kw)
+            elif ends or ndef or kw:
+                sdef = self.make_definition(sdef, owner, ends, ndef, **kw)
             return sdef
 
         def endify(name, tokens):
@@ -572,7 +565,7 @@ class SyntaxDefinition(NoHighlight):
                         yield End(token, next_def, color, self)
                 else:
                     token = next(token)
-                    sdef = lookup_syntax(self.name, token, parent_ends, next_def)
+                    sdef = lookup_syntax(token, self.name, parent_ends, next_def)
                     for phrase, ident, color_ in sdef.iter_group_info():
                         yield End(phrase, sdef, color_, sdef)
 
@@ -583,13 +576,17 @@ class SyntaxDefinition(NoHighlight):
             if idgen is None:
                 return lookahead(escape(start)), None, self.get_color(name)
             if sdef:
-                sdef = lookup_syntax(name, sdef, ends)
-                if not sdef:
-                    sdef = self.make_definition(name, unknown, ends)
-                if sdef.default_text_color is const.DELIMITER:
-                    sdef.default_text_color = name
-                elif not sdef.default_text_color:
-                    sdef.default_text_color = self.default_text_color
+                key = sdef
+                if not (is_syntax_class(key) or hasattr(key, "make_definition")):
+                    sdef = self.get_compiled_definition(key, unknown)
+                color_name = getattr(sdef, "default_text_color", None)
+                if color_name is const.DELIMITER:
+                    color_name = name
+                elif not color_name:
+                    color_name = self.default_text_color
+                overrides = {"default_text_color": color_name}
+                sdef = lookup_syntax(sdef, name, ends, overrides=overrides)
+                assert sdef is not None, (name, start, ends, key)
             else:
                 # ranges without nested syntax rules are broken into lines to
                 # minimize the range that needs to be re-highlighted on edit
@@ -600,11 +597,10 @@ class SyntaxDefinition(NoHighlight):
                     rules = [(name, [RE(r".+?$")])]
                     default_text_color = name
                 lines.__name__ = "{}.lines".format(name)
-                sdef = self.make_definition(name, lines, ends)
+                sdef = self.make_definition(lines, name, ends)
             ident = "r%s" % next(idgen)
             phrase = "(?P<{}>{})".format(ident, escape(start))
-            info = MatchInfo(self.get_color(name), sdef, self)
-            return phrase, ident, info
+            return phrase, ident, MatchInfo(self.get_color(name), sdef, self)
 
         for rule in self.rules:
             try:
@@ -636,17 +632,17 @@ class SyntaxDefinition(NoHighlight):
                     yield compile_range(name, start, ends, sdef)
                 else:
                     if sdef:
-                        ndef = lookup_syntax(name, sdef, ends)
+                        ndef = lookup_syntax(sdef, name, ends)
                     else:
                         class delim_color:
                             default_text_color = name
                             rules = []
                         delim_color.__name__ = name
-                        ndef = self.make_definition(name, delim_color, ends)
+                        ndef = self.make_definition(delim_color, name, ends)
                     if not ndef:
-                        ndef = self.make_definition(name, unknown, ends)
+                        ndef = self.make_definition(unknown, name, ends)
                     #import bug; bug.trace()
-                    start_def = lookup_syntax(name, start, parent_ends, ndef)
+                    start_def = lookup_syntax(start, name, parent_ends, ndef)
                     assert start_def, (self, name, start, ends, ndef)
                     yield from start_def.iter_group_info(idgen)
             except Error:
@@ -663,10 +659,24 @@ class SyntaxDefinition(NoHighlight):
             name = "text_color"  # theme default text color
         return self.name + " " + name
 
-    def make_definition(self, name, other_definition, ends, next_def=None):
+    def get_compiled_definition(self, key, default=None):
+        try:
+            sdef = self.registry[key]
+        except KeyError:
+            log.debug("unknown syntax definition: %r", key)
+            sdef = default
+        except Exception:
+            log.debug("bad syntax key: %s", key, exc_info=True)
+            sdef = default
+        return sdef
+
+    def make_definition(self, source_definition, name, ends, next_def=None,
+                        *, overrides=None):
         end_key = (self.next,) if self.next else ()
         end_key += (next_def,) if next_def else ()
-        def_key = (name, other_definition) + end_key + tuple(unique(ends))
+        def_key = (name, source_definition) + end_key + tuple(unique(ends))
+        if overrides:
+            def_key += tuple(sorted(overrides.items()))
         sdef = self.registry.get(def_key)
         if sdef is None:
             NA = object()
@@ -676,9 +686,11 @@ class SyntaxDefinition(NoHighlight):
                 "registry": self.registry,
             }
             for attr in self.ARGS:
-                value = getattr(other_definition, attr, NA)
+                value = getattr(source_definition, attr, NA)
                 if value is not NA:
                     args[attr] = value
+            if overrides:
+                args.update(overrides)
             ident = next(self.lang_ids)
             args.update(
                 _id=ident,
@@ -726,18 +738,15 @@ class DynamicRange:
             lang_pattern = re.compile(lang_pattern, re.MULTILINE)
         self.lang_pattern = lang_pattern
         self.color_name = color_name
-    def make_definition(self, parent, lookup_syntax, name, ends, next_def=None):
+    def make_definition(self, parent, lookup_syntax, *args, **kw):
         ident = next(parent.lang_ids)
-        none = parent.make_definition(name, self._none, ends, next_def)
+        none = parent.make_definition(self._none, *args, **kw)
         sdef = type(self)(self.lang_pattern, self.color_name)
         sdef.key = (parent.key + " " + ident) if parent.key else ident
         sdef.parent = parent
         sdef.lookup_syntax = lookup_syntax
-        sdef.name = name
-        sdef.ends = ends
-        sdef.next = next_def
+        sdef.syntax_args = (args, kw)
         sdef.color = parent.get_color(self.color_name)
-        sdef.default_text_color = "this is ignored"
         sdef.none = MatchInfo(parent.get_color(), none, parent)
         return sdef
     @property
@@ -761,7 +770,8 @@ class DynamicRange:
         # HACK must be called after `finditer` as in `Highlighter.scan`
         name = self.last_match_value
         if name:
-            sdef = self.lookup_syntax(self.name, name, self.ends, self.next)
+            args, kw = self.syntax_args
+            sdef = self.lookup_syntax(name, *args, **kw)
             if sdef is not None:
                 return MatchInfo(self.color, sdef, self.parent)
         return self.none
@@ -798,6 +808,11 @@ class End(RE):
     def __hash__(self):
         return hash((End, self.pattern, self.next, self.name))
 
+
+def is_syntax_class(obj):
+    return hasattr(obj, "rules") \
+        or hasattr(obj, "word_groups") \
+        or hasattr(obj, "delimited_ranges")
 
 def lookahead(pattern):
     # could return wrong result sometimes, probaby doesn't matter
