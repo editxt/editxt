@@ -20,8 +20,7 @@
 name = "Jinja Template"
 file_patterns = ["*.jn2"]
 comment_token = "{#" # ("{#", "#}")
-word_groups = []
-delimited_ranges = [
+rules = [
     # xml tags
     ("comment", "<!--", ["-->"]),
     ("tag", RE("<(/)?[a-zA-Z]"), [">", RE(r"(?=\{\{ )")]),

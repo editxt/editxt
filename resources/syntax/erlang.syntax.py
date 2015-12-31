@@ -14,154 +14,133 @@ literal = ['false', 'true']
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 
-class _group2:
-    default_text = DELIMITER
-    rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-_group2.__name__ = ''
+keyword0 = ['fun', 'receive', 'if', 'try', 'case']
 
-class _group5:
-    default_text = DELIMITER
-    rules = []
+class _group1:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+_group1.__name__ = ''
 
 class _group3:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
+    rules = []
+
+class _group2:
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': "([a-z'][a-zA-Z0-9_']*:[a-z'][a-zA-Z0-9_']*|[a-z'][a-zA-Z0-9_']*)", 'relevance': 0},
-        ('_group5', RE(r"\("), [RE(r"(?=\))")], _group5),
+        # ignore {'begin': "([a-z'][a-zA-Z0-9_']*:[a-z'][a-zA-Z0-9_']*|[a-z'][a-zA-Z0-9_']*)", 'relevance': 0},
+        ('_group3', RE(r"\("), [RE(r"(?=\))")], _group3),
     ]
 
 class string:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ('contains', 0, 'contains', 0, 'contains', 2, 'contains', 2, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 number = [RE(r"\b(?:\d+#[a-fA-F0-9]+|\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)")]
 
+class _group4:
+    default_text_color = DELIMITER
+    rules = []
+
 class _group6:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = []
 
-class _group11:
-    default_text = DELIMITER
-    rules = []
-
-class _group9:
-    default_text = DELIMITER
+class _group5:
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '#[a-zA-Z_]\\w*', 'relevance': 0},
-        ('_group11', RE(r"{"), [RE(r"}")], _group11),
+        # ignore {'begin': '#[a-zA-Z_]\\w*', 'relevance': 0},
+        ('_group6', RE(r"{"), [RE(r"}")], _group6),
     ]
 
 class _group0:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
         ('literal', literal),
+        ('keyword', keyword0),
         None,  # params.rules[0],
-        # {'begin': "fun\\s+[a-z'][a-zA-Z0-9_']*/\\d+"},
-        ('', RE(r"'"), [RE(r"'")], _group2),
-        # {'beginKeywords': 'fun receive if try case', 'end': 'end'},
-        ('_group3', RE(r"(?=(?:[a-z'][a-zA-Z0-9_']*:[a-z'][a-zA-Z0-9_']*|[a-z'][a-zA-Z0-9_']*)\()"), [RE(r"\)")], _group3),
+        # ('contains', 0, 'contains', 0, 'contains', 1) {'begin': "fun\\s+[a-z'][a-zA-Z0-9_']*/\\d+"},
+        ('', RE(r"'"), [RE(r"'")], _group1),
+        None,  # params.rules[1],
+        ('_group2', RE(r"(?=(?:[a-z'][a-zA-Z0-9_']*:[a-z'][a-zA-Z0-9_']*|[a-z'][a-zA-Z0-9_']*)\()"), [RE(r"\)")], _group2),
         ('string', RE(r"\""), [RE(r"\"")], string),
         ('number', number),
-        ('_group6', RE(r"{"), [RE(r"}")], _group6),
-        # {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
-        # {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
-        ('_group9', RE(r"(?=#[a-zA-Z_]\w*)"), [RE(r"\B\b")], _group9),
+        ('_group4', RE(r"{"), [RE(r"}")], _group4),
+        # ignore {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
+        # ignore {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
+        ('_group5', RE(r"(?=#[a-zA-Z_]\w*)"), [RE(r"\B\b")], _group5),
     ]
 
 class params:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('comment', RE(r"%"), [RE(r"$")], comment),
-        # {'begin': "fun\\s+[a-z'][a-zA-Z0-9_']*/\\d+"},
+        # ignore {'begin': "fun\\s+[a-z'][a-zA-Z0-9_']*/\\d+"},
         ('_group0', RE(r"\b(?:fun|receive|if|try|case)"), [RE(r"end")], _group0),
-        _group0.rules[4],
-        _group0.rules[5],
-        ('number', number),
+        _group0.rules[6],
         _group0.rules[7],
-        # {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
-        # {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
-        _group0.rules[8],
+        ('number', number),
+        _group0.rules[9],
+        # ('contains', 0, 'contains', 0, 'contains', 2, 'contains', 8) {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
+        # ('contains', 0, 'contains', 0, 'contains', 2, 'contains', 9) {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
+        _group0.rules[10],
     ]
 
 title = [RE(r"[a-z'][a-zA-Z0-9_']*")]
 
 class function:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [('params', RE(r"\("), [RE(r"\)")], params), ('title', title)]
 
 class function0:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('function', RE(r"(?=^[a-z'][a-zA-Z0-9_']*\s*\()"), [RE(r"->")], function),
     ]
 function0.__name__ = 'function'
 
-class _group12:
-    default_text = DELIMITER
+class _group7:
+    default_text_color = DELIMITER
     rules = [('keyword', keyword), ('literal', literal)]
 
-keyword0 = """
+keyword1 = """
     -module -record -undef -export -ifdef -ifndef -author -copyright
     -doc -vsn -import -include -include_lib -compile -define -else
     -endif -file -behaviour -behavior -spec
     """.split()
 
-class _group13:
-    default_text = DELIMITER
-    rules = [('keyword', keyword0), function.rules[0]]
+class _group8:
+    default_text_color = DELIMITER
+    rules = [('keyword', keyword1), function.rules[0]]
 
 rules = [
     ('keyword', keyword),
     ('literal', literal),
-    ('function', function0, [RE(r";|\.")], _group12),
+    ('function', function0, [RE(r";|\.")], _group7),
     params.rules[0],
-    ('_group13', RE(r"(?=^-)"), [RE(r"\.")], _group13),
+    ('_group8', RE(r"(?=^-)"), [RE(r"\.")], _group8),
     ('number', number),
-    _group0.rules[5],
-    _group0.rules[8],
-    # {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
-    # {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
     _group0.rules[7],
-    # {'begin': {'pattern': '\\.$', 'type': 'RegExp'}},
+    _group0.rules[10],
+    # ('contains', 0, 'contains', 0, 'contains', 2, 'contains', 8) {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
+    # ('contains', 0, 'contains', 0, 'contains', 2, 'contains', 9) {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
+    _group0.rules[9],
+    # ignore {'begin': {'pattern': '\\.$', 'type': 'RegExp'}},
 ]
 
-_group0.rules[2] = params.rules[0]
-_group5.rules.extend(params.rules)
+_group0.rules[3] = params.rules[0]
+_group0.rules[5] = params.rules[1]
+_group3.rules.extend(params.rules)
+_group4.rules.extend(params.rules)
 _group6.rules.extend(params.rules)
-_group11.rules.extend(params.rules)
-
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup

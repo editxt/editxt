@@ -18,13 +18,17 @@ meta = ['doc', 'by', 'license', 'see', 'throws', 'tagged']
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 
 meta0 = [RE(r"@[a-z]\w*(?:\:\"[^\"]*\")?")]
+
+class _subst:
+    default_text_color = DELIMITER
+    rules = [('_subst', [RE(r"``")])]
 
 keyword0 = """
     assembly module package import alias class interface object given
@@ -37,19 +41,19 @@ number = [
     RE(r"#[0-9a-fA-F_]+|\$[01_]+|[0-9_]+(?:\.[0-9_](?:[eE][+-]?\d+)?)?[kMGTPmunpf]?"),
 ]
 
-class _subst:
-    default_text = DELIMITER
+class subst:
+    default_text_color = DELIMITER
     rules = [
         ('keyword', keyword0),
         None,  # rules[5],
-        # {'begin': '"', 'className': 'string', 'end': ...},
+        None,  # rules[6],
         ('string', RE(r"'"), [RE(r"'")]),
         ('number', number),
     ]
 
 class string:
-    default_text = DELIMITER
-    rules = [('_subst', RE(r"``"), [RE(r"``")], _subst)]
+    default_text_color = DELIMITER
+    rules = [('subst', _subst, [_subst], subst)]
 
 rules = [
     ('keyword', keyword),
@@ -59,33 +63,9 @@ rules = [
     ('meta', meta0),
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    _subst.rules[2],
+    subst.rules[3],
     ('number', number),
 ]
 
-_subst.rules[1] = rules[5]
-
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup
+subst.rules[1] = rules[5]
+subst.rules[2] = rules[6]

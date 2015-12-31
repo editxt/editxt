@@ -8,30 +8,30 @@ symbol = [RE(r"[A-Z][a-zA-Z0-9_]*")]
 
 symbol0 = [RE(r"_[A-Za-z0-9_]*")]
 
-class _group2:
-    default_text = DELIMITER
+class _group1:
+    default_text_color = DELIMITER
     rules = []
 
 class comment:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
     ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment0:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ('contains', 2, 'contains', 5, 'contains', 0) {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 comment0.__name__ = 'comment'
 
 class string:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 string0 = [RE(r"0\'(?:\\\'|.)")]
@@ -42,14 +42,15 @@ number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
-class _group1:
-    default_text = DELIMITER
+class _group0:
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': '[a-z][A-Za-z0-9_]*', 'type': 'RegExp'}, 'relevance': 0},
-        ('symbol', symbol0),
-        # {'begin': {'pattern': '\\(', 'type': 'RegExp'}, 'end': {'pattern': '\\)', 'type': 'RegExp'}, 'relevance': 0},
-        # {'begin': {'pattern': ':-', 'type': 'RegExp'}},
-        ('_group2', RE(r"\["), [RE(r"\]")], _group2),
+        # ('contains', 0) {'begin': {'pattern': '[a-z][A-Za-z0-9_]*', 'type': 'RegExp'}, 'relevance': 0},
+        None,  # rules[0],
+        None,  # rules[1],
+        None,  # rules[2],
+        # ignore {'begin': {'pattern': ':-', 'type': 'RegExp'}},
+        ('_group1', RE(r"\["), [RE(r"\]")], _group1),
         ('comment', RE(r"%"), [RE(r"$")], comment),
         ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
         ('string', RE(r"\""), [RE(r"\"")], string),
@@ -61,46 +62,24 @@ class _group1:
     ]
 
 rules = [
-    # {'begin': {'pattern': '[a-z][A-Za-z0-9_]*', 'type': 'RegExp'}, 'relevance': 0},
+    # ignore {'begin': {'pattern': '[a-z][A-Za-z0-9_]*', 'type': 'RegExp'}, 'relevance': 0},
     ('symbol', symbol),
     ('symbol', symbol0),
-    ('_group1', RE(r"\("), [RE(r"\)")], _group1),
-    # {'begin': {'pattern': ':-', 'type': 'RegExp'}},
-    _group1.rules[1],
-    _group1.rules[2],
-    _group1.rules[3],
-    _group1.rules[4],
-    _group1.rules[5],
-    _group1.rules[6],
+    ('_group0', RE(r"\("), [RE(r"\)")], _group0),
+    # ('contains', 2, 'contains', 3) {'begin': {'pattern': ':-', 'type': 'RegExp'}},
+    _group0.rules[3],
+    _group0.rules[4],
+    _group0.rules[5],
+    _group0.rules[6],
+    _group0.rules[7],
+    _group0.rules[8],
     ('string', string0),
     ('string', string1),
     ('number', number),
-    # {'begin': {'pattern': '\\.$', 'type': 'RegExp'}},
+    # ignore {'begin': {'pattern': '\\.$', 'type': 'RegExp'}},
 ]
 
-_group2.rules.extend(_group1.rules)
-
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup
+_group0.rules[0] = rules[0]
+_group0.rules[1] = rules[1]
+_group0.rules[2] = rules[2]
+_group1.rules.extend(_group0.rules)

@@ -21,7 +21,7 @@
 name = "EditXT Log"
 file_patterns = ["EditXT Log"]
 comment_token = "x"
-word_groups = [
+rules = [
     ("navy.log.debug", [RE("DEBUG [a-zA-Z.]+ - ")]),
     ("green.log.info", [RE("INFO [a-zA-Z.]+ - ")]),
     ("orange.log.warning", [RE("WARNING [a-zA-Z.]+ - ")]),

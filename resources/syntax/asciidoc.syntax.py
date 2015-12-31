@@ -7,9 +7,9 @@ file_patterns = ['*.asciidoc', '*.adoc']
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 
@@ -20,13 +20,13 @@ section = [RE(r"^(?:={1,5}) .+?(?: \1)?$")]
 section0 = [RE(r"^[^\[\]\n]+?\n[=\-~\^\+]{2,}$")]
 
 class _meta:
-    default_text = DELIMITER
-    rules = [('_meta', RE(r"\s"), [RE(r'\b|\B')])]
+    default_text_color = DELIMITER
+    rules = [('_meta', [RE(r"\s")])]
 
 meta = [RE(r"^\[.+?\]$")]
 
 class _group1:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [('_group2', RE(r"<"), [RE(r">")], 'xml')]
 
 bullet = [RE(r"^(?:\*+|\-+|\.+|[^\n]+?::)\s+")]
@@ -34,15 +34,15 @@ bullet = [RE(r"^(?:\*+|\-+|\.+|[^\n]+?::)\s+")]
 symbol = [RE(r"^(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION):\s+")]
 
 class strong:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\\\*\\w', 'relevance': 0},
+        # ignore {'begin': '\\\\*\\w', 'relevance': 0},
     ]
 
 class emphasis:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': "\\\\'\\w", 'relevance': 0},
+        # ignore {'begin': "\\\\'\\w", 'relevance': 0},
     ]
 
 string = [RE(r"``.+?''")]
@@ -51,12 +51,21 @@ string0 = [RE(r"`.+?'")]
 
 code = [RE(r"(?:`.+?`|\+.+?\+)")]
 
-class _group6:
-    default_text = DELIMITER
+class _string:
+    default_text_color = DELIMITER
+    rules = [('_string', [RE(r"\[")])]
+
+class _string0:
+    default_text_color = DELIMITER
+    rules = [('_string', [RE(r"\]")])]
+_string0.__name__ = '_string'
+
+class _group3:
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '(link|image:?):', 'relevance': 0},
+        # ignore {'begin': '(link|image:?):', 'relevance': 0},
         ('link', RE(r"\w"), [RE(r"[^\[]+")]),
-        ('_string', RE(r"\["), [RE(r"\]")]),
+        ('string', _string, [_string0]),
     ]
 
 rules = [
@@ -80,31 +89,6 @@ rules = [
     ('string', string0),
     ('code', code),
     ('code', RE(r"^[ \t]"), [RE(r"$")]),
-    # {'begin': "^'{3,}[ \\t]*$", 'relevance': 10},
-    ('_group6', RE(r"(?=(?:link:)?(?:http|https|ftp|file|irc|image:?):\S+\[.*?\])"), [RE(r"\B\b")], _group6),
+    # ignore {'begin': "^'{3,}[ \\t]*$", 'relevance': 10},
+    ('_group3', RE(r"(?=(?:link:)?(?:http|https|ftp|file|irc|image:?):\S+\[.*?\])"), [RE(r"\B\b")], _group3),
 ]
-
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup

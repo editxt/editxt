@@ -29,7 +29,7 @@ file_patterns = [
     "*.ino",    # Arduino C++
 ]
 comment_token = "//"
-word_groups = [
+rules = [
     # --------------------------------------------------------------------------
     # copied from javascript
     ("keyword", """
@@ -86,8 +86,7 @@ word_groups = [
         @compatibility_alias
     """.split()), # BA2DA2
     ("builtin", "YES NO NULL nil".split()),
-]
-delimited_ranges = [
+
     ("string.single-line", RE('@?"'), ['"', RE(r"[^\\]$")]), # D32E1B
     ("header", RE('\s\<'), [RE('\.h\>'), RE(r"[^\\]$")]), # D32E1B
     ("string.char", RE("@?'"), ["'", RE(r"[^\\]$")]),

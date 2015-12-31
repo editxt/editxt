@@ -7,9 +7,9 @@ file_patterns = ['*.json']
 literal = ['true', 'false', 'null']
 
 class string:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 number = [
@@ -17,64 +17,48 @@ number = [
 ]
 
 class _attr:
-    default_text = DELIMITER
-    rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    default_text_color = DELIMITER
+    rules = [('_attr', [RE(r"\s*\"")])]
 
 class _attr0:
-    default_text = DELIMITER
-    rules = [('_attr', RE(r"\s*\""), [RE(r"\"\s*:\s*")], _attr)]
+    default_text_color = DELIMITER
+    rules = [('_attr', [RE(r"\"\s*:\s*")])]
 _attr0.__name__ = '_attr'
 
-class _group2:
-    default_text = DELIMITER
-    rules = [('literal', literal)]
+class attr:
+    default_text_color = DELIMITER
+    rules = [
+        # ('contains', 0, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+
+class attr0:
+    default_text_color = DELIMITER
+    rules = [('attr', _attr, [_attr0], attr)]
+attr0.__name__ = 'attr'
 
 class _group1:
-    default_text = DELIMITER
-    rules = [('_attr', _attr0, [RE(r",")], _group2)]
-
-class _group4:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [('literal', literal)]
 
+class _group0:
+    default_text_color = DELIMITER
+    rules = [('attr', attr0, [RE(r",")], _group1)]
+
 class _group3:
-    default_text = DELIMITER
-    rules = [('_group4', RE(r"\B|\b"), [RE(r",")], _group4)]
+    default_text_color = DELIMITER
+    rules = [('literal', literal)]
+
+class _group2:
+    default_text_color = DELIMITER
+    rules = [('_group3', RE(r"\B|\b"), [RE(r",")], _group3)]
 
 rules = [
     ('literal', literal),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),
-    ('_group1', RE(r"{"), [RE(r"}")], _group1),
-    ('_group3', RE(r"\["), [RE(r"\]")], _group3),
+    ('_group0', RE(r"{"), [RE(r"}")], _group0),
+    ('_group2', RE(r"\["), [RE(r"\]")], _group2),
 ]
 
-_group2.rules.extend(rules)
-_group4.rules.extend(rules)
-
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup
+_group1.rules.extend(rules)
+_group3.rules.extend(rules)

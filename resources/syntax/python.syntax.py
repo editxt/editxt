@@ -21,7 +21,7 @@ name = "Python"
 file_patterns = ["*.py", "*.pyw"]
 comment_token = "#"
 
-word_groups = [
+rules = [
     ("keyword", """
         and       del       from      not       while    
         as        elif      global    or        with     
@@ -33,9 +33,7 @@ word_groups = [
     ("builtin", "self True False None".split()),
     ("comment.single-line", [RE("#.*")]),
     #("operator", "== != < > <= >=".split()),
-]
 
-delimited_ranges = [
     ("string.multiline.double-quote", RE(r'(?<!r)[bu]?"""'), ['"""']),
     ("string.multiline.single-quote", RE(r"(?<!r)[bu]?'''"), ["'''"]),
     ("string.double-quote", RE('(?<!r)[bu]?"'), [

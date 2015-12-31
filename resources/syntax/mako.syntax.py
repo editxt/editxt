@@ -21,12 +21,11 @@
 name = "Mako Template"
 file_patterns = ["*.mako", "*.mak"]
 comment_token = "##"
-word_groups = [
+rules = [
     ("builtin", [
         RE("<%!?\s"), RE("\s%>"),
     ]), # 400080
-]
-delimited_ranges = [
+
     ("comment.doc", "<%doc>", ["</%doc>"]),
     ("tag", RE("<%[a-z]"), [">"]),
     ("tag", RE("</%"), [">"]),

@@ -20,7 +20,7 @@
 name = "JavaScript"
 file_patterns = ["*.js"]
 comment_token = "//"
-word_groups = [
+rules = [
     ("keyword", """
         abstract boolean break byte case catch char class const continue
         debugger default delete do double else enum export extends final finally
@@ -30,8 +30,7 @@ word_groups = [
         var void volatile while with yield
     """.split()),
     ("builtin", "true false undefined alert".split()),
-]
-delimited_ranges = [
+
     ("string.double-quote", RE('"'), [
         RE(r'(?:(?:[^\\]|(?<="))(?:\\\\)*)"'),
         RE(r"$"),

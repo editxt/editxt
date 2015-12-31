@@ -1428,16 +1428,16 @@ literal = ['True', 'False', 'And', 'Null', 'Not', 'Or']
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 
 class string:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': '""', 'type': 'RegExp'}, 'relevance': 0},
+        # ignore {'begin': {'pattern': '""', 'type': 'RegExp'}, 'relevance': 0},
     ]
 
 number = [RE(r"\b(?:0b[01]+)")]
@@ -1482,30 +1482,35 @@ meta_keyword = """
 meta_keyword0 = ['include']
 
 class meta_string:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': '""', 'type': 'RegExp'}, 'relevance': 0},
+        # ignore {'begin': {'pattern': '""', 'type': 'RegExp'}, 'relevance': 0},
     ]
 meta_string.__name__ = 'meta-string'
 
-class _group3:
-    default_text = DELIMITER
+class _group0:
+    default_text_color = DELIMITER
     rules = [
         ('meta-keyword', meta_keyword0),
-        # {'className': 'string'},
+        ('keyword', meta_keyword0),
+        None,  # rules[6],
+        None,  # rules[7],
         ('meta-string', RE(r"<"), [RE(r">")]),
         ('meta-string', RE(r"\""), [RE(r"\"")], meta_string),
         ('meta-string', RE(r"'"), [RE(r"'")], meta_string),
     ]
 
 class meta:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('meta-keyword', meta_keyword),
-        # {'begin': {'pattern': '\\\\\\n', 'type': 'RegExp'}, 'relevance': 0},
-        ('_group3', RE(r"\b(?:include)"), [RE(r"$")], _group3),
-        # {'className': 'string'},
-        # {},
+        # ignore {'begin': {'pattern': '\\\\\\n', 'type': 'RegExp'}, 'relevance': 0},
+        ('_group0', RE(r"\b(?:include)"), [RE(r"$")], _group0),
+        None,  # rules[6],
+        None,  # rules[7],
+        None,  # rules[3],
+        None,  # rules[4],
+        None,  # rules[5],
     ]
 
 symbol = [RE(r"@[A-z0-9_]+")]
@@ -1515,15 +1520,17 @@ keyword0 = ['Func']
 title = [RE(r"[a-zA-Z_]\w*")]
 
 class params:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\$[A-z0-9_]+'},
-        # {'className': 'string'},
-        ('number', number0),
+        # ('contains', 1) {'begin': '\\$[A-z0-9_]+'},
+        None,  # rules[6],
+        None,  # rules[7],
+        None,  # rules[8],
+        None,  # rules[9],
     ]
 
 class function:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('keyword', keyword0),
         ('title', title),
@@ -1537,7 +1544,7 @@ rules = [
     ('comment', RE(r";"), [RE(r"$")], comment),
     ('comment', RE(r"#cs"), [RE(r"#ce")], comment),
     ('comment', RE(r"#comments-start"), [RE(r"#comments-end")], comment),
-    # {'begin': '\\$[A-z0-9_]+'},
+    # ignore {'begin': '\\$[A-z0-9_]+'},
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"'"), [RE(r"'")], string),
     ('number', number),
@@ -1547,27 +1554,14 @@ rules = [
     ('function', RE(r"\b(?:Func)"), [RE(r"$")], function),
 ]
 
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup
+_group0.rules[2] = rules[6]
+_group0.rules[3] = rules[7]
+meta.rules[2] = rules[6]
+meta.rules[3] = rules[7]
+meta.rules[4] = rules[3]
+meta.rules[5] = rules[4]
+meta.rules[6] = rules[5]
+params.rules[0] = rules[6]
+params.rules[1] = rules[7]
+params.rules[2] = rules[8]
+params.rules[3] = rules[9]

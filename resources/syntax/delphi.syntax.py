@@ -19,9 +19,9 @@ keyword = """
     """.split()
 
 class string:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "''", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "''", 'type': 'RegExp'}},
     ]
 
 string0 = [RE(r"(?:#\d+)+")]
@@ -31,13 +31,13 @@ number = [RE(r"\b\d+(?:\.\d+)?")]
 title = [RE(r"[a-zA-Z]\w*")]
 
 class _group0:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [('title', title)]
 
 keyword0 = ['function', 'constructor', 'destructor', 'procedure']
 
 class params:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
         None,  # rules[1],
@@ -47,15 +47,16 @@ class params:
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 
 class function:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
+        ('keyword', keyword0),
         ('keyword', keyword0),
         ('title', title),
         ('params', RE(r"\("), [RE(r"\)")], params),
@@ -71,34 +72,9 @@ rules = [
     ('number', number),
     ('_group0', RE(r"(?=[a-zA-Z]\w*\s*=\s*class\s*\()"), [RE(r"\B\b")], _group0),
     ('function', RE(r"\b(?:function|constructor|destructor|procedure)"), [RE(r"[:;]")], function),
-    function.rules[3],
     function.rules[4],
     function.rules[5],
+    function.rules[6],
 ]
 
 params.rules[1] = rules[1]
-
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup

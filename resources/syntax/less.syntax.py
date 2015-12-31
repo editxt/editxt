@@ -9,16 +9,16 @@ flags = re.IGNORECASE | re.MULTILINE
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 
 class keyword:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        ('keyword', RE(r"@(?:import|media|charset|font-face|(?:-[a-z]+-)?keyframes|supports|document|namespace|page|viewport|host)\b"), [RE(r"\B\b")]),
+        ('keyword', RE(r"@(?:import|media|charset|font-face|(?:-[a-z]+-)?keyframes|supports|document|namespace|page|viewport|host)\b"), [RE(r"\B|\b")]),
     ]
 
 string = [RE(r"~?'.*?'")]
@@ -30,22 +30,17 @@ number = [
 ]
 
 class _group1:
-    default_text = DELIMITER
-    rules = [('_group1', RE(r"(?:url|data-uri)\("), [RE(r"\B\b")])]
-
-class string1:
-    default_text = DELIMITER
-    rules = []
-string1.__name__ = 'string'
+    default_text_color = DELIMITER
+    rules = [('_group1', RE(r"(?:url|data-uri)\("), [RE(r"\B|\b")])]
 
 class _string:
-    default_text = DELIMITER
-    rules = [('_string', RE(r"[\)\n]"), [RE(r'\b|\B')])]
+    default_text_color = DELIMITER
+    rules = [('_string', [RE(r"[\)\n]")])]
 
 number0 = [RE(r"#[0-9A-Fa-f]+\b")]
 
 class _group2:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = []
 
 variable = [RE(r"@@?[\w-]+")]
@@ -55,20 +50,20 @@ variable0 = [RE(r"@{[\w-]+}")]
 built_in = [RE(r"~?`[^`]*?`")]
 
 class _attribute:
-    default_text = DELIMITER
-    rules = [('_attribute', RE(r":"), [RE(r'\b|\B')])]
+    default_text_color = DELIMITER
+    rules = [('_attribute', [RE(r":")])]
 
 meta = [RE(r"!important")]
 
 class _group0:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         None,  # rules[0],
         None,  # rules[1],
         ('string', string),
         ('string', string0),
         ('number', number),
-        ('_group1', _group1, [_string], string1),
+        ('_group1', _group1, [_string]),
         ('number', number0),
         ('_group2', RE(r"\("), [RE(r"\)")], _group2),
         ('variable', variable),
@@ -79,16 +74,16 @@ class _group0:
     ]
 
 class variable1:
-    default_text = DELIMITER
-    rules = [('variable', RE(r"@[\w-]+\s*:"), [RE(r"\B\b")])]
+    default_text_color = DELIMITER
+    rules = [('variable', RE(r"@[\w-]+\s*:"), [RE(r"\B|\b")])]
 variable1.__name__ = 'variable'
 
 class _group4:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = []
 
 class _group3:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         None,  # rules[0],
         None,  # rules[1],
@@ -107,16 +102,16 @@ class _group3:
     ]
 
 class variable2:
-    default_text = DELIMITER
-    rules = [('variable', RE(r"@[\w-]+"), [RE(r"\B\b")])]
+    default_text_color = DELIMITER
+    rules = [('variable', RE(r"@[\w-]+"), [RE(r"\B|\b")])]
 variable2.__name__ = 'variable'
 
 class _group5:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = []
 
 class _group30:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         None,  # rules[0],
         None,  # rules[1],
@@ -138,7 +133,7 @@ _group30.__name__ = '_group3'
 keyword0 = ['when']
 
 class _group7:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('keyword', keyword0),
         ('_group8', RE(r"\b(?:and|not)"), [RE(r"\B\b")]),
@@ -168,11 +163,11 @@ selector_class = [RE(r"\.(?:[\w-]+|@{[\w-]+})")]
 selector_tag0 = [RE(r"&")]
 
 class _group9:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = []
 
 class _group6:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         None,  # rules[0],
         None,  # rules[1],
@@ -185,11 +180,11 @@ class _group6:
         ('selector-tag', selector_tag0),
         ('selector-attr', RE(r"\["), [RE(r"\]")]),
         ('_group9', RE(r"\("), [RE(r"\)")], _group9),
-        # {'begin': '!important'},
+        # ignore {'begin': '!important'},
     ]
 
 class _group11:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('keyword', keyword0),
         ('_group12', RE(r"\b(?:and|not)"), [RE(r"\B\b")]),
@@ -209,11 +204,11 @@ class _group11:
     ]
 
 class _group13:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = []
 
 class _group10:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         None,  # rules[0],
         None,  # rules[1],
@@ -226,25 +221,25 @@ class _group10:
         ('selector-tag', selector_tag0),
         ('selector-attr', RE(r"\["), [RE(r"\]")]),
         ('_group13', RE(r"\("), [RE(r"\)")], _group13),
-        # {'begin': '!important'},
+        # ignore {'begin': '!important'},
     ]
 
 class attribute:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         None,  # rules[0],
         None,  # rules[1],
     ]
 
 class attribute0:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('attribute', RE(r"(?:[\w-]+|@{[\w-]+})"), [_attribute], attribute),
     ]
 attribute0.__name__ = 'attribute'
 
 class _group14:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = []
 
 rules = [
@@ -277,28 +272,3 @@ attribute.rules[1] = rules[1]
 _group2.rules.extend(_group0.rules)
 _group4.rules.extend(rules)
 _group5.rules.extend(rules)
-
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup

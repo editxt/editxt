@@ -7,17 +7,17 @@ file_patterns = ['*.stylus', '*.styl']
 keyword = ['if', 'else', 'for', 'in']
 
 class string:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 
@@ -25,20 +25,20 @@ number = [RE(r"#(?:[a-fA-F0-9]{6}|[a-fA-F0-9]{3})")]
 
 selector_class = [RE(r"\.[a-zA-Z][a-zA-Z0-9_-]*")]
 
-class _group1:
-    default_text = DELIMITER
+class _group0:
+    default_text_color = DELIMITER
     rules = [('selector-class', selector_class)]
 
 selector_id = [RE(r"\#[a-zA-Z][a-zA-Z0-9_-]*")]
 
-class _group2:
-    default_text = DELIMITER
+class _group1:
+    default_text_color = DELIMITER
     rules = [('selector-id', selector_id)]
 
 selector_tag = [RE(r"\b[a-zA-Z][a-zA-Z0-9_-]*")]
 
-class _group3:
-    default_text = DELIMITER
+class _group2:
+    default_text_color = DELIMITER
     rules = [('selector-tag', selector_tag)]
 
 variable = [RE(r"\$[a-zA-Z]\w*")]
@@ -50,7 +50,7 @@ number0 = [
 number1 = [RE(r"\b\d+(?:\.\d+)?")]
 
 class params:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('number', number),
         ('variable', variable),
@@ -61,7 +61,7 @@ class params:
     ]
 
 class function:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('title', selector_tag),
         ('params', RE(r"\("), [RE(r"\)")], params),
@@ -78,11 +78,11 @@ rules = [
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('number', number),
-    ('_group1', RE(r"(?=\.[a-zA-Z][a-zA-Z0-9_-]*[\.\s\n\[\:,])"), [RE(r"\B\b")], _group1),
-    ('_group2', RE(r"(?=\#[a-zA-Z][a-zA-Z0-9_-]*[\.\s\n\[\:,])"), [RE(r"\B\b")], _group2),
-    ('_group3', RE(r"(?=\b(?:a|abbr|address|article|aside|audio|b|blockquote|body|button|canvas|caption|cite|code|dd|del|details|dfn|div|dl|dt|em|fieldset|figcaption|figure|footer|form|h1|h2|h3|h4|h5|h6|header|hgroup|html|i|iframe|img|input|ins|kbd|label|legend|li|mark|menu|nav|object|ol|p|q|quote|samp|section|span|strong|summary|sup|table|tbody|td|textarea|tfoot|th|thead|time|tr|ul|var|video)[\.\s\n\[\:,])"), [RE(r"\B\b")], _group3),
-    # {'begin': '&?:?:\\b(after|before|first-letter|first-line|active|first-child|focus|hover|lang|link|visited)[\\.\\s\\n\\[\\:,]'},
-    # {'begin': '@(charset|css|debug|extend|font-face|for|import|include|media|mixin|page|warn|while)\\b'},
+    ('_group0', RE(r"(?=\.[a-zA-Z][a-zA-Z0-9_-]*[\.\s\n\[\:,])"), [RE(r"\B\b")], _group0),
+    ('_group1', RE(r"(?=\#[a-zA-Z][a-zA-Z0-9_-]*[\.\s\n\[\:,])"), [RE(r"\B\b")], _group1),
+    ('_group2', RE(r"(?=\b(?:a|abbr|address|article|aside|audio|b|blockquote|body|button|canvas|caption|cite|code|dd|del|details|dfn|div|dl|dt|em|fieldset|figcaption|figure|footer|form|h1|h2|h3|h4|h5|h6|header|hgroup|html|i|iframe|img|input|ins|kbd|label|legend|li|mark|menu|nav|object|ol|p|q|quote|samp|section|span|strong|summary|sup|table|tbody|td|textarea|tfoot|th|thead|time|tr|ul|var|video)[\.\s\n\[\:,])"), [RE(r"\B\b")], _group2),
+    # ignore {'begin': '&?:?:\\b(after|before|first-letter|first-line|active|first-child|focus|hover|lang|link|visited)[\\.\\s\\n\\[\\:,]'},
+    # ignore {'begin': '@(charset|css|debug|extend|font-face|for|import|include|media|mixin|page|warn|while)\\b'},
     ('variable', variable),
     ('number', number0),
     ('number', number1),
@@ -92,28 +92,3 @@ rules = [
 
 params.rules[2] = rules[2]
 params.rules[5] = rules[1]
-
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup

@@ -7,21 +7,21 @@ file_patterns = ['*.nginx', '*.nginxconf']
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 
 section = [RE(r"[a-zA-Z_]\w*")]
 
 class _group0:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [('section', section)]
 
 class attribute:
-    default_text = DELIMITER
-    rules = [('attribute', RE(r"[a-zA-Z_]\w*"), [RE(r"\B\b")])]
+    default_text_color = DELIMITER
+    rules = [('attribute', RE(r"[a-zA-Z_]\w*"), [RE(r"\B|\b")])]
 
 literal = """
     on off yes no true false none blocked debug info notice warn error
@@ -34,23 +34,29 @@ variable = [RE(r"\$\d+")]
 variable0 = [RE(r"[\$\@][a-zA-Z_]\w*")]
 
 class string:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         ('variable', variable),
         ('variable', RE(r"\$\{"), [RE(r"}")]),
         ('variable', variable0),
     ]
 
-class _group5:
-    default_text = DELIMITER
-    rules = [('variable', variable0)]
+class _group3:
+    default_text_color = DELIMITER
+    rules = [
+        None,  # string.rules[0],
+        None,  # string.rules[1],
+        None,  # string.rules[2],
+    ]
 
 class regexp:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('variable', variable0),
+        # ('contains', 2, 'contains', 0, 'starts', 'contains', 1, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        None,  # string.rules[0],
+        None,  # string.rules[1],
+        None,  # string.rules[2],
     ]
 
 number = [RE(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d{1,5})?\b")]
@@ -58,25 +64,27 @@ number = [RE(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d{1,5})?\b")]
 number0 = [RE(r"\b\d+[kKmMgGdshdwy]*\b")]
 
 class _group2:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('literal', literal),
         None,  # rules[0],
         ('string', RE(r"\""), [RE(r"\"")], string),
         ('string', RE(r"'"), [RE(r"'")], string),
-        ('_group5', RE(r"(?:[a-z]+):/"), [RE(r"\s")], _group5),
+        ('_group3', RE(r"(?:[a-z]+):/"), [RE(r"\s")], _group3),
         ('regexp', RE(r"\s\^"), [RE(r"(?=\s|{|;)")], regexp),
         ('regexp', RE(r"~\*?\s+"), [RE(r"(?=\s|{|;)")], regexp),
         ('regexp', RE(r"\*(?:\.[a-z\-]+)+"), [RE(r"\B\b")], regexp),
         ('regexp', RE(r"(?:[a-z\-]+\.)+\*"), [RE(r"\B\b")], regexp),
         ('number', number),
         ('number', number0),
-        ('variable', variable0),
+        None,  # string.rules[0],
+        None,  # string.rules[1],
+        None,  # string.rules[2],
     ]
 
 class _group1:
-    default_text = DELIMITER
-    rules = [('attribute', attribute, [RE(r"(?=;|{)")], _group2)]
+    default_text_color = DELIMITER
+    rules = [('attribute', attribute, [RE(r"\B\b")], _group2)]
 
 rules = [
     ('comment', RE(r"#"), [RE(r"$")], comment),
@@ -84,29 +92,13 @@ rules = [
     ('_group1', RE(r"(?=[a-zA-Z_]\w*\s)"), [RE(r";|{")], _group1),
 ]
 
+_group3.rules[0] = string.rules[0]
+_group3.rules[1] = string.rules[1]
+_group3.rules[2] = string.rules[2]
+regexp.rules[0] = string.rules[0]
+regexp.rules[1] = string.rules[1]
+regexp.rules[2] = string.rules[2]
 _group2.rules[1] = rules[0]
-
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup
+_group2.rules[11] = string.rules[0]
+_group2.rules[12] = string.rules[1]
+_group2.rules[13] = string.rules[2]

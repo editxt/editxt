@@ -35,7 +35,7 @@ keyword0 = ['function']
 title = [RE(r"[a-zA-Z_]\w*")]
 
 class function:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('keyword', keyword0),
         ('title', title),
@@ -44,10 +44,10 @@ class function:
     ]
 
 class _group0:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': '[a-zA-Z_][a-zA-Z_0-9]*', 'type': 'RegExp'}, 'relevance': 0},
-        # {'begin': {'pattern': "'['\\.]*", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': '[a-zA-Z_][a-zA-Z_0-9]*', 'type': 'RegExp'}, 'relevance': 0},
+        # ignore {'begin': {'pattern': "'['\\.]*", 'type': 'RegExp'}},
     ]
 
 number = [
@@ -55,52 +55,54 @@ number = [
 ]
 
 class string:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        # {'begin': "''"},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': "''"},
     ]
 
-class _group2:
-    default_text = DELIMITER
+class _group1:
+    default_text_color = DELIMITER
     rules = [('number', number), ('string', RE(r"'"), [RE(r"'")], string)]
 
-class _group20:
-    default_text = DELIMITER
-    rules = [('_group2', RE(r"\["), [RE(r"\]")], _group2)]
-_group20.__name__ = '_group2'
+class _group10:
+    default_text_color = DELIMITER
+    rules = [('_group1', RE(r"\["), [RE(r"\]")], _group1)]
+_group10.__name__ = '_group1'
+
+class _group2:
+    default_text_color = DELIMITER
+    rules = [
+        # ('contains', 1, 'contains', 1) {'begin': {'pattern': "'['\\.]*", 'type': 'RegExp'}},
+    ]
+
+class _group3:
+    default_text_color = DELIMITER
+    rules = []
+
+class _group30:
+    default_text_color = DELIMITER
+    rules = [('_group3', RE(r"\{"), [RE(r"}")], _group3)]
+_group30.__name__ = '_group3'
 
 class _group4:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = []
 
 class _group5:
-    default_text = DELIMITER
-    rules = []
-
-class _group50:
-    default_text = DELIMITER
-    rules = [('_group5', RE(r"\{"), [RE(r"}")], _group5)]
-_group50.__name__ = '_group5'
+    default_text_color = DELIMITER
+    rules = [('_group5', RE(r"\)"), [RE(r"\B|\b")])]
 
 class _group6:
-    default_text = DELIMITER
-    rules = []
-
-class _group7:
-    default_text = DELIMITER
-    rules = [('_group7', RE(r"\)"), [RE(r"\B\b")])]
-
-class _group8:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = []
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 
@@ -109,36 +111,11 @@ rules = [
     ('keyword', keyword),
     ('function', RE(r"\b(?:function)"), [RE(r"$")], function),
     ('_group0', RE(r"(?=[a-zA-Z_][a-zA-Z_0-9]*'['\.]*)"), [RE(r"\B\b")], _group0),
-    ('_group2', _group20, [RE(r"(?=\B\b)")], _group4),
-    ('_group5', _group50, [RE(r"(?=\B\b)")], _group6),
-    ('_group7', _group7, [RE(r"(?=\B\b)")], _group8),
+    ('_group1', _group10, [RE(r"\B\b")], _group2),
+    ('_group3', _group30, [RE(r"\B\b")], _group4),
+    ('_group5', _group5, [RE(r"\B\b")], _group6),
     ('comment', RE(r"^\s*\%\{\s*$"), [RE(r"^\s*\%\}\s*$")], comment),
     ('comment', RE(r"\%"), [RE(r"$")], comment),
     ('number', number),
-    _group2.rules[1],
+    _group1.rules[1],
 ]
-
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup

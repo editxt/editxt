@@ -40,9 +40,9 @@ keyword0 = [RE(r"\b[a-z\d_]*_t\b")]
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 
@@ -53,8 +53,10 @@ number0 = [
 ]
 
 class string:
-    default_text = DELIMITER
-    rules = []
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
 
 meta_keyword = """
     if else elif endif define undef warning error line pragma ifdef
@@ -63,34 +65,42 @@ meta_keyword = """
 
 meta_keyword0 = ['include']
 
+class string0:
+    default_text_color = DELIMITER
+    rules = []
+string0.__name__ = 'string'
+
 class meta_string:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = []
 meta_string.__name__ = 'meta-string'
 
-class _group1:
-    default_text = DELIMITER
+class _group0:
+    default_text_color = DELIMITER
     rules = [
         ('meta-keyword', meta_keyword0),
-        ('string', RE(r"(?:(u8?|U)|L)?\""), [RE(r"\"")], string),
+        ('keyword', meta_keyword0),
+        ('string', RE(r"(?:(u8?|U)|L)?\""), [RE(r"\"")], string0),
         ('meta-string', RE(r"(?:u8?|U)?R\""), [RE(r"\"")], meta_string),
         ('meta-string', RE(r"'\\?."), [RE(r"'")]),
         ('meta-string', RE(r"<"), [RE(r">")]),
     ]
 
 class meta:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('meta-keyword', meta_keyword),
-        # {'begin': {'pattern': '\\\\\\n', 'type': 'RegExp'}, 'relevance': 0},
-        ('_group1', RE(r"\b(?:include)"), [RE(r"$")], _group1),
+        # ignore {'begin': {'pattern': '\\\\\\n', 'type': 'RegExp'}, 'relevance': 0},
+        ('_group0', RE(r"\b(?:include)"), [RE(r"$")], _group0),
+        None,  # rules[8],
+        None,  # rules[9],
         None,  # rules[10],
         None,  # rules[4],
         None,  # rules[5],
     ]
 
-class _group2:
-    default_text = DELIMITER
+class _group1:
+    default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
@@ -98,8 +108,8 @@ class _group2:
         ('keyword', keyword0),
     ]
 
-class _group3:
-    default_text = DELIMITER
+class _group2:
+    default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
@@ -107,34 +117,37 @@ class _group3:
     ]
 
 class _function:
-    default_text = DELIMITER
-    rules = [('_function', RE(r"[{;=]"), [RE(r'\b|\B')])]
+    default_text_color = DELIMITER
+    rules = [('_function', [RE(r"[{;=]")])]
 
 title = [RE(r"[a-zA-Z]\w*")]
 
-class _group5:
-    default_text = DELIMITER
+class _group4:
+    default_text_color = DELIMITER
     rules = [('title', title)]
 
 class params:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
         ('literal', literal),
         None,  # rules[4],
         None,  # rules[5],
+        None,  # rules[8],
+        None,  # rules[9],
         None,  # rules[10],
-        ('number', number0),
+        None,  # rules[6],
+        None,  # rules[7],
     ]
 
 class function:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
         ('literal', literal),
-        ('_group5', RE(r"(?=[a-zA-Z]\w*\s*\()"), [RE(r"\B\b")], _group5),
+        ('_group4', RE(r"(?=[a-zA-Z]\w*\s*\()"), [RE(r"\B\b")], _group4),
         ('params', RE(r"\("), [RE(r"\)")], params),
         None,  # rules[4],
         None,  # rules[5],
@@ -154,43 +167,25 @@ rules = [
     ('string', RE(r"(?:u8?|U)?R\""), [RE(r"\"")], string),
     ('string', RE(r"'\\?."), [RE(r"'")]),
     ('meta', RE(r"#"), [RE(r"$")], meta),
-    ('_group2', RE(r"\b(?:deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\s*<"), [RE(r">")], _group2),
-    ('_group3', RE(r"[a-zA-Z]\w*::"), [RE(r"\B\b")], _group3),
-    ('_group4', RE(r"\b(?:new|throw|return|else)"), [RE(r"\B\b")]),
+    ('_group1', RE(r"\b(?:deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\s*<"), [RE(r">")], _group1),
+    ('_group2', RE(r"[a-zA-Z]\w*::"), [RE(r"\B\b")], _group2),
+    ('_group3', RE(r"\b(?:new|throw|return|else)"), [RE(r"\B\b")]),
     ('function', RE(r"(?=(?:[a-zA-Z]\w*[\*&\s]+)+[a-zA-Z]\w*\s*\()"), [_function], function),
 ]
 
-meta.rules[2] = rules[10]
-meta.rules[3] = rules[4]
-meta.rules[4] = rules[5]
+meta.rules[2] = rules[8]
+meta.rules[3] = rules[9]
+meta.rules[4] = rules[10]
+meta.rules[5] = rules[4]
+meta.rules[6] = rules[5]
 params.rules[3] = rules[4]
 params.rules[4] = rules[5]
-params.rules[5] = rules[10]
+params.rules[5] = rules[8]
+params.rules[6] = rules[9]
+params.rules[7] = rules[10]
+params.rules[8] = rules[6]
+params.rules[9] = rules[7]
 function.rules[5] = rules[4]
 function.rules[6] = rules[5]
 function.rules[7] = rules[11]
-
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup
+meta_string.rules.extend(string.rules)

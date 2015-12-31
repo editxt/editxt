@@ -20,7 +20,7 @@
 name = "Bind Zone"
 file_patterns = ["*.zone"]
 comment_token = ";"
-word_groups = [
+rules = [
     ("keyword", """
         A
         AAAA
@@ -58,9 +58,7 @@ word_groups = [
         TXT
     """.split()),
     ("operator", "@ IN".split()),
-]
-# TODO revisit the theme names used for these ranges
-delimited_ranges = [
+    # TODO revisit the theme names used for these ranges
     ("variable", RE('\$[A-Z]'), [RE(r"(?=\s)")]), # plum
     ("string.txt", RE('"'), ['"']),              # teal, TXT-like record values
     ("value.a-record", RE('(?<=\sA\s)'), [RE(r"$")]),      # cayenne, A record values

@@ -7,15 +7,15 @@ file_patterns = ['*.xml', '*.html', '*.xhtml', '*.rss', '*.atom', '*.xsl', '*.pl
 flags = re.IGNORECASE | re.MULTILINE
 
 class meta:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [('_group0', RE(r"\["), [RE(r"\]")])]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 
@@ -24,13 +24,13 @@ name0 = ['style']
 attr = [RE(r"[A-Za-z0-9\._:-]+")]
 
 class string:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         None,  # _group2.rules[0],
     ]
 
 class _group4:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('string', RE(r"\""), [RE(r"\"")], string),
         ('string', RE(r"'"), [RE(r"'")], string),
@@ -38,7 +38,7 @@ class _group4:
     ]
 
 class _group2:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('_group3', RE(r"<\?(?:php)?(?!\w)"), [RE(r"\?>")], 'php'),
         ('attr', attr),
@@ -46,41 +46,33 @@ class _group2:
     ]
 
 class tag:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('name', name0),
         ('_group2', RE(r"\B|\b"), [RE(r"\B\b")], _group2),
     ]
 
 class tag0:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [('tag', RE(r"<style(?=\s|>|$)"), [RE(r">")], tag)]
 tag0.__name__ = 'tag'
-
-class _group5:
-    default_text = DELIMITER
-    rules = []
 
 name1 = ['script']
 
 class tag1:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [('name', name1), tag.rules[1]]
 tag1.__name__ = 'tag'
 
 class tag2:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [('tag', RE(r"<script(?=\s|>|$)"), [RE(r">")], tag1)]
 tag2.__name__ = 'tag'
-
-class _group6:
-    default_text = DELIMITER
-    rules = []
 
 name2 = [RE(r"[^\/><\s]+")]
 
 class tag3:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [('name', name2), tag.rules[1]]
 tag3.__name__ = 'tag'
 
@@ -88,36 +80,11 @@ rules = [
     ('meta', RE(r"<!DOCTYPE"), [RE(r">")], meta),
     ('comment', RE(r"<!--"), [RE(r"-->")], comment),
     ('_group1', RE(r"<\!\[CDATA\["), [RE(r"\]\]>")]),
-    ('tag', tag0, [RE(r"(?=</style>)")], _group5),
-    ('tag', tag2, [RE(r"(?=</script>)")], _group6),
+    ('tag', tag0, [RE(r"(?=</style>)")], 'css'),
+    ('tag', tag2, [RE(r"(?=</script>)")], 'javascript'),
     _group2.rules[0],
     ('meta', RE(r"<\?\w+"), [RE(r"\?>")]),
     ('tag', RE(r"</?"), [RE(r"/?>")], tag3),
 ]
 
 string.rules[0] = _group2.rules[0]
-
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup

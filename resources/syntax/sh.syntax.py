@@ -20,7 +20,7 @@
 name = "Shell"
 file_patterns = ["*.sh"]
 comment_token = "#"
-word_groups = [
+rules = [
     ("keyword", """
         alias
         break
@@ -47,8 +47,7 @@ word_groups = [
     """.split()),
     ("operator.logical", [RE("&&"), RE("\|\|")]),
     ("operator.equal", [RE("=="), RE("!=")]),
-]
-delimited_ranges = [
+
     ("string.double-quote", RE('"'), ['"']), # TODO $VARS
     ("string.single-quote", RE("'"), ["'"]),
     ("comment", "#", [RE(r"$")]),

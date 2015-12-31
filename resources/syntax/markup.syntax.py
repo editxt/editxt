@@ -24,7 +24,7 @@ comment_token = "" #("<!--", "-->")
 flags = re.IGNORECASE | re.MULTILINE
 
 class attributes:
-    word_groups = [
+    rules = [
         ("attribute", [RE(r"[\w.:-]+")]),
         ("tag.punctuation", "="),
         ("value", [RE(r"(?<==)\s*'[^']*'")]),
@@ -33,21 +33,19 @@ class attributes:
     ]
 
 class cdata:
-    word_groups = []
+    rules = []
 
 def tag(name):
     class tag:
-        delimited_ranges = [
+        rules = [
             ("tag", RE(r"<{}\b".format(name)), [">"], attributes)
         ]
     tag.__name__ = name
     return tag
 
-word_groups = [
+rules = [
     ("tag", [RE(r"</[\w.:-]+\s*>")]),
-]
 
-delimited_ranges = [
     ("tag.doctype", RE(r"<!DOCTYPE\b"), [">"], attributes),
     ("comment", RE("<!--"), ["-->"]),
     ("tag.cdata", RE(r"<!\[CDATA\["), [RE(r"\]\]>")], cdata),

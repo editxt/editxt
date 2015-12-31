@@ -7,67 +7,38 @@ file_patterns = ['*.http', '*.https']
 number = [RE(r"\b\d{3}\b")]
 
 class _group0:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [('number', number)]
+
+class _string:
+    default_text_color = DELIMITER
+    rules = [('_string', [RE(r" ")])]
 
 keyword = [RE(r"[A-Z]+")]
 
 class _group1:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        ('_string', RE(r" "), [RE(r" ")]),
-        # {'begin': 'HTTP/[0-9\\.]+'},
+        ('string', _string, [_string]),
+        # ignore {'begin': 'HTTP/[0-9\\.]+'},
         ('keyword', keyword),
     ]
 
 class _attribute:
-    default_text = DELIMITER
-    rules = [('_attribute', RE(r": "), [RE(r'\b|\B')])]
+    default_text_color = DELIMITER
+    rules = [('_attribute', [RE(r": ")])]
 
 class attribute:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [('attribute', RE(r"^\w"), [_attribute])]
 
-class _group2:
-    default_text = DELIMITER
-    rules = []
-
 class _group3:
-    default_text = DELIMITER
-    rules = [('_group3', RE(r"\n\n"), [RE(r"\B\b")])]
-
-class _group4:
-    default_text = DELIMITER
-    rules = []
+    default_text_color = DELIMITER
+    rules = [('_group3', RE(r"\n\n"), [RE(r"\B|\b")])]
 
 rules = [
     ('_group0', RE(r"^HTTP/[0-9\.]+"), [RE(r"$")], _group0),
     ('_group1', RE(r"(?=^[A-Z]+ (?:.*?) HTTP/[0-9\.]+$)"), [RE(r"$")], _group1),
-    ('attribute', attribute, [RE(r"$")], _group2),
-    ('_group3', _group3, [RE(r"(?=\B\b)")], _group4),
+    ('attribute', attribute, [RE(r"$")]),
+    ('_group3', _group3, [RE(r"\B\b")]),
 ]
-
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup

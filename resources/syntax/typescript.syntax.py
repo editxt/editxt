@@ -28,15 +28,15 @@ literal = ['true', 'false', 'null', 'undefined', 'NaN', 'Infinity']
 meta = [RE(r"^\s*['\"]use strict['\"]")]
 
 class string:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 class string0:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ('contains', 1, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         ('subst', RE(r"\$\{"), [RE(r"\}")]),
     ]
 string0.__name__ = 'string'
@@ -44,9 +44,9 @@ string0.__name__ = 'string'
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 
@@ -60,21 +60,21 @@ number1 = [
 
 keyword0 = ['return', 'throw', 'case']
 
-class _group2:
-    default_text = DELIMITER
+class _group1:
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ('contains', 1, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 class regexp:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('_group2', RE(r"\["), [RE(r"\]")], _group2),
+        # ('contains', 1, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        ('_group1', RE(r"\["), [RE(r"\]")], _group1),
     ]
 
-class _group1:
-    default_text = DELIMITER
+class _group0:
+    default_text_color = DELIMITER
     rules = [
         ('keyword', keyword0),
         None,  # rules[7],
@@ -83,13 +83,22 @@ class _group1:
     ]
 
 class _function:
-    default_text = DELIMITER
-    rules = [('_function', RE(r"[\{;]"), [RE(r'\b|\B')])]
+    default_text_color = DELIMITER
+    rules = [('_function', [RE(r"[\{;]")])]
 
 title = [RE(r"[A-Za-z$_][0-9A-Za-z$_]*")]
 
 class _params:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
+    rules = [('_params', [RE(r"\(")])]
+
+class _params0:
+    default_text_color = DELIMITER
+    rules = [('_params', [RE(r"\)")])]
+_params0.__name__ = '_params'
+
+class params:
+    default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
@@ -99,20 +108,22 @@ class _params:
     ]
 
 class function:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
         ('literal', literal),
         ('title', title),
-        ('_params', RE(r"\("), [RE(r"\)")], _params),
+        ('params', _params, [_params0], params),
     ]
 
 keyword1 = ['interface', 'extends']
 
-class _group5:
-    default_text = DELIMITER
-    rules = [('keyword', keyword1)]
+keyword2 = ['interface']
+
+class _group4:
+    default_text_color = DELIMITER
+    rules = [('keyword', keyword1), ('keyword', keyword2)]
 
 rules = [
     ('built_in', built_in),
@@ -127,41 +138,16 @@ rules = [
     ('number', number),
     ('number', number0),
     ('number', number1),
-    ('_group1', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~|\b(?:case|return|throw)\b)\s*"), [RE(r"\B\b")], _group1),
+    ('_group0', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~|\b(?:case|return|throw)\b)\s*"), [RE(r"\B\b")], _group0),
     ('function', RE(r"function"), [_function], function),
-    ('_group3', RE(r"\b(?:constructor)"), [RE(r"\{")]),
-    ('_group4', RE(r"\b(?:module)"), [RE(r"\{")]),
-    ('_group5', RE(r"\b(?:interface)"), [RE(r"\{")], _group5),
-    # {'begin': {'pattern': '\\$[(.]', 'type': 'RegExp'}},
-    # {'begin': '\\.[a-zA-Z]\\w*', 'relevance': 0},
+    ('_group2', RE(r"\b(?:constructor)"), [RE(r"\{")]),
+    ('_group3', RE(r"\b(?:module)"), [RE(r"\{")]),
+    ('_group4', RE(r"\b(?:interface)"), [RE(r"\{")], _group4),
+    # ignore {'begin': {'pattern': '\\$[(.]', 'type': 'RegExp'}},
+    # ignore {'begin': '\\.[a-zA-Z]\\w*', 'relevance': 0},
 ]
 
-_group1.rules[1] = rules[7]
-_group1.rules[2] = rules[8]
-_params.rules[3] = rules[7]
-_params.rules[4] = rules[8]
-
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup
+_group0.rules[1] = rules[7]
+_group0.rules[2] = rules[8]
+params.rules[3] = rules[7]
+params.rules[4] = rules[8]

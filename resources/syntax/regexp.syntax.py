@@ -19,9 +19,31 @@
 
 name = "Regular Expression"
 file_patterns = []
-default_text = DELIMITER
+default_text_color = DELIMITER
 
-word_groups = [
+class name_:
+    rules = [("name", [RE(r"[a-zA-Z_]\w*")])]
+
+class charset:
+    rules = [
+        ("operator.range", [
+            RE(r"(?<![\[^\\])-(?![\]])")
+        ]),
+        ("operator.class", [
+            RE(r"\\[AbBdDsSwWZafnrtv]"),
+        ]),
+        ("operator.escape.char", [
+            RE(r"\\x[0-9a-fA-F]{2}"),
+            RE(r"\\u[0-9a-fA-F]{4}"),
+            RE(r"\\U[0-9a-fA-F]{8}"),
+            RE(r"\\([0-7]{3}|0\d{1,2})"),
+        ]),
+        ("operator.escape", [
+            RE(r"\\."), # NOTE this pattern should be last (in rules)
+        ]),
+    ]
+
+rules = [
     ("keyword", list(r".^$*+?|") + [
         RE(r"\{\d+(,\d+)?\}"),
     ]),
@@ -51,33 +73,9 @@ word_groups = [
         RE(r"\(\?[aiLmsux]+\)")
     ]),
     ("operator.escape", [
-        RE(r"\\."), # NOTE this pattern should be last (in word_groups)
+        RE(r"\\."),
     ]),
-]
 
-class name_:
-    word_groups = [("name", [RE(r"[a-zA-Z_]\w*")])]
-
-class charset:
-    word_groups = [
-        ("operator.range", [
-            RE(r"(?<![\[^\\])-(?![\]])")
-        ]),
-        ("operator.class", [
-            RE(r"\\[AbBdDsSwWZafnrtv]"),
-        ]),
-        ("operator.escape.char", [
-            RE(r"\\x[0-9a-fA-F]{2}"),
-            RE(r"\\u[0-9a-fA-F]{4}"),
-            RE(r"\\U[0-9a-fA-F]{8}"),
-            RE(r"\\([0-7]{3}|0\d{1,2})"),
-        ]),
-        ("operator.escape", [
-            RE(r"\\."), # NOTE this pattern should be last (in word_groups)
-        ]),
-    ]
-
-delimited_ranges = [
     ("keyword.set.inverse", "[^", ["]"], charset),
     ("keyword.set", "[", ["]"], charset),
     ("group.named", RE(r"\(\?P<(?=[a-zA-Z_]\w*>)"), [">"], name_),

@@ -2707,7 +2707,7 @@ FunctionEnd
 
 ## Objective C
 
-```objectivec
+```objective-c
 #import <UIKit/UIKit.h>
 #import "Dependency.h"
 
@@ -3092,7 +3092,7 @@ void draw(){
 
 ## Python profile
 
-```profile
+```python-profile
        261917242 function calls in 686.251 CPU seconds
 
        ncalls  tottime  filename:lineno(function)
@@ -3121,7 +3121,7 @@ split([A,B|R],[A|Ra],[B|Rb]) :-  split(R,Ra,Rb).
 
 ## Protocol Buffers
 
-```protobuf
+```protocol-buffers
 package languages.protobuf;
 
 option java_package = "org.highlightjs.languages.protobuf";
@@ -4511,7 +4511,7 @@ void main () {
 
 ## VB.NET
 
-```vbnet
+```vb.net
 Import System
 Import System.IO
 #Const DEBUG = True
@@ -4692,7 +4692,7 @@ end architecture behaviour;
 
 ## Vim Script
 
-```vim
+```vim-script
 if foo > 2 || has("gui_running")
   syntax on
   set hlsearch
@@ -4790,7 +4790,7 @@ page "A nice car",
 
 ## HTML, XML
 
-```xml
+```markup
 <?xml version="1.0"?>
 <response value="ok" xml:lang="en">
   <text>Ok</text>

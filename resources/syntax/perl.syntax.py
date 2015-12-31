@@ -34,32 +34,34 @@ keyword = """
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 
 class _group3:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = []
 
 class subst:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [('keyword', keyword)]
 
 class string:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         ('subst', RE(r"[$@]\{"), [RE(r"\}")], subst),
-        # {},
+        None,  # rules[1],
+        None,  # rules[2],
+        None,  # rules[3],
     ]
 
 class string0:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ('contains', 4, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 string0.__name__ = 'string'
 
@@ -72,14 +74,14 @@ keyword0 = ['split', 'return', 'print', 'reverse', 'grep']
 regexp = [RE(r"(?:s|tr|y)/(?:\\.|[^/])*/(?:\\.|[^/])*/[a-z]*")]
 
 class regexp0:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [
-        # {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ('contains', 4, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 regexp0.__name__ = 'regexp'
 
-class _group11:
-    default_text = DELIMITER
+class _group4:
+    default_text_color = DELIMITER
     rules = [
         ('keyword', keyword0),
         None,  # rules[1],
@@ -88,26 +90,26 @@ class _group11:
     ]
 
 class _function:
-    default_text = DELIMITER
-    rules = [('_function', RE(r"(?:\s*\(.*?\))?[;{]"), [RE(r'\b|\B')])]
+    default_text_color = DELIMITER
+    rules = [('_function', [RE(r"(?:\s*\(.*?\))?[;{]")])]
 
 keyword1 = ['sub']
 
 title = [RE(r"[a-zA-Z]\w*")]
 
 class function:
-    default_text = DELIMITER
+    default_text_color = DELIMITER
     rules = [('keyword', keyword1), ('title', title)]
 
-class _group13:
-    default_text = DELIMITER
+class _group5:
+    default_text_color = DELIMITER
     rules = [('comment', RE(r"^@@.*"), [RE(r"$")])]
 
 rules = [
     ('keyword', keyword),
-    # {'begin': {'pattern': '\\$\\d', 'type': 'RegExp'}, 'variants': [{'begin': ...}, {'begin': {'pattern': '[\\$%@](\\^\\w\\b|#\\w+(::\\w+)*|{\\w+}|\\w+(::\\w*)*)', 'type': 'RegExp'}}, {'begin': {'pattern': '[\\$%@][^\\s\\w{]', 'type': 'RegExp'}, 'relevance': 0}]},
-    # {'begin': {'pattern': '[\\$%@](\\^\\w\\b|#\\w+(::\\w+)*|{\\w+}|\\w+(::\\w*)*)', 'type': 'RegExp'}, 'variants': [{'begin': {'pattern': '\\$\\d', 'type': 'RegExp'}}, {'begin': ...}, {'begin': {'pattern': '[\\$%@][^\\s\\w{]', 'type': 'RegExp'}, 'relevance': 0}]},
-    # {'begin': {'pattern': '[\\$%@][^\\s\\w{]', 'type': 'RegExp'}, 'relevance': 0, 'variants': [{'begin': {'pattern': '\\$\\d', 'type': 'RegExp'}}, {'begin': {'pattern': '[\\$%@](\\^\\w\\b|#\\w+(::\\w+)*|{\\w+}|\\w+(::\\w*)*)', 'type': 'RegExp'}}, {'begin': ..., 'relevance': ...}]},
+    # unknown {'begin': {'pattern': '\\$\\d', 'type': 'RegExp'}, 'variants': [{'begin': ...}, {'begin': {'pattern': '[\\$%@](\\^\\w\\b|#\\w+(::\\w+)*|{\\w+}|\\w+(::\\w*)*)', 'type': 'RegExp'}}, {'begin': {'pattern': '[\\$%@][^\\s\\w{]', 'type': 'RegExp'}, 'relevance': 0}]},
+    # unknown {'begin': {'pattern': '[\\$%@](\\^\\w\\b|#\\w+(::\\w+)*|{\\w+}|\\w+(::\\w*)*)', 'type': 'RegExp'}, 'variants': [{'begin': {'pattern': '\\$\\d', 'type': 'RegExp'}}, {'begin': ...}, {'begin': {'pattern': '[\\$%@][^\\s\\w{]', 'type': 'RegExp'}, 'relevance': 0}]},
+    # unknown {'begin': {'pattern': '[\\$%@][^\\s\\w{]', 'type': 'RegExp'}, 'relevance': 0, 'variants': [{'begin': {'pattern': '\\$\\d', 'type': 'RegExp'}}, {'begin': {'pattern': '[\\$%@](\\^\\w\\b|#\\w+(::\\w+)*|{\\w+}|\\w+(::\\w*)*)', 'type': 'RegExp'}}, {'begin': ..., 'relevance': ...}]},
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('comment', RE(r"^\=\w"), [RE(r"\=cut")], comment),
     ('_group3', RE(r"->{"), [RE(r"}")], _group3),
@@ -123,37 +125,15 @@ rules = [
     ('string', RE(r"{\w+}"), [RE(r"\B\b")]),
     ('string', RE(r"-?\w+\s*\=\>"), [RE(r"\B\b")]),
     ('number', number),
-    ('_group11', RE(r"(?:\/\/|!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~|\b(?:split|return|print|reverse|grep)\b)\s*"), [RE(r"\B\b")], _group11),
+    ('_group4', RE(r"(?:\/\/|!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~|\b(?:split|return|print|reverse|grep)\b)\s*"), [RE(r"\B\b")], _group4),
     ('function', RE(r"\b(?:sub)"), [_function], function),
-    # {'begin': '-\\w\\b', 'relevance': 0},
-    ('_group13', RE(r"^__DATA__$"), [RE(r"^__END__$")], 'mojolicious'),
+    # ignore {'begin': '-\\w\\b', 'relevance': 0},
+    ('_group5', RE(r"^__DATA__$"), [RE(r"^__END__$")], 'mojolicious'),
 ]
 
-_group11.rules[1] = rules[1]
+string.rules[1] = rules[1]
+string.rules[2] = rules[2]
+string.rules[3] = rules[3]
+_group4.rules[1] = rules[1]
 _group3.rules.extend(rules)
 subst.rules.extend(rules)
-
-# TODO merge "word_groups" and "delimited_ranges" into "rules" in editxt.syntax
-assert "__obj" not in globals()
-assert "__fixup" not in globals()
-def __fixup(obj):
-    groups = []
-    ranges = []
-    rules = getattr(obj, "rules", [])
-    for i, rng in reversed(list(enumerate(rules))):
-        if len(rng) == 2:
-            groups.append(rng)
-        else:
-            assert len(rng) > 2, rng
-            ranges.append(rng)
-    return groups, ranges
-
-class __obj:
-    rules = globals().get("rules", [])
-word_groups, delimited_ranges = __fixup(__obj)
-
-for __obj in globals().values():
-    if hasattr(__obj, "rules"):
-        __obj.word_groups, __obj.delimited_ranges = __fixup(__obj)
-
-del __obj, __fixup
