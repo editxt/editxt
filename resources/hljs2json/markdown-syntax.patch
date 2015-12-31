@@ -17,7 +17,7 @@ index 9171d33..979009f 100644
 +code = [RE(r"``[^`\n]+``"), RE(r"`[^`\n]+`")]
  
  class _string:
-     default_text = DELIMITER
+     default_text_color = DELIMITER
 @@ -50,6 +50,7 @@ rules = [
      ('emphasis', emphasis0),
      ('quote', RE(r"^>\s+"), [RE(r"$")]),

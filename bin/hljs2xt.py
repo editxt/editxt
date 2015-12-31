@@ -41,6 +41,8 @@ Other useful commands:
     node resources/hljs2json/hljs2json.js resources/hljs2json/hljs/src/languages/...
     rsync -aHv --delete dmiller@octagon:code/EditXT/resources/hljs2json/hljs/ \
                                                     resources/hljs2json/hljs/
+    ./bin/hljs2xt.py -v resources/hljs2json/hljs/src/languages/ resources/syntax/
+    git apply resources/hljs2json/markdown-syntax.patch resources/syntax/markdown.syntax.py
 """
 import json
 import os
@@ -731,7 +733,7 @@ class SyntaxClass:
     def __repr__(self):
         # by design: name == None -> syntax error
         lines = ["class {}:".format(self.safe_name)]
-        lines.append("    default_text = DELIMITER")
+        lines.append("    default_text_color = DELIMITER")
         rules = pretty_format(self.rules, 4).lstrip()
         lines.append("    rules = {}".format(rules))
         if self._safe_name:
@@ -844,7 +846,7 @@ PYTHON_KEYWORDS = set("""
     raise     continue  finally   is        return   
     def       for       lambda    try       nonlocal
     RE        DELIMITER
-    comment_token       default_text        delimited_ranges
+    comment_token       default_text_color  delimited_ranges
     disabled  ends      file_patterns       name
     registry  whitespace          word_groups
     rules

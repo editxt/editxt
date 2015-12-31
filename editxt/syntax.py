@@ -225,7 +225,7 @@ class Highlighter(object):
 
         while lang is not None:
             wordinfo = lang.wordinfo
-            text_color = theme.get_syntax_color(lang.default_text_name)
+            text_color = theme.get_syntax_color(lang.text_color)
             #log.debug("key=%s offset=%s", key, offset)
             for match in lang.regex.finditer(string, offset):
                 info = wordinfo.get(match.lastgroup)
@@ -252,7 +252,7 @@ class Highlighter(object):
                         rplus = ((start - 1), end - start + 2)
                         if info.event:
                             # extend if at beginning or end of delimited range
-                            if info.next and info.next.default_text_name == info:
+                            if info.next and info.next.text_color == info:
                                 alt = (info, (rng[0], rng[1] + 1))
                             else:
                                 alt = None
@@ -386,24 +386,23 @@ class SyntaxDefinition(NoHighlight):
         Delimited ranges are three- or four-tuples. Start or end
         delimiters may be a *syntax definition type*, which is an object
         with a `rules` attribute. When a syntax definition type is
-        specified as the start delimiter, any matched token in the
+        specified as the start delimiter, any matched rule in the
         definition will immediately transition to the (optional) syntax
         definition type of the start delimiter's range. When a syntax
         definition type is specified as an end delimiter, any matched
-        token in the definition will immedately end the range and
-        transition to the end delimiter's nested definitions (if any). A
-        `default_text` attribute may be specified on a syntax definition
-        type to set the default text color for the range; the
-        `DELIMITER` constant signifies the same color as the range
-        delimiter.
+        rule in the definition will immedately end the range and
+        transition to the end delimiter's rules.
 
         Color names are strings like 'keyword', 'string.single-quoted',
-        etc., and are defined in themes. They are mapped to actual
-        colors during syntax highlighting. Dotted color names are
-        matched to the most specific color found in the theme, starting
-        with the left-most part of the name. So 'string.single-quoted'
-        may match the full string or simply 'string'. If no match is
-        found then the default text color will be used.
+        etc. defined in themes. They are mapped to actual colors during
+        syntax highlighting. Dotted color names are matched to the most
+        specific color found in the theme, starting with the left-most
+        part of the name. So 'string.single-quoted' may match the full
+        string or simply 'string'. If no match is found then the default
+        text color will be used. A `default_text_color` attribute may be
+        specified on a syntax definition type to set the default text
+        color for the range; the `DELIMITER` constant signifies the same
+        color as the range delimiter.
     :param comment_token: The comment token to use when block-commenting
         a region of text.
     :param disabled: True if this definition is disabled.
@@ -418,7 +417,7 @@ class SyntaxDefinition(NoHighlight):
         "disabled",
         "flags",
         "whitespace",
-        "default_text",
+        "default_text_color",
         "registry",
 
         # deprecated
@@ -432,7 +431,7 @@ class SyntaxDefinition(NoHighlight):
     def __init__(self, filename, name, *, file_patterns=(),
             rules=(), word_groups=(), delimited_ranges=(),
             comment_token="", disabled=False, flags=re.MULTILINE,
-            whitespace=whitespace, default_text="", registry=None,
+            whitespace=whitespace, default_text_color="", registry=None,
             _id=None, _lang_ids=None, _ends=None, _next=None, _key=""):
         super().__init__(name, comment_token, disabled, _id=_id)
         self.filename = filename
@@ -450,7 +449,7 @@ class SyntaxDefinition(NoHighlight):
         self.key = _key
         self.flags = flags
         self.whitespace = whitespace
-        self.default_text = default_text
+        self.default_text_color = default_text_color
         self.registry = registry
         self.lang_ids = _lang_ids or ("%x" % i for i in count())
 
@@ -468,8 +467,11 @@ class SyntaxDefinition(NoHighlight):
             msg = "cannot compile groups for %s: %s\n%r" % (self.name, err, groups)
             log.warn(msg, exc_info=True)
             raise Error(msg)
-        self._default_text_name = self.get_color(
-            "" if self.default_text is const.DELIMITER else self.default_text)
+        color_name = self.default_text_color
+        if color_name == const.DELIMITER:
+            # use theme default if parent has not specified a color
+            color_name = "text_color"
+        self._text_color = self.get_color(color_name)
         log.debug("file: %s\n"
                   "name: %s\n"
                   "id: %s\n"
@@ -499,12 +501,12 @@ class SyntaxDefinition(NoHighlight):
         return self._regex
 
     @property
-    def default_text_name(self):
+    def text_color(self):
         try:
-            return self._default_text_name
+            return self._text_color
         except AttributeError:
             self._init()
-        return self._default_text_name
+        return self._text_color
 
     def iter_group_info(self, idgen=None):
         """
@@ -529,8 +531,7 @@ class SyntaxDefinition(NoHighlight):
                 yield phrase, ident, info
             parent_ends = self.ends
         else:
-            color = self.get_color("text_color")
-            parent_ends = [End("\Z", self.next, color, None)]
+            parent_ends = [End("\Z", self.next, self.get_color(), None)]
         yield from self.iter_groups(idgen, parent_ends)
 
     def iter_groups(self, idgen, parent_ends):
@@ -582,14 +583,13 @@ class SyntaxDefinition(NoHighlight):
             if idgen is None:
                 return lookahead(escape(start)), None, self.get_color(name)
             if sdef:
-                expanded_ends = False
                 sdef = lookup_syntax(name, sdef, ends)
                 if not sdef:
                     sdef = self.make_definition(name, unknown, ends)
-                if sdef.default_text is const.DELIMITER:
-                    sdef.default_text = name
-                elif not sdef.default_text:
-                    sdef.default_text = self.default_text
+                if sdef.default_text_color is const.DELIMITER:
+                    sdef.default_text_color = name
+                elif not sdef.default_text_color:
+                    sdef.default_text_color = self.default_text_color
             else:
                 # ranges without nested syntax rules are broken into lines to
                 # minimize the range that needs to be re-highlighted on edit
@@ -598,7 +598,7 @@ class SyntaxDefinition(NoHighlight):
                         for e in ends]
                 class lines:
                     rules = [(name, [RE(r".+?$")])]
-                    default_text = name
+                    default_text_color = name
                 lines.__name__ = "{}.lines".format(name)
                 sdef = self.make_definition(name, lines, ends)
             ident = "r%s" % next(idgen)
@@ -639,7 +639,7 @@ class SyntaxDefinition(NoHighlight):
                         ndef = lookup_syntax(name, sdef, ends)
                     else:
                         class delim_color:
-                            default_text = name
+                            default_text_color = name
                             rules = []
                         delim_color.__name__ = name
                         ndef = self.make_definition(name, delim_color, ends)
@@ -654,14 +654,13 @@ class SyntaxDefinition(NoHighlight):
             except Exception:
                 log.error("rule error: %s", rule, exc_info=True)
 
-    def get_color(self, name):
+    def get_color(self, name="text_color"):
         if " " in name:
             value = name.replace(" ", "_")
             log.warn("invalid color name: converting %r to %r", name, value)
             name = value
-        if name.startswith("_"):
-            # color names starting with _ get default text color
-            name = "text_color"
+        if name.startswith("_") or not name:
+            name = "text_color"  # theme default text color
         return self.name + " " + name
 
     def make_definition(self, name, other_definition, ends, next_def=None):
@@ -719,27 +718,27 @@ WORD_CHAR = re.compile(r"\w", re.UNICODE)
 
 
 class DynamicRange:
-    default_text = None
     class _none:
-        default_text = const.DELIMITER
+        default_text_color = const.DELIMITER
         rules = []
-    def __init__(self, lang_pattern, color=None):
+    def __init__(self, lang_pattern, color_name=""):
         if isinstance(lang_pattern, str):
             lang_pattern = re.compile(lang_pattern, re.MULTILINE)
         self.lang_pattern = lang_pattern
-        self.color = color
+        self.color_name = color_name
     def make_definition(self, parent, lookup_syntax, name, ends, next_def=None):
         ident = next(parent.lang_ids)
         none = parent.make_definition(name, self._none, ends, next_def)
-        sdef = type(self)(self.lang_pattern, self.color)
+        sdef = type(self)(self.lang_pattern, self.color_name)
         sdef.key = (parent.key + " " + ident) if parent.key else ident
         sdef.parent = parent
         sdef.lookup_syntax = lookup_syntax
         sdef.name = name
         sdef.ends = ends
         sdef.next = next_def
-        sdef.color_token = parent.get_color(self.color)
-        sdef.none = MatchInfo(parent.get_color("_none"), none, parent)
+        sdef.color = parent.get_color(self.color_name)
+        sdef.default_text_color = "this is ignored"
+        sdef.none = MatchInfo(parent.get_color(), none, parent)
         return sdef
     @property
     def regex(self):
@@ -748,8 +747,8 @@ class DynamicRange:
     def wordinfo(self):
         return self
     @property
-    def default_text_name(self):
-        return self.parent.default_text_name
+    def text_color(self):
+        return self.parent.text_color
     def finditer(self, string, offset):
         match = self.lang_pattern.match(string, offset)
         if match:
@@ -764,7 +763,7 @@ class DynamicRange:
         if name:
             sdef = self.lookup_syntax(self.name, name, self.ends, self.next)
             if sdef is not None:
-                return MatchInfo(self.color_token, sdef, self.parent)
+                return MatchInfo(self.color, sdef, self.parent)
         return self.none
 
 
