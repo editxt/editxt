@@ -31,6 +31,10 @@ keyword = """
     exp time push setgrent gt lt or ne m break given say state when
     """.split()
 
+number = [
+    RE(r"(?:\b0[0-7_]+)|(?:\b0x[0-9a-fA-F_]+)|(?:\b[1-9][0-9_]*(?:\.[0-9_]+)?)|[0_]\b"),
+]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -53,21 +57,14 @@ class string:
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         ('subst', RE(r"[$@]\{"), [RE(r"\}")], subst),
-        None,  # rules[1],
-        None,  # rules[2],
-        None,  # rules[3],
     ]
 
 class string0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 4, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 string0.__name__ = 'string'
-
-number = [
-    RE(r"(?:\b0[0-7_]+)|(?:\b0x[0-9a-fA-F_]+)|(?:\b[1-9][0-9_]*(?:\.[0-9_]+)?)|[0_]\b"),
-]
 
 keyword0 = ['split', 'return', 'print', 'reverse', 'grep']
 
@@ -76,7 +73,7 @@ regexp = [RE(r"(?:s|tr|y)/(?:\\.|[^/])*/(?:\\.|[^/])*/[a-z]*")]
 class regexp0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 4, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 regexp0.__name__ = 'regexp'
 
@@ -107,9 +104,9 @@ class _group5:
 
 rules = [
     ('keyword', keyword),
-    # unknown {'begin': {'pattern': '\\$\\d', 'type': 'RegExp'}, 'variants': [{'begin': ...}, {'begin': {'pattern': '[\\$%@](\\^\\w\\b|#\\w+(::\\w+)*|{\\w+}|\\w+(::\\w*)*)', 'type': 'RegExp'}}, {'begin': {'pattern': '[\\$%@][^\\s\\w{]', 'type': 'RegExp'}, 'relevance': 0}]},
-    # unknown {'begin': {'pattern': '[\\$%@](\\^\\w\\b|#\\w+(::\\w+)*|{\\w+}|\\w+(::\\w*)*)', 'type': 'RegExp'}, 'variants': [{'begin': {'pattern': '\\$\\d', 'type': 'RegExp'}}, {'begin': ...}, {'begin': {'pattern': '[\\$%@][^\\s\\w{]', 'type': 'RegExp'}, 'relevance': 0}]},
-    # unknown {'begin': {'pattern': '[\\$%@][^\\s\\w{]', 'type': 'RegExp'}, 'relevance': 0, 'variants': [{'begin': {'pattern': '\\$\\d', 'type': 'RegExp'}}, {'begin': {'pattern': '[\\$%@](\\^\\w\\b|#\\w+(::\\w+)*|{\\w+}|\\w+(::\\w*)*)', 'type': 'RegExp'}}, {'begin': ..., 'relevance': ...}]},
+    # ignore {'begin': {'pattern': '\\$\\d', 'type': 'RegExp'}},
+    # ignore {'begin': {'pattern': '[\\$%@](\\^\\w\\b|#\\w+(::\\w+)*|{\\w+}|\\w+(::\\w*)*)', 'type': 'RegExp'}},
+    # ignore {'begin': {'pattern': '[\\$%@][^\\s\\w{]', 'type': 'RegExp'}, 'relevance': 0},
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('comment', RE(r"^\=\w"), [RE(r"\=cut")], comment),
     ('_group3', RE(r"->{"), [RE(r"}")], _group3),
@@ -131,9 +128,6 @@ rules = [
     ('_group5', RE(r"^__DATA__$"), [RE(r"^__END__$")], 'mojolicious'),
 ]
 
-string.rules[1] = rules[1]
-string.rules[2] = rules[2]
-string.rules[3] = rules[3]
 _group4.rules[1] = rules[1]
 _group3.rules.extend(rules)
 subst.rules.extend(rules)

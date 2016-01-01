@@ -196,6 +196,10 @@ keyword0 = """
     restore check backup revoke
     """.split()
 
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
 class string:
     default_text_color = DELIMITER
     rules = [
@@ -206,13 +210,9 @@ class string:
 class string0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 0, 'contains', 0, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 string0.__name__ = 'string'
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 

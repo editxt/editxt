@@ -17,13 +17,27 @@ literal = """
     ON OFF max_speed LPOS JPOS ENABLE DISABLE START STOP RESET
     """.split()
 
-number = [RE(r"[1-9][0-9]*")]
+keyword0 = [RE(r"/(?:PROG|ATTR|MN|POS|END)\b")]
+
+keyword1 = [RE(r"(?:CALL|RUN|POINT_LOGIC|LBL)\b")]
+
+keyword2 = [RE(r"\b(?:ACC|CNT|Skip|Offset|PSPD|RT_LD|AP_LD|Tool_Offset)")]
+
+number = [RE(r"\d+(?:sec|msec|mm/sec|cm/min|inch/min|deg/sec|mm|in|cm)?\b")]
+
+number0 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+variable = [RE(r"\$[A-Za-z0-9_]+")]
+
+number1 = [RE(r"[1-9][0-9]*")]
 
 symbol = [RE(r":[^\]]+")]
 
 class built_in:
     default_text_color = DELIMITER
-    rules = [('number', number), ('symbol', symbol)]
+    rules = [('number', number1), ('symbol', symbol)]
 
 class string:
     default_text_color = DELIMITER
@@ -34,19 +48,11 @@ class string:
 class built_in0:
     default_text_color = DELIMITER
     rules = [
-        ('number', number),
+        ('number', number1),
         ('string', RE(r"\""), [RE(r"\"")], string),
         ('symbol', symbol),
     ]
 built_in0.__name__ = 'built_in'
-
-keyword0 = [RE(r"/(?:PROG|ATTR|MN|POS|END)\b")]
-
-keyword1 = [RE(r"(?:CALL|RUN|POINT_LOGIC|LBL)\b")]
-
-keyword2 = [RE(r"\b(?:ACC|CNT|Skip|Offset|PSPD|RT_LD|AP_LD|Tool_Offset)")]
-
-number0 = [RE(r"\d+(?:sec|msec|mm/sec|cm/min|inch/min|deg/sec|mm|in|cm)?\b")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
@@ -57,12 +63,6 @@ class comment:
         ('doctag', doctag),
     ]
 
-number1 = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-variable = [RE(r"\$[A-Za-z0-9_]+")]
-
 rules = [
     ('keyword', keyword),
     ('literal', literal),
@@ -71,12 +71,12 @@ rules = [
     ('keyword', keyword0),
     ('keyword', keyword1),
     ('keyword', keyword2),
-    ('number', number0),
+    ('number', number),
     ('comment', RE(r"//"), [RE(r"[;$]")], comment),
     ('comment', RE(r"!"), [RE(r"[;$]")], comment),
     ('comment', RE(r"--eg:"), [RE(r"$")], comment),
     built_in0.rules[1],
     ('string', RE(r"'"), [RE(r"'")]),
-    ('number', number1),
+    ('number', number0),
     ('variable', variable),
 ]

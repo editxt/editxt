@@ -12,10 +12,12 @@ literal = ['A', 'true', 'false', 'NOT', 'AND', 'OR']
 
 built_in = [RE(r"A_[a-zA-Z0-9]+")]
 
+number = [RE(r"\b\d+(?:\.\d+)?")]
+
 class string:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 1) {'begin': {'pattern': '`[\\s\\S]', 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': '`[\\s\\S]', 'type': 'RegExp'}},
     ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
@@ -27,18 +29,16 @@ class comment:
         ('doctag', doctag),
     ]
 
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
 class variable:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 1) {'begin': {'pattern': '`[\\s\\S]', 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': '`[\\s\\S]', 'type': 'RegExp'}},
     ]
 
 class symbol:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 1) {'begin': {'pattern': '`[\\s\\S]', 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': '`[\\s\\S]', 'type': 'RegExp'}},
     ]
 
 rules = [

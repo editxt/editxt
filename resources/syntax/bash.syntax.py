@@ -29,6 +29,8 @@ literal = ['true', 'false']
 
 meta = [RE(r"^#![^\n]+sh\s*$")]
 
+number = [RE(r"\b\d+(?:\.\d+)?")]
+
 title = [RE(r"\w[\w\d_]*")]
 
 class function:
@@ -44,8 +46,6 @@ class comment:
         ('doctag', doctag),
     ]
 
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
 variable = [RE(r"\$[\w\d#@][\w\d_]*")]
 
 variable0 = [RE(r"\$\{(?:.*?)}")]
@@ -53,7 +53,7 @@ variable0 = [RE(r"\$\{(?:.*?)}")]
 class variable1:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 4, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 variable1.__name__ = 'variable'
 
@@ -77,6 +77,5 @@ rules = [
     ('number', number),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"'"), [RE(r"'")]),
-    string.rules[0],
     string.rules[1],
 ]

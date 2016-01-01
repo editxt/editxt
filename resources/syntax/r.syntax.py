@@ -4,6 +4,16 @@
 name = 'R'
 file_patterns = ['*.r']
 
+number = [RE(r"0[xX][0-9a-fA-F]+[Li]?\b")]
+
+number0 = [RE(r"\d+(?:[eE][+\-]?\d*)?L\b")]
+
+number1 = [RE(r"\d+\.(?!\d)(?:i\b)?")]
+
+number2 = [RE(r"\d+(?:\.\d*)?(?:[eE][+\-]?\d*)?i?\b")]
+
+number3 = [RE(r"\.\d+(?:[eE][+\-]?\d*)?i?\b")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -27,16 +37,6 @@ literal = """
 class _group0:
     default_text_color = DELIMITER
     rules = [('keyword', keyword), ('literal', literal)]
-
-number = [RE(r"0[xX][0-9a-fA-F]+[Li]?\b")]
-
-number0 = [RE(r"\d+(?:[eE][+\-]?\d*)?L\b")]
-
-number1 = [RE(r"\d+\.(?!\d)(?:i\b)?")]
-
-number2 = [RE(r"\d+(?:\.\d*)?(?:[eE][+\-]?\d*)?i?\b")]
-
-number3 = [RE(r"\.\d+(?:[eE][+\-]?\d*)?i?\b")]
 
 class string:
     default_text_color = DELIMITER

@@ -10,6 +10,14 @@ keyword = """
     ensure or include use alias fn quote
     """.split()
 
+symbol = [RE(r"[a-zA-Z_][a-zA-Z0-9_]*(?:\!|\?)?:")]
+
+number = [
+    RE(r"(?:\b0[0-7_]+)|(?:\b0x[0-9a-fA-F_]+)|(?:\b[1-9][0-9_]*(?:\.[0-9_]+)?)|[0_]\b"),
+]
+
+variable = [RE(r"(?:\$\W)|(?:(\$|\@\@?)(?:\w+))")]
+
 class subst:
     default_text_color = DELIMITER
     rules = [('keyword', keyword)]
@@ -45,26 +53,19 @@ class function:
     default_text_color = DELIMITER
     rules = [('keyword', keyword1)]
 
-class symbol:
+class symbol0:
     default_text_color = DELIMITER
     rules = [
         None,  # rules[1],
         None,  # rules[2],
         # ignore {'begin': '[a-zA-Z_]\\w*[!?=]?|[-+~]\\@|<<|>>|=~|===?|<=>|[<>]=?|\\*\\*|[-/+%^&*~`|]|\\[\\]=?'},
     ]
-
-symbol0 = [RE(r"[a-zA-Z_][a-zA-Z0-9_]*(?:\!|\?)?:")]
-
-number = [
-    RE(r"(?:\b0[0-7_]+)|(?:\b0x[0-9a-fA-F_]+)|(?:\b[1-9][0-9_]*(?:\.[0-9_]+)?)|[0_]\b"),
-]
-
-variable = [RE(r"(?:\$\W)|(?:(\$|\@\@?)(?:\w+))")]
+symbol0.__name__ = 'symbol'
 
 class regexp:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 0, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         None,  # string.rules[0],
     ]
 
@@ -83,16 +84,16 @@ rules = [
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('class', RE(r"\b(?:defmodule|defrecord)"), [RE(r"\bdo\b|$|;")], class0),
     ('function', RE(r"\b(?:def|defp|defmacro)"), [RE(r"\B\b")], function),
-    ('symbol', RE(r":"), [RE(r"\B\b")], symbol),
-    ('symbol', symbol0),
+    ('symbol', RE(r":"), [RE(r"\B\b")], symbol0),
+    ('symbol', symbol),
     ('number', number),
     ('variable', variable),
     # ignore {'begin': '->'},
     ('_group0', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B\b")], _group0),
 ]
 
-symbol.rules[0] = rules[1]
-symbol.rules[1] = rules[2]
-regexp.rules[0] = string.rules[0]
+symbol0.rules[0] = rules[1]
+symbol0.rules[1] = rules[2]
+regexp.rules[1] = string.rules[0]
 _group0.rules[0] = rules[3]
 subst.rules.extend(rules)

@@ -29,6 +29,10 @@ literal = """
     /dev/poll
     """.split()
 
+number = [RE(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d{1,5})?\b")]
+
+number0 = [RE(r"\b\d+[kKmMgGdshdwy]*\b")]
+
 variable = [RE(r"\$\d+")]
 
 variable0 = [RE(r"[\$\@][a-zA-Z_]\w*")]
@@ -45,7 +49,6 @@ class string:
 class _group3:
     default_text_color = DELIMITER
     rules = [
-        None,  # string.rules[0],
         None,  # string.rules[1],
         None,  # string.rules[2],
     ]
@@ -53,15 +56,10 @@ class _group3:
 class regexp:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 2, 'contains', 0, 'starts', 'contains', 1, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        None,  # string.rules[0],
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         None,  # string.rules[1],
         None,  # string.rules[2],
     ]
-
-number = [RE(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d{1,5})?\b")]
-
-number0 = [RE(r"\b\d+[kKmMgGdshdwy]*\b")]
 
 class _group2:
     default_text_color = DELIMITER
@@ -77,7 +75,6 @@ class _group2:
         ('regexp', RE(r"(?:[a-z\-]+\.)+\*"), [RE(r"\B\b")], regexp),
         ('number', number),
         ('number', number0),
-        None,  # string.rules[0],
         None,  # string.rules[1],
         None,  # string.rules[2],
     ]
@@ -92,13 +89,10 @@ rules = [
     ('_group1', RE(r"(?=[a-zA-Z_]\w*\s)"), [RE(r";|{")], _group1),
 ]
 
-_group3.rules[0] = string.rules[0]
-_group3.rules[1] = string.rules[1]
-_group3.rules[2] = string.rules[2]
-regexp.rules[0] = string.rules[0]
+_group3.rules[0] = string.rules[1]
+_group3.rules[1] = string.rules[2]
 regexp.rules[1] = string.rules[1]
 regexp.rules[2] = string.rules[2]
 _group2.rules[1] = rules[0]
-_group2.rules[11] = string.rules[0]
-_group2.rules[12] = string.rules[1]
-_group2.rules[13] = string.rules[2]
+_group2.rules[11] = string.rules[1]
+_group2.rules[12] = string.rules[2]

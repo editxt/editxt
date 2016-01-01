@@ -21,6 +21,10 @@ keyword = """
 
 literal = ['false', 'true', 'PI', 'undef']
 
+number = [RE(r"\b\d+(?:\.\d+)?(?:e-?\d+)?")]
+
+keyword0 = [RE(r"\$(?:f[asn]|t|vp[rtd]|children)")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -29,8 +33,6 @@ class comment:
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-
-number = [RE(r"\b\d+(?:\.\d+)?(?:e-?\d+)?")]
 
 meta_keyword = ['include', 'use']
 
@@ -44,9 +46,9 @@ class string:
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-keyword0 = [RE(r"\$(?:f[asn]|t|vp[rtd]|children)")]
-
 keyword1 = ['module', 'function']
+
+title = [RE(r"[a-zA-Z_]\w*")]
 
 literal0 = [RE(r"false|true|PI|undef")]
 
@@ -58,8 +60,6 @@ class params:
         ('keyword', keyword0),
         ('literal', literal0),
     ]
-
-title = [RE(r"[a-zA-Z_]\w*")]
 
 class function:
     default_text_color = DELIMITER

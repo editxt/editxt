@@ -11,13 +11,15 @@ keyword = """
     family forall mdo proc rec
     """.split()
 
+title = [RE(r"^[_a-z][\w']*")]
+
 keyword0 = ['module', 'where']
 
 keyword1 = ['module']
 
 type = [RE(r"\b[A-Z][\w]*(?:\((?:\.\.|,|\w+)\))?")]
 
-title = [RE(r"[_a-z][\w']*")]
+title0 = [RE(r"[_a-z][\w']*")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
@@ -28,13 +30,13 @@ class comment:
         ('doctag', doctag),
     ]
 
-class _group1:
+class _group5:
     default_text_color = DELIMITER
     rules = [
         ('meta', RE(r"{-#"), [RE(r"#-}")]),
         ('meta', RE(r"^#"), [RE(r"$")]),
         ('type', type),
-        ('title', title),
+        ('title', title0),
         ('comment', RE(r"--"), [RE(r"$")], comment),
         ('comment', RE(r"{-"), [RE(r"-}")], comment),
     ]
@@ -44,20 +46,20 @@ class _group0:
     rules = [
         ('keyword', keyword0),
         ('keyword', keyword1),
-        ('_group1', RE(r"\("), [RE(r"\)")], _group1),
-        _group1.rules[4],
-        _group1.rules[5],
+        ('_group5', RE(r"\("), [RE(r"\)")], _group5),
+        _group5.rules[4],
+        _group5.rules[5],
     ]
 
 keyword2 = ['import', 'qualified', 'as', 'hiding']
 
-class _group2:
+class _group1:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword2),
         _group0.rules[2],
-        _group1.rules[4],
-        _group1.rules[5],
+        _group5.rules[4],
+        _group5.rules[5],
     ]
 
 keyword3 = ['class', 'family', 'instance', 'where']
@@ -70,14 +72,14 @@ class class0:
         ('keyword', keyword3),
         ('type', type0),
         _group0.rules[2],
-        _group1.rules[4],
-        _group1.rules[5],
+        _group5.rules[4],
+        _group5.rules[5],
     ]
 class0.__name__ = 'class'
 
 keyword4 = ['data', 'family', 'type', 'newtype', 'deriving']
 
-class _group3:
+class _group6:
     default_text_color = DELIMITER
     rules = []
 
@@ -85,25 +87,25 @@ class class1:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword4),
-        _group1.rules[0],
+        _group5.rules[0],
         ('type', type0),
         _group0.rules[2],
-        ('_group3', RE(r"{"), [RE(r"}")], _group3),
-        _group1.rules[4],
-        _group1.rules[5],
+        ('_group6', RE(r"{"), [RE(r"}")], _group6),
+        _group5.rules[4],
+        _group5.rules[5],
     ]
 class1.__name__ = 'class'
 
 keyword5 = ['default']
 
-class _group4:
+class _group2:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword5),
         ('type', type0),
         _group0.rules[2],
-        _group1.rules[4],
-        _group1.rules[5],
+        _group5.rules[4],
+        _group5.rules[5],
     ]
 
 keyword6 = ['infix', 'infixl', 'infixr']
@@ -112,13 +114,13 @@ number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
-class _group5:
+class _group3:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword6),
         ('number', number),
-        _group1.rules[4],
-        _group1.rules[5],
+        _group5.rules[4],
+        _group5.rules[5],
     ]
 
 keyword7 = """
@@ -131,35 +133,33 @@ class string:
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-class _group6:
+class _group4:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword7),
         ('type', type0),
         ('string', RE(r"\""), [RE(r"\"")], string),
-        _group1.rules[4],
-        _group1.rules[5],
+        _group5.rules[4],
+        _group5.rules[5],
     ]
-
-title0 = [RE(r"^[_a-z][\w']*")]
 
 rules = [
     ('keyword', keyword),
     ('_group0', RE(r"\b(?:module)"), [RE(r"where")], _group0),
-    ('_group2', RE(r"\bimport\b"), [RE(r"$")], _group2),
+    ('_group1', RE(r"\bimport\b"), [RE(r"$")], _group1),
     ('class', RE(r"^(?:\s*)?(?:class|instance)\b"), [RE(r"where")], class0),
     ('class', RE(r"\b(?:data|(?:new)?type)\b"), [RE(r"$")], class1),
-    ('_group4', RE(r"\b(?:default)"), [RE(r"$")], _group4),
-    ('_group5', RE(r"\b(?:infix|infixl|infixr)"), [RE(r"$")], _group5),
-    ('_group6', RE(r"\bforeign\b"), [RE(r"$")], _group6),
+    ('_group2', RE(r"\b(?:default)"), [RE(r"$")], _group2),
+    ('_group3', RE(r"\b(?:infix|infixl|infixr)"), [RE(r"$")], _group3),
+    ('_group4', RE(r"\bforeign\b"), [RE(r"$")], _group4),
     ('meta', RE(r"#!\/usr\/bin\/env runhaskell"), [RE(r"$")]),
-    _group1.rules[0],
-    _group1.rules[1],
-    _group6.rules[2],
+    _group5.rules[0],
+    _group5.rules[1],
+    _group4.rules[2],
     ('number', number),
     ('type', type0),
-    ('title', title0),
-    _group1.rules[4],
-    _group1.rules[5],
+    ('title', title),
+    _group5.rules[4],
+    _group5.rules[5],
     # ignore {'begin': '->|<-'},
 ]

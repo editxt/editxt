@@ -4,6 +4,8 @@
 name = 'Makefile'
 file_patterns = ['*.makefile', '*.mk', '*.mak']
 
+section = [RE(r"^[\w]+:\s*$")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -17,9 +19,9 @@ class _group0:
     default_text_color = DELIMITER
     rules = [('_group0', RE(r"(?=^\w+\s*\W*=)"), [RE(r"\B|\b")])]
 
-class _group1:
+class _group2:
     default_text_color = DELIMITER
-    rules = [('_group1', _group0, [RE(r"\s*\W*=")])]
+    rules = [('_group2', _group0, [RE(r"\s*\W*=")])]
 
 class variable:
     default_text_color = DELIMITER
@@ -27,11 +29,9 @@ class variable:
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-class _group2:
+class _group3:
     default_text_color = DELIMITER
     rules = [('variable', RE(r"\$\("), [RE(r"\)")], variable)]
-
-section = [RE(r"^[\w]+:\s*$")]
 
 meta_keyword = ['.PHONY']
 
@@ -42,17 +42,17 @@ class meta:
 class string:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 1, 'starts', 'starts', 'contains', 0, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-class _group3:
+class _group1:
     default_text_color = DELIMITER
-    rules = [('string', RE(r"\""), [RE(r"\"")], string), _group2.rules[0]]
+    rules = [('string', RE(r"\""), [RE(r"\"")], string), _group3.rules[0]]
 
 rules = [
     ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('_group0', _group1, [RE(r"$")], _group2),
+    ('_group0', _group2, [RE(r"$")], _group3),
     ('section', section),
     ('meta', RE(r"^\.PHONY:"), [RE(r"$")], meta),
-    ('_group3', RE(r"^\t+"), [RE(r"$")], _group3),
+    ('_group1', RE(r"^\t+"), [RE(r"$")], _group1),
 ]

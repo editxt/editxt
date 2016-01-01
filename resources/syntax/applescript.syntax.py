@@ -28,12 +28,6 @@ literal = """
     AppleScript false linefeed return pi quote result space tab true
     """.split()
 
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-
 number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
@@ -47,6 +41,12 @@ literal0 = [RE(r"\b(?:text item delimiters|current application|missing value)\b"
 keyword0 = [
     RE(r"\b(?:apart from|aside from|instead of|out of|greater than|isn't|(?:doesn't|does not) (?:equal|come before|come after|contain)|(?:greater|less) than(?: or equal)?|(?:starts?|ends|begins?) with|contained by|comes (?:before|after)|a (?:ref|reference)|POSIX file|POSIX path|(?:date|time) string|quoted form)\b"),
 ]
+
+class string:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
 
 keyword1 = ['on']
 
@@ -80,7 +80,7 @@ class comment0:
     default_text_color = DELIMITER
     rules = [
         None,  # rules[9],
-        # ('contains', 6, 'contains', 0) {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 comment0.__name__ = 'comment'

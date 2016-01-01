@@ -112,23 +112,23 @@ class name1:
     ]
 name1.__name__ = 'name'
 
+comment0 = [RE(r"\^[a-zA-Z_\-!.?+*=<>&#'][a-zA-Z_\-!.?+*=<>&#'0-9/;:]*")]
+
+symbol = [RE(r"[:][a-zA-Z_\-!.?+*=<>&#'][a-zA-Z_\-!.?+*=<>&#'0-9/;:]*")]
+
+number = [RE(r"[-+]?\d+(?:\.\d+)?")]
+
+literal = [RE(r"\b(?:true|false|nil)\b")]
+
 class string:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-comment0 = [RE(r"\^[a-zA-Z_\-!.?+*=<>&#'][a-zA-Z_\-!.?+*=<>&#'0-9/;:]*")]
-
-symbol = [RE(r"[:][a-zA-Z_\-!.?+*=<>&#'][a-zA-Z_\-!.?+*=<>&#'0-9/;:]*")]
-
 class _group2:
     default_text_color = DELIMITER
     rules = []
-
-number = [RE(r"[-+]?\d+(?:\.\d+)?")]
-
-literal = [RE(r"\b(?:true|false|nil)\b")]
 
 class _group1:
     default_text_color = DELIMITER

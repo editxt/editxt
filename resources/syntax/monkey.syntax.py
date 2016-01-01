@@ -21,6 +21,14 @@ keyword = """
 
 literal = ['true', 'false', 'null', 'and', 'or', 'shl', 'shr', 'mod']
 
+built_in0 = [RE(r"\b(?:self|super)\b")]
+
+meta = [RE(r"^\s*strict\b")]
+
+number = [RE(r"[$][a-fA-F0-9]+")]
+
+number0 = [RE(r"\b\d+(?:\.\d+)?")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -44,24 +52,21 @@ class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword1),
-        ('_group0', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('_group1', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
         ('title', title),
     ]
 class0.__name__ = 'class'
 
-built_in0 = [RE(r"\b(?:self|super)\b")]
-
 meta_keyword = ['if', 'else', 'elseif', 'endif', 'end', 'then']
 
-class meta:
+class meta0:
     default_text_color = DELIMITER
     rules = [('meta-keyword', meta_keyword)]
-
-meta0 = [RE(r"^\s*strict\b")]
+meta0.__name__ = 'meta'
 
 keyword2 = ['alias']
 
-class _group1:
+class _group0:
     default_text_color = DELIMITER
     rules = [('keyword', keyword2), ('title', title)]
 
@@ -70,10 +75,6 @@ class string:
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-number = [RE(r"[$][a-fA-F0-9]+")]
-
-number0 = [RE(r"\b\d+(?:\.\d+)?")]
 
 rules = [
     ('built_in', built_in),
@@ -84,9 +85,9 @@ rules = [
     ('function', RE(r"\b(?:function|method)"), [RE(r"[(?:=:]|$")], function),
     ('class', RE(r"\b(?:class|interface)"), [RE(r"$")], class0),
     ('built_in', built_in0),
-    ('meta', RE(r"\s*#"), [RE(r"$")], meta),
-    ('meta', meta0),
-    ('_group1', RE(r"\b(?:alias)"), [RE(r"=")], _group1),
+    ('meta', RE(r"\s*#"), [RE(r"$")], meta0),
+    ('meta', meta),
+    ('_group0', RE(r"\b(?:alias)"), [RE(r"=")], _group0),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),
     ('number', number0),

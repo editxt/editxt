@@ -13,13 +13,13 @@ keyword = """
 
 literal = ['true', 'false']
 
+number = [RE(r"\b\d+(?:\.\d+)?")]
+
 class string:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
@@ -41,7 +41,7 @@ class class0:
     rules = [('keyword', keyword0), ('title', title, [RE(r"\B\b")])]
 class0.__name__ = 'class'
 
-class _group1:
+class _group0:
     default_text_color = DELIMITER
     rules = [('keyword', built_in)]
 
@@ -54,5 +54,5 @@ rules = [
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('class', RE(r"\b(?:struct|enum|service|exception)"), [RE(r"\{")], class0),
-    ('_group1', RE(r"\b(?:set|list|map)\s*<"), [RE(r">")], _group1),
+    ('_group0', RE(r"\b(?:set|list|map)\s*<"), [RE(r">")], _group0),
 ]

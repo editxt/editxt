@@ -14,6 +14,10 @@ keyword = """
 
 literal = ['true', 'false', 'null']
 
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
 doctag = [RE(r"@[A-Za-z]+")]
 
 doctag0 = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
@@ -29,7 +33,7 @@ class comment:
 class comment0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 0, 'contains', 1) {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag0),
     ]
 comment0.__name__ = 'comment'
@@ -112,10 +116,6 @@ class string:
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
 
 rules = [
     ('keyword', keyword),

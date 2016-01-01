@@ -15,13 +15,13 @@ keyword = """
 
 literal = ['true', 'false']
 
+number = [RE(r"\b\d+(?:\.\d+)?")]
+
 class string:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
@@ -64,5 +64,5 @@ rules = [
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('class', RE(r"\b(?:message|enum|service)"), [RE(r"\{")], class0),
     ('function', RE(r"\b(?:rpc)"), [_function], function),
-    ('_group1', RE(r"^\s*[A-Z_]+"), [RE(r"\s*=")]),
+    ('_group0', RE(r"^\s*[A-Z_]+"), [RE(r"\s*=")]),
 ]

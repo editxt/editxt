@@ -15,6 +15,16 @@ meta = [RE(r"\%")]
 
 meta0 = [RE(r"(?:[O])(?:[0-9]+)")]
 
+number = [
+    RE(r"(?:[-+]?(?:[0-9]*\.?[0-9]+\.?))|(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+name0 = [RE(r"(?:[G])(?:[0-9]+\.?[0-9]?)")]
+
+name1 = [RE(r"(?:[M])(?:[0-9]+\.?[0-9]?)")]
+
+attr = [RE(r"(?:VZOFX|VZOFY|VZOFZ)")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -24,21 +34,11 @@ class comment:
         ('doctag', doctag),
     ]
 
-number = [
-    RE(r"(?:[-+]?(?:[0-9]*\.?[0-9]+\.?))|(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
 class string:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-name0 = [RE(r"(?:[G])(?:[0-9]+\.?[0-9]?)")]
-
-name1 = [RE(r"(?:[M])(?:[0-9]+\.?[0-9]?)")]
-
-attr = [RE(r"(?:VZOFX|VZOFY|VZOFZ)")]
 
 rules = [
     ('keyword', keyword),

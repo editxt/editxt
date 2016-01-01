@@ -29,19 +29,7 @@ number = [
     RE(r"\b\d+(?:\.\d+)?(?:%|em|ex|ch|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc|px|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx)?"),
 ]
 
-class _group1:
-    default_text_color = DELIMITER
-    rules = [('_group1', RE(r"(?:url|data-uri)\("), [RE(r"\B|\b")])]
-
-class _string:
-    default_text_color = DELIMITER
-    rules = [('_string', [RE(r"[\)\n]")])]
-
 number0 = [RE(r"#[0-9A-Fa-f]+\b")]
-
-class _group2:
-    default_text_color = DELIMITER
-    rules = []
 
 variable = [RE(r"@@?[\w-]+")]
 
@@ -49,13 +37,25 @@ variable0 = [RE(r"@{[\w-]+}")]
 
 built_in = [RE(r"~?`[^`]*?`")]
 
+meta = [RE(r"!important")]
+
+class _group3:
+    default_text_color = DELIMITER
+    rules = [('_group3', RE(r"(?:url|data-uri)\("), [RE(r"\B|\b")])]
+
+class _string:
+    default_text_color = DELIMITER
+    rules = [('_string', [RE(r"[\)\n]")])]
+
+class _group4:
+    default_text_color = DELIMITER
+    rules = []
+
 class _attribute:
     default_text_color = DELIMITER
     rules = [('_attribute', [RE(r":")])]
 
-meta = [RE(r"!important")]
-
-class _group0:
+class _group2:
     default_text_color = DELIMITER
     rules = [
         None,  # rules[0],
@@ -63,9 +63,9 @@ class _group0:
         ('string', string),
         ('string', string0),
         ('number', number),
-        ('_group1', _group1, [_string]),
+        ('_group3', _group3, [_string]),
         ('number', number0),
-        ('_group2', RE(r"\("), [RE(r"\)")], _group2),
+        ('_group4', RE(r"\("), [RE(r"\)")], _group4),
         ('variable', variable),
         ('variable', variable0),
         ('built_in', built_in),
@@ -78,11 +78,11 @@ class variable1:
     rules = [('variable', RE(r"@[\w-]+\s*:"), [RE(r"\B|\b")])]
 variable1.__name__ = 'variable'
 
-class _group4:
+class _group6:
     default_text_color = DELIMITER
     rules = []
 
-class _group3:
+class _group5:
     default_text_color = DELIMITER
     rules = [
         None,  # rules[0],
@@ -90,15 +90,15 @@ class _group3:
         ('string', string),
         ('string', string0),
         ('number', number),
-        _group0.rules[5],
+        _group2.rules[5],
         ('number', number0),
-        _group0.rules[7],
+        _group2.rules[7],
         ('variable', variable),
         ('variable', variable0),
         ('built_in', built_in),
-        _group0.rules[11],
+        _group2.rules[11],
         ('meta', meta),
-        ('_group4', RE(r"{"), [RE(r"}")], _group4),
+        ('_group6', RE(r"{"), [RE(r"}")], _group6),
     ]
 
 class variable2:
@@ -106,11 +106,11 @@ class variable2:
     rules = [('variable', RE(r"@[\w-]+"), [RE(r"\B|\b")])]
 variable2.__name__ = 'variable'
 
-class _group5:
+class _group7:
     default_text_color = DELIMITER
     rules = []
 
-class _group30:
+class _group50:
     default_text_color = DELIMITER
     rules = [
         None,  # rules[0],
@@ -118,41 +118,19 @@ class _group30:
         ('string', string),
         ('string', string0),
         ('number', number),
-        _group0.rules[5],
+        _group2.rules[5],
         ('number', number0),
-        _group0.rules[7],
+        _group2.rules[7],
         ('variable', variable),
         ('variable', variable0),
         ('built_in', built_in),
-        _group0.rules[11],
+        _group2.rules[11],
         ('meta', meta),
-        ('_group5', RE(r"{"), [RE(r"}")], _group5),
+        ('_group7', RE(r"{"), [RE(r"}")], _group7),
     ]
-_group30.__name__ = '_group3'
+_group50.__name__ = '_group5'
 
-keyword0 = ['when']
-
-class _group7:
-    default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword0),
-        ('_group8', RE(r"\b(?:and|not)"), [RE(r"\B\b")]),
-        None,  # rules[0],
-        None,  # rules[1],
-        ('string', string),
-        ('string', string0),
-        ('number', number),
-        _group0.rules[5],
-        ('number', number0),
-        _group0.rules[7],
-        ('variable', variable),
-        ('variable', variable0),
-        ('built_in', built_in),
-        _group0.rules[11],
-        ('meta', meta),
-    ]
-
-keyword1 = [RE(r"all\b")]
+keyword0 = [RE(r"all\b")]
 
 selector_tag = [RE(r"(?:[\w-]+|@{[\w-]+})%?")]
 
@@ -162,17 +140,39 @@ selector_class = [RE(r"\.(?:[\w-]+|@{[\w-]+})")]
 
 selector_tag0 = [RE(r"&")]
 
+keyword1 = ['when']
+
+class _group8:
+    default_text_color = DELIMITER
+    rules = [
+        ('keyword', keyword1),
+        ('_group10', RE(r"\b(?:and|not)"), [RE(r"\B\b")]),
+        None,  # rules[0],
+        None,  # rules[1],
+        ('string', string),
+        ('string', string0),
+        ('number', number),
+        _group2.rules[5],
+        ('number', number0),
+        _group2.rules[7],
+        ('variable', variable),
+        ('variable', variable0),
+        ('built_in', built_in),
+        _group2.rules[11],
+        ('meta', meta),
+    ]
+
 class _group9:
     default_text_color = DELIMITER
     rules = []
 
-class _group6:
+class _group0:
     default_text_color = DELIMITER
     rules = [
         None,  # rules[0],
         None,  # rules[1],
-        ('_group7', RE(r"\b(?:when)"), [RE(r"\B\b")], _group7),
-        ('keyword', keyword1),
+        ('_group8', RE(r"\b(?:when)"), [RE(r"\B\b")], _group8),
+        ('keyword', keyword0),
         ('variable', variable0),
         ('selector-tag', selector_tag),
         ('selector-id', selector_id),
@@ -186,41 +186,41 @@ class _group6:
 class _group11:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
-        ('_group12', RE(r"\b(?:and|not)"), [RE(r"\B\b")]),
+        ('keyword', keyword1),
+        ('_group13', RE(r"\b(?:and|not)"), [RE(r"\B\b")]),
         None,  # rules[0],
         None,  # rules[1],
         ('string', string),
         ('string', string0),
         ('number', number),
-        _group0.rules[5],
+        _group2.rules[5],
         ('number', number0),
-        _group0.rules[7],
+        _group2.rules[7],
         ('variable', variable),
         ('variable', variable0),
         ('built_in', built_in),
-        _group0.rules[11],
+        _group2.rules[11],
         ('meta', meta),
     ]
 
-class _group13:
+class _group12:
     default_text_color = DELIMITER
     rules = []
 
-class _group10:
+class _group1:
     default_text_color = DELIMITER
     rules = [
         None,  # rules[0],
         None,  # rules[1],
         ('_group11', RE(r"\b(?:when)"), [RE(r"\B\b")], _group11),
-        ('keyword', keyword1),
+        ('keyword', keyword0),
         ('variable', variable0),
         ('selector-tag', selector_tag),
         ('selector-id', selector_id),
         ('selector-class', selector_class),
         ('selector-tag', selector_tag0),
         ('selector-attr', RE(r"\["), [RE(r"\]")]),
-        ('_group13', RE(r"\("), [RE(r"\)")], _group13),
+        ('_group12', RE(r"\("), [RE(r"\)")], _group12),
         # ignore {'begin': '!important'},
     ]
 
@@ -245,30 +245,30 @@ class _group14:
 rules = [
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('keyword', keyword, [RE(r"(?=[;{}])")], _group0),
-    ('variable', variable1, [RE(r"(?=[;}])")], _group3),
-    ('variable', variable2, [RE(r"(?=[;}])")], _group30),
-    ('_group6', RE(r"(?=[\.#:&\[])"), [RE(r"(?=[;{}])")], _group6),
-    ('_group10', RE(r"(?=(?:[\w-]+|@{[\w-]+})[^;]*{)"), [RE(r"(?={)")], _group10),
+    ('keyword', keyword, [RE(r"(?=[;{}])")], _group2),
+    ('variable', variable1, [RE(r"(?=[;}])")], _group5),
+    ('variable', variable2, [RE(r"(?=[;}])")], _group50),
+    ('_group0', RE(r"(?=[\.#:&\[])"), [RE(r"(?=[;{}])")], _group0),
+    ('_group1', RE(r"(?=(?:[\w-]+|@{[\w-]+})[^;]*{)"), [RE(r"(?={)")], _group1),
     ('attribute', attribute0, [RE(r"(?=[;}])")], _group14),
 ]
 
+_group2.rules[0] = rules[0]
+_group2.rules[1] = rules[1]
+_group5.rules[0] = rules[0]
+_group5.rules[1] = rules[1]
+_group50.rules[0] = rules[0]
+_group50.rules[1] = rules[1]
+_group8.rules[2] = rules[0]
+_group8.rules[3] = rules[1]
 _group0.rules[0] = rules[0]
 _group0.rules[1] = rules[1]
-_group3.rules[0] = rules[0]
-_group3.rules[1] = rules[1]
-_group30.rules[0] = rules[0]
-_group30.rules[1] = rules[1]
-_group7.rules[2] = rules[0]
-_group7.rules[3] = rules[1]
-_group6.rules[0] = rules[0]
-_group6.rules[1] = rules[1]
 _group11.rules[2] = rules[0]
 _group11.rules[3] = rules[1]
-_group10.rules[0] = rules[0]
-_group10.rules[1] = rules[1]
+_group1.rules[0] = rules[0]
+_group1.rules[1] = rules[1]
 attribute.rules[0] = rules[0]
 attribute.rules[1] = rules[1]
-_group2.rules.extend(_group0.rules)
-_group4.rules.extend(rules)
-_group5.rules.extend(rules)
+_group4.rules.extend(_group2.rules)
+_group6.rules.extend(rules)
+_group7.rules.extend(rules)

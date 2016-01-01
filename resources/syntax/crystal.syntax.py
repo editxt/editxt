@@ -15,6 +15,18 @@ keyword = """
 
 literal = ['false', 'nil', 'true']
 
+symbol = [RE(r"[a-zA-Z_]\w*(?:\!|\?)?:")]
+
+number = [RE(r"\b0b(?:[01_]*[01])(?:_[uif](?:8|16|32|64))?")]
+
+number0 = [RE(r"\b0o(?:[0-7_]*[0-7])(?:_[uif](?:8|16|32|64))?")]
+
+number1 = [RE(r"\b0x(?:[A-Fa-f0-9_]*[A-Fa-f0-9])(?:_[uif](?:8|16|32|64))?")]
+
+number2 = [
+    RE(r"\b(?:([0-9][0-9_]*[0-9]|[0-9])(?:\.[0-9_]*[0-9])?(?:[eE][+-]?[0-9_]*[0-9])?)(?:_[uif](?:8|16|32|64))?"),
+]
+
 class subst:
     default_text_color = DELIMITER
     rules = [('keyword', keyword), ('literal', literal)]
@@ -26,46 +38,46 @@ class string:
         ('subst', RE(r"#{"), [RE(r"}")], subst),
     ]
 
-class _group0:
+class _group1:
     default_text_color = DELIMITER
     rules = []
 
 class string0:
     default_text_color = DELIMITER
-    rules = [('_group0', RE(r"\("), [RE(r"\)")], _group0)]
+    rules = [('_group1', RE(r"\("), [RE(r"\)")], _group1)]
 string0.__name__ = 'string'
-
-class _group1:
-    default_text_color = DELIMITER
-    rules = []
-
-class string1:
-    default_text_color = DELIMITER
-    rules = [('_group1', RE(r"\["), [RE(r"\]")], _group1)]
-string1.__name__ = 'string'
 
 class _group2:
     default_text_color = DELIMITER
     rules = []
 
-class string2:
+class string1:
     default_text_color = DELIMITER
-    rules = [('_group2', RE(r"{"), [RE(r"}")], _group2)]
-string2.__name__ = 'string'
+    rules = [('_group2', RE(r"\["), [RE(r"\]")], _group2)]
+string1.__name__ = 'string'
 
 class _group3:
     default_text_color = DELIMITER
     rules = []
 
+class string2:
+    default_text_color = DELIMITER
+    rules = [('_group3', RE(r"{"), [RE(r"}")], _group3)]
+string2.__name__ = 'string'
+
+class _group4:
+    default_text_color = DELIMITER
+    rules = []
+
 class string3:
     default_text_color = DELIMITER
-    rules = [('_group3', RE(r"<"), [RE(r">")], _group3)]
+    rules = [('_group4', RE(r"<"), [RE(r">")], _group4)]
 string3.__name__ = 'string'
 
 class regexp:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 0, 'contains', 0, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         None,  # string.rules[0],
     ]
 
@@ -105,7 +117,7 @@ class regexp3:
     rules = [('_group8', RE(r"<"), [RE(r">")], _group8)]
 regexp3.__name__ = 'regexp'
 
-class _group4:
+class _group0:
     default_text_color = DELIMITER
     rules = [
         ('regexp', RE(r"/"), [RE(r"/[a-z]*")], regexp),
@@ -210,8 +222,6 @@ class function0:
     rules = [('keyword', keyword3), ('title', title0)]
 function0.__name__ = 'function'
 
-symbol = [RE(r"[a-zA-Z_]\w*(?:\!|\?)?:")]
-
 class symbol0:
     default_text_color = DELIMITER
     rules = [
@@ -230,16 +240,6 @@ class symbol0:
     ]
 symbol0.__name__ = 'symbol'
 
-number = [RE(r"\b0b(?:[01_]*[01])(?:_[uif](?:8|16|32|64))?")]
-
-number0 = [RE(r"\b0o(?:[0-7_]*[0-7])(?:_[uif](?:8|16|32|64))?")]
-
-number1 = [RE(r"\b0x(?:[A-Fa-f0-9_]*[A-Fa-f0-9])(?:_[uif](?:8|16|32|64))?")]
-
-number2 = [
-    RE(r"\b(?:([0-9][0-9_]*[0-9]|[0-9])(?:\.[0-9_]*[0-9])?(?:[eE][+-]?[0-9_]*[0-9])?)(?:_[uif](?:8|16|32|64))?"),
-]
-
 class template_variable:
     default_text_color = DELIMITER
     rules = [
@@ -256,7 +256,7 @@ class template_variable:
         ('string', RE(r"%w?%"), [RE(r"%")], string),
         ('string', RE(r"%w?-"), [RE(r"-")], string),
         ('string', RE(r"%w?\|"), [RE(r"\|")], string),
-        ('_group4', RE(r"(?:!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B\b")], _group4),
+        ('_group0', RE(r"(?:!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B\b")], _group0),
         ('regexp', RE(r"%r\("), [RE(r"\)")], regexp4),
         ('regexp', RE(r"%r\["), [RE(r"\]")], regexp5),
         ('regexp', RE(r"%r{"), [RE(r"}")], regexp6),
@@ -280,40 +280,40 @@ class template_variable:
     ]
 template_variable.__name__ = 'template-variable'
 
-class _group13:
+class _group14:
     default_text_color = DELIMITER
     rules = []
 
 class string4:
     default_text_color = DELIMITER
-    rules = [('_group13', RE(r"\("), [RE(r"\)")], _group13)]
+    rules = [('_group14', RE(r"\("), [RE(r"\)")], _group14)]
 string4.__name__ = 'string'
-
-class _group14:
-    default_text_color = DELIMITER
-    rules = []
-
-class string5:
-    default_text_color = DELIMITER
-    rules = [('_group14', RE(r"\["), [RE(r"\]")], _group14)]
-string5.__name__ = 'string'
 
 class _group15:
     default_text_color = DELIMITER
     rules = []
 
-class string6:
+class string5:
     default_text_color = DELIMITER
-    rules = [('_group15', RE(r"{"), [RE(r"}")], _group15)]
-string6.__name__ = 'string'
+    rules = [('_group15', RE(r"\["), [RE(r"\]")], _group15)]
+string5.__name__ = 'string'
 
 class _group16:
     default_text_color = DELIMITER
     rules = []
 
+class string6:
+    default_text_color = DELIMITER
+    rules = [('_group16', RE(r"{"), [RE(r"}")], _group16)]
+string6.__name__ = 'string'
+
+class _group17:
+    default_text_color = DELIMITER
+    rules = []
+
 class string7:
     default_text_color = DELIMITER
-    rules = [('_group16', RE(r"<"), [RE(r">")], _group16)]
+    rules = [('_group17', RE(r"<"), [RE(r">")], _group17)]
 string7.__name__ = 'string'
 
 class _group18:
@@ -352,7 +352,7 @@ class regexp11:
     rules = [('_group21', RE(r"<"), [RE(r">")], _group21)]
 regexp11.__name__ = 'regexp'
 
-class _group17:
+class _group13:
     default_text_color = DELIMITER
     rules = [
         ('regexp', RE(r"/"), [RE(r"/[a-z]*")], regexp),
@@ -418,7 +418,7 @@ class template_variable0:
         ('string', RE(r"%w?%"), [RE(r"%")], string),
         ('string', RE(r"%w?-"), [RE(r"-")], string),
         ('string', RE(r"%w?\|"), [RE(r"\|")], string),
-        ('_group17', RE(r"(?:!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B\b")], _group17),
+        ('_group13', RE(r"(?:!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B\b")], _group13),
         ('regexp', RE(r"%r\("), [RE(r"\)")], regexp12),
         ('regexp', RE(r"%r\["), [RE(r"\]")], regexp13),
         ('regexp', RE(r"%r{"), [RE(r"}")], regexp14),
@@ -481,7 +481,7 @@ rules = [
     template_variable0.rules[33],
 ]
 
-regexp.rules[0] = string.rules[0]
+regexp.rules[1] = string.rules[0]
 class0.rules[1] = template_variable0.rules[23]
 class1.rules[1] = template_variable0.rules[23]
 symbol0.rules[0] = template_variable0.rules[2]
@@ -497,10 +497,10 @@ symbol0.rules[9] = template_variable0.rules[11]
 symbol0.rules[10] = template_variable0.rules[12]
 rules[30] = ('symbol', symbol)
 subst.rules.extend(rules)
-_group0.rules.extend(string4.rules)
-_group1.rules.extend(string5.rules)
-_group2.rules.extend(string6.rules)
-_group3.rules.extend(string7.rules)
+_group1.rules.extend(string4.rules)
+_group2.rules.extend(string5.rules)
+_group3.rules.extend(string6.rules)
+_group4.rules.extend(string7.rules)
 _group5.rules.extend(regexp8.rules)
 _group6.rules.extend(regexp9.rules)
 _group7.rules.extend(regexp10.rules)
@@ -510,10 +510,10 @@ _group10.rules.extend(regexp13.rules)
 _group11.rules.extend(regexp14.rules)
 _group12.rules.extend(regexp15.rules)
 meta.rules.extend(rules)
-_group13.rules.extend(string4.rules)
-_group14.rules.extend(string5.rules)
-_group15.rules.extend(string6.rules)
-_group16.rules.extend(string7.rules)
+_group14.rules.extend(string4.rules)
+_group15.rules.extend(string5.rules)
+_group16.rules.extend(string6.rules)
+_group17.rules.extend(string7.rules)
 _group18.rules.extend(regexp8.rules)
 _group19.rules.extend(regexp9.rules)
 _group20.rules.extend(regexp10.rules)

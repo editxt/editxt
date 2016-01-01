@@ -17,6 +17,10 @@ keyword = """
 
 literal = ['false', 'true', 'null']
 
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
 class _class:
     default_text_color = DELIMITER
     rules = [('_class', [RE(r"{")])]
@@ -44,10 +48,6 @@ class string:
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
 
 rules = [
     ('built_in', built_in),

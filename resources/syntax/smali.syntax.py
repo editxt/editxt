@@ -4,15 +4,6 @@
 name = 'Smali'
 file_patterns = ['*.smali', '*.smali']
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
-class comment:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-
 keyword = [RE(r"\s*\.end\s[a-zA-Z0-9]*")]
 
 keyword0 = [RE(r"^[ ]*\.[a-zA-Z]*")]
@@ -36,6 +27,15 @@ built_in1 = [
 ]
 
 class0 = [RE(r"L[^(?:;:\n]*;")]
+
+doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+
+class comment:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 rules = [
     ('string', RE(r"\""), [RE(r"\"")]),

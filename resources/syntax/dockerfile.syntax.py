@@ -37,15 +37,15 @@ _group00.__name__ = '_group0'
 
 keyword1 = ['from', 'maintainer', 'expose', 'env', 'user', 'onbuild']
 
+number = [RE(r"\b\d+(?:\.\d+)?")]
+
 class string:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
-class _group2:
+class _group1:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword1),
@@ -59,7 +59,7 @@ rules = [
     ('keyword', keyword),
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('_group0', _group00, [RE(r"[^\\]\n")], 'bash'),
-    ('_group2', RE(r"^ *(?:onbuild +)?(?:from|maintainer|expose|env|user|onbuild) +"), [RE(r"[^\\]\n")], _group2),
+    ('_group1', RE(r"^ *(?:onbuild +)?(?:from|maintainer|expose|env|user|onbuild) +"), [RE(r"[^\\]\n")], _group1),
 ]
 
-_group2.rules[4] = rules[1]
+_group1.rules[4] = rules[1]

@@ -27,6 +27,10 @@ keyword = """
     variable vmode vprop vunit wait when while with xnor xor
     """.split()
 
+number = [
+    RE(r"\b(?:\d(?:_|\d)*#\w+(?:\.\w+)?#(?:[eE][-+]?\d(?:_|\d)*)?|\d(?:_|\d)*(?:\.\d(?:_|\d)*)?(?:[eE][-+]?\d(?:_|\d)*)?)"),
+]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -42,20 +46,16 @@ class string:
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-number = [
-    RE(r"\b(?:\d(?:_|\d)*#\w+(?:\.\w+)?#(?:[eE][-+]?\d(?:_|\d)*)?|\d(?:_|\d)*(?:\.\d(?:_|\d)*)?(?:[eE][-+]?\d(?:_|\d)*)?)"),
-]
-
 class literal:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 2, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 class symbol:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 2, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 rules = [

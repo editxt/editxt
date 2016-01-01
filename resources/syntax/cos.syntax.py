@@ -17,6 +17,14 @@ keyword = """
 
 number = [RE(r"\b(?:\d+(?:\.\d*)?|\.\d+)")]
 
+built_in = [RE(r"\$\$?[a-zA-Z]+")]
+
+keyword0 = [RE(r"\$\$\$[a-zA-Z]+")]
+
+symbol = [RE(r"\^%?[a-zA-Z][\w]*")]
+
+keyword1 = [RE(r"##class")]
+
 class string:
     default_text_color = DELIMITER
     rules = [
@@ -31,14 +39,6 @@ class comment:
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-
-built_in = [RE(r"\$\$?[a-zA-Z]+")]
-
-keyword0 = [RE(r"\$\$\$[a-zA-Z]+")]
-
-symbol = [RE(r"\^%?[a-zA-Z][\w]*")]
-
-keyword1 = [RE(r"##class")]
 
 rules = [
     ('keyword', keyword),

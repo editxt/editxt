@@ -6,6 +6,16 @@ file_patterns = ['*.smalltalk', '*.st']
 
 keyword = ['self', 'super', 'nil', 'true', 'false', 'thisContext']
 
+type = [RE(r"\b[A-Z][A-Za-z0-9_]*")]
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+symbol = [RE(r"#[a-zA-Z_]\w*")]
+
+string = [RE(r"\$.{1}")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -15,21 +25,12 @@ class comment:
         ('doctag', doctag),
     ]
 
-class string:
+class string0:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-type = [RE(r"\b[A-Z][A-Za-z0-9_]*")]
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-symbol = [RE(r"#[a-zA-Z_]\w*")]
-
-string0 = [RE(r"\$.{1}")]
+string0.__name__ = 'string'
 
 class _group0:
     default_text_color = DELIMITER
@@ -41,7 +42,7 @@ class _group1:
     default_text_color = DELIMITER
     rules = [
         None,  # rules[2],
-        ('string', string0),
+        ('string', string),
         ('number', number),
         ('symbol', symbol),
     ]
@@ -49,12 +50,12 @@ class _group1:
 rules = [
     ('keyword', keyword),
     ('comment', RE(r"\""), [RE(r"\"")], comment),
-    ('string', RE(r"'"), [RE(r"'")], string),
+    ('string', RE(r"'"), [RE(r"'")], string0),
     ('type', type),
     # ignore {'begin': '[a-z][a-zA-Z0-9_]*:', 'relevance': 0},
     ('number', number),
     ('symbol', symbol),
-    ('string', string0),
+    ('string', string),
     ('_group0', RE(r"(?=\|[ ]*[a-z][a-zA-Z0-9_]*(?:[ ]+[a-z][a-zA-Z0-9_]*)*[ ]*\|)"), [RE(r"\|")], _group0),
     ('_group1', RE(r"\#\("), [RE(r"\)")], _group1),
 ]

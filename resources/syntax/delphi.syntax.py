@@ -18,15 +18,16 @@ keyword = """
     implementation finally published procedure
     """.split()
 
-class string:
+string = [RE(r"(?:#\d+)+")]
+
+number = [RE(r"\b\d+(?:\.\d+)?")]
+
+class string0:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "''", 'type': 'RegExp'}},
     ]
-
-string0 = [RE(r"(?:#\d+)+")]
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
+string0.__name__ = 'string'
 
 title = [RE(r"[a-zA-Z]\w*")]
 
@@ -41,7 +42,7 @@ class params:
     rules = [
         ('keyword', keyword),
         None,  # rules[1],
-        ('string', string0),
+        ('string', string),
     ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
@@ -67,8 +68,8 @@ class function:
 
 rules = [
     ('keyword', keyword),
-    ('string', RE(r"'"), [RE(r"'")], string),
-    ('string', string0),
+    ('string', RE(r"'"), [RE(r"'")], string0),
+    ('string', string),
     ('number', number),
     ('_group0', RE(r"(?=[a-zA-Z]\w*\s*=\s*class\s*\()"), [RE(r"\B\b")], _group0),
     ('function', RE(r"\b(?:function|constructor|destructor|procedure)"), [RE(r"[:;]")], function),

@@ -9,6 +9,8 @@ keyword = """
     as infix infixl infixr port
     """.split()
 
+title = [RE(r"^[_a-z][\w']*")]
+
 keyword0 = ['module', 'where']
 
 keyword1 = ['module']
@@ -24,7 +26,7 @@ class comment:
         ('doctag', doctag),
     ]
 
-class _group1:
+class _group5:
     default_text_color = DELIMITER
     rules = [
         ('type', type),
@@ -37,39 +39,39 @@ class _group0:
     rules = [
         ('keyword', keyword0),
         ('keyword', keyword1),
-        ('_group1', RE(r"\("), [RE(r"\)")], _group1),
-        _group1.rules[1],
-        _group1.rules[2],
+        ('_group5', RE(r"\("), [RE(r"\)")], _group5),
+        _group5.rules[1],
+        _group5.rules[2],
     ]
 
 keyword2 = ['import', 'as', 'exposing']
 
-class _group2:
+class _group1:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword2),
         _group0.rules[2],
-        _group1.rules[1],
-        _group1.rules[2],
+        _group5.rules[1],
+        _group5.rules[2],
     ]
 
 keyword3 = ['type', 'alias']
 
 type0 = [RE(r"\b[A-Z][\w']*")]
 
-class _group4:
+class _group6:
     default_text_color = DELIMITER
     rules = []
 
-class _group3:
+class _group2:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword3),
         ('type', type0),
         _group0.rules[2],
-        ('_group4', RE(r"{"), [RE(r"}")], _group4),
-        _group1.rules[1],
-        _group1.rules[2],
+        ('_group6', RE(r"{"), [RE(r"}")], _group6),
+        _group5.rules[1],
+        _group5.rules[2],
     ]
 
 keyword4 = ['infix', 'infixl', 'infixr']
@@ -78,20 +80,20 @@ number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
-class _group5:
+class _group3:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword4),
         ('number', number),
-        _group1.rules[1],
-        _group1.rules[2],
+        _group5.rules[1],
+        _group5.rules[2],
     ]
 
 keyword5 = ['port']
 
-class _group6:
+class _group4:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword5), _group1.rules[1], _group1.rules[2]]
+    rules = [('keyword', keyword5), _group5.rules[1], _group5.rules[2]]
 
 class string:
     default_text_color = DELIMITER
@@ -99,20 +101,18 @@ class string:
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-title = [RE(r"^[_a-z][\w']*")]
-
 rules = [
     ('keyword', keyword),
     ('_group0', RE(r"\b(?:module)"), [RE(r"where")], _group0),
-    ('_group2', RE(r"import"), [RE(r"$")], _group2),
-    ('_group3', RE(r"type"), [RE(r"$")], _group3),
-    ('_group5', RE(r"\b(?:infix|infixl|infixr)"), [RE(r"$")], _group5),
-    ('_group6', RE(r"port"), [RE(r"$")], _group6),
+    ('_group1', RE(r"import"), [RE(r"$")], _group1),
+    ('_group2', RE(r"type"), [RE(r"$")], _group2),
+    ('_group3', RE(r"\b(?:infix|infixl|infixr)"), [RE(r"$")], _group3),
+    ('_group4', RE(r"port"), [RE(r"$")], _group4),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),
     ('type', type0),
     ('title', title),
-    _group1.rules[1],
-    _group1.rules[2],
+    _group5.rules[1],
+    _group5.rules[2],
     # ignore {'begin': '->|<-'},
 ]

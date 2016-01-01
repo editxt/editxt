@@ -17,24 +17,24 @@ keyword = """
     parents warning error soft precedence thisAspectInstance
     """.split()
 
-doctag = [RE(r"@[A-Za-z]+")]
+meta = [RE(r"@[A-Za-z]+")]
 
-doctag0 = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': '\\w+@', 'type': 'RegExp'}, 'relevance': 0},
-        ('doctag', doctag),
+        ('doctag', meta),
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag0),
+        ('doctag', doctag),
     ]
 
 class comment0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 0, 'contains', 2) {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag0),
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
     ]
 comment0.__name__ = 'comment'
 
@@ -66,7 +66,7 @@ keyword1 = """
     args call
     """.split()
 
-class _group1:
+class _group4:
     default_text_color = DELIMITER
     rules = [('keyword', keyword1)]
 
@@ -74,9 +74,9 @@ class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword0),
-        ('_group0', RE(r"\b(?:extends|implements|pertypewithin|perthis|pertarget|percflowbelow|percflow|issingleton)"), [RE(r"\B\b")]),
+        ('_group3', RE(r"\b(?:extends|implements|pertypewithin|perthis|pertarget|percflowbelow|percflow|issingleton)"), [RE(r"\B\b")]),
         ('title', title),
-        ('_group1', RE(r"\([^\)]*"), [RE(r"[)]+")], _group1),
+        ('_group4', RE(r"\([^\)]*"), [RE(r"[)]+")], _group4),
     ]
 class0.__name__ = 'class'
 
@@ -87,33 +87,33 @@ class class1:
     rules = [
         ('keyword', keyword2),
         ('keyword', keyword2),
-        ('_group2', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('_group5', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
         ('title', title),
     ]
 class1.__name__ = 'class'
 
 keyword3 = ['pointcut', 'after', 'before', 'around', 'throwing', 'returning']
 
-class _group4:
+class _group6:
     default_text_color = DELIMITER
     rules = [('title', title)]
 
-class _group3:
+class _group0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword3),
-        ('_group4', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B\b")], _group4),
+        ('_group6', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B\b")], _group6),
     ]
 
-class _group6:
+class _group7:
     default_text_color = DELIMITER
     rules = [('keyword', keyword1)]
 
-class _group5:
+class _group1:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
-        ('_group6', RE(r"[a-zA-Z_]\w*\s*\("), [RE(r"\B\b")], _group6),
+        ('_group7', RE(r"[a-zA-Z_]\w*\s*\("), [RE(r"\B\b")], _group7),
         None,  # rules[5],
     ]
 
@@ -158,15 +158,15 @@ rules = [
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('class', RE(r"\b(?:aspect)"), [_class], class0),
     ('class', RE(r"\b(?:class|interface)"), [_class], class1),
-    ('_group3', RE(r"\b(?:pointcut|after|before|around|throwing|returning)"), [RE(r"[)]")], _group3),
-    ('_group5', RE(r"(?=[:])"), [RE(r"[{;]")], _group5),
-    ('_group7', RE(r"\b(?:new|throw)"), [RE(r"\B\b")]),
+    ('_group0', RE(r"\b(?:pointcut|after|before|around|throwing|returning)"), [RE(r"[)]")], _group0),
+    ('_group1', RE(r"(?=[:])"), [RE(r"[{;]")], _group1),
+    ('_group2', RE(r"\b(?:new|throw)"), [RE(r"\B\b")]),
     ('function', RE(r"(?=\w+ +\w+(?:\.)?\w+\s*\([^\)]*\)\s*(?:(throws)[\w\s,]+)?[\{;])"), [_function], function),
     ('number', number),
-    ('meta', doctag),
+    ('meta', meta),
 ]
 
-_group5.rules[2] = rules[5]
+_group1.rules[2] = rules[5]
 params.rules[1] = rules[4]
 params.rules[2] = rules[5]
 params.rules[4] = rules[3]

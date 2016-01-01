@@ -33,32 +33,33 @@ keyword = """
 
 literal = ['true', 'false', 'nothing']
 
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
 class string:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '""'},
     ]
 
-class doctag:
+doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+
+class doctag0:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
     ]
-
-doctag0 = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+doctag0.__name__ = 'doctag'
 
 class comment:
     default_text_color = DELIMITER
     rules = [
-        ('doctag', RE(r"'''|<!--|-->"), [RE(r"\B\b")], doctag),
-        ('doctag', RE(r"</?"), [RE(r">")], doctag),
-        # ('contains', 1, 'contains', 0, 'contains', 0) {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag0),
+        ('doctag', RE(r"'''|<!--|-->"), [RE(r"\B\b")], doctag0),
+        ('doctag', RE(r"</?"), [RE(r">")], doctag0),
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
     ]
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
 
 meta_keyword = ['if', 'else', 'elseif', 'end', 'region', 'externalsource']
 

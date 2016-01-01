@@ -40,6 +40,12 @@ keyword = """
 
 literal = ['true', 'false', 'nil']
 
+type = [RE(r"\b[A-Z][\w']*")]
+
+meta = [
+    RE(r"(?:@warn_unused_result|@exported|@lazy|@noescape|@NSCopying|@NSManaged|@objc|@convention|@required|@noreturn|@IBAction|@IBDesignable|@IBInspectable|@IBOutlet|@infix|@prefix|@postfix|@autoclosure|@testable|@available|@nonobjc|@NSApplicationMain|@UIApplicationMain)"),
+]
+
 number = [
     RE(r"\b(?:[\d_]+(?:\.[\deE_]+)?|0x[a-fA-F0-9_]+(?:\.[a-fA-F0-9p_]+)?|0b[01_]+|0o[0-7_]+)\b"),
 ]
@@ -68,8 +74,6 @@ class comment:
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-
-type = [RE(r"\b[A-Z][\w']*")]
 
 class _function:
     default_text_color = DELIMITER
@@ -101,7 +105,7 @@ class function:
     rules = [
         ('keyword', keyword0),
         ('title', title),
-        ('_group0', RE(r"<"), [RE(r">")]),
+        ('_group1', RE(r"<"), [RE(r">")]),
     ]
 
 class _class:
@@ -121,13 +125,9 @@ class class0:
     ]
 class0.__name__ = 'class'
 
-meta = [
-    RE(r"(?:@warn_unused_result|@exported|@lazy|@noescape|@NSCopying|@NSManaged|@objc|@convention|@required|@noreturn|@IBAction|@IBDesignable|@IBInspectable|@IBOutlet|@infix|@prefix|@postfix|@autoclosure|@testable|@available|@nonobjc|@NSApplicationMain|@UIApplicationMain)"),
-]
-
 keyword2 = ['import']
 
-class _group2:
+class _group0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword2),
@@ -147,9 +147,9 @@ rules = [
     ('function', RE(r"\b(?:func)"), [_function, params0], function),
     ('class', RE(r"\b(?:struct|protocol|class|extension|enum)"), [_class], class0),
     ('meta', meta),
-    ('_group2', RE(r"\b(?:import)"), [RE(r"$")], _group2),
+    ('_group0', RE(r"\b(?:import)"), [RE(r"$")], _group0),
 ]
 
 params.rules[4] = rules[3]
-_group2.rules[1] = rules[4]
-_group2.rules[2] = rules[5]
+_group0.rules[1] = rules[4]
+_group0.rules[2] = rules[5]

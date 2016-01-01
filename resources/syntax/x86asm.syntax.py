@@ -293,15 +293,6 @@ meta = """
     __FLOAT_DAZ__ __FLOAT_ROUND__ __FLOAT__
     """.split()
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
-class comment:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-
 number = [
     RE(r"\b(?:(?:[0-9][0-9_]*)?\.[0-9_]*(?:[eE][+-]?[0-9_]+)?|(?:0[Xx])?[0-9][0-9_]*\.?[0-9_]*(?:[pP](?:[+-]?[0-9_]+)?)?)\b"),
 ]
@@ -316,13 +307,7 @@ number2 = [
     RE(r"\b(?:0[Xx][0-9A-Fa-f_]+|0[DdTt][0-9_]+|0[QqOo][0-7_]+|0[BbYy][0-1_]+)\b"),
 ]
 
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-
-string0 = [RE(r"\.[A-Za-z0-9]+")]
+string = [RE(r"\.[A-Za-z0-9]+")]
 
 symbol = [RE(r"^\s*[A-Za-z._?][A-Za-z0-9_$#@~.?]*(?::|\s+label)")]
 
@@ -331,6 +316,22 @@ symbol0 = [RE(r"^\s*%%[A-Za-z0-9_$#@~.?]*:")]
 subst = [RE(r"%[0-9]+")]
 
 subst0 = [RE(r"%!S+")]
+
+doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+
+class comment:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
+
+class string0:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+string0.__name__ = 'string'
 
 rules = [
     ('built_in', built_in),
@@ -341,10 +342,10 @@ rules = [
     ('number', number0),
     ('number', number1),
     ('number', number2),
-    ('string', RE(r"\""), [RE(r"\"")], string),
+    ('string', RE(r"\""), [RE(r"\"")], string0),
     ('string', RE(r"'"), [RE(r"[^\\]'")]),
     ('string', RE(r"`"), [RE(r"[^\\]`")]),
-    ('string', string0),
+    ('string', string),
     ('symbol', symbol),
     ('symbol', symbol0),
     ('subst', subst),

@@ -10,15 +10,6 @@ keyword = """
     PTR RRSIG RP SIG SOA SRV SSHFP TA TKEY TLSA TSIG TXT
     """.split()
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
-class comment:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-
 meta = [RE(r"^\$(?:TTL|GENERATE|INCLUDE|ORIGIN)\b")]
 
 number = [
@@ -30,6 +21,15 @@ number0 = [
 ]
 
 number1 = [RE(r"\b\d+[dhwm]?")]
+
+doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+
+class comment:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
 
 rules = [
     ('keyword', keyword),

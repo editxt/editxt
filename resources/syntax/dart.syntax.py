@@ -19,6 +19,8 @@ keyword = """
     operator part set static typedef
     """.split()
 
+meta = [RE(r"@[A-Za-z]+")]
+
 keyword0 = ['true', 'false', 'null', 'this', 'is', 'new', 'super']
 
 number = [
@@ -50,7 +52,7 @@ class string:
 class string0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 0, 'variants', 4, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         string.rules[0],
     ]
 string0.__name__ = 'string'
@@ -80,8 +82,6 @@ class class0:
         ('title', title),
     ]
 class0.__name__ = 'class'
-
-meta = [RE(r"@[A-Za-z]+")]
 
 rules = [
     ('built_in', built_in),

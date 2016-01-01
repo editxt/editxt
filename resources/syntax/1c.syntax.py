@@ -49,6 +49,10 @@ keyword = """
     процедура строка тогда фс функция цикл число экспорт
     """.split()
 
+number = [RE(r"\b\d+(?:\.\d+)?")]
+
+number0 = [RE(r"'\d{2}\.\d{2}\.(?:\d{2}|\d{4})'")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -58,8 +62,6 @@ class comment:
         ('doctag', doctag),
     ]
 
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
 class string:
     default_text_color = DELIMITER
     rules = [
@@ -67,6 +69,8 @@ class string:
     ]
 
 keyword0 = ['процедура', 'функция']
+
+title = [RE(r"[a-zA-Zа-яА-Я][a-zA-Z0-9_а-яА-Я]*")]
 
 keyword1 = ['экспорт']
 
@@ -87,8 +91,6 @@ class params:
         None,  # rules[5],
     ]
 
-title = [RE(r"[a-zA-Zа-яА-Я][a-zA-Z0-9_а-яА-Я]*")]
-
 class function:
     default_text_color = DELIMITER
     rules = [
@@ -98,8 +100,6 @@ class function:
         None,  # rules[2],
         ('title', title),
     ]
-
-number0 = [RE(r"'\d{2}\.\d{2}\.(?:\d{2}|\d{4})'")]
 
 rules = [
     ('built_in', built_in),

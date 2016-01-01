@@ -4,6 +4,8 @@
 name = 'Puppet'
 file_patterns = ['*.puppet', '*.pp']
 
+variable = [RE(r"\$(?:[A-Za-z_]|::)(?:\w|::)*")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -12,8 +14,6 @@ class comment:
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-
-variable = [RE(r"\$(?:[A-Za-z_]|::)(?:\w|::)*")]
 
 class string:
     default_text_color = DELIMITER
@@ -102,13 +102,13 @@ literal = """
     sslverify mounted
     """.split()
 
-class _group4:
-    default_text_color = DELIMITER
-    rules = [('attr', section)]
-
 number = [
     RE(r"(?:\b0[0-7_]+)|(?:\b0x[0-9a-fA-F_]+)|(?:\b[1-9][0-9_]*(?:\.[0-9_]+)?)|[0_]\b"),
 ]
+
+class _group4:
+    default_text_color = DELIMITER
+    rules = [('attr', section)]
 
 class _group3:
     default_text_color = DELIMITER

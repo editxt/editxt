@@ -8,7 +8,7 @@ flags = re.IGNORECASE | re.MULTILINE
 
 class meta:
     default_text_color = DELIMITER
-    rules = [('_group0', RE(r"\["), [RE(r"\]")])]
+    rules = [('_group1', RE(r"\["), [RE(r"\]")])]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
@@ -79,7 +79,7 @@ tag3.__name__ = 'tag'
 rules = [
     ('meta', RE(r"<!DOCTYPE"), [RE(r">")], meta),
     ('comment', RE(r"<!--"), [RE(r"-->")], comment),
-    ('_group1', RE(r"<\!\[CDATA\["), [RE(r"\]\]>")]),
+    ('_group0', RE(r"<\!\[CDATA\["), [RE(r"\]\]>")]),
     ('tag', tag0, [RE(r"(?=</style>)")], 'css'),
     ('tag', tag2, [RE(r"(?=</script>)")], 'javascript'),
     _group2.rules[0],

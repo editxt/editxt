@@ -37,9 +37,16 @@ literal = """
     gte eq neq rx nrx ft
     """.split()
 
-class meta:
+meta = [RE(r"\[/noprocess|<\?(?:lasso(?:script)?|=)")]
+
+meta0 = [RE(r"\[")]
+
+meta1 = [RE(r"^#!.+lasso9\b")]
+
+class meta2:
     default_text_color = DELIMITER
     rules = [('meta', RE(r"\]|\?>"), [RE(r"\B|\b")])]
+meta2.__name__ = 'meta'
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
@@ -54,29 +61,31 @@ class _group0:
     default_text_color = DELIMITER
     rules = [('comment', RE(r"<!--"), [RE(r"-->")], comment)]
 
-class meta0:
+class meta3:
     default_text_color = DELIMITER
     rules = [('meta', RE(r"\[noprocess\]"), [RE(r"\B|\b")])]
-meta0.__name__ = 'meta'
+meta3.__name__ = 'meta'
 
 class _group1:
     default_text_color = DELIMITER
     rules = [_group0.rules[0]]
 
-meta1 = [RE(r"\[/noprocess|<\?(?:lasso(?:script)?|=)")]
-
-class meta2:
+class meta4:
     default_text_color = DELIMITER
     rules = [('meta', RE(r"\[no_square_brackets"), [RE(r"\B|\b")])]
-meta2.__name__ = 'meta'
-
-class _group3:
-    default_text_color = DELIMITER
-    rules = [_group0.rules[0]]
+meta4.__name__ = 'meta'
 
 number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)|(?:infinity|nan)\b"),
 ]
+
+attr = [RE(r"-(?!infinity)[a-zA-Z_]\w*")]
+
+attr0 = [RE(r"(?:\.\.\.)")]
+
+class _group6:
+    default_text_color = DELIMITER
+    rules = [_group0.rules[0]]
 
 class string:
     default_text_color = DELIMITER
@@ -84,13 +93,9 @@ class string:
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-attr = [RE(r"-(?!infinity)[a-zA-Z_]\w*")]
-
-attr0 = [RE(r"(?:\.\.\.)")]
-
 symbol = [RE(r"'[a-zA-Z_][a-zA-Z0-9_.]*'")]
 
-class _group6:
+class _group5:
     default_text_color = DELIMITER
     rules = [('symbol', symbol)]
 
@@ -109,9 +114,9 @@ class _group2:
         ('built_in', built_in),
         ('keyword', keyword),
         ('literal', literal),
-        ('meta', meta, [RE(r"(?=\[noprocess\]|<\?(?:lasso(?:script)?|=))")], _group3),
+        ('meta', meta2, [RE(r"(?=\[noprocess\]|<\?(?:lasso(?:script)?|=))")], _group6),
         None,  # rules[4],
-        ('meta', meta1),
+        ('meta', meta),
         ('comment', RE(r"/\*\*!"), [RE(r"\*/")], comment),
         ('comment', RE(r"//"), [RE(r"$")], comment),
         ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
@@ -119,29 +124,25 @@ class _group2:
         ('string', RE(r"'"), [RE(r"'")], string),
         ('string', RE(r"\""), [RE(r"\"")], string),
         ('string', RE(r"`"), [RE(r"`")]),
-        # unknown {'begin': '[#$][a-zA-Z_][a-zA-Z0-9_.]*', 'variants': [{'begin': ...}, {'begin': '#', 'end': '\\d+', 'illegal': '\\W'}]},
-        ('_group5', RE(r"#"), [RE(r"\d+")]),
+        # ignore {'begin': '[#$][a-zA-Z_][a-zA-Z0-9_.]*'},
+        ('_group4', RE(r"#"), [RE(r"\d+")]),
         ('type', RE(r"::\s*"), [RE(r"[a-zA-Z_][a-zA-Z0-9_.]*")]),
         ('attr', attr),
         ('attr', attr0),
-        ('_group6', RE(r"(?:->|\.\.?)\s*"), [RE(r"\B\b")], _group6),
+        ('_group5', RE(r"(?:->|\.\.?)\s*"), [RE(r"\B\b")], _group5),
         ('class', RE(r"\b(?:define)"), [RE(r"(?=\(|=>)")], class0),
     ]
-
-meta3 = [RE(r"\[")]
-
-meta4 = [RE(r"^#!.+lasso9\b")]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
     ('literal', literal),
-    ('meta', meta, [RE(r"(?=\[|<\?(?:lasso(?:script)?|=))")], _group0),
-    ('meta', meta0, [RE(r"(?=\[/noprocess\])")], _group1),
+    ('meta', meta2, [RE(r"(?=\[|<\?(?:lasso(?:script)?|=))")], _group0),
+    ('meta', meta3, [RE(r"(?=\[/noprocess\])")], _group1),
+    ('meta', meta),
+    ('meta', meta4, [RE(r"\[/no_square_brackets\]")], _group2),
+    ('meta', meta0),
     ('meta', meta1),
-    ('meta', meta2, [RE(r"\[/no_square_brackets\]")], _group2),
-    ('meta', meta3),
-    ('meta', meta4),
     _group2.rules[6],
     _group2.rules[7],
     _group2.rules[8],
@@ -149,7 +150,6 @@ rules = [
     _group2.rules[10],
     _group2.rules[11],
     _group2.rules[12],
-    _group2.rules[13],
     _group2.rules[14],
     _group2.rules[14],
     _group2.rules[15],

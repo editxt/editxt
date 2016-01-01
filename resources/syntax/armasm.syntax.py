@@ -36,6 +36,20 @@ meta = """
     ROUT SETA SETL SETS SN SPACE SUBT THUMB THUMBX TTL WHILE WEND
     """.split()
 
+number = [RE(r"[#$=]?0x[0-9a-f]+")]
+
+number0 = [RE(r"[#$=]?0b[01]+")]
+
+number1 = [RE(r"[#$=]\d+")]
+
+number2 = [RE(r"\b\d+")]
+
+symbol = [RE(r"^[a-z_\.\$][a-z0-9_\.\$]+")]
+
+symbol0 = [RE(r"^\s*[a-z_\.\$][a-z0-9_\.\$]+:")]
+
+symbol1 = [RE(r"[=#]\w+")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -50,20 +64,6 @@ class string:
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-number = [RE(r"[#$=]?0x[0-9a-f]+")]
-
-number0 = [RE(r"[#$=]?0b[01]+")]
-
-number1 = [RE(r"[#$=]\d+")]
-
-number2 = [RE(r"\b\d+")]
-
-symbol = [RE(r"^[a-z_\.\$][a-z0-9_\.\$]+")]
-
-symbol0 = [RE(r"^\s*[a-z_\.\$][a-z0-9_\.\$]+:")]
-
-symbol1 = [RE(r"[=#]\w+")]
 
 rules = [
     ('built_in', built_in),

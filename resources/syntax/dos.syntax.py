@@ -24,6 +24,8 @@ keyword = """
 
 variable = [RE(r"%%[^ ]|%[^ ]+?%|![^ ]+?!")]
 
+number = [RE(r"\b\d+")]
+
 title = [RE(r"(?:[_a-zA-Z]\w*\.)*(?:[_a-zA-Z]\w*:)?[_a-zA-Z]\w*")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
@@ -41,8 +43,6 @@ class function:
         ('title', title),
         ('comment', RE(r"@?rem\b"), [RE(r"$")], comment),
     ]
-
-number = [RE(r"\b\d+")]
 
 rules = [
     ('built_in', built_in),

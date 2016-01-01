@@ -35,7 +35,7 @@ class comment0:
     rules = [
         ('doctag', doctag0),
         ('meta', meta),
-        # ('contains', 0, 'contains', 0) {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 comment0.__name__ = 'comment'
@@ -46,7 +46,7 @@ class comment1:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword0),
-        # ('contains', 0, 'contains', 0) {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 comment1.__name__ = 'comment'
@@ -69,10 +69,16 @@ keyword1 = ['function']
 
 title = [RE(r"[a-zA-Z_]\w*")]
 
+number = [RE(r"\b(?:0b[01]+)")]
+
+number0 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
 class string0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 4, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         ('meta', meta),
     ]
 string0.__name__ = 'string'
@@ -80,20 +86,14 @@ string0.__name__ = 'string'
 class string1:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 4, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 string1.__name__ = 'string'
-
-number = [RE(r"\b(?:0b[01]+)")]
-
-number0 = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
 
 class params:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 6) {'begin': '\\$+[a-zA-Z_\x7f-ÿ][a-zA-Z0-9_\x7f-ÿ]*'},
+        # ignore {'begin': '\\$+[a-zA-Z_\x7f-ÿ][a-zA-Z0-9_\x7f-ÿ]*'},
         ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
         ('string', RE(r"b\""), [RE(r"\"")], string0),
         ('string', RE(r"b'"), [RE(r"'")], string0),
@@ -121,20 +121,20 @@ class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword2),
-        ('_group0', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('_group2', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
         ('title', title),
     ]
 class0.__name__ = 'class'
 
 keyword3 = ['namespace']
 
-class _group1:
+class _group0:
     default_text_color = DELIMITER
     rules = [('keyword', keyword3), ('title', title)]
 
 keyword4 = ['use']
 
-class _group2:
+class _group1:
     default_text_color = DELIMITER
     rules = [('keyword', keyword4), ('title', title)]
 
@@ -150,13 +150,13 @@ rules = [
     # ignore {'begin': {'pattern': '(::|->)+[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*', 'type': 'RegExp'}},
     ('function', RE(r"\b(?:function)"), [_function], function),
     ('class', RE(r"\b(?:class|interface)"), [_class], class0),
-    ('_group1', RE(r"\b(?:namespace)"), [RE(r";")], _group1),
-    ('_group2', RE(r"\b(?:use)"), [RE(r";")], _group2),
+    ('_group0', RE(r"\b(?:namespace)"), [RE(r";")], _group0),
+    ('_group1', RE(r"\b(?:use)"), [RE(r";")], _group1),
     # ignore {'begin': '=>'},
-    params.rules[1],
     params.rules[2],
     params.rules[3],
     params.rules[4],
     params.rules[5],
     params.rules[6],
+    params.rules[7],
 ]

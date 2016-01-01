@@ -33,6 +33,8 @@ keyword = """
     or equal less greater strless strgreater strequal matches
     """.split()
 
+number = [RE(r"\b\d+(?:\.\d+)?")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -47,8 +49,6 @@ class string:
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
 
 rules = [
     ('keyword', keyword),

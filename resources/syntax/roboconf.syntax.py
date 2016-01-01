@@ -22,7 +22,7 @@ variable = [RE(r"\.[a-zA-Z-_]+")]
 
 keyword1 = [RE(r"\(optional\)")]
 
-class _group1:
+class _group3:
     default_text_color = DELIMITER
     rules = [('variable', variable), ('keyword', keyword1)]
 
@@ -39,7 +39,7 @@ class _group0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword0),
-        ('attribute', attribute, [RE(r";")], _group1),
+        ('attribute', attribute, [RE(r";")], _group3),
         ('comment', RE(r"#"), [RE(r"$")], comment),
     ]
 
@@ -47,18 +47,18 @@ keyword2 = """
     name count channels instance-data instance-state instance of
     """.split()
 
-class _group2:
+class _group1:
     default_text_color = DELIMITER
     rules = [('keyword', keyword2), _group0.rules[1], _group0.rules[2]]
 
-class _group3:
+class _group2:
     default_text_color = DELIMITER
     rules = [_group0.rules[1], _group0.rules[2]]
 
 rules = [
     ('keyword', keyword),
     ('_group0', RE(r"^facet [a-zA-Z-_][^\n{]+\{"), [RE(r"}")], _group0),
-    ('_group2', RE(r"^\s*instance of [a-zA-Z-_][^\n{]+\{"), [RE(r"}")], _group2),
-    ('_group3', RE(r"^[a-zA-Z-_][^\n{]+\{"), [RE(r"}")], _group3),
+    ('_group1', RE(r"^\s*instance of [a-zA-Z-_][^\n{]+\{"), [RE(r"}")], _group1),
+    ('_group2', RE(r"^[a-zA-Z-_][^\n{]+\{"), [RE(r"}")], _group2),
     _group0.rules[2],
 ]

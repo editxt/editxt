@@ -136,15 +136,16 @@ keyword = """
 
 number = [RE(r"\b\d+(?:\.\d+)?")]
 
-class string:
+string = [RE(r"\"(?:(\\\")|[^\"\n])*(?:\"|\n)")]
+
+variable = [RE(r"[bwtglsav]:[\w\d_]*")]
+
+class string0:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-string0 = [RE(r"\"(?:(\\\")|[^\"\n])*(?:\"|\n)")]
-
-variable = [RE(r"[bwtglsav]:[\w\d_]*")]
+string0.__name__ = 'string'
 
 keyword0 = ['function', 'function!']
 
@@ -162,8 +163,8 @@ rules = [
     ('built_in', built_in),
     ('keyword', keyword),
     ('number', number),
-    ('string', RE(r"'"), [RE(r"'")], string),
-    ('string', string0),
+    ('string', RE(r"'"), [RE(r"'")], string0),
+    ('string', string),
     ('variable', variable),
     ('function', RE(r"\b(?:function|function!)"), [RE(r"$")], function),
 ]

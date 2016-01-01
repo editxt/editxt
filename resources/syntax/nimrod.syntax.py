@@ -17,12 +17,6 @@ literal = """
     shared guarded stdin stdout stderr result true false
     """.split()
 
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': '""', 'type': 'RegExp'}},
-    ]
-
 type = [RE(r"\b[A-Z]\w+\b")]
 
 built_in = [
@@ -36,6 +30,12 @@ number0 = [RE(r"\b(?:0o[0-7][_0-7]*)(?:'?[iIuUfF](?:8|16|32|64))?")]
 number1 = [RE(r"\b(?:0(?:b|B)[01][_01]*)(?:'?[iIuUfF](?:8|16|32|64))?")]
 
 number2 = [RE(r"\b(?:\d[_\d]*)(?:'?[iIuUfF](?:8|16|32|64))?")]
+
+class string:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': '""', 'type': 'RegExp'}},
+    ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 

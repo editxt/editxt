@@ -21,6 +21,12 @@ keyword = """
     trace unknown unload unset update uplevel upvar variable vwait while
     """.split()
 
+number = [RE(r"\b(?:0b[01]+)")]
+
+number0 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -46,14 +52,8 @@ class _group0:
 class string:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 4, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-number = [RE(r"\b(?:0b[01]+)")]
-
-number0 = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
 
 rules = [
     ('keyword', keyword),

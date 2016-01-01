@@ -25,23 +25,7 @@ keyword = """
 
 literal = ['false', 'null', 'true']
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
-class comment:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-
 string = [RE(r"x\"[\da-fA-F\s\n\r]*\"[cwd]?")]
-
-class string0:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\([\'"\\?\\\\abfnrtv]|u[\\dA-Fa-f]{4}|[0-7]{1,3}|x[\\dA-Fa-f]{2}|U[\\dA-Fa-f]{8})|&[a-zA-Z\\d]{2,};', 'relevance': 0},
-    ]
-string0.__name__ = 'string'
 
 number = [
     RE(r"\b(?:((?:0[xX](?:([\da-fA-F][\da-fA-F_]*|_[\da-fA-F][\da-fA-F_]*)\.(?:[\da-fA-F][\da-fA-F_]*|_[\da-fA-F][\da-fA-F_]*)|\.?(?:[\da-fA-F][\da-fA-F_]*|_[\da-fA-F][\da-fA-F_]*))[pP][+-]?(?:0|[1-9][\d_]*|\d[\d_]*|[\d_]+?\d))|(?:(0|[1-9][\d_]*|\d[\d_]*|[\d_]+?\d)(?:\.\d*|(?:[eE][+-]?(?:0|[1-9][\d_]*|\d[\d_]*|[\d_]+?\d)))|\d+\.(?:0|[1-9][\d_]*|\d[\d_]*|[\d_]+?\d)(?:0|[1-9][\d_]*|\d[\d_]*|[\d_]+?\d)|\.(?:0|[1-9][\d_]*)(?:[eE][+-]?(?:0|[1-9][\d_]*|\d[\d_]*|[\d_]+?\d))?))(?:[fF]|L|i|[fF]i|Li)?|(?:(0|[1-9][\d_]*)|0[bB][01_]+|0[xX](?:[\da-fA-F][\da-fA-F_]*|_[\da-fA-F][\da-fA-F_]*))(?:i|[fF]i|Li))"),
@@ -52,6 +36,22 @@ number0 = [
 ]
 
 keyword0 = [RE(r"@[a-zA-Z_][a-zA-Z_\d]*")]
+
+doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+
+class comment:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
+
+class string0:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': '\\\\([\'"\\?\\\\abfnrtv]|u[\\dA-Fa-f]{4}|[0-7]{1,3}|x[\\dA-Fa-f]{2}|U[\\dA-Fa-f]{8})|&[a-zA-Z\\d]{2,};', 'relevance': 0},
+    ]
+string0.__name__ = 'string'
 
 rules = [
     ('built_in', built_in),

@@ -1425,6 +1425,14 @@ keyword = """
 
 literal = ['True', 'False', 'And', 'Null', 'Not', 'Or']
 
+number = [RE(r"\b(?:0b[01]+)")]
+
+number0 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+symbol = [RE(r"@[A-z0-9_]+")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -1439,12 +1447,6 @@ class string:
     rules = [
         # ignore {'begin': {'pattern': '""', 'type': 'RegExp'}, 'relevance': 0},
     ]
-
-number = [RE(r"\b(?:0b[01]+)")]
-
-number0 = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
 
 meta_keyword = """
     include include-once NoTrayIcon OnAutoItStartRegister RequireAdmin
@@ -1493,7 +1495,6 @@ class _group0:
     rules = [
         ('meta-keyword', meta_keyword0),
         ('keyword', meta_keyword0),
-        None,  # rules[6],
         None,  # rules[7],
         ('meta-string', RE(r"<"), [RE(r">")]),
         ('meta-string', RE(r"\""), [RE(r"\"")], meta_string),
@@ -1506,14 +1507,11 @@ class meta:
         ('meta-keyword', meta_keyword),
         # ignore {'begin': {'pattern': '\\\\\\n', 'type': 'RegExp'}, 'relevance': 0},
         ('_group0', RE(r"\b(?:include)"), [RE(r"$")], _group0),
-        None,  # rules[6],
         None,  # rules[7],
         None,  # rules[3],
         None,  # rules[4],
         None,  # rules[5],
     ]
-
-symbol = [RE(r"@[A-z0-9_]+")]
 
 keyword0 = ['Func']
 
@@ -1522,8 +1520,7 @@ title = [RE(r"[a-zA-Z_]\w*")]
 class params:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 1) {'begin': '\\$[A-z0-9_]+'},
-        None,  # rules[6],
+        # ignore {'begin': '\\$[A-z0-9_]+'},
         None,  # rules[7],
         None,  # rules[8],
         None,  # rules[9],
@@ -1554,14 +1551,11 @@ rules = [
     ('function', RE(r"\b(?:Func)"), [RE(r"$")], function),
 ]
 
-_group0.rules[2] = rules[6]
-_group0.rules[3] = rules[7]
-meta.rules[2] = rules[6]
-meta.rules[3] = rules[7]
-meta.rules[4] = rules[3]
-meta.rules[5] = rules[4]
-meta.rules[6] = rules[5]
-params.rules[0] = rules[6]
+_group0.rules[2] = rules[7]
+meta.rules[2] = rules[7]
+meta.rules[3] = rules[3]
+meta.rules[4] = rules[4]
+meta.rules[5] = rules[5]
 params.rules[1] = rules[7]
 params.rules[2] = rules[8]
 params.rules[3] = rules[9]

@@ -16,24 +16,24 @@ keyword = """
     variable variables while1 xor yes
     """.split()
 
+number = [RE(r"\$[a-zA-Z0-9]+")]
+
 keyword0 = ['sets', 'parameters', 'variables', 'equations']
 
-number = [RE(r"\b\d+(?:\.\d+)?")]
+number0 = [RE(r"\b\d+(?:\.\d+)?")]
 
 class _group1:
     default_text_color = DELIMITER
-    rules = [('number', number)]
+    rules = [('number', number0)]
 
 class _group0:
     default_text_color = DELIMITER
     rules = [('keyword', keyword0), ('_group1', RE(r"/"), [RE(r"/")], _group1)]
 
-number0 = [RE(r"\$[a-zA-Z0-9]+")]
-
 rules = [
     ('keyword', keyword),
     ('_group0', RE(r"\b(?:sets|parameters|variables|equations)"), [RE(r";")], _group0),
     ('string', RE(r"\*{3}"), [RE(r"\*{3}")]),
-    ('number', number),
     ('number', number0),
+    ('number', number),
 ]

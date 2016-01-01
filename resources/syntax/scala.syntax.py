@@ -13,6 +13,16 @@ keyword = """
 
 literal = ['true', 'false', 'null']
 
+symbol = [RE(r"'\w[\w\d_]*(?!')")]
+
+type = [RE(r"\b[A-Z][A-Za-z0-9_]*")]
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+meta = [RE(r"@[A-Za-z]+")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -33,7 +43,7 @@ subst = [RE(r"\$[A-Za-z0-9_]+")]
 class string0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 2, 'variants', 0, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         ('subst', subst),
         ('subst', RE(r"\${"), [RE(r"}")]),
     ]
@@ -41,12 +51,8 @@ string0.__name__ = 'string'
 
 class string1:
     default_text_color = DELIMITER
-    rules = [string0.rules[0], string0.rules[1]]
+    rules = [string0.rules[1], string0.rules[2]]
 string1.__name__ = 'string'
-
-symbol = [RE(r"'\w[\w\d_]*(?!')")]
-
-type = [RE(r"\b[A-Z][A-Za-z0-9_]*")]
 
 keyword0 = ['def']
 
@@ -73,12 +79,6 @@ class class0:
         ('title', title),
     ]
 class0.__name__ = 'class'
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-meta = [RE(r"@[A-Za-z]+")]
 
 rules = [
     ('keyword', keyword),

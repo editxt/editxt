@@ -22,23 +22,23 @@ literal = """
     xs:short xs:byte attribute
     """.split()
 
+number = [
+    RE(r"(?:\b0[0-7_]+)|(?:\b0x[0-9a-fA-F_]+)|(?:\b[1-9][0-9_]*(?:\.[0-9_]+)?)|[0_]\b"),
+]
+
+meta = [RE(r"%\w+")]
+
 class string:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': '""', 'type': 'RegExp'}, 'relevance': 0},
     ]
 
-number = [
-    RE(r"(?:\b0[0-7_]+)|(?:\b0x[0-9a-fA-F_]+)|(?:\b[1-9][0-9_]*(?:\.[0-9_]+)?)|[0_]\b"),
-]
-
 doctag = [RE(r"@\w+")]
 
 class comment:
     default_text_color = DELIMITER
     rules = [('doctag', doctag)]
-
-meta = [RE(r"%\w+")]
 
 class _group0:
     default_text_color = DELIMITER

@@ -4,6 +4,10 @@
 name = 'Brainfuck'
 file_patterns = ['*.brainfuck', '*.bf']
 
+title = [RE(r"[\[\]]")]
+
+string = [RE(r"[\.,]")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -12,10 +16,6 @@ class comment:
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-
-title = [RE(r"[\[\]]")]
-
-string = [RE(r"[\.,]")]
 
 literal = [RE(r"[\+\-]")]
 

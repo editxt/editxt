@@ -70,28 +70,28 @@ class _group10:
     rules = [('_group1', RE(r"\["), [RE(r"\]")], _group1)]
 _group10.__name__ = '_group1'
 
-class _group2:
-    default_text_color = DELIMITER
-    rules = [
-        # ('contains', 1, 'contains', 1) {'begin': {'pattern': "'['\\.]*", 'type': 'RegExp'}},
-    ]
-
-class _group3:
-    default_text_color = DELIMITER
-    rules = []
-
-class _group30:
-    default_text_color = DELIMITER
-    rules = [('_group3', RE(r"\{"), [RE(r"}")], _group3)]
-_group30.__name__ = '_group3'
-
 class _group4:
     default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': "'['\\.]*", 'type': 'RegExp'}},
+    ]
+
+class _group2:
+    default_text_color = DELIMITER
     rules = []
+
+class _group20:
+    default_text_color = DELIMITER
+    rules = [('_group2', RE(r"\{"), [RE(r"}")], _group2)]
+_group20.__name__ = '_group2'
 
 class _group5:
     default_text_color = DELIMITER
-    rules = [('_group5', RE(r"\)"), [RE(r"\B|\b")])]
+    rules = []
+
+class _group3:
+    default_text_color = DELIMITER
+    rules = [('_group3', RE(r"\)"), [RE(r"\B|\b")])]
 
 class _group6:
     default_text_color = DELIMITER
@@ -111,9 +111,9 @@ rules = [
     ('keyword', keyword),
     ('function', RE(r"\b(?:function)"), [RE(r"$")], function),
     ('_group0', RE(r"(?=[a-zA-Z_][a-zA-Z_0-9]*'['\.]*)"), [RE(r"\B\b")], _group0),
-    ('_group1', _group10, [RE(r"\B\b")], _group2),
-    ('_group3', _group30, [RE(r"\B\b")], _group4),
-    ('_group5', _group5, [RE(r"\B\b")], _group6),
+    ('_group1', _group10, [RE(r"\B\b")], _group4),
+    ('_group2', _group20, [RE(r"\B\b")], _group5),
+    ('_group3', _group3, [RE(r"\B\b")], _group6),
     ('comment', RE(r"^\s*\%\{\s*$"), [RE(r"^\s*\%\}\s*$")], comment),
     ('comment', RE(r"\%"), [RE(r"$")], comment),
     ('number', number),

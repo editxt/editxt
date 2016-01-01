@@ -11,6 +11,8 @@ keyword = """
 
 literal = ['false', 'true']
 
+title = [RE(r"[a-z'][a-zA-Z0-9_']*")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -22,14 +24,16 @@ class comment:
 
 keyword0 = ['fun', 'receive', 'if', 'try', 'case']
 
-class _group1:
+number = [RE(r"\b(?:\d+#[a-fA-F0-9]+|\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)")]
+
+class _group5:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-_group1.__name__ = ''
+_group5.__name__ = ''
 
-class _group3:
+class _group6:
     default_text_color = DELIMITER
     rules = []
 
@@ -37,49 +41,47 @@ class _group2:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': "([a-z'][a-zA-Z0-9_']*:[a-z'][a-zA-Z0-9_']*|[a-z'][a-zA-Z0-9_']*)", 'relevance': 0},
-        ('_group3', RE(r"\("), [RE(r"(?=\))")], _group3),
+        ('_group6', RE(r"\("), [RE(r"(?=\))")], _group6),
     ]
 
 class string:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 0, 'contains', 0, 'contains', 2, 'contains', 2, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-number = [RE(r"\b(?:\d+#[a-fA-F0-9]+|\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)")]
+class _group3:
+    default_text_color = DELIMITER
+    rules = []
+
+class _group7:
+    default_text_color = DELIMITER
+    rules = []
 
 class _group4:
     default_text_color = DELIMITER
-    rules = []
-
-class _group6:
-    default_text_color = DELIMITER
-    rules = []
-
-class _group5:
-    default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '#[a-zA-Z_]\\w*', 'relevance': 0},
-        ('_group6', RE(r"{"), [RE(r"}")], _group6),
+        ('_group7', RE(r"{"), [RE(r"}")], _group7),
     ]
 
-class _group0:
+class _group1:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
         ('literal', literal),
         ('keyword', keyword0),
         None,  # params.rules[0],
-        # ('contains', 0, 'contains', 0, 'contains', 1) {'begin': "fun\\s+[a-z'][a-zA-Z0-9_']*/\\d+"},
-        ('', RE(r"'"), [RE(r"'")], _group1),
+        # ignore {'begin': "fun\\s+[a-z'][a-zA-Z0-9_']*/\\d+"},
+        ('', RE(r"'"), [RE(r"'")], _group5),
         None,  # params.rules[1],
         ('_group2', RE(r"(?=(?:[a-z'][a-zA-Z0-9_']*:[a-z'][a-zA-Z0-9_']*|[a-z'][a-zA-Z0-9_']*)\()"), [RE(r"\)")], _group2),
         ('string', RE(r"\""), [RE(r"\"")], string),
         ('number', number),
-        ('_group4', RE(r"{"), [RE(r"}")], _group4),
+        ('_group3', RE(r"{"), [RE(r"}")], _group3),
         # ignore {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
         # ignore {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
-        ('_group5', RE(r"(?=#[a-zA-Z_]\w*)"), [RE(r"\B\b")], _group5),
+        ('_group4', RE(r"(?=#[a-zA-Z_]\w*)"), [RE(r"\B\b")], _group4),
     ]
 
 class params:
@@ -87,17 +89,15 @@ class params:
     rules = [
         ('comment', RE(r"%"), [RE(r"$")], comment),
         # ignore {'begin': "fun\\s+[a-z'][a-zA-Z0-9_']*/\\d+"},
-        ('_group0', RE(r"\b(?:fun|receive|if|try|case)"), [RE(r"end")], _group0),
-        _group0.rules[6],
-        _group0.rules[7],
+        ('_group1', RE(r"\b(?:fun|receive|if|try|case)"), [RE(r"end")], _group1),
+        _group1.rules[7],
+        _group1.rules[8],
         ('number', number),
-        _group0.rules[9],
-        # ('contains', 0, 'contains', 0, 'contains', 2, 'contains', 8) {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
-        # ('contains', 0, 'contains', 0, 'contains', 2, 'contains', 9) {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
-        _group0.rules[10],
+        _group1.rules[10],
+        # ignore {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
+        # ignore {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
+        _group1.rules[11],
     ]
-
-title = [RE(r"[a-z'][a-zA-Z0-9_']*")]
 
 class function:
     default_text_color = DELIMITER
@@ -110,7 +110,7 @@ class function0:
     ]
 function0.__name__ = 'function'
 
-class _group7:
+class _group8:
     default_text_color = DELIMITER
     rules = [('keyword', keyword), ('literal', literal)]
 
@@ -120,27 +120,27 @@ keyword1 = """
     -endif -file -behaviour -behavior -spec
     """.split()
 
-class _group8:
+class _group0:
     default_text_color = DELIMITER
     rules = [('keyword', keyword1), function.rules[0]]
 
 rules = [
     ('keyword', keyword),
     ('literal', literal),
-    ('function', function0, [RE(r";|\.")], _group7),
+    ('function', function0, [RE(r";|\.")], _group8),
     params.rules[0],
-    ('_group8', RE(r"(?=^-)"), [RE(r"\.")], _group8),
+    ('_group0', RE(r"(?=^-)"), [RE(r"\.")], _group0),
     ('number', number),
-    _group0.rules[7],
-    _group0.rules[10],
-    # ('contains', 0, 'contains', 0, 'contains', 2, 'contains', 8) {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
-    # ('contains', 0, 'contains', 0, 'contains', 2, 'contains', 9) {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
-    _group0.rules[9],
+    _group1.rules[8],
+    _group1.rules[11],
+    # ignore {'begin': '\\b_([A-Z][A-Za-z0-9_]*)?', 'relevance': 0},
+    # ignore {'begin': '[A-Z][a-zA-Z0-9_]*', 'relevance': 0},
+    _group1.rules[10],
     # ignore {'begin': {'pattern': '\\.$', 'type': 'RegExp'}},
 ]
 
-_group0.rules[3] = params.rules[0]
-_group0.rules[5] = params.rules[1]
-_group3.rules.extend(params.rules)
-_group4.rules.extend(params.rules)
+_group1.rules[3] = params.rules[0]
+_group1.rules[6] = params.rules[1]
 _group6.rules.extend(params.rules)
+_group3.rules.extend(params.rules)
+_group7.rules.extend(params.rules)

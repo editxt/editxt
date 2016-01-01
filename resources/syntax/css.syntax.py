@@ -6,6 +6,14 @@ file_patterns = ['*.css']
 
 flags = re.IGNORECASE | re.MULTILINE
 
+selector_id = [RE(r"#[A-Za-z0-9_-]+")]
+
+selector_class = [RE(r"\.[A-Za-z0-9_-]+")]
+
+selector_pseudo = [RE(r":(?::)?[a-zA-Z0-9\_\-\+\(\)\"']+")]
+
+selector_tag = [RE(r"[a-zA-Z-][a-zA-Z0-9_-]*")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -15,12 +23,6 @@ class comment:
         ('doctag', doctag),
     ]
 
-selector_id = [RE(r"#[A-Za-z0-9_-]+")]
-
-selector_class = [RE(r"\.[A-Za-z0-9_-]+")]
-
-selector_pseudo = [RE(r":(?::)?[a-zA-Z0-9\_\-\+\(\)\"']+")]
-
 keyword = ['font-face', 'page']
 
 class _group0:
@@ -29,17 +31,17 @@ class _group0:
 
 keyword0 = [RE(r"\S+")]
 
+number = [
+    RE(r"\b\d+(?:\.\d+)?(?:%|em|ex|ch|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc|px|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx)?"),
+]
+
 class string:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-number = [
-    RE(r"\b\d+(?:\.\d+)?(?:%|em|ex|ch|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc|px|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx)?"),
-]
-
-class _group2:
+class _group3:
     default_text_color = DELIMITER
     rules = [
         ('string', RE(r"'"), [RE(r"'")], string),
@@ -51,10 +53,8 @@ class _group1:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword0),
-        ('_group2', RE(r"\s"), [RE(r"\B\b")], _group2),
+        ('_group3', RE(r"\s"), [RE(r"\B\b")], _group3),
     ]
-
-selector_tag = [RE(r"[a-zA-Z-][a-zA-Z0-9_-]*")]
 
 class _attribute:
     default_text_color = DELIMITER
@@ -72,8 +72,8 @@ class _group5:
     default_text_color = DELIMITER
     rules = [
         ('number', number),
-        _group2.rules[1],
-        _group2.rules[0],
+        _group3.rules[1],
+        _group3.rules[0],
         None,  # rules[0],
         ('number', number0),
         ('meta', meta),
@@ -83,7 +83,7 @@ class _group4:
     default_text_color = DELIMITER
     rules = [('attribute', attribute, [RE(r"\B\b")], _group5)]
 
-class _group3:
+class _group2:
     default_text_color = DELIMITER
     rules = [
         None,  # rules[0],
@@ -99,8 +99,8 @@ rules = [
     ('_group0', RE(r"@(?:font-face|page)"), [RE(r"\B\b")], _group0),
     ('_group1', RE(r"@"), [RE(r"[{;]")], _group1),
     ('selector-tag', selector_tag),
-    ('_group3', RE(r"{"), [RE(r"}")], _group3),
+    ('_group2', RE(r"{"), [RE(r"}")], _group2),
 ]
 
 _group5.rules[3] = rules[0]
-_group3.rules[0] = rules[0]
+_group2.rules[0] = rules[0]

@@ -48,6 +48,10 @@ built_in5 = [RE(r":-\|-->")]
 
 built_in6 = [RE(r"=")]
 
+number = [RE(r"0'.\|0[box][0-9a-fA-F]*")]
+
+number0 = [RE(r"\b\d+(?:\.\d+)?")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -56,10 +60,6 @@ class comment:
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-
-number = [RE(r"0'.\|0[box][0-9a-fA-F]*")]
-
-number0 = [RE(r"\b\d+(?:\.\d+)?")]
 
 class string:
     default_text_color = DELIMITER
@@ -74,7 +74,7 @@ subst = [
 class string0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 6, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         ('subst', subst),
     ]
 string0.__name__ = 'string'

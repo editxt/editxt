@@ -4,6 +4,24 @@
 name = 'AsciiDoc'
 file_patterns = ['*.asciidoc', '*.adoc']
 
+title = [RE(r"^\.\w.*$")]
+
+section = [RE(r"^(?:={1,5}) .+?(?: \1)?$")]
+
+section0 = [RE(r"^[^\[\]\n]+?\n[=\-~\^\+]{2,}$")]
+
+meta = [RE(r"^\[.+?\]$")]
+
+bullet = [RE(r"^(?:\*+|\-+|\.+|[^\n]+?::)\s+")]
+
+symbol = [RE(r"^(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION):\s+")]
+
+string = [RE(r"``.+?''")]
+
+string0 = [RE(r"`.+?'")]
+
+code = [RE(r"(?:`.+?`|\+.+?\+)")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -13,25 +31,13 @@ class comment:
         ('doctag', doctag),
     ]
 
-title = [RE(r"^\.\w.*$")]
-
-section = [RE(r"^(?:={1,5}) .+?(?: \1)?$")]
-
-section0 = [RE(r"^[^\[\]\n]+?\n[=\-~\^\+]{2,}$")]
-
 class _meta:
     default_text_color = DELIMITER
     rules = [('_meta', [RE(r"\s")])]
 
-meta = [RE(r"^\[.+?\]$")]
-
 class _group1:
     default_text_color = DELIMITER
-    rules = [('_group2', RE(r"<"), [RE(r">")], 'xml')]
-
-bullet = [RE(r"^(?:\*+|\-+|\.+|[^\n]+?::)\s+")]
-
-symbol = [RE(r"^(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION):\s+")]
+    rules = [('_group3', RE(r"<"), [RE(r">")], 'xml')]
 
 class strong:
     default_text_color = DELIMITER
@@ -45,12 +51,6 @@ class emphasis:
         # ignore {'begin': "\\\\'\\w", 'relevance': 0},
     ]
 
-string = [RE(r"``.+?''")]
-
-string0 = [RE(r"`.+?'")]
-
-code = [RE(r"(?:`.+?`|\+.+?\+)")]
-
 class _string:
     default_text_color = DELIMITER
     rules = [('_string', [RE(r"\[")])]
@@ -60,7 +60,7 @@ class _string0:
     rules = [('_string', [RE(r"\]")])]
 _string0.__name__ = '_string'
 
-class _group3:
+class _group2:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '(link|image:?):', 'relevance': 0},
@@ -90,5 +90,5 @@ rules = [
     ('code', code),
     ('code', RE(r"^[ \t]"), [RE(r"$")]),
     # ignore {'begin': "^'{3,}[ \\t]*$", 'relevance': 10},
-    ('_group3', RE(r"(?=(?:link:)?(?:http|https|ftp|file|irc|image:?):\S+\[.*?\])"), [RE(r"\B\b")], _group3),
+    ('_group2', RE(r"(?=(?:link:)?(?:http|https|ftp|file|irc|image:?):\S+\[.*?\])"), [RE(r"\B\b")], _group2),
 ]

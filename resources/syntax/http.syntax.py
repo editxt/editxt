@@ -10,11 +10,11 @@ class _group0:
     default_text_color = DELIMITER
     rules = [('number', number)]
 
+keyword = [RE(r"[A-Z]+")]
+
 class _string:
     default_text_color = DELIMITER
     rules = [('_string', [RE(r" ")])]
-
-keyword = [RE(r"[A-Z]+")]
 
 class _group1:
     default_text_color = DELIMITER
@@ -32,13 +32,13 @@ class attribute:
     default_text_color = DELIMITER
     rules = [('attribute', RE(r"^\w"), [_attribute])]
 
-class _group3:
+class _group2:
     default_text_color = DELIMITER
-    rules = [('_group3', RE(r"\n\n"), [RE(r"\B|\b")])]
+    rules = [('_group2', RE(r"\n\n"), [RE(r"\B|\b")])]
 
 rules = [
     ('_group0', RE(r"^HTTP/[0-9\.]+"), [RE(r"$")], _group0),
     ('_group1', RE(r"(?=^[A-Z]+ (?:.*?) HTTP/[0-9\.]+$)"), [RE(r"$")], _group1),
     ('attribute', attribute, [RE(r"$")]),
-    ('_group3', _group3, [RE(r"\B\b")]),
+    ('_group2', _group2, [RE(r"\B\b")]),
 ]

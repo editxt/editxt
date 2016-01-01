@@ -8,6 +8,14 @@ symbol = [RE(r"[A-Z][a-zA-Z0-9_]*")]
 
 symbol0 = [RE(r"_[A-Za-z0-9_]*")]
 
+string = [RE(r"0\'(?:\\\'|.)")]
+
+string0 = [RE(r"0\'\\s")]
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
 class _group1:
     default_text_color = DELIMITER
     rules = []
@@ -23,41 +31,33 @@ doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 class comment0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 2, 'contains', 5, 'contains', 0) {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 comment0.__name__ = 'comment'
 
-class string:
+class string1:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-string0 = [RE(r"0\'(?:\\\'|.)")]
-
-string1 = [RE(r"0\'\\s")]
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
+string1.__name__ = 'string'
 
 class _group0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 0) {'begin': {'pattern': '[a-z][A-Za-z0-9_]*', 'type': 'RegExp'}, 'relevance': 0},
-        None,  # rules[0],
+        # ignore {'begin': {'pattern': '[a-z][A-Za-z0-9_]*', 'type': 'RegExp'}, 'relevance': 0},
         None,  # rules[1],
         None,  # rules[2],
         # ignore {'begin': {'pattern': ':-', 'type': 'RegExp'}},
         ('_group1', RE(r"\["), [RE(r"\]")], _group1),
         ('comment', RE(r"%"), [RE(r"$")], comment),
         ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
-        ('string', RE(r"\""), [RE(r"\"")], string),
-        ('string', RE(r"'"), [RE(r"'")], string),
-        ('string', RE(r"`"), [RE(r"`")], string),
+        ('string', RE(r"\""), [RE(r"\"")], string1),
+        ('string', RE(r"'"), [RE(r"'")], string1),
+        ('string', RE(r"`"), [RE(r"`")], string1),
+        ('string', string),
         ('string', string0),
-        ('string', string1),
         ('number', number),
     ]
 
@@ -66,20 +66,19 @@ rules = [
     ('symbol', symbol),
     ('symbol', symbol0),
     ('_group0', RE(r"\("), [RE(r"\)")], _group0),
-    # ('contains', 2, 'contains', 3) {'begin': {'pattern': ':-', 'type': 'RegExp'}},
+    # ignore {'begin': {'pattern': ':-', 'type': 'RegExp'}},
     _group0.rules[3],
     _group0.rules[4],
     _group0.rules[5],
     _group0.rules[6],
     _group0.rules[7],
     _group0.rules[8],
+    ('string', string),
     ('string', string0),
-    ('string', string1),
     ('number', number),
     # ignore {'begin': {'pattern': '\\.$', 'type': 'RegExp'}},
 ]
 
-_group0.rules[0] = rules[0]
 _group0.rules[1] = rules[1]
 _group0.rules[2] = rules[2]
 _group1.rules.extend(_group0.rules)

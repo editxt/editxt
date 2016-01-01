@@ -6,15 +6,15 @@ file_patterns = ['*.json']
 
 literal = ['true', 'false', 'null']
 
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
 class string:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
 
 class _attr:
     default_text_color = DELIMITER
@@ -28,7 +28,7 @@ _attr0.__name__ = '_attr'
 class attr:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 0, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 class attr0:
@@ -36,19 +36,19 @@ class attr0:
     rules = [('attr', _attr, [_attr0], attr)]
 attr0.__name__ = 'attr'
 
-class _group1:
+class _group2:
     default_text_color = DELIMITER
     rules = [('literal', literal)]
 
 class _group0:
     default_text_color = DELIMITER
-    rules = [('attr', attr0, [RE(r",")], _group1)]
+    rules = [('attr', attr0, [RE(r",")], _group2)]
 
 class _group3:
     default_text_color = DELIMITER
     rules = [('literal', literal)]
 
-class _group2:
+class _group1:
     default_text_color = DELIMITER
     rules = [('_group3', RE(r"\B|\b"), [RE(r",")], _group3)]
 
@@ -57,8 +57,8 @@ rules = [
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),
     ('_group0', RE(r"{"), [RE(r"}")], _group0),
-    ('_group2', RE(r"\["), [RE(r"\]")], _group2),
+    ('_group1', RE(r"\["), [RE(r"\]")], _group1),
 ]
 
-_group1.rules.extend(rules)
+_group2.rules.extend(rules)
 _group3.rules.extend(rules)

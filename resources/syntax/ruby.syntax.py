@@ -26,7 +26,7 @@ class comment:
 class comment0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 0, 'contains', 1) {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag0),
     ]
 comment0.__name__ = 'comment'
@@ -34,6 +34,12 @@ comment0.__name__ = 'comment'
 class _group0:
     default_text_color = DELIMITER
     rules = [('_group0', RE(r"^\s*=>"), [RE(r"\B|\b")])]
+
+symbol = [RE(r"[a-zA-Z_]\w*(?:\!|\?)?:")]
+
+number = [
+    RE(r"(?:\b0[0-7_]+)|(?:\b0x[0-9a-fA-F_]+)|(?:\b[1-9][0-9_]*(?:\.[0-9_]+)?)|[0_]\b"),
+]
 
 class subst:
     default_text_color = DELIMITER
@@ -50,7 +56,7 @@ keyword0 = ['class', 'module']
 
 title = [RE(r"[A-Za-z_]\w*(?:::\w+)*(?:\?|\!)?")]
 
-class _group3:
+class _group4:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '([a-zA-Z]\\w*::)?[a-zA-Z]\\w*'},
@@ -61,7 +67,7 @@ class class0:
     rules = [
         ('keyword', keyword0),
         ('title', title),
-        ('_group3', RE(r"<\s*"), [RE(r"\B\b")], _group3),
+        ('_group4', RE(r"<\s*"), [RE(r"\B\b")], _group4),
         None,  # rules[1],
         None,  # rules[2],
         None,  # rules[3],
@@ -93,8 +99,6 @@ class function:
         None,  # rules[3],
     ]
 
-symbol = [RE(r"[a-zA-Z_]\w*(?:\!|\?)?:")]
-
 class symbol0:
     default_text_color = DELIMITER
     rules = [
@@ -114,18 +118,14 @@ class symbol0:
     ]
 symbol0.__name__ = 'symbol'
 
-number = [
-    RE(r"(?:\b0[0-7_]+)|(?:\b0x[0-9a-fA-F_]+)|(?:\b[1-9][0-9_]*(?:\.[0-9_]+)?)|[0_]\b"),
-]
-
 class regexp:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 3, 'starts', 'contains', 0, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         None,  # string.rules[0],
     ]
 
-class _group5:
+class _group3:
     default_text_color = DELIMITER
     rules = [
         None,  # _group1.rules[12],
@@ -161,7 +161,7 @@ class _group1:
         ('symbol', RE(r":"), [RE(r"\B\b")], symbol0),
         ('number', number),
         # ignore {'begin': '(\\$\\W)|((\\$|\\@\\@?)(\\w+))'},
-        ('_group5', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B\b")], _group5),
+        ('_group3', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B\b")], _group3),
         None,  # rules[1],
         None,  # rules[2],
         None,  # rules[3],
@@ -173,7 +173,7 @@ class meta:
         ('meta', RE(r"^(?:[>?]>|[\w#]+\(\w+\):\d+:\d+>|(?:\w+-)?\d+\.\d+\.\d(?:p\d+)?[^>]+>)"), [RE(r"\B|\b")]),
     ]
 
-class _group6:
+class _group5:
     default_text_color = DELIMITER
     rules = []
 
@@ -183,7 +183,7 @@ rules = [
     ('comment', RE(r"^\=begin"), [RE(r"^\=end")], comment),
     ('comment', RE(r"^__END__"), [RE(r"\n$")], comment0),
     ('_group0', _group0, [RE(r"$")], _group1),
-    ('meta', meta, [RE(r"$")], _group6),
+    ('meta', meta, [RE(r"$")], _group5),
     _group1.rules[0],
     _group1.rules[1],
     _group1.rules[2],
@@ -202,7 +202,7 @@ rules = [
     ('symbol', symbol),
     _group1.rules[16],
     ('number', number),
-    # ('contains', 3, 'starts', 'contains', 7) {'begin': '(\\$\\W)|((\\$|\\@\\@?)(\\w+))'},
+    # ignore {'begin': '(\\$\\W)|((\\$|\\@\\@?)(\\w+))'},
     _group1.rules[18],
     None,  # rules[1],
     None,  # rules[2],
@@ -227,16 +227,16 @@ symbol0.rules[8] = _group1.rules[8]
 symbol0.rules[9] = _group1.rules[9]
 symbol0.rules[10] = _group1.rules[10]
 symbol0.rules[11] = _group1.rules[11]
-regexp.rules[0] = string.rules[0]
-_group5.rules[0] = _group1.rules[12]
-_group5.rules[6] = rules[1]
-_group5.rules[7] = rules[2]
-_group5.rules[8] = rules[3]
+regexp.rules[1] = string.rules[0]
+_group3.rules[0] = _group1.rules[12]
+_group3.rules[6] = rules[1]
+_group3.rules[7] = rules[2]
+_group3.rules[8] = rules[3]
 _group1.rules[19] = rules[1]
 _group1.rules[20] = rules[2]
 _group1.rules[21] = rules[3]
-rules[25] = rules[1]
-rules[26] = rules[2]
-rules[27] = rules[3]
+rules[26] = rules[1]
+rules[27] = rules[2]
+rules[28] = rules[3]
 subst.rules.extend(_group1.rules)
 params.rules.extend(_group1.rules)

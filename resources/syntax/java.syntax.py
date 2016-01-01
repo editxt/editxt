@@ -12,24 +12,28 @@ keyword = """
     this switch continue throws protected public private
     """.split()
 
-doctag = [RE(r"@[A-Za-z]+")]
+number = [
+    RE(r"\b(?:0[bB](?:[01]+[01_]+[01]+|[01]+)|0[xX](?:[a-fA-F0-9]+[a-fA-F0-9_]+[a-fA-F0-9]+|[a-fA-F0-9]+)|(?:([\d]+[\d_]+[\d]+|[\d]+)(?:\.(?:[\d]+[\d_]+[\d]+|[\d]+))?|\.(?:[\d]+[\d_]+[\d]+|[\d]+))(?:[eE][-+]?\d+)?)[lLfF]?"),
+]
 
-doctag0 = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+meta = [RE(r"@[A-Za-z]+")]
+
+doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': '\\w+@', 'type': 'RegExp'}, 'relevance': 0},
-        ('doctag', doctag),
+        ('doctag', meta),
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag0),
+        ('doctag', doctag),
     ]
 
 class comment0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 0, 'contains', 2) {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag0),
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
     ]
 comment0.__name__ = 'comment'
 
@@ -52,7 +56,7 @@ class class0:
     rules = [
         ('keyword', keyword0),
         ('keyword', keyword0),
-        ('_group0', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('_group1', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
         ('title', title),
     ]
 class0.__name__ = 'class'
@@ -65,7 +69,7 @@ class _group2:
     default_text_color = DELIMITER
     rules = [('title', title)]
 
-number = [
+number0 = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
@@ -75,7 +79,7 @@ class params:
         ('keyword', keyword),
         None,  # rules[4],
         None,  # rules[5],
-        ('number', number),
+        ('number', number0),
         None,  # rules[3],
     ]
 
@@ -89,10 +93,6 @@ class function:
         None,  # rules[3],
     ]
 
-number0 = [
-    RE(r"\b(?:0[bB](?:[01]+[01_]+[01]+|[01]+)|0[xX](?:[a-fA-F0-9]+[a-fA-F0-9_]+[a-fA-F0-9]+|[a-fA-F0-9]+)|(?:([\d]+[\d_]+[\d]+|[\d]+)(?:\.(?:[\d]+[\d_]+[\d]+|[\d]+))?|\.(?:[\d]+[\d_]+[\d]+|[\d]+))(?:[eE][-+]?\d+)?)[lLfF]?"),
-]
-
 rules = [
     ('keyword', keyword),
     ('comment', RE(r"/\*\*"), [RE(r"\*/")], comment),
@@ -101,10 +101,10 @@ rules = [
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('class', RE(r"\b(?:class|interface)"), [_class], class0),
-    ('_group1', RE(r"\b(?:new|throw|return|else)"), [RE(r"\B\b")]),
+    ('_group0', RE(r"\b(?:new|throw|return|else)"), [RE(r"\B\b")]),
     ('function', RE(r"(?=(?:[a-zA-Z_]\w*(?:<[a-zA-Z_]\w*>)?\s+)+[a-zA-Z_]\w*\s*\()"), [_function], function),
-    ('number', number0),
-    ('meta', doctag),
+    ('number', number),
+    ('meta', meta),
 ]
 
 params.rules[1] = rules[4]

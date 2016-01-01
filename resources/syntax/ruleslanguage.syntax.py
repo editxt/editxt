@@ -65,6 +65,14 @@ keyword = """
     TOLOWER TOUPPER TRIM NUMDAYS READ_DATE STAGING
     """.split()
 
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+literal = [RE(r"#\s+[a-zA-Z\ \.]*")]
+
+literal0 = [RE(r"#[a-zA-Z\ \.]+")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -79,14 +87,6 @@ class string:
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-literal = [RE(r"#\s+[a-zA-Z\ \.]*")]
-
-literal0 = [RE(r"#[a-zA-Z\ \.]+")]
 
 rules = [
     ('built_in', built_in),

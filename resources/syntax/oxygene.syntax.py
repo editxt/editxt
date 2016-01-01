@@ -26,6 +26,10 @@ keyword = """
     published autoreleasepool selector strong weak unretained
     """.split()
 
+string = [RE(r"(?:#\d+)+")]
+
+number = [RE(r"\b\d+(?:\.\d+)?")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -35,15 +39,12 @@ class comment:
         ('doctag', doctag),
     ]
 
-class string:
+class string0:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': "''"},
     ]
-
-string0 = [RE(r"(?:#\d+)+")]
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
+string0.__name__ = 'string'
 
 keyword0 = ['function', 'constructor', 'destructor', 'procedure', 'method']
 
@@ -54,7 +55,7 @@ class params:
     rules = [
         ('keyword', keyword),
         None,  # rules[4],
-        ('string', string0),
+        ('string', string),
     ]
 
 class function:
@@ -73,7 +74,7 @@ class class0:
     rules = [
         ('keyword', keyword),
         None,  # rules[4],
-        ('string', string0),
+        ('string', string),
         None,  # rules[1],
         None,  # rules[2],
         None,  # rules[3],
@@ -86,8 +87,8 @@ rules = [
     ('comment', RE(r"{"), [RE(r"}")], comment),
     ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('string', RE(r"'"), [RE(r"'")], string),
-    ('string', string0),
+    ('string', RE(r"'"), [RE(r"'")], string0),
+    ('string', string),
     ('number', number),
     ('function', RE(r"\b(?:function|constructor|destructor|procedure|method)"), [RE(r"[:;]")], function),
     ('class', RE(r"=\bclass\b"), [RE(r"end;")], class0),

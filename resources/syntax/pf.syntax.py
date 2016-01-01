@@ -26,6 +26,10 @@ keyword = """
 
 literal = ['all', 'any', 'no-route', 'self', 'urpf-failed', 'egress', 'unknown']
 
+number = [RE(r"\b\d+(?:\.\d+)?")]
+
+variable = [RE(r"\$[\w\d#@][\w\d_]*")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -35,15 +39,11 @@ class comment:
         ('doctag', doctag),
     ]
 
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
 class string:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-variable = [RE(r"\$[\w\d#@][\w\d_]*")]
 
 rules = [
     ('built_in', built_in),

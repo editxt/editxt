@@ -18,6 +18,14 @@ literal = """
     false
     """.split()
 
+meta = [RE(r"(?:ocf|systemd|service|lsb):[\w_:-]+")]
+
+number = [RE(r"\b\d+(?:\.\d+)?(?:ms|s|h|m)?")]
+
+literal0 = [RE(r"[-]?(?:infinity|inf)")]
+
+attr = [RE(r"(?:[A-Za-z\$_\#][\w_-]+)=")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -31,38 +39,38 @@ class _group0:
     default_text_color = DELIMITER
     rules = [('_group0', RE(r"\b(?:node)"), [RE(r"\B|\b")])]
 
+class _group4:
+    default_text_color = DELIMITER
+    rules = [('_group4', _group0, [RE(r"\s*(?:[\w_-]+:)?")])]
+
 class _group1:
     default_text_color = DELIMITER
-    rules = [('_group1', _group0, [RE(r"\s*(?:[\w_-]+:)?")])]
-
-class _group2:
-    default_text_color = DELIMITER
-    rules = [('_group2', RE(r"\b(?:primitive|rsc_template)"), [RE(r"\B|\b")])]
+    rules = [('_group1', RE(r"\b(?:primitive|rsc_template)"), [RE(r"\B|\b")])]
 
 class title:
     default_text_color = DELIMITER
-    rules = [('title', _group2, [RE(r"\s*[\$\w_][\w_-]*")])]
+    rules = [('title', _group1, [RE(r"\s*[\$\w_][\w_-]*")])]
 
 keyword0 = """
     group clone ms master location colocation order fencing_topology
     rsc_ticket acl_target acl_group user role tag xml
     """.split()
 
-class _group4:
+class _group2:
     default_text_color = DELIMITER
     rules = [('keyword', keyword0)]
 
-class _group40:
+class _group20:
     default_text_color = DELIMITER
     rules = [
-        ('_group4', RE(r"\b(?:group|clone|ms|master|location|colocation|order|fencing_topology|rsc_ticket|acl_target|acl_group|user|role|tag|xml)\s+"), [RE(r"\B|\b")], _group4),
+        ('_group2', RE(r"\b(?:group|clone|ms|master|location|colocation|order|fencing_topology|rsc_ticket|acl_target|acl_group|user|role|tag|xml)\s+"), [RE(r"\B|\b")], _group2),
     ]
-_group40.__name__ = '_group4'
+_group20.__name__ = '_group2'
 
-class _group5:
+class _group3:
     default_text_color = DELIMITER
     rules = [
-        ('_group5', RE(r"\b(?:property|rsc_defaults|op_defaults)"), [RE(r"\B|\b")]),
+        ('_group3', RE(r"\b(?:property|rsc_defaults|op_defaults)"), [RE(r"\B|\b")]),
     ]
 
 class string:
@@ -71,22 +79,14 @@ class string:
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-meta = [RE(r"(?:ocf|systemd|service|lsb):[\w_:-]+")]
-
-number = [RE(r"\b\d+(?:\.\d+)?(?:ms|s|h|m)?")]
-
-literal0 = [RE(r"[-]?(?:infinity|inf)")]
-
-attr = [RE(r"(?:[A-Za-z\$_\#][\w_-]+)=")]
-
 rules = [
     ('keyword', keyword),
     ('literal', literal),
     ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('_group0', _group1, [RE(r"\s*[\$\w_][\w_-]*")]),
-    ('_group2', title, [RE(r"\s*@?[\w_][\w_\.:-]*")]),
-    ('_group4', _group40, [RE(r"[\$\w_][\w_-]*")]),
-    ('_group5', _group5, [RE(r"\s*(?:[\w_-]+:)?")]),
+    ('_group0', _group4, [RE(r"\s*[\$\w_][\w_-]*")]),
+    ('_group1', title, [RE(r"\s*@?[\w_][\w_\.:-]*")]),
+    ('_group2', _group20, [RE(r"[\$\w_][\w_-]*")]),
+    ('_group3', _group3, [RE(r"\s*(?:[\w_-]+:)?")]),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('meta', meta),
     ('number', number),

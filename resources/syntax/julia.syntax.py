@@ -77,6 +77,10 @@ type = [RE(r"::")]
 
 type0 = [RE(r"<:")]
 
+meta = [RE(r"@[A-Za-z_\u00A1-\uFFFF][A-Za-z_0-9\u00A1-\uFFFF]*")]
+
+variable = [RE(r"\$[A-Za-z_\u00A1-\uFFFF][A-Za-z_0-9\u00A1-\uFFFF]*")]
+
 class subst:
     default_text_color = DELIMITER
     rules = [
@@ -84,8 +88,6 @@ class subst:
         ('keyword', keyword),
         ('literal', literal),
     ]
-
-variable = [RE(r"\$[A-Za-z_\u00A1-\uFFFF][A-Za-z_0-9\u00A1-\uFFFF]*")]
 
 class string0:
     default_text_color = DELIMITER
@@ -99,13 +101,11 @@ string0.__name__ = 'string'
 class string1:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 4, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         None,  # string.rules[0],
         None,  # ('variable', variable),
     ]
 string1.__name__ = 'string'
-
-meta = [RE(r"@[A-Za-z_\u00A1-\uFFFF][A-Za-z_0-9\u00A1-\uFFFF]*")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
@@ -133,6 +133,6 @@ rules = [
     ('comment', RE(r"#"), [RE(r"$")], comment),
 ]
 
-string1.rules[0] = string0.rules[0]
-string1.rules[1] = ('variable', variable)
+string1.rules[1] = string0.rules[0]
+string1.rules[2] = ('variable', variable)
 subst.rules.extend(rules)

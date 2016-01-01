@@ -34,7 +34,7 @@ class comment0:
     default_text_color = DELIMITER
     rules = [
         ('doctag', doctag0),
-        # ('contains', 0, 'contains', 0) {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 comment0.__name__ = 'comment'
@@ -45,7 +45,7 @@ class comment1:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword0),
-        # ('contains', 0, 'contains', 0) {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
 comment1.__name__ = 'comment'
@@ -100,20 +100,20 @@ class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword2),
-        ('_group0', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('_group2', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
         ('title', title),
     ]
 class0.__name__ = 'class'
 
 keyword3 = ['namespace']
 
-class _group1:
+class _group0:
     default_text_color = DELIMITER
     rules = [('keyword', keyword3), ('title', title)]
 
 keyword4 = ['use']
 
-class _group2:
+class _group1:
     default_text_color = DELIMITER
     rules = [('keyword', keyword4), ('title', title)]
 
@@ -127,8 +127,8 @@ rules = [
     # ignore {'begin': {'pattern': '(::|->)+[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*', 'type': 'RegExp'}},
     ('function', RE(r"\b(?:function)"), [_function], function),
     ('class', RE(r"\b(?:class|interface)"), [_class], class0),
-    ('_group1', RE(r"\b(?:namespace)"), [RE(r";")], _group1),
-    ('_group2', RE(r"\b(?:use)"), [RE(r";")], _group2),
+    ('_group0', RE(r"\b(?:namespace)"), [RE(r";")], _group0),
+    ('_group1', RE(r"\b(?:use)"), [RE(r";")], _group1),
     # ignore {'begin': '=>'},
     params.rules[1],
     params.rules[2],

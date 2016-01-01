@@ -16,13 +16,17 @@ keyword = """
 
 literal = ['true', 'false']
 
+number = [RE(r"\b\d+(?:\.\d+)?")]
+
+meta = [RE(r"@0x[\w\d]{16};")]
+
+number0 = [RE(r"@\d+\b")]
+
 class string:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
@@ -32,10 +36,6 @@ class comment:
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-
-meta = [RE(r"@0x[\w\d]{16};")]
-
-number0 = [RE(r"@\d+\b")]
 
 keyword0 = ['struct', 'enum']
 

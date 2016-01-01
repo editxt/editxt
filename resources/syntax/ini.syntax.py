@@ -23,15 +23,15 @@ variable = [RE(r"\$[\w\d\"][\w\d_]*")]
 
 variable0 = [RE(r"\$\{(?:.*?)}")]
 
+number = [RE(r"(?:[\+\-]+)?[\d]+_[\d_]+")]
+
+number0 = [RE(r"\b\d+(?:\.\d+)?")]
+
 class string:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-number = [RE(r"(?:[\+\-]+)?[\d]+_[\d_]+")]
-
-number0 = [RE(r"\b\d+(?:\.\d+)?")]
 
 class _group1:
     default_text_color = DELIMITER

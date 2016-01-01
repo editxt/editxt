@@ -22,6 +22,16 @@ literal = ['true', 'false']
 
 literal0 = [RE(r"\[(?:\|\|)?\]|\(\)")]
 
+symbol = [RE(r"'[A-Za-z_](?!')[\w']*")]
+
+type = [RE(r"`[A-Z][\w']*")]
+
+type0 = [RE(r"\b[A-Z][\w']*")]
+
+number = [
+    RE(r"\b(?:0[xX][a-fA-F0-9_]+[Lln]?|0[oO][0-7_]+[Lln]?|0[bB][01_]+[Lln]?|[0-9][0-9_]*(?:[Lln]|(?:\.[0-9_]*)?(?:[eE][-+]?[0-9_]+)?)?)"),
+]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -31,21 +41,11 @@ class comment:
         ('doctag', doctag),
     ]
 
-symbol = [RE(r"'[A-Za-z_](?!')[\w']*")]
-
-type = [RE(r"`[A-Z][\w']*")]
-
-type0 = [RE(r"\b[A-Z][\w']*")]
-
 class string:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-number = [
-    RE(r"\b(?:0[xX][a-fA-F0-9_]+[Lln]?|0[oO][0-7_]+[Lln]?|0[bB][01_]+[Lln]?|[0-9][0-9_]*(?:[Lln]|(?:\.[0-9_]*)?(?:[eE][-+]?[0-9_]+)?)?)"),
-]
 
 rules = [
     ('built_in', built_in),

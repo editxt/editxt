@@ -15,6 +15,10 @@ keyword = """
 
 keyword0 = [RE(r"\b(?:yield|return|let|do)!")]
 
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
 class string:
     default_text_color = DELIMITER
     rules = [
@@ -58,10 +62,6 @@ class symbol:
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
 
 rules = [
     ('keyword', keyword),

@@ -20,6 +20,8 @@ keyword = """
     trior trireg vectored wand weak0 weak1 wire wor
     """.split()
 
+variable = [RE(r"#\((?!parameter).+\)")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -38,10 +40,8 @@ class string:
 class number:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 2, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-variable = [RE(r"#\((?!parameter).+\)")]
 
 rules = [
     ('keyword', keyword),

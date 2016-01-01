@@ -13,17 +13,18 @@ keyword = """
 
 literal = ['false', 'true']
 
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "''", 'type': 'RegExp'}},
-    ]
-
-string0 = [RE(r"(?:#\d+)+")]
+string = [RE(r"(?:#\d+)+")]
 
 number = [RE(r"\b\d+(?:\.\d+)?(?:DT|D|T)")]
 
 number0 = [RE(r"\b\d+(?:\.\d+)?")]
+
+class string0:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': "''", 'type': 'RegExp'}},
+    ]
+string0.__name__ = 'string'
 
 title = [RE(r"[a-zA-Z]\w*")]
 
@@ -34,7 +35,7 @@ class params:
     rules = [
         ('keyword', keyword),
         None,  # rules[2],
-        ('string', string0),
+        ('string', string),
     ]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
@@ -69,8 +70,8 @@ class0.__name__ = 'class'
 rules = [
     ('keyword', keyword),
     ('literal', literal),
-    ('string', RE(r"'"), [RE(r"'")], string),
-    ('string', string0),
+    ('string', RE(r"'"), [RE(r"'")], string0),
+    ('string', string),
     ('number', number),
     ('string', RE(r"\""), [RE(r"\"")]),
     ('number', number0),

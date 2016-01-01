@@ -18,14 +18,6 @@ attr1 = [RE(r"^[ \-]*'[a-zA-Z_][\w\-]*':")]
 
 meta = [RE(r"^---s*$")]
 
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('template-variable', RE(r"{{"), [RE(r"}}")]),
-        ('template-variable', RE(r"%{"), [RE(r"}")]),
-    ]
-
 type = [RE(r"!![a-zA-Z_]\w*")]
 
 meta0 = [RE(r"&[a-zA-Z_]\w*$")]
@@ -33,6 +25,18 @@ meta0 = [RE(r"&[a-zA-Z_]\w*$")]
 meta1 = [RE(r"\*[a-zA-Z_]\w*$")]
 
 bullet = [RE(r"^ *-")]
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+class string:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        ('template-variable', RE(r"{{"), [RE(r"}}")]),
+        ('template-variable', RE(r"%{"), [RE(r"}")]),
+    ]
 
 class string0:
     default_text_color = DELIMITER
@@ -47,10 +51,6 @@ class comment:
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
 
 rules = [
     ('literal', literal),

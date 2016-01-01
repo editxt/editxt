@@ -128,15 +128,15 @@ literal = """
 
 keyword0 = [RE(r"\bend\sif\b")]
 
+meta = [RE(r"<\?(?:rev|lc|livecode)")]
+
+meta0 = [RE(r"<\?")]
+
+meta1 = [RE(r"\?>")]
+
 keyword1 = ['function']
 
 title = [RE(r"\b(?:[A-Za-z0-9_\-]+)\b")]
-
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
 
 number = [RE(r"\b(?:0b[01]+)")]
 
@@ -148,11 +148,17 @@ title0 = [RE(r"\b_*rig[A-Z]+[A-Za-z0-9_\-]*")]
 
 title1 = [RE(r"\b_[a-z0-9\-]+")]
 
+class string:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+
 class function:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword1),
-        # ('contains', 0) {'begin': '\\b[gtps][A-Z]+[A-Za-z0-9_\\-]*\\b|\\$_[A-Z]+', 'relevance': 0},
+        # ignore {'begin': '\\b[gtps][A-Z]+[A-Za-z0-9_\\-]*\\b|\\$_[A-Z]+', 'relevance': 0},
         ('title', title),
         ('string', RE(r"'"), [RE(r"'")], string),
         ('string', RE(r"\""), [RE(r"\"")], string),
@@ -169,8 +175,8 @@ class function0:
     rules = [
         ('keyword', keyword2),
         ('title', title),
-        function.rules[6],
         function.rules[7],
+        function.rules[8],
     ]
 function0.__name__ = 'function'
 
@@ -180,21 +186,15 @@ class _group0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword3),
-        # ('contains', 0) {'begin': '\\b[gtps][A-Z]+[A-Za-z0-9_\\-]*\\b|\\$_[A-Z]+', 'relevance': 0},
+        # ignore {'begin': '\\b[gtps][A-Z]+[A-Za-z0-9_\\-]*\\b|\\$_[A-Z]+', 'relevance': 0},
         ('title', title),
-        function.rules[2],
         function.rules[3],
+        function.rules[4],
         ('number', number),
         ('number', number0),
-        function.rules[6],
         function.rules[7],
+        function.rules[8],
     ]
-
-meta = [RE(r"<\?(?:rev|lc|livecode)")]
-
-meta0 = [RE(r"<\?")]
-
-meta1 = [RE(r"\?>")]
 
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
@@ -217,12 +217,12 @@ rules = [
     ('meta', meta),
     ('meta', meta0),
     ('meta', meta1),
-    function.rules[2],
     function.rules[3],
+    function.rules[4],
     ('number', number),
     ('number', number0),
-    function.rules[6],
     function.rules[7],
+    function.rules[8],
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('comment', RE(r"--"), [RE(r"$")], comment),

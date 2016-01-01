@@ -14,13 +14,13 @@ number2 = [RE(r"#o[0-7]+(?:/[0-7]+)?")]
 
 number3 = [RE(r"#x[0-9a-f]+(?:/[0-9a-f]+)?")]
 
+symbol = [RE(r"'[^\(\)\[\]\{\}\",'`;#|\\\s]+")]
+
 class string:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-symbol = [RE(r"'[^\(\)\[\]\{\}\",'`;#|\\\s]+")]
 
 builtin_name = """
     case-lambda call/cc class define-class exit-handler field import
@@ -76,7 +76,7 @@ class comment:
         ('doctag', doctag),
     ]
 
-class _group1:
+class _group2:
     default_text_color = DELIMITER
     rules = [
         ('literal', literal),
@@ -98,7 +98,7 @@ class _group0:
     default_text_color = DELIMITER
     rules = [
         ('name', RE(r"[^\(\)\[\]\{\}\",'`;#|\\\s]+"), [RE(r"\B\b")], name0),
-        ('_group1', RE(r"\B|\b"), [RE(r"\B\b")], _group1),
+        ('_group2', RE(r"\B|\b"), [RE(r"\B\b")], _group2),
     ]
 
 class _group3:
@@ -119,7 +119,7 @@ class _group3:
         ('comment', RE(r"#\|"), [RE(r"\|#")], comment),
     ]
 
-class _group2:
+class _group1:
     default_text_color = DELIMITER
     rules = [
         ('name', RE(r"[^\(\)\[\]\{\}\",'`;#|\\\s]+"), [RE(r"\B\b")], name0),
@@ -136,19 +136,19 @@ rules = [
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('symbol', symbol),
     ('_group0', RE(r"\("), [RE(r"\)")], _group0),
-    ('_group2', RE(r"\["), [RE(r"\]")], _group2),
-    _group3.rules[10],
-    _group3.rules[11],
+    ('_group1', RE(r"\["), [RE(r"\]")], _group1),
+    _group3.rules[5],
+    _group3.rules[6],
 ]
 
-_group1.rules[1] = rules[1]
-_group1.rules[2] = rules[2]
-_group1.rules[3] = rules[3]
-_group1.rules[4] = rules[4]
-_group1.rules[5] = rules[5]
-_group1.rules[6] = rules[6]
-_group1.rules[8] = rules[8]
-_group1.rules[9] = rules[9]
+_group2.rules[1] = rules[1]
+_group2.rules[2] = rules[2]
+_group2.rules[3] = rules[3]
+_group2.rules[4] = rules[4]
+_group2.rules[5] = rules[5]
+_group2.rules[6] = rules[6]
+_group2.rules[8] = rules[8]
+_group2.rules[9] = rules[9]
 _group3.rules[1] = rules[1]
 _group3.rules[2] = rules[2]
 _group3.rules[3] = rules[3]

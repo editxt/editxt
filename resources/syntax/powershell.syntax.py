@@ -48,6 +48,10 @@ nomarkup = """
     -contains -notcontains -in -notin -replace
     """.split()
 
+number = [RE(r"\b\d+(?:\.\d+)?")]
+
+literal = [RE(r"\$(?:null|true|false)\b")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -56,8 +60,6 @@ class comment:
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
         ('doctag', doctag),
     ]
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
 
 variable = [RE(r"\$[\w\d][\w\d_:]*")]
 
@@ -69,8 +71,6 @@ class string:
         ('variable', RE(r"\$[A-z]"), [RE(r"[^A-z]")]),
     ]
 
-literal = [RE(r"\$(?:null|true|false)\b")]
-
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
@@ -80,5 +80,4 @@ rules = [
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"'"), [RE(r"'")]),
     ('literal', literal),
-    string.rules[0],
 ]

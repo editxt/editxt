@@ -35,7 +35,7 @@ symbol = [
     RE(r"[:&][a-zA-Z_\-\+\*\/\<\=\>\&\#][a-zA-Z0-9_\-\+\*\/\<\=\>\&\#!]*"),
 ]
 
-class _group2:
+class _group7:
     default_text_color = DELIMITER
     rules = [
         ('literal', literal),
@@ -57,15 +57,15 @@ class _group0:
         None,  # rules[3],
         None,  # rules[4],
         None,  # rules[7],
-        ('_group1', RE(r"\*"), [RE(r"\*")]),
+        ('_group6', RE(r"\*"), [RE(r"\*")]),
         ('symbol', symbol),
-        ('_group2', RE(r"\("), [RE(r"\)")], _group2),
-        # ('contains', 5, 'contains', 4, 'contains', 4) {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
+        ('_group7', RE(r"\("), [RE(r"\)")], _group7),
+        # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
     ]
 
 name0 = ['quote']
 
-class _group5:
+class _group9:
     default_text_color = DELIMITER
     rules = [
         ('literal', literal),
@@ -78,7 +78,7 @@ class _group5:
         # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
     ]
 
-class _group3:
+class _group1:
     default_text_color = DELIMITER
     rules = [
         ('name', name0),
@@ -88,13 +88,13 @@ class _group3:
         None,  # rules[3],
         None,  # rules[4],
         None,  # rules[7],
-        ('_group4', RE(r"\*"), [RE(r"\*")]),
+        ('_group8', RE(r"\*"), [RE(r"\*")]),
         ('symbol', symbol),
-        ('_group5', RE(r"\("), [RE(r"\)")], _group5),
-        # ('contains', 5, 'contains', 4, 'contains', 4) {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
+        ('_group9', RE(r"\("), [RE(r"\)")], _group9),
+        # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
     ]
 
-class _group8:
+class _group11:
     default_text_color = DELIMITER
     rules = [
         ('literal', literal),
@@ -107,7 +107,7 @@ class _group8:
         # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
     ]
 
-class _group6:
+class _group2:
     default_text_color = DELIMITER
     rules = [
         None,  # rules[0],
@@ -116,15 +116,15 @@ class _group6:
         None,  # rules[3],
         None,  # rules[4],
         None,  # rules[7],
-        ('_group7', RE(r"\*"), [RE(r"\*")]),
+        ('_group10', RE(r"\*"), [RE(r"\*")]),
         ('symbol', symbol),
-        ('_group8', RE(r"\("), [RE(r"\)")], _group8),
-        # ('contains', 5, 'contains', 4, 'contains', 4) {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
+        ('_group11', RE(r"\("), [RE(r"\)")], _group11),
+        # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
     ]
 
 name1 = [RE(r"[a-zA-Z_\-\+\*\/\<\=\>\&\#][a-zA-Z0-9_\-\+\*\/\<\=\>\&\#!]*")]
 
-name2 = [RE(r"\|[^]*?\|")]
+name2 = [RE(r"\|[\s\S]*?\|")]
 
 class _group12:
     default_text_color = DELIMITER
@@ -132,8 +132,6 @@ class _group12:
         None,  # rules[9],
         None,  # rules[10],
         None,  # rules[11],
-        None,  # rules[12],
-        None,  # rules[13],
         None,  # rules[12],
         ('literal', literal),
         None,  # rules[0],
@@ -143,13 +141,13 @@ class _group12:
         None,  # rules[4],
         None,  # rules[7],
         None,  # rules[8],
-        _group6.rules[6],
+        _group2.rules[2],
         None,  # ('symbol', symbol),
         # ignore {'begin': '\\|[^]*?\\|'},
-        # ('contains', 5, 'contains', 4, 'contains', 4) {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
+        # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
     ]
 
-class _group11:
+class _group5:
     default_text_color = DELIMITER
     rules = [
         ('name', name1),
@@ -168,61 +166,59 @@ rules = [
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('comment', RE(r";"), [RE(r"$")], comment),
     ('_group0', RE(r"['`]\("), [RE(r"\)")], _group0),
-    ('_group3', RE(r"\(quote "), [RE(r"\)")], _group3),
-    ('_group6', RE(r"'\|[^]*?\|"), [RE(r"\B\b")], _group6),
-    # unknown {'begin': "'[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*", 'variants': [{'begin': ...}, {'begin': "#'[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*(::[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*)*"}]},
-    # unknown {'begin': "#'[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*(::[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*)*", 'variants': [{'begin': "'[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*"}, {'begin': ...}]},
-    ('_group11', RE(r"\(\s*"), [RE(r"\)")], _group11),
-    # ('contains', 5, 'contains', 4, 'contains', 4) {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
+    ('_group1', RE(r"\(quote "), [RE(r"\)")], _group1),
+    ('_group2', RE(r"'\|[\s\S]*?\|"), [RE(r"\B\b")], _group2),
+    # ignore {'begin': "'[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*"},
+    # ignore {'begin': "#'[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*(::[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*)*"},
+    ('_group5', RE(r"\(\s*"), [RE(r"\)")], _group5),
+    # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
 ]
 
-_group2.rules[1] = rules[7]
-_group2.rules[2] = rules[0]
-_group2.rules[3] = rules[1]
-_group2.rules[4] = rules[2]
-_group2.rules[5] = rules[3]
-_group2.rules[6] = rules[4]
+_group7.rules[1] = rules[7]
+_group7.rules[2] = rules[0]
+_group7.rules[3] = rules[1]
+_group7.rules[4] = rules[2]
+_group7.rules[5] = rules[3]
+_group7.rules[6] = rules[4]
 _group0.rules[0] = rules[0]
 _group0.rules[1] = rules[1]
 _group0.rules[2] = rules[2]
 _group0.rules[3] = rules[3]
 _group0.rules[4] = rules[4]
 _group0.rules[5] = rules[7]
-_group5.rules[1] = rules[7]
-_group5.rules[2] = rules[0]
-_group5.rules[3] = rules[1]
-_group5.rules[4] = rules[2]
-_group5.rules[5] = rules[3]
-_group5.rules[6] = rules[4]
-_group3.rules[1] = rules[0]
-_group3.rules[2] = rules[1]
-_group3.rules[3] = rules[2]
-_group3.rules[4] = rules[3]
-_group3.rules[5] = rules[4]
-_group3.rules[6] = rules[7]
-_group8.rules[1] = rules[7]
-_group8.rules[2] = rules[0]
-_group8.rules[3] = rules[1]
-_group8.rules[4] = rules[2]
-_group8.rules[5] = rules[3]
-_group8.rules[6] = rules[4]
-_group6.rules[0] = rules[0]
-_group6.rules[1] = rules[1]
-_group6.rules[2] = rules[2]
-_group6.rules[3] = rules[3]
-_group6.rules[4] = rules[4]
-_group6.rules[5] = rules[7]
+_group9.rules[1] = rules[7]
+_group9.rules[2] = rules[0]
+_group9.rules[3] = rules[1]
+_group9.rules[4] = rules[2]
+_group9.rules[5] = rules[3]
+_group9.rules[6] = rules[4]
+_group1.rules[1] = rules[0]
+_group1.rules[2] = rules[1]
+_group1.rules[3] = rules[2]
+_group1.rules[4] = rules[3]
+_group1.rules[5] = rules[4]
+_group1.rules[6] = rules[7]
+_group11.rules[1] = rules[7]
+_group11.rules[2] = rules[0]
+_group11.rules[3] = rules[1]
+_group11.rules[4] = rules[2]
+_group11.rules[5] = rules[3]
+_group11.rules[6] = rules[4]
+_group2.rules[0] = rules[0]
+_group2.rules[1] = rules[1]
+_group2.rules[2] = rules[2]
+_group2.rules[3] = rules[3]
+_group2.rules[4] = rules[4]
+_group2.rules[5] = rules[7]
 _group12.rules[0] = rules[9]
 _group12.rules[1] = rules[10]
 _group12.rules[2] = rules[11]
 _group12.rules[3] = rules[12]
-_group12.rules[4] = rules[13]
-_group12.rules[5] = rules[12]
-_group12.rules[7] = rules[0]
-_group12.rules[8] = rules[1]
-_group12.rules[9] = rules[2]
-_group12.rules[10] = rules[3]
-_group12.rules[11] = rules[4]
-_group12.rules[12] = rules[7]
-_group12.rules[13] = rules[8]
-_group12.rules[15] = ('symbol', symbol)
+_group12.rules[5] = rules[0]
+_group12.rules[6] = rules[1]
+_group12.rules[7] = rules[2]
+_group12.rules[8] = rules[3]
+_group12.rules[9] = rules[4]
+_group12.rules[10] = rules[7]
+_group12.rules[11] = rules[8]
+_group12.rules[13] = ('symbol', symbol)

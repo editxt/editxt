@@ -27,6 +27,14 @@ literal = ['true', 'false', 'null', 'undefined', 'NaN', 'Infinity']
 
 meta = [RE(r"^\s*['\"]use strict['\"]")]
 
+number = [RE(r"\b(?:0[bB][01]+)")]
+
+number0 = [RE(r"\b(?:0[oO][0-7]+)")]
+
+number1 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
 class string:
     default_text_color = DELIMITER
     rules = [
@@ -36,7 +44,7 @@ class string:
 class string0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 1, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         ('subst', RE(r"\$\{"), [RE(r"\}")]),
     ]
 string0.__name__ = 'string'
@@ -50,27 +58,19 @@ class comment:
         ('doctag', doctag),
     ]
 
-number = [RE(r"\b(?:0[bB][01]+)")]
-
-number0 = [RE(r"\b(?:0[oO][0-7]+)")]
-
-number1 = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
 keyword0 = ['return', 'throw', 'case']
 
-class _group1:
+class _group4:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 1, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 class regexp:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 1, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('_group1', RE(r"\["), [RE(r"\]")], _group1),
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        ('_group4', RE(r"\["), [RE(r"\]")], _group4),
     ]
 
 class _group0:
@@ -121,7 +121,7 @@ keyword1 = ['interface', 'extends']
 
 keyword2 = ['interface']
 
-class _group4:
+class _group3:
     default_text_color = DELIMITER
     rules = [('keyword', keyword1), ('keyword', keyword2)]
 
@@ -140,9 +140,9 @@ rules = [
     ('number', number1),
     ('_group0', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~|\b(?:case|return|throw)\b)\s*"), [RE(r"\B\b")], _group0),
     ('function', RE(r"function"), [_function], function),
-    ('_group2', RE(r"\b(?:constructor)"), [RE(r"\{")]),
-    ('_group3', RE(r"\b(?:module)"), [RE(r"\{")]),
-    ('_group4', RE(r"\b(?:interface)"), [RE(r"\{")], _group4),
+    ('_group1', RE(r"\b(?:constructor)"), [RE(r"\{")]),
+    ('_group2', RE(r"\b(?:module)"), [RE(r"\{")]),
+    ('_group3', RE(r"\b(?:interface)"), [RE(r"\{")], _group3),
     # ignore {'begin': {'pattern': '\\$[(.]', 'type': 'RegExp'}},
     # ignore {'begin': '\\.[a-zA-Z]\\w*', 'relevance': 0},
 ]

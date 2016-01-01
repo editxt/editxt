@@ -29,6 +29,8 @@ keyword = """
     withReader withStream withWriter withWriterAppend write writeLine
     """.split()
 
+number = [RE(r"\b\d+(?:\.\d+)?")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -44,18 +46,16 @@ class string:
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
 class _group0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 2, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
 class regexp:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 2, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
         ('_group0', RE(r"\["), [RE(r"\]")], _group0),
     ]
 

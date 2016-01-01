@@ -27,6 +27,10 @@ keyword = """
 
 literal = ['true', 'false', 'nil']
 
+number = [RE(r"[0-9]+#[0-9A-Z_]+(?:\.[0-9-A-Z_]+)?#?(?:[Ee][+-]?[0-9]+)?")]
+
+number0 = [RE(r"\b\d+(?:\.\d+)?")]
+
 doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
@@ -40,7 +44,7 @@ class title:
     default_text_color = DELIMITER
     rules = [('title', RE(r"[a-zA-Z]\w*"), [RE(r"\B|\b")])]
 
-class _group0:
+class _group1:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
@@ -50,11 +54,11 @@ class _group0:
 
 class function:
     default_text_color = DELIMITER
-    rules = [('title', title, [RE(r"\B\b")], _group0)]
+    rules = [('title', title, [RE(r"\B\b")], _group1)]
 
 keyword0 = ['import']
 
-class _group1:
+class _group0:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
@@ -63,10 +67,6 @@ class _group1:
         ('keyword', keyword0),
         None,  # rules[5],
     ]
-
-number = [RE(r"[0-9]+#[0-9A-Z_]+(?:\.[0-9-A-Z_]+)?#?(?:[Ee][+-]?[0-9]+)?")]
-
-number0 = [RE(r"\b\d+(?:\.\d+)?")]
 
 rules = [
     ('built_in', built_in),
@@ -78,9 +78,9 @@ rules = [
     ('string', RE(r"'"), [RE(r"'")]),
     ('string', RE(r"<<"), [RE(r">>")]),
     ('function', RE(r"(?=[a-z][^\n]*->)"), [RE(r"->")], function),
-    ('_group1', RE(r"\b(?:import)"), [RE(r"$")], _group1),
+    ('_group0', RE(r"\b(?:import)"), [RE(r"$")], _group0),
     ('number', number),
     ('number', number0),
 ]
 
-_group1.rules[4] = rules[5]
+_group0.rules[4] = rules[5]

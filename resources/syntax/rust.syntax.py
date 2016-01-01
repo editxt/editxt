@@ -24,24 +24,9 @@ keyword = """
     i16 i32 i64 uint u8 u32 u64 float f32 f64 str char bool
     """.split()
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+string = [RE(r"r(?:#*)\".*?\"\1(?!#)")]
 
-class comment:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-
-string0 = [RE(r"r(?:#*)\".*?\"\1(?!#)")]
-
-string1 = [RE(r"'\\?(?:x\w{2}|u\w{4}|U\w{8}|.)'")]
+string0 = [RE(r"'\\?(?:x\w{2}|u\w{4}|U\w{8}|.)'")]
 
 symbol = [RE(r"'[a-zA-Z_][a-zA-Z0-9_]*")]
 
@@ -54,6 +39,22 @@ number1 = [RE(r"\b0x(?:[A-Fa-f0-9_]+)(?:[uif](?:8|16|32|64|size))?")]
 number2 = [
     RE(r"\b(?:\d[\d_]*(?:\.[0-9_]+)?(?:[eE][+-]?[0-9_]+)?)(?:[uif](?:8|16|32|64|size))?"),
 ]
+
+doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+
+class comment:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
+    ]
+
+class string1:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+    ]
+string1.__name__ = 'string'
 
 class _function:
     default_text_color = DELIMITER
@@ -90,9 +91,9 @@ rules = [
     ('keyword', keyword),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('string', RE(r"\""), [RE(r"\"")], string),
+    ('string', RE(r"\""), [RE(r"\"")], string1),
+    ('string', string),
     ('string', string0),
-    ('string', string1),
     ('symbol', symbol),
     ('number', number),
     ('number', number0),

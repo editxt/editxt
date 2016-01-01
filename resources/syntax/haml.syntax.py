@@ -37,7 +37,7 @@ class string:
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
 
-class _group3:
+class _group5:
     default_text_color = DELIMITER
     rules = [
         ('attr', attr),
@@ -46,22 +46,22 @@ class _group3:
         # ignore {'begin': '\\w+', 'relevance': 0},
     ]
 
-class _group2:
+class _group3:
     default_text_color = DELIMITER
-    rules = [('_group3', RE(r"(?=:\w+\s*=>)"), [RE(r",\s+")], _group3)]
+    rules = [('_group5', RE(r"(?=:\w+\s*=>)"), [RE(r",\s+")], _group5)]
 
-class _group5:
+class _group6:
     default_text_color = DELIMITER
     rules = [
         ('attr', selector_tag),
-        _group3.rules[1],
-        _group3.rules[2],
+        _group5.rules[1],
+        _group5.rules[2],
         # ignore {'begin': '\\w+', 'relevance': 0},
     ]
 
 class _group4:
     default_text_color = DELIMITER
-    rules = [('_group5', RE(r"(?=\w+\s*=)"), [RE(r"\s+")], _group5)]
+    rules = [('_group6', RE(r"(?=\w+\s*=)"), [RE(r"\s+")], _group6)]
 
 class tag:
     default_text_color = DELIMITER
@@ -69,13 +69,13 @@ class tag:
         ('selector-tag', selector_tag),
         ('selector-id', selector_id),
         ('selector-class', selector_class),
-        ('_group2', RE(r"{\s*"), [RE(r"\s*}")], _group2),
+        ('_group3', RE(r"{\s*"), [RE(r"\s*}")], _group3),
         ('_group4', RE(r"\(\s*"), [RE(r"\s*\)")], _group4),
     ]
 
-class _group6:
+class _group1:
     default_text_color = DELIMITER
-    rules = [('_group6', RE(r"#{"), [RE(r"\B|\b")])]
+    rules = [('_group1', RE(r"#{"), [RE(r"\B|\b")])]
 
 rules = [
     ('meta', meta),
@@ -83,5 +83,5 @@ rules = [
     ('_group0', _group0, [RE(r"\n")], 'ruby'),
     ('tag', RE(r"^\s*%"), [RE(r"\B\b")], tag),
     # ignore {'begin': '^\\s*[=~]\\s*'},
-    ('_group6', _group6, [RE(r"}")], 'ruby'),
+    ('_group1', _group1, [RE(r"}")], 'ruby'),
 ]

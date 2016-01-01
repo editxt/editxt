@@ -14,40 +14,49 @@ keyword = """
 
 literal = ['true', 'false', 'null']
 
-doctag = [RE(r"@[A-Za-z]+")]
+number = [RE(r"\b(?:0b[01]+)")]
 
-doctag0 = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+number0 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+meta = [RE(r"@[A-Za-z]+")]
+
+string = [RE(r"[^\?]{0}[A-Za-z0-9_$]+ *:")]
+
+symbol = [RE(r"^\s*[A-Za-z0-9_$]+:")]
+
+doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': '\\w+@', 'type': 'RegExp'}, 'relevance': 0},
-        ('doctag', doctag),
+        ('doctag', meta),
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag0),
+        ('doctag', doctag),
     ]
 
 class comment0:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 0, 'contains', 2) {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag0),
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', doctag),
     ]
 comment0.__name__ = 'comment'
 
-class string:
+class string0:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
+string0.__name__ = 'string'
 
 class regexp:
     default_text_color = DELIMITER
     rules = [
-        # ('contains', 6, 'contains', 0) {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
     ]
-
-number = [RE(r"\b(?:0b[01]+)")]
 
 keyword0 = ['class', 'interface', 'trait', 'enum']
 
@@ -57,18 +66,10 @@ class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword0),
-        ('_group0', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('_group1', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
         ('title', title),
     ]
 class0.__name__ = 'class'
-
-number0 = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-string0 = [RE(r"[^\?]{0}[A-Za-z0-9_$]+ *:")]
-
-symbol = [RE(r"^\s*[A-Za-z0-9_$]+:")]
 
 rules = [
     ('keyword', keyword),
@@ -79,15 +80,15 @@ rules = [
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
     ('string', RE(r"'''"), [RE(r"'''")]),
     ('string', RE(r"\$/"), [RE(r"/\$")]),
-    ('string', RE(r"'"), [RE(r"'")], string),
+    ('string', RE(r"'"), [RE(r"'")], string0),
     ('regexp', RE(r"~?\/[^\/\n]+\/"), [RE(r"\B\b")], regexp),
-    ('string', RE(r"\""), [RE(r"\"")], string),
+    ('string', RE(r"\""), [RE(r"\"")], string0),
     ('meta', RE(r"^#!/usr/bin/env"), [RE(r"$")]),
     ('number', number),
     ('class', RE(r"\b(?:class|interface|trait|enum)"), [RE(r"{")], class0),
     ('number', number0),
-    ('meta', doctag),
-    ('string', string0),
-    ('_group1', RE(r"\?"), [RE(r"\:")]),
+    ('meta', meta),
+    ('string', string),
+    ('_group0', RE(r"\?"), [RE(r"\:")]),
     ('symbol', symbol),
 ]
