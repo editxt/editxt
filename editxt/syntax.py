@@ -468,7 +468,8 @@ class SyntaxDefinition(NoHighlight):
         try:
             self._regex = re.compile("|".join(groups), self.flags)
         except re.error as err:
-            msg = "cannot compile groups for %s: %s\n%r" % (self.name, err, groups)
+            msg = "cannot compile groups for %s: %s\n%r" \
+                    % (self.name, err, "|".join(groups))
             log.warn(msg, exc_info=True)
             raise Error(msg)
         color_name = self.default_text_color

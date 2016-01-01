@@ -170,6 +170,7 @@ def transform_syntax(data, definitions, path, name=None):
             definitions.add_ref(path, ref, name=name_, expr=assignment)
 
     rules = []
+    ranges = []
     syntax = SyntaxClass(name, rules)
     if data._get("keywords"):
         for word_name, value in iter_keyword_sets(data.keywords):
@@ -190,7 +191,6 @@ def transform_syntax(data, definitions, path, name=None):
         return syntax
 
     ref = expr_ref(name, "rules")
-    #print('add_ref', path + ("contains",), name)
     definitions.add_ref(path + ("contains",), ref, expr=syntax)
     for i, item in enumerate(contains):
         if item == "self":
@@ -202,41 +202,15 @@ def transform_syntax(data, definitions, path, name=None):
             continue  # skip
         if item.get("type") == "RecursiveRef":
             syntax.recursive_refs += 1
-            rules.extend(definitions.add_recursive_ref(
-                item["path"],
-                item["name"],
-                expr_ref(name, "rules[{i}] = {ref}"),
-                expr=syntax,
-                i=sum(1 for r in rules if not isinstance(r, Comment)),
-            ))
+            ref_index = sum(1 for r in rules if not isinstance(r, Comment))
+            ranges.append((len(rules), item, ref_index, True))
+            rules.append(Placeholder(item))
             continue
         base_path = path + ("contains", i)
+        ref = expr_ref(name, "rules[{i}]")
         if "variants" in item:
-            def iteritems(item):
-                if "contains" in item and \
-                        all("contains" in v for v in item["variants"]):
-                    print("WARNING variants mask contains in {} {}".format(
-                        syntax.safe_name, base_path))
-                for j, variant in enumerate(item["variants"]):
-                    var = item.copy()
-                    var.update(variant)
-                    var_path = base_path + ("variants", j)
-                    if "contains" in item and "contains" not in variant:
-                        assert "starts" not in item, \
-                            DictObj(item) - {"contains", "variants", "keywords"}
-                        child_path = base_path
-                    elif "starts" in item and "starts" not in variant:
-                        assert "contains" not in item, \
-                            DictObj(item) - {"contains", "variants", "keywords"}
-                        child_path = base_path
-                    else:
-                        child_path = var_path
-                    yield var, var_path, child_path
-            items = list(iteritems(item))
-            #print('add_ref', base_path, DictObj(item) - {"contains", "variants", "keywords"})
-            ref = expr_ref(name, "rules[{i}]")
-            offset = sum(1 for r in rules if not isinstance(r, Comment))
-            variants_ref = VariantsRef(offset, len(items), ref, expr=syntax)
+            items = list(iter_variants(item, syntax, base_path))
+            variants_ref = VariantsRef(rules, len(items), ref, expr=syntax)
             definitions.add_ref(base_path, variants_ref, expr=syntax)
         else:
             items = [(item, base_path, base_path)]
@@ -249,23 +223,65 @@ def transform_syntax(data, definitions, path, name=None):
             if "end" in item or item._get("endsWithParent") \
                     or "contains" in item or "keywords" in item \
                     or "beginKeywords" in item or "starts" in item:
-                ref = expr_ref(name, "rules[{i}]")
                 index = sum(1 for r in rules if not isinstance(r, Comment))
-                #print('add_ref', item_path, item - {"contains", "variants", "keywords"})
                 definitions.add_ref(item_path, ref, expr=syntax, i=index)
-                rng = transform_range(item, definitions, child_path)
-                if item._get("endsParent"):
-                    end_name = definitions.get_name(rng)
-                    end = SyntaxClass(item.className, [rng])
-                    end_name = definitions.add(end)
-                    syntax.parent_ends.append(Literal(end_name))
-                else:
-                    rules.append(rng)
+                rule_index = None if item._get("endsParent") else len(rules)
+                ranges.append((rule_index, item, child_path, False))
+                if rule_index is not None:
+                    rules.append(Placeholder(item))
             elif not plain and "begin" in item:
                 add_words(item.className, [regex(item.begin)], item_path)
             else:
-                rules.append(Comment("# unknown {}".format(ordered_repr(original))))
+                rules.append(Comment("# ignore {}".format(ordered_repr(original))))
+
+    # do these last because nested rules may reference rules in this definition
+    added_rules = 0
+    for i, item, arg, is_recursive in ranges:
+        if is_recursive:
+            refs = definitions.add_recursive_ref(
+                item["path"],
+                item["name"],
+                expr_ref(name, "rules[{i}] = {ref}"),
+                expr=syntax,
+                i=added_rules + arg,  # arg is ref_index
+            )
+            index = i + added_rules
+            rules[index:index + 1] = refs
+            added_rules += len(refs) - 1
+        else:
+            rng = transform_range(item, definitions, arg)  # arg is child_path
+            if item._get("endsParent"):
+                assert i is None
+                end = SyntaxClass(item.className, [rng])
+                end_name = definitions.add(end)
+                syntax.parent_ends.append(Literal(end_name))
+            else:
+                rules[i + added_rules] = rng
+
     return syntax
+
+
+def iter_variants(item, syntax, base_path):
+    if "contains" in item and \
+            all("contains" in v for v in item["variants"]):
+        print("WARNING variants mask contains in {} {}".format(
+            syntax.safe_name, base_path))
+    for j, variant in enumerate(item["variants"]):
+        var = item.copy()
+        del var['variants']
+        var.update(variant)
+        var_path = base_path + ("variants", j)
+        if "contains" in item and "contains" not in variant:
+            assert "starts" not in item, \
+                DictObj(item) - {"contains", "variants", "keywords"}
+            child_path = base_path
+        elif "starts" in item and "starts" not in variant:
+            assert "contains" not in item, \
+                DictObj(item) - {"contains", "variants", "keywords"}
+            child_path = base_path
+        else:
+            child_path = var_path
+        yield var, var_path, child_path
 
 
 def transform_range(item, definitions, path):
@@ -431,14 +447,12 @@ class Definitions:
     def add_recursive_ref(self, path, name, template, **args):
         path = tuple(path)
         if path not in self.paths:
-            if set(name) - IGNORE_ITEM_KEYS:
-                import bug; bug.trace()
             assert not (set(name) - IGNORE_ITEM_KEYS), (path, name)
-            return [Comment("# {} {}".format(path, ordered_repr(name)))]
+            return [Comment("# ignore {}".format(ordered_repr(name)))]
         ref_template, ref_args = self.paths[path]
         refs = []
         if isinstance(ref_template, VariantsRef):
-            items = ref_template.items
+            items = ref_template.iteritems()
         else:
             items = [(ref_template, ref_args)]
         for ref_template, ref_args in items:
@@ -469,14 +483,14 @@ class Definitions:
         for path, name, template, args in self.recursive_refs:
             ref_template, ref_args = self.paths[path]
             if isinstance(ref_template, VariantsRef):
-                items = ref_template.items
+                items = list(ref_template.iteritems())
             else:
                 items = [(ref_template, ref_args)]
             for i, (ref_template, ref_args) in enumerate(items):
                 ref = ref_template.format(**deref(ref_args))
                 if len(items) > 1:
                     ith_args = dict(args)
-                    ith_args['i'] += i  # TODO assert this references the correct rule
+                    ith_args['i'] += i
                 else:
                     ith_args = args
                 assignment = template.format(ref=ref, **deref(ith_args))
@@ -610,11 +624,31 @@ class RecursiveRef(Literal):
 
 class VariantsRef:
 
-    def __init__(self, offset, length, template, **args):
+    def __init__(self, rules, length, template, **args):
         assert 'i' not in args, args
-        self.items = []
-        for i in range(length):
-            self.items.append((template, dict(args, i=offset + i)))
+        self.rules = rules
+        self.length = length
+        self.offset = sum(1 for r in rules if not isinstance(r, Comment))
+        self.template = template
+        self.args = args
+
+    def iteritems(self):
+        for i in range(self.length):
+            if not isinstance(self.rules[self.offset + i], Comment):
+                yield self.template, dict(self.args, i=self.offset + i)
+
+
+class Placeholder(Literal):
+
+    def __init__(self, value):
+        self.value = value
+
+    def __eq__(self, other):
+        raise Error("placeholder for {} should not be compared"
+                    .format(ordered_repr(self.value)))
+
+    def __repr__(self):
+        raise Error("placeholder for {}".format(ordered_repr(self.value)))
 
 
 def expr_ref(name, attribute):
@@ -654,8 +688,10 @@ class RE:
         return self
 
     def __repr__(self, paren=re.compile(r"(^|[^\\](?:\\\\)*)\((?!\?)"),
+                       capture_all=re.compile(r"(^|[^\\](?:\\\\)*)\[\^\]"),
                        group=re.compile(r"\$\d")):
         pattern = paren.sub(r"\1(?:", self.pattern) # paren -> non-capturing paren
+        pattern = capture_all.sub(r"\1[\s\S]", pattern) # [^] -> [\s\S]
         assert not group.search(pattern), "illegal group ref: " + self.pattern
         return 'RE(r"{}")'.format(pattern.replace('"', '\\"'))
 
