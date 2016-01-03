@@ -457,6 +457,9 @@ class SyntaxDefinition(NoHighlight):
         self.registry = registry
         self.lang_ids = _lang_ids or ("%x" % i for i in count())
 
+    def __repr__(self):
+        return "<{} {} {}>".format(type(self).__name__, self.filename, self.name)
+
     def _init(self):
         wordinfo = {}
         groups = []
@@ -652,7 +655,7 @@ class SyntaxDefinition(NoHighlight):
             except Error:
                 raise
             except Exception:
-                log.error("rule error: %s", rule, exc_info=True)
+                log.error("%s rule error: %s", self, rule, exc_info=True)
 
     def get_color(self, name="text_color"):
         if " " in name:

@@ -25,7 +25,7 @@ Usage:
     syntaxgen.py -h | --help
 
 Required arguments:
-    <hljs-file>     A language syntax defintion file or directory
+    <hljs-file>     A language syntax definition file or directory
                     containing language syntax definition files.
     <editxt-file>   A file or directory where syntax definitions
                     will be written.
@@ -49,7 +49,9 @@ import os
 import re
 import sys
 import traceback
+from bdb import BdbQuit
 from collections import defaultdict, OrderedDict
+from contextlib import contextmanager
 from itertools import chain, count
 from os.path import abspath, basename, dirname, exists, isdir, isfile, join, splitext
 from subprocess import check_output, CalledProcessError
@@ -108,6 +110,8 @@ def convert_syntax(hljs_file, xt_file, overwrite, verbose):
         converted = parse(hljs_file, verbose)
         with open(xt_file, "w", encoding="utf-8") as fh:
             fh.write(converted)
+    except (BdbQuit, KeyboardInterrupt):
+        raise
     except CalledProcessError:
         return "ERROR"
     except Exception:
@@ -121,17 +125,17 @@ def parse(hljs_file, verbose=False):
         ["node", HLJS2JSON, hljs_file],
         universal_newlines=True
     )
-    if verbose > 1:
+    if verbose > 2:
         print(hljs_json)
     meta = parse_metadata(hljs_file)
     data = DictObj(json.loads(hljs_json))
-    definitions = Definitions()
+    definitions = Definitions(verbose > 1)
     if data._get("case_insensitive"):
         flags = Assignment("flags", Literal("re.IGNORECASE | re.MULTILINE"))
         flags = definitions.add(flags)
         assert flags == "flags", flags
     syntax = transform_syntax(data, definitions, ())
-    definitions.update_recursive_refs(syntax)
+    syntax.finalize_recursive_refs(definitions.recursive)
     assert not syntax.contains_self, syntax
     assert not syntax.parent_ends, syntax
     aliases = [meta.alias] + data._get("aliases", [])
@@ -158,123 +162,79 @@ def parse_metadata(hljs_file):
 
 
 def transform_syntax(data, definitions, path, name=None):
-    #print("transyn", path, name)
-    def add_words(name_, words, path=None):
-        assert isinstance(name_, str), name_
-        assignment = Assignment(name_, words)
-        ref = definitions.add(assignment)
-        rules.append((name_, Literal(ref)))
-        if path is not None:
-            ref  = "({name!r}, {expr.safe_name})"
-            #print('add_ref', path)
-            definitions.add_ref(path, ref, name=name_, expr=assignment)
-
-    rules = []
-    ranges = []
-    syntax = SyntaxClass(name, rules)
+    syntax = SyntaxClass(name)
     if data._get("keywords"):
-        for word_name, value in iter_keyword_sets(data.keywords):
-            add_words(word_name, value)
+        for word_name, words in iter_keyword_sets(data.keywords):
+            syntax.add_rule(definitions.add_words(word_name, words))
     if data._get("beginKeywords"):
-        add_words("keyword", split_keywords(data.beginKeywords))
+        words = split_keywords(data.beginKeywords)
+        syntax.add_rule(definitions.add_words("keyword", words))
 
     contains = data._get("contains", [])
     if hasattr(contains, "get") and contains.get("type") == "RecursiveRef":
-        syntax.recursive_refs += 1
-        refs = definitions.add_recursive_ref(
-            contains["path"],
-            contains["name"],
-            expr_ref(name, "rules.extend({ref})"),
-            expr=syntax,
-        )
-        assert len(refs) == 1, (contains, refs)
+        definitions.recursive.add_rules_ref(syntax, contains)
         return syntax
 
-    ref = expr_ref(name, "rules")
-    definitions.add_ref(path + ("contains",), ref, expr=syntax)
+    definitions.recursive[path + ("contains",)] = syntax
     for i, item in enumerate(contains):
         if item == "self":
             assert name is not None, repr(syntax)
             syntax.contains_self = True
             continue
-        if not set(item) - IGNORE_ITEM_KEYS:
-            rules.append(Comment("# ignore {}".format(ordered_repr(item))))
-            continue  # skip
         if item.get("type") == "RecursiveRef":
-            syntax.recursive_refs += 1
-            ref_index = sum(1 for r in rules if not isinstance(r, Comment))
-            ranges.append((len(rules), item, ref_index, True))
-            rules.append(Placeholder(item))
+            syntax.add_recursive_ref(item)
             continue
         base_path = path + ("contains", i)
-        ref = expr_ref(name, "rules[{i}]")
         if "variants" in item:
+            if "contains" in item:
+                # create rule in case a variant masks it and references it
+                cont = definitions.new_dict_obj(item)
+                with definitions.new_rule(cont, base_path) as rule:
+                    rule.range = transform_range(cont, definitions, base_path)
             items = list(iter_variants(item, syntax, base_path))
-            variants_ref = VariantsRef(rules, len(items), ref, expr=syntax)
-            definitions.add_ref(base_path, variants_ref, expr=syntax)
+            paths = [item_path for x, item_path, x in items]
+            #print(base_path, '-->', paths)
+            definitions.recursive[base_path] = VariantsRef(paths)
         else:
             items = [(item, base_path, base_path)]
         for item, item_path, child_path in items:
-            original = item
-            plain = "className" not in item
-            if plain:
-                item = dict(item, className=definitions.get_name(item))
-            item = DictObj(item)
+            original, item = item, definitions.new_dict_obj(item)
+            has_name = not item.className.startswith("_")
             if "end" in item or item._get("endsWithParent") \
                     or "contains" in item or "keywords" in item \
                     or "beginKeywords" in item or "starts" in item:
-                index = sum(1 for r in rules if not isinstance(r, Comment))
-                definitions.add_ref(item_path, ref, expr=syntax, i=index)
-                rule_index = None if item._get("endsParent") else len(rules)
-                ranges.append((rule_index, item, child_path, False))
-                if rule_index is not None:
-                    rules.append(Placeholder(item))
-            elif not plain and "begin" in item:
-                add_words(item.className, [regex(item.begin)], item_path)
+                with definitions.new_rule(item, item_path) as rule:
+                    rule.range = transform_range(item, definitions, child_path)
+                if item._get("endsParent"):
+                    end = SyntaxClass(item.className, [rule])
+                    end_name = definitions.add(end)
+                    syntax.parent_ends.append(Literal(end_name))
+                else:
+                    syntax.add_rule(rule)
+            elif has_name and "begin" in item:
+                words = [regex(item.begin)]
+                rule = definitions.add_words(item.className, words, item_path)
+                syntax.add_rule(rule)
             else:
-                rules.append(Comment("# ignore {}".format(ordered_repr(original))))
-
-    # do these last because nested rules may reference rules in this definition
-    added_rules = 0
-    for i, item, arg, is_recursive in ranges:
-        if is_recursive:
-            refs = definitions.add_recursive_ref(
-                item["path"],
-                item["name"],
-                expr_ref(name, "rules[{i}] = {ref}"),
-                expr=syntax,
-                i=added_rules + arg,  # arg is ref_index
-            )
-            index = i + added_rules
-            rules[index:index + 1] = refs
-            added_rules += len(refs) - 1
-        else:
-            rng = transform_range(item, definitions, arg)  # arg is child_path
-            if item._get("endsParent"):
-                assert i is None
-                end = SyntaxClass(item.className, [rng])
-                end_name = definitions.add(end)
-                syntax.parent_ends.append(Literal(end_name))
-            else:
-                rules[i + added_rules] = rng
+                syntax.add_rule(definitions.ignore(original, item_path))
 
     return syntax
 
 
 def iter_variants(item, syntax, base_path):
-    if "contains" in item and \
-            all("contains" in v for v in item["variants"]):
-        print("WARNING variants mask contains in {} {}".format(
-            syntax.safe_name, base_path))
     for j, variant in enumerate(item["variants"]):
         var = item.copy()
         del var['variants']
         var.update(variant)
         var_path = base_path + ("variants", j)
-        if "contains" in item and "contains" not in variant:
-            assert "starts" not in item, \
-                DictObj(item) - {"contains", "variants", "keywords"}
-            child_path = base_path
+        if "contains" in item:
+            if "contains" in variant:
+                print("WARNING {} masks contains in {}".format(
+                      var_path, syntax.safe_name))
+            else:
+                assert "starts" not in item, \
+                    DictObj(item) - {"contains", "variants", "keywords"}
+            child_path = var_path
         elif "starts" in item and "starts" not in variant:
             assert "contains" not in item, \
                 DictObj(item) - {"contains", "variants", "keywords"}
@@ -292,11 +252,10 @@ def transform_range(item, definitions, path):
 
     content = ()
     ends = [end]
-    if "keywords" in item or item._get("contains"):
+    if "keywords" in item or item._get("contains") \
+            or any("contains" in v for v in item._get("variants", [])):
         syntax = transform_syntax(item, definitions, path, name)
-        if syntax or syntax.contains_self:
-            syntax_name = definitions.add(syntax)
-            content = (Literal(syntax_name),)
+        content = (SyntaxRef(definitions.add(syntax), syntax),)
         ends.extend(syntax.parent_ends)
 
     if "subLanguage" in item:
@@ -318,30 +277,24 @@ def transform_range(item, definitions, path):
             for word_name, words in iter_keyword_sets(item.keywords):
                 words = [w for w in words if begin_re.match(w)]
                 if words:
-                    assignment = Assignment(word_name, words)
-                    ref = definitions.add(assignment)
-                    rules.append((word_name, Literal(ref)))
-        rules.append((name, begin, ends) + content)
-        begin_syntax = SyntaxClass(name, rules)
-        begin = Literal(definitions.add(begin_syntax))
+                    rules.append(definitions.add_words(word_name, words))
+        rules.append(definitions.add_range((name, begin, ends) + content))
+        begin_syntax = SyntaxClass(name, rules, is_begin=True)
+        begin = SyntaxRef(definitions.add(begin_syntax), begin_syntax)
         ends = []
         if isinstance(item.starts, str):
-            content = (Literal(item.starts),)
+            content = (item.starts,)
             raise NotImplementedError("how to end? {}".format(
                     item - {"contains", "variants", "keywords"}))
         else:
-            next_args = {"_parent_starts": begin}
-            if "className" not in item.starts:
-                next_args["className"] = definitions.get_name(item.starts)
-            next_item = DictObj(item.starts, **next_args)
+            next_item = definitions.new_dict_obj(item.starts, _parent_starts=begin)
             next_path = path + ("starts",)
-            rng = transform_range(next_item, definitions, next_path)
-            #print('add_ref', next_path)
-            definitions.add_ref(next_path, "{expr}", expr=Literal(repr(rng)))
+            with definitions.new_rule(next_item, next_path) as rule:
+                rule.range = rng = transform_range(next_item, definitions, next_path)
             if next_item._get("starts"):
                 begin = rng[1]
             ends = rng[2]
-            content = (rng[3],) if len(rng) > 3 else ()
+            content = rng[3:]
 
     return (name, begin, ends) + content
 
@@ -359,10 +312,10 @@ def transform_begin(item, definitions):
     else:
         begin = RE(r"\B|\b")
     if begin != RE(r"\B|\b") and not begin.pattern.startswith(("(?=", "(?<=")):
-        if item._get("excludeBegin") and not str(item.className).startswith("_"):
+        if item._get("excludeBegin") and not item.className.startswith("_"):
             assert not item._get("returnBegin"), item - {"contains"}
             #begin = RE(r"(?<={})".format(begin.pattern))
-            rules = [Literal("('_{}', [{!r}])".format(item.className, begin))]
+            rules = [definitions.add_words(item.className, [begin])]
             syntax = SyntaxClass("_{}".format(item.className), rules)
             begin = Literal(definitions.add(syntax))
         elif item._get("returnBegin"):
@@ -375,11 +328,11 @@ def transform_end(item, definitions, lookahead=False):
     if item._get("end"):
         end = regex(item.end)
         if item._get("excludeEnd") \
-                and not str(item.className).startswith("_") \
+                and not item.className.startswith("_") \
                 and not lookahead \
                 and not end.pattern.startswith("(?="):
             #end = end.lookahead()
-            rules = [Literal("('_{}', [{!r}])".format(item.className, end))]
+            rules = [definitions.add_words(item.className, [end])]
             syntax = SyntaxClass("_{}".format(item.className), rules)
             return Literal(definitions.add(syntax))
         elif lookahead and not end.is_lookahead():
@@ -422,17 +375,53 @@ def regex(obj):
     raise Error("unknown regex type: {}".format(obj))
 
 
+class RE:
+
+    def __init__(self, pattern):
+        self.pattern = pattern.replace("\n", r"\n").replace("\r", r"\r")
+
+    def __bool__(self):
+        return bool(self.pattern)
+
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and self.pattern == other.pattern
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __or__(self, other):
+        if other:
+            if not self:
+                return other
+            return RE(self.pattern + "|" + other.pattern)
+        return self
+
+    def __repr__(self, paren=re.compile(r"(^|(?<=[^\\])(?:\\\\)*)\((?!\?)"),
+                       capture_all=re.compile(r"(^|(?<=[^\\])(?:\\\\)*)\[\^\]"),
+                       group=re.compile(r"\$\d")):
+        pattern = paren.sub(r"\1(?:", self.pattern) # paren -> non-capturing paren
+        pattern = capture_all.sub(r"\1[\s\S]", pattern) # [^] -> [\s\S]
+        assert not group.search(pattern), "illegal group ref: " + self.pattern
+        return 'RE(r"{}")'.format(pattern.replace('"', '\\"'))
+
+    def is_lookahead(self):
+        # WARNING returns wrong result (False) for /(?=\))/
+        return self.pattern.startswith("(?=") and self.pattern.endswith(")") \
+                and ")" not in self.pattern[3:-1]
+
+    def lookahead(self):
+        return RE(r"(?={})".format(self.pattern))
+
+
 class Definitions:
 
-    def __init__(self):
+    def __init__(self, verbose=False):
         self.items = OrderedDict()
         self.names = ("_group{}".format(i) for i in count())
-        self.paths = {}
-        self.deferred_refs = defaultdict(list)
-        self.recursive_refs = []
+        self.recursive = Recurses(self, verbose=verbose)
 
     def add(self, expr):
-        self.update_recursive_refs(expr)
+        expr.finalize_recursive_refs(self.recursive)
         name = self.find(expr)
         if name is None:
             name = self.get_name(expr, expr.name)
@@ -441,66 +430,38 @@ class Definitions:
             self.items[name] = expr
         return name
 
-    def add_ref(self, path, template, **args):
-        self.paths[path] = (template, args)
+    def new_rule(self, item, path):
+        @contextmanager
+        def context():
+            rule = Rule(item.className, Placeholder(item))
+            if path not in self.recursive:
+                self.recursive[path] = rule
+            yield rule
+            self.add(rule)
+        return context()
 
-    def add_recursive_ref(self, path, name, template, **args):
-        path = tuple(path)
-        if path not in self.paths:
-            assert not (set(name) - IGNORE_ITEM_KEYS), (path, name)
-            return [Comment("# ignore {}".format(ordered_repr(name)))]
-        ref_template, ref_args = self.paths[path]
-        refs = []
-        if isinstance(ref_template, VariantsRef):
-            items = ref_template.iteritems()
-        else:
-            items = [(ref_template, ref_args)]
-        for ref_template, ref_args in items:
-            ref = RecursiveRef(ref_template, ref_args)
-            deferred = (ref, path, name, template, args)
-            self.deferred_refs[id(args["expr"])].append(deferred)
-            refs.append(ref)
-        return refs
+    def add_words(self, name, words, path=None):
+        assert isinstance(name, str), name
+        rule = (name, words)
+        if len(repr(rule)) > 80:
+            words_name = self.add(Assignment(*rule))
+            rule = (name, Literal(words_name))
+        return self.add_range(rule, path)
 
-    def update_recursive_refs(self, expr):
-        if id(expr) not in self.deferred_refs:
-            return
-        for ref, path, name, template, args in self.deferred_refs[id(expr)]:
-            exp = ref.args["expr"] #self.find_item(ref.args["expr"])
-            if any(exp is obj for obj in self):
-                ref.update(exp)
-            else:
-                assert path in self.paths, (path, name, template, args)
-                self.recursive_refs.append((path, name, template, args))
+    def add_range(self, rng, path=None):
+        rule = Rule(rng[0], rng)
+        self.add(rule)
+        if path is not None and path not in self.recursive:
+            self.recursive[path] = rule
+        return rule
 
-    def get_recursive_refs(self):
-        def deref(args):
-            def find(obj):
-                found = self.find_item(obj)
-                return obj if found is None else found
-            return {k: find(v) for k, v in args.items()}
-        defs = []
-        for path, name, template, args in self.recursive_refs:
-            ref_template, ref_args = self.paths[path]
-            if isinstance(ref_template, VariantsRef):
-                items = list(ref_template.iteritems())
-            else:
-                items = [(ref_template, ref_args)]
-            for i, (ref_template, ref_args) in enumerate(items):
-                ref = ref_template.format(**deref(ref_args))
-                if len(items) > 1:
-                    ith_args = dict(args)
-                    ith_args['i'] += i
-                else:
-                    ith_args = args
-                assignment = template.format(ref=ref, **deref(ith_args))
-                if assignment not in defs:
-                    defs.append(assignment)
-        if defs:
-            defs.sort(key=lambda x: 1 if ".extend(" in x else 0)
-            defs.insert(0, "")
-            defs.insert(0, "")
-        return "\n".join(defs)
+    def ignore(self, item, path):
+        if isinstance(item, dict) and item.get("className", "").startswith("_"):
+            item = dict(item)
+            item.pop("className")
+        comment = Comment("# ignore {}".format(ordered_repr(item)))
+        self.recursive[path] = comment
+        return comment
 
     def get(self, name, default=None):
         return self.items.get(name, default)
@@ -518,6 +479,19 @@ class Definitions:
         while name in self or name in PYTHON_KEYWORDS:
             name = temp + str(next(number))
         return Name(name, value)
+
+    def new_dict_obj(self, item, **kw):
+        if "className" not in item:
+            assert "className" not in kw, kw
+            try:
+                begin = item["begin"]
+                if isinstance(begin, dict):
+                    begin = begin["pattern"]
+                name = DEFAULT_COLORS[begin]
+            except KeyError:
+                name = self.get_name(item).name
+            kw["className"] = name
+        return DictObj(item, **kw)
 
     def find(self, obj):
         for name, item in self.items.items():
@@ -540,10 +514,195 @@ class Definitions:
     def __repr__(self):
         if not self.items:
             return ""
-        defs = []
+        statements = []
         for expr in self.items.values():
-            defs.append(repr(expr))
-        return "\n" + "\n\n".join(defs)
+            if isinstance(expr, Rule):
+                if expr.assignment is None:
+                    continue
+                rule = Literal(expr.repr_rule_tuple(expr.range, ""))
+                expr = Literal(expr.assignment.repr_assignment(rule))
+            elif isinstance(expr, SyntaxClass) and not expr:
+                expr = Literal("#" + repr(expr).replace("\n", "\n#"))
+            statements.append(repr(expr))
+        return "\n" + "\n\n".join(statements)
+
+    def get_recursive_refs(self):
+        statements = []
+        rules_refs = []
+        for expr in self.items.values():
+            if isinstance(expr, SyntaxClass):
+                statements.extend(repr(r) for r in expr.iter_recursive_refs())
+                rules_refs.extend(expr.recursive_rules_refs)
+        statements.extend(repr(r) for r in rules_refs)
+        if statements:
+            statements.insert(0, "")
+            statements.insert(0, "")
+        return "\n".join(statements)
+
+
+class Recurses:
+
+    def __init__(self, definitions, verbose=False):
+        self.pathmap = {}
+        self.placeholders = defaultdict(list)
+        self.definitions = definitions
+        self.verbose = verbose
+
+    def __setitem__(self, path, obj):
+        if self.verbose:
+            print(path, obj.safe_name if isinstance(obj, Rule) else obj)
+        assert isinstance(obj, (Rule, Literal, VariantsRef, SyntaxClass)), (type(obj), obj)
+        if path in self.placeholders:
+            assert isinstance(obj, Rule), obj
+            if obj.assignment is None:
+                obj.setup_assignment()
+            for rule in self.placeholders[path]:
+                rule.value = obj
+        #if path in self.pathmap:
+        #    assert self.pathmap[path] == obj, (self.pathmap[path], obj)
+        self.pathmap[path] = obj
+
+    def __getitem__(self, item):
+        if isinstance(item, dict):
+            desc = item["desc"]
+            path = tuple(item["path"])
+        else:
+            path = desc = item
+        try:
+            return self.pathmap[path]
+        except KeyError:
+            raise KeyError(Literal("{} {}".format(path, desc)))
+
+    def __contains__(self, path):
+        return path in self.pathmap
+
+    def add_rules_ref(self, syntax, item):
+        syntax.add_recursive_rules_ref(self[item])
+
+    def iter_rules(self, item, syntax):
+        def deref(rule, path):
+            if isinstance(rule, Rule):
+                found = self.definitions.find_item(rule)
+                if found is not None:
+                    rule = found
+                if rule.assignment is None:
+                    # TODO don't do this for clojure _group20
+                    rule.setup_assignment()
+                return RecursiveRule(rule, found is None)
+            if isinstance(rule, Comment):
+                return rule
+            raise NotImplementedError("{} {} -> {!r}".format(path, desc, rule))
+        desc = item["desc"]
+        path = tuple(item["path"])
+        ref = self[item]
+        if isinstance(ref, VariantsRef):
+            for path in ref.paths:
+                try:
+                    ref = self[path]
+                except KeyError:
+                    rule = RecursiveRule(Placeholder(path), True)
+                    self.placeholders[path].append(rule)
+                else:
+                    rule = deref(ref, path)
+                yield rule
+        else:
+            yield deref(ref, path)
+
+    def dedupe(self, rule, path=None):
+        found = self.definitions.find_item(rule)
+        if found is None:
+            assert isinstance(rule, RecursiveRule), rule
+            # maybe the wrong place for this
+            rule.recursive = True
+        else:
+            if found is rule:
+                # could be problematic:
+                # just because rule is in definitions does not mean
+                # it does not need an assignment (clojure works though)
+                return rule
+            if path is not None:
+                self[path] = found
+            rule = found
+        return rule
+
+
+class ValueType:
+
+    def __init__(self, value):
+        self.value = value
+
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and self.value == other.value
+
+    def __ne__(self, other):
+        return not self == other
+
+
+class Literal(ValueType):
+
+    def __repr__(self):
+        if isinstance(self.value, Name):
+            return str(self.value)
+        return self.value
+
+
+class Placeholder(Literal):
+
+    def __init__(self, item):
+        self.value = "placeholder for {}".format(ordered_repr(item))
+
+
+class SyntaxRef(Literal):
+
+    def __init__(self, name, syntax):
+        self.value = name
+        self.syntax = syntax
+
+    def __bool__(self):
+        return bool(self.syntax)
+
+
+class Comment(Literal):
+
+    def __eq__(self, other):
+        return isinstance(other, type(self))
+
+    def __len__(self):
+        return 0
+
+
+class RecursiveRef(ValueType):
+    """Container: value contains path to recursive element"""
+
+
+class VariantsRef:
+
+    def __init__(self, paths):
+        self.paths = paths
+
+    def __repr__(self):
+        return "<{} {}>".format(type(self).__name__, self.paths)
+
+
+class RulesExtension:
+
+    def __init__(self, dst, src):
+        self.src = src
+        self.dst = dst
+
+    def __repr__(self):
+        prefix = '' if self.src else '#'
+        ref = self.dst.ref("rules.extend({ref})", ref=self.src.ref("rules"))
+        return prefix + repr(ref)
+
+class Ref:
+
+    def __init__(self, template, args):
+        self.template = template
+        self.args = args
+
+    def __repr__(self):
+        return self.template.format(**self.args)
 
 
 class Name:
@@ -551,7 +710,7 @@ class Name:
     def __init__(self, name, value=None):
         if isinstance(name, Name):
             name = name.name
-            assert isinstance(name, str)
+        assert name is None or isinstance(name, str), (type(name), name)
         self.name = name
         self.value = value if value is not None else object()
 
@@ -563,6 +722,7 @@ class Name:
             return self.name == other
         return isinstance(other, type(self)) and (
             self.name == other.name or
+            self.value is other.value or
             self.value == other.value
         )
 
@@ -579,132 +739,7 @@ class Name:
         return repr(self.__str__())
 
 
-class Literal:
-
-    def __init__(self, value):
-        self.value = value
-
-    def __eq__(self, other):
-        return isinstance(other, type(self)) and self.value == other.value
-
-    def __ne__(self, other):
-        return not self == other
-
-    def __repr__(self):
-        if isinstance(self.value, Name):
-            return str(self.value)
-        return self.value
-
-
-class RecursiveRef(Literal):
-
-    def __init__(self, template, args):
-        self.template = template
-        self.args = args
-        self.defined = False
-
-    @property
-    def value(self):
-        prefix = "" if self.defined else "None,  # "
-        return prefix + self.template.format(**self.args)
-
-    def update(self, expr):
-        assert self.args.get("expr") is expr, (self.args, expr)
-        self.defined = True
-
-    def __eq__(self, other):
-        expr = self.args["expr"]
-        if isinstance(other, tuple) and repr(self).startswith("("):
-            ns = {expr.safe_name: Literal(expr.safe_name)}
-        else:
-            ns = {expr.safe_name: expr}
-        obj = eval(repr(self), {}, ns)
-        return obj == other or super().__eq__(other)
-
-
-class VariantsRef:
-
-    def __init__(self, rules, length, template, **args):
-        assert 'i' not in args, args
-        self.rules = rules
-        self.length = length
-        self.offset = sum(1 for r in rules if not isinstance(r, Comment))
-        self.template = template
-        self.args = args
-
-    def iteritems(self):
-        for i in range(self.length):
-            if not isinstance(self.rules[self.offset + i], Comment):
-                yield self.template, dict(self.args, i=self.offset + i)
-
-
-class Placeholder(Literal):
-
-    def __init__(self, value):
-        self.value = value
-
-    def __eq__(self, other):
-        raise Error("placeholder for {} should not be compared"
-                    .format(ordered_repr(self.value)))
-
-    def __repr__(self):
-        raise Error("placeholder for {}".format(ordered_repr(self.value)))
-
-
-def expr_ref(name, attribute):
-    if name is None:
-        return attribute
-    return "{expr.safe_name}." + attribute
-
-
-class Comment(Literal):
-
-    def update(self, expr):
-        pass
-
-    def __eq__(self, other):
-        return isinstance(other, type(self))
-
-
-class RE:
-
-    def __init__(self, pattern):
-        self.pattern = pattern.replace("\n", r"\n").replace("\r", r"\r")
-
-    def __bool__(self):
-        return bool(self.pattern)
-
-    def __eq__(self, other):
-        return isinstance(other, type(self)) and self.pattern == other.pattern
-
-    def __ne__(self, other):
-        return not self == other
-
-    def __or__(self, other):
-        if other:
-            if not self:
-                return other
-            return RE(self.pattern + "|" + other.pattern)
-        return self
-
-    def __repr__(self, paren=re.compile(r"(^|[^\\](?:\\\\)*)\((?!\?)"),
-                       capture_all=re.compile(r"(^|[^\\](?:\\\\)*)\[\^\]"),
-                       group=re.compile(r"\$\d")):
-        pattern = paren.sub(r"\1(?:", self.pattern) # paren -> non-capturing paren
-        pattern = capture_all.sub(r"\1[\s\S]", pattern) # [^] -> [\s\S]
-        assert not group.search(pattern), "illegal group ref: " + self.pattern
-        return 'RE(r"{}")'.format(pattern.replace('"', '\\"'))
-
-    def is_lookahead(self):
-        # WARNING returns wrong result (False) for /(?=\))/
-        return self.pattern.startswith("(?=") and self.pattern.endswith(")") \
-                and ")" not in self.pattern[3:-1]
-
-    def lookahead(self):
-        return RE(r"(?={})".format(self.pattern))
-
-
-class Assignment:
+class Assignment(ValueType):
 
     def __init__(self, name, value):
         self.safe_name = Name(name, value)
@@ -714,25 +749,134 @@ class Assignment:
     def name(self):
         return self.safe_name
 
-    def __eq__(self, other):
-        return isinstance(other, type(self)) and self.value == other.value
+    def finalize_recursive_refs(self, recursive):
+        pass
 
-    def __ne__(self, other):
-        return not self == other
+    def repr_assignment(self, value):
+        return "{} = {}".format(self.safe_name, pretty_format(value))
 
     def __repr__(self):
-        return "{} = {}".format(self.safe_name, pretty_format(self.value))
+        return self.repr_assignment(self.value)
+
+
+class Rule(ValueType):
+
+    def __init__(self, name, value):
+        self.value = Assignment(name, value)
+        self.assignment = None
+
+    @property
+    def safe_name(self):
+        return self.value.safe_name
+    @safe_name.setter
+    def safe_name(self, value):
+        self.value.safe_name = value
+
+    @property
+    def name(self):
+        return self.value.safe_name
+
+    @property
+    def range(self):
+        return self.value.value
+    @range.setter
+    def range(self, value):
+        self.value.value = value
+
+    def setup_assignment(self):
+        self.assignment = self.value
+
+    def finalize_recursive_refs(self, recursive):
+        pass
+
+    def repr_rule_tuple(self, rule, sep=","):
+        if len(rule) == 4:
+            assert isinstance(rule[3], (str, SyntaxRef)), rule
+            if not rule[3]:
+                return repr(rule[:3]) + "{} #, {!r})".format(sep, rule[3])
+        return repr(rule)
+
+    def __bool__(self):
+        rng = self.range
+        return bool(
+            not rng[0].startswith("_") or               # text color
+            len(self.range) > 3 or                      # sub rules
+            (isinstance(rng[1], SyntaxRef) and rng[1])  # begin rules
+        )
+
+    def __repr__(self):
+        if isinstance(self.range, Placeholder):
+            raise Error(repr(self.range))
+        if self.assignment is not None:
+            return str(self.safe_name)
+        return self.repr_rule_tuple(self.range)
+
+
+class RecursiveRule(ValueType):
+
+    def __init__(self, rule, recursive=False):
+        assert isinstance(rule, (Rule, Placeholder)), rule
+        self.value = rule
+        self.recursive = recursive
+
+    @property
+    def safe_name(self):
+        return self.value.safe_name
+
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self.value == other.value
+        return self.value == other
+
+    def __bool__(self):
+        return bool(self.value)
+
+    def __repr__(self):
+        if self.recursive:
+            return "None, # {}".format(self.value)
+        return repr(self.value)
 
 
 class SyntaxClass:
 
-    def __init__(self, name, rules):
+    def __init__(self, name, rules=None, *, is_begin=False):
         self.name = Name(name, self)
-        self.rules = rules
+        self.rules = rules or []
         self._safe_name = None
         self.contains_self = False
         self.parent_ends = []
-        self.recursive_refs = 0
+        self.recursive_rules_refs = []
+        self.is_root_namespace = name is None
+        self.is_begin = is_begin
+
+    def add_rule(self, rule):
+        self.rules.append(rule)
+
+    def add_recursive_ref(self, item):
+        self.rules.append(RecursiveRef(item))
+
+    def add_recursive_rules_ref(self, syntax):
+        assert isinstance(syntax, SyntaxClass), syntax
+        self.recursive_rules_refs.append(RulesExtension(self, syntax))
+
+    def finalize_recursive_refs(self, recursive):
+        def iter_rules():
+            for rule in self.rules:
+                if isinstance(rule, RecursiveRef):
+                    yield from recursive.iter_rules(rule.value, self)
+                elif isinstance(rule, Comment):
+                    yield rule
+                else:
+                    if not isinstance(rule, (Rule, Comment)):
+                        import bug; bug.trace()
+                    yield recursive.dedupe(rule)
+        self.rules[:] = iter_rules()
+
+    def ref(self, template, **args):
+        args["expr"] = self
+        if self.is_root_namespace:
+            return Ref(template, args)
+        return Ref("{expr.safe_name}." + template, args)
 
     @property
     def safe_name(self):
@@ -741,21 +885,8 @@ class SyntaxClass:
     def safe_name(self, value):
         self._safe_name = value
 
-    @staticmethod
-    def _get_names_from_range(rng):
-        names = []
-        if not isinstance(rng, Literal):
-            if isinstance(rng[1], Literal):
-                names.append(rng[1].value)
-            for end in rng[2]:
-                if isinstance(end, Literal):
-                    names.append(end.value)
-            if len(rng) > 3 and isinstance(rng[3], Literal):
-                names.append(rng[3].value)
-        return names
-
     def __bool__(self):
-        return bool(self.rules or self.recursive_refs)
+        return bool(any(self.rules) or self.recursive_rules_refs or self.is_begin)
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and (
@@ -775,6 +906,14 @@ class SyntaxClass:
         if self._safe_name:
             lines.append("{}.__name__ = {!r}".format(self.safe_name, self.name))
         return "\n".join(lines)
+
+    def iter_recursive_refs(self):
+        comments = 0
+        for i, rule in enumerate(self.rules):
+            if isinstance(rule, Comment):
+                comments += 1
+            elif isinstance(rule, RecursiveRule) and rule.recursive:
+                yield self.ref("rules[{i}] = {ref}", i=i - comments, ref=rule.value)
 
 
 class DictObj:
@@ -861,6 +1000,13 @@ def ordered_repr(obj, seen=None):
 
 
 class Error(Exception): pass
+
+
+DEFAULT_COLORS = {
+    r"\\[\s\S]": "operator.escape",
+    r"`[\s\S]": "operator.escape",
+    #'""': "operator.escape",
+}
 
 
 TEMPLATE = """

@@ -78,18 +78,17 @@ function isSimple(value) {
 }
 
 function recursiveRef(path, value, thisPath) {
-    var name = {};
+    var desc = {};
     if (Object.prototype.toString.apply(value) === '[object Array]') {
-        name = thisPath.join("-");
+        desc = thisPath.join("-");
     } else {
-        name = {};
         for (key in value) {
             if (value.hasOwnProperty(key)) {
-                name[key] = isSimple(value[key]) ? value[key] : "...";
+                desc[key] = isSimple(value[key]) ? value[key] : "...";
             }
         }
     }
-    return {type: "RecursiveRef", path: path, name: name}
+    return {type: "RecursiveRef", path: path, desc: desc}
 }
 
 var fs = require("fs"),
