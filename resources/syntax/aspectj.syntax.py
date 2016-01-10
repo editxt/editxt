@@ -48,9 +48,10 @@ string0 = ('string', RE(r"'"), [RE(r"'")], string)
 
 string1 = ('string', RE(r"\""), [RE(r"\"")], string)
 
-class _class:
+class _class0:
     default_text_color = DELIMITER
-    rules = [('class', [RE(r"[{;=]")])]
+    rules = [('_class', [RE(r"[{;=]")])]
+_class0.__name__ = '_class'
 
 title = ('title', [RE(r"[a-zA-Z_]\w*")])
 
@@ -72,7 +73,7 @@ class _group3:
     default_text_color = DELIMITER
     rules = [('keyword', keyword2)]
 
-class class1:
+class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['aspect']),
@@ -80,9 +81,9 @@ class class1:
         title,
         ('_group3', RE(r"\([^\)]*"), [RE(r"[)]+")], _group3),
     ]
-class1.__name__ = 'class'
+class0.__name__ = 'class'
 
-class class3:
+class class2:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['class', 'interface']),
@@ -90,7 +91,7 @@ class class3:
         ('_group4', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
         title,
     ]
-class3.__name__ = 'class'
+class2.__name__ = 'class'
 
 class _group6:
     default_text_color = DELIMITER
@@ -115,9 +116,10 @@ class _group7:
         string1,
     ]
 
-class _function:
+class _function0:
     default_text_color = DELIMITER
-    rules = [('function', [RE(r"[{;=]")])]
+    rules = [('_function', [RE(r"[{;=]")])]
+_function0.__name__ = '_function'
 
 class _group10:
     default_text_color = DELIMITER
@@ -133,7 +135,7 @@ class params:
     default_text_color = DELIMITER
     rules = [('keyword', keyword), string0, string1, number0, comment3]
 
-class function0:
+class function:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
@@ -142,7 +144,6 @@ class function0:
         comment2,
         comment3,
     ]
-function0.__name__ = 'function'
 
 rules = [
     ('keyword', keyword),
@@ -151,12 +152,12 @@ rules = [
     comment3,
     string0,
     string1,
-    ('class', RE(r"\b(?:aspect)"), [_class], class1),
-    ('class', RE(r"\b(?:class|interface)"), [_class], class3),
+    ('class', RE(r"\b(?:aspect)"), [_class0], class0),
+    ('class', RE(r"\b(?:class|interface)"), [_class0], class2),
     ('_group5', RE(r"\b(?:pointcut|after|before|around|throwing|returning)"), [RE(r"[)]")], _group5),
     ('_group7', RE(r"(?=[:])"), [RE(r"[{;]")], _group7),
     ('_group9', RE(r"\b(?:new|throw)"), [RE(r"\B\b")]),
-    ('function', RE(r"(?=\w+ +\w+(?:\.)?\w+\s*\([^\)]*\)\s*(?:(?:throws)[\w\s,]+)?[\{;])"), [_function], function0),
+    ('function', RE(r"(?=\w+ +\w+(?:\.)?\w+\s*\([^\)]*\)\s*(?:(?:throws)[\w\s,]+)?[\{;])"), [_function0], function),
     number0,
     ('meta', [RE(r"@[A-Za-z]+")]),
 ]

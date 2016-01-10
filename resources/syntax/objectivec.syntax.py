@@ -45,17 +45,18 @@ class meta:
         ('meta-string', RE(r"<"), [RE(r">")]),
     ]
 
-class _class:
+class _class0:
     default_text_color = DELIMITER
-    rules = [('class', [RE(r"(?:{|$)")])]
+    rules = [('_class', [RE(r"(?:{|$)")])]
+_class0.__name__ = '_class'
 
-class class1:
+class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['@interface', '@class', '@protocol', '@implementation']),
         ('title', [RE(r"[a-zA-Z_]\w*")]),
     ]
-class1.__name__ = 'class'
+class0.__name__ = 'class'
 
 rules = [
     ('built_in', built_in),
@@ -69,6 +70,6 @@ rules = [
     ('string', RE(r"@\""), [RE(r"\"")], string),
     ('string', RE(r"'"), [RE(r"[^\\]'")]),
     ('meta', RE(r"#"), [RE(r"$")], meta),
-    ('class', RE(r"(?:@interface|@class|@protocol|@implementation)\b"), [_class], class1),
+    ('class', RE(r"(?:@interface|@class|@protocol|@implementation)\b"), [_class0], class0),
     # ignore {'begin': '\\.[a-zA-Z_]\\w*', 'relevance': 0},
 ]

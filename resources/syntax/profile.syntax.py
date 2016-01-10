@@ -24,14 +24,15 @@ class string:
     default_text_color = DELIMITER
     rules = [operator_escape]
 
-class _string:
-    default_text_color = DELIMITER
-    rules = [('string', [RE(r"\(")])]
-
 class _string0:
     default_text_color = DELIMITER
-    rules = [('string', [RE(r"\)$")])]
+    rules = [('_string', [RE(r"\(")])]
 _string0.__name__ = '_string'
+
+class _string2:
+    default_text_color = DELIMITER
+    rules = [('_string', [RE(r"\)$")])]
+_string2.__name__ = '_string'
 
 rules = [
     number0,
@@ -40,5 +41,5 @@ rules = [
     ('_group2', RE(r"function calls"), [RE(r"$")], _group2),
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('string', _string, [_string0]),
+    ('string', _string0, [_string2]),
 ]

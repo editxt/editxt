@@ -39,16 +39,16 @@ number2 = [
     RE(r"\b(?:\d[\d_]*(?:\.[0-9_]+)?(?:[eE][+-]?[0-9_]+)?)(?:[uif](?:8|16|32|64|size))?"),
 ]
 
-class _function:
+class _function0:
     default_text_color = DELIMITER
-    rules = [('function', [RE(r"(?:\(|<)")])]
+    rules = [('_function', [RE(r"(?:\(|<)")])]
+_function0.__name__ = '_function'
 
 title = ('title', [RE(r"[a-zA-Z_]\w*")])
 
-class function0:
+class function:
     default_text_color = DELIMITER
     rules = [('keyword', ['fn']), title]
-function0.__name__ = 'function'
 
 class class0:
     default_text_color = DELIMITER
@@ -77,7 +77,7 @@ rules = [
     ('number', [RE(r"\b0o(?:[0-7_]+)(?:[uif](?:8|16|32|64|size))?")]),
     ('number', [RE(r"\b0x(?:[A-Fa-f0-9_]+)(?:[uif](?:8|16|32|64|size))?")]),
     ('number', number2),
-    ('function', RE(r"\b(?:fn)"), [_function], function0),
+    ('function', RE(r"\b(?:fn)"), [_function0], function),
     ('meta', RE(r"#\!?\["), [RE(r"\]")]),
     ('class', RE(r"\b(?:type)"), [RE(r"(?:=|<)")], class0),
     ('class', RE(r"\b(?:trait|enum)"), [RE(r"{")], class2),

@@ -14,24 +14,24 @@ number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
-class _attr:
-    default_text_color = DELIMITER
-    rules = [('attr', [RE(r"\s*\"")])]
-
 class _attr0:
     default_text_color = DELIMITER
-    rules = [('attr', [RE(r"\"\s*:\s*")])]
+    rules = [('_attr', [RE(r"\s*\"")])]
 _attr0.__name__ = '_attr'
+
+class _attr2:
+    default_text_color = DELIMITER
+    rules = [('_attr', [RE(r"\"\s*:\s*")])]
+_attr2.__name__ = '_attr'
+
+class attr:
+    default_text_color = DELIMITER
+    rules = [operator_escape]
 
 class attr1:
     default_text_color = DELIMITER
-    rules = [operator_escape]
+    rules = [('attr', _attr0, [_attr2], attr)]
 attr1.__name__ = 'attr'
-
-class attr3:
-    default_text_color = DELIMITER
-    rules = [('attr', _attr, [_attr0], attr1)]
-attr3.__name__ = 'attr'
 
 class _group1:
     default_text_color = DELIMITER
@@ -39,7 +39,7 @@ class _group1:
 
 class _group0:
     default_text_color = DELIMITER
-    rules = [('attr', attr3, [RE(r",")], _group1)]
+    rules = [('attr', attr1, [RE(r",")], _group1)]
 
 class _group3:
     default_text_color = DELIMITER

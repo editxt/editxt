@@ -83,14 +83,14 @@ class _group5:
         ('regexp', RE(r"(?:m|qr)?/"), [RE(r"/[a-z]*")], regexp0),
     ]
 
-class _function:
+class _function0:
     default_text_color = DELIMITER
-    rules = [('function', [RE(r"(?:\s*\(.*?\))?[;{]")])]
+    rules = [('_function', [RE(r"(?:\s*\(.*?\))?[;{]")])]
+_function0.__name__ = '_function'
 
-class function0:
+class function:
     default_text_color = DELIMITER
     rules = [('keyword', ['sub']), ('title', [RE(r"[a-zA-Z]\w*")])]
-function0.__name__ = 'function'
 
 class _group7:
     default_text_color = DELIMITER
@@ -117,7 +117,7 @@ rules = [
     ('string', RE(r"-?\w+\s*\=\>"), [RE(r"\B\b")]),
     ('number', number),
     ('_group5', RE(r"(?:\/\/|!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~|\b(?:split|return|print|reverse|grep)\b)\s*"), [RE(r"\B\b")], _group5),
-    ('function', RE(r"\b(?:sub)"), [_function], function0),
+    ('function', RE(r"\b(?:sub)"), [_function0], function),
     # ignore {'begin': '-\\w\\b', 'relevance': 0},
     ('_group7', RE(r"^__DATA__$"), [RE(r"^__END__$")], 'mojolicious'),
 ]

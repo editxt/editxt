@@ -11,9 +11,10 @@ class comment:
         ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class _meta:
+class _meta0:
     default_text_color = DELIMITER
-    rules = [('meta', [RE(r"\s")])]
+    rules = [('_meta', [RE(r"\s")])]
+_meta0.__name__ = '_meta'
 
 class _group2:
     default_text_color = DELIMITER
@@ -31,21 +32,22 @@ class _group2:
 #        # ignore {'begin': "\\\\'\\w", 'relevance': 0},
 #    ]
 
-class _string:
-    default_text_color = DELIMITER
-    rules = [('string', [RE(r"\[")])]
-
 class _string0:
     default_text_color = DELIMITER
-    rules = [('string', [RE(r"\]")])]
+    rules = [('_string', [RE(r"\[")])]
 _string0.__name__ = '_string'
+
+class _string2:
+    default_text_color = DELIMITER
+    rules = [('_string', [RE(r"\]")])]
+_string2.__name__ = '_string'
 
 class _group7:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '(link|image:?):', 'relevance': 0},
         ('link', RE(r"\w"), [RE(r"[^\[]+")]),
-        ('string', _string, [_string0]),
+        ('string', _string0, [_string2]),
     ]
 
 rules = [
@@ -55,7 +57,7 @@ rules = [
     ('_group1', RE(r"^[=\*]{4,}\n"), [RE(r"\n^[=\*]{4,}$")]),
     ('section', [RE(r"^(?:={1,5}) .+?(?: \1)?$")]),
     ('section', [RE(r"^[^\[\]\n]+?\n[=\-~\^\+]{2,}$")]),
-    ('meta', RE(r"^:.+?:"), [_meta]),
+    ('meta', RE(r"^:.+?:"), [_meta0]),
     ('meta', [RE(r"^\[.+?\]$")]),
     ('quote', RE(r"^_{4,}\n"), [RE(r"\n_{4,}$")]),
     ('code', RE(r"^[\-\.]{4,}\n"), [RE(r"\n[\-\.]{4,}$")]),

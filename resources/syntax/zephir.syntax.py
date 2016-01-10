@@ -50,9 +50,10 @@ class string:
     default_text_color = DELIMITER
     rules = [operator_escape]
 
-class _function:
+class _function0:
     default_text_color = DELIMITER
-    rules = [('function', [RE(r"[;{]")])]
+    rules = [('_function', [RE(r"[;{]")])]
+_function0.__name__ = '_function'
 
 title = ('title', [RE(r"[a-zA-Z_]\w*")])
 
@@ -84,27 +85,27 @@ class params:
         number1,
     ]
 
-class function0:
+class function:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['function']),
         title,
         ('params', RE(r"\("), [RE(r"\)")], params),
     ]
-function0.__name__ = 'function'
 
-class _class:
+class _class0:
     default_text_color = DELIMITER
-    rules = [('class', [RE(r"{")])]
+    rules = [('_class', [RE(r"{")])]
+_class0.__name__ = '_class'
 
-class class1:
+class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['class', 'interface']),
         ('_group2', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
         title,
     ]
-class1.__name__ = 'class'
+class0.__name__ = 'class'
 
 class _group3:
     default_text_color = DELIMITER
@@ -122,8 +123,8 @@ rules = [
     ('comment', RE(r"__halt_compiler.+?;"), [RE(r"\B\b")], comment4),
     ('string', RE(r"<<<['\"]?\w+['\"]?$"), [RE(r"^\w+;")], string),
     # ignore {'begin': {'pattern': '(::|->)+[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*', 'type': 'RegExp'}},
-    ('function', RE(r"\b(?:function)"), [_function], function0),
-    ('class', RE(r"\b(?:class|interface)"), [_class], class1),
+    ('function', RE(r"\b(?:function)"), [_function0], function),
+    ('class', RE(r"\b(?:class|interface)"), [_class0], class0),
     ('_group3', RE(r"\b(?:namespace)"), [RE(r";")], _group3),
     ('_group4', RE(r"\b(?:use)"), [RE(r";")], _group4),
     # ignore {'begin': '=>'},

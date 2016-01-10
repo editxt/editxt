@@ -22,9 +22,10 @@ class comment:
 
 string = ('string', RE(r"\"\"\""), [RE(r"\"\"\"")])
 
-class _subst:
+class _subst0:
     default_text_color = DELIMITER
-    rules = [('subst', [RE(r"``")])]
+    rules = [('_subst', [RE(r"``")])]
+_subst0.__name__ = '_subst'
 
 keyword1 = """
     assembly module package import alias class interface object given
@@ -41,7 +42,7 @@ number = [
 
 number0 = ('number', number)
 
-class subst0:
+class subst:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword1),
@@ -50,11 +51,10 @@ class subst0:
         string0,
         number0,
     ]
-subst0.__name__ = 'subst'
 
 class string1:
     default_text_color = DELIMITER
-    rules = [('subst', _subst, [_subst], subst0)]
+    rules = [('subst', _subst0, [_subst0], subst)]
 string1.__name__ = 'string'
 
 string2 = ('string', RE(r"\""), [RE(r"\"")], string1)
@@ -71,4 +71,4 @@ rules = [
     number0,
 ]
 
-subst0.rules[2] = string2
+subst.rules[2] = string2

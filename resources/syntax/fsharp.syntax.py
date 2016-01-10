@@ -26,22 +26,23 @@ class comment:
         ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class _class:
+class _class0:
     default_text_color = DELIMITER
-    rules = [('class', [RE(r"\(|=|$")])]
+    rules = [('_class', [RE(r"\(|=|$")])]
+_class0.__name__ = '_class'
 
 class _group2:
     default_text_color = DELIMITER
     rules = [('title', [RE(r"'[a-zA-Z0-9_]+")])]
 
-class class1:
+class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['type']),
         ('title', [RE(r"[a-zA-Z_]\w*")]),
         ('_group2', RE(r"<"), [RE(r">")], _group2),
     ]
-class1.__name__ = 'class'
+class0.__name__ = 'class'
 
 operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
@@ -64,7 +65,7 @@ rules = [
     ('string', RE(r"@\""), [RE(r"\"")]), #, string),
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
     ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment),
-    ('class', RE(r"\b(?:type)"), [_class], class1),
+    ('class', RE(r"\b(?:type)"), [_class0], class0),
     ('meta', RE(r"\[<"), [RE(r">\]")]),
     ('symbol', RE(r"\B(?:'[A-Za-z])\b"), [RE(r"\B\b")], symbol),
     ('comment', RE(r"//"), [RE(r"$")], comment),

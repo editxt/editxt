@@ -37,14 +37,14 @@ class class0:
     ]
 class0.__name__ = 'class'
 
-class _function:
+class _function0:
     default_text_color = DELIMITER
-    rules = [('function', [RE(r";")])]
+    rules = [('_function', [RE(r";")])]
+_function0.__name__ = '_function'
 
-class function0:
+class function:
     default_text_color = DELIMITER
     rules = [('keyword', ['rpc', 'returns']), ('keyword', ['rpc'])]
-function0.__name__ = 'function'
 
 rules = [
     ('built_in', built_in),
@@ -54,6 +54,6 @@ rules = [
     ('number', [RE(r"\b\d+(?:\.\d+)?")]),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('class', RE(r"\b(?:message|enum|service)"), [RE(r"\{")], class0),
-    ('function', RE(r"\b(?:rpc)"), [_function], function0),
+    ('function', RE(r"\b(?:rpc)"), [_function0], function),
     ('_group2', RE(r"^\s*[A-Z_]+"), [RE(r"\s*=")]),
 ]

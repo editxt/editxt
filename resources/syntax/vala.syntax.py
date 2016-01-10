@@ -13,17 +13,18 @@ keyword = """
     this get set const stdout stdin stderr var
     """.split()
 
-class _class:
+class _class0:
     default_text_color = DELIMITER
-    rules = [('class', [RE(r"{")])]
+    rules = [('_class', [RE(r"{")])]
+_class0.__name__ = '_class'
 
-class class1:
+class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['class', 'interface', 'delegate', 'namespace']),
         ('title', [RE(r"[a-zA-Z_]\w*")]),
     ]
-class1.__name__ = 'class'
+class0.__name__ = 'class'
 
 class comment:
     default_text_color = DELIMITER
@@ -47,7 +48,7 @@ rules = [
     ('built_in', ['DBus', 'GLib', 'CCode', 'Gee', 'Object']),
     ('keyword', keyword),
     ('literal', ['false', 'true', 'null']),
-    ('class', RE(r"\b(?:class|interface|delegate|namespace)"), [_class], class1),
+    ('class', RE(r"\b(?:class|interface|delegate|namespace)"), [_class0], class0),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),

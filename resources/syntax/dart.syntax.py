@@ -72,18 +72,19 @@ class comment:
         ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class _class:
+class _class0:
     default_text_color = DELIMITER
-    rules = [('class', [RE(r"{")])]
+    rules = [('_class', [RE(r"{")])]
+_class0.__name__ = '_class'
 
-class class1:
+class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['class', 'interface']),
         ('_group1', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
         ('title', [RE(r"[a-zA-Z_]\w*")]),
     ]
-class1.__name__ = 'class'
+class0.__name__ = 'class'
 
 rules = [
     ('built_in', built_in),
@@ -100,7 +101,7 @@ rules = [
     ('comment', RE(r"///"), [RE(r"$")], 'markdown'),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('class', RE(r"\b(?:class|interface)"), [_class], class1),
+    ('class', RE(r"\b(?:class|interface)"), [_class0], class0),
     number0,
     ('meta', [RE(r"@[A-Za-z]+")]),
     # ignore {'begin': '=>'},

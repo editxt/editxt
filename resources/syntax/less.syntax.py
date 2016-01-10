@@ -39,11 +39,12 @@ class _group20:
     rules = [('_group2', RE(r"(?:url|data-uri)\("), [RE(r"\B|\b")])]
 _group20.__name__ = '_group2'
 
-class _string:
+class _string0:
     default_text_color = DELIMITER
-    rules = [('string', [RE(r"[\)\n]")])]
+    rules = [('_string', [RE(r"[\)\n]")])]
+_string0.__name__ = '_string'
 
-_group21 = ('_group2', _group20, [_string])
+_group21 = ('_group2', _group20, [_string0])
 
 number1 = ('number', [RE(r"#[0-9A-Fa-f]+\b")])
 
@@ -59,11 +60,12 @@ variable0 = ('variable', [RE(r"@{[\w-]+}")])
 
 built_in = ('built_in', [RE(r"~?`[^`]*?`")])
 
-class _attribute:
+class _attribute0:
     default_text_color = DELIMITER
-    rules = [('attribute', [RE(r":")])]
+    rules = [('_attribute', [RE(r":")])]
+_attribute0.__name__ = '_attribute'
 
-attribute0 = ('attribute', RE(r"(?=[\w-]+\s*:)"), [_attribute])
+attribute = ('attribute', RE(r"(?=[\w-]+\s*:)"), [_attribute0])
 
 meta = ('meta', [RE(r"!important")])
 
@@ -81,7 +83,7 @@ class _group1:
         variable,
         variable0,
         built_in,
-        attribute0,
+        attribute,
         meta,
     ]
 
@@ -108,7 +110,7 @@ class _group4:
         variable,
         variable0,
         built_in,
-        attribute0,
+        attribute,
         meta,
         ('_group5', RE(r"{"), [RE(r"}")], _group5),
     ]
@@ -134,7 +136,7 @@ class _group7:
         variable,
         variable0,
         built_in,
-        attribute0,
+        attribute,
         meta,
     ]
 
@@ -159,17 +161,17 @@ class _group6:
         # ignore {'begin': '!important'},
     ]
 
-class attribute1:
+class attribute0:
     default_text_color = DELIMITER
     rules = [comment0, comment1]
-attribute1.__name__ = 'attribute'
+attribute0.__name__ = 'attribute'
 
-class attribute3:
+class attribute2:
     default_text_color = DELIMITER
     rules = [
-        ('attribute', RE(r"(?:[\w-]+|@{[\w-]+})"), [_attribute], attribute1),
+        ('attribute', RE(r"(?:[\w-]+|@{[\w-]+})"), [_attribute0], attribute0),
     ]
-attribute3.__name__ = 'attribute'
+attribute2.__name__ = 'attribute'
 
 class _group11:
     default_text_color = DELIMITER
@@ -183,7 +185,7 @@ rules = [
     ('variable', variable5, [RE(r"(?=[;}])")], _group4),
     ('_group6', RE(r"(?=[\.#:&\[])"), [RE(r"(?=[;{}])")], _group6),
     ('_group6', RE(r"(?=(?:[\w-]+|@{[\w-]+})[^;]*{)"), [RE(r"(?={)")], _group6),
-    ('attribute', attribute3, [RE(r"(?=[;}])")], _group11),
+    ('attribute', attribute2, [RE(r"(?=[;}])")], _group11),
 ]
 
 _group3.rules.extend(_group1.rules)

@@ -28,15 +28,16 @@ class comment:
         ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class _title:
+class _title0:
     default_text_color = DELIMITER
-    rules = [('title', [RE(r"[ \t\n\r]")])]
+    rules = [('_title', [RE(r"[ \t\n\r]")])]
+_title0.__name__ = '_title'
 
 class _group1:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['proc']),
-        ('title', RE(r"[ \t\n\r]+(?:::)?[a-zA-Z_](?:(?:::)?[a-zA-Z0-9_])*"), [_title]),
+        ('title', RE(r"[ \t\n\r]+(?:::)?[a-zA-Z_](?:(?:::)?[a-zA-Z0-9_])*"), [_title0]),
     ]
 
 operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])

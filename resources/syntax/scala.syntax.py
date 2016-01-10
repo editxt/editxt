@@ -48,11 +48,12 @@ class function:
     default_text_color = DELIMITER
     rules = [('keyword', ['def']), title0]
 
-class _class:
+class _class0:
     default_text_color = DELIMITER
-    rules = [('class', [RE(r"[:={\[\n;]")])]
+    rules = [('_class', [RE(r"[:={\[\n;]")])]
+_class0.__name__ = '_class'
 
-class class1:
+class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['class', 'object', 'trait', 'type']),
@@ -60,7 +61,7 @@ class class1:
         ('params', RE(r"\("), [RE(r"\)")]),
         title0,
     ]
-class1.__name__ = 'class'
+class0.__name__ = 'class'
 
 number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
@@ -78,7 +79,7 @@ rules = [
     ('symbol', [RE(r"'\w[\w\d_]*(?!')")]),
     ('type', [RE(r"\b[A-Z][A-Za-z0-9_]*")]),
     ('function', RE(r"\b(?:def)"), [RE(r"[:={\[(?:\n;]")], function),
-    ('class', RE(r"\b(?:class|object|trait|type)"), [_class], class1),
+    ('class', RE(r"\b(?:class|object|trait|type)"), [_class0], class0),
     ('number', number),
     ('meta', [RE(r"@[A-Za-z]+")]),
 ]

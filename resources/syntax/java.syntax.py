@@ -43,13 +43,14 @@ string0 = ('string', RE(r"'"), [RE(r"'")], string)
 
 string1 = ('string', RE(r"\""), [RE(r"\"")], string)
 
-class _class:
+class _class0:
     default_text_color = DELIMITER
-    rules = [('class', [RE(r"[{;=]")])]
+    rules = [('_class', [RE(r"[{;=]")])]
+_class0.__name__ = '_class'
 
 title = ('title', [RE(r"[a-zA-Z_]\w*")])
 
-class class1:
+class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['class', 'interface']),
@@ -57,11 +58,12 @@ class class1:
         ('_group2', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
         title,
     ]
-class1.__name__ = 'class'
+class0.__name__ = 'class'
 
-class _function:
+class _function0:
     default_text_color = DELIMITER
-    rules = [('function', [RE(r"[{;=]")])]
+    rules = [('_function', [RE(r"[{;=]")])]
+_function0.__name__ = '_function'
 
 class _group4:
     default_text_color = DELIMITER
@@ -81,7 +83,7 @@ class params:
         comment3,
     ]
 
-class function0:
+class function:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
@@ -90,7 +92,6 @@ class function0:
         comment2,
         comment3,
     ]
-function0.__name__ = 'function'
 
 number1 = [
     RE(r"\b(?:0[bB](?:[01]+[01_]+[01]+|[01]+)|0[xX](?:[a-fA-F0-9]+[a-fA-F0-9_]+[a-fA-F0-9]+|[a-fA-F0-9]+)|(?:(?:[\d]+[\d_]+[\d]+|[\d]+)(?:\.(?:[\d]+[\d_]+[\d]+|[\d]+))?|\.(?:[\d]+[\d_]+[\d]+|[\d]+))(?:[eE][-+]?\d+)?)[lLfF]?"),
@@ -103,9 +104,9 @@ rules = [
     comment3,
     string0,
     string1,
-    ('class', RE(r"\b(?:class|interface)"), [_class], class1),
+    ('class', RE(r"\b(?:class|interface)"), [_class0], class0),
     ('_group3', RE(r"\b(?:new|throw|return|else)"), [RE(r"\B\b")]),
-    ('function', RE(r"(?=(?:[a-zA-Z_]\w*(?:<[a-zA-Z_]\w*>)?\s+)+[a-zA-Z_]\w*\s*\()"), [_function], function0),
+    ('function', RE(r"(?=(?:[a-zA-Z_]\w*(?:<[a-zA-Z_]\w*>)?\s+)+[a-zA-Z_]\w*\s*\()"), [_function0], function),
     ('number', number1),
     ('meta', [RE(r"@[A-Za-z]+")]),
 ]

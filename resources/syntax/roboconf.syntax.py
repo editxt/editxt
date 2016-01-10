@@ -6,14 +6,15 @@ file_patterns = ['*.roboconf', '*.graph', '*.instances']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-class _attribute:
+class _attribute0:
     default_text_color = DELIMITER
-    rules = [('attribute', [RE(r"\s*:")])]
+    rules = [('_attribute', [RE(r"\s*:")])]
+_attribute0.__name__ = '_attribute'
 
-class attribute1:
+class attribute0:
     default_text_color = DELIMITER
-    rules = [('attribute', RE(r"[a-zA-Z-_]+"), [_attribute])]
-attribute1.__name__ = 'attribute'
+    rules = [('attribute', RE(r"[a-zA-Z-_]+"), [_attribute0])]
+attribute0.__name__ = 'attribute'
 
 class _group1:
     default_text_color = DELIMITER
@@ -22,7 +23,7 @@ class _group1:
         ('keyword', [RE(r"\(optional\)")]),
     ]
 
-attribute2 = ('attribute', attribute1, [RE(r";")], _group1)
+attribute1 = ('attribute', attribute0, [RE(r";")], _group1)
 
 class comment:
     default_text_color = DELIMITER
@@ -35,7 +36,7 @@ comment0 = ('comment', RE(r"#"), [RE(r"$")], comment)
 
 class _group0:
     default_text_color = DELIMITER
-    rules = [('keyword', ['facet']), attribute2, comment0]
+    rules = [('keyword', ['facet']), attribute1, comment0]
 
 keyword2 = """
     name count channels instance-data instance-state instance of
@@ -43,11 +44,11 @@ keyword2 = """
 
 class _group3:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword2), attribute2, comment0]
+    rules = [('keyword', keyword2), attribute1, comment0]
 
 class _group4:
     default_text_color = DELIMITER
-    rules = [attribute2, comment0]
+    rules = [attribute1, comment0]
 
 rules = [
     ('keyword', ['import']),

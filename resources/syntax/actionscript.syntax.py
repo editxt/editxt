@@ -44,18 +44,19 @@ class class0:
     rules = [('keyword', ['package']), title]
 class0.__name__ = 'class'
 
-class _class:
+class _class0:
     default_text_color = DELIMITER
-    rules = [('class', [RE(r"{")])]
+    rules = [('_class', [RE(r"{")])]
+_class0.__name__ = '_class'
 
-class class3:
+class class2:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['class', 'interface']),
         ('_group1', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
         title,
     ]
-class3.__name__ = 'class'
+class2.__name__ = 'class'
 
 class meta:
     default_text_color = DELIMITER
@@ -64,9 +65,10 @@ class meta:
         ('keyword', ['import', 'include']),
     ]
 
-class _function:
+class _function0:
     default_text_color = DELIMITER
-    rules = [('function', [RE(r"[{;]")])]
+    rules = [('_function', [RE(r"[{;]")])]
+_function0.__name__ = '_function'
 
 class params:
     default_text_color = DELIMITER
@@ -78,7 +80,7 @@ class params:
         ('rest_arg', RE(r"[.]{3}"), [RE(r"[a-zA-Z_$][a-zA-Z0-9_$]*")]),
     ]
 
-class function0:
+class function:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['function']),
@@ -86,7 +88,6 @@ class function0:
         ('params', RE(r"\("), [RE(r"\)")], params),
         # ignore {'begin': ':\\s*([*]|[a-zA-Z_$][a-zA-Z0-9_$]*)'},
     ]
-function0.__name__ = 'function'
 
 rules = [
     ('keyword', keyword),
@@ -97,7 +98,7 @@ rules = [
     comment1,
     ('number', number),
     ('class', RE(r"\b(?:package)"), [RE(r"{")], class0),
-    ('class', RE(r"\b(?:class|interface)"), [_class], class3),
+    ('class', RE(r"\b(?:class|interface)"), [_class0], class2),
     ('meta', RE(r"\b(?:import|include)"), [RE(r";")], meta),
-    ('function', RE(r"\b(?:function)"), [_function], function0),
+    ('function', RE(r"\b(?:function)"), [_function0], function),
 ]

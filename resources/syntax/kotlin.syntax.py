@@ -32,9 +32,10 @@ comment2 = ('comment', RE(r"//"), [RE(r"$")], comment1)
 
 comment3 = ('comment', RE(r"/\*"), [RE(r"\*/")], comment1)
 
-class _function:
+class _function0:
     default_text_color = DELIMITER
-    rules = [('function', [RE(r"[(?:]|$")])]
+    rules = [('_function', [RE(r"[(?:]|$")])]
+_function0.__name__ = '_function'
 
 title = ('title', [RE(r"[a-zA-Z_]\w*")])
 
@@ -47,15 +48,16 @@ class type0:
     rules = [('keyword', ['reified'])]
 type0.__name__ = 'type'
 
-class _type:
+class _type0:
     default_text_color = DELIMITER
-    rules = [('type', [RE(r":\s*")])]
+    rules = [('_type', [RE(r":\s*")])]
+_type0.__name__ = '_type'
 
 class params:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword), ('type', _type, [RE(r"(?=\s*[=\)])")])]
+    rules = [('keyword', keyword), ('type', _type0, [RE(r"(?=\s*[=\)])")])]
 
-class function0:
+class function:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
@@ -66,40 +68,41 @@ class function0:
         comment2,
         comment3,
     ]
-function0.__name__ = 'function'
 
-class _class:
+class _class0:
     default_text_color = DELIMITER
-    rules = [('class', [RE(r"[:\{(?:]|$")])]
-
-class _type0:
-    default_text_color = DELIMITER
-    rules = [('type', [RE(r"<")])]
-_type0.__name__ = '_type'
-
-class _type1:
-    default_text_color = DELIMITER
-    rules = [('type', [RE(r">")])]
-_type1.__name__ = '_type'
+    rules = [('_class', [RE(r"[:\{(?:]|$")])]
+_class0.__name__ = '_class'
 
 class _type2:
     default_text_color = DELIMITER
-    rules = [('type', [RE(r"[,:]\s*")])]
+    rules = [('_type', [RE(r"<")])]
 _type2.__name__ = '_type'
 
-class class1:
+class _type4:
+    default_text_color = DELIMITER
+    rules = [('_type', [RE(r">")])]
+_type4.__name__ = '_type'
+
+class _type6:
+    default_text_color = DELIMITER
+    rules = [('_type', [RE(r"[,:]\s*")])]
+_type6.__name__ = '_type'
+
+class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['class', 'trait']),
         title,
-        ('type', _type0, [_type1]),
-        ('type', _type2, [RE(r"(?=[<\(,]|$)")]),
+        ('type', _type2, [_type4]),
+        ('type', _type6, [RE(r"(?=[<\(,]|$)")]),
     ]
-class1.__name__ = 'class'
+class0.__name__ = 'class'
 
-class _variable:
+class _variable0:
     default_text_color = DELIMITER
-    rules = [('variable', [RE(r"\s*[=:$]")])]
+    rules = [('_variable', [RE(r"\s*[=:$]")])]
+_variable0.__name__ = '_variable'
 
 class string:
     default_text_color = DELIMITER
@@ -116,9 +119,9 @@ rules = [
     comment2,
     comment3,
     ('type', RE(r"(?=<)"), [RE(r">")]),
-    ('function', RE(r"(?=\b(?:fun))"), [_function], function0),
-    ('class', RE(r"\b(?:class|trait)"), [_class], class1),
-    ('variable', RE(r"\b(?:var|val)"), [_variable]),
+    ('function', RE(r"(?=\b(?:fun))"), [_function0], function),
+    ('class', RE(r"\b(?:class|trait)"), [_class0], class0),
+    ('variable', RE(r"\b(?:var|val)"), [_variable0]),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('meta', RE(r"^#!/usr/bin/env"), [RE(r"$")]),
     ('number', number),

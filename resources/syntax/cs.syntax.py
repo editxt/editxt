@@ -86,38 +86,38 @@ class _group3:
         comment3,
     ]
 
-class _function:
+class _function0:
     default_text_color = DELIMITER
-    rules = [('function', [RE(r"[{;=]")])]
+    rules = [('_function', [RE(r"[{;=]")])]
+_function0.__name__ = '_function'
 
 class _group5:
     default_text_color = DELIMITER
     rules = [title]
 
-class _params:
-    default_text_color = DELIMITER
-    rules = [('params', [RE(r"\(")])]
-
 class _params0:
     default_text_color = DELIMITER
-    rules = [('params', [RE(r"\)")])]
+    rules = [('_params', [RE(r"\(")])]
 _params0.__name__ = '_params'
 
-class params1:
+class _params2:
+    default_text_color = DELIMITER
+    rules = [('_params', [RE(r"\)")])]
+_params2.__name__ = '_params'
+
+class params:
     default_text_color = DELIMITER
     rules = [('keyword', keyword), string2, string3, number0, comment3]
-params1.__name__ = 'params'
 
-class function0:
+class function:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
         ('_group5', RE(r"(?=[a-zA-Z]\w*\s*\()"), [RE(r"\B\b")], _group5),
-        ('params', _params, [_params0], params1),
+        ('params', _params0, [_params2], params),
         comment2,
         comment3,
     ]
-function0.__name__ = 'function'
 
 rules = [
     ('keyword', keyword),
@@ -132,5 +132,5 @@ rules = [
     ('_group2', RE(r"\b(?:class|interface)"), [RE(r"[{;=]")], _group2),
     ('_group3', RE(r"\b(?:namespace)"), [RE(r"[{;=]")], _group3),
     ('_group4', RE(r"\b(?:new|return|throw|await)"), [RE(r"\B\b")]),
-    ('function', RE(r"(?=(?:[a-zA-Z]\w*(?:<[a-zA-Z]\w*>)?\s+)+[a-zA-Z]\w*\s*\()"), [_function], function0),
+    ('function', RE(r"(?=(?:[a-zA-Z]\w*(?:<[a-zA-Z]\w*>)?\s+)+[a-zA-Z]\w*\s*\()"), [_function0], function),
 ]

@@ -46,14 +46,15 @@ class _group2:
         ('_group3', RE(r"\s"), [RE(r"\B\b")], _group3),
     ]
 
-class _attribute:
+class _attribute0:
     default_text_color = DELIMITER
-    rules = [('attribute', [RE(r":")])]
+    rules = [('_attribute', [RE(r":")])]
+_attribute0.__name__ = '_attribute'
 
-class attribute1:
+class attribute0:
     default_text_color = DELIMITER
-    rules = [('attribute', RE(r"\S"), [_attribute])]
-attribute1.__name__ = 'attribute'
+    rules = [('attribute', RE(r"\S"), [_attribute0])]
+attribute0.__name__ = 'attribute'
 
 class _group6:
     default_text_color = DELIMITER
@@ -68,7 +69,7 @@ class _group6:
 
 class _group5:
     default_text_color = DELIMITER
-    rules = [('attribute', attribute1, [RE(r"\B\b")], _group6)]
+    rules = [('attribute', attribute0, [RE(r"\B\b")], _group6)]
 
 class _group4:
     default_text_color = DELIMITER

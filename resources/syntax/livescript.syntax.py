@@ -76,7 +76,7 @@ class subst:
         string1,
         None, # string3,
         None, # string4,
-        None, # string6,
+        None, # string5,
         regexp0,
         regexp1,
         # ignore {'begin': '@[A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*'},
@@ -105,11 +105,12 @@ string3 = ('string', RE(r"\"\"\""), [RE(r"\"\"\"")], string2)
 
 string4 = ('string', RE(r"\""), [RE(r"\"")], string2)
 
-class _string:
+class _string0:
     default_text_color = DELIMITER
-    rules = [('string', [RE(r"(?:\s|$)")])]
+    rules = [('_string', [RE(r"(?:\s|$)")])]
+_string0.__name__ = '_string'
 
-string6 = ('string', RE(r"\\"), [_string])
+string5 = ('string', RE(r"\\"), [_string0])
 
 title = ('title', [RE(r"[A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*")])
 
@@ -125,7 +126,7 @@ class _group4:
         string1,
         string3,
         string4,
-        string6,
+        string5,
         regexp0,
         regexp1,
         # ignore {'begin': '@[A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*'},
@@ -163,7 +164,7 @@ rules = [
     string1,
     string3,
     string4,
-    string6,
+    string5,
     regexp0,
     regexp1,
     # ignore {'begin': '@[A-Za-z$_](?:-[0-9A-Za-z$_]|[0-9A-Za-z$_])*'},
@@ -180,4 +181,4 @@ rules = [
 regexp.rules[0] = subst0
 subst.rules[7] = string3
 subst.rules[8] = string4
-subst.rules[9] = string6
+subst.rules[9] = string5

@@ -66,20 +66,22 @@ class _group1:
         ('regexp', RE(r"\/"), [RE(r"\/[gimuy]*")], regexp),
     ]
 
-class _function:
+class _function0:
     default_text_color = DELIMITER
-    rules = [('function', [RE(r"[\{;]")])]
-
-class _params:
-    default_text_color = DELIMITER
-    rules = [('params', [RE(r"\(")])]
+    rules = [('_function', [RE(r"[\{;]")])]
+_function0.__name__ = '_function'
 
 class _params0:
     default_text_color = DELIMITER
-    rules = [('params', [RE(r"\)")])]
+    rules = [('_params', [RE(r"\(")])]
 _params0.__name__ = '_params'
 
-class params1:
+class _params2:
+    default_text_color = DELIMITER
+    rules = [('_params', [RE(r"\)")])]
+_params2.__name__ = '_params'
+
+class params:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
@@ -88,18 +90,16 @@ class params1:
         comment0,
         comment1,
     ]
-params1.__name__ = 'params'
 
-class function0:
+class function:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
         ('literal', ['true', 'false', 'null', 'undefined', 'NaN', 'Infinity']),
         ('title', [RE(r"[A-Za-z$_][0-9A-Za-z$_]*")]),
-        ('params', _params, [_params0], params1),
+        ('params', _params0, [_params2], params),
     ]
-function0.__name__ = 'function'
 
 class _group5:
     default_text_color = DELIMITER
@@ -119,7 +119,7 @@ rules = [
     ('number', [RE(r"\b(?:0[oO][0-7]+)")]),
     ('number', number1),
     ('_group1', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~|\b(?:case|return|throw)\b)\s*"), [RE(r"\B\b")], _group1),
-    ('function', RE(r"function"), [_function], function0),
+    ('function', RE(r"function"), [_function0], function),
     ('_group3', RE(r"\b(?:constructor)"), [RE(r"\{")]),
     ('_group4', RE(r"\b(?:module)"), [RE(r"\{")]),
     ('_group5', RE(r"\b(?:interface)"), [RE(r"\{")], _group5),

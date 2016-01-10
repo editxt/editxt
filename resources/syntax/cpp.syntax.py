@@ -124,9 +124,10 @@ class _group4:
         ('literal', ['true', 'false', 'nullptr', 'NULL']),
     ]
 
-class _function:
+class _function0:
     default_text_color = DELIMITER
-    rules = [('function', [RE(r"[{;=]")])]
+    rules = [('_function', [RE(r"[{;=]")])]
+_function0.__name__ = '_function'
 
 class _group6:
     default_text_color = DELIMITER
@@ -147,7 +148,7 @@ class params:
         number1,
     ]
 
-class function0:
+class function:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
@@ -159,7 +160,6 @@ class function0:
         comment1,
         meta0,
     ]
-function0.__name__ = 'function'
 
 rules = [
     ('built_in', built_in),
@@ -177,7 +177,7 @@ rules = [
     ('_group3', RE(r"\b(?:deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\s*<"), [RE(r">")], _group3),
     ('_group4', RE(r"[a-zA-Z]\w*::"), [RE(r"\B\b")], _group4),
     ('_group5', RE(r"\b(?:new|throw|return|else)"), [RE(r"\B\b")]),
-    ('function', RE(r"(?=(?:[a-zA-Z]\w*[\*&\s]+)+[a-zA-Z]\w*\s*\()"), [_function], function0),
+    ('function', RE(r"(?=(?:[a-zA-Z]\w*[\*&\s]+)+[a-zA-Z]\w*\s*\()"), [_function0], function),
 ]
 
 string3.rules.extend(string.rules)

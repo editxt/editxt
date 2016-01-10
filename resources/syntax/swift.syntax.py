@@ -73,9 +73,10 @@ comment0 = ('comment', RE(r"//"), [RE(r"$")], comment)
 
 comment1 = ('comment', RE(r"/\*"), [RE(r"\*/")], comment)
 
-class _function:
+class _function0:
     default_text_color = DELIMITER
-    rules = [('function', [RE(r"{")])]
+    rules = [('_function', [RE(r"{")])]
+_function0.__name__ = '_function'
 
 class params:
     default_text_color = DELIMITER
@@ -94,20 +95,20 @@ class params1:
     rules = [('params', RE(r"\("), [RE(r"\)")], params)]
 params1.__name__ = 'params'
 
-class function0:
+class function:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['func']),
         ('title', [RE(r"[A-Za-z$_][0-9A-Za-z$_]*")]),
         ('_group1', RE(r"<"), [RE(r">")]),
     ]
-function0.__name__ = 'function'
 
-class _class:
+class _class0:
     default_text_color = DELIMITER
-    rules = [('class', [RE(r"\{")])]
+    rules = [('_class', [RE(r"\{")])]
+_class0.__name__ = '_class'
 
-class class1:
+class class0:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
@@ -116,7 +117,7 @@ class class1:
         ('keyword', ['struct', 'protocol', 'class', 'extension', 'enum']),
         ('title', [RE(r"[A-Za-z$_][0-9A-Za-z$_]*")]),
     ]
-class1.__name__ = 'class'
+class0.__name__ = 'class'
 
 meta = [
     RE(r"(?:@warn_unused_result|@exported|@lazy|@noescape|@NSCopying|@NSManaged|@objc|@convention|@required|@noreturn|@IBAction|@IBDesignable|@IBInspectable|@IBOutlet|@infix|@prefix|@postfix|@autoclosure|@testable|@available|@nonobjc|@NSApplicationMain|@UIApplicationMain)"),
@@ -135,8 +136,8 @@ rules = [
     comment1,
     ('type', [RE(r"\b[A-Z][\w']*")]),
     number0,
-    ('function', RE(r"\b(?:func)"), [_function, params1], function0),
-    ('class', RE(r"\b(?:struct|protocol|class|extension|enum)"), [_class], class1),
+    ('function', RE(r"\b(?:func)"), [_function0, params1], function),
+    ('class', RE(r"\b(?:struct|protocol|class|extension|enum)"), [_class0], class0),
     ('meta', meta),
     ('_group3', RE(r"\b(?:import)"), [RE(r"$")], _group3),
 ]
