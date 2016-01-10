@@ -19,96 +19,94 @@ keyword = """
     operator part set static typedef
     """.split()
 
-meta = [RE(r"@[A-Za-z]+")]
+string = ('string', RE(r"r'''"), [RE(r"'''")])
 
-keyword0 = ['true', 'false', 'null', 'this', 'is', 'new', 'super']
+string0 = ('string', RE(r"r\"\"\""), [RE(r"\"\"\"")])
+
+string1 = ('string', RE(r"r'"), [RE(r"'")])
+
+string2 = ('string', RE(r"r\""), [RE(r"\"")])
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
+number0 = ('number', number)
+
 class subst:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
-        ('number', number),
-        None,  # rules[2],
-        None,  # rules[3],
-        None,  # rules[4],
-        None,  # rules[5],
-        None,  # rules[6],
-        None,  # rules[7],
-        None,  # rules[8],
-        None,  # rules[9],
+        ('keyword', ['true', 'false', 'null', 'this', 'is', 'new', 'super']),
+        number0,
+        string,
+        string0,
+        string1,
+        string2,
+        None, # string4,
+        None, # string5,
+        None, # string6,
+        None, # string7,
     ]
 
-class string:
+subst0 = ('subst', RE(r"\$\{"), [RE(r"}")], subst)
+
+class string3:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('subst', RE(r"\$\{"), [RE(r"}")], subst),
-    ]
+    rules = [operator_escape, subst0]
+string3.__name__ = 'string'
 
-class string0:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        string.rules[0],
-    ]
-string0.__name__ = 'string'
+string4 = ('string', RE(r"'''"), [RE(r"'''")], string3)
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+string5 = ('string', RE(r"\"\"\""), [RE(r"\"\"\"")], string3)
+
+string6 = ('string', RE(r"'"), [RE(r"'")], string3)
+
+string7 = ('string', RE(r"\""), [RE(r"\"")], string3)
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 class _class:
     default_text_color = DELIMITER
-    rules = [('_class', [RE(r"{")])]
+    rules = [('class', [RE(r"{")])]
 
-keyword1 = ['class', 'interface']
-
-title = [RE(r"[a-zA-Z_]\w*")]
-
-class class0:
+class class1:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword1),
-        ('_group0', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
-        ('title', title),
+        ('keyword', ['class', 'interface']),
+        ('_group1', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('title', [RE(r"[a-zA-Z_]\w*")]),
     ]
-class0.__name__ = 'class'
+class1.__name__ = 'class'
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('string', RE(r"r'''"), [RE(r"'''")]),
-    ('string', RE(r"r\"\"\""), [RE(r"\"\"\"")]),
-    ('string', RE(r"r'"), [RE(r"'")]),
-    ('string', RE(r"r\""), [RE(r"\"")]),
-    ('string', RE(r"'''"), [RE(r"'''")], string),
-    ('string', RE(r"\"\"\""), [RE(r"\"\"\"")], string0),
-    ('string', RE(r"'"), [RE(r"'")], string0),
-    ('string', RE(r"\""), [RE(r"\"")], string0),
+    string,
+    string0,
+    string1,
+    string2,
+    string4,
+    string5,
+    string6,
+    string7,
     ('comment', RE(r"/\*\*"), [RE(r"\*/")], 'markdown'),
     ('comment', RE(r"///"), [RE(r"$")], 'markdown'),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('class', RE(r"\b(?:class|interface)"), [_class], class0),
-    ('number', number),
-    ('meta', meta),
+    ('class', RE(r"\b(?:class|interface)"), [_class], class1),
+    number0,
+    ('meta', [RE(r"@[A-Za-z]+")]),
     # ignore {'begin': '=>'},
 ]
 
-subst.rules[2] = rules[2]
-subst.rules[3] = rules[3]
-subst.rules[4] = rules[4]
-subst.rules[5] = rules[5]
-subst.rules[6] = rules[6]
-subst.rules[7] = rules[7]
-subst.rules[8] = rules[8]
-subst.rules[9] = rules[9]
+subst.rules[6] = string4
+subst.rules[7] = string5
+subst.rules[8] = string6
+subst.rules[9] = string7

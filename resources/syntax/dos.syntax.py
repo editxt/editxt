@@ -22,33 +22,27 @@ keyword = """
     neq lss leq gtr geq
     """.split()
 
-variable = [RE(r"%%[^ ]|%[^ ]+?%|![^ ]+?!")]
-
-number = [RE(r"\b\d+")]
-
-title = [RE(r"(?:[_a-zA-Z]\w*\.)*(?:[_a-zA-Z]\w*:)?[_a-zA-Z]\w*")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+comment0 = ('comment', RE(r"@?rem\b"), [RE(r"$")], comment)
 
 class function:
     default_text_color = DELIMITER
     rules = [
-        ('title', title),
-        ('comment', RE(r"@?rem\b"), [RE(r"$")], comment),
+        ('title', [RE(r"(?:[_a-zA-Z]\w*\.)*(?:[_a-zA-Z]\w*:)?[_a-zA-Z]\w*")]),
+        comment0,
     ]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('variable', variable),
+    ('variable', [RE(r"%[^ ]|%[^ ]+?%|![^ ]+?!")]),
     ('function', RE(r"^\s*[A-Za-z._?][A-Za-z0-9_$#@~.?]*(?::|\s+label)"), [RE(r"goto:eof")], function),
-    ('number', number),
-    function.rules[1],
+    ('number', [RE(r"\b\d+")]),
+    comment0,
 ]

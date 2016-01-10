@@ -8,33 +8,33 @@ number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
-keyword = ['ncalls', 'tottime', 'cumtime', 'filename']
+number0 = ('number', number)
 
 class _group1:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword)]
+    rules = [('keyword', ['ncalls', 'tottime', 'cumtime', 'filename'])]
 
 class _group2:
     default_text_color = DELIMITER
-    rules = [('number', number)]
+    rules = [number0]
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
 class _string:
     default_text_color = DELIMITER
-    rules = [('_string', [RE(r"\(")])]
+    rules = [('string', [RE(r"\(")])]
 
 class _string0:
     default_text_color = DELIMITER
-    rules = [('_string', [RE(r"\)$")])]
+    rules = [('string', [RE(r"\)$")])]
 _string0.__name__ = '_string'
 
 rules = [
-    ('number', number),
+    number0,
     ('_group0', RE(r"[a-zA-Z_][\da-zA-Z_]+\.[\da-zA-Z_]{1,3}"), [RE(r":")]),
     ('_group1', RE(r"(?:ncalls|tottime|cumtime)"), [RE(r"$")], _group1),
     ('_group2', RE(r"function calls"), [RE(r"$")], _group2),

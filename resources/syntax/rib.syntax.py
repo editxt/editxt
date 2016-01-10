@@ -25,24 +25,22 @@ keyword = """
     TrimCurve WorldBegin WorldEnd
     """.split()
 
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
 rules = [
     ('keyword', keyword),

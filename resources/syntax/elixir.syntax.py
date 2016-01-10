@@ -10,90 +10,81 @@ keyword = """
     ensure or include use alias fn quote
     """.split()
 
-symbol = [RE(r"[a-zA-Z_][a-zA-Z0-9_]*(?:\!|\?)?:")]
-
-number = [
-    RE(r"(?:\b0[0-7_]+)|(?:\b0x[0-9a-fA-F_]+)|(?:\b[1-9][0-9_]*(?:\.[0-9_]+)?)|[0_]\b"),
-]
-
-variable = [RE(r"(?:\$\W)|(?:(\$|\@\@?)(?:\w+))")]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class subst:
     default_text_color = DELIMITER
     rules = [('keyword', keyword)]
 
+subst0 = ('subst', RE(r"#\{"), [RE(r"}")], subst)
+
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('subst', RE(r"#\{"), [RE(r"}")], subst),
-    ]
+    rules = [operator_escape, subst0]
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+string1 = ('string', RE(r"'"), [RE(r"'")], string)
+
+string2 = ('string', RE(r"\""), [RE(r"\"")], string)
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-keyword0 = ['defmodule', 'defrecord']
-
-title = [RE(r"[a-zA-Z_][a-zA-Z0-9_]*(?:\!|\?)?")]
+comment0 = ('comment', RE(r"#"), [RE(r"$")], comment)
 
 class class0:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword0), ('title', title)]
+    rules = [
+        ('keyword', ['defmodule', 'defrecord']),
+        ('title', [RE(r"[a-zA-Z_][a-zA-Z0-9_]*(?:\!|\?)?")]),
+    ]
 class0.__name__ = 'class'
-
-keyword1 = ['def', 'defp', 'defmacro']
 
 class function:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword1)]
+    rules = [('keyword', ['def', 'defp', 'defmacro'])]
 
-class symbol0:
+class symbol:
     default_text_color = DELIMITER
     rules = [
-        None,  # rules[1],
-        None,  # rules[2],
+        string1,
+        string2,
         # ignore {'begin': '[a-zA-Z_]\\w*[!?=]?|[-+~]\\@|<<|>>|=~|===?|<=>|[<>]=?|\\*\\*|[-/+%^&*~`|]|\\[\\]=?'},
     ]
-symbol0.__name__ = 'symbol'
+
+number = [
+    RE(r"(?:\b0[0-7_]+)|(?:\b0x[0-9a-fA-F_]+)|(?:\b[1-9][0-9_]*(?:\.[0-9_]+)?)|[0_]\b"),
+]
 
 class regexp:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        None,  # string.rules[0],
-    ]
+    rules = [operator_escape, subst0]
 
-class _group0:
+class _group3:
     default_text_color = DELIMITER
     rules = [
-        None,  # rules[3],
+        comment0,
         ('regexp', RE(r"/"), [RE(r"/[a-z]*")], regexp),
         ('regexp', RE(r"%r\["), [RE(r"\][a-z]*")], regexp),
     ]
 
 rules = [
     ('keyword', keyword),
-    ('string', RE(r"'"), [RE(r"'")], string),
-    ('string', RE(r"\""), [RE(r"\"")], string),
-    ('comment', RE(r"#"), [RE(r"$")], comment),
+    string1,
+    string2,
+    comment0,
     ('class', RE(r"\b(?:defmodule|defrecord)"), [RE(r"\bdo\b|$|;")], class0),
     ('function', RE(r"\b(?:def|defp|defmacro)"), [RE(r"\B\b")], function),
-    ('symbol', RE(r":"), [RE(r"\B\b")], symbol0),
-    ('symbol', symbol),
+    ('symbol', RE(r":"), [RE(r"\B\b")], symbol),
+    ('symbol', [RE(r"[a-zA-Z_][a-zA-Z0-9_]*(?:\!|\?)?:")]),
     ('number', number),
-    ('variable', variable),
+    ('variable', [RE(r"(?:\$\W)|(?:(?:\$|\@\@?)(?:\w+))")]),
     # ignore {'begin': '->'},
-    ('_group0', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B\b")], _group0),
+    ('_group3', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B\b")], _group3),
 ]
 
-symbol0.rules[0] = rules[1]
-symbol0.rules[1] = rules[2]
-regexp.rules[1] = string.rules[0]
-_group0.rules[0] = rules[3]
 subst.rules.extend(rules)
+function.rules.extend(class0.rules)

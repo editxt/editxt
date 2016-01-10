@@ -4,38 +4,30 @@
 name = 'Erlang REPL'
 file_patterns = ['*.erlang-repl']
 
-built_in = ['spawn', 'spawn_link', 'self']
-
 keyword = """
     after and andalso band begin bnot bor bsl bsr bxor case catch cond
     div end fun if let not of or orelse query receive rem try when xor
     """.split()
 
-meta = [RE(r"^[0-9]+> ")]
-
-number = [RE(r"\b(?:\d+#[a-fA-F0-9]+|\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
 rules = [
-    ('built_in', built_in),
+    ('built_in', ['spawn', 'spawn_link', 'self']),
     ('keyword', keyword),
-    ('meta', meta),
+    ('meta', [RE(r"^[0-9]+> ")]),
     ('comment', RE(r"%"), [RE(r"$")], comment),
-    ('number', number),
+    ('number', [RE(r"\b(?:\d+#[a-fA-F0-9]+|\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)")]),
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
     # ignore {'begin': '\\?(::)?([A-Z]\\w*(::)?)+'},

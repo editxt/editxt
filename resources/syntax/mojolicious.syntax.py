@@ -4,10 +4,10 @@
 name = 'Mojolicious'
 file_patterns = ['*.mojolicious']
 
-meta = [RE(r"^__(?:END|DATA)__$")]
+
 
 rules = [
-    ('meta', meta),
+    ('meta', [RE(r"^__(?:END|DATA)__$")]),
     ('_group0', RE(r"^\s*%{1,2}={0,2}"), [RE(r"$")], 'perl'),
     ('_group1', RE(r"<%{1,2}={0,2}"), [RE(r"={0,1}%>")], 'perl'),
 ]

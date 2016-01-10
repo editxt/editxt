@@ -4,8 +4,6 @@
 name = 'Vala'
 file_patterns = ['*.vala']
 
-built_in = ['DBus', 'GLib', 'CCode', 'Gee', 'Object']
-
 keyword = """
     char uchar unichar int uint long ulong short ushort int8 int16 int32
     int64 uint8 uint16 uint32 uint64 float double bool struct enum
@@ -15,50 +13,46 @@ keyword = """
     this get set const stdout stdin stderr var
     """.split()
 
-literal = ['false', 'true', 'null']
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
 class _class:
     default_text_color = DELIMITER
-    rules = [('_class', [RE(r"{")])]
+    rules = [('class', [RE(r"{")])]
 
-keyword0 = ['class', 'interface', 'delegate', 'namespace']
-
-title = [RE(r"[a-zA-Z_]\w*")]
-
-class class0:
+class class1:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword0), ('title', title)]
-class0.__name__ = 'class'
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+    rules = [
+        ('keyword', ['class', 'interface', 'delegate', 'namespace']),
+        ('title', [RE(r"[a-zA-Z_]\w*")]),
+    ]
+class1.__name__ = 'class'
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class string:
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
+
+class string0:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
+string0.__name__ = 'string'
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 rules = [
-    ('built_in', built_in),
+    ('built_in', ['DBus', 'GLib', 'CCode', 'Gee', 'Object']),
     ('keyword', keyword),
-    ('literal', literal),
-    ('class', RE(r"\b(?:class|interface|delegate|namespace)"), [_class], class0),
+    ('literal', ['false', 'true', 'null']),
+    ('class', RE(r"\b(?:class|interface|delegate|namespace)"), [_class], class1),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
-    ('string', RE(r"'"), [RE(r"'")], string),
-    ('string', RE(r"\""), [RE(r"\"")], string),
+    ('string', RE(r"'"), [RE(r"'")], string0),
+    ('string', RE(r"\""), [RE(r"\"")], string0),
     ('number', number),
     ('meta', RE(r"^#"), [RE(r"$")]),
 ]

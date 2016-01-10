@@ -8,11 +8,11 @@ flags = re.IGNORECASE | re.MULTILINE
 
 class _string:
     default_text_color = DELIMITER
-    rules = [('_string', [RE(r"=")])]
+    rules = [('string', [RE(r"=")])]
 
 class _string0:
     default_text_color = DELIMITER
-    rules = [('_string', [RE(r"(?:[\u2401\u0001])")])]
+    rules = [('string', [RE(r"(?:[\u2401\u0001])")])]
 _string0.__name__ = '_string'
 
 class _group0:

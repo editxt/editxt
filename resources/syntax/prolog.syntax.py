@@ -4,81 +4,94 @@
 name = 'Prolog'
 file_patterns = ['*.prolog']
 
-symbol = [RE(r"[A-Z][a-zA-Z0-9_]*")]
+symbol = ('symbol', [RE(r"[A-Z][a-zA-Z0-9_]*")])
 
-symbol0 = [RE(r"_[A-Za-z0-9_]*")]
+symbol0 = ('symbol', [RE(r"_[A-Za-z0-9_]*")])
 
-string = [RE(r"0\'(?:\\\'|.)")]
+class _group3:
+    default_text_color = DELIMITER
+    rules = []
 
-string0 = [RE(r"0\'\\s")]
+_group30 = ('_group3', RE(r"\["), [RE(r"\]")], _group3)
+
+#class comment:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+#    ]
+
+comment0 = ('comment', RE(r"%"), [RE(r"$")]) #, comment)
+
+class comment1:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
+    ]
+comment1.__name__ = 'comment'
+
+comment2 = ('comment', RE(r"/\*"), [RE(r"\*/")], comment1)
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
+
+class string:
+    default_text_color = DELIMITER
+    rules = [operator_escape]
+
+string0 = ('string', RE(r"\""), [RE(r"\"")], string)
+
+string1 = ('string', RE(r"'"), [RE(r"'")], string)
+
+string2 = ('string', RE(r"`"), [RE(r"`")], string)
+
+string3 = ('string', [RE(r"0\'(?:\\\'|.)")])
+
+string4 = ('string', [RE(r"0\'\\s")])
 
 number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
+number0 = ('number', number)
+
 class _group1:
-    default_text_color = DELIMITER
-    rules = []
-
-class comment:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-    ]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
-class comment0:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-comment0.__name__ = 'comment'
-
-class string1:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-string1.__name__ = 'string'
-
-class _group0:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': '[a-z][A-Za-z0-9_]*', 'type': 'RegExp'}, 'relevance': 0},
-        None,  # rules[1],
-        None,  # rules[2],
+        symbol,
+        symbol0,
+        None, # _group10,
         # ignore {'begin': {'pattern': ':-', 'type': 'RegExp'}},
-        ('_group1', RE(r"\["), [RE(r"\]")], _group1),
-        ('comment', RE(r"%"), [RE(r"$")], comment),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
-        ('string', RE(r"\""), [RE(r"\"")], string1),
-        ('string', RE(r"'"), [RE(r"'")], string1),
-        ('string', RE(r"`"), [RE(r"`")], string1),
-        ('string', string),
-        ('string', string0),
-        ('number', number),
+        _group30,
+        comment0,
+        comment2,
+        string0,
+        string1,
+        string2,
+        string3,
+        string4,
+        number0,
     ]
+
+_group10 = ('_group1', RE(r"\("), [RE(r"\)")], _group1)
 
 rules = [
     # ignore {'begin': {'pattern': '[a-z][A-Za-z0-9_]*', 'type': 'RegExp'}, 'relevance': 0},
-    ('symbol', symbol),
-    ('symbol', symbol0),
-    ('_group0', RE(r"\("), [RE(r"\)")], _group0),
+    symbol,
+    symbol0,
+    _group10,
     # ignore {'begin': {'pattern': ':-', 'type': 'RegExp'}},
-    _group0.rules[3],
-    _group0.rules[4],
-    _group0.rules[5],
-    _group0.rules[6],
-    _group0.rules[7],
-    _group0.rules[8],
-    ('string', string),
-    ('string', string0),
-    ('number', number),
+    _group30,
+    comment0,
+    comment2,
+    string0,
+    string1,
+    string2,
+    string3,
+    string4,
+    number0,
     # ignore {'begin': {'pattern': '\\.$', 'type': 'RegExp'}},
 ]
 
-_group0.rules[1] = rules[1]
-_group0.rules[2] = rules[2]
-_group1.rules.extend(_group0.rules)
+_group1.rules[2] = _group10
+_group3.rules.extend(_group1.rules)

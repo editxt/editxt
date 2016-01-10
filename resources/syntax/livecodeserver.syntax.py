@@ -126,83 +126,68 @@ literal = """
     DIR_READ_UMASK DIR_WRITE_UMASK
     """.split()
 
-keyword0 = [RE(r"\bend\sif\b")]
+title = ('title', [RE(r"\b(?:[A-Za-z0-9_\-]+)\b")])
 
-meta = [RE(r"<\?(?:rev|lc|livecode)")]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
-meta0 = [RE(r"<\?")]
+class string:
+    default_text_color = DELIMITER
+    rules = [operator_escape]
 
-meta1 = [RE(r"\?>")]
+string0 = ('string', RE(r"'"), [RE(r"'")], string)
 
-keyword1 = ['function']
+string1 = ('string', RE(r"\""), [RE(r"\"")], string)
 
-title = [RE(r"\b(?:[A-Za-z0-9_\-]+)\b")]
-
-number = [RE(r"\b(?:0b[01]+)")]
+number = ('number', [RE(r"\b(?:0b[01]+)")])
 
 number0 = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
-title0 = [RE(r"\b_*rig[A-Z]+[A-Za-z0-9_\-]*")]
+number1 = ('number', number0)
 
-title1 = [RE(r"\b_[a-z0-9\-]+")]
+title0 = ('title', [RE(r"\b_*rig[A-Z]+[A-Za-z0-9_\-]*")])
 
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+title1 = ('title', [RE(r"\b_[a-z0-9\-]+")])
 
 class function:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword1),
+        ('keyword', ['function']),
         # ignore {'begin': '\\b[gtps][A-Z]+[A-Za-z0-9_\\-]*\\b|\\$_[A-Z]+', 'relevance': 0},
-        ('title', title),
-        ('string', RE(r"'"), [RE(r"'")], string),
-        ('string', RE(r"\""), [RE(r"\"")], string),
-        ('number', number),
-        ('number', number0),
-        ('title', title0),
-        ('title', title1),
+        title,
+        string0,
+        string1,
+        number,
+        number1,
+        title0,
+        title1,
     ]
 
-keyword2 = ['end']
+class function1:
+    default_text_color = DELIMITER
+    rules = [('keyword', ['end']), title, title0, title1]
+function1.__name__ = 'function'
 
-class function0:
+class _group1:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword2),
-        ('title', title),
-        function.rules[7],
-        function.rules[8],
-    ]
-function0.__name__ = 'function'
-
-keyword3 = ['command', 'on']
-
-class _group0:
-    default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword3),
+        ('keyword', ['command', 'on']),
         # ignore {'begin': '\\b[gtps][A-Z]+[A-Za-z0-9_\\-]*\\b|\\$_[A-Z]+', 'relevance': 0},
-        ('title', title),
-        function.rules[3],
-        function.rules[4],
-        ('number', number),
-        ('number', number0),
-        function.rules[7],
-        function.rules[8],
+        title,
+        string0,
+        string1,
+        number,
+        number1,
+        title0,
+        title1,
     ]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 rules = [
@@ -210,19 +195,19 @@ rules = [
     ('keyword', keyword),
     ('literal', literal),
     # ignore {'begin': '\\b[gtps][A-Z]+[A-Za-z0-9_\\-]*\\b|\\$_[A-Z]+', 'relevance': 0},
-    ('keyword', keyword0),
+    ('keyword', [RE(r"\bend\sif\b")]),
     ('function', RE(r"\b(?:function)"), [RE(r"$")], function),
-    ('function', RE(r"\bend\s+"), [RE(r"$")], function0),
-    ('_group0', RE(r"\b(?:command|on)"), [RE(r"$")], _group0),
-    ('meta', meta),
-    ('meta', meta0),
-    ('meta', meta1),
-    function.rules[3],
-    function.rules[4],
-    ('number', number),
-    ('number', number0),
-    function.rules[7],
-    function.rules[8],
+    ('function', RE(r"\bend\s+"), [RE(r"$")], function1),
+    ('_group1', RE(r"\b(?:command|on)"), [RE(r"$")], _group1),
+    ('meta', [RE(r"<\?(?:rev|lc|livecode)")]),
+    ('meta', [RE(r"<\?")]),
+    ('meta', [RE(r"\?>")]),
+    string0,
+    string1,
+    number,
+    number1,
+    title0,
+    title1,
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('comment', RE(r"--"), [RE(r"$")], comment),

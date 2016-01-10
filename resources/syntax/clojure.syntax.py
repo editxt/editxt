@@ -4,13 +4,11 @@
 name = 'Clojure'
 file_patterns = ['*.clojure', '*.clj']
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 builtin_name = """
@@ -61,7 +59,7 @@ class name0:
     rules = [('builtin-name', builtin_name)]
 name0.__name__ = 'name'
 
-builtin_name0 = """
+builtin_name1 = """
     def defonce cond apply if-not if-let if not not= = < > <= >= == + *
     - rem quot neg? pos? delay? symbol? keyword? true? false? integer?
     empty? coll? list? set? ifn? fn? associative? sequential? sorted?
@@ -104,67 +102,76 @@ builtin_name0 = """
     find-keyword keyword symbol gensym force rationalize
     """.split()
 
-class name1:
+class name2:
     default_text_color = DELIMITER
     rules = [
-        ('builtin-name', builtin_name0),
+        ('builtin-name', builtin_name1),
         ('name', RE(r"[a-zA-Z_\-!.?+*=<>&#'][a-zA-Z_\-!.?+*=<>&#'0-9/;:]*"), [RE(r"\B|\b")], name0),
     ]
-name1.__name__ = 'name'
-
-comment0 = [RE(r"\^[a-zA-Z_\-!.?+*=<>&#'][a-zA-Z_\-!.?+*=<>&#'0-9/;:]*")]
-
-symbol = [RE(r"[:][a-zA-Z_\-!.?+*=<>&#'][a-zA-Z_\-!.?+*=<>&#'0-9/;:]*")]
-
-number = [RE(r"[-+]?\d+(?:\.\d+)?")]
-
-literal = [RE(r"\b(?:true|false|nil)\b")]
+name2.__name__ = 'name'
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
-class _group2:
+string0 = ('string', RE(r"\""), [RE(r"\"")], string)
+
+comment1 = ('comment', [RE(r"\^[a-zA-Z_\-!.?+*=<>&#'][a-zA-Z_\-!.?+*=<>&#'0-9/;:]*")])
+
+comment2 = ('comment', RE(r"\^\{"), [RE(r"\}")], comment)
+
+comment3 = ('comment', RE(r";"), [RE(r"$")], comment)
+
+symbol = ('symbol', [RE(r"[:][a-zA-Z_\-!.?+*=<>&#'][a-zA-Z_\-!.?+*=<>&#'0-9/;:]*")])
+
+class _group3:
     default_text_color = DELIMITER
     rules = []
 
-class _group1:
+_group30 = ('_group3', RE(r"[\[\{]"), [RE(r"[\]\}]")], _group3)
+
+number = ('number', [RE(r"[-+]?\d+(?:\.\d+)?")])
+
+literal = ('literal', [RE(r"\b(?:true|false|nil)\b")])
+
+class _group2:
     default_text_color = DELIMITER
     rules = [
-        None,  # rules[0],
-        ('string', RE(r"\""), [RE(r"\"")], string),
-        ('comment', comment0),
-        ('comment', RE(r"\^\{"), [RE(r"\}")], comment),
-        ('comment', RE(r";"), [RE(r"$")], comment),
-        ('symbol', symbol),
-        ('_group2', RE(r"[\[\{]"), [RE(r"[\]\}]")], _group2),
-        ('number', number),
-        ('literal', literal),
+        None, # _group00,
+        string0,
+        comment1,
+        comment2,
+        comment3,
+        symbol,
+        _group30,
+        number,
+        literal,
         # ignore {'begin': "[a-zA-Z_\\-!.?+*=<>&#'][a-zA-Z_\\-!.?+*=<>&#'0-9/;:]*", 'relevance': 0},
     ]
+
+_group20 = ('_group2', name2, [RE(r"\B\b")], _group2)
 
 class _group0:
     default_text_color = DELIMITER
     rules = [
         ('comment', RE(r"comment"), [RE(r"\B\b")], comment),
-        ('name', name1, [RE(r"\B\b")], _group1),
-        None,  # ('_group1', name1, [RE(r"\B\b")], _group1),
+        ('name', name2, [RE(r"\B\b")], _group2),
+        _group20,
     ]
 
+_group00 = ('_group0', RE(r"\("), [RE(r"\)")], _group0)
+
 rules = [
-    ('_group0', RE(r"\("), [RE(r"\)")], _group0),
-    _group1.rules[1],
-    ('comment', comment0),
-    _group1.rules[3],
-    _group1.rules[4],
-    ('symbol', symbol),
-    _group1.rules[6],
-    ('number', number),
-    ('literal', literal),
+    _group00,
+    string0,
+    comment1,
+    comment2,
+    comment3,
+    symbol,
+    _group30,
+    number,
+    literal,
 ]
 
-_group1.rules[0] = rules[0]
-_group0.rules[2] = ('_group1', name1, [RE(r"\B\b")], _group1)
-_group2.rules.extend(_group1.rules)
+_group2.rules[0] = _group00
+_group3.rules.extend(_group2.rules)

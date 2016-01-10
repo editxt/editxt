@@ -15,42 +15,30 @@ keyword = """
     zquit zsync ascii
     """.split()
 
-number = [RE(r"\b(?:\d+(?:\.\d*)?|\.\d+)")]
-
-built_in = [RE(r"\$\$?[a-zA-Z]+")]
-
-keyword0 = [RE(r"\$\$\$[a-zA-Z]+")]
-
-symbol = [RE(r"\^%?[a-zA-Z][\w]*")]
-
-keyword1 = [RE(r"##class")]
-
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '""', 'relevance': 0},
-    ]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+#class string:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': '""', 'relevance': 0},
+#    ]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 rules = [
     ('keyword', keyword),
-    ('number', number),
-    ('string', RE(r"\""), [RE(r"\"")], string),
+    ('number', [RE(r"\b(?:\d+(?:\.\d*)?|\.\d+)")]),
+    ('string', RE(r"\""), [RE(r"\"")]), #, string),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('built_in', built_in),
-    ('keyword', keyword0),
-    ('symbol', symbol),
-    ('keyword', keyword1),
-    ('_group0', RE(r"&sql\("), [RE(r"\)")], 'sql'),
-    ('_group1', RE(r"&(?:js|jscript|javascript)<"), [RE(r">")], 'javascript'),
-    ('_group2', RE(r"&html<\s*<"), [RE(r">\s*>")], 'xml'),
+    ('built_in', [RE(r"\$\$?[a-zA-Z]+")]),
+    ('keyword', [RE(r"\$\$\$[a-zA-Z]+")]),
+    ('symbol', [RE(r"\^%?[a-zA-Z][\w]*")]),
+    ('keyword', [RE(r"##class")]),
+    ('_group2', RE(r"&sql\("), [RE(r"\)")], 'sql'),
+    ('_group3', RE(r"&(?:js|jscript|javascript)<"), [RE(r">")], 'javascript'),
+    ('_group4', RE(r"&html<\s*<"), [RE(r">\s*>")], 'xml'),
 ]

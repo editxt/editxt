@@ -11,48 +11,44 @@ keyword = """
     set list map required optional
     """.split()
 
-literal = ['true', 'false']
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-keyword0 = ['struct', 'enum', 'service', 'exception']
-
-class title:
+class title0:
     default_text_color = DELIMITER
     rules = [('title', RE(r"[a-zA-Z]\w*"), [RE(r"\B|\b")])]
+title0.__name__ = 'title'
 
 class class0:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword0), ('title', title, [RE(r"\B\b")])]
+    rules = [
+        ('keyword', ['struct', 'enum', 'service', 'exception']),
+        ('title', title0, [RE(r"\B\b")]),
+    ]
 class0.__name__ = 'class'
 
-class _group0:
+class _group2:
     default_text_color = DELIMITER
-    rules = [('keyword', built_in)]
+    rules = [
+        ('keyword', ['bool', 'byte', 'i16', 'i32', 'i64', 'double', 'string', 'binary']),
+    ]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
+    ('literal', ['true', 'false']),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('number', number),
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('class', RE(r"\b(?:struct|enum|service|exception)"), [RE(r"\{")], class0),
-    ('_group0', RE(r"\b(?:set|list|map)\s*<"), [RE(r">")], _group0),
+    ('_group2', RE(r"\b(?:set|list|map)\s*<"), [RE(r">")], _group2),
 ]

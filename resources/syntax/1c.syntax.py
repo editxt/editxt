@@ -49,71 +49,51 @@ keyword = """
     процедура строка тогда фс функция цикл число экспорт
     """.split()
 
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
-number0 = [RE(r"'\d{2}\.\d{2}\.(?:\d{2}|\d{4})'")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class string:
+comment0 = ('comment', RE(r"//"), [RE(r"$")], comment)
+
+#class string:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': '""'},
+#    ]
+
+string0 = ('string', RE(r"\""), [RE(r"\"|$")]) #, string)
+
+string1 = ('string', RE(r"\|"), [RE(r"\"|$")]) #, string)
+
+class _group2:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '""'},
-    ]
-
-keyword0 = ['процедура', 'функция']
-
-title = [RE(r"[a-zA-Zа-яА-Я][a-zA-Z0-9_а-яА-Я]*")]
-
-keyword1 = ['экспорт']
-
-class _group0:
-    default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword1),
-        None,  # rules[2],
-    ]
-
-keyword2 = ['знач']
+    rules = [('keyword', ['экспорт']), comment0]
 
 class params:
     default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword2),
-        None,  # rules[4],
-        None,  # rules[5],
-    ]
+    rules = [('keyword', ['знач']), string0, string1]
 
 class function:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
-        ('_group0', RE(r"экспорт"), [RE(r"\B\b")], _group0),
+        ('keyword', ['процедура', 'функция']),
+        ('_group2', RE(r"экспорт"), [RE(r"\B\b")], _group2),
         ('params', RE(r"\("), [RE(r"\)")], params),
-        None,  # rules[2],
-        ('title', title),
+        comment0,
+        ('title', [RE(r"[a-zA-Zа-яА-Я][a-zA-Z0-9_а-яА-Я]*")]),
     ]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('number', number),
-    ('string', RE(r"\""), [RE(r"\"|$")], string),
-    ('string', RE(r"\|"), [RE(r"\"|$")], string),
+    comment0,
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
+    string0,
+    string1,
     ('function', RE(r"(?:процедура|функция)"), [RE(r"$")], function),
     ('meta', RE(r"#"), [RE(r"$")]),
-    ('number', number0),
+    ('number', [RE(r"'\d{2}\.\d{2}\.(?:\d{2}|\d{4})'")]),
 ]
-
-_group0.rules[1] = rules[2]
-params.rules[1] = rules[4]
-params.rules[2] = rules[5]
-function.rules[3] = rules[2]

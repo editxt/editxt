@@ -417,39 +417,46 @@ keyword = """
     then throw to try while with
     """.split()
 
-literal = ['true', 'false', 'nil']
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '""'},
-    ]
+comment0 = ('comment', RE(r"//"), [RE(r"$")], comment)
+
+comment1 = ('comment', RE(r"/\*"), [RE(r"\*/")], comment)
+
+number = ('number', [RE(r"\b\d+(?:\.\d+)?")])
+
+#class string:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': '""'},
+#    ]
 
 meta_keyword = """
     if else elif endif define undef warning error line pragma ifdef
     ifndef
     """.split()
 
-meta_keyword0 = ['include']
+class string2:
+    default_text_color = DELIMITER
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
+string2.__name__ = 'string'
 
-class _group0:
+string3 = ('string', RE(r"\""), [RE(r"\"")], string2)
+
+string4 = ('string', RE(r"'\\?."), [RE(r"'")])
+
+class _group4:
     default_text_color = DELIMITER
     rules = [
-        ('meta-keyword', meta_keyword0),
-        ('keyword', meta_keyword0),
-        ('string', RE(r"\""), [RE(r"\"")], string),
-        ('string', RE(r"'\\?."), [RE(r"'")]),
+        ('meta-keyword', ['include']),
+        ('keyword', ['include']),
+        string3,
+        string4,
         ('meta-string', RE(r"<"), [RE(r">")]),
     ]
 
@@ -458,25 +465,22 @@ class meta:
     rules = [
         ('meta-keyword', meta_keyword),
         # ignore {'begin': {'pattern': '\\\\\\n', 'type': 'RegExp'}, 'relevance': 0},
-        ('_group0', RE(r"\b(?:include)"), [RE(r"$")], _group0),
-        _group0.rules[2],
-        _group0.rules[3],
-        ('number', number),
-        None,  # rules[3],
-        None,  # rules[4],
+        ('_group4', RE(r"\b(?:include)"), [RE(r"$")], _group4),
+        string3,
+        string4,
+        number,
+        comment0,
+        comment1,
     ]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('number', number),
-    ('string', RE(r"\""), [RE(r"\"")], string),
-    ('string', RE(r"'"), [RE(r"'")], string),
+    ('literal', ['true', 'false', 'nil']),
+    comment0,
+    comment1,
+    number,
+    ('string', RE(r"\""), [RE(r"\"")]), #, string),
+    ('string', RE(r"'"), [RE(r"'")]), #, string),
     ('meta', RE(r"#"), [RE(r"$")], meta),
 ]
-
-meta.rules[5] = rules[3]
-meta.rules[6] = rules[4]

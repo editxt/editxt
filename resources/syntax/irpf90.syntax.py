@@ -75,43 +75,35 @@ keyword = """
     irp_read
     """.split()
 
-literal = ['.False.', '.True.']
-
-number = [
-    RE(r"(?=\b|\+|\-|\.)(?=\.\d|\d)(?:\d+)?(?:\.?\d*)(?:[de][+-]?\d+)?\b\.?"),
-]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-
-keyword0 = ['subroutine', 'function', 'program']
-
-title = [RE(r"[a-zA-Z_]\w*")]
+    rules = [operator_escape]
 
 class function:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
-        ('title', title),
+        ('keyword', ['subroutine', 'function', 'program']),
+        ('title', [RE(r"[a-zA-Z_]\w*")]),
         ('params', RE(r"\("), [RE(r"\)")]),
     ]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+number = [
+    RE(r"(?=\b|\+|\-|\.)(?=\.\d|\d)(?:\d+)?(?:\.?\d*)(?:[de][+-]?\d+)?\b\.?"),
+]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
+    ('literal', ['.False.', '.True.']),
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('function', RE(r"\b(?:subroutine|function|program)"), [RE(r"\B\b")], function),

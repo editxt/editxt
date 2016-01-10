@@ -1065,15 +1065,15 @@ keyword = """
     $UserName $Version $VersionNumber
     """.split()
 
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 rules = [
     ('keyword', keyword),

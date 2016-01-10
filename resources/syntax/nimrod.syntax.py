@@ -17,7 +17,16 @@ literal = """
     shared guarded stdin stdout stderr result true false
     """.split()
 
-type = [RE(r"\b[A-Z]\w+\b")]
+#class string:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': {'pattern': '""', 'type': 'RegExp'}},
+#    ]
+
+class string2:
+    default_text_color = DELIMITER
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
+string2.__name__ = 'string'
 
 built_in = [
     RE(r"\b(?:int|int8|int16|int32|int64|uint|uint8|uint16|uint32|uint64|float|float32|float64|bool|char|string|cstring|pointer|expr|stmt|void|auto|any|range|array|openarray|varargs|seq|set|clong|culong|cchar|cschar|cshort|cint|csize|clonglong|cfloat|cdouble|clongdouble|cuchar|cushort|cuint|culonglong|cstringarray|semistatic)\b"),
@@ -25,39 +34,25 @@ built_in = [
 
 number = [RE(r"\b(?:0[xX][0-9a-fA-F][_0-9a-fA-F]*)(?:'?[iIuU](?:8|16|32|64))?")]
 
-number0 = [RE(r"\b(?:0o[0-7][_0-7]*)(?:'?[iIuUfF](?:8|16|32|64))?")]
-
-number1 = [RE(r"\b(?:0(?:b|B)[01][_01]*)(?:'?[iIuUfF](?:8|16|32|64))?")]
-
-number2 = [RE(r"\b(?:\d[_\d]*)(?:'?[iIuUfF](?:8|16|32|64))?")]
-
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': '""', 'type': 'RegExp'}},
-    ]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 rules = [
     ('keyword', keyword),
     ('literal', literal),
     ('meta', RE(r"{\."), [RE(r"\.}")]),
-    ('string', RE(r"[a-zA-Z]\w*\""), [RE(r"\"")], string),
+    ('string', RE(r"[a-zA-Z]\w*\""), [RE(r"\"")]), #, string),
     ('string', RE(r"(?:[a-zA-Z]\w*)?\"\"\""), [RE(r"\"\"\"")]),
-    ('string', RE(r"\""), [RE(r"\"")], string),
-    ('type', type),
+    ('string', RE(r"\""), [RE(r"\"")], string2),
+    ('type', [RE(r"\b[A-Z]\w+\b")]),
     ('built_in', built_in),
     ('number', number),
-    ('number', number0),
-    ('number', number1),
-    ('number', number2),
+    ('number', [RE(r"\b(?:0o[0-7][_0-7]*)(?:'?[iIuUfF](?:8|16|32|64))?")]),
+    ('number', [RE(r"\b(?:0(?:b|B)[01][_01]*)(?:'?[iIuUfF](?:8|16|32|64))?")]),
+    ('number', [RE(r"\b(?:\d[_\d]*)(?:'?[iIuUfF](?:8|16|32|64))?")]),
     ('comment', RE(r"#"), [RE(r"$")], comment),
 ]

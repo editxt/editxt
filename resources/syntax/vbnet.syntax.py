@@ -31,47 +31,42 @@ keyword = """
     writeonly xor
     """.split()
 
-literal = ['true', 'false', 'nothing']
+#class string:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': '""'},
+#    ]
+
+#class doctag:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+#    ]
+
+class comment:
+    default_text_color = DELIMITER
+    rules = [
+        ('doctag', RE(r"'''|<!--|-->"), [RE(r"\B\b")]), #, doctag),
+        ('doctag', RE(r"</?"), [RE(r">")]), #, doctag),
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
+    ]
 
 number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '""'},
-    ]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
-class doctag0:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-    ]
-doctag0.__name__ = 'doctag'
-
-class comment:
-    default_text_color = DELIMITER
-    rules = [
-        ('doctag', RE(r"'''|<!--|-->"), [RE(r"\B\b")], doctag0),
-        ('doctag', RE(r"</?"), [RE(r">")], doctag0),
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-
-meta_keyword = ['if', 'else', 'elseif', 'end', 'region', 'externalsource']
-
 class meta:
     default_text_color = DELIMITER
-    rules = [('meta-keyword', meta_keyword)]
+    rules = [
+        ('meta-keyword', ['if', 'else', 'elseif', 'end', 'region', 'externalsource']),
+    ]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
-    ('string', RE(r"\""), [RE(r"\"")], string),
+    ('literal', ['true', 'false', 'nothing']),
+    ('string', RE(r"\""), [RE(r"\"")]), #, string),
     ('comment', RE(r"(?=')"), [RE(r"$")], comment),
     ('number', number),
     ('meta', RE(r"#"), [RE(r"$")], meta),

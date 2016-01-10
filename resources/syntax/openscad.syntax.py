@@ -19,68 +19,54 @@ keyword = """
     function module include use for intersection_for if else \%
     """.split()
 
-literal = ['false', 'true', 'PI', 'undef']
-
-number = [RE(r"\b\d+(?:\.\d+)?(?:e-?\d+)?")]
-
-keyword0 = [RE(r"\$(?:f[asn]|t|vp[rtd]|children)")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-meta_keyword = ['include', 'use']
+number = ('number', [RE(r"\b\d+(?:\.\d+)?(?:e-?\d+)?")])
 
 class meta:
     default_text_color = DELIMITER
-    rules = [('meta-keyword', meta_keyword)]
+    rules = [('meta-keyword', ['include', 'use'])]
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
-keyword1 = ['module', 'function']
+string0 = ('string', RE(r"\""), [RE(r"\"")], string)
 
-title = [RE(r"[a-zA-Z_]\w*")]
-
-literal0 = [RE(r"false|true|PI|undef")]
+keyword1 = ('keyword', [RE(r"\$(?:f[asn]|t|vp[rtd]|children)")])
 
 class params:
     default_text_color = DELIMITER
     rules = [
-        ('number', number),
-        None,  # rules[7],
-        ('keyword', keyword0),
-        ('literal', literal0),
+        number,
+        string0,
+        keyword1,
+        ('literal', [RE(r"false|true|PI|undef")]),
     ]
 
 class function:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword1),
+        ('keyword', ['module', 'function']),
         ('params', RE(r"\("), [RE(r"\)")], params),
-        ('title', title),
+        ('title', [RE(r"[a-zA-Z_]\w*")]),
     ]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
+    ('literal', ['false', 'true', 'PI', 'undef']),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('number', number),
+    number,
     ('meta', RE(r"include|use <"), [RE(r">")], meta),
-    ('string', RE(r"\""), [RE(r"\"")], string),
-    ('keyword', keyword0),
+    string0,
+    keyword1,
     # ignore {'begin': '[*!#%]', 'relevance': 0},
     ('function', RE(r"\b(?:module|function)"), [RE(r"\=|\{")], function),
 ]
-
-params.rules[1] = rules[7]

@@ -14,41 +14,35 @@ keyword = """
     container anytype common div mod
     """.split()
 
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 class _class:
     default_text_color = DELIMITER
-    rules = [('_class', [RE(r"{")])]
+    rules = [('class', [RE(r"{")])]
 
-keyword0 = ['class', 'interface']
-
-title = [RE(r"[a-zA-Z_]\w*")]
-
-class class0:
+class class1:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
-        ('_group0', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
-        ('title', title),
+        ('keyword', ['class', 'interface']),
+        ('_group1', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('title', [RE(r"[a-zA-Z_]\w*")]),
     ]
-class0.__name__ = 'class'
+class1.__name__ = 'class'
 
 rules = [
     ('keyword', keyword),
@@ -58,5 +52,5 @@ rules = [
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),
     ('meta', RE(r"#"), [RE(r"$")]),
-    ('class', RE(r"\b(?:class|interface)"), [_class], class0),
+    ('class', RE(r"\b(?:class|interface)"), [_class], class1),
 ]

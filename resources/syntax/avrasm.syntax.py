@@ -37,32 +37,20 @@ meta = """
     .include .list .listmac .macro .nolist .org .set
     """.split()
 
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-number0 = [RE(r"\b(?:0b[01]+)")]
-
-number1 = [RE(r"\b(?:\$[a-zA-Z0-9]+|0o[0-7]+)")]
-
-symbol = [RE(r"^[A-Za-z0-9_.$]+:")]
-
-subst = [RE(r"@[0-9]+")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
 rules = [
     ('built_in', built_in),
@@ -71,11 +59,11 @@ rules = [
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('comment', RE(r";"), [RE(r"$")], comment),
     ('number', number),
-    ('number', number0),
-    ('number', number1),
+    ('number', [RE(r"\b(?:0b[01]+)")]),
+    ('number', [RE(r"\b(?:\$[a-zA-Z0-9]+|0o[0-7]+)")]),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"'"), [RE(r"[^\\]'")]),
-    ('symbol', symbol),
+    ('symbol', [RE(r"^[A-Za-z0-9_.$]+:")]),
     ('meta', RE(r"#"), [RE(r"$")]),
-    ('subst', subst),
+    ('subst', [RE(r"@[0-9]+")]),
 ]

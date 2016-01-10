@@ -18,64 +18,59 @@ keyword = """
     implementation finally published procedure
     """.split()
 
-string = [RE(r"(?:#\d+)+")]
+#class string:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': {'pattern': "''", 'type': 'RegExp'}},
+#    ]
 
-number = [RE(r"\b\d+(?:\.\d+)?")]
+string0 = ('string', RE(r"'"), [RE(r"'")]) #, string)
 
-class string0:
+string1 = ('string', [RE(r"(?:#\d+)+")])
+
+title = ('title', [RE(r"[a-zA-Z]\w*")])
+
+class _group1:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "''", 'type': 'RegExp'}},
-    ]
-string0.__name__ = 'string'
-
-title = [RE(r"[a-zA-Z]\w*")]
-
-class _group0:
-    default_text_color = DELIMITER
-    rules = [('title', title)]
-
-keyword0 = ['function', 'constructor', 'destructor', 'procedure']
+    rules = [title]
 
 class params:
     default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword),
-        None,  # rules[1],
-        ('string', string),
-    ]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+    rules = [('keyword', keyword), string0, string1]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+comment0 = ('comment', RE(r"//"), [RE(r"$")], comment)
+
+comment1 = ('comment', RE(r"\{"), [RE(r"\}")], comment)
+
+comment2 = ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment)
 
 class function:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
-        ('keyword', keyword0),
-        ('title', title),
+        ('keyword', ['function', 'constructor', 'destructor', 'procedure']),
+        ('keyword', ['function', 'constructor', 'destructor', 'procedure']),
+        title,
         ('params', RE(r"\("), [RE(r"\)")], params),
-        ('comment', RE(r"//"), [RE(r"$")], comment),
-        ('comment', RE(r"\{"), [RE(r"\}")], comment),
-        ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment),
+        comment0,
+        comment1,
+        comment2,
     ]
 
 rules = [
     ('keyword', keyword),
-    ('string', RE(r"'"), [RE(r"'")], string0),
-    ('string', string),
-    ('number', number),
-    ('_group0', RE(r"(?=[a-zA-Z]\w*\s*=\s*class\s*\()"), [RE(r"\B\b")], _group0),
+    string0,
+    string1,
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
+    ('_group1', RE(r"(?=[a-zA-Z]\w*\s*=\s*class\s*\()"), [RE(r"\B\b")], _group1),
     ('function', RE(r"\b(?:function|constructor|destructor|procedure)"), [RE(r"[:;]")], function),
-    function.rules[4],
-    function.rules[5],
-    function.rules[6],
+    comment0,
+    comment1,
+    comment2,
 ]
-
-params.rules[1] = rules[1]

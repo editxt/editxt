@@ -34,67 +34,44 @@ meta = """
     unknown_sharing sharing
     """.split()
 
-built_in0 = [RE(r"<=>")]
-
-built_in1 = [RE(r"<=")]
-
-built_in2 = [RE(r"=>")]
-
-built_in3 = [RE(r"/\\")]
-
-built_in4 = [RE(r"\\/")]
-
-built_in5 = [RE(r":-\|-->")]
-
-built_in6 = [RE(r"=")]
-
-number = [RE(r"0'.\|0[box][0-9a-fA-F]*")]
-
-number0 = [RE(r"\b\d+(?:\.\d+)?")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
 subst = [
     RE(r"\\[abfnrtv]\|\\x[0-9a-fA-F]*\\\|%[-+# *.0-9]*[dioxXucsfeEgGp]"),
 ]
 
-class string0:
+class string1:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('subst', subst),
-    ]
-string0.__name__ = 'string'
+    rules = [operator_escape, ('subst', subst)]
+string1.__name__ = 'string'
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
     ('meta', meta),
-    ('built_in', built_in0),
-    ('built_in', built_in1),
-    ('built_in', built_in2),
-    ('built_in', built_in3),
-    ('built_in', built_in4),
-    ('built_in', built_in5),
-    ('built_in', built_in6),
+    ('built_in', [RE(r"<=>")]),
+    ('built_in', [RE(r"<=")]),
+    ('built_in', [RE(r"=>")]),
+    ('built_in', [RE(r"/\\")]),
+    ('built_in', [RE(r"\\/")]),
+    ('built_in', [RE(r":-\|-->")]),
+    ('built_in', [RE(r"=")]),
     ('comment', RE(r"%"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('number', number),
-    ('number', number0),
+    ('number', [RE(r"0'.\|0[box][0-9a-fA-F]*")]),
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
     ('string', RE(r"'"), [RE(r"'")], string),
-    ('string', RE(r"\""), [RE(r"\"")], string0),
+    ('string', RE(r"\""), [RE(r"\"")], string1),
     # ignore {'begin': {'pattern': ':-', 'type': 'RegExp'}},
 ]

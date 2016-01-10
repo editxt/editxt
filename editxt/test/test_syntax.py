@@ -561,8 +561,7 @@ def test_Highlighter_color_text():
         <style> tag
           .error selector-class text_color CSS
           { text_color CSS
-          color attribute CSS
-          : text_color CSS
+          color: attribute CSS
           ; text_color CSS
           } text_color CSS
         </style> tag

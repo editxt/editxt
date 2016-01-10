@@ -4,61 +4,58 @@
 name = 'JSON'
 file_patterns = ['*.json']
 
-literal = ['true', 'false', 'null']
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
+
+class string:
+    default_text_color = DELIMITER
+    rules = [operator_escape]
 
 number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-
 class _attr:
     default_text_color = DELIMITER
-    rules = [('_attr', [RE(r"\s*\"")])]
+    rules = [('attr', [RE(r"\s*\"")])]
 
 class _attr0:
     default_text_color = DELIMITER
-    rules = [('_attr', [RE(r"\"\s*:\s*")])]
+    rules = [('attr', [RE(r"\"\s*:\s*")])]
 _attr0.__name__ = '_attr'
 
-class attr:
+class attr1:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
+attr1.__name__ = 'attr'
 
-class attr0:
+class attr3:
     default_text_color = DELIMITER
-    rules = [('attr', _attr, [_attr0], attr)]
-attr0.__name__ = 'attr'
+    rules = [('attr', _attr, [_attr0], attr1)]
+attr3.__name__ = 'attr'
 
-class _group2:
+class _group1:
     default_text_color = DELIMITER
-    rules = [('literal', literal)]
+    rules = [('literal', ['true', 'false', 'null'])]
 
 class _group0:
     default_text_color = DELIMITER
-    rules = [('attr', attr0, [RE(r",")], _group2)]
+    rules = [('attr', attr3, [RE(r",")], _group1)]
 
 class _group3:
     default_text_color = DELIMITER
-    rules = [('literal', literal)]
+    rules = [('literal', ['true', 'false', 'null'])]
 
-class _group1:
+class _group2:
     default_text_color = DELIMITER
     rules = [('_group3', RE(r"\B|\b"), [RE(r",")], _group3)]
 
 rules = [
-    ('literal', literal),
+    ('literal', ['true', 'false', 'null']),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),
     ('_group0', RE(r"{"), [RE(r"}")], _group0),
-    ('_group1', RE(r"\["), [RE(r"\]")], _group1),
+    ('_group2', RE(r"\["), [RE(r"\]")], _group2),
 ]
 
-_group2.rules.extend(rules)
+_group1.rules.extend(rules)
 _group3.rules.extend(rules)

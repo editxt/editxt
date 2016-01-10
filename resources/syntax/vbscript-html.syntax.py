@@ -5,4 +5,5 @@ name = 'VBScript in HTML'
 file_patterns = ['*.vbscript-html']
 
 
+
 rules = [('_group0', RE(r"<%"), [RE(r"%>")], 'vbscript')]

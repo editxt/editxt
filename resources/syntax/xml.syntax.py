@@ -6,30 +6,24 @@ file_patterns = ['*.xml', '*.html', '*.xhtml', '*.rss', '*.atom', '*.xsl', '*.pl
 
 flags = re.IGNORECASE | re.MULTILINE
 
-class meta:
-    default_text_color = DELIMITER
-    rules = [('_group1', RE(r"\["), [RE(r"\]")])]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+#class meta:
+#    default_text_color = DELIMITER
+#    rules = [('_group0', RE(r"\["), [RE(r"\]")])]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-name0 = ['style']
-
-attr = [RE(r"[A-Za-z0-9\._:-]+")]
+_group4 = ('_group4', RE(r"<\?(?:php)?(?!\w)"), [RE(r"\?>")], 'php')
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        None,  # _group2.rules[0],
-    ]
+    rules = [_group4]
 
-class _group4:
+class _group5:
     default_text_color = DELIMITER
     rules = [
         ('string', RE(r"\""), [RE(r"\"")], string),
@@ -37,54 +31,47 @@ class _group4:
         ('string', RE(r"[^\s\/>]+"), [RE(r"\B\b")], string),
     ]
 
-class _group2:
+class _group3:
     default_text_color = DELIMITER
     rules = [
-        ('_group3', RE(r"<\?(?:php)?(?!\w)"), [RE(r"\?>")], 'php'),
-        ('attr', attr),
-        ('_group4', RE(r"="), [RE(r"\B\b")], _group4),
+        _group4,
+        ('attr', [RE(r"[A-Za-z0-9\._:-]+")]),
+        ('_group5', RE(r"="), [RE(r"\B\b")], _group5),
     ]
+
+_group30 = ('_group3', RE(r"\B|\b"), [RE(r"\B\b")], _group3)
 
 class tag:
     default_text_color = DELIMITER
-    rules = [
-        ('name', name0),
-        ('_group2', RE(r"\B|\b"), [RE(r"\B\b")], _group2),
-    ]
-
-class tag0:
-    default_text_color = DELIMITER
-    rules = [('tag', RE(r"<style(?=\s|>|$)"), [RE(r">")], tag)]
-tag0.__name__ = 'tag'
-
-name1 = ['script']
+    rules = [('name', ['style']), _group30]
 
 class tag1:
     default_text_color = DELIMITER
-    rules = [('name', name1), tag.rules[1]]
+    rules = [('tag', RE(r"<style(?=\s|>|$)"), [RE(r">")], tag)]
 tag1.__name__ = 'tag'
-
-class tag2:
-    default_text_color = DELIMITER
-    rules = [('tag', RE(r"<script(?=\s|>|$)"), [RE(r">")], tag1)]
-tag2.__name__ = 'tag'
-
-name2 = [RE(r"[^\/><\s]+")]
 
 class tag3:
     default_text_color = DELIMITER
-    rules = [('name', name2), tag.rules[1]]
+    rules = [('name', ['script']), _group30]
 tag3.__name__ = 'tag'
 
-rules = [
-    ('meta', RE(r"<!DOCTYPE"), [RE(r">")], meta),
-    ('comment', RE(r"<!--"), [RE(r"-->")], comment),
-    ('_group0', RE(r"<\!\[CDATA\["), [RE(r"\]\]>")]),
-    ('tag', tag0, [RE(r"(?=</style>)")], 'css'),
-    ('tag', tag2, [RE(r"(?=</script>)")], 'javascript'),
-    _group2.rules[0],
-    ('meta', RE(r"<\?\w+"), [RE(r"\?>")]),
-    ('tag', RE(r"</?"), [RE(r"/?>")], tag3),
-]
+class tag5:
+    default_text_color = DELIMITER
+    rules = [('tag', RE(r"<script(?=\s|>|$)"), [RE(r">")], tag3)]
+tag5.__name__ = 'tag'
 
-string.rules[0] = _group2.rules[0]
+class tag7:
+    default_text_color = DELIMITER
+    rules = [('name', [RE(r"[^\/><\s]+")]), _group30]
+tag7.__name__ = 'tag'
+
+rules = [
+    ('meta', RE(r"<!DOCTYPE"), [RE(r">")]), #, meta),
+    ('comment', RE(r"<!--"), [RE(r"-->")], comment),
+    ('_group2', RE(r"<\!\[CDATA\["), [RE(r"\]\]>")]),
+    ('tag', tag1, [RE(r"(?=</style>)")], 'css'),
+    ('tag', tag5, [RE(r"(?=</script>)")], 'javascript'),
+    _group4,
+    ('meta', RE(r"<\?\w+"), [RE(r"\?>")]),
+    ('tag', RE(r"</?"), [RE(r"/?>")], tag7),
+]

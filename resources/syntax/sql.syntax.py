@@ -185,9 +185,7 @@ keyword = """
     xmltable xmltype xor year year_to_month years yearweek
     """.split()
 
-literal = ['true', 'false', 'null']
-
-keyword0 = """
+keyword1 = """
     begin end start commit rollback savepoint lock alter create drop
     rename call delete do handler insert load replace select truncate
     update set show pragma grant merge describe use explain help declare
@@ -196,50 +194,52 @@ keyword0 = """
     restore check backup revoke
     """.split()
 
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
     rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        operator_escape,
         # ignore {'begin': "''"},
     ]
 
-class string0:
+class string2:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-string0.__name__ = 'string'
+    rules = [operator_escape]
+string2.__name__ = 'string'
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+comment0 = ('comment', RE(r"/\*"), [RE(r"\*/")], comment)
+
+comment1 = ('comment', RE(r"--"), [RE(r"$")], comment)
 
 class _group0:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
-        ('literal', literal),
-        ('keyword', keyword0),
+        ('literal', ['true', 'false', 'null']),
+        ('keyword', keyword1),
         ('string', RE(r"'"), [RE(r"'")], string),
         ('string', RE(r"\""), [RE(r"\"")], string),
-        ('string', RE(r"`"), [RE(r"`")], string0),
+        ('string', RE(r"`"), [RE(r"`")], string2),
         ('number', number),
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-        ('comment', RE(r"--"), [RE(r"$")], comment),
+        comment0,
+        comment1,
     ]
 
 rules = [
     ('_group0', RE(r"\b(?:begin|end|start|commit|rollback|savepoint|lock|alter|create|drop|rename|call|delete|do|handler|insert|load|replace|select|truncate|update|set|show|pragma|grant|merge|describe|use|explain|help|declare|prepare|execute|deallocate|release|unlock|purge|reset|change|stop|analyze|cache|flush|optimize|repair|kill|install|uninstall|checksum|restore|check|backup|revoke)"), [RE(r";")], _group0),
-    _group0.rules[8],
-    _group0.rules[9],
+    comment0,
+    comment1,
 ]

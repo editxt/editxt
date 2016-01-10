@@ -12,97 +12,92 @@ keyword = """
     super switch this throw try typeof use var void while with
     """.split()
 
-literal = ['true', 'false', 'null', 'undefined']
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+string0 = ('string', RE(r"'"), [RE(r"'")], string)
+
+string1 = ('string', RE(r"\""), [RE(r"\"")], string)
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-keyword0 = ['package']
+comment0 = ('comment', RE(r"//"), [RE(r"$")], comment)
 
-title = [RE(r"[a-zA-Z]\w*")]
+comment1 = ('comment', RE(r"/\*"), [RE(r"\*/")], comment)
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+title = ('title', [RE(r"[a-zA-Z]\w*")])
 
 class class0:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword0), ('title', title)]
+    rules = [('keyword', ['package']), title]
 class0.__name__ = 'class'
 
 class _class:
     default_text_color = DELIMITER
-    rules = [('_class', [RE(r"{")])]
+    rules = [('class', [RE(r"{")])]
 
-keyword1 = ['class', 'interface']
-
-class class1:
+class class3:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword1),
-        ('_group0', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
-        ('title', title),
+        ('keyword', ['class', 'interface']),
+        ('_group1', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        title,
     ]
-class1.__name__ = 'class'
-
-meta_keyword = ['import', 'include']
+class3.__name__ = 'class'
 
 class meta:
     default_text_color = DELIMITER
-    rules = [('meta-keyword', meta_keyword), ('keyword', meta_keyword)]
+    rules = [
+        ('meta-keyword', ['import', 'include']),
+        ('keyword', ['import', 'include']),
+    ]
 
 class _function:
     default_text_color = DELIMITER
-    rules = [('_function', [RE(r"[{;]")])]
-
-keyword2 = ['function']
+    rules = [('function', [RE(r"[{;]")])]
 
 class params:
     default_text_color = DELIMITER
     rules = [
-        None,  # rules[2],
-        None,  # rules[3],
-        None,  # rules[4],
-        None,  # rules[5],
+        string0,
+        string1,
+        comment0,
+        comment1,
         ('rest_arg', RE(r"[.]{3}"), [RE(r"[a-zA-Z_$][a-zA-Z0-9_$]*")]),
     ]
 
-class function:
+class function0:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword2),
-        ('title', title),
+        ('keyword', ['function']),
+        title,
         ('params', RE(r"\("), [RE(r"\)")], params),
         # ignore {'begin': ':\\s*([*]|[a-zA-Z_$][a-zA-Z0-9_$]*)'},
     ]
+function0.__name__ = 'function'
 
 rules = [
     ('keyword', keyword),
-    ('literal', literal),
-    ('string', RE(r"'"), [RE(r"'")], string),
-    ('string', RE(r"\""), [RE(r"\"")], string),
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+    ('literal', ['true', 'false', 'null', 'undefined']),
+    string0,
+    string1,
+    comment0,
+    comment1,
     ('number', number),
     ('class', RE(r"\b(?:package)"), [RE(r"{")], class0),
-    ('class', RE(r"\b(?:class|interface)"), [_class], class1),
+    ('class', RE(r"\b(?:class|interface)"), [_class], class3),
     ('meta', RE(r"\b(?:import|include)"), [RE(r";")], meta),
-    ('function', RE(r"\b(?:function)"), [_function], function),
+    ('function', RE(r"\b(?:function)"), [_function], function0),
 ]
-
-params.rules[0] = rules[2]
-params.rules[1] = rules[3]
-params.rules[2] = rules[4]
-params.rules[3] = rules[5]

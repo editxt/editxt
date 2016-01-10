@@ -4,60 +4,48 @@
 name = 'Smalltalk'
 file_patterns = ['*.smalltalk', '*.st']
 
-keyword = ['self', 'super', 'nil', 'true', 'false', 'thisContext']
+class comment:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
+    ]
 
-type = [RE(r"\b[A-Z][A-Za-z0-9_]*")]
+class string:
+    default_text_color = DELIMITER
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
+
+string0 = ('string', RE(r"'"), [RE(r"'")], string)
 
 number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
-symbol = [RE(r"#[a-zA-Z_]\w*")]
+number0 = ('number', number)
 
-string = [RE(r"\$.{1}")]
+symbol = ('symbol', [RE(r"#[a-zA-Z_]\w*")])
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+string1 = ('string', [RE(r"\$.{1}")])
 
-class comment:
+#class _group2:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': '(\\|[ ]*)?[a-z][a-zA-Z0-9_]*'},
+#    ]
+
+class _group4:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-
-class string0:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-string0.__name__ = 'string'
-
-class _group0:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '(\\|[ ]*)?[a-z][a-zA-Z0-9_]*'},
-    ]
-
-class _group1:
-    default_text_color = DELIMITER
-    rules = [
-        None,  # rules[2],
-        ('string', string),
-        ('number', number),
-        ('symbol', symbol),
-    ]
+    rules = [string0, string1, number0, symbol]
 
 rules = [
-    ('keyword', keyword),
+    ('keyword', ['self', 'super', 'nil', 'true', 'false', 'thisContext']),
     ('comment', RE(r"\""), [RE(r"\"")], comment),
-    ('string', RE(r"'"), [RE(r"'")], string0),
-    ('type', type),
+    string0,
+    ('type', [RE(r"\b[A-Z][A-Za-z0-9_]*")]),
     # ignore {'begin': '[a-z][a-zA-Z0-9_]*:', 'relevance': 0},
-    ('number', number),
-    ('symbol', symbol),
-    ('string', string),
-    ('_group0', RE(r"(?=\|[ ]*[a-z][a-zA-Z0-9_]*(?:[ ]+[a-z][a-zA-Z0-9_]*)*[ ]*\|)"), [RE(r"\|")], _group0),
-    ('_group1', RE(r"\#\("), [RE(r"\)")], _group1),
+    number0,
+    symbol,
+    string1,
+    ('_group2', RE(r"(?=\|[ ]*[a-z][a-zA-Z0-9_]*(?:[ ]+[a-z][a-zA-Z0-9_]*)*[ ]*\|)"), [RE(r"\|")]), #, _group2),
+    ('_group4', RE(r"\#\("), [RE(r"\)")], _group4),
 ]
-
-_group1.rules[0] = rules[2]

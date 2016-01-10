@@ -16,18 +16,18 @@ class string:
     default_text_color = DELIMITER
     rules = [('subst', RE(r"\["), [RE(r"\]")])]
 
-class _group0:
-    default_text_color = DELIMITER
-    rules = [('_group1', RE(r"\(This"), [RE(r"\)")])]
+#class _group0:
+#    default_text_color = DELIMITER
+#    rules = [('_group1', RE(r"\(This"), [RE(r"\)")])]
 
-class comment:
-    default_text_color = DELIMITER
-    rules = []
+#class comment:
+#    default_text_color = DELIMITER
+#    rules = []
 
 rules = [
     ('keyword', keyword),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('section', RE(r"^(?:Volume|Book|Part|Chapter|Section|Table)\b"), [RE(r"$")]),
-    ('_group0', RE(r"^(?:Check|Carry out|Report|Instead of|To|Rule|When|Before|After)\b"), [RE(r":")], _group0),
-    ('comment', RE(r"\["), [RE(r"\]")], comment),
+    ('_group0', RE(r"^(?:Check|Carry out|Report|Instead of|To|Rule|When|Before|After)\b"), [RE(r":")]), #, _group0),
+    ('comment', RE(r"\["), [RE(r"\]")]), #, comment),
 ]

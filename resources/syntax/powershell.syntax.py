@@ -48,26 +48,20 @@ nomarkup = """
     -contains -notcontains -in -notin -replace
     """.split()
 
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
-literal = [RE(r"\$(?:null|true|false)\b")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-variable = [RE(r"\$[\w\d][\w\d_:]*")]
+variable = ('variable', [RE(r"\$[\w\d][\w\d_:]*")])
 
 class string:
     default_text_color = DELIMITER
     rules = [
-        # ignore {'begin': '`[\\s\\S]', 'relevance': 0},
-        ('variable', variable),
+        ('operator.escape', [RE(r"`[\s\S]")]),
+        variable,
         ('variable', RE(r"\$[A-z]"), [RE(r"[^A-z]")]),
     ]
 
@@ -76,8 +70,9 @@ rules = [
     ('keyword', keyword),
     ('nomarkup', nomarkup),
     ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('number', number),
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"'"), [RE(r"'")]),
-    ('literal', literal),
+    ('literal', [RE(r"\$(?:null|true|false)\b")]),
+    variable,
 ]

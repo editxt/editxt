@@ -29,32 +29,28 @@ keyword = """
     class_terminate default preserve in me byval byref step resume goto
     """.split()
 
-literal = ['true', 'false', 'null', 'nothing', 'empty']
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '""'},
-    ]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+#class string:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': '""'},
+#    ]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
-    ('string', RE(r"\""), [RE(r"\"")], string),
+    ('literal', ['true', 'false', 'null', 'nothing', 'empty']),
+    ('string', RE(r"\""), [RE(r"\"")]), #, string),
     ('comment', RE(r"'"), [RE(r"$")], comment),
     ('number', number),
 ]

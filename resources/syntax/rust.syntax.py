@@ -24,65 +24,43 @@ keyword = """
     i16 i32 i64 uint u8 u32 u64 float f32 f64 str char bool
     """.split()
 
-string = [RE(r"r(?:#*)\".*?\"\1(?!#)")]
+class comment:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
+    ]
 
-string0 = [RE(r"'\\?(?:x\w{2}|u\w{4}|U\w{8}|.)'")]
-
-symbol = [RE(r"'[a-zA-Z_][a-zA-Z0-9_]*")]
-
-number = [RE(r"\b0b(?:[01_]+)(?:[uif](?:8|16|32|64|size))?")]
-
-number0 = [RE(r"\b0o(?:[0-7_]+)(?:[uif](?:8|16|32|64|size))?")]
-
-number1 = [RE(r"\b0x(?:[A-Fa-f0-9_]+)(?:[uif](?:8|16|32|64|size))?")]
+class string:
+    default_text_color = DELIMITER
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
 number2 = [
     RE(r"\b(?:\d[\d_]*(?:\.[0-9_]+)?(?:[eE][+-]?[0-9_]+)?)(?:[uif](?:8|16|32|64|size))?"),
 ]
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
-class comment:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-
-class string1:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-string1.__name__ = 'string'
-
 class _function:
     default_text_color = DELIMITER
-    rules = [('_function', [RE(r"(?:\(|<)")])]
+    rules = [('function', [RE(r"(?:\(|<)")])]
 
-keyword0 = ['fn']
+title = ('title', [RE(r"[a-zA-Z_]\w*")])
 
-title = [RE(r"[a-zA-Z_]\w*")]
-
-class function:
+class function0:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword0), ('title', title)]
-
-keyword1 = ['type']
+    rules = [('keyword', ['fn']), title]
+function0.__name__ = 'function'
 
 class class0:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword1), ('title', title)]
+    rules = [('keyword', ['type']), title]
 class0.__name__ = 'class'
 
-keyword2 = ['trait', 'enum']
-
-class class1:
+class class2:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword2), ('title', title)]
-class1.__name__ = 'class'
+    rules = [('keyword', ['trait', 'enum']), title]
+class2.__name__ = 'class'
 
-class _group0:
+class _group1:
     default_text_color = DELIMITER
     rules = [('built_in', built_in)]
 
@@ -91,18 +69,18 @@ rules = [
     ('keyword', keyword),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('string', RE(r"\""), [RE(r"\"")], string1),
-    ('string', string),
-    ('string', string0),
-    ('symbol', symbol),
-    ('number', number),
-    ('number', number0),
-    ('number', number1),
+    ('string', RE(r"\""), [RE(r"\"")], string),
+    ('string', [RE(r"r(?:#*)\".*?\"\1(?!#)")]),
+    ('string', [RE(r"'\\?(?:x\w{2}|u\w{4}|U\w{8}|.)'")]),
+    ('symbol', [RE(r"'[a-zA-Z_][a-zA-Z0-9_]*")]),
+    ('number', [RE(r"\b0b(?:[01_]+)(?:[uif](?:8|16|32|64|size))?")]),
+    ('number', [RE(r"\b0o(?:[0-7_]+)(?:[uif](?:8|16|32|64|size))?")]),
+    ('number', [RE(r"\b0x(?:[A-Fa-f0-9_]+)(?:[uif](?:8|16|32|64|size))?")]),
     ('number', number2),
-    ('function', RE(r"\b(?:fn)"), [_function], function),
+    ('function', RE(r"\b(?:fn)"), [_function], function0),
     ('meta', RE(r"#\!?\["), [RE(r"\]")]),
     ('class', RE(r"\b(?:type)"), [RE(r"(?:=|<)")], class0),
-    ('class', RE(r"\b(?:trait|enum)"), [RE(r"{")], class1),
-    ('_group0', RE(r"[a-zA-Z]\w*::"), [RE(r"\B\b")], _group0),
+    ('class', RE(r"\b(?:trait|enum)"), [RE(r"{")], class2),
+    ('_group1', RE(r"[a-zA-Z]\w*::"), [RE(r"\B\b")], _group1),
     # ignore {'begin': '->'},
 ]

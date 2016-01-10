@@ -4,24 +4,23 @@
 name = 'Nginx'
 file_patterns = ['*.nginx', '*.nginxconf']
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-section = [RE(r"[a-zA-Z_]\w*")]
+comment0 = ('comment', RE(r"#"), [RE(r"$")], comment)
 
-class _group0:
+class _group1:
     default_text_color = DELIMITER
-    rules = [('section', section)]
+    rules = [('section', [RE(r"[a-zA-Z_]\w*")])]
 
-class attribute:
+class attribute0:
     default_text_color = DELIMITER
     rules = [('attribute', RE(r"[a-zA-Z_]\w*"), [RE(r"\B|\b")])]
+attribute0.__name__ = 'attribute'
 
 literal = """
     on off yes no true false none blocked debug info notice warn error
@@ -29,70 +28,51 @@ literal = """
     /dev/poll
     """.split()
 
-number = [RE(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d{1,5})?\b")]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
-number0 = [RE(r"\b\d+[kKmMgGdshdwy]*\b")]
+variable = ('variable', [RE(r"\$\d+")])
 
-variable = [RE(r"\$\d+")]
+variable0 = ('variable', RE(r"\$\{"), [RE(r"}")])
 
-variable0 = [RE(r"[\$\@][a-zA-Z_]\w*")]
+variable1 = ('variable', [RE(r"[\$\@][a-zA-Z_]\w*")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('variable', variable),
-        ('variable', RE(r"\$\{"), [RE(r"}")]),
-        ('variable', variable0),
-    ]
+    rules = [operator_escape, variable, variable0, variable1]
+
+class _group4:
+    default_text_color = DELIMITER
+    rules = [variable, variable0, variable1]
+
+class regexp:
+    default_text_color = DELIMITER
+    rules = [operator_escape, variable, variable0, variable1]
 
 class _group3:
     default_text_color = DELIMITER
     rules = [
-        None,  # string.rules[1],
-        None,  # string.rules[2],
-    ]
-
-class regexp:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        None,  # string.rules[1],
-        None,  # string.rules[2],
-    ]
-
-class _group2:
-    default_text_color = DELIMITER
-    rules = [
         ('literal', literal),
-        None,  # rules[0],
+        comment0,
         ('string', RE(r"\""), [RE(r"\"")], string),
         ('string', RE(r"'"), [RE(r"'")], string),
-        ('_group3', RE(r"(?:[a-z]+):/"), [RE(r"\s")], _group3),
+        ('_group4', RE(r"(?:[a-z]+):/"), [RE(r"\s")], _group4),
         ('regexp', RE(r"\s\^"), [RE(r"(?=\s|{|;)")], regexp),
         ('regexp', RE(r"~\*?\s+"), [RE(r"(?=\s|{|;)")], regexp),
         ('regexp', RE(r"\*(?:\.[a-z\-]+)+"), [RE(r"\B\b")], regexp),
         ('regexp', RE(r"(?:[a-z\-]+\.)+\*"), [RE(r"\B\b")], regexp),
-        ('number', number),
-        ('number', number0),
-        None,  # string.rules[1],
-        None,  # string.rules[2],
+        ('number', [RE(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d{1,5})?\b")]),
+        ('number', [RE(r"\b\d+[kKmMgGdshdwy]*\b")]),
+        variable,
+        variable0,
+        variable1,
     ]
 
-class _group1:
+class _group2:
     default_text_color = DELIMITER
-    rules = [('attribute', attribute, [RE(r"\B\b")], _group2)]
+    rules = [('attribute', attribute0, [RE(r"\B\b")], _group3)]
 
 rules = [
-    ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('_group0', RE(r"(?=[a-zA-Z_]\w*\s+{)"), [RE(r"{")], _group0),
-    ('_group1', RE(r"(?=[a-zA-Z_]\w*\s)"), [RE(r";|{")], _group1),
+    comment0,
+    ('_group1', RE(r"(?=[a-zA-Z_]\w*\s+{)"), [RE(r"{")], _group1),
+    ('_group2', RE(r"(?=[a-zA-Z_]\w*\s)"), [RE(r";|{")], _group2),
 ]
-
-_group3.rules[0] = string.rules[1]
-_group3.rules[1] = string.rules[2]
-regexp.rules[1] = string.rules[1]
-regexp.rules[2] = string.rules[2]
-_group2.rules[1] = rules[0]
-_group2.rules[11] = string.rules[1]
-_group2.rules[12] = string.rules[2]

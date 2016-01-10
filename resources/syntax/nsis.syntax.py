@@ -52,44 +52,40 @@ literal = """
     silent silentlog smooth textonly true user
     """.split()
 
-keyword0 = [
-    RE(r"\!(?:addincludedir|addplugindir|appendfile|cd|define|delfile|echo|else|endif|error|execute|finalize|getdllversionsystem|ifdef|ifmacrodef|ifmacrondef|ifndef|if|include|insertmacro|macroend|macro|makensis|packhdr|searchparse|searchreplace|tempfile|undef|verbose|warning)"),
-]
-
-built_in = [
-    RE(r"(?:ARCHIVE|FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_NORMAL|FILE_ATTRIBUTE_OFFLINE|FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_SYSTEM|FILE_ATTRIBUTE_TEMPORARY|HKCR|HKCU|HKDD|HKEY_CLASSES_ROOT|HKEY_CURRENT_CONFIG|HKEY_CURRENT_USER|HKEY_DYN_DATA|HKEY_LOCAL_MACHINE|HKEY_PERFORMANCE_DATA|HKEY_USERS|HKLM|HKPD|HKU|IDABORT|IDCANCEL|IDIGNORE|IDNO|IDOK|IDRETRY|IDYES|MB_ABORTRETRYIGNORE|MB_DEFBUTTON1|MB_DEFBUTTON2|MB_DEFBUTTON3|MB_DEFBUTTON4|MB_ICONEXCLAMATION|MB_ICONINFORMATION|MB_ICONQUESTION|MB_ICONSTOP|MB_OK|MB_OKCANCEL|MB_RETRYCANCEL|MB_RIGHT|MB_RTLREADING|MB_SETFOREGROUND|MB_TOPMOST|MB_USERICON|MB_YESNO|NORMAL|OFFLINE|READONLY|SHCTX|SHELL_CONTEXT|SYSTEM|TEMPORARY)"),
-]
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 variable = [
     RE(r"\$(?:ADMINTOOLS|APPDATA|CDBURN_AREA|CMDLINE|COMMONFILES32|COMMONFILES64|COMMONFILES|COOKIES|DESKTOP|DOCUMENTS|EXEDIR|EXEFILE|EXEPATH|FAVORITES|FONTS|HISTORY|HWNDPARENT|INSTDIR|INTERNET_CACHE|LANGUAGE|LOCALAPPDATA|MUSIC|NETHOOD|OUTDIR|PICTURES|PLUGINSDIR|PRINTHOOD|PROFILE|PROGRAMFILES32|PROGRAMFILES64|PROGRAMFILES|QUICKLAUNCH|RECENT|RESOURCES_LOCALIZED|RESOURCES|SENDTO|SMPROGRAMS|SMSTARTUP|STARTMENU|SYSDIR|TEMP|TEMPLATES|VIDEOS|WINDIR)"),
 ]
 
-variable0 = [RE(r"\$+{[a-zA-Z0-9_]+}")]
+variable1 = ('variable', [RE(r"\$+{[a-zA-Z0-9_]+}")])
 
-variable1 = [RE(r"\$+[a-zA-Z0-9_]+")]
+variable2 = ('variable', [RE(r"\$+[a-zA-Z0-9_]+")])
 
-variable2 = [RE(r"\$+\([a-zA-Z0-9_]+\)")]
+variable3 = ('variable', [RE(r"\$+\([a-zA-Z0-9_]+\)")])
 
 class string:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\$(\\\\(n|r|t)|\\$)'},
         ('variable', variable),
-        ('variable', variable0),
-        ('variable', variable1),
-        ('variable', variable2),
+        variable1,
+        variable2,
+        variable3,
     ]
+
+keyword1 = [
+    RE(r"\!(?:addincludedir|addplugindir|appendfile|cd|define|delfile|echo|else|endif|error|execute|finalize|getdllversionsystem|ifdef|ifmacrodef|ifmacrondef|ifndef|if|include|insertmacro|macroend|macro|makensis|packhdr|searchparse|searchreplace|tempfile|undef|verbose|warning)"),
+]
+
+built_in = [
+    RE(r"(?:ARCHIVE|FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_NORMAL|FILE_ATTRIBUTE_OFFLINE|FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_SYSTEM|FILE_ATTRIBUTE_TEMPORARY|HKCR|HKCU|HKDD|HKEY_CLASSES_ROOT|HKEY_CURRENT_CONFIG|HKEY_CURRENT_USER|HKEY_DYN_DATA|HKEY_LOCAL_MACHINE|HKEY_PERFORMANCE_DATA|HKEY_USERS|HKLM|HKPD|HKU|IDABORT|IDCANCEL|IDIGNORE|IDNO|IDOK|IDRETRY|IDYES|MB_ABORTRETRYIGNORE|MB_DEFBUTTON1|MB_DEFBUTTON2|MB_DEFBUTTON3|MB_DEFBUTTON4|MB_ICONEXCLAMATION|MB_ICONINFORMATION|MB_ICONQUESTION|MB_ICONSTOP|MB_OK|MB_OKCANCEL|MB_RETRYCANCEL|MB_RIGHT|MB_RTLREADING|MB_SETFOREGROUND|MB_TOPMOST|MB_USERICON|MB_YESNO|NORMAL|OFFLINE|READONLY|SHCTX|SHELL_CONTEXT|SYSTEM|TEMPORARY)"),
+]
 
 rules = [
     ('keyword', keyword),
@@ -99,11 +95,11 @@ rules = [
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('comment', RE(r";"), [RE(r"$")], comment),
     ('function', RE(r"\b(?:Function|PageEx|Section|SectionGroup|SubSection)"), [RE(r"$")]),
-    ('keyword', keyword0),
-    ('variable', variable0),
-    ('variable', variable1),
-    ('variable', variable2),
+    ('keyword', keyword1),
+    variable1,
+    variable2,
+    variable3,
     ('built_in', built_in),
-    ('number', number),
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
     # ignore {'begin': '[a-zA-Z]\\w*::[a-zA-Z]\\w*'},
 ]

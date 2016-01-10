@@ -11,17 +11,11 @@ built_in = """
 
 keyword = ['rec', 'with', 'let', 'in', 'inherit', 'assert', 'if', 'else', 'then']
 
-literal = ['true', 'false', 'or', 'and', 'null']
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 class subst:
@@ -29,29 +23,27 @@ class subst:
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
-        ('literal', literal),
+        ('literal', ['true', 'false', 'or', 'and', 'null']),
     ]
 
 class string:
     default_text_color = DELIMITER
     rules = [('subst', RE(r"\$\{"), [RE(r"}")], subst)]
 
-attr = [RE(r"\S+")]
-
-class _group0:
+class _group1:
     default_text_color = DELIMITER
-    rules = [('attr', attr)]
+    rules = [('attr', [RE(r"\S+")])]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
-    ('number', number),
+    ('literal', ['true', 'false', 'or', 'and', 'null']),
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('string', RE(r"''"), [RE(r"''")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('_group0', RE(r"(?=[a-zA-Z0-9-_]+(?:\s*=))"), [RE(r"\B\b")], _group0),
+    ('_group1', RE(r"(?=[a-zA-Z0-9-_]+(?:\s*=))"), [RE(r"\B\b")], _group1),
 ]
 
 subst.rules.extend(rules)

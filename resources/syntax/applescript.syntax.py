@@ -28,77 +28,69 @@ literal = """
     AppleScript false linefeed return pi quote result space tab true
     """.split()
 
+class string:
+    default_text_color = DELIMITER
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
+
+string0 = ('string', RE(r"\""), [RE(r"\"")], string)
+
 number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
-built_in0 = [
+number0 = ('number', number)
+
+built_in1 = [
     RE(r"\b(?:clipboard info|the clipboard|info for|list (?:disks|folder)|mount volume|path to|(?:close|open for) access|(?:get|set) eof|current date|do shell script|get volume settings|random number|set volume|system attribute|system info|time to GMT|(?:load|run|store) script|scripting components|ASCII (?:character|number)|localized string|choose (?:application|color|file|file name|folder|from list|remote application|URL)|display (?:alert|dialog))\b|^\s*return\b"),
 ]
 
-literal0 = [RE(r"\b(?:text item delimiters|current application|missing value)\b")]
+literal1 = [RE(r"\b(?:text item delimiters|current application|missing value)\b")]
 
-keyword0 = [
+keyword1 = [
     RE(r"\b(?:apart from|aside from|instead of|out of|greater than|isn't|(?:doesn't|does not) (?:equal|come before|come after|contain)|(?:greater|less) than(?: or equal)?|(?:starts?|ends|begins?) with|contained by|comes (?:before|after)|a (?:ref|reference)|POSIX file|POSIX path|(?:date|time) string|quoted form)\b"),
 ]
 
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-
-keyword1 = ['on']
-
-title = [RE(r"[a-zA-Z_]\w*")]
-
 class params:
     default_text_color = DELIMITER
-    rules = [
-        ('number', number),
-        None,  # rules[3],
-    ]
+    rules = [number0, string0]
 
 class _group0:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword1),
-        ('title', title),
+        ('keyword', ['on']),
+        ('title', [RE(r"[a-zA-Z_]\w*")]),
         ('params', RE(r"\("), [RE(r"\)")], params),
     ]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class comment0:
+comment0 = ('comment', RE(r"--"), [RE(r"$")], comment)
+
+class comment1:
     default_text_color = DELIMITER
     rules = [
-        None,  # rules[9],
+        comment0,
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
-comment0.__name__ = 'comment'
+comment1.__name__ = 'comment'
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
     ('literal', literal),
-    ('string', RE(r"\""), [RE(r"\"")], string),
-    ('number', number),
-    ('built_in', built_in0),
-    ('literal', literal0),
-    ('keyword', keyword0),
+    string0,
+    number0,
+    ('built_in', built_in1),
+    ('literal', literal1),
+    ('keyword', keyword1),
     ('_group0', RE(r"\b(?:on)"), [RE(r"\B\b")], _group0),
-    ('comment', RE(r"--"), [RE(r"$")], comment),
-    ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment0),
+    comment0,
+    ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment1),
     ('comment', RE(r"#"), [RE(r"$")], comment),
 ]
-
-params.rules[1] = rules[3]
-comment0.rules[0] = rules[9]

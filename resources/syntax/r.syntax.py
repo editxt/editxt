@@ -4,23 +4,11 @@
 name = 'R'
 file_patterns = ['*.r']
 
-number = [RE(r"0[xX][0-9a-fA-F]+[Li]?\b")]
-
-number0 = [RE(r"\d+(?:[eE][+\-]?\d*)?L\b")]
-
-number1 = [RE(r"\d+\.(?!\d)(?:i\b)?")]
-
-number2 = [RE(r"\d+(?:\.\d*)?(?:[eE][+\-]?\d*)?i?\b")]
-
-number3 = [RE(r"\.\d+(?:[eE][+\-]?\d*)?i?\b")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 keyword = """
@@ -34,25 +22,23 @@ literal = """
     NA_complex_
     """.split()
 
-class _group0:
+class _group1:
     default_text_color = DELIMITER
     rules = [('keyword', keyword), ('literal', literal)]
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
 rules = [
     ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('_group0', RE(r"(?:[a-zA-Z]|\.[a-zA-Z.])[a-zA-Z0-9._]*"), [RE(r"\B\b")], _group0),
-    ('number', number),
-    ('number', number0),
-    ('number', number1),
-    ('number', number2),
-    ('number', number3),
-    ('_group1', RE(r"`"), [RE(r"`")]),
+    ('_group1', RE(r"(?:[a-zA-Z]|\.[a-zA-Z.])[a-zA-Z0-9._]*"), [RE(r"\B\b")], _group1),
+    ('number', [RE(r"0[xX][0-9a-fA-F]+[Li]?\b")]),
+    ('number', [RE(r"\d+(?:[eE][+\-]?\d*)?L\b")]),
+    ('number', [RE(r"\d+\.(?!\d)(?:i\b)?")]),
+    ('number', [RE(r"\d+(?:\.\d*)?(?:[eE][+\-]?\d*)?i?\b")]),
+    ('number', [RE(r"\.\d+(?:[eE][+\-]?\d*)?i?\b")]),
+    ('_group2', RE(r"`"), [RE(r"`")]),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"'"), [RE(r"'")], string),
 ]

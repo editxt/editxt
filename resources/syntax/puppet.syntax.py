@@ -4,43 +4,36 @@
 name = 'Puppet'
 file_patterns = ['*.puppet', '*.pp']
 
-variable = [RE(r"\$(?:[A-Za-z_]|::)(?:\w|::)*")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+comment0 = ('comment', RE(r"#"), [RE(r"$")], comment)
+
+variable = ('variable', [RE(r"\$(?:[A-Za-z_]|::)(?:\w|::)*")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('variable', variable),
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")]), variable]
 
-keyword = ['class']
+string1 = ('string', RE(r"'"), [RE(r"'")], string)
 
-title = [RE(r"(?:[A-Za-z_]|::)(?:\w|::)*")]
-
-class _group0:
-    default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword),
-        ('title', title),
-        None,  # rules[0],
-    ]
-
-keyword0 = ['define']
-
-section = [RE(r"[a-zA-Z]\w*")]
+string2 = ('string', RE(r"\""), [RE(r"\"")], string)
 
 class _group1:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword0), ('section', section)]
+    rules = [
+        ('keyword', ['class']),
+        ('title', [RE(r"(?:[A-Za-z_]|::)(?:\w|::)*")]),
+        comment0,
+    ]
+
+class _group2:
+    default_text_color = DELIMITER
+    rules = [('keyword', ['define']), ('section', [RE(r"[a-zA-Z]\w*")])]
 
 built_in = """
     architecture augeasversion blockdevices boardmanufacturer
@@ -65,7 +58,7 @@ built_in = """
     vlans xendomains zfs_version zonenae zones zpool_version
     """.split()
 
-keyword1 = """
+keyword2 = """
     and case default else elsif false if in import enherits node or true
     undef unless main settings $string
     """.split()
@@ -102,46 +95,41 @@ literal = """
     sslverify mounted
     """.split()
 
+class _group5:
+    default_text_color = DELIMITER
+    rules = [('attr', [RE(r"[a-zA-Z]\w*")])]
+
 number = [
     RE(r"(?:\b0[0-7_]+)|(?:\b0x[0-9a-fA-F_]+)|(?:\b[1-9][0-9_]*(?:\.[0-9_]+)?)|[0_]\b"),
 ]
 
 class _group4:
     default_text_color = DELIMITER
-    rules = [('attr', section)]
+    rules = [
+        ('built_in', built_in),
+        ('keyword', keyword2),
+        ('literal', literal),
+        string1,
+        string2,
+        comment0,
+        ('_group5', RE(r"(?=[a-zA-Z_]+\s*=>)"), [RE(r"=>")], _group5),
+        ('number', number),
+        variable,
+    ]
 
 class _group3:
     default_text_color = DELIMITER
     rules = [
-        ('built_in', built_in),
-        ('keyword', keyword1),
-        ('literal', literal),
-        None,  # rules[2],
-        None,  # rules[3],
-        None,  # rules[0],
-        ('_group4', RE(r"(?=[a-zA-Z_]+\s*=>)"), [RE(r"=>")], _group4),
-        ('number', number),
-        ('variable', variable),
-    ]
-
-class _group2:
-    default_text_color = DELIMITER
-    rules = [
-        ('keyword', section),
-        ('_group3', RE(r"\{"), [RE(r"\}")], _group3),
+        ('keyword', [RE(r"[a-zA-Z]\w*")]),
+        ('_group4', RE(r"\{"), [RE(r"\}")], _group4),
     ]
 
 rules = [
-    ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('variable', variable),
-    ('string', RE(r"'"), [RE(r"'")], string),
-    ('string', RE(r"\""), [RE(r"\"")], string),
-    ('_group0', RE(r"\b(?:class)"), [RE(r"\{|;")], _group0),
-    ('_group1', RE(r"\b(?:define)"), [RE(r"\{")], _group1),
-    ('_group2', RE(r"(?=[a-zA-Z]\w*\s+\{)"), [RE(r"\S")], _group2),
+    comment0,
+    variable,
+    string1,
+    string2,
+    ('_group1', RE(r"\b(?:class)"), [RE(r"\{|;")], _group1),
+    ('_group2', RE(r"\b(?:define)"), [RE(r"\{")], _group2),
+    ('_group3', RE(r"(?=[a-zA-Z]\w*\s+\{)"), [RE(r"\S")], _group3),
 ]
-
-_group0.rules[2] = rules[0]
-_group3.rules[3] = rules[2]
-_group3.rules[4] = rules[3]
-_group3.rules[5] = rules[0]

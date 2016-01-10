@@ -25,62 +25,53 @@ keyword = """
     postfix block tree
     """.split()
 
-literal = ['true', 'false', 'nil']
-
-number = [RE(r"[0-9]+#[0-9A-Z_]+(?:\.[0-9-A-Z_]+)?#?(?:[Ee][+-]?[0-9]+)?")]
-
-number0 = [RE(r"\b\d+(?:\.\d+)?")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class title:
+string = ('string', RE(r"\""), [RE(r"\"")])
+
+class title0:
     default_text_color = DELIMITER
     rules = [('title', RE(r"[a-zA-Z]\w*"), [RE(r"\B|\b")])]
+title0.__name__ = 'title'
 
 class _group1:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
-        ('literal', literal),
+        ('literal', ['true', 'false', 'nil']),
     ]
 
 class function:
     default_text_color = DELIMITER
-    rules = [('title', title, [RE(r"\B\b")], _group1)]
+    rules = [('title', title0, [RE(r"\B\b")], _group1)]
 
-keyword0 = ['import']
-
-class _group0:
+class _group2:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
-        ('literal', literal),
-        ('keyword', keyword0),
-        None,  # rules[5],
+        ('literal', ['true', 'false', 'nil']),
+        ('keyword', ['import']),
+        string,
     ]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
+    ('literal', ['true', 'false', 'nil']),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('string', RE(r"\""), [RE(r"\"")]),
+    string,
     ('string', RE(r"'"), [RE(r"'")]),
     ('string', RE(r"<<"), [RE(r">>")]),
     ('function', RE(r"(?=[a-z][^\n]*->)"), [RE(r"->")], function),
-    ('_group0', RE(r"\b(?:import)"), [RE(r"$")], _group0),
-    ('number', number),
-    ('number', number0),
+    ('_group2', RE(r"\b(?:import)"), [RE(r"$")], _group2),
+    ('number', [RE(r"[0-9]+#[0-9A-Z_]+(?:\.[0-9-A-Z_]+)?#?(?:[Ee][+-]?[0-9]+)?")]),
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
 ]
-
-_group0.rules[4] = rules[5]

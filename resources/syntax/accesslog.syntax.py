@@ -4,10 +4,6 @@
 name = 'Access log'
 file_patterns = ['*.accesslog']
 
-number = [RE(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d{1,5})?\b")]
-
-number0 = [RE(r"\b\d+\b")]
-
 keyword = """
     GET POST HEAD PUT DELETE CONNECT OPTIONS PATCH TRACE
     """.split()
@@ -17,8 +13,8 @@ class string:
     rules = [('keyword', keyword)]
 
 rules = [
-    ('number', number),
-    ('number', number0),
+    ('number', [RE(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d{1,5})?\b")]),
+    ('number', [RE(r"\b\d+\b")]),
     ('string', RE(r"\"(?:GET|POST|HEAD|PUT|DELETE|CONNECT|OPTIONS|PATCH|TRACE)"), [RE(r"\"")], string),
     ('string', RE(r"\["), [RE(r"\]")]),
     ('string', RE(r"\""), [RE(r"\"")]),

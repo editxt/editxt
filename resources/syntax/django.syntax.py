@@ -6,13 +6,11 @@ file_patterns = ['*.django', '*.jinja']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 name0 = """
@@ -28,19 +26,17 @@ name0 = """
     get_current_timezone verbatim
     """.split()
 
-class name1:
-    default_text_color = DELIMITER
-    rules = [('name', name0)]
-name1.__name__ = 'name'
-
 class name2:
     default_text_color = DELIMITER
-    rules = [('name', name0), ('name', RE(r"\w+"), [RE(r"\B|\b")], name1)]
+    rules = [('name', name0)]
 name2.__name__ = 'name'
 
-keyword = ['in', 'by', 'as']
+class name4:
+    default_text_color = DELIMITER
+    rules = [('name', name0), ('name', RE(r"\w+"), [RE(r"\B|\b")], name2)]
+name4.__name__ = 'name'
 
-name3 = """
+name5 = """
     truncatewords removetags linebreaksbr yesno get_digit timesince
     random striptags filesizeformat escape linebreaks length_is ljust
     rjust cut urlize fix_ampersands title floatformat capfirst pprint
@@ -52,35 +48,34 @@ name3 = """
     safeseq truncatechars localize unlocalize localtime utc timezone
     """.split()
 
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
+
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
-class _group1:
+class _group2:
     default_text_color = DELIMITER
     rules = [
-        ('name', name3),
+        ('name', name5),
         ('string', RE(r"\""), [RE(r"\"")], string),
         ('string', RE(r"'"), [RE(r"'")], string),
     ]
 
-class _group0:
+_group20 = ('_group2', RE(r"\|[A-Za-z]+:?"), [RE(r"\B\b")], _group2)
+
+class _group1:
     default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword),
-        ('_group1', RE(r"\|[A-Za-z]+:?"), [RE(r"\B\b")], _group1),
-    ]
+    rules = [('keyword', ['in', 'by', 'as']), _group20]
 
 class template_tag:
     default_text_color = DELIMITER
-    rules = [('name', name2, [RE(r"\B\b")], _group0)]
+    rules = [('name', name4, [RE(r"\B\b")], _group1)]
 template_tag.__name__ = 'template-tag'
 
 class template_variable:
     default_text_color = DELIMITER
-    rules = [_group0.rules[1]]
+    rules = [_group20]
 template_variable.__name__ = 'template-variable'
 
 rules = [

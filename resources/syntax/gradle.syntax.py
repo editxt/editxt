@@ -29,35 +29,26 @@ keyword = """
     withReader withStream withWriter withWriterAppend write writeLine
     """.split()
 
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
-class _group0:
+class _group1:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
 class regexp:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('_group0', RE(r"\["), [RE(r"\]")], _group0),
-    ]
+    rules = [operator_escape, ('_group1', RE(r"\["), [RE(r"\]")], _group1)]
 
 rules = [
     ('keyword', keyword),
@@ -65,6 +56,6 @@ rules = [
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('number', number),
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
     ('regexp', RE(r"\/"), [RE(r"\/[gimuy]*")], regexp),
 ]

@@ -134,37 +134,24 @@ keyword = """
     xmapclear xmap xmenu xnoremap xnoremenu xunmap xunmenu yank
     """.split()
 
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
-string = [RE(r"\"(?:(\\\")|[^\"\n])*(?:\"|\n)")]
-
-variable = [RE(r"[bwtglsav]:[\w\d_]*")]
-
-class string0:
+class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-string0.__name__ = 'string'
-
-keyword0 = ['function', 'function!']
-
-title = [RE(r"[a-zA-Z]\w*")]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
 class function:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
-        ('title', title),
+        ('keyword', ['function', 'function!']),
+        ('title', [RE(r"[a-zA-Z]\w*")]),
         ('params', RE(r"\("), [RE(r"\)")]),
     ]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('number', number),
-    ('string', RE(r"'"), [RE(r"'")], string0),
-    ('string', string),
-    ('variable', variable),
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
+    ('string', RE(r"'"), [RE(r"'")], string),
+    ('string', [RE(r"\"(?:(?:\\\")|[^\"\n])*(?:\"|\n)")]),
+    ('variable', [RE(r"[bwtglsav]:[\w\d_]*")]),
     ('function', RE(r"\b(?:function|function!)"), [RE(r"$")], function),
 ]

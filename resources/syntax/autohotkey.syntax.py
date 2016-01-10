@@ -8,48 +8,36 @@ flags = re.IGNORECASE | re.MULTILINE
 
 keyword = ['Break', 'Continue', 'Else', 'Gosub', 'If', 'Loop', 'Return', 'While']
 
-literal = ['A', 'true', 'false', 'NOT', 'AND', 'OR']
-
-built_in = [RE(r"A_[a-zA-Z0-9]+")]
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
+operator_escape = ('operator.escape', [RE(r"`[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': '`[\\s\\S]', 'type': 'RegExp'}},
-    ]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+    rules = [operator_escape]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 class variable:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': '`[\\s\\S]', 'type': 'RegExp'}},
-    ]
+    rules = [operator_escape]
 
 class symbol:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': '`[\\s\\S]', 'type': 'RegExp'}},
-    ]
+    rules = [operator_escape]
 
 rules = [
     ('keyword', keyword),
-    ('literal', literal),
-    ('built_in', built_in),
+    ('literal', ['A', 'true', 'false', 'NOT', 'AND', 'OR']),
+    ('built_in', [RE(r"A_[a-zA-Z0-9]+")]),
     ('built_in', RE(r"\b(?:ComSpec|Clipboard|ClipboardAll|ErrorLevel)"), [RE(r"\B\b")]),
-    # ignore {'begin': {'pattern': '`[\\s\\S]', 'type': 'RegExp'}},
+    operator_escape,
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('comment', RE(r";"), [RE(r"$")], comment),
-    ('number', number),
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
     ('variable', RE(r"%"), [RE(r"%")], variable),
     ('symbol', RE(r"^[^\n\";]+::(?!=)"), [RE(r"\B\b")], symbol),
     ('symbol', RE(r"^[^\n\";]+:(?!=)"), [RE(r"\B\b")], symbol),

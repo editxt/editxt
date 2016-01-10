@@ -11,55 +11,49 @@ keyword = """
     onbuild run env label
     """.split()
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-keyword0 = """
+comment0 = ('comment', RE(r"#"), [RE(r"$")], comment)
+
+keyword1 = """
     run cmd entrypoint volume add copy workdir onbuild label
     """.split()
 
-class _group0:
+class _group1:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword0)]
+    rules = [('keyword', keyword1)]
 
-class _group00:
+class _group11:
     default_text_color = DELIMITER
     rules = [
-        ('_group0', RE(r"^ *(?:onbuild +)?(?:run|cmd|entrypoint|volume|add|copy|workdir|label) +"), [RE(r"\B|\b")], _group0),
+        ('_group1', RE(r"^ *(?:onbuild +)?(?:run|cmd|entrypoint|volume|add|copy|workdir|label) +"), [RE(r"\B|\b")], _group1),
     ]
-_group00.__name__ = '_group0'
+_group11.__name__ = '_group1'
 
-keyword1 = ['from', 'maintainer', 'expose', 'env', 'user', 'onbuild']
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
-class _group1:
+class _group3:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword1),
+        ('keyword', ['from', 'maintainer', 'expose', 'env', 'user', 'onbuild']),
         ('string', RE(r"'"), [RE(r"'")], string),
         ('string', RE(r"\""), [RE(r"\"")], string),
-        ('number', number),
-        None,  # rules[1],
+        ('number', [RE(r"\b\d+(?:\.\d+)?")]),
+        comment0,
     ]
 
 rules = [
     ('keyword', keyword),
-    ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('_group0', _group00, [RE(r"[^\\]\n")], 'bash'),
-    ('_group1', RE(r"^ *(?:onbuild +)?(?:from|maintainer|expose|env|user|onbuild) +"), [RE(r"[^\\]\n")], _group1),
+    comment0,
+    ('_group1', _group11, [RE(r"[^\\]\n")], 'bash'),
+    ('_group3', RE(r"^ *(?:onbuild +)?(?:from|maintainer|expose|env|user|onbuild) +"), [RE(r"[^\\]\n")], _group3),
 ]
-
-_group1.rules[4] = rules[1]

@@ -23,131 +23,106 @@ keyword = """
     abstract
     """.split()
 
-literal = ['true', 'false', 'null', 'undefined', 'NaN', 'Infinity']
-
-meta = [RE(r"^\s*['\"]use strict['\"]")]
-
-number = [RE(r"\b(?:0[bB][01]+)")]
-
-number0 = [RE(r"\b(?:0[oO][0-7]+)")]
-
-number1 = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
-class string0:
+class string2:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('subst', RE(r"\$\{"), [RE(r"\}")]),
-    ]
-string0.__name__ = 'string'
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+    rules = [operator_escape, ('subst', RE(r"\$\{"), [RE(r"\}")])]
+string2.__name__ = 'string'
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-keyword0 = ['return', 'throw', 'case']
+comment0 = ('comment', RE(r"//"), [RE(r"$")], comment)
 
-class _group4:
+comment1 = ('comment', RE(r"/\*"), [RE(r"\*/")], comment)
+
+number1 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+class _group2:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
 class regexp:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('_group4', RE(r"\["), [RE(r"\]")], _group4),
-    ]
+    rules = [operator_escape, ('_group2', RE(r"\["), [RE(r"\]")], _group2)]
 
-class _group0:
+class _group1:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
-        None,  # rules[7],
-        None,  # rules[8],
+        ('keyword', ['return', 'throw', 'case']),
+        comment0,
+        comment1,
         ('regexp', RE(r"\/"), [RE(r"\/[gimuy]*")], regexp),
     ]
 
 class _function:
     default_text_color = DELIMITER
-    rules = [('_function', [RE(r"[\{;]")])]
-
-title = [RE(r"[A-Za-z$_][0-9A-Za-z$_]*")]
+    rules = [('function', [RE(r"[\{;]")])]
 
 class _params:
     default_text_color = DELIMITER
-    rules = [('_params', [RE(r"\(")])]
+    rules = [('params', [RE(r"\(")])]
 
 class _params0:
     default_text_color = DELIMITER
-    rules = [('_params', [RE(r"\)")])]
+    rules = [('params', [RE(r"\)")])]
 _params0.__name__ = '_params'
 
-class params:
+class params1:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
-        ('literal', literal),
-        None,  # rules[7],
-        None,  # rules[8],
+        ('literal', ['true', 'false', 'null', 'undefined', 'NaN', 'Infinity']),
+        comment0,
+        comment1,
     ]
+params1.__name__ = 'params'
 
-class function:
+class function0:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
-        ('literal', literal),
-        ('title', title),
-        ('params', _params, [_params0], params),
+        ('literal', ['true', 'false', 'null', 'undefined', 'NaN', 'Infinity']),
+        ('title', [RE(r"[A-Za-z$_][0-9A-Za-z$_]*")]),
+        ('params', _params, [_params0], params1),
     ]
+function0.__name__ = 'function'
 
-keyword1 = ['interface', 'extends']
-
-keyword2 = ['interface']
-
-class _group3:
+class _group5:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword1), ('keyword', keyword2)]
+    rules = [('keyword', ['interface', 'extends']), ('keyword', ['interface'])]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
-    ('meta', meta),
+    ('literal', ['true', 'false', 'null', 'undefined', 'NaN', 'Infinity']),
+    ('meta', [RE(r"^\s*['\"]use strict['\"]")]),
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('string', RE(r"`"), [RE(r"`")], string0),
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('number', number),
-    ('number', number0),
+    ('string', RE(r"`"), [RE(r"`")], string2),
+    comment0,
+    comment1,
+    ('number', [RE(r"\b(?:0[bB][01]+)")]),
+    ('number', [RE(r"\b(?:0[oO][0-7]+)")]),
     ('number', number1),
-    ('_group0', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~|\b(?:case|return|throw)\b)\s*"), [RE(r"\B\b")], _group0),
-    ('function', RE(r"function"), [_function], function),
-    ('_group1', RE(r"\b(?:constructor)"), [RE(r"\{")]),
-    ('_group2', RE(r"\b(?:module)"), [RE(r"\{")]),
-    ('_group3', RE(r"\b(?:interface)"), [RE(r"\{")], _group3),
+    ('_group1', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~|\b(?:case|return|throw)\b)\s*"), [RE(r"\B\b")], _group1),
+    ('function', RE(r"function"), [_function], function0),
+    ('_group3', RE(r"\b(?:constructor)"), [RE(r"\{")]),
+    ('_group4', RE(r"\b(?:module)"), [RE(r"\{")]),
+    ('_group5', RE(r"\b(?:interface)"), [RE(r"\{")], _group5),
     # ignore {'begin': {'pattern': '\\$[(.]', 'type': 'RegExp'}},
     # ignore {'begin': '\\.[a-zA-Z]\\w*', 'relevance': 0},
 ]
-
-_group0.rules[1] = rules[7]
-_group0.rules[2] = rules[8]
-params.rules[3] = rules[7]
-params.rules[4] = rules[8]

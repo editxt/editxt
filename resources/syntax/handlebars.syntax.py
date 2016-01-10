@@ -6,13 +6,11 @@ file_patterns = ['*.handlebars', '*.hbs', '*.html.hbs', '*.html.handlebars']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 builtin_name = """
@@ -25,27 +23,25 @@ class name0:
     rules = [('builtin-name', builtin_name)]
 name0.__name__ = 'name'
 
-class name1:
+class name2:
     default_text_color = DELIMITER
     rules = [
         ('builtin-name', builtin_name),
         ('name', RE(r"[a-zA-Z\.-]+"), [RE(r"\B|\b")], name0),
     ]
-name1.__name__ = 'name'
+name2.__name__ = 'name'
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
-class _group0:
+class _group1:
     default_text_color = DELIMITER
     rules = [('string', RE(r"\""), [RE(r"\"")], string)]
 
 class template_tag:
     default_text_color = DELIMITER
-    rules = [('name', name1, [RE(r"\B\b")], _group0)]
+    rules = [('name', name2, [RE(r"\B\b")], _group1)]
 template_tag.__name__ = 'template-tag'
 
 class template_variable:

@@ -17,42 +17,44 @@ keyword = """
     parents warning error soft precedence thisAspectInstance
     """.split()
 
-meta = [RE(r"@[A-Za-z]+")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': '\\w+@', 'type': 'RegExp'}, 'relevance': 0},
-        ('doctag', meta),
+        ('doctag', [RE(r"@[A-Za-z]+")]),
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class comment0:
+class comment1:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
-comment0.__name__ = 'comment'
+comment1.__name__ = 'comment'
+
+comment2 = ('comment', RE(r"//"), [RE(r"$")], comment1)
+
+comment3 = ('comment', RE(r"/\*"), [RE(r"\*/")], comment1)
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
+
+string0 = ('string', RE(r"'"), [RE(r"'")], string)
+
+string1 = ('string', RE(r"\""), [RE(r"\"")], string)
 
 class _class:
     default_text_color = DELIMITER
-    rules = [('_class', [RE(r"[{;=]")])]
+    rules = [('class', [RE(r"[{;=]")])]
 
-keyword0 = ['aspect']
+title = ('title', [RE(r"[a-zA-Z_]\w*")])
 
-title = [RE(r"[a-zA-Z_]\w*")]
-
-keyword1 = """
+keyword2 = """
     false synchronized int abstract float private char boolean static
     null if const for true while long throw strictfp finally protected
     import native final return void enum else extends implements break
@@ -66,109 +68,95 @@ keyword1 = """
     args call
     """.split()
 
-class _group4:
+class _group3:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword1)]
-
-class class0:
-    default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword0),
-        ('_group3', RE(r"\b(?:extends|implements|pertypewithin|perthis|pertarget|percflowbelow|percflow|issingleton)"), [RE(r"\B\b")]),
-        ('title', title),
-        ('_group4', RE(r"\([^\)]*"), [RE(r"[)]+")], _group4),
-    ]
-class0.__name__ = 'class'
-
-keyword2 = ['class', 'interface']
+    rules = [('keyword', keyword2)]
 
 class class1:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword2),
-        ('keyword', keyword2),
-        ('_group5', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
-        ('title', title),
+        ('keyword', ['aspect']),
+        ('_group2', RE(r"\b(?:extends|implements|pertypewithin|perthis|pertarget|percflowbelow|percflow|issingleton)"), [RE(r"\B\b")]),
+        title,
+        ('_group3', RE(r"\([^\)]*"), [RE(r"[)]+")], _group3),
     ]
 class1.__name__ = 'class'
 
-keyword3 = ['pointcut', 'after', 'before', 'around', 'throwing', 'returning']
+class class3:
+    default_text_color = DELIMITER
+    rules = [
+        ('keyword', ['class', 'interface']),
+        ('keyword', ['class', 'interface']),
+        ('_group4', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        title,
+    ]
+class3.__name__ = 'class'
 
 class _group6:
     default_text_color = DELIMITER
-    rules = [('title', title)]
+    rules = [title]
 
-class _group0:
+class _group5:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword3),
+        ('keyword', ['pointcut', 'after', 'before', 'around', 'throwing', 'returning']),
         ('_group6', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B\b")], _group6),
     ]
 
-class _group7:
+class _group8:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword1)]
+    rules = [('keyword', keyword2)]
 
-class _group1:
+class _group7:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
-        ('_group7', RE(r"[a-zA-Z_]\w*\s*\("), [RE(r"\B\b")], _group7),
-        None,  # rules[5],
+        ('_group8', RE(r"[a-zA-Z_]\w*\s*\("), [RE(r"\B\b")], _group8),
+        string1,
     ]
 
 class _function:
     default_text_color = DELIMITER
-    rules = [('_function', [RE(r"[{;=]")])]
+    rules = [('function', [RE(r"[{;=]")])]
 
-class _group8:
+class _group10:
     default_text_color = DELIMITER
-    rules = [('title', title)]
+    rules = [title]
 
 number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
+number0 = ('number', number)
+
 class params:
     default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword),
-        None,  # rules[4],
-        None,  # rules[5],
-        ('number', number),
-        None,  # rules[3],
-    ]
+    rules = [('keyword', keyword), string0, string1, number0, comment3]
 
-class function:
+class function0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
-        ('_group8', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B\b")], _group8),
+        ('_group10', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B\b")], _group10),
         ('params', RE(r"\("), [RE(r"\)")], params),
-        None,  # rules[2],
-        None,  # rules[3],
+        comment2,
+        comment3,
     ]
+function0.__name__ = 'function'
 
 rules = [
     ('keyword', keyword),
     ('comment', RE(r"/\*\*"), [RE(r"\*/")], comment),
-    ('comment', RE(r"//"), [RE(r"$")], comment0),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
-    ('string', RE(r"'"), [RE(r"'")], string),
-    ('string', RE(r"\""), [RE(r"\"")], string),
-    ('class', RE(r"\b(?:aspect)"), [_class], class0),
-    ('class', RE(r"\b(?:class|interface)"), [_class], class1),
-    ('_group0', RE(r"\b(?:pointcut|after|before|around|throwing|returning)"), [RE(r"[)]")], _group0),
-    ('_group1', RE(r"(?=[:])"), [RE(r"[{;]")], _group1),
-    ('_group2', RE(r"\b(?:new|throw)"), [RE(r"\B\b")]),
-    ('function', RE(r"(?=\w+ +\w+(?:\.)?\w+\s*\([^\)]*\)\s*(?:(throws)[\w\s,]+)?[\{;])"), [_function], function),
-    ('number', number),
-    ('meta', meta),
+    comment2,
+    comment3,
+    string0,
+    string1,
+    ('class', RE(r"\b(?:aspect)"), [_class], class1),
+    ('class', RE(r"\b(?:class|interface)"), [_class], class3),
+    ('_group5', RE(r"\b(?:pointcut|after|before|around|throwing|returning)"), [RE(r"[)]")], _group5),
+    ('_group7', RE(r"(?=[:])"), [RE(r"[{;]")], _group7),
+    ('_group9', RE(r"\b(?:new|throw)"), [RE(r"\B\b")]),
+    ('function', RE(r"(?=\w+ +\w+(?:\.)?\w+\s*\([^\)]*\)\s*(?:(?:throws)[\w\s,]+)?[\{;])"), [_function], function0),
+    number0,
+    ('meta', [RE(r"@[A-Za-z]+")]),
 ]
-
-_group1.rules[2] = rules[5]
-params.rules[1] = rules[4]
-params.rules[2] = rules[5]
-params.rules[4] = rules[3]
-function.rules[3] = rules[2]
-function.rules[4] = rules[3]

@@ -19,76 +19,55 @@ keyword = """
     step next return module inline throw import
     """.split()
 
-literal = ['true', 'false', 'null', 'and', 'or', 'shl', 'shr', 'mod']
-
-built_in0 = [RE(r"\b(?:self|super)\b")]
-
-meta = [RE(r"^\s*strict\b")]
-
-number = [RE(r"[$][a-fA-F0-9]+")]
-
-number0 = [RE(r"\b\d+(?:\.\d+)?")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-keyword0 = ['function', 'method']
-
-title = [RE(r"[a-zA-Z_]\w*")]
+title = ('title', [RE(r"[a-zA-Z_]\w*")])
 
 class function:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword0), ('title', title)]
-
-keyword1 = ['class', 'interface']
+    rules = [('keyword', ['function', 'method']), title]
 
 class class0:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword1),
+        ('keyword', ['class', 'interface']),
         ('_group1', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
-        ('title', title),
+        title,
     ]
 class0.__name__ = 'class'
 
-meta_keyword = ['if', 'else', 'elseif', 'endif', 'end', 'then']
-
-class meta0:
+class meta:
     default_text_color = DELIMITER
-    rules = [('meta-keyword', meta_keyword)]
-meta0.__name__ = 'meta'
+    rules = [
+        ('meta-keyword', ['if', 'else', 'elseif', 'endif', 'end', 'then']),
+    ]
 
-keyword2 = ['alias']
-
-class _group0:
+class _group2:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword2), ('title', title)]
+    rules = [('keyword', ['alias']), title]
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
+    ('literal', ['true', 'false', 'null', 'and', 'or', 'shl', 'shr', 'mod']),
     ('comment', RE(r"#rem"), [RE(r"#end")], comment),
     ('comment', RE(r"'"), [RE(r"$")], comment),
     ('function', RE(r"\b(?:function|method)"), [RE(r"[(?:=:]|$")], function),
     ('class', RE(r"\b(?:class|interface)"), [RE(r"$")], class0),
-    ('built_in', built_in0),
-    ('meta', RE(r"\s*#"), [RE(r"$")], meta0),
-    ('meta', meta),
-    ('_group0', RE(r"\b(?:alias)"), [RE(r"=")], _group0),
+    ('built_in', [RE(r"\b(?:self|super)\b")]),
+    ('meta', RE(r"\s*#"), [RE(r"$")], meta),
+    ('meta', [RE(r"^\s*strict\b")]),
+    ('_group2', RE(r"\b(?:alias)"), [RE(r"=")], _group2),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('number', number),
-    ('number', number0),
+    ('number', [RE(r"[$][a-fA-F0-9]+")]),
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
 ]

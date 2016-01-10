@@ -6,13 +6,11 @@ file_patterns = ['*.apache', '*.apacheconf']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 nomarkup = """
@@ -25,40 +23,36 @@ class attribute:
     default_text_color = DELIMITER
     rules = [('nomarkup', nomarkup)]
 
-class attribute0:
+class attribute1:
     default_text_color = DELIMITER
     rules = [
         ('nomarkup', nomarkup),
         ('attribute', RE(r"\w+"), [RE(r"\B|\b")], attribute),
     ]
-attribute0.__name__ = 'attribute'
+attribute1.__name__ = 'attribute'
 
-literal = ['on', 'off', 'all']
-
-number = [RE(r"[\$%]\d+")]
+number = ('number', [RE(r"[\$%]\d+")])
 
 class variable:
     default_text_color = DELIMITER
-    rules = [('number', number)]
+    rules = [number]
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
-class _group0:
+class _group1:
     default_text_color = DELIMITER
     rules = [
-        ('literal', literal),
+        ('literal', ['on', 'off', 'all']),
         ('meta', RE(r"\s\["), [RE(r"\]$")]),
         ('variable', RE(r"[\$%]\{"), [RE(r"\}")], variable),
-        ('number', number),
+        number,
         ('string', RE(r"\""), [RE(r"\"")], string),
     ]
 
 rules = [
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('section', RE(r"</?"), [RE(r">")]),
-    ('attribute', attribute0, [RE(r"$")], _group0),
+    ('attribute', attribute1, [RE(r"$")], _group1),
 ]

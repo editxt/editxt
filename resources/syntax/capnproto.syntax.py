@@ -14,56 +14,41 @@ keyword = """
     extends in of on as with from fixed
     """.split()
 
-literal = ['true', 'false']
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
-meta = [RE(r"@0x[\w\d]{16};")]
-
-number0 = [RE(r"@\d+\b")]
-
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-keyword0 = ['struct', 'enum']
-
-class title:
+class title0:
     default_text_color = DELIMITER
     rules = [('title', RE(r"[a-zA-Z]\w*"), [RE(r"\B|\b")])]
+title0.__name__ = 'title'
 
 class class0:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword0), ('title', title, [RE(r"\B\b")])]
+    rules = [('keyword', ['struct', 'enum']), ('title', title0, [RE(r"\B\b")])]
 class0.__name__ = 'class'
 
-keyword1 = ['interface']
-
-class class1:
+class class2:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword1), ('title', title, [RE(r"\B\b")])]
-class1.__name__ = 'class'
+    rules = [('keyword', ['interface']), ('title', title0, [RE(r"\B\b")])]
+class2.__name__ = 'class'
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
+    ('literal', ['true', 'false']),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('number', number),
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
     ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('meta', meta),
-    ('number', number0),
+    ('meta', [RE(r"@0x[\w\d]{16};")]),
+    ('number', [RE(r"@\d+\b")]),
     ('class', RE(r"\b(?:struct|enum)"), [RE(r"\{")], class0),
-    ('class', RE(r"\b(?:interface)"), [RE(r"\{")], class1),
+    ('class', RE(r"\b(?:interface)"), [RE(r"\{")], class2),
 ]

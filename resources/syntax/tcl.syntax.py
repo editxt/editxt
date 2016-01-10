@@ -21,49 +21,43 @@ keyword = """
     trace unknown unload unset update uplevel upvar variable vwait while
     """.split()
 
-number = [RE(r"\b(?:0b[01]+)")]
+class comment:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
+    ]
+
+class _title:
+    default_text_color = DELIMITER
+    rules = [('title', [RE(r"[ \t\n\r]")])]
+
+class _group1:
+    default_text_color = DELIMITER
+    rules = [
+        ('keyword', ['proc']),
+        ('title', RE(r"[ \t\n\r]+(?:::)?[a-zA-Z_](?:(?:::)?[a-zA-Z0-9_])*"), [_title]),
+    ]
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
+
+class string:
+    default_text_color = DELIMITER
+    rules = [operator_escape]
 
 number0 = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
-class comment:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-
-keyword0 = ['proc']
-
-class _title:
-    default_text_color = DELIMITER
-    rules = [('_title', [RE(r"[ \t\n\r]")])]
-
-class _group0:
-    default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword0),
-        ('title', RE(r"[ \t\n\r]+(?:::)?[a-zA-Z_](?:(::)?[a-zA-Z0-9_])*"), [_title]),
-    ]
-
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-
 rules = [
     ('keyword', keyword),
     ('comment', RE(r";[ \t]*#"), [RE(r"$")], comment),
     ('comment', RE(r"^[ \t]*#"), [RE(r"$")], comment),
-    ('_group0', RE(r"\b(?:proc)"), [RE(r"[\{]")], _group0),
-    ('_group1', RE(r"\$(?:\{)?(?:::)?[a-zA-Z_](?:(::)?[a-zA-Z0-9_])*\((?:[a-zA-Z0-9_])*\)"), [RE(r"[^a-zA-Z0-9_\}\$]")]),
-    ('_group2', RE(r"\$(?:\{)?(?:::)?[a-zA-Z_](?:(::)?[a-zA-Z0-9_])*"), [RE(r"(?:\))?[^a-zA-Z0-9_\}\$]")]),
+    ('_group1', RE(r"\b(?:proc)"), [RE(r"[\{]")], _group1),
+    ('_group2', RE(r"\$(?:\{)?(?:::)?[a-zA-Z_](?:(?:::)?[a-zA-Z0-9_])*\((?:[a-zA-Z0-9_])*\)"), [RE(r"[^a-zA-Z0-9_\}\$]")]),
+    ('_group3', RE(r"\$(?:\{)?(?:::)?[a-zA-Z_](?:(?:::)?[a-zA-Z0-9_])*"), [RE(r"(?:\))?[^a-zA-Z0-9_\}\$]")]),
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('number', number),
+    ('number', [RE(r"\b(?:0b[01]+)")]),
     ('number', number0),
 ]

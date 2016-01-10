@@ -21,24 +21,22 @@ keyword = """
     break extern continue
     """.split()
 
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 rules = [
     ('built_in', built_in),
@@ -50,5 +48,5 @@ rules = [
     ('number', number),
     ('meta', RE(r"#"), [RE(r"$")]),
     ('class', RE(r"\b(?:surface|displacement|light|volume|imager)"), [RE(r"\(")]),
-    ('_group0', RE(r"\b(?:illuminate|illuminance|gather)"), [RE(r"\(")]),
+    ('_group1', RE(r"\b(?:illuminate|illuminance|gather)"), [RE(r"\(")]),
 ]

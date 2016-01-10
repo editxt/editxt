@@ -4,29 +4,23 @@
 name = 'Brainfuck'
 file_patterns = ['*.brainfuck', '*.bf']
 
-title = [RE(r"[\[\]]")]
-
-string = [RE(r"[\.,]")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-literal = [RE(r"[\+\-]")]
+literal = ('literal', [RE(r"[\+\-]")])
 
-class _group0:
+class _group1:
     default_text_color = DELIMITER
-    rules = [('literal', literal)]
+    rules = [literal]
 
 rules = [
     ('comment', RE(r"[^\[\]\.,\+\-<> \r\n]"), [RE(r"(?=[\[\]\.,\+\-<> \r\n])")], comment),
-    ('title', title),
-    ('string', string),
-    ('_group0', RE(r"(?=\+\+|\-\-)"), [RE(r"\B\b")], _group0),
-    ('literal', literal),
+    ('title', [RE(r"[\[\]]")]),
+    ('string', [RE(r"[\.,]")]),
+    ('_group1', RE(r"(?=\+\+|\-\-)"), [RE(r"\B\b")], _group1),
+    literal,
 ]

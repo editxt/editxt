@@ -9,39 +9,29 @@ keyword = """
     Outline Scenario Template Examples Given And Then But When
     """.split()
 
-keyword0 = [RE(r"\*")]
-
-meta = [RE(r"@[^@\s]+")]
-
-string = [RE(r"[^|]+")]
-
 class _group0:
     default_text_color = DELIMITER
-    rules = [('string', string)]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+    rules = [('string', [RE(r"[^|]+")])]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class string0:
+class string1:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-string0.__name__ = 'string'
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
+string1.__name__ = 'string'
 
 rules = [
     ('keyword', keyword),
-    ('keyword', keyword0),
-    ('meta', meta),
+    ('keyword', [RE(r"\*")]),
+    ('meta', [RE(r"@[^@\s]+")]),
     ('_group0', RE(r"\|"), [RE(r"\|\w*$")], _group0),
     ('variable', RE(r"<"), [RE(r">")]),
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
-    ('string', RE(r"\""), [RE(r"\"")], string0),
+    ('string', RE(r"\""), [RE(r"\"")], string1),
 ]

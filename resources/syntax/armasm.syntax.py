@@ -36,49 +36,31 @@ meta = """
     ROUT SETA SETL SETS SN SPACE SUBT THUMB THUMBX TTL WHILE WEND
     """.split()
 
-number = [RE(r"[#$=]?0x[0-9a-f]+")]
-
-number0 = [RE(r"[#$=]?0b[01]+")]
-
-number1 = [RE(r"[#$=]\d+")]
-
-number2 = [RE(r"\b\d+")]
-
-symbol = [RE(r"^[a-z_\.\$][a-z0-9_\.\$]+")]
-
-symbol0 = [RE(r"^\s*[a-z_\.\$][a-z0-9_\.\$]+:")]
-
-symbol1 = [RE(r"[=#]\w+")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
 rules = [
     ('built_in', built_in),
     ('meta', meta),
-    ('keyword', RE(r"\b(?:adc|(?:qd?|sh?|u[qh]?)?add(?:8|16)?|usada?8|(?:q|sh?|u[qh]?)?(?:as|sa)x|and|adrl?|sbc|rs[bc]|asr|b[lx]?|blx|bxj|cbn?z|tb[bh]|bic|bfc|bfi|[su]bfx|bkpt|cdp2?|clz|clrex|cmp|cmn|cpsi[ed]|cps|setend|dbg|dmb|dsb|eor|isb|it[te]{0,3}|lsl|lsr|ror|rrx|ldm(?:([id][ab])|f[ds])?|ldr(?:(s|ex)?[bhd])?|movt?|mvn|mra|mar|mul|[us]mull|smul[bwt][bt]|smu[as]d|smmul|smmla|mla|umlaal|smlal?(?:[wbt][bt]|d)|mls|smlsl?[ds]|smc|svc|sev|mia(?:[bt]{2}|ph)?|mrr?c2?|mcrr2?|mrs|msr|orr|orn|pkh(?:tb|bt)|rbit|rev(?:16|sh)?|sel|[su]sat(?:16)?|nop|pop|push|rfe(?:[id][ab])?|stm(?:[id][ab])?|str(?:ex)?[bhd]?|(?:qd?)?sub|(?:sh?|q|u[qh]?)?sub(?:8|16)|[su]xt(?:a?h|a?b(?:16)?)|srs(?:[id][ab])?|swpb?|swi|smi|tst|teq|wfe|wfi|yield)(?:eq|ne|cs|cc|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|hs|lo)?[sptrx]?"), [RE(r"\s")]),
+    ('keyword', RE(r"\b(?:adc|(?:qd?|sh?|u[qh]?)?add(?:8|16)?|usada?8|(?:q|sh?|u[qh]?)?(?:as|sa)x|and|adrl?|sbc|rs[bc]|asr|b[lx]?|blx|bxj|cbn?z|tb[bh]|bic|bfc|bfi|[su]bfx|bkpt|cdp2?|clz|clrex|cmp|cmn|cpsi[ed]|cps|setend|dbg|dmb|dsb|eor|isb|it[te]{0,3}|lsl|lsr|ror|rrx|ldm(?:(?:[id][ab])|f[ds])?|ldr(?:(?:s|ex)?[bhd])?|movt?|mvn|mra|mar|mul|[us]mull|smul[bwt][bt]|smu[as]d|smmul|smmla|mla|umlaal|smlal?(?:[wbt][bt]|d)|mls|smlsl?[ds]|smc|svc|sev|mia(?:[bt]{2}|ph)?|mrr?c2?|mcrr2?|mrs|msr|orr|orn|pkh(?:tb|bt)|rbit|rev(?:16|sh)?|sel|[su]sat(?:16)?|nop|pop|push|rfe(?:[id][ab])?|stm(?:[id][ab])?|str(?:ex)?[bhd]?|(?:qd?)?sub|(?:sh?|q|u[qh]?)?sub(?:8|16)|[su]xt(?:a?h|a?b(?:16)?)|srs(?:[id][ab])?|swpb?|swi|smi|tst|teq|wfe|wfi|yield)(?:eq|ne|cs|cc|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|hs|lo)?[sptrx]?"), [RE(r"\s")]),
     ('comment', RE(r"[;@]"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"'"), [RE(r"[^\\]'")]),
     ('title', RE(r"\|"), [RE(r"\|")]),
-    ('number', number),
-    ('number', number0),
-    ('number', number1),
-    ('number', number2),
-    ('symbol', symbol),
-    ('symbol', symbol0),
-    ('symbol', symbol1),
+    ('number', [RE(r"[#$=]?0x[0-9a-f]+")]),
+    ('number', [RE(r"[#$=]?0b[01]+")]),
+    ('number', [RE(r"[#$=]\d+")]),
+    ('number', [RE(r"\b\d+")]),
+    ('symbol', [RE(r"^[a-z_\.\$][a-z0-9_\.\$]+")]),
+    ('symbol', [RE(r"^\s*[a-z_\.\$][a-z0-9_\.\$]+:")]),
+    ('symbol', [RE(r"[=#]\w+")]),
 ]

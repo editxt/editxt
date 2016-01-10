@@ -38,118 +38,105 @@ keyword = """
     Type typealias unowned var weak where while willSet
     """.split()
 
-literal = ['true', 'false', 'nil']
-
-type = [RE(r"\b[A-Z][\w']*")]
-
-meta = [
-    RE(r"(?:@warn_unused_result|@exported|@lazy|@noescape|@NSCopying|@NSManaged|@objc|@convention|@required|@noreturn|@IBAction|@IBDesignable|@IBInspectable|@IBOutlet|@infix|@prefix|@postfix|@autoclosure|@testable|@available|@nonobjc|@NSApplicationMain|@UIApplicationMain)"),
-]
-
 number = [
     RE(r"\b(?:[\d_]+(?:\.[\deE_]+)?|0x[a-fA-F0-9_]+(?:\.[a-fA-F0-9p_]+)?|0b[01_]+|0o[0-7_]+)\b"),
 ]
+
+number0 = ('number', number)
 
 class subst:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
-        ('literal', literal),
-        ('number', number),
+        ('literal', ['true', 'false', 'nil']),
+        number0,
     ]
 
 class string:
     default_text_color = DELIMITER
     rules = [
         ('subst', RE(r"\\\("), [RE(r"\)")], subst),
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        ('operator.escape', [RE(r"\\[\s\S]")]),
     ]
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+string0 = ('string', RE(r"\""), [RE(r"\"")], string)
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+comment0 = ('comment', RE(r"//"), [RE(r"$")], comment)
+
+comment1 = ('comment', RE(r"/\*"), [RE(r"\*/")], comment)
 
 class _function:
     default_text_color = DELIMITER
-    rules = [('_function', [RE(r"{")])]
-
-keyword0 = ['func']
-
-title = [RE(r"[A-Za-z$_][0-9A-Za-z$_]*")]
+    rules = [('function', [RE(r"{")])]
 
 class params:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
-        ('literal', literal),
-        ('number', number),
-        None,  # rules[3],
-        ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
+        ('literal', ['true', 'false', 'nil']),
+        number0,
+        string0,
+        comment1,
         # ignore {'begin': ':'},
     ]
 
-class params0:
+class params1:
     default_text_color = DELIMITER
     rules = [('params', RE(r"\("), [RE(r"\)")], params)]
-params0.__name__ = 'params'
+params1.__name__ = 'params'
 
-class function:
+class function0:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
-        ('title', title),
+        ('keyword', ['func']),
+        ('title', [RE(r"[A-Za-z$_][0-9A-Za-z$_]*")]),
         ('_group1', RE(r"<"), [RE(r">")]),
     ]
+function0.__name__ = 'function'
 
 class _class:
     default_text_color = DELIMITER
-    rules = [('_class', [RE(r"\{")])]
+    rules = [('class', [RE(r"\{")])]
 
-keyword1 = ['struct', 'protocol', 'class', 'extension', 'enum']
-
-class class0:
+class class1:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
-        ('literal', literal),
-        ('keyword', keyword1),
-        ('title', title),
+        ('literal', ['true', 'false', 'nil']),
+        ('keyword', ['struct', 'protocol', 'class', 'extension', 'enum']),
+        ('title', [RE(r"[A-Za-z$_][0-9A-Za-z$_]*")]),
     ]
-class0.__name__ = 'class'
+class1.__name__ = 'class'
 
-keyword2 = ['import']
+meta = [
+    RE(r"(?:@warn_unused_result|@exported|@lazy|@noescape|@NSCopying|@NSManaged|@objc|@convention|@required|@noreturn|@IBAction|@IBDesignable|@IBInspectable|@IBOutlet|@infix|@prefix|@postfix|@autoclosure|@testable|@available|@nonobjc|@NSApplicationMain|@UIApplicationMain)"),
+]
 
-class _group0:
+class _group3:
     default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword2),
-        None,  # rules[4],
-        None,  # rules[5],
-    ]
+    rules = [('keyword', ['import']), comment0, comment1]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
-    ('string', RE(r"\""), [RE(r"\"")], string),
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('type', type),
-    ('number', number),
-    ('function', RE(r"\b(?:func)"), [_function, params0], function),
-    ('class', RE(r"\b(?:struct|protocol|class|extension|enum)"), [_class], class0),
+    ('literal', ['true', 'false', 'nil']),
+    string0,
+    comment0,
+    comment1,
+    ('type', [RE(r"\b[A-Z][\w']*")]),
+    number0,
+    ('function', RE(r"\b(?:func)"), [_function, params1], function0),
+    ('class', RE(r"\b(?:struct|protocol|class|extension|enum)"), [_class], class1),
     ('meta', meta),
-    ('_group0', RE(r"\b(?:import)"), [RE(r"$")], _group0),
+    ('_group3', RE(r"\b(?:import)"), [RE(r"$")], _group3),
 ]
-
-params.rules[4] = rules[3]
-_group0.rules[1] = rules[4]
-_group0.rules[2] = rules[5]

@@ -4,8 +4,9 @@
 name = 'Clojure REPL'
 file_patterns = ['*.clojure-repl']
 
-class meta:
+class meta0:
     default_text_color = DELIMITER
     rules = [('meta', RE(r"^(?:[\w.-]+|\s*#_)=>"), [RE(r"\B|\b")])]
+meta0.__name__ = 'meta'
 
-rules = [('meta', meta, [RE(r"$")], 'clojure')]
+rules = [('meta', meta0, [RE(r"$")], 'clojure')]

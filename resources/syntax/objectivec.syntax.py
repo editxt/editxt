@@ -21,28 +21,22 @@ keyword = """
     @autoreleasepool @synthesize @dynamic @selector @optional @required
     """.split()
 
-literal = ['false', 'true', 'FALSE', 'TRUE', 'nil', 'YES', 'NO', 'NULL']
-
-built_in0 = [RE(r"(?:AV|CA|CF|CG|CI|MK|MP|NS|UI)\w+")]
+class comment:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
+    ]
 
 number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
-class comment:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
 class meta:
     default_text_color = DELIMITER
@@ -53,22 +47,21 @@ class meta:
 
 class _class:
     default_text_color = DELIMITER
-    rules = [('_class', [RE(r"(?:{|$)")])]
+    rules = [('class', [RE(r"(?:{|$)")])]
 
-keyword0 = ['@interface', '@class', '@protocol', '@implementation']
-
-title = [RE(r"[a-zA-Z_]\w*")]
-
-class class0:
+class class1:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword0), ('title', title)]
-class0.__name__ = 'class'
+    rules = [
+        ('keyword', ['@interface', '@class', '@protocol', '@implementation']),
+        ('title', [RE(r"[a-zA-Z_]\w*")]),
+    ]
+class1.__name__ = 'class'
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
-    ('built_in', built_in0),
+    ('literal', ['false', 'true', 'FALSE', 'TRUE', 'nil', 'YES', 'NO', 'NULL']),
+    ('built_in', [RE(r"(?:AV|CA|CF|CG|CI|MK|MP|NS|UI)\w+")]),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('number', number),
@@ -76,6 +69,6 @@ rules = [
     ('string', RE(r"@\""), [RE(r"\"")], string),
     ('string', RE(r"'"), [RE(r"[^\\]'")]),
     ('meta', RE(r"#"), [RE(r"$")], meta),
-    ('class', RE(r"(?:@interface|@class|@protocol|@implementation)\b"), [_class], class0),
+    ('class', RE(r"(?:@interface|@class|@protocol|@implementation)\b"), [_class], class1),
     # ignore {'begin': '\\.[a-zA-Z_]\\w*', 'relevance': 0},
 ]

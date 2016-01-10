@@ -5,220 +5,145 @@ name = 'Lisp'
 file_patterns = ['*.lisp']
 
 number = [
-    RE(r"(?:\-|\+)?\d+(?:\.\d+|\/\d+)?(?:(d|e|f|l|s|D|E|F|L|S)(?:\+|\-)?\d+)?"),
+    RE(r"(?:\-|\+)?\d+(?:\.\d+|\/\d+)?(?:(?:d|e|f|l|s|D|E|F|L|S)(?:\+|\-)?\d+)?"),
 ]
 
-number0 = [RE(r"#(?:b|B)[0-1]+(?:/[0-1]+)?")]
+number0 = ('number', number)
 
-number1 = [RE(r"#(?:o|O)[0-7]+(?:/[0-7]+)?")]
+number1 = ('number', [RE(r"#(?:b|B)[0-1]+(?:/[0-1]+)?")])
 
-number2 = [RE(r"#(?:x|X)[0-9a-fA-F]+(?:/[0-9a-fA-F]+)?")]
+number2 = ('number', [RE(r"#(?:o|O)[0-7]+(?:/[0-7]+)?")])
 
-literal = [RE(r"\b(?:t{1}|nil)\b")]
+number3 = ('number', [RE(r"#(?:x|X)[0-9a-fA-F]+(?:/[0-9a-fA-F]+)?")])
+
+number4 = ('number', RE(r"#(?:c|C)\((?:\-|\+)?\d+(?:\.\d+|\/\d+)?(?:(?:d|e|f|l|s|D|E|F|L|S)(?:\+|\-)?\d+)? +(?:\-|\+)?\d+(?:\.\d+|\/\d+)?(?:(?:d|e|f|l|s|D|E|F|L|S)(?:\+|\-)?\d+)?"), [RE(r"\)")])
+
+literal = ('literal', [RE(r"\b(?:t{1}|nil)\b")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+string0 = ('string', RE(r"\""), [RE(r"\"")], string)
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+comment0 = ('comment', RE(r";"), [RE(r"$")], comment)
+
+_group2 = ('_group2', RE(r"\*"), [RE(r"\*")])
 
 symbol = [
     RE(r"[:&][a-zA-Z_\-\+\*\/\<\=\>\&\#][a-zA-Z0-9_\-\+\*\/\<\=\>\&\#!]*"),
 ]
 
-class _group7:
+symbol0 = ('symbol', symbol)
+
+class _group3:
     default_text_color = DELIMITER
     rules = [
-        ('literal', literal),
-        None,  # rules[7],
-        None,  # rules[0],
-        None,  # rules[1],
-        None,  # rules[2],
-        None,  # rules[3],
-        None,  # rules[4],
-        # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
-    ]
-
-class _group0:
-    default_text_color = DELIMITER
-    rules = [
-        None,  # rules[0],
-        None,  # rules[1],
-        None,  # rules[2],
-        None,  # rules[3],
-        None,  # rules[4],
-        None,  # rules[7],
-        ('_group6', RE(r"\*"), [RE(r"\*")]),
-        ('symbol', symbol),
-        ('_group7', RE(r"\("), [RE(r"\)")], _group7),
-        # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
-    ]
-
-name0 = ['quote']
-
-class _group9:
-    default_text_color = DELIMITER
-    rules = [
-        ('literal', literal),
-        None,  # rules[7],
-        None,  # rules[0],
-        None,  # rules[1],
-        None,  # rules[2],
-        None,  # rules[3],
-        None,  # rules[4],
+        literal,
+        string0,
+        number0,
+        number1,
+        number2,
+        number3,
+        number4,
         # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
     ]
 
 class _group1:
     default_text_color = DELIMITER
     rules = [
-        ('name', name0),
-        None,  # rules[0],
-        None,  # rules[1],
-        None,  # rules[2],
-        None,  # rules[3],
-        None,  # rules[4],
-        None,  # rules[7],
-        ('_group8', RE(r"\*"), [RE(r"\*")]),
-        ('symbol', symbol),
-        ('_group9', RE(r"\("), [RE(r"\)")], _group9),
+        number0,
+        number1,
+        number2,
+        number3,
+        number4,
+        string0,
+        _group2,
+        symbol0,
+        ('_group3', RE(r"\("), [RE(r"\)")], _group3),
         # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
     ]
 
-class _group11:
-    default_text_color = DELIMITER
-    rules = [
-        ('literal', literal),
-        None,  # rules[7],
-        None,  # rules[0],
-        None,  # rules[1],
-        None,  # rules[2],
-        None,  # rules[3],
-        None,  # rules[4],
-        # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
-    ]
-
-class _group2:
-    default_text_color = DELIMITER
-    rules = [
-        None,  # rules[0],
-        None,  # rules[1],
-        None,  # rules[2],
-        None,  # rules[3],
-        None,  # rules[4],
-        None,  # rules[7],
-        ('_group10', RE(r"\*"), [RE(r"\*")]),
-        ('symbol', symbol),
-        ('_group11', RE(r"\("), [RE(r"\)")], _group11),
-        # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
-    ]
-
-name1 = [RE(r"[a-zA-Z_\-\+\*\/\<\=\>\&\#][a-zA-Z0-9_\-\+\*\/\<\=\>\&\#!]*")]
-
-name2 = [RE(r"\|[\s\S]*?\|")]
+_group11 = ('_group1', RE(r"['`]\("), [RE(r"\)")], _group1)
 
 class _group12:
     default_text_color = DELIMITER
     rules = [
-        None,  # rules[9],
-        None,  # rules[10],
-        None,  # rules[11],
-        None,  # rules[12],
-        ('literal', literal),
-        None,  # rules[0],
-        None,  # rules[1],
-        None,  # rules[2],
-        None,  # rules[3],
-        None,  # rules[4],
-        None,  # rules[7],
-        None,  # rules[8],
-        _group2.rules[2],
-        None,  # ('symbol', symbol),
+        ('name', ['quote']),
+        number0,
+        number1,
+        number2,
+        number3,
+        number4,
+        string0,
+        _group2,
+        symbol0,
+        ('_group3', RE(r"\("), [RE(r"\)")], _group3),
+        # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
+    ]
+_group12.__name__ = '_group1'
+
+_group13 = ('_group1', RE(r"\(quote "), [RE(r"\)")], _group12)
+
+_group14 = ('_group1', RE(r"'\|[\s\S]*?\|"), [RE(r"\B\b")], _group1)
+
+class _group8:
+    default_text_color = DELIMITER
+    rules = [
+        _group11,
+        _group13,
+        _group14,
+        # ignore {'begin': "'[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*"},
+        # ignore {'begin': "#'[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*(::[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*)*"},
+        None, # _group70,
+        literal,
+        number0,
+        number1,
+        number2,
+        number3,
+        number4,
+        string0,
+        comment0,
+        _group2,
+        symbol0,
         # ignore {'begin': '\\|[^]*?\\|'},
         # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
     ]
 
-class _group5:
+class _group7:
     default_text_color = DELIMITER
     rules = [
-        ('name', name1),
-        ('name', name2),
-        ('_group12', RE(r"\B|\b"), [RE(r"\B\b")], _group12),
+        ('name', [RE(r"[a-zA-Z_\-\+\*\/\<\=\>\&\#][a-zA-Z0-9_\-\+\*\/\<\=\>\&\#!]*")]),
+        ('name', [RE(r"\|[\s\S]*?\|")]),
+        ('_group8', RE(r"\B|\b"), [RE(r"\B\b")], _group8),
     ]
 
+_group70 = ('_group7', RE(r"\(\s*"), [RE(r"\)")], _group7)
+
 rules = [
-    ('number', number),
-    ('number', number0),
-    ('number', number1),
-    ('number', number2),
-    ('number', RE(r"#(?:c|C)\((?:\-|\+)?\d+(?:\.\d+|\/\d+)?(?:(d|e|f|l|s|D|E|F|L|S)(?:\+|\-)?\d+)? +(?:\-|\+)?\d+(?:\.\d+|\/\d+)?(?:(d|e|f|l|s|D|E|F|L|S)(?:\+|\-)?\d+)?"), [RE(r"\)")]),
+    number0,
+    number1,
+    number2,
+    number3,
+    number4,
     ('meta', RE(r"^#!"), [RE(r"$")]),
-    ('literal', literal),
-    ('string', RE(r"\""), [RE(r"\"")], string),
-    ('comment', RE(r";"), [RE(r"$")], comment),
-    ('_group0', RE(r"['`]\("), [RE(r"\)")], _group0),
-    ('_group1', RE(r"\(quote "), [RE(r"\)")], _group1),
-    ('_group2', RE(r"'\|[\s\S]*?\|"), [RE(r"\B\b")], _group2),
+    literal,
+    string0,
+    comment0,
+    _group11,
+    _group13,
+    _group14,
     # ignore {'begin': "'[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*"},
     # ignore {'begin': "#'[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*(::[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*)*"},
-    ('_group5', RE(r"\(\s*"), [RE(r"\)")], _group5),
+    _group70,
     # ignore {'begin': '[a-zA-Z_\\-\\+\\*\\/\\<\\=\\>\\&\\#][a-zA-Z0-9_\\-\\+\\*\\/\\<\\=\\>\\&\\#!]*', 'relevance': 0},
 ]
 
-_group7.rules[1] = rules[7]
-_group7.rules[2] = rules[0]
-_group7.rules[3] = rules[1]
-_group7.rules[4] = rules[2]
-_group7.rules[5] = rules[3]
-_group7.rules[6] = rules[4]
-_group0.rules[0] = rules[0]
-_group0.rules[1] = rules[1]
-_group0.rules[2] = rules[2]
-_group0.rules[3] = rules[3]
-_group0.rules[4] = rules[4]
-_group0.rules[5] = rules[7]
-_group9.rules[1] = rules[7]
-_group9.rules[2] = rules[0]
-_group9.rules[3] = rules[1]
-_group9.rules[4] = rules[2]
-_group9.rules[5] = rules[3]
-_group9.rules[6] = rules[4]
-_group1.rules[1] = rules[0]
-_group1.rules[2] = rules[1]
-_group1.rules[3] = rules[2]
-_group1.rules[4] = rules[3]
-_group1.rules[5] = rules[4]
-_group1.rules[6] = rules[7]
-_group11.rules[1] = rules[7]
-_group11.rules[2] = rules[0]
-_group11.rules[3] = rules[1]
-_group11.rules[4] = rules[2]
-_group11.rules[5] = rules[3]
-_group11.rules[6] = rules[4]
-_group2.rules[0] = rules[0]
-_group2.rules[1] = rules[1]
-_group2.rules[2] = rules[2]
-_group2.rules[3] = rules[3]
-_group2.rules[4] = rules[4]
-_group2.rules[5] = rules[7]
-_group12.rules[0] = rules[9]
-_group12.rules[1] = rules[10]
-_group12.rules[2] = rules[11]
-_group12.rules[3] = rules[12]
-_group12.rules[5] = rules[0]
-_group12.rules[6] = rules[1]
-_group12.rules[7] = rules[2]
-_group12.rules[8] = rules[3]
-_group12.rules[9] = rules[4]
-_group12.rules[10] = rules[7]
-_group12.rules[11] = rules[8]
-_group12.rules[13] = ('symbol', symbol)
+_group8.rules[3] = _group70

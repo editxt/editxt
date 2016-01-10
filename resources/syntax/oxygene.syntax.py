@@ -26,79 +26,67 @@ keyword = """
     published autoreleasepool selector strong weak unretained
     """.split()
 
-string = [RE(r"(?:#\d+)+")]
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class string0:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': "''"},
-    ]
-string0.__name__ = 'string'
+comment0 = ('comment', RE(r"{"), [RE(r"}")], comment)
 
-keyword0 = ['function', 'constructor', 'destructor', 'procedure', 'method']
+comment1 = ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment)
 
-title = [RE(r"[a-zA-Z]\w*")]
+comment2 = ('comment', RE(r"//"), [RE(r"$")], comment)
+
+#class string:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': "''"},
+#    ]
+
+string0 = ('string', RE(r"'"), [RE(r"'")]) #, string)
+
+string1 = ('string', [RE(r"(?:#\d+)+")])
 
 class params:
     default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword),
-        None,  # rules[4],
-        ('string', string),
-    ]
+    rules = [('keyword', keyword), string0, string1]
 
 class function:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
-        ('keyword', keyword0),
-        ('title', title),
+        ('keyword', ['function', 'constructor', 'destructor', 'procedure', 'method']),
+        ('keyword', ['function', 'constructor', 'destructor', 'procedure', 'method']),
+        ('title', [RE(r"[a-zA-Z]\w*")]),
         ('params', RE(r"\("), [RE(r"\)")], params),
-        None,  # rules[1],
-        None,  # rules[2],
+        comment0,
+        comment1,
     ]
+
+function0 = ('function', RE(r"\b(?:function|constructor|destructor|procedure|method)"), [RE(r"[:;]")], function)
 
 class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
-        None,  # rules[4],
-        ('string', string),
-        None,  # rules[1],
-        None,  # rules[2],
-        None,  # rules[3],
-        None,  # rules[7],
+        string0,
+        string1,
+        comment0,
+        comment1,
+        comment2,
+        function0,
     ]
 class0.__name__ = 'class'
 
 rules = [
     ('keyword', keyword),
-    ('comment', RE(r"{"), [RE(r"}")], comment),
-    ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment),
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('string', RE(r"'"), [RE(r"'")], string0),
-    ('string', string),
-    ('number', number),
-    ('function', RE(r"\b(?:function|constructor|destructor|procedure|method)"), [RE(r"[:;]")], function),
+    comment0,
+    comment1,
+    comment2,
+    string0,
+    string1,
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
+    function0,
     ('class', RE(r"=\bclass\b"), [RE(r"end;")], class0),
 ]
-
-params.rules[1] = rules[4]
-function.rules[4] = rules[1]
-function.rules[5] = rules[2]
-class0.rules[1] = rules[4]
-class0.rules[3] = rules[1]
-class0.rules[4] = rules[2]
-class0.rules[5] = rules[3]
-class0.rules[6] = rules[7]

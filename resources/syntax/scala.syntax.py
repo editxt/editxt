@@ -11,88 +11,74 @@ keyword = """
     default try this match continue throws implicit
     """.split()
 
-literal = ['true', 'false', 'null']
-
-symbol = [RE(r"'\w[\w\d_]*(?!')")]
-
-type = [RE(r"\b[A-Z][A-Za-z0-9_]*")]
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-meta = [RE(r"@[A-Za-z]+")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
-subst = [RE(r"\$[A-Za-z0-9_]+")]
+subst = ('subst', [RE(r"\$[A-Za-z0-9_]+")])
 
-class string0:
+subst0 = ('subst', RE(r"\${"), [RE(r"}")])
+
+class string2:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('subst', subst),
-        ('subst', RE(r"\${"), [RE(r"}")]),
-    ]
-string0.__name__ = 'string'
+    rules = [operator_escape, subst, subst0]
+string2.__name__ = 'string'
 
-class string1:
+class string4:
     default_text_color = DELIMITER
-    rules = [string0.rules[1], string0.rules[2]]
-string1.__name__ = 'string'
-
-keyword0 = ['def']
+    rules = [subst, subst0]
+string4.__name__ = 'string'
 
 title = [
     RE(r"[^0-9\n\t \"'(?:),.`{}\[\]:;][^\n\t \"'(?:),.`{}\[\]:;]+|[^0-9\n\t \"'(?:),.`{}\[\]:;=]"),
 ]
 
+title0 = ('title', title)
+
 class function:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword0), ('title', title)]
+    rules = [('keyword', ['def']), title0]
 
 class _class:
     default_text_color = DELIMITER
-    rules = [('_class', [RE(r"[:={\[\n;]")])]
+    rules = [('class', [RE(r"[:={\[\n;]")])]
 
-keyword1 = ['class', 'object', 'trait', 'type']
-
-class class0:
+class class1:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword1),
-        ('_group0', RE(r"\b(?:extends|with)"), [RE(r"\B\b")]),
+        ('keyword', ['class', 'object', 'trait', 'type']),
+        ('_group1', RE(r"\b(?:extends|with)"), [RE(r"\B\b")]),
         ('params', RE(r"\("), [RE(r"\)")]),
-        ('title', title),
+        title0,
     ]
-class0.__name__ = 'class'
+class1.__name__ = 'class'
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 rules = [
     ('keyword', keyword),
-    ('literal', literal),
+    ('literal', ['true', 'false', 'null']),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
-    ('string', RE(r"[a-z]+\""), [RE(r"\"")], string0),
-    ('string', RE(r"[a-z]+\"\"\""), [RE(r"\"\"\"")], string1),
-    ('symbol', symbol),
-    ('type', type),
+    ('string', RE(r"[a-z]+\""), [RE(r"\"")], string2),
+    ('string', RE(r"[a-z]+\"\"\""), [RE(r"\"\"\"")], string4),
+    ('symbol', [RE(r"'\w[\w\d_]*(?!')")]),
+    ('type', [RE(r"\b[A-Z][A-Za-z0-9_]*")]),
     ('function', RE(r"\b(?:def)"), [RE(r"[:={\[(?:\n;]")], function),
-    ('class', RE(r"\b(?:class|object|trait|type)"), [_class], class0),
+    ('class', RE(r"\b(?:class|object|trait|type)"), [_class], class1),
     ('number', number),
-    ('meta', meta),
+    ('meta', [RE(r"@[A-Za-z]+")]),
 ]

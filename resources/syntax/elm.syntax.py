@@ -9,110 +9,100 @@ keyword = """
     as infix infixl infixr port
     """.split()
 
-title = [RE(r"^[_a-z][\w']*")]
-
-keyword0 = ['module', 'where']
-
-keyword1 = ['module']
-
-type = [RE(r"\b[A-Z][\w]*(?:\((?:\.\.|,|\w+)\))?")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class _group5:
-    default_text_color = DELIMITER
-    rules = [
-        ('type', type),
-        ('comment', RE(r"--"), [RE(r"$")], comment),
-        ('comment', RE(r"{-"), [RE(r"-}")], comment),
-    ]
+comment0 = ('comment', RE(r"--"), [RE(r"$")], comment)
 
-class _group0:
-    default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword0),
-        ('keyword', keyword1),
-        ('_group5', RE(r"\("), [RE(r"\)")], _group5),
-        _group5.rules[1],
-        _group5.rules[2],
-    ]
-
-keyword2 = ['import', 'as', 'exposing']
+comment1 = ('comment', RE(r"{-"), [RE(r"-}")], comment)
 
 class _group1:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword2),
-        _group0.rules[2],
-        _group5.rules[1],
-        _group5.rules[2],
+        ('type', [RE(r"\b[A-Z][\w]*(?:\((?:\.\.|,|\w+)\))?")]),
+        comment0,
+        comment1,
     ]
 
-keyword3 = ['type', 'alias']
+_group10 = ('_group1', RE(r"\("), [RE(r"\)")], _group1)
 
-type0 = [RE(r"\b[A-Z][\w']*")]
+class _group0:
+    default_text_color = DELIMITER
+    rules = [
+        ('keyword', ['module', 'where']),
+        ('keyword', ['module']),
+        _group10,
+        comment0,
+        comment1,
+    ]
 
-class _group6:
+class _group3:
+    default_text_color = DELIMITER
+    rules = [
+        ('keyword', ['import', 'as', 'exposing']),
+        _group10,
+        comment0,
+        comment1,
+    ]
+
+type0 = ('type', [RE(r"\b[A-Z][\w']*")])
+
+class _group5:
     default_text_color = DELIMITER
     rules = []
 
-class _group2:
+class _group4:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword3),
-        ('type', type0),
-        _group0.rules[2],
-        ('_group6', RE(r"{"), [RE(r"}")], _group6),
-        _group5.rules[1],
-        _group5.rules[2],
+        ('keyword', ['type', 'alias']),
+        type0,
+        _group10,
+        ('_group5', RE(r"{"), [RE(r"}")], _group5),
+        comment0,
+        comment1,
     ]
-
-keyword4 = ['infix', 'infixl', 'infixr']
 
 number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
-class _group3:
+number0 = ('number', number)
+
+class _group6:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword4),
-        ('number', number),
-        _group5.rules[1],
-        _group5.rules[2],
+        ('keyword', ['infix', 'infixl', 'infixr']),
+        number0,
+        comment0,
+        comment1,
     ]
 
-keyword5 = ['port']
-
-class _group4:
+class _group7:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword5), _group5.rules[1], _group5.rules[2]]
+    rules = [('keyword', ['port']), comment0, comment1]
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
 rules = [
     ('keyword', keyword),
     ('_group0', RE(r"\b(?:module)"), [RE(r"where")], _group0),
-    ('_group1', RE(r"import"), [RE(r"$")], _group1),
-    ('_group2', RE(r"type"), [RE(r"$")], _group2),
-    ('_group3', RE(r"\b(?:infix|infixl|infixr)"), [RE(r"$")], _group3),
-    ('_group4', RE(r"port"), [RE(r"$")], _group4),
+    ('_group3', RE(r"import"), [RE(r"$")], _group3),
+    ('_group4', RE(r"type"), [RE(r"$")], _group4),
+    ('_group6', RE(r"\b(?:infix|infixl|infixr)"), [RE(r"$")], _group6),
+    ('_group7', RE(r"port"), [RE(r"$")], _group7),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('number', number),
-    ('type', type0),
-    ('title', title),
-    _group5.rules[1],
-    _group5.rules[2],
+    number0,
+    type0,
+    ('title', [RE(r"^[_a-z][\w']*")]),
+    comment0,
+    comment1,
     # ignore {'begin': '->|<-'},
 ]
+
+_group5.rules.extend(_group1.rules)

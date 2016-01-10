@@ -10,78 +10,74 @@ meta = [
     RE(r"^!!!(?: (?:5|1\.1|Strict|Frameset|Basic|Mobile|RDFa|XML\b.*))?$"),
 ]
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class _group0:
+class _group10:
     default_text_color = DELIMITER
-    rules = [('_group0', RE(r"^\s*(?:-|=|!=)(?!#)"), [RE(r"\B|\b")])]
+    rules = [('_group1', RE(r"^\s*(?:-|=|!=)(?!#)"), [RE(r"\B|\b")])]
+_group10.__name__ = '_group1'
 
-selector_tag = [RE(r"\w+")]
-
-selector_id = [RE(r"#[\w-]+")]
-
-selector_class = [RE(r"\.[\w-]+")]
-
-attr = [RE(r":\w+")]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
-class _group5:
+string0 = ('string', RE(r"'"), [RE(r"'")], string)
+
+string1 = ('string', RE(r"\""), [RE(r"\"")], string)
+
+class _group4:
     default_text_color = DELIMITER
     rules = [
-        ('attr', attr),
-        ('string', RE(r"'"), [RE(r"'")], string),
-        ('string', RE(r"\""), [RE(r"\"")], string),
+        ('attr', [RE(r":\w+")]),
+        string0,
+        string1,
         # ignore {'begin': '\\w+', 'relevance': 0},
     ]
 
 class _group3:
     default_text_color = DELIMITER
-    rules = [('_group5', RE(r"(?=:\w+\s*=>)"), [RE(r",\s+")], _group5)]
+    rules = [('_group4', RE(r"(?=:\w+\s*=>)"), [RE(r",\s+")], _group4)]
 
-class _group6:
+class _group7:
     default_text_color = DELIMITER
     rules = [
-        ('attr', selector_tag),
-        _group5.rules[1],
-        _group5.rules[2],
+        ('attr', [RE(r"\w+")]),
+        string0,
+        string1,
         # ignore {'begin': '\\w+', 'relevance': 0},
     ]
 
-class _group4:
+class _group6:
     default_text_color = DELIMITER
-    rules = [('_group6', RE(r"(?=\w+\s*=)"), [RE(r"\s+")], _group6)]
+    rules = [('_group7', RE(r"(?=\w+\s*=)"), [RE(r"\s+")], _group7)]
 
 class tag:
     default_text_color = DELIMITER
     rules = [
-        ('selector-tag', selector_tag),
-        ('selector-id', selector_id),
-        ('selector-class', selector_class),
+        ('selector-tag', [RE(r"\w+")]),
+        ('selector-id', [RE(r"#[\w-]+")]),
+        ('selector-class', [RE(r"\.[\w-]+")]),
         ('_group3', RE(r"{\s*"), [RE(r"\s*}")], _group3),
-        ('_group4', RE(r"\(\s*"), [RE(r"\s*\)")], _group4),
+        ('_group6', RE(r"\(\s*"), [RE(r"\s*\)")], _group6),
     ]
 
-class _group1:
+class _group101:
     default_text_color = DELIMITER
-    rules = [('_group1', RE(r"#{"), [RE(r"\B|\b")])]
+    rules = [('_group10', RE(r"#{"), [RE(r"\B|\b")])]
+_group101.__name__ = '_group10'
 
 rules = [
     ('meta', meta),
     ('comment', RE(r"^\s*(?:!=#|=#|-#|/).*$"), [RE(r"\B\b")], comment),
-    ('_group0', _group0, [RE(r"\n")], 'ruby'),
+    ('_group1', _group10, [RE(r"\n")], 'ruby'),
     ('tag', RE(r"^\s*%"), [RE(r"\B\b")], tag),
     # ignore {'begin': '^\\s*[=~]\\s*'},
-    ('_group1', _group1, [RE(r"}")], 'ruby'),
+    ('_group10', _group101, [RE(r"}")], 'ruby'),
 ]

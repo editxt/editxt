@@ -4,63 +4,43 @@
 name = 'AsciiDoc'
 file_patterns = ['*.asciidoc', '*.adoc']
 
-title = [RE(r"^\.\w.*$")]
-
-section = [RE(r"^(?:={1,5}) .+?(?: \1)?$")]
-
-section0 = [RE(r"^[^\[\]\n]+?\n[=\-~\^\+]{2,}$")]
-
-meta = [RE(r"^\[.+?\]$")]
-
-bullet = [RE(r"^(?:\*+|\-+|\.+|[^\n]+?::)\s+")]
-
-symbol = [RE(r"^(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION):\s+")]
-
-string = [RE(r"``.+?''")]
-
-string0 = [RE(r"`.+?'")]
-
-code = [RE(r"(?:`.+?`|\+.+?\+)")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 class _meta:
     default_text_color = DELIMITER
-    rules = [('_meta', [RE(r"\s")])]
+    rules = [('meta', [RE(r"\s")])]
 
-class _group1:
+class _group2:
     default_text_color = DELIMITER
     rules = [('_group3', RE(r"<"), [RE(r">")], 'xml')]
 
-class strong:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\*\\w', 'relevance': 0},
-    ]
+#class strong:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': '\\\\*\\w', 'relevance': 0},
+#    ]
 
-class emphasis:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': "\\\\'\\w", 'relevance': 0},
-    ]
+#class emphasis:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': "\\\\'\\w", 'relevance': 0},
+#    ]
 
 class _string:
     default_text_color = DELIMITER
-    rules = [('_string', [RE(r"\[")])]
+    rules = [('string', [RE(r"\[")])]
 
 class _string0:
     default_text_color = DELIMITER
-    rules = [('_string', [RE(r"\]")])]
+    rules = [('string', [RE(r"\]")])]
 _string0.__name__ = '_string'
 
-class _group2:
+class _group7:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '(link|image:?):', 'relevance': 0},
@@ -71,24 +51,24 @@ class _group2:
 rules = [
     ('comment', RE(r"^/{4,}\n"), [RE(r"\n/{4,}$")], comment),
     ('comment', RE(r"^//"), [RE(r"$")], comment),
-    ('title', title),
-    ('_group0', RE(r"^[=\*]{4,}\n"), [RE(r"\n^[=\*]{4,}$")]),
-    ('section', section),
-    ('section', section0),
+    ('title', [RE(r"^\.\w.*$")]),
+    ('_group1', RE(r"^[=\*]{4,}\n"), [RE(r"\n^[=\*]{4,}$")]),
+    ('section', [RE(r"^(?:={1,5}) .+?(?: \1)?$")]),
+    ('section', [RE(r"^[^\[\]\n]+?\n[=\-~\^\+]{2,}$")]),
     ('meta', RE(r"^:.+?:"), [_meta]),
-    ('meta', meta),
+    ('meta', [RE(r"^\[.+?\]$")]),
     ('quote', RE(r"^_{4,}\n"), [RE(r"\n_{4,}$")]),
     ('code', RE(r"^[\-\.]{4,}\n"), [RE(r"\n[\-\.]{4,}$")]),
-    ('_group1', RE(r"^\+{4,}\n"), [RE(r"\n\+{4,}$")], _group1),
-    ('bullet', bullet),
-    ('symbol', symbol),
-    ('strong', RE(r"\B\*(?![\*\s])"), [RE(r"(?:\n{2}|\*)")], strong),
-    ('emphasis', RE(r"\B'(?!['\s])"), [RE(r"(?:\n{2}|')")], emphasis),
+    ('_group2', RE(r"^\+{4,}\n"), [RE(r"\n\+{4,}$")], _group2),
+    ('bullet', [RE(r"^(?:\*+|\-+|\.+|[^\n]+?::)\s+")]),
+    ('symbol', [RE(r"^(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION):\s+")]),
+    ('strong', RE(r"\B\*(?![\*\s])"), [RE(r"(?:\n{2}|\*)")]), #, strong),
+    ('emphasis', RE(r"\B'(?!['\s])"), [RE(r"(?:\n{2}|')")]), #, emphasis),
     ('emphasis', RE(r"_(?![_\s])"), [RE(r"(?:\n{2}|_)")]),
-    ('string', string),
-    ('string', string0),
-    ('code', code),
+    ('string', [RE(r"``.+?''")]),
+    ('string', [RE(r"`.+?'")]),
+    ('code', [RE(r"(?:`.+?`|\+.+?\+)")]),
     ('code', RE(r"^[ \t]"), [RE(r"$")]),
     # ignore {'begin': "^'{3,}[ \\t]*$", 'relevance': 10},
-    ('_group2', RE(r"(?=(?:link:)?(?:http|https|ftp|file|irc|image:?):\S+\[.*?\])"), [RE(r"\B\b")], _group2),
+    ('_group7', RE(r"(?=(?:link:)?(?:http|https|ftp|file|irc|image:?):\S+\[.*?\])"), [RE(r"\B\b")], _group7),
 ]

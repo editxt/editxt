@@ -4,55 +4,51 @@
 name = 'Makefile'
 file_patterns = ['*.makefile', '*.mk', '*.mak']
 
-section = [RE(r"^[\w]+:\s*$")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class _group0:
+class _group10:
     default_text_color = DELIMITER
-    rules = [('_group0', RE(r"(?=^\w+\s*\W*=)"), [RE(r"\B|\b")])]
+    rules = [('_group1', RE(r"(?=^\w+\s*\W*=)"), [RE(r"\B|\b")])]
+_group10.__name__ = '_group1'
 
-class _group2:
+class _group20:
     default_text_color = DELIMITER
-    rules = [('_group2', _group0, [RE(r"\s*\W*=")])]
+    rules = [('_group2', _group10, [RE(r"\s*\W*=")])]
+_group20.__name__ = '_group2'
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class variable:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
+
+variable0 = ('variable', RE(r"\$\("), [RE(r"\)")], variable)
 
 class _group3:
     default_text_color = DELIMITER
-    rules = [('variable', RE(r"\$\("), [RE(r"\)")], variable)]
-
-meta_keyword = ['.PHONY']
+    rules = [variable0]
 
 class meta:
     default_text_color = DELIMITER
-    rules = [('meta-keyword', meta_keyword)]
+    rules = [('meta-keyword', ['.PHONY'])]
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
-class _group1:
+class _group4:
     default_text_color = DELIMITER
-    rules = [('string', RE(r"\""), [RE(r"\"")], string), _group3.rules[0]]
+    rules = [('string', RE(r"\""), [RE(r"\"")], string), variable0]
 
 rules = [
     ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('_group0', _group2, [RE(r"$")], _group3),
-    ('section', section),
+    ('_group1', _group20, [RE(r"$")], _group3),
+    ('section', [RE(r"^[\w]+:\s*$")]),
     ('meta', RE(r"^\.PHONY:"), [RE(r"$")], meta),
-    ('_group1', RE(r"^\t+"), [RE(r"$")], _group1),
+    ('_group4', RE(r"^\t+"), [RE(r"$")], _group4),
 ]

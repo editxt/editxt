@@ -6,13 +6,11 @@ file_patterns = ['*.twig', '*.craftcms']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 keyword = """
@@ -28,53 +26,51 @@ class name0:
     rules = [('keyword', keyword)]
 name0.__name__ = 'name'
 
-class name1:
+class name2:
     default_text_color = DELIMITER
     rules = [('keyword', keyword), ('name', RE(r"\w+"), [RE(r"\B|\b")], name0)]
-name1.__name__ = 'name'
+name2.__name__ = 'name'
 
-keyword0 = """
+keyword1 = """
     abs batch capitalize convert_encoding date date_modify default
     escape first format join json_encode keys last length lower merge
     nl2br number_format raw replace reverse round slice sort split
     striptags title trim upper url_encode
     """.split()
 
-name2 = """
+name3 = """
     attribute block constant cycle date dump include max min parent
     random range source template_from_string
     """.split()
 
-class _group2:
+class _group3:
     default_text_color = DELIMITER
     rules = [
-        ('name', name2),
-        ('keyword', name2),
+        ('name', name3),
+        ('keyword', name3),
         ('params', RE(r"\("), [RE(r"\)")]),
     ]
 
+_group30 = ('_group3', RE(r"\b(?:attribute|block|constant|cycle|date|dump|include|max|min|parent|random|range|source|template_from_string)"), [RE(r"\B\b")], _group3)
+
+class _group2:
+    default_text_color = DELIMITER
+    rules = [('keyword', keyword1), _group30]
+
+_group20 = ('_group2', RE(r"\|[A-Za-z_]+:?"), [RE(r"\B\b")], _group2)
+
 class _group1:
     default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword0),
-        ('_group2', RE(r"\b(?:attribute|block|constant|cycle|date|dump|include|max|min|parent|random|range|source|template_from_string)"), [RE(r"\B\b")], _group2),
-    ]
-
-class _group0:
-    default_text_color = DELIMITER
-    rules = [
-        ('_group1', RE(r"\|[A-Za-z_]+:?"), [RE(r"\B\b")], _group1),
-        _group1.rules[1],
-    ]
+    rules = [_group20, _group30]
 
 class template_tag:
     default_text_color = DELIMITER
-    rules = [('name', name1, [RE(r"\B\b")], _group0)]
+    rules = [('name', name2, [RE(r"\B\b")], _group1)]
 template_tag.__name__ = 'template-tag'
 
 class template_variable:
     default_text_color = DELIMITER
-    rules = [_group0.rules[0], _group1.rules[1]]
+    rules = [_group20, _group30]
 template_variable.__name__ = 'template-variable'
 
 rules = [

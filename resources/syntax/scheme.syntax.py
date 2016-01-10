@@ -4,23 +4,23 @@
 name = 'Scheme'
 file_patterns = ['*.scheme']
 
-number = [RE(r"(?:\-|\+)?\d+(?:[./]\d+)?")]
+number = ('number', [RE(r"(?:\-|\+)?\d+(?:[./]\d+)?")])
 
-number0 = [RE(r"(?:\-|\+)?\d+(?:[./]\d+)?[+\-](?:\-|\+)?\d+(?:[./]\d+)?i")]
+number0 = ('number', [RE(r"(?:\-|\+)?\d+(?:[./]\d+)?[+\-](?:\-|\+)?\d+(?:[./]\d+)?i")])
 
-number1 = [RE(r"#b[0-1]+(?:/[0-1]+)?")]
+number1 = ('number', [RE(r"#b[0-1]+(?:/[0-1]+)?")])
 
-number2 = [RE(r"#o[0-7]+(?:/[0-7]+)?")]
+number2 = ('number', [RE(r"#o[0-7]+(?:/[0-7]+)?")])
 
-number3 = [RE(r"#x[0-9a-f]+(?:/[0-9a-f]+)?")]
-
-symbol = [RE(r"'[^\(\)\[\]\{\}\",'`;#|\\\s]+")]
+number3 = ('number', [RE(r"#x[0-9a-f]+(?:/[0-9a-f]+)?")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
+
+string0 = ('string', RE(r"\""), [RE(r"\"")], string)
+
+symbol = ('symbol', [RE(r"'[^\(\)\[\]\{\}\",'`;#|\\\s]+")])
 
 builtin_name = """
     case-lambda call/cc class define-class exit-handler field import
@@ -65,95 +65,89 @@ class name0:
     rules = [('builtin-name', builtin_name)]
 name0.__name__ = 'name'
 
-literal = [RE(r"(?:#t|#f|#\\[^\(\)\[\]\{\}\",'`;#|\\\s]+|#\\.)")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class _group2:
+comment0 = ('comment', RE(r";"), [RE(r"$")], comment)
+
+comment1 = ('comment', RE(r"#\|"), [RE(r"\|#")], comment)
+
+class _group1:
     default_text_color = DELIMITER
     rules = [
-        ('literal', literal),
-        None,  # rules[1],
-        None,  # rules[2],
-        None,  # rules[3],
-        None,  # rules[4],
-        None,  # rules[5],
-        None,  # rules[6],
+        ('literal', [RE(r"(?:#t|#f|#\\[^\(\)\[\]\{\}\",'`;#|\\\s]+|#\\.)")]),
+        number,
+        number0,
+        number1,
+        number2,
+        number3,
+        string0,
         # ignore {'begin': '[^\\(\\)\\[\\]\\{\\}",\'`;#|\\\\\\s]+', 'relevance': 0},
-        ('symbol', symbol),
-        None,  # rules[8],
-        None,  # rules[9],
-        ('comment', RE(r";"), [RE(r"$")], comment),
-        ('comment', RE(r"#\|"), [RE(r"\|#")], comment),
+        symbol,
+        None, # _group00,
+        comment0,
+        comment1,
     ]
 
 class _group0:
     default_text_color = DELIMITER
     rules = [
         ('name', RE(r"[^\(\)\[\]\{\}\",'`;#|\\\s]+"), [RE(r"\B\b")], name0),
-        ('_group2', RE(r"\B|\b"), [RE(r"\B\b")], _group2),
+        ('_group1', RE(r"\B|\b"), [RE(r"\B\b")], _group1),
     ]
 
-class _group3:
+_group00 = ('_group0', RE(r"\B|\b"), [RE(r"\B\b")], _group0)
+
+class _group11:
     default_text_color = DELIMITER
     rules = [
-        ('literal', literal),
-        None,  # rules[1],
-        None,  # rules[2],
-        None,  # rules[3],
-        None,  # rules[4],
-        None,  # rules[5],
-        None,  # rules[6],
+        ('literal', [RE(r"(?:#t|#f|#\\[^\(\)\[\]\{\}\",'`;#|\\\s]+|#\\.)")]),
+        number,
+        number0,
+        number1,
+        number2,
+        number3,
+        string0,
         # ignore {'begin': '[^\\(\\)\\[\\]\\{\\}",\'`;#|\\\\\\s]+', 'relevance': 0},
-        ('symbol', symbol),
-        None,  # rules[8],
-        None,  # rules[9],
-        ('comment', RE(r";"), [RE(r"$")], comment),
-        ('comment', RE(r"#\|"), [RE(r"\|#")], comment),
+        symbol,
+        None, # _group02,
+        None, # _group03,
+        comment0,
+        comment1,
     ]
+_group11.__name__ = '_group1'
 
-class _group1:
+class _group01:
     default_text_color = DELIMITER
     rules = [
         ('name', RE(r"[^\(\)\[\]\{\}\",'`;#|\\\s]+"), [RE(r"\B\b")], name0),
-        ('_group3', RE(r"\B|\b"), [RE(r"\B\b")], _group3),
+        ('_group1', RE(r"\B|\b"), [RE(r"\B\b")], _group11),
     ]
+_group01.__name__ = '_group0'
+
+_group02 = ('_group0', RE(r"\("), [RE(r"\)")], _group01)
+
+_group03 = ('_group0', RE(r"\["), [RE(r"\]")], _group01)
 
 rules = [
     ('meta', RE(r"^#!"), [RE(r"$")]),
-    ('number', number),
-    ('number', number0),
-    ('number', number1),
-    ('number', number2),
-    ('number', number3),
-    ('string', RE(r"\""), [RE(r"\"")], string),
-    ('symbol', symbol),
-    ('_group0', RE(r"\("), [RE(r"\)")], _group0),
-    ('_group1', RE(r"\["), [RE(r"\]")], _group1),
-    _group3.rules[5],
-    _group3.rules[6],
+    number,
+    number0,
+    number1,
+    number2,
+    number3,
+    string0,
+    symbol,
+    _group02,
+    _group03,
+    comment0,
+    comment1,
 ]
 
-_group2.rules[1] = rules[1]
-_group2.rules[2] = rules[2]
-_group2.rules[3] = rules[3]
-_group2.rules[4] = rules[4]
-_group2.rules[5] = rules[5]
-_group2.rules[6] = rules[6]
-_group2.rules[8] = rules[8]
-_group2.rules[9] = rules[9]
-_group3.rules[1] = rules[1]
-_group3.rules[2] = rules[2]
-_group3.rules[3] = rules[3]
-_group3.rules[4] = rules[4]
-_group3.rules[5] = rules[5]
-_group3.rules[6] = rules[6]
-_group3.rules[8] = rules[8]
-_group3.rules[9] = rules[9]
+_group1.rules[8] = _group00
+_group11.rules[8] = _group02
+_group11.rules[9] = _group03

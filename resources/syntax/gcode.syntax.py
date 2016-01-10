@@ -11,49 +11,37 @@ keyword = """
     LT GT NE GE LE OR XOR
     """.split()
 
-meta = [RE(r"\%")]
-
-meta0 = [RE(r"(?:[O])(?:[0-9]+)")]
+class comment:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
+    ]
 
 number = [
     RE(r"(?:[-+]?(?:[0-9]*\.?[0-9]+\.?))|(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
-name0 = [RE(r"(?:[G])(?:[0-9]+\.?[0-9]?)")]
-
-name1 = [RE(r"(?:[M])(?:[0-9]+\.?[0-9]?)")]
-
-attr = [RE(r"(?:VZOFX|VZOFY|VZOFZ)")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
-class comment:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
 rules = [
     ('keyword', keyword),
-    ('meta', meta),
-    ('meta', meta0),
+    ('meta', [RE(r"\%")]),
+    ('meta', [RE(r"(?:[O])(?:[0-9]+)")]),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('comment', RE(r"\("), [RE(r"\)")], comment),
     ('number', number),
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('name', name0),
-    ('name', name1),
+    ('name', [RE(r"(?:[G])(?:[0-9]+\.?[0-9]?)")]),
+    ('name', [RE(r"(?:[M])(?:[0-9]+\.?[0-9]?)")]),
     ('attr', RE(r"(?:VC|VS|#)"), [RE(r"(?:\d+)")]),
-    ('attr', attr),
+    ('attr', [RE(r"(?:VZOFX|VZOFY|VZOFZ)")]),
     ('built_in', RE(r"(?:ATAN|ABS|ACOS|ASIN|SIN|COS|EXP|FIX|FUP|ROUND|LN|TAN)(?:\[)"), [RE(r"(?:[-+]?(?:[0-9]*\.?[0-9]+\.?))(?:\])")]),
     ('symbol', RE(r"N"), [RE(r"\d+")]),
 ]

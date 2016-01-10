@@ -4,8 +4,6 @@
 name = 'Bash'
 file_patterns = ['*.bash', '*.sh', '*.zsh']
 
-_ = ['-ne', '-eq', '-lt', '-gt', '-f', '-d', '-e', '-s', '-l', '-a']
-
 built_in = """
     break cd continue eval exec exit export getopts hash pwd readonly
     return shift test times trap umask unset alias bind builtin caller
@@ -25,57 +23,48 @@ keyword = """
     if then else elif fi for while in do done case esac function
     """.split()
 
-literal = ['true', 'false']
-
-meta = [RE(r"^#![^\n]+sh\s*$")]
-
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
-title = [RE(r"\w[\w\d_]*")]
-
 class function:
     default_text_color = DELIMITER
-    rules = [('title', title)]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+    rules = [('title', [RE(r"\w[\w\d_]*")])]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-variable = [RE(r"\$[\w\d#@][\w\d_]*")]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
-variable0 = [RE(r"\$\{(?:.*?)}")]
+variable = ('variable', [RE(r"\$[\w\d#@][\w\d_]*")])
+
+variable0 = ('variable', [RE(r"\$\{(?:.*?)}")])
 
 class variable1:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 variable1.__name__ = 'variable'
 
 class string:
     default_text_color = DELIMITER
     rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('variable', variable),
-        ('variable', variable0),
+        operator_escape,
+        variable,
+        variable0,
         ('variable', RE(r"\$\("), [RE(r"\)")], variable1),
     ]
 
 rules = [
-    ('_', _),
+    ('_', ['-ne', '-eq', '-lt', '-gt', '-f', '-d', '-e', '-s', '-l', '-a']),
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
-    ('meta', meta),
+    ('literal', ['true', 'false']),
+    ('meta', [RE(r"^#![^\n]+sh\s*$")]),
     ('function', RE(r"(?=\w[\w\d_]*\s*\(\s*\)\s*\{)"), [RE(r"\B\b")], function),
     ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('number', number),
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('string', RE(r"'"), [RE(r"'")]),
-    string.rules[1],
+    variable,
+    variable0,
 ]

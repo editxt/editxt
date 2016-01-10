@@ -33,27 +33,21 @@ keyword = """
     or equal less greater strless strgreater strequal matches
     """.split()
 
-number = [RE(r"\b\d+(?:\.\d+)?")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
 rules = [
     ('keyword', keyword),
     ('variable', RE(r"\${"), [RE(r"}")]),
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('number', number),
+    ('number', [RE(r"\b\d+(?:\.\d+)?")]),
 ]

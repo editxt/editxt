@@ -14,162 +14,159 @@ keyword = """
     unless until loop of by when and or is isnt not
     """.split()
 
-literal = ['true', 'false', 'null', 'undefined', 'yes', 'no', 'on', 'off']
+number = ('number', [RE(r"\b(?:0b[01]+)")])
 
-number = [RE(r"\b(?:0b[01]+)")]
-
-class number0:
+class number1:
     default_text_color = DELIMITER
     rules = [
         ('number', RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"), [RE(r"\B|\b")]),
     ]
-number0.__name__ = 'number'
+number1.__name__ = 'number'
+
+number2 = ('number', number1, [RE(r"(?:\s*/)?")])
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
-regexp = [RE(r"//[gim]*")]
+string0 = ('string', RE(r"'''"), [RE(r"'''")], string)
 
-regexp0 = [RE(r"\/(?![ *])(?:\\\/|.)*?\/[gim]*(?=\W|$)")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+string1 = ('string', RE(r"'"), [RE(r"'")], string)
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class regexp1:
+comment0 = ('comment', RE(r"#"), [RE(r"$")], comment)
+
+class regexp:
     default_text_color = DELIMITER
     rules = [
-        None,  # string0.rules[1],
-        ('comment', RE(r"#"), [RE(r"$")], comment),
+        None, # subst0,
+        comment0,
     ]
-regexp1.__name__ = 'regexp'
+
+regexp0 = ('regexp', RE(r"///"), [RE(r"///")], regexp)
+
+regexp1 = ('regexp', [RE(r"//[gim]*")])
+
+regexp2 = ('regexp', [RE(r"\/(?![ *])(?:\\\/|.)*?\/[gim]*(?=\W|$)")])
+
+_group3 = ('_group3', RE(r"`"), [RE(r"`")], 'javascript')
 
 class subst:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
-        ('literal', literal),
-        ('number', number),
-        None,  # rules[4],
-        None,  # rules[5],
-        None,  # rules[6],
-        None,  # rules[7],
-        None,  # rules[8],
-        ('regexp', RE(r"///"), [RE(r"///")], regexp1),
-        ('regexp', regexp),
-        ('regexp', regexp0),
+        ('literal', ['true', 'false', 'null', 'undefined', 'yes', 'no', 'on', 'off']),
+        number,
+        number2,
+        string0,
+        string1,
+        None, # string3,
+        None, # string4,
+        regexp0,
+        regexp1,
+        regexp2,
         # ignore {'begin': '@[A-Za-z$_][0-9A-Za-z$_]*'},
-        ('_group3', RE(r"`"), [RE(r"`")], 'javascript'),
+        _group3,
     ]
 
-class string0:
+subst0 = ('subst', RE(r"#\{"), [RE(r"}")], subst)
+
+class string2:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('subst', RE(r"#\{"), [RE(r"}")], subst),
-    ]
-string0.__name__ = 'string'
+    rules = [operator_escape, subst0]
+string2.__name__ = 'string'
 
-title = [RE(r"[A-Za-z$_][0-9A-Za-z$_]*")]
+string3 = ('string', RE(r"\"\"\""), [RE(r"\"\"\"")], string2)
+
+string4 = ('string', RE(r"\""), [RE(r"\"")], string2)
+
+title = ('title', [RE(r"[A-Za-z$_][0-9A-Za-z$_]*")])
 
 class _group4:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
-        ('literal', literal),
-        ('number', number),
-        None,  # rules[4],
-        None,  # rules[5],
-        None,  # rules[6],
-        None,  # rules[7],
-        None,  # rules[8],
-        subst.rules[6],
-        subst.rules[7],
-        subst.rules[8],
+        ('literal', ['true', 'false', 'null', 'undefined', 'yes', 'no', 'on', 'off']),
+        number,
+        number2,
+        string0,
+        string1,
+        string3,
+        string4,
+        regexp0,
+        regexp1,
+        regexp2,
         # ignore {'begin': '@[A-Za-z$_][0-9A-Za-z$_]*'},
-        subst.rules[9],
+        _group3,
     ]
 
 class params:
     default_text_color = DELIMITER
     rules = [('_group4', RE(r"\("), [RE(r"\)")], _group4)]
 
+params0 = ('params', RE(r"(?=\([^\(])"), [RE(r"\B\b")], params)
+
 class function:
     default_text_color = DELIMITER
-    rules = [
-        ('title', title),
-        ('params', RE(r"(?=\([^\(])"), [RE(r"\B\b")], params),
-    ]
+    rules = [title, params0]
 
-class function0:
+class function1:
     default_text_color = DELIMITER
-    rules = [function.rules[1]]
-function0.__name__ = 'function'
-
-class _group0:
-    default_text_color = DELIMITER
-    rules = [
-        ('function', RE(r"(?=(?:\(.*\))?\s*\B[-=]>)"), [RE(r"[-=]>")], function0),
-    ]
-
-keyword0 = ['class']
-
-keyword1 = ['extends']
+    rules = [params0]
+function1.__name__ = 'function'
 
 class _group5:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword1), ('title', title)]
+    rules = [
+        ('function', RE(r"(?=(?:\(.*\))?\s*\B[-=]>)"), [RE(r"[-=]>")], function1),
+    ]
+
+class _group6:
+    default_text_color = DELIMITER
+    rules = [('keyword', ['extends']), title]
 
 class class0:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
-        ('_group5', RE(r"\b(?:extends)"), [RE(r"\B\b")], _group5),
-        ('title', title),
+        ('keyword', ['class']),
+        ('_group6', RE(r"\b(?:extends)"), [RE(r"\B\b")], _group6),
+        title,
     ]
 class0.__name__ = 'class'
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
-    ('number', number),
-    ('number', number0, [RE(r"(?:\s*/)?")]),
-    ('string', RE(r"'''"), [RE(r"'''")], string),
-    ('string', RE(r"'"), [RE(r"'")], string),
-    ('string', RE(r"\"\"\""), [RE(r"\"\"\"")], string0),
-    ('string', RE(r"\""), [RE(r"\"")], string0),
-    subst.rules[6],
-    subst.rules[7],
-    subst.rules[8],
+    ('literal', ['true', 'false', 'null', 'undefined', 'yes', 'no', 'on', 'off']),
+    number,
+    number2,
+    string0,
+    string1,
+    string3,
+    string4,
+    regexp0,
+    regexp1,
+    regexp2,
     # ignore {'begin': '@[A-Za-z$_][0-9A-Za-z$_]*'},
-    subst.rules[9],
+    _group3,
     ('comment', RE(r"###"), [RE(r"###")], comment),
-    regexp1.rules[1],
+    comment0,
     ('function', RE(r"(?=^\s*[A-Za-z$_][0-9A-Za-z$_]*\s*=\s*(?:\(.*\))?\s*\B[-=]>)"), [RE(r"[-=]>")], function),
-    ('_group0', RE(r"[:\(,=]\s*"), [RE(r"\B\b")], _group0),
+    ('_group5', RE(r"[:\(,=]\s*"), [RE(r"\B\b")], _group5),
     ('class', RE(r"\b(?:class)"), [RE(r"$")], class0),
-    ('_group1', RE(r"(?=[A-Za-z$_][0-9A-Za-z$_]*:)"), [RE(r"(?=:)")]),
+    ('_group7', RE(r"(?=[A-Za-z$_][0-9A-Za-z$_]*:)"), [RE(r"(?=:)")]),
 ]
 
-regexp1.rules[0] = string0.rules[1]
-subst.rules[4] = rules[4]
-subst.rules[5] = rules[5]
-subst.rules[6] = rules[6]
-subst.rules[7] = rules[7]
-subst.rules[8] = rules[8]
-_group4.rules[4] = rules[4]
-_group4.rules[5] = rules[5]
-_group4.rules[6] = rules[6]
-_group4.rules[7] = rules[7]
-_group4.rules[8] = rules[8]
+regexp.rules[0] = subst0
+subst.rules[7] = string3
+subst.rules[8] = string4

@@ -17,77 +17,69 @@ keyword = """
     return then true until while
     """.split()
 
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class _group0:
-    default_text_color = DELIMITER
-    rules = []
+comment0 = ('comment', RE(r"--(?!\[=*\[)"), [RE(r"$")], comment)
 
-class comment0:
+#class _group1:
+#    default_text_color = DELIMITER
+#    rules = []
+
+_group10 = ('_group1', RE(r"\[=*\["), [RE(r"\]=*\]")]) #, _group1)
+
+class comment1:
     default_text_color = DELIMITER
     rules = [
-        ('_group0', RE(r"\[=*\["), [RE(r"\]=*\]")], _group0),
+        _group10,
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
-comment0.__name__ = 'comment'
+comment1.__name__ = 'comment'
 
-keyword0 = ['function']
-
-title = [RE(r"(?:[_a-zA-Z]\w*\.)*(?:[_a-zA-Z]\w*:)?[_a-zA-Z]\w*")]
+comment2 = ('comment', RE(r"--\[=*\["), [RE(r"\]=*\]")], comment1)
 
 class params:
     default_text_color = DELIMITER
-    rules = [
-        None,  # rules[2],
-        None,  # rules[3],
-    ]
+    rules = [comment0, comment2]
 
 class function:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
-        ('title', title),
+        ('keyword', ['function']),
+        ('title', [RE(r"(?:[_a-zA-Z]\w*\.)*(?:[_a-zA-Z]\w*:)?[_a-zA-Z]\w*")]),
         ('params', RE(r"\("), [RE(r"\B\b")], params),
-        None,  # rules[2],
-        None,  # rules[3],
+        comment0,
+        comment2,
     ]
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
-class string0:
+class string2:
     default_text_color = DELIMITER
-    rules = [comment0.rules[0]]
-string0.__name__ = 'string'
+    rules = [_group10]
+string2.__name__ = 'string'
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('comment', RE(r"--(?!\[=*\[)"), [RE(r"$")], comment),
-    ('comment', RE(r"--\[=*\["), [RE(r"\]=*\]")], comment0),
+    comment0,
+    comment2,
     ('function', RE(r"\b(?:function)"), [RE(r"\)")], function),
     ('number', number),
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('string', RE(r"\[=*\["), [RE(r"\]=*\]")], string0),
+    ('string', RE(r"\[=*\["), [RE(r"\]=*\]")], string2),
 ]
-
-params.rules[0] = rules[2]
-params.rules[1] = rules[3]
-function.rules[3] = rules[2]
-function.rules[4] = rules[3]

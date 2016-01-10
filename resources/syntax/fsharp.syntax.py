@@ -13,66 +13,61 @@ keyword = """
     upcast use val void when while with yield
     """.split()
 
-keyword0 = [RE(r"\b(?:yield|return|let|do)!")]
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '""'},
-    ]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+#class string:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': '""'},
+#    ]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 class _class:
     default_text_color = DELIMITER
-    rules = [('_class', [RE(r"\(|=|$")])]
+    rules = [('class', [RE(r"\(|=|$")])]
 
-keyword1 = ['type']
-
-title = [RE(r"[a-zA-Z_]\w*")]
-
-title0 = [RE(r"'[a-zA-Z0-9_]+")]
-
-class _group0:
+class _group2:
     default_text_color = DELIMITER
-    rules = [('title', title0)]
+    rules = [('title', [RE(r"'[a-zA-Z0-9_]+")])]
 
-class class0:
+class class1:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword1),
-        ('title', title),
-        ('_group0', RE(r"<"), [RE(r">")], _group0),
+        ('keyword', ['type']),
+        ('title', [RE(r"[a-zA-Z_]\w*")]),
+        ('_group2', RE(r"<"), [RE(r">")], _group2),
     ]
-class0.__name__ = 'class'
+class1.__name__ = 'class'
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class symbol:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
+
+class string2:
+    default_text_color = DELIMITER
+    rules = [operator_escape]
+string2.__name__ = 'string'
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 rules = [
     ('keyword', keyword),
-    ('keyword', keyword0),
-    ('string', RE(r"@\""), [RE(r"\"")], string),
+    ('keyword', [RE(r"\b(?:yield|return|let|do)!")]),
+    ('string', RE(r"@\""), [RE(r"\"")]), #, string),
     ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
     ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment),
-    ('class', RE(r"\b(?:type)"), [_class], class0),
+    ('class', RE(r"\b(?:type)"), [_class], class1),
     ('meta', RE(r"\[<"), [RE(r">\]")]),
     ('symbol', RE(r"\B(?:'[A-Za-z])\b"), [RE(r"\B\b")], symbol),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('string', RE(r"\""), [RE(r"\"")], string),
+    ('string', RE(r"\""), [RE(r"\"")], string2),
     ('number', number),
 ]

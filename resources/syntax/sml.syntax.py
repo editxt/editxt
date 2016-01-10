@@ -18,42 +18,32 @@ keyword = """
 
 literal = ['true', 'false', 'NONE', 'SOME', 'LESS', 'EQUAL', 'GREATER', 'nil']
 
-literal0 = [RE(r"\[(?:\|\|)?\]|\(\)")]
+class comment:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
+    ]
 
-symbol = [RE(r"'[A-Za-z_](?!')[\w']*")]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
-type = [RE(r"`[A-Z][\w']*")]
-
-type0 = [RE(r"\b[A-Z][\w']*")]
+class string:
+    default_text_color = DELIMITER
+    rules = [operator_escape]
 
 number = [
     RE(r"\b(?:0[xX][a-fA-F0-9_]+[Lln]?|0[oO][0-7_]+[Lln]?|0[bB][01_]+[Lln]?|[0-9][0-9_]*(?:[Lln]|(?:\.[0-9_]*)?(?:[eE][-+]?[0-9_]+)?)?)"),
 ]
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
-class comment:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
-
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
     ('literal', literal),
-    ('literal', literal0),
+    ('literal', [RE(r"\[(?:\|\|)?\]|\(\)")]),
     ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment),
-    ('symbol', symbol),
-    ('type', type),
-    ('type', type0),
+    ('symbol', [RE(r"'[A-Za-z_](?!')[\w']*")]),
+    ('type', [RE(r"`[A-Z][\w']*")]),
+    ('type', [RE(r"\b[A-Z][\w']*")]),
     # ignore {'begin': "[a-z_]\\w*'[\\w']*"},
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),

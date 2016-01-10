@@ -1423,30 +1423,36 @@ keyword = """
     Switch Then To Until Volatile WEnd While With
     """.split()
 
-literal = ['True', 'False', 'And', 'Null', 'Not', 'Or']
+class comment:
+    default_text_color = DELIMITER
+    rules = [
+        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
+    ]
 
-number = [RE(r"\b(?:0b[01]+)")]
+comment0 = ('comment', RE(r";"), [RE(r"$")], comment)
+
+comment1 = ('comment', RE(r"#cs"), [RE(r"#ce")], comment)
+
+comment2 = ('comment', RE(r"#comments-start"), [RE(r"#comments-end")], comment)
+
+#class string:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': {'pattern': '""', 'type': 'RegExp'}, 'relevance': 0},
+#    ]
+
+string0 = ('string', RE(r"\""), [RE(r"\"")]) #, string)
+
+string1 = ('string', RE(r"'"), [RE(r"'")]) #, string)
+
+number = ('number', [RE(r"\b(?:0b[01]+)")])
 
 number0 = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
-symbol = [RE(r"@[A-z0-9_]+")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
-class comment:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
-    ]
-
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': {'pattern': '""', 'type': 'RegExp'}, 'relevance': 0},
-    ]
+number1 = ('number', number0)
 
 meta_keyword = """
     include include-once NoTrayIcon OnAutoItStartRegister RequireAdmin
@@ -1481,24 +1487,23 @@ meta_keyword = """
     Tidy_Off Tidy_On Tidy_Parameters EndRegion Region
     """.split()
 
-meta_keyword0 = ['include']
+#class meta_string0:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': {'pattern': '""', 'type': 'RegExp'}, 'relevance': 0},
+#    ]
+#meta_string0.__name__ = 'meta-string'
 
-class meta_string:
+class _group5:
     default_text_color = DELIMITER
     rules = [
-        # ignore {'begin': {'pattern': '""', 'type': 'RegExp'}, 'relevance': 0},
-    ]
-meta_string.__name__ = 'meta-string'
-
-class _group0:
-    default_text_color = DELIMITER
-    rules = [
-        ('meta-keyword', meta_keyword0),
-        ('keyword', meta_keyword0),
-        None,  # rules[7],
+        ('meta-keyword', ['include']),
+        ('keyword', ['include']),
+        string0,
+        string1,
         ('meta-string', RE(r"<"), [RE(r">")]),
-        ('meta-string', RE(r"\""), [RE(r"\"")], meta_string),
-        ('meta-string', RE(r"'"), [RE(r"'")], meta_string),
+        ('meta-string', RE(r"\""), [RE(r"\"")]), #, meta_string0),
+        ('meta-string', RE(r"'"), [RE(r"'")]), #, meta_string0),
     ]
 
 class meta:
@@ -1506,56 +1511,45 @@ class meta:
     rules = [
         ('meta-keyword', meta_keyword),
         # ignore {'begin': {'pattern': '\\\\\\n', 'type': 'RegExp'}, 'relevance': 0},
-        ('_group0', RE(r"\b(?:include)"), [RE(r"$")], _group0),
-        None,  # rules[7],
-        None,  # rules[3],
-        None,  # rules[4],
-        None,  # rules[5],
+        ('_group5', RE(r"\b(?:include)"), [RE(r"$")], _group5),
+        string0,
+        string1,
+        comment0,
+        comment1,
+        comment2,
     ]
-
-keyword0 = ['Func']
-
-title = [RE(r"[a-zA-Z_]\w*")]
 
 class params:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': '\\$[A-z0-9_]+'},
-        None,  # rules[7],
-        None,  # rules[8],
-        None,  # rules[9],
+        string0,
+        string1,
+        number,
+        number1,
     ]
 
 class function:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
-        ('title', title),
+        ('keyword', ['Func']),
+        ('title', [RE(r"[a-zA-Z_]\w*")]),
         ('params', RE(r"\("), [RE(r"\)")], params),
     ]
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
-    ('comment', RE(r";"), [RE(r"$")], comment),
-    ('comment', RE(r"#cs"), [RE(r"#ce")], comment),
-    ('comment', RE(r"#comments-start"), [RE(r"#comments-end")], comment),
+    ('literal', ['True', 'False', 'And', 'Null', 'Not', 'Or']),
+    comment0,
+    comment1,
+    comment2,
     # ignore {'begin': '\\$[A-z0-9_]+'},
-    ('string', RE(r"\""), [RE(r"\"")], string),
-    ('string', RE(r"'"), [RE(r"'")], string),
-    ('number', number),
-    ('number', number0),
+    string0,
+    string1,
+    number,
+    number1,
     ('meta', RE(r"#"), [RE(r"$")], meta),
-    ('symbol', symbol),
+    ('symbol', [RE(r"@[A-z0-9_]+")]),
     ('function', RE(r"\b(?:Func)"), [RE(r"$")], function),
 ]
-
-_group0.rules[2] = rules[7]
-meta.rules[2] = rules[7]
-meta.rules[3] = rules[3]
-meta.rules[4] = rules[4]
-meta.rules[5] = rules[5]
-params.rules[1] = rules[7]
-params.rules[2] = rules[8]
-params.rules[3] = rules[9]

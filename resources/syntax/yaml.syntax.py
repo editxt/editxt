@@ -10,62 +10,46 @@ literal = """
     { } true false yes no Yes No True False null
     """.split()
 
-attr = [RE(r"^[ \-]*[a-zA-Z_][\w\-]*:")]
-
-attr0 = [RE(r"^[ \-]*\"[a-zA-Z_][\w\-]*\":")]
-
-attr1 = [RE(r"^[ \-]*'[a-zA-Z_][\w\-]*':")]
-
-meta = [RE(r"^---s*$")]
-
-type = [RE(r"!![a-zA-Z_]\w*")]
-
-meta0 = [RE(r"&[a-zA-Z_]\w*$")]
-
-meta1 = [RE(r"\*[a-zA-Z_]\w*$")]
-
-bullet = [RE(r"^ *-")]
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
 class string:
     default_text_color = DELIMITER
     rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        ('operator.escape', [RE(r"\\[\s\S]")]),
         ('template-variable', RE(r"{{"), [RE(r"}}")]),
         ('template-variable', RE(r"%{"), [RE(r"}")]),
     ]
 
-class string0:
+class string1:
     default_text_color = DELIMITER
     rules = []
-string0.__name__ = 'string'
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+string1.__name__ = 'string'
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 rules = [
     ('literal', literal),
-    ('attr', attr),
-    ('attr', attr0),
-    ('attr', attr1),
-    ('meta', meta),
+    ('attr', [RE(r"^[ \-]*[a-zA-Z_][\w\-]*:")]),
+    ('attr', [RE(r"^[ \-]*\"[a-zA-Z_][\w\-]*\":")]),
+    ('attr', [RE(r"^[ \-]*'[a-zA-Z_][\w\-]*':")]),
+    ('meta', [RE(r"^---s*$")]),
     ('string', RE(r"[\|>] *$"), [RE(r"(?=^[ \-]*[a-zA-Z_][\w\-]*:)")], string),
     ('_group0', RE(r"<%[%=-]?"), [RE(r"[%-]?%>")], 'ruby'),
-    ('type', type),
-    ('meta', meta0),
-    ('meta', meta1),
-    ('bullet', bullet),
-    ('string', RE(r"'"), [RE(r"'")], string0),
-    ('string', RE(r"\""), [RE(r"\"")], string0),
+    ('type', [RE(r"!![a-zA-Z_]\w*")]),
+    ('meta', [RE(r"&[a-zA-Z_]\w*$")]),
+    ('meta', [RE(r"\*[a-zA-Z_]\w*$")]),
+    ('bullet', [RE(r"^ *-")]),
+    ('string', RE(r"'"), [RE(r"'")], string1),
+    ('string', RE(r"\""), [RE(r"\"")], string1),
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('number', number),
 ]
+
+string1.rules.extend(string.rules)

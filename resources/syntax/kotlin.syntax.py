@@ -12,125 +12,114 @@ keyword = """
     Int Long Boolean Float Double Void Unit Nothing
     """.split()
 
-literal = ['true', 'false', 'null']
-
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-doctag = [RE(r"@[A-Za-z]+")]
-
-doctag0 = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
-        ('doctag', doctag),
+        ('doctag', [RE(r"@[A-Za-z]+")]),
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag0),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class comment0:
+class comment1:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag0),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
-comment0.__name__ = 'comment'
+comment1.__name__ = 'comment'
+
+comment2 = ('comment', RE(r"//"), [RE(r"$")], comment1)
+
+comment3 = ('comment', RE(r"/\*"), [RE(r"\*/")], comment1)
 
 class _function:
     default_text_color = DELIMITER
-    rules = [('_function', [RE(r"[(?:]|$")])]
+    rules = [('function', [RE(r"[(?:]|$")])]
 
-keyword0 = ['fun']
+title = ('title', [RE(r"[a-zA-Z_]\w*")])
 
-title = [RE(r"[a-zA-Z_]\w*")]
-
-class _group0:
+class _group1:
     default_text_color = DELIMITER
-    rules = [('title', title)]
+    rules = [title]
 
-keyword1 = ['reified']
-
-class type:
+class type0:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword1)]
+    rules = [('keyword', ['reified'])]
+type0.__name__ = 'type'
 
 class _type:
     default_text_color = DELIMITER
-    rules = [('_type', [RE(r":\s*")])]
+    rules = [('type', [RE(r":\s*")])]
 
 class params:
     default_text_color = DELIMITER
     rules = [('keyword', keyword), ('type', _type, [RE(r"(?=\s*[=\)])")])]
 
-class function:
+class function0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
-        ('keyword', keyword0),
-        ('_group0', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B\b")], _group0),
-        ('type', RE(r"<"), [RE(r">")], type),
+        ('keyword', ['fun']),
+        ('_group1', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B\b")], _group1),
+        ('type', RE(r"<"), [RE(r">")], type0),
         ('params', RE(r"\("), [RE(r"\)")], params),
-        None,  # rules[3],
-        None,  # rules[4],
+        comment2,
+        comment3,
     ]
+function0.__name__ = 'function'
 
 class _class:
     default_text_color = DELIMITER
-    rules = [('_class', [RE(r"[:\{(?:]|$")])]
-
-keyword2 = ['class', 'trait']
+    rules = [('class', [RE(r"[:\{(?:]|$")])]
 
 class _type0:
     default_text_color = DELIMITER
-    rules = [('_type', [RE(r"<")])]
+    rules = [('type', [RE(r"<")])]
 _type0.__name__ = '_type'
 
 class _type1:
     default_text_color = DELIMITER
-    rules = [('_type', [RE(r">")])]
+    rules = [('type', [RE(r">")])]
 _type1.__name__ = '_type'
 
 class _type2:
     default_text_color = DELIMITER
-    rules = [('_type', [RE(r"[,:]\s*")])]
+    rules = [('type', [RE(r"[,:]\s*")])]
 _type2.__name__ = '_type'
 
-class class0:
+class class1:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword2),
-        ('title', title),
+        ('keyword', ['class', 'trait']),
+        title,
         ('type', _type0, [_type1]),
         ('type', _type2, [RE(r"(?=[<\(,]|$)")]),
     ]
-class0.__name__ = 'class'
+class1.__name__ = 'class'
 
 class _variable:
     default_text_color = DELIMITER
-    rules = [('_variable', [RE(r"\s*[=:$]")])]
+    rules = [('variable', [RE(r"\s*[=:$]")])]
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 rules = [
     ('keyword', keyword),
-    ('literal', literal),
+    ('literal', ['true', 'false', 'null']),
     ('comment', RE(r"/\*\*"), [RE(r"\*/")], comment),
-    ('comment', RE(r"//"), [RE(r"$")], comment0),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    comment2,
+    comment3,
     ('type', RE(r"(?=<)"), [RE(r">")]),
-    ('function', RE(r"(?=\b(?:fun))"), [_function], function),
-    ('class', RE(r"\b(?:class|trait)"), [_class], class0),
+    ('function', RE(r"(?=\b(?:fun))"), [_function], function0),
+    ('class', RE(r"\b(?:class|trait)"), [_class], class1),
     ('variable', RE(r"\b(?:var|val)"), [_variable]),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('meta', RE(r"^#!/usr/bin/env"), [RE(r"$")]),
     ('number', number),
 ]
-
-function.rules[5] = rules[3]
-function.rules[6] = rules[4]

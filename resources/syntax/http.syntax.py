@@ -4,41 +4,39 @@
 name = 'HTTP'
 file_patterns = ['*.http', '*.https']
 
-number = [RE(r"\b\d{3}\b")]
-
 class _group0:
     default_text_color = DELIMITER
-    rules = [('number', number)]
-
-keyword = [RE(r"[A-Z]+")]
+    rules = [('number', [RE(r"\b\d{3}\b")])]
 
 class _string:
     default_text_color = DELIMITER
-    rules = [('_string', [RE(r" ")])]
+    rules = [('string', [RE(r" ")])]
 
 class _group1:
     default_text_color = DELIMITER
     rules = [
         ('string', _string, [_string]),
         # ignore {'begin': 'HTTP/[0-9\\.]+'},
-        ('keyword', keyword),
+        ('keyword', [RE(r"[A-Z]+")]),
     ]
 
 class _attribute:
     default_text_color = DELIMITER
-    rules = [('_attribute', [RE(r": ")])]
+    rules = [('attribute', [RE(r": ")])]
 
-class attribute:
+class attribute1:
     default_text_color = DELIMITER
     rules = [('attribute', RE(r"^\w"), [_attribute])]
+attribute1.__name__ = 'attribute'
 
-class _group2:
+class _group40:
     default_text_color = DELIMITER
-    rules = [('_group2', RE(r"\n\n"), [RE(r"\B|\b")])]
+    rules = [('_group4', RE(r"\n\n"), [RE(r"\B|\b")])]
+_group40.__name__ = '_group4'
 
 rules = [
     ('_group0', RE(r"^HTTP/[0-9\.]+"), [RE(r"$")], _group0),
     ('_group1', RE(r"(?=^[A-Z]+ (?:.*?) HTTP/[0-9\.]+$)"), [RE(r"$")], _group1),
-    ('attribute', attribute, [RE(r"$")]),
-    ('_group2', _group2, [RE(r"\B\b")]),
+    ('attribute', attribute1, [RE(r"$")]),
+    ('_group4', _group40, [RE(r"\B\b")]),
 ]

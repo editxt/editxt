@@ -20,28 +20,22 @@ keyword = """
     trior trireg vectored wand weak0 weak1 wire wor
     """.split()
 
-variable = [RE(r"#\((?!parameter).+\)")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
 class number:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
 
 rules = [
     ('keyword', keyword),
@@ -49,5 +43,5 @@ rules = [
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', RE(r"\b(?:\d+'(?:b|h|o|d|B|H|O|D))?[0-9xzXZ]+"), [RE(r"\B\b")], number),
-    ('variable', variable),
+    ('variable', [RE(r"#\((?!parameter).+\)")]),
 ]

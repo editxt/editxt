@@ -17,33 +17,27 @@ keyword = """
     select set value var where yield
     """.split()
 
-number = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-doctag = [RE(r"///")]
-
-doctag0 = [RE(r"<!--|-->")]
-
-doctag1 = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
-        ('doctag', doctag),
-        ('doctag', doctag0),
+        ('doctag', [RE(r"///")]),
+        ('doctag', [RE(r"<!--|-->")]),
         ('doctag', RE(r"</?"), [RE(r">")]),
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag1),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class comment0:
+class comment1:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag1),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
-comment0.__name__ = 'comment'
+comment1.__name__ = 'comment'
+
+comment2 = ('comment', RE(r"//"), [RE(r"$")], comment1)
+
+comment3 = ('comment', RE(r"/\*"), [RE(r"\*/")], comment1)
 
 meta_keyword = """
     if else elif endif define undef warning error line region endregion
@@ -54,97 +48,89 @@ class meta:
     default_text_color = DELIMITER
     rules = [('meta-keyword', meta_keyword)]
 
-class string:
+#class string:
+#    default_text_color = DELIMITER
+#    rules = [
+#        # ignore {'begin': '""'},
+#    ]
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
+
+class string1:
+    default_text_color = DELIMITER
+    rules = [operator_escape]
+string1.__name__ = 'string'
+
+string2 = ('string', RE(r"'"), [RE(r"'")], string1)
+
+string3 = ('string', RE(r"\""), [RE(r"\"")], string1)
+
+number = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+number0 = ('number', number)
+
+title = ('title', [RE(r"[a-zA-Z]\w*")])
+
+class _group2:
+    default_text_color = DELIMITER
+    rules = [('keyword', ['class', 'interface']), title, comment2, comment3]
+
+class _group3:
     default_text_color = DELIMITER
     rules = [
-        # ignore {'begin': '""'},
-    ]
-
-keyword0 = ['class', 'interface']
-
-title = [RE(r"[a-zA-Z]\w*")]
-
-class _group0:
-    default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword0),
-        ('title', title),
-        None,  # rules[2],
-        None,  # rules[3],
-    ]
-
-keyword1 = ['namespace']
-
-title0 = [RE(r"[a-zA-Z](?:\.?\w)*")]
-
-class _group1:
-    default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword1),
-        ('title', title0),
-        None,  # rules[2],
-        None,  # rules[3],
+        ('keyword', ['namespace']),
+        ('title', [RE(r"[a-zA-Z](?:\.?\w)*")]),
+        comment2,
+        comment3,
     ]
 
 class _function:
     default_text_color = DELIMITER
-    rules = [('_function', [RE(r"[{;=]")])]
+    rules = [('function', [RE(r"[{;=]")])]
 
-class _group3:
+class _group5:
     default_text_color = DELIMITER
-    rules = [('title', title)]
+    rules = [title]
 
 class _params:
     default_text_color = DELIMITER
-    rules = [('_params', [RE(r"\(")])]
+    rules = [('params', [RE(r"\(")])]
 
 class _params0:
     default_text_color = DELIMITER
-    rules = [('_params', [RE(r"\)")])]
+    rules = [('params', [RE(r"\)")])]
 _params0.__name__ = '_params'
 
-class params:
+class params1:
     default_text_color = DELIMITER
-    rules = [
-        ('keyword', keyword),
-        None,  # rules[6],
-        None,  # rules[7],
-        ('number', number),
-        None,  # rules[3],
-    ]
+    rules = [('keyword', keyword), string2, string3, number0, comment3]
+params1.__name__ = 'params'
 
-class function:
+class function0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
-        ('_group3', RE(r"(?=[a-zA-Z]\w*\s*\()"), [RE(r"\B\b")], _group3),
-        ('params', _params, [_params0], params),
-        None,  # rules[2],
-        None,  # rules[3],
+        ('_group5', RE(r"(?=[a-zA-Z]\w*\s*\()"), [RE(r"\B\b")], _group5),
+        ('params', _params, [_params0], params1),
+        comment2,
+        comment3,
     ]
+function0.__name__ = 'function'
 
 rules = [
     ('keyword', keyword),
     ('comment', RE(r"(?=///)"), [RE(r"$")], comment),
-    ('comment', RE(r"//"), [RE(r"$")], comment0),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment0),
+    comment2,
+    comment3,
     ('meta', RE(r"#"), [RE(r"$")], meta),
-    ('string', RE(r"@\""), [RE(r"\"")], string),
-    ('string', RE(r"'"), [RE(r"'")], string),
-    ('string', RE(r"\""), [RE(r"\"")], string),
-    ('number', number),
-    ('_group0', RE(r"\b(?:class|interface)"), [RE(r"[{;=]")], _group0),
-    ('_group1', RE(r"\b(?:namespace)"), [RE(r"[{;=]")], _group1),
-    ('_group2', RE(r"\b(?:new|return|throw|await)"), [RE(r"\B\b")]),
-    ('function', RE(r"(?=(?:[a-zA-Z]\w*(?:<[a-zA-Z]\w*>)?\s+)+[a-zA-Z]\w*\s*\()"), [_function], function),
+    ('string', RE(r"@\""), [RE(r"\"")]), #, string),
+    string2,
+    string3,
+    number0,
+    ('_group2', RE(r"\b(?:class|interface)"), [RE(r"[{;=]")], _group2),
+    ('_group3', RE(r"\b(?:namespace)"), [RE(r"[{;=]")], _group3),
+    ('_group4', RE(r"\b(?:new|return|throw|await)"), [RE(r"\B\b")]),
+    ('function', RE(r"(?=(?:[a-zA-Z]\w*(?:<[a-zA-Z]\w*>)?\s+)+[a-zA-Z]\w*\s*\()"), [_function], function0),
 ]
-
-_group0.rules[2] = rules[2]
-_group0.rules[3] = rules[3]
-_group1.rules[2] = rules[2]
-_group1.rules[3] = rules[3]
-params.rules[1] = rules[6]
-params.rules[2] = rules[7]
-params.rules[4] = rules[3]
-function.rules[3] = rules[2]
-function.rules[4] = rules[3]

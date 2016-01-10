@@ -6,16 +6,14 @@ file_patterns = ['*.dust', '*.dst']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-class name0:
+class name1:
     default_text_color = DELIMITER
     rules = [('name', RE(r"[a-zA-Z\.-]+"), [RE(r"\B|\b")])]
-name0.__name__ = 'name'
+name1.__name__ = 'name'
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
 class _group0:
     default_text_color = DELIMITER
@@ -23,7 +21,7 @@ class _group0:
 
 class template_tag:
     default_text_color = DELIMITER
-    rules = [('name', name0, [RE(r"\B\b")], _group0)]
+    rules = [('name', name1, [RE(r"\B\b")], _group0)]
 template_tag.__name__ = 'template-tag'
 
 keyword = """

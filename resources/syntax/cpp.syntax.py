@@ -33,54 +33,60 @@ keyword = """
     atomic_ullong
     """.split()
 
-literal = ['true', 'false', 'nullptr', 'NULL']
-
-keyword0 = [RE(r"\b[a-z\d_]*_t\b")]
-
-number = [RE(r"\b(?:\d+(?:\.\d*)?|\.\d+)(?:u|U|l|L|ul|UL|f|F)")]
-
-number0 = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+keyword1 = ('keyword', [RE(r"\b[a-z\d_]*_t\b")])
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+comment0 = ('comment', RE(r"//"), [RE(r"$")], comment)
+
+comment1 = ('comment', RE(r"/\*"), [RE(r"\*/")], comment)
+
+number = ('number', [RE(r"\b(?:\d+(?:\.\d*)?|\.\d+)(?:u|U|l|L|ul|UL|f|F)")])
+
+number0 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
+
+number1 = ('number', number0)
+
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [operator_escape]
+
+string0 = ('string', RE(r"(?:(?:u8?|U)|L)?\""), [RE(r"\"")], string)
+
+string1 = ('string', RE(r"(?:u8?|U)?R\""), [RE(r"\"")], string)
+
+string2 = ('string', RE(r"'\\?."), [RE(r"'")])
 
 meta_keyword = """
     if else elif endif define undef warning error line pragma ifdef
     ifndef
     """.split()
 
-meta_keyword0 = ['include']
-
-class string0:
+class string3:
     default_text_color = DELIMITER
     rules = []
-string0.__name__ = 'string'
+string3.__name__ = 'string'
 
 class meta_string:
     default_text_color = DELIMITER
     rules = []
 meta_string.__name__ = 'meta-string'
 
-class _group3:
+class _group2:
     default_text_color = DELIMITER
     rules = [
-        ('meta-keyword', meta_keyword0),
-        ('keyword', meta_keyword0),
-        ('string', RE(r"(?:(u8?|U)|L)?\""), [RE(r"\"")], string0),
+        ('meta-keyword', ['include']),
+        ('keyword', ['include']),
+        ('string', RE(r"(?:(?:u8?|U)|L)?\""), [RE(r"\"")], string3),
         ('meta-string', RE(r"(?:u8?|U)?R\""), [RE(r"\"")], meta_string),
         ('meta-string', RE(r"'\\?."), [RE(r"'")]),
         ('meta-string', RE(r"<"), [RE(r">")]),
@@ -91,101 +97,88 @@ class meta:
     rules = [
         ('meta-keyword', meta_keyword),
         # ignore {'begin': {'pattern': '\\\\\\n', 'type': 'RegExp'}, 'relevance': 0},
-        ('_group3', RE(r"\b(?:include)"), [RE(r"$")], _group3),
-        None,  # rules[8],
-        None,  # rules[9],
-        None,  # rules[10],
-        None,  # rules[4],
-        None,  # rules[5],
+        ('_group2', RE(r"\b(?:include)"), [RE(r"$")], _group2),
+        string0,
+        string1,
+        string2,
+        comment0,
+        comment1,
     ]
 
-class _group0:
+meta0 = ('meta', RE(r"#"), [RE(r"$")], meta)
+
+class _group3:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
-        ('literal', literal),
-        ('keyword', keyword0),
+        ('literal', ['true', 'false', 'nullptr', 'NULL']),
+        keyword1,
     ]
 
-class _group1:
+class _group4:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
-        ('literal', literal),
+        ('literal', ['true', 'false', 'nullptr', 'NULL']),
     ]
 
 class _function:
     default_text_color = DELIMITER
-    rules = [('_function', [RE(r"[{;=]")])]
+    rules = [('function', [RE(r"[{;=]")])]
 
-title = [RE(r"[a-zA-Z]\w*")]
-
-class _group4:
+class _group6:
     default_text_color = DELIMITER
-    rules = [('title', title)]
+    rules = [('title', [RE(r"[a-zA-Z]\w*")])]
 
 class params:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
-        ('literal', literal),
-        None,  # rules[4],
-        None,  # rules[5],
-        None,  # rules[8],
-        None,  # rules[9],
-        None,  # rules[10],
-        None,  # rules[6],
-        None,  # rules[7],
+        ('literal', ['true', 'false', 'nullptr', 'NULL']),
+        comment0,
+        comment1,
+        string0,
+        string1,
+        string2,
+        number,
+        number1,
     ]
 
-class function:
+class function0:
     default_text_color = DELIMITER
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
-        ('literal', literal),
-        ('_group4', RE(r"(?=[a-zA-Z]\w*\s*\()"), [RE(r"\B\b")], _group4),
+        ('literal', ['true', 'false', 'nullptr', 'NULL']),
+        ('_group6', RE(r"(?=[a-zA-Z]\w*\s*\()"), [RE(r"\B\b")], _group6),
         ('params', RE(r"\("), [RE(r"\)")], params),
-        None,  # rules[4],
-        None,  # rules[5],
-        None,  # rules[11],
+        comment0,
+        comment1,
+        meta0,
     ]
+function0.__name__ = 'function'
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
-    ('literal', literal),
-    ('keyword', keyword0),
-    ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('number', number),
-    ('number', number0),
-    ('string', RE(r"(?:(u8?|U)|L)?\""), [RE(r"\"")], string),
-    ('string', RE(r"(?:u8?|U)?R\""), [RE(r"\"")], string),
-    ('string', RE(r"'\\?."), [RE(r"'")]),
-    ('meta', RE(r"#"), [RE(r"$")], meta),
-    ('_group0', RE(r"\b(?:deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\s*<"), [RE(r">")], _group0),
-    ('_group1', RE(r"[a-zA-Z]\w*::"), [RE(r"\B\b")], _group1),
-    ('_group2', RE(r"\b(?:new|throw|return|else)"), [RE(r"\B\b")]),
-    ('function', RE(r"(?=(?:[a-zA-Z]\w*[\*&\s]+)+[a-zA-Z]\w*\s*\()"), [_function], function),
+    ('literal', ['true', 'false', 'nullptr', 'NULL']),
+    keyword1,
+    comment0,
+    comment1,
+    number,
+    number1,
+    string0,
+    string1,
+    string2,
+    meta0,
+    ('_group3', RE(r"\b(?:deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\s*<"), [RE(r">")], _group3),
+    ('_group4', RE(r"[a-zA-Z]\w*::"), [RE(r"\B\b")], _group4),
+    ('_group5', RE(r"\b(?:new|throw|return|else)"), [RE(r"\B\b")]),
+    ('function', RE(r"(?=(?:[a-zA-Z]\w*[\*&\s]+)+[a-zA-Z]\w*\s*\()"), [_function], function0),
 ]
 
-meta.rules[2] = rules[8]
-meta.rules[3] = rules[9]
-meta.rules[4] = rules[10]
-meta.rules[5] = rules[4]
-meta.rules[6] = rules[5]
-params.rules[3] = rules[4]
-params.rules[4] = rules[5]
-params.rules[5] = rules[8]
-params.rules[6] = rules[9]
-params.rules[7] = rules[10]
-params.rules[8] = rules[6]
-params.rules[9] = rules[7]
-function.rules[5] = rules[4]
-function.rules[6] = rules[5]
-function.rules[7] = rules[11]
+string3.rules.extend(string.rules)
 meta_string.rules.extend(string.rules)

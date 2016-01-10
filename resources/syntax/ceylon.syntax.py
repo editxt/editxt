@@ -13,59 +13,62 @@ keyword = """
     deprecatedfinal sealed annotation suppressWarnings small
     """.split()
 
-meta = ['doc', 'by', 'license', 'see', 'throws', 'tagged']
-
-meta0 = [RE(r"@[a-z]\w*(?:\:\"[^\"]*\")?")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+string = ('string', RE(r"\"\"\""), [RE(r"\"\"\"")])
 
 class _subst:
     default_text_color = DELIMITER
-    rules = [('_subst', [RE(r"``")])]
+    rules = [('subst', [RE(r"``")])]
 
-keyword0 = """
+keyword1 = """
     assembly module package import alias class interface object given
     value assign void function new of extends satisfies abstracts in out
     return break continue throw assert dynamic if else switch case for
     while try catch finally then let this outer super is exists nonempty
     """.split()
 
+string0 = ('string', RE(r"'"), [RE(r"'")])
+
 number = [
     RE(r"#[0-9a-fA-F_]+|\$[01_]+|[0-9_]+(?:\.[0-9_](?:[eE][+-]?\d+)?)?[kMGTPmunpf]?"),
 ]
 
-class subst:
+number0 = ('number', number)
+
+class subst0:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
-        None,  # rules[5],
-        None,  # rules[6],
-        ('string', RE(r"'"), [RE(r"'")]),
-        ('number', number),
+        ('keyword', keyword1),
+        string,
+        None, # string2,
+        string0,
+        number0,
     ]
+subst0.__name__ = 'subst'
 
-class string:
+class string1:
     default_text_color = DELIMITER
-    rules = [('subst', _subst, [_subst], subst)]
+    rules = [('subst', _subst, [_subst], subst0)]
+string1.__name__ = 'string'
+
+string2 = ('string', RE(r"\""), [RE(r"\"")], string1)
 
 rules = [
     ('keyword', keyword),
-    ('meta', meta),
+    ('meta', ['doc', 'by', 'license', 'see', 'throws', 'tagged']),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('meta', meta0),
-    ('string', RE(r"\"\"\""), [RE(r"\"\"\"")]),
-    ('string', RE(r"\""), [RE(r"\"")], string),
-    subst.rules[3],
-    ('number', number),
+    ('meta', [RE(r"@[a-z]\w*(?:\:\"[^\"]*\")?")]),
+    string,
+    string2,
+    string0,
+    number0,
 ]
 
-subst.rules[1] = rules[5]
-subst.rules[2] = rules[6]
+subst0.rules[2] = string2

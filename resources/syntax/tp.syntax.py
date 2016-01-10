@@ -17,66 +17,50 @@ literal = """
     ON OFF max_speed LPOS JPOS ENABLE DISABLE START STOP RESET
     """.split()
 
-keyword0 = [RE(r"/(?:PROG|ATTR|MN|POS|END)\b")]
+number = ('number', [RE(r"[1-9][0-9]*")])
 
-keyword1 = [RE(r"(?:CALL|RUN|POINT_LOGIC|LBL)\b")]
-
-keyword2 = [RE(r"\b(?:ACC|CNT|Skip|Offset|PSPD|RT_LD|AP_LD|Tool_Offset)")]
-
-number = [RE(r"\d+(?:sec|msec|mm/sec|cm/min|inch/min|deg/sec|mm|in|cm)?\b")]
-
-number0 = [
-    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
-]
-
-variable = [RE(r"\$[A-Za-z0-9_]+")]
-
-number1 = [RE(r"[1-9][0-9]*")]
-
-symbol = [RE(r":[^\]]+")]
+symbol = ('symbol', [RE(r":[^\]]+")])
 
 class built_in:
     default_text_color = DELIMITER
-    rules = [('number', number1), ('symbol', symbol)]
+    rules = [number, symbol]
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
-class built_in0:
+string0 = ('string', RE(r"\""), [RE(r"\"")], string)
+
+class built_in1:
     default_text_color = DELIMITER
-    rules = [
-        ('number', number1),
-        ('string', RE(r"\""), [RE(r"\"")], string),
-        ('symbol', symbol),
-    ]
-built_in0.__name__ = 'built_in'
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+    rules = [number, string0, symbol]
+built_in1.__name__ = 'built_in'
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+
+number1 = [
+    RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
+]
 
 rules = [
     ('keyword', keyword),
     ('literal', literal),
     ('built_in', RE(r"(?:AR|P|PAYLOAD|PR|R|SR|RSR|LBL|VR|UALM|MESSAGE|UTOOL|UFRAME|TIMER|    TIMER_OVERFLOW|JOINT_MAX_SPEED|RESUME_PROG|DIAG_REC)\["), [RE(r"\]")], built_in),
-    ('built_in', RE(r"(?:AI|AO|DI|DO|F|RI|RO|UI|UO|GI|GO|SI|SO)\["), [RE(r"\]")], built_in0),
-    ('keyword', keyword0),
-    ('keyword', keyword1),
-    ('keyword', keyword2),
-    ('number', number),
+    ('built_in', RE(r"(?:AI|AO|DI|DO|F|RI|RO|UI|UO|GI|GO|SI|SO)\["), [RE(r"\]")], built_in1),
+    ('keyword', [RE(r"/(?:PROG|ATTR|MN|POS|END)\b")]),
+    ('keyword', [RE(r"(?:CALL|RUN|POINT_LOGIC|LBL)\b")]),
+    ('keyword', [RE(r"\b(?:ACC|CNT|Skip|Offset|PSPD|RT_LD|AP_LD|Tool_Offset)")]),
+    ('number', [RE(r"\d+(?:sec|msec|mm/sec|cm/min|inch/min|deg/sec|mm|in|cm)?\b")]),
     ('comment', RE(r"//"), [RE(r"[;$]")], comment),
     ('comment', RE(r"!"), [RE(r"[;$]")], comment),
     ('comment', RE(r"--eg:"), [RE(r"$")], comment),
-    built_in0.rules[1],
+    string0,
     ('string', RE(r"'"), [RE(r"'")]),
-    ('number', number0),
-    ('variable', variable),
+    ('number', number1),
+    ('variable', [RE(r"\$[A-Za-z0-9_]+")]),
 ]

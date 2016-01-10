@@ -6,101 +6,85 @@ file_patterns = ['*.css']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-selector_id = [RE(r"#[A-Za-z0-9_-]+")]
-
-selector_class = [RE(r"\.[A-Za-z0-9_-]+")]
-
-selector_pseudo = [RE(r":(?::)?[a-zA-Z0-9\_\-\+\(\)\"']+")]
-
-selector_tag = [RE(r"[a-zA-Z-][a-zA-Z0-9_-]*")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-keyword = ['font-face', 'page']
+comment0 = ('comment', RE(r"/\*"), [RE(r"\*/")], comment)
 
-class _group0:
+class _group1:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword)]
+    rules = [('keyword', ['font-face', 'page'])]
 
-keyword0 = [RE(r"\S+")]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
+
+class string:
+    default_text_color = DELIMITER
+    rules = [operator_escape]
+
+string0 = ('string', RE(r"'"), [RE(r"'")], string)
+
+string1 = ('string', RE(r"\""), [RE(r"\"")], string)
 
 number = [
     RE(r"\b\d+(?:\.\d+)?(?:%|em|ex|ch|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc|px|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx)?"),
 ]
 
-class string:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+number0 = ('number', number)
 
 class _group3:
     default_text_color = DELIMITER
-    rules = [
-        ('string', RE(r"'"), [RE(r"'")], string),
-        ('string', RE(r"\""), [RE(r"\"")], string),
-        ('number', number),
-    ]
+    rules = [string0, string1, number0]
 
-class _group1:
+class _group2:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
+        ('keyword', [RE(r"\S+")]),
         ('_group3', RE(r"\s"), [RE(r"\B\b")], _group3),
     ]
 
 class _attribute:
     default_text_color = DELIMITER
-    rules = [('_attribute', [RE(r":")])]
+    rules = [('attribute', [RE(r":")])]
 
-class attribute:
+class attribute1:
     default_text_color = DELIMITER
     rules = [('attribute', RE(r"\S"), [_attribute])]
+attribute1.__name__ = 'attribute'
 
-number0 = [RE(r"#[0-9A-Fa-f]+")]
-
-meta = [RE(r"!important")]
+class _group6:
+    default_text_color = DELIMITER
+    rules = [
+        number0,
+        string1,
+        string0,
+        comment0,
+        ('number', [RE(r"#[0-9A-Fa-f]+")]),
+        ('meta', [RE(r"!important")]),
+    ]
 
 class _group5:
     default_text_color = DELIMITER
-    rules = [
-        ('number', number),
-        _group3.rules[1],
-        _group3.rules[0],
-        None,  # rules[0],
-        ('number', number0),
-        ('meta', meta),
-    ]
+    rules = [('attribute', attribute1, [RE(r"\B\b")], _group6)]
 
 class _group4:
     default_text_color = DELIMITER
-    rules = [('attribute', attribute, [RE(r"\B\b")], _group5)]
-
-class _group2:
-    default_text_color = DELIMITER
     rules = [
-        None,  # rules[0],
-        ('_group4', RE(r"(?=[A-Z\_\.\-]+\s*:)"), [RE(r";")], _group4),
+        comment0,
+        ('_group5', RE(r"(?=[A-Z\_\.\-]+\s*:)"), [RE(r";")], _group5),
     ]
 
 rules = [
-    ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
-    ('selector-id', selector_id),
-    ('selector-class', selector_class),
+    comment0,
+    ('selector-id', [RE(r"#[A-Za-z0-9_-]+")]),
+    ('selector-class', [RE(r"\.[A-Za-z0-9_-]+")]),
     ('selector-attr', RE(r"\["), [RE(r"\]")]),
-    ('selector-pseudo', selector_pseudo),
-    ('_group0', RE(r"@(?:font-face|page)"), [RE(r"\B\b")], _group0),
-    ('_group1', RE(r"@"), [RE(r"[{;]")], _group1),
-    ('selector-tag', selector_tag),
-    ('_group2', RE(r"{"), [RE(r"}")], _group2),
+    ('selector-pseudo', [RE(r":(?::)?[a-zA-Z0-9\_\-\+\(\)\"']+")]),
+    ('_group1', RE(r"@(?:font-face|page)"), [RE(r"\B\b")], _group1),
+    ('_group2', RE(r"@"), [RE(r"[{;]")], _group2),
+    ('selector-tag', [RE(r"[a-zA-Z-][a-zA-Z0-9_-]*")]),
+    ('_group4', RE(r"{"), [RE(r"}")], _group4),
 ]
-
-_group5.rules[3] = rules[0]
-_group2.rules[0] = rules[0]

@@ -18,79 +18,72 @@ literal = """
     false
     """.split()
 
-meta = [RE(r"(?:ocf|systemd|service|lsb):[\w_:-]+")]
-
-number = [RE(r"\b\d+(?:\.\d+)?(?:ms|s|h|m)?")]
-
-literal0 = [RE(r"[-]?(?:infinity|inf)")]
-
-attr = [RE(r"(?:[A-Za-z\$_\#][\w_-]+)=")]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
-class _group0:
+class _group10:
     default_text_color = DELIMITER
-    rules = [('_group0', RE(r"\b(?:node)"), [RE(r"\B|\b")])]
+    rules = [('_group1', RE(r"\b(?:node)"), [RE(r"\B|\b")])]
+_group10.__name__ = '_group1'
 
-class _group4:
+class _group20:
     default_text_color = DELIMITER
-    rules = [('_group4', _group0, [RE(r"\s*(?:[\w_-]+:)?")])]
+    rules = [('_group2', _group10, [RE(r"\s*(?:[\w_-]+:)?")])]
+_group20.__name__ = '_group2'
 
-class _group1:
+class _group30:
     default_text_color = DELIMITER
-    rules = [('_group1', RE(r"\b(?:primitive|rsc_template)"), [RE(r"\B|\b")])]
+    rules = [('_group3', RE(r"\b(?:primitive|rsc_template)"), [RE(r"\B|\b")])]
+_group30.__name__ = '_group3'
 
-class title:
+class title1:
     default_text_color = DELIMITER
-    rules = [('title', _group1, [RE(r"\s*[\$\w_][\w_-]*")])]
+    rules = [('title', _group30, [RE(r"\s*[\$\w_][\w_-]*")])]
+title1.__name__ = 'title'
 
-keyword0 = """
+keyword1 = """
     group clone ms master location colocation order fencing_topology
     rsc_ticket acl_target acl_group user role tag xml
     """.split()
 
-class _group2:
+class _group5:
     default_text_color = DELIMITER
-    rules = [('keyword', keyword0)]
+    rules = [('keyword', keyword1)]
 
-class _group20:
+class _group51:
     default_text_color = DELIMITER
     rules = [
-        ('_group2', RE(r"\b(?:group|clone|ms|master|location|colocation|order|fencing_topology|rsc_ticket|acl_target|acl_group|user|role|tag|xml)\s+"), [RE(r"\B|\b")], _group2),
+        ('_group5', RE(r"\b(?:group|clone|ms|master|location|colocation|order|fencing_topology|rsc_ticket|acl_target|acl_group|user|role|tag|xml)\s+"), [RE(r"\B|\b")], _group5),
     ]
-_group20.__name__ = '_group2'
+_group51.__name__ = '_group5'
 
-class _group3:
+class _group60:
     default_text_color = DELIMITER
     rules = [
-        ('_group3', RE(r"\b(?:property|rsc_defaults|op_defaults)"), [RE(r"\B|\b")]),
+        ('_group6', RE(r"\b(?:property|rsc_defaults|op_defaults)"), [RE(r"\B|\b")]),
     ]
+_group60.__name__ = '_group6'
 
 class string:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-    ]
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
 
 rules = [
     ('keyword', keyword),
     ('literal', literal),
     ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('_group0', _group4, [RE(r"\s*[\$\w_][\w_-]*")]),
-    ('_group1', title, [RE(r"\s*@?[\w_][\w_\.:-]*")]),
-    ('_group2', _group20, [RE(r"[\$\w_][\w_-]*")]),
-    ('_group3', _group3, [RE(r"\s*(?:[\w_-]+:)?")]),
+    ('_group1', _group20, [RE(r"\s*[\$\w_][\w_-]*")]),
+    ('_group3', title1, [RE(r"\s*@?[\w_][\w_\.:-]*")]),
+    ('_group5', _group51, [RE(r"[\$\w_][\w_-]*")]),
+    ('_group6', _group60, [RE(r"\s*(?:[\w_-]+:)?")]),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('meta', meta),
-    ('number', number),
-    ('literal', literal0),
-    ('attr', attr),
+    ('meta', [RE(r"(?:ocf|systemd|service|lsb):[\w_:-]+")]),
+    ('number', [RE(r"\b\d+(?:\.\d+)?(?:ms|s|h|m)?")]),
+    ('literal', [RE(r"[-]?(?:infinity|inf)")]),
+    ('attr', [RE(r"(?:[A-Za-z\$_\#][\w_-]+)=")]),
     ('tag', RE(r"</?"), [RE(r"/?>")]),
 ]

@@ -6,54 +6,41 @@ file_patterns = ['*.ini', '*.toml']
 
 flags = re.IGNORECASE | re.MULTILINE
 
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
-
-attr = [RE(r"[a-z0-9\[\]_-]+")]
-
-literal = [RE(r"\bon|off|true|false|yes|no\b")]
-
-variable = [RE(r"\$[\w\d\"][\w\d_]*")]
-
-variable0 = [RE(r"\$\{(?:.*?)}")]
-
-number = [RE(r"(?:[\+\-]+)?[\d]+_[\d_]+")]
-
-number0 = [RE(r"\b\d+(?:\.\d+)?")]
 
 class string:
     default_text_color = DELIMITER
+    rules = [('operator.escape', [RE(r"\\[\s\S]")])]
+
+class _group2:
+    default_text_color = DELIMITER
     rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        ('literal', [RE(r"\bon|off|true|false|yes|no\b")]),
+        ('variable', [RE(r"\$[\w\d\"][\w\d_]*")]),
+        ('variable', [RE(r"\$\{(?:.*?)}")]),
+        ('string', RE(r"'''"), [RE(r"'''")], string),
+        ('string', RE(r"\"\"\""), [RE(r"\"\"\"")], string),
+        ('string', RE(r"\""), [RE(r"\"")], string),
+        ('string', RE(r"'"), [RE(r"'")], string),
+        ('number', [RE(r"(?:[\+\-]+)?[\d]+_[\d_]+")]),
+        ('number', [RE(r"\b\d+(?:\.\d+)?")]),
     ]
 
 class _group1:
     default_text_color = DELIMITER
     rules = [
-        ('literal', literal),
-        ('variable', variable),
-        ('variable', variable0),
-        ('string', RE(r"'''"), [RE(r"'''")], string),
-        ('string', RE(r"\"\"\""), [RE(r"\"\"\"")], string),
-        ('string', RE(r"\""), [RE(r"\"")], string),
-        ('string', RE(r"'"), [RE(r"'")], string),
-        ('number', number),
-        ('number', number0),
+        ('attr', [RE(r"[a-z0-9\[\]_-]+")]),
+        ('_group2', RE(r"="), [RE(r"\B\b")], _group2),
     ]
-
-class _group0:
-    default_text_color = DELIMITER
-    rules = [('attr', attr), ('_group1', RE(r"="), [RE(r"\B\b")], _group1)]
 
 rules = [
     ('comment', RE(r";"), [RE(r"$")], comment),
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('section', RE(r"^\s*\[+"), [RE(r"\]+")]),
-    ('_group0', RE(r"(?=^[a-z0-9\[\]_-]+\s*=\s*)"), [RE(r"$")], _group0),
+    ('_group1', RE(r"(?=^[a-z0-9\[\]_-]+\s*=\s*)"), [RE(r"$")], _group1),
 ]

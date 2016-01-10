@@ -23,15 +23,11 @@ literal = """
     %f %F %t %T %pi %eps %inf %nan %e %i %z %s
     """.split()
 
-keyword0 = ['function']
-
-title = [RE(r"[a-zA-Z_]\w*")]
-
 class function:
     default_text_color = DELIMITER
     rules = [
-        ('keyword', keyword0),
-        ('title', title),
+        ('keyword', ['function']),
+        ('title', [RE(r"[a-zA-Z_]\w*")]),
         ('params', RE(r"\("), [RE(r"\)")]),
     ]
 
@@ -39,27 +35,26 @@ number = [
     RE(r"(?:\b0[xX][a-fA-F0-9]+|(?:\b\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"),
 ]
 
+number0 = ('number', number)
+
 class string:
     default_text_color = DELIMITER
     rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
+        ('operator.escape', [RE(r"\\[\s\S]")]),
         # ignore {'begin': "''"},
     ]
 
+string0 = ('string', RE(r"'|\""), [RE(r"'|\"")], string)
+
 class _group1:
     default_text_color = DELIMITER
-    rules = [
-        ('number', number),
-        ('string', RE(r"'|\""), [RE(r"'|\"")], string),
-    ]
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
+    rules = [number0, string0]
 
 class comment:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
 
 rules = [
@@ -70,6 +65,6 @@ rules = [
     ('_group0', RE(r"[a-zA-Z_][a-zA-Z_0-9]*(?:'+[\.']*|[\.']+)"), [RE(r"\B\b")]),
     ('_group1', RE(r"\["), [RE(r"\]'*[\.']*")], _group1),
     ('comment', RE(r"//"), [RE(r"$")], comment),
-    ('number', number),
-    _group1.rules[1],
+    number0,
+    string0,
 ]

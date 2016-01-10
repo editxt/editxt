@@ -71,15 +71,7 @@ number = [
     RE(r"(?:\b0x[\d_]*(?:\.[\d_]*)?|0x\.\d[\d_]*)p[-+]?\d+|\b0[box][a-fA-F0-9][a-fA-F0-9_]*|(?:\b\d[\d_]*(?:\.[\d_]*)?|\.\d[\d_]*)(?:[eEfF][-+]?\d+)?"),
 ]
 
-string = [RE(r"'(?:.|\\[xXuU][a-zA-Z0-9]+)'")]
-
-type = [RE(r"::")]
-
-type0 = [RE(r"<:")]
-
-meta = [RE(r"@[A-Za-z_\u00A1-\uFFFF][A-Za-z_0-9\u00A1-\uFFFF]*")]
-
-variable = [RE(r"\$[A-Za-z_\u00A1-\uFFFF][A-Za-z_0-9\u00A1-\uFFFF]*")]
+operator_escape = ('operator.escape', [RE(r"\\[\s\S]")])
 
 class subst:
     default_text_color = DELIMITER
@@ -89,50 +81,38 @@ class subst:
         ('literal', literal),
     ]
 
+subst0 = ('subst', RE(r"\$\("), [RE(r"\)")], subst)
+
+variable = ('variable', [RE(r"\$[A-Za-z_\u00A1-\uFFFF][A-Za-z_0-9\u00A1-\uFFFF]*")])
+
 class string0:
     default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        ('subst', RE(r"\$\("), [RE(r"\)")], subst),
-        ('variable', variable),
-    ]
+    rules = [operator_escape, subst0, variable]
 string0.__name__ = 'string'
 
-class string1:
-    default_text_color = DELIMITER
-    rules = [
-        # ignore {'begin': '\\\\[\\s\\S]', 'relevance': 0},
-        None,  # string.rules[0],
-        None,  # ('variable', variable),
-    ]
-string1.__name__ = 'string'
-
-doctag = [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]
-
-class comment:
+class comment1:
     default_text_color = DELIMITER
     rules = [
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
-        ('doctag', doctag),
+        ('doctag', [RE(r"(?:TODO|FIXME|NOTE|BUG|XXX):")]),
     ]
+comment1.__name__ = 'comment'
 
 rules = [
     ('built_in', built_in),
     ('keyword', keyword),
     ('literal', literal),
     ('number', number),
-    ('string', string),
-    ('type', type),
-    ('type', type0),
+    ('string', [RE(r"'(?:.|\\[xXuU][a-zA-Z0-9]+)'")]),
+    ('type', [RE(r"::")]),
+    ('type', [RE(r"<:")]),
     ('string', RE(r"\w*\"\"\""), [RE(r"\"\"\"\w*")], string0),
     ('string', RE(r"\w*\""), [RE(r"\"\w*")], string0),
-    ('string', RE(r"`"), [RE(r"`")], string1),
-    ('meta', meta),
+    ('string', RE(r"`"), [RE(r"`")], string0),
+    ('meta', [RE(r"@[A-Za-z_\u00A1-\uFFFF][A-Za-z_0-9\u00A1-\uFFFF]*")]),
     ('comment', RE(r"#="), [RE(r"=#")]),
     ('comment', RE(r"#"), [RE(r"$")]),
-    ('comment', RE(r"#"), [RE(r"$")], comment),
+    ('comment', RE(r"#"), [RE(r"$")], comment1),
 ]
 
-string1.rules[1] = string0.rules[0]
-string1.rules[2] = ('variable', variable)
 subst.rules.extend(rules)
