@@ -314,10 +314,11 @@ class Highlighter(object):
                             rem_attribute(x_range, rng)
                     elif lang and langs.get(lang.key, (None, end - 1))[1] == end:
                         # FIXME could hit this due to self.langs holding stale start value?
-                        raise Error("non-advancing range: index={} {} {}".format(
+                        raise Error("non-advancing range: index={} {} {} {}".format(
                             start,
                             match,
                             info.next.regex,
+                            lang,
                         ))
 
                     if lang is not None:
@@ -542,7 +543,8 @@ class SyntaxDefinition(NoHighlight):
                     # and are not passed on to delimited ranges
                     immediate_ends.append((phrase, ident, info))
                 else:
-                    parent_ends.append(end)
+                    if end.propagate:
+                        parent_ends.append(end)
                     yield phrase, ident, info
         else:
             parent_ends = [End(r"\Z", self.next, self.get_color(), self)]
@@ -564,7 +566,7 @@ class SyntaxDefinition(NoHighlight):
                 sdef = self.make_definition(sdef, owner, ends, ndef, **kw)
             return sdef
 
-        def endify(name, tokens):
+        def endify(name, tokens, propagate):
             next_def = self.next or self
             color = self.get_color(name)
             def keyfunc(t, transition_key=count(start=1)):
@@ -577,17 +579,17 @@ class SyntaxDefinition(NoHighlight):
                             token = escape(token[0])
                         else:
                             token = r"(?:{})".format(disjunction(token))
-                        yield End(token, next_def, color, self)
+                        yield End(token, next_def, color, self, propagate=propagate)
                 else:
                     token = next(token)
                     sdef = lookup_syntax(token, self.name, parent_ends, next_def)
                     for phrase, ident, color_ in sdef.iter_group_info():
-                        yield End(phrase, sdef, color_, sdef)
+                        yield End(phrase, sdef, color_, sdef, propagate=propagate)
 
         class unknown:
             rules = []
 
-        def compile_range(name, start, ends, sdef):
+        def compile_range(name, start, ends, sdef, propagate_ends):
             if idgen is None:
                 return lookahead(escape(start)), None, self.get_color(name)
             if sdef:
@@ -607,7 +609,8 @@ class SyntaxDefinition(NoHighlight):
                 # ranges without nested syntax rules are broken into lines to
                 # minimize the range that needs to be re-highlighted on edit
                 color = self.get_color(name)
-                ends = [End(r".*?{}".format(e.pattern), e.next, color, self)
+                ends = [End(r".*?{}".format(e.pattern), e.next, color, self,
+                            propagate=propagate_ends)
                         for e in ends]
                 ends.append(End(r".*?(?={})".format(disjunction(parent_ends)),
                                 self, color, self))
@@ -645,9 +648,11 @@ class SyntaxDefinition(NoHighlight):
                     sdef = sdef[0]
                 else:
                     sdef = None
-                ends = list(endify(name, ends))
+                propagate_ends = isinstance(sdef, (str, DynamicRange)) \
+                                 or getattr(sdef, "ends_with_parent", False)
+                ends = list(endify(name, ends, propagate_ends))
                 if isinstance(start, (str, RE)):
-                    yield compile_range(name, start, ends, sdef)
+                    yield compile_range(name, start, ends, sdef, propagate_ends)
                 else:
                     ends = list(unique(chain(ends, parent_ends)))
                     if sdef:
@@ -813,11 +818,12 @@ class RE(object):
 
 
 class End(RE):
-    def __init__(self, pattern, next_def, name, lang):
+    def __init__(self, pattern, next_def, name, lang, propagate=True):
         self.pattern = pattern
         self.next = next_def
         self.name = name
         self.lang = lang
+        self.propagate = propagate
     def __repr__(self):
         next_name = self.next.name if self.next else None
         return "<End %r %s %s>" % (self.pattern, self.name, next_name)
@@ -825,9 +831,10 @@ class End(RE):
         return isinstance(other, type(self)) \
             and self.pattern == other.pattern \
             and self.next == other.next \
-            and self.name == other.name
+            and self.name == other.name \
+            and self.propagate == other.propagate
     def __hash__(self):
-        return hash((End, self.pattern, self.next, self.name))
+        return hash((End, self.pattern, self.next, self.name, self.propagate))
 
 
 def is_syntax_class(obj):

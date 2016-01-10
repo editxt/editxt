@@ -161,8 +161,8 @@ def parse_metadata(hljs_file):
     )
 
 
-def transform_syntax(data, definitions, path, name=None):
-    syntax = SyntaxClass(name)
+def transform_syntax(data, definitions, path, name=None, parent_ends=None):
+    syntax = SyntaxClass(name, ends_with_parent=data._get("endsWithParent"))
     if data._get("keywords"):
         for word_name, words in iter_keyword_sets(data.keywords):
             syntax.add_rule(definitions.add_words(word_name, words))
@@ -190,7 +190,7 @@ def transform_syntax(data, definitions, path, name=None):
                 # create rule in case a variant masks it and references it
                 cont = definitions.new_dict_obj(item)
                 with definitions.new_rule(cont, base_path) as rule:
-                    rule.range = transform_range(cont, definitions, base_path)
+                    rule.range = transform_range(cont, definitions, base_path, parent_ends)
             items = list(iter_variants(item, syntax, base_path))
             paths = [item_path for x, item_path, x in items]
             #print(base_path, '-->', paths)
@@ -204,7 +204,7 @@ def transform_syntax(data, definitions, path, name=None):
                     or "contains" in item or "keywords" in item \
                     or "beginKeywords" in item or "starts" in item:
                 with definitions.new_rule(item, item_path) as rule:
-                    rule.range = transform_range(item, definitions, child_path)
+                    rule.range = transform_range(item, definitions, child_path, parent_ends)
                 if item._get("endsParent"):
                     end = SyntaxClass(item.className, [rule])
                     end_name = definitions.add(end)
@@ -244,17 +244,16 @@ def iter_variants(item, syntax, base_path):
         yield var, var_path, child_path
 
 
-def transform_range(item, definitions, path):
+def transform_range(item, definitions, path, parent_ends):
     name = item.className
 
     begin = transform_begin(item, definitions)
-    end = transform_end(item, definitions)
+    ends = transform_ends(item, definitions, parent_ends)
 
     content = ()
-    ends = [end]
     if "keywords" in item or item._get("contains") \
             or any("contains" in v for v in item._get("variants", [])):
-        syntax = transform_syntax(item, definitions, path, name)
+        syntax = transform_syntax(item, definitions, path, name, ends)
         content = (SyntaxRef(definitions.add(syntax), syntax),)
         ends.extend(syntax.parent_ends)
 
@@ -290,7 +289,8 @@ def transform_range(item, definitions, path):
             next_item = definitions.new_dict_obj(item.starts, _parent_starts=begin)
             next_path = path + ("starts",)
             with definitions.new_rule(next_item, next_path) as rule:
-                rule.range = rng = transform_range(next_item, definitions, next_path)
+                rule.range = rng = transform_range(
+                    next_item, definitions, next_path, parent_ends)
             if next_item._get("starts"):
                 begin = rng[1]
             ends = rng[2]
@@ -319,33 +319,39 @@ def transform_begin(item, definitions):
             rules = [definitions.add_words(name, [begin])]
             syntax = SyntaxClass(name, rules, is_delim=True)
             begin = SyntaxRef(definitions.add(syntax), syntax)
-        elif item._get("returnBegin"):
-            begin = begin if begin.is_lookahead() else begin.lookahead()
+        elif item._get("returnBegin") and (item._get("end")
+                # does not have ignored contained element with same pattern
+                or not any(sub.get("begin") == item.begin
+                            and not (set(sub) - IGNORE_ITEM_KEYS)
+                            for sub in item._get("contains", []))):
+            begin = begin.lookahead()
     return begin
 
 
-def transform_end(item, definitions, lookahead=False):
-    lookahead = lookahead or item._get("end") and item._get("returnEnd")
+def transform_ends(item, definitions, parent_ends):
     if item._get("end"):
         end = regex(item.end)
-        if item._get("excludeEnd") \
+        if item._get("returnEnd"):
+            end = end.lookahead()
+        elif item._get("excludeEnd") \
                 and not item.className.startswith("_") \
-                and not lookahead \
                 and not end.pattern.startswith("(?="):
-            #end = end.lookahead()
             name = "_{}".format(item.className)
             rules = [definitions.add_words(name, [end])]
             syntax = SyntaxClass(name, rules, is_delim=True)
-            return SyntaxRef(definitions.add(syntax), syntax)
-        elif lookahead and not end.is_lookahead():
-            end = end.lookahead()
-        return end
+            non_lookahead_pattern = end.non_lookahead_pattern
+            end = SyntaxRef(definitions.add(syntax), syntax)
+            end.non_lookahead_pattern = non_lookahead_pattern
+        return [end]
     elif "starts" in item or item._get("returnBegin"):
         # The range with "starts" or "returnBegin" and no "end" should
         # end after matching a single token.
-        return RE(r"\B|\b")
+        return [RE(r"\B|\b")]
     # matches nothing -> end with parent
-    return RE(r"\B\b")
+    if not parent_ends:
+        return [RE(r"\B|\b")]
+    pattern = "|".join(e.non_lookahead_pattern for e in parent_ends)
+    return [RE(pattern).lookahead()]
 
 
 def iter_keyword_sets(keywords):
@@ -379,8 +385,10 @@ def regex(obj):
 
 class RE:
 
-    def __init__(self, pattern):
+    def __init__(self, pattern, non_lookahead_pattern=None):
         self.pattern = pattern.replace("\n", r"\n").replace("\r", r"\r")
+        assert non_lookahead_pattern is None or pattern.startswith(r"(?="), pattern
+        self._non_lookahead_pattern = non_lookahead_pattern
 
     def __bool__(self):
         return bool(self.pattern)
@@ -408,11 +416,22 @@ class RE:
 
     def is_lookahead(self):
         # WARNING returns wrong result (False) for /(?=\))/
-        return self.pattern.startswith("(?=") and self.pattern.endswith(")") \
+        return self._non_lookahead_pattern is not None \
+            or self.pattern.startswith("(?=") and self.pattern.endswith(")") \
                 and ")" not in self.pattern[3:-1]
 
     def lookahead(self):
-        return RE(r"(?={})".format(self.pattern))
+        if self.is_lookahead() or self.pattern == "$":
+            return self
+        return RE(r"(?={})".format(self.pattern), self.pattern)
+
+    @property
+    def non_lookahead_pattern(self):
+        if self._non_lookahead_pattern is not None:
+            return self._non_lookahead_pattern
+        if self.is_lookahead():
+            return self.pattern[3:-1]
+        return self.pattern
 
 
 class Definitions:
@@ -845,7 +864,7 @@ class RecursiveRule(ValueType):
 
 class SyntaxClass:
 
-    def __init__(self, name, rules=None, *, is_delim=False):
+    def __init__(self, name, rules=None, *, is_delim=False, ends_with_parent=False):
         self.name = Name(name, self)
         self.rules = rules or []
         self._safe_name = None
@@ -854,6 +873,7 @@ class SyntaxClass:
         self.recursive_rules_refs = []
         self.is_root_namespace = name is None
         self.is_delim = is_delim
+        self.ends_with_parent = ends_with_parent
 
     def add_rule(self, rule):
         self.rules.append(rule)
@@ -907,6 +927,8 @@ class SyntaxClass:
         # by design: name == None -> syntax error
         lines = ["class {}:".format(self.safe_name)]
         lines.append("    default_text_color = DELIMITER")
+        if self.ends_with_parent:
+            lines.append("    ends_with_parent = True")
         rules = pretty_format(self.rules, 4).lstrip()
         lines.append("    rules = {}".format(rules))
         if self._safe_name:

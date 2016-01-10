@@ -787,7 +787,51 @@ def test_Highlighter_color_text():
         ] keyword.set.inverse keyword
         """)
 
-    # TODO test and change match.lastgroup ??
+    yield test("erlang",
+        """
+        -module(ssh_cli).
+
+        -behaviour(ssh_channel).
+
+        -include("ssh.hrl").
+        %% backwards compatibility
+        """,
+        """
+        -module keyword
+        ( params text_color
+        ) params text_color
+        . text_color
+        -behaviour keyword
+        ( params text_color
+        ) params text_color
+        . text_color
+        -include keyword
+        ( params text_color
+        " string
+        ssh.hrl string
+        " string
+        ) params text_color
+        . text_color
+        % comment
+        % backwards compatibility
+         comment
+        """)
+
+    yield test("erlang",
+        """
+        init([Shell, Exec]) ->
+            {ok, #state{shell = Shell, exec = Exec}};
+        """,
+        """
+        init title text_color
+        ( params text_color
+        ) params text_color
+        -> function text_color
+        { text_color
+        #state{ text_color
+        }} text_color
+        ; function text_color
+        """)
 
     class lang:
         class sub:
