@@ -279,7 +279,7 @@ def transform_range(item, definitions, path):
                 if words:
                     rules.append(definitions.add_words(word_name, words))
         rules.append(definitions.add_range((name, begin, ends) + content))
-        begin_syntax = SyntaxClass(name, rules, is_begin=True)
+        begin_syntax = SyntaxClass(name, rules, is_delim=True)
         begin = SyntaxRef(definitions.add(begin_syntax), begin_syntax)
         ends = []
         if isinstance(item.starts, str):
@@ -315,9 +315,10 @@ def transform_begin(item, definitions):
         if item._get("excludeBegin") and not item.className.startswith("_"):
             assert not item._get("returnBegin"), item - {"contains"}
             #begin = RE(r"(?<={})".format(begin.pattern))
-            rules = [definitions.add_words(item.className, [begin])]
-            syntax = SyntaxClass("_{}".format(item.className), rules)
-            begin = Literal(definitions.add(syntax))
+            name = "_{}".format(item.className)
+            rules = [definitions.add_words(name, [begin])]
+            syntax = SyntaxClass(name, rules, is_delim=True)
+            begin = SyntaxRef(definitions.add(syntax), syntax)
         elif item._get("returnBegin"):
             begin = begin if begin.is_lookahead() else begin.lookahead()
     return begin
@@ -332,9 +333,10 @@ def transform_end(item, definitions, lookahead=False):
                 and not lookahead \
                 and not end.pattern.startswith("(?="):
             #end = end.lookahead()
-            rules = [definitions.add_words(item.className, [end])]
-            syntax = SyntaxClass("_{}".format(item.className), rules)
-            return Literal(definitions.add(syntax))
+            name = "_{}".format(item.className)
+            rules = [definitions.add_words(name, [end])]
+            syntax = SyntaxClass(name, rules, is_delim=True)
+            return SyntaxRef(definitions.add(syntax), syntax)
         elif lookahead and not end.is_lookahead():
             end = end.lookahead()
         return end
@@ -799,9 +801,13 @@ class Rule(ValueType):
     def __bool__(self):
         rng = self.range
         return bool(
-            not rng[0].startswith("_") or               # text color
-            len(self.range) > 3 or                      # sub rules
-            (isinstance(rng[1], SyntaxRef) and rng[1])  # begin rules
+            not rng[0].startswith("_") or                   # text color
+            len(self.range) > 3 or                          # sub rules
+            (isinstance(rng[1], SyntaxRef) and rng[1]) or   # begin rules
+            (                                               # end rules
+                len(rng) > 2 and
+                any(isinstance(end, SyntaxRef) and end for end in rng[2])
+            )
         )
 
     def __repr__(self):
@@ -839,7 +845,7 @@ class RecursiveRule(ValueType):
 
 class SyntaxClass:
 
-    def __init__(self, name, rules=None, *, is_begin=False):
+    def __init__(self, name, rules=None, *, is_delim=False):
         self.name = Name(name, self)
         self.rules = rules or []
         self._safe_name = None
@@ -847,7 +853,7 @@ class SyntaxClass:
         self.parent_ends = []
         self.recursive_rules_refs = []
         self.is_root_namespace = name is None
-        self.is_begin = is_begin
+        self.is_delim = is_delim
 
     def add_rule(self, rule):
         self.rules.append(rule)
@@ -886,7 +892,7 @@ class SyntaxClass:
         self._safe_name = value
 
     def __bool__(self):
-        return bool(any(self.rules) or self.recursive_rules_refs or self.is_begin)
+        return bool(any(self.rules) or self.recursive_rules_refs or self.is_delim)
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and (
