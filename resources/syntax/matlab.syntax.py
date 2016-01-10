@@ -109,7 +109,7 @@ rules = [
     ('built_in', built_in),
     ('keyword', keyword),
     ('function', RE(r"\b(?:function)"), [RE(r"$")], function),
-    ('_group0', RE(r"(?=[a-zA-Z_][a-zA-Z_0-9]*'['\.]*)"), [RE(r"\B\b")]), #, _group0),
+    ('_group0', RE(r"(?=[a-zA-Z_][a-zA-Z_0-9]*'['\.]*)"), [RE(r"\B|\b")]), #, _group0),
     ('_group3', _group31, [RE(r"\B\b")]), #, _group5),
     ('_group6', _group61, [RE(r"\B\b")], _group7),
     ('_group8', _group80, [RE(r"\B\b")], _group9),

@@ -21,6 +21,6 @@ rules = [
     ('comment', RE(r"[^\[\]\.,\+\-<> \r\n]"), [RE(r"(?=[\[\]\.,\+\-<> \r\n])")], comment),
     ('title', [RE(r"[\[\]]")]),
     ('string', [RE(r"[\.,]")]),
-    ('_group1', RE(r"(?=\+\+|\-\-)"), [RE(r"\B\b")], _group1),
+    ('_group1', RE(r"(?=\+\+|\-\-)"), [RE(r"\B|\b")], _group1),
     literal,
 ]

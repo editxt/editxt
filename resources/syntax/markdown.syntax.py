@@ -4,54 +4,57 @@
 name = 'Markdown'
 file_patterns = ['*.markdown', '*.md', '*.mkdown', '*.mkd']
 
-class _string:
+class _string0:
     default_text_color = DELIMITER
-    rules = [('string', [RE(r"\[")])]
-
-class _link:
-    default_text_color = DELIMITER
-    rules = [('link', [RE(r"\]\(")])]
+    rules = [('_string', [RE(r"\[")])]
+_string0.__name__ = '_string'
 
 class _link0:
     default_text_color = DELIMITER
-    rules = [('link', [RE(r"\)")])]
+    rules = [('_link', [RE(r"\]\(")])]
 _link0.__name__ = '_link'
 
-class _symbol:
+class _link2:
     default_text_color = DELIMITER
-    rules = [('symbol', [RE(r"\]\[")])]
+    rules = [('_link', [RE(r"\)")])]
+_link2.__name__ = '_link'
 
 class _symbol0:
     default_text_color = DELIMITER
-    rules = [('symbol', [RE(r"\]")])]
+    rules = [('_symbol', [RE(r"\]\[")])]
 _symbol0.__name__ = '_symbol'
+
+class _symbol2:
+    default_text_color = DELIMITER
+    rules = [('_symbol', [RE(r"\]")])]
+_symbol2.__name__ = '_symbol'
 
 class _group2:
     default_text_color = DELIMITER
     rules = [
-        ('string', _string, [RE(r"(?=\])")]),
-        ('link', _link, [_link0]),
-        ('symbol', _symbol, [_symbol0]),
+        ('string', _string0, [RE(r"(?=\])")]),
+        ('link', _link0, [_link2]),
+        ('symbol', _symbol0, [_symbol2]),
     ]
 
-class _symbol1:
+class _symbol4:
     default_text_color = DELIMITER
-    rules = [('symbol', [RE(r"\[")])]
-_symbol1.__name__ = '_symbol'
+    rules = [('_symbol', [RE(r"\[")])]
+_symbol4.__name__ = '_symbol'
 
-class _symbol2:
+class _symbol6:
     default_text_color = DELIMITER
-    rules = [('symbol', [RE(r"\]:")])]
-_symbol2.__name__ = '_symbol'
+    rules = [('_symbol', [RE(r"\]:")])]
+_symbol6.__name__ = '_symbol'
 
-class symbol5:
+class symbol1:
     default_text_color = DELIMITER
-    rules = [('symbol', _symbol1, [_symbol2])]
-symbol5.__name__ = 'symbol'
+    rules = [('symbol', _symbol4, [_symbol6])]
+symbol1.__name__ = 'symbol'
 
 class _group3:
     default_text_color = DELIMITER
-    rules = [('symbol', symbol5, [RE(r"$")])]
+    rules = [('symbol', symbol1, [RE(r"$")])]
 
 rules = [
     ('section', RE(r"^#{1,6}"), [RE(r"$")]),
@@ -66,6 +69,6 @@ rules = [
     ('code', [RE(r"``.+?``"), RE(r"`.+?`")]),
     ('code', RE(r"^(?: {4}|	)"), [RE(r"$")]),
     ('_group1', RE(r"^[-\*]{3,}"), [RE(r"$")]),
-    ('_group2', RE(r"(?=\[.+?\][\(\[].*?[\)\]])"), [RE(r"\B\b")], _group2),
-    ('_group3', RE(r"(?=^\[.+\]:)"), [RE(r"\B\b")], _group3),
+    ('_group2', RE(r"(?=\[.+?\][\(\[].*?[\)\]])"), [RE(r"\B|\b")], _group2),
+    ('_group3', RE(r"(?=^\[.+\]:)"), [RE(r"\B|\b")], _group3),
 ]

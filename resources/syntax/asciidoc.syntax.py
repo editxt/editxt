@@ -72,5 +72,5 @@ rules = [
     ('code', [RE(r"(?:`.+?`|\+.+?\+)")]),
     ('code', RE(r"^[ \t]"), [RE(r"$")]),
     # ignore {'begin': "^'{3,}[ \\t]*$", 'relevance': 10},
-    ('_group7', RE(r"(?=(?:link:)?(?:http|https|ftp|file|irc|image:?):\S+\[.*?\])"), [RE(r"\B\b")], _group7),
+    ('_group7', RE(r"(?=(?:link:)?(?:http|https|ftp|file|irc|image:?):\S+\[.*?\])"), [RE(r"\B|\b")], _group7),
 ]

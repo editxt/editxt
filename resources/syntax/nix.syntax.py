@@ -43,7 +43,7 @@ rules = [
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('string', RE(r"''"), [RE(r"''")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('_group1', RE(r"(?=[a-zA-Z0-9-_]+(?:\s*=))"), [RE(r"\B\b")], _group1),
+    ('_group1', RE(r"(?=[a-zA-Z0-9-_]+(?:\s*=))"), [RE(r"\B|\b")], _group1),
 ]
 
 subst.rules.extend(rules)

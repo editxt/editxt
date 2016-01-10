@@ -61,6 +61,6 @@ rules = [
     ('number', [RE(r"\b\d+(?:\.\d+)?(?:DT|D|T)")]),
     ('string', RE(r"\""), [RE(r"\"")]),
     ('number', [RE(r"\b\d+(?:\.\d+)?")]),
-    ('class', RE(r"(?=OBJECT (?:Table|Form|Report|Dataport|Codeunit|XMLport|MenuSuite|Page|Query) (?:\d+) (?:[^\r\n]+))"), [RE(r"\B\b")], class0),
+    ('class', RE(r"(?=OBJECT (?:Table|Form|Report|Dataport|Codeunit|XMLport|MenuSuite|Page|Query) (?:\d+) (?:[^\r\n]+))"), [RE(r"\B|\b")], class0),
     function0,
 ]

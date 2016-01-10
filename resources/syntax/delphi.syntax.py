@@ -68,7 +68,7 @@ rules = [
     string0,
     string1,
     ('number', [RE(r"\b\d+(?:\.\d+)?")]),
-    ('_group1', RE(r"(?=[a-zA-Z]\w*\s*=\s*class\s*\()"), [RE(r"\B\b")], _group1),
+    ('_group1', RE(r"(?=[a-zA-Z]\w*\s*=\s*class\s*\()"), [RE(r"\B|\b")], _group1),
     ('function', RE(r"\b(?:function|constructor|destructor|procedure)"), [RE(r"[:;]")], function),
     comment0,
     comment1,

@@ -113,7 +113,7 @@ class function:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
-        ('_group5', RE(r"(?=[a-zA-Z]\w*\s*\()"), [RE(r"\B\b")], _group5),
+        ('_group5', RE(r"(?=[a-zA-Z]\w*\s*\()"), [RE(r"\B|\b")], _group5),
         ('params', _params0, [_params2], params),
         comment2,
         comment3,

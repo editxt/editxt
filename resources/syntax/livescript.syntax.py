@@ -139,7 +139,7 @@ class params:
 
 class function:
     default_text_color = DELIMITER
-    rules = [title, ('params', RE(r"(?=\()"), [RE(r"\B\b")], params)]
+    rules = [title, ('params', RE(r"(?=\()"), [RE(r"\B|\b")], params)]
 
 class _group5:
     default_text_color = DELIMITER

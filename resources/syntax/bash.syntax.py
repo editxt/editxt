@@ -60,7 +60,7 @@ rules = [
     ('keyword', keyword),
     ('literal', ['true', 'false']),
     ('meta', [RE(r"^#![^\n]+sh\s*$")]),
-    ('function', RE(r"(?=\w[\w\d_]*\s*\(\s*\)\s*\{)"), [RE(r"\B\b")], function),
+    ('function', RE(r"(?=\w[\w\d_]*\s*\(\s*\)\s*\{)"), [RE(r"\B|\b")], function),
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('number', [RE(r"\b\d+(?:\.\d+)?")]),
     ('string', RE(r"\""), [RE(r"\"")], string),

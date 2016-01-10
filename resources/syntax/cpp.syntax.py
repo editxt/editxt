@@ -154,7 +154,7 @@ class function:
         ('built_in', built_in),
         ('keyword', keyword),
         ('literal', ['true', 'false', 'nullptr', 'NULL']),
-        ('_group6', RE(r"(?=[a-zA-Z]\w*\s*\()"), [RE(r"\B\b")], _group6),
+        ('_group6', RE(r"(?=[a-zA-Z]\w*\s*\()"), [RE(r"\B|\b")], _group6),
         ('params', RE(r"\("), [RE(r"\)")], params),
         comment0,
         comment1,

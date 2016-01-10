@@ -101,7 +101,7 @@ class _group5:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['pointcut', 'after', 'before', 'around', 'throwing', 'returning']),
-        ('_group6', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B\b")], _group6),
+        ('_group6', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B|\b")], _group6),
     ]
 
 class _group8:
@@ -139,7 +139,7 @@ class function:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
-        ('_group10', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B\b")], _group10),
+        ('_group10', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B|\b")], _group10),
         ('params', RE(r"\("), [RE(r"\)")], params),
         comment2,
         comment3,

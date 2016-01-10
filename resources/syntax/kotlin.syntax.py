@@ -62,7 +62,7 @@ class function:
     rules = [
         ('keyword', keyword),
         ('keyword', ['fun']),
-        ('_group1', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B\b")], _group1),
+        ('_group1', RE(r"(?=[a-zA-Z_]\w*\s*\()"), [RE(r"\B|\b")], _group1),
         ('type', RE(r"<"), [RE(r">")], type0),
         ('params', RE(r"\("), [RE(r"\)")], params),
         comment2,
