@@ -340,9 +340,9 @@ def transform_end(item, definitions, lookahead=False):
         elif lookahead and not end.is_lookahead():
             end = end.lookahead()
         return end
-    elif "starts" in item:
-        # The range with "starts" and no "end" should end after matching a
-        # single token.
+    elif "starts" in item or item._get("returnBegin"):
+        # The range with "starts" or "returnBegin" and no "end" should
+        # end after matching a single token.
         return RE(r"\B|\b")
     # matches nothing -> end with parent
     return RE(r"\B\b")

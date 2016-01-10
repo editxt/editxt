@@ -22,7 +22,7 @@ import os
 import re
 from contextlib import closing
 from difflib import unified_diff
-from itertools import islice
+from itertools import chain, islice
 from tempfile import gettempdir
 
 import AppKit as ak
@@ -208,7 +208,11 @@ def test_Highlighter_color_text():
                         else:
                             # default text color, not a matched token
                             attr_name = "{} {} -".format(lang, colr)
-                        print(attr_name.ljust(30), repr(text)[1:-1][:40])
+                        print(
+                            attr_name.ljust(30),
+                            (key or '').ljust(15),
+                            repr(text)[1:-1]
+                        )
                         attr = attr.rsplit(" ", 1)[-1] if attr else colr
                         language = lang if xrng[0] <= attr_range[0] else ("~" + lang)
                         language = language.replace(attr + ".", "$.")
@@ -245,7 +249,7 @@ def test_Highlighter_color_text():
                 hl.color_text(text)
         errors = log.data.get("error")
         assert not errors, "Errors logged:\n" + "\n---\n\n".join(errors)
-        a = text.colors(hl)
+        a = list(chain.from_iterable(x.split("\n") for x in text.colors(hl)))
         b = dedent(expect).strip().split("\n") if expect else []
         assert a == b, "\n" + "\n".join(
                 unified_diff(b, a, "expected", "actual", lineterm=""))
@@ -635,6 +639,31 @@ def test_Highlighter_color_text():
           nil literal text_color Clojure
         ``` code text_color
         *Clojure* emphasis text_color
+        """)
+    yield test("markdown",
+        """
+        ```asciidoc
+        Want to see a image::images/tiger.png[Tiger]?
+        *strong*
+        [quote, Sir Arthur Conan Doyle]
+        ____
+        When you have eliminated all...
+        ```
+        not *strong*
+        """,
+        """
+        ``` code text_color
+        asciidoc tag
+          image::images/tiger.png link text_color AsciiDoc
+          [ text_color AsciiDoc
+          Tiger string AsciiDoc
+          ] text_color AsciiDoc
+          *strong* strong text_color AsciiDoc
+          [quote, Sir Arthur Conan Doyle] meta text_color AsciiDoc
+          ____
+        When you have eliminated all... quote text_color AsciiDoc
+        ``` code text_color
+        *strong* emphasis text_color
         """)
 
     yield test("javascript",

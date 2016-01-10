@@ -377,7 +377,7 @@ class SyntaxDefinition(NoHighlight):
                 <color name>,
                 <start delimiter string, RE, or definition type>,
                 <list of end delimiters: string, RE, or definition type>,
-                <(optional) syntax definition type or name>,
+                <(optional) syntax definition type or name for delimited range>,
             ),
             ('comment.multi-line', '<!--', ['-->']),
             ('string.double-quoted', '"', ['"', '\n']),
@@ -463,7 +463,7 @@ class SyntaxDefinition(NoHighlight):
     def _init(self):
         wordinfo = {}
         groups = []
-        idgen = count()
+        idgen = ("%X" % i for i in count())
         for phrase, ident, info in self.iter_group_info(idgen):
             groups.append(phrase)
             wordinfo[ident] = info
@@ -529,17 +529,25 @@ class SyntaxDefinition(NoHighlight):
         If `idgen` is `None` then the second element in the yielded
         tuple will be `None`, and only start patterns will be yielded.
         """
+        immediate_ends = []
         if self.ends and idgen is not None:
+            parent_ends = []
             for end in self.ends:
                 assert end.next is not None or r'\Z' in end.pattern, end
                 ident = "e%s" % next(idgen)
                 phrase = "(?P<{}>{})".format(ident, end.pattern)
                 info = MatchInfo(end.name, end.next, end.lang)
-                yield phrase, ident, info
-            parent_ends = self.ends
+                if MATCH_ANYTHING.match(end.pattern):
+                    # common patterns that match anything are put last
+                    # and are not passed on to delimited ranges
+                    immediate_ends.append((phrase, ident, info))
+                else:
+                    parent_ends.append(end)
+                    yield phrase, ident, info
         else:
             parent_ends = [End(r"\Z", self.next, self.get_color(), self)]
         yield from self.iter_groups(idgen, parent_ends)
+        yield from iter(immediate_ends)
 
     def iter_groups(self, idgen, parent_ends):
         def lookup_syntax(sdef, owner, ends, ndef=None, **kw):
@@ -592,6 +600,7 @@ class SyntaxDefinition(NoHighlight):
                 elif not color_name:
                     color_name = self.default_text_color
                 overrides = {"default_text_color": color_name}
+                ends += parent_ends
                 sdef = lookup_syntax(sdef, name, ends, overrides=overrides)
                 assert sdef is not None, (name, start, ends, key)
             else:
@@ -600,6 +609,8 @@ class SyntaxDefinition(NoHighlight):
                 color = self.get_color(name)
                 ends = [End(r".*?{}".format(e.pattern), e.next, color, self)
                         for e in ends]
+                ends.append(End(r".*?(?={})".format(disjunction(parent_ends)),
+                                self, color, self))
                 class lines:
                     rules = [(name, [RE(r".+?$")])]
                     default_text_color = name
@@ -634,10 +645,11 @@ class SyntaxDefinition(NoHighlight):
                     sdef = sdef[0]
                 else:
                     sdef = None
-                ends = list(unique(chain(endify(name, ends), parent_ends)))
+                ends = list(endify(name, ends))
                 if isinstance(start, (str, RE)):
                     yield compile_range(name, start, ends, sdef)
                 else:
+                    ends = list(unique(chain(ends, parent_ends)))
                     if sdef:
                         ndef = lookup_syntax(sdef, name, ends)
                     else:
@@ -728,12 +740,13 @@ class MatchInfo(str):
         return info
 
     def __repr__(self):
-        return super().__repr__() + ("n" if self.next else "")
+        return super().__repr__() + (("->" + self.next.id) if self.next else "")
 
 
 PLAIN_TEXT = NoHighlight("Plain Text", "x")
 EMPTY_REGEX = re.compile("")
 WORD_CHAR = re.compile(r"\w", re.UNICODE)
+MATCH_ANYTHING = re.compile(r"^(\\B\|\\b|\\b\|\\B)?$")
 
 
 class DynamicRange:
@@ -749,6 +762,7 @@ class DynamicRange:
         ident = next(parent.lang_ids)
         none = parent.make_definition(self._none, *args, **kw)
         sdef = type(self)(self.lang_pattern, self.color_name)
+        sdef.id = ident
         sdef.key = (parent.key + " " + ident) if parent.key else ident
         sdef.parent = parent
         sdef.lookup_syntax = lookup_syntax
