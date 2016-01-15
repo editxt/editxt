@@ -67,7 +67,7 @@ rules = [
     ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment),
     ('class', RE(r"\b(?:type)"), [_class0], class0),
     ('meta', RE(r"\[<"), [RE(r">\]")]),
-    ('symbol', RE(r"\B(?:'[A-Za-z])\b"), [RE(r"\B\b")], symbol),
+    ('symbol', RE(r"\B(?:'[A-Za-z])\b"), [RE(r"\B|\b")], symbol),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('string', RE(r"\""), [RE(r"\"")], string2),
     ('number', number),

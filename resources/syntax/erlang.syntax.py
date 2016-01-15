@@ -27,6 +27,7 @@ _group3.__name__ = ''
 
 class _group7:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = []
 
 class _group5:
@@ -63,7 +64,7 @@ class _group11:
         ('_group13', RE(r"{"), [RE(r"}")], _group13),
     ]
 
-_group110 = ('_group11', RE(r"(?=#[a-zA-Z_]\w*)"), [RE(r"\B|\b")], _group11)
+_group110 = ('_group11', RE(r"#[a-zA-Z_]\w*"), [RE(r"\B|\b")], _group11)
 
 class _group2:
     default_text_color = DELIMITER

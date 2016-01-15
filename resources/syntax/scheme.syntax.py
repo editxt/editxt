@@ -78,6 +78,7 @@ comment1 = ('comment', RE(r"#\|"), [RE(r"\|#")], comment)
 
 class _group1:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [
         ('literal', [RE(r"(?:#t|#f|#\\[^\(\)\[\]\{\}\",'`;#|\\\s]+|#\\.)")]),
         number,
@@ -96,14 +97,15 @@ class _group1:
 class _group0:
     default_text_color = DELIMITER
     rules = [
-        ('name', RE(r"[^\(\)\[\]\{\}\",'`;#|\\\s]+"), [RE(r"\B\b")], name0),
-        ('_group1', RE(r"\B|\b"), [RE(r"\B\b")], _group1),
+        ('name', RE(r"[^\(\)\[\]\{\}\",'`;#|\\\s]+"), [RE(r"(?=\B|\b)")], name0),
+        ('_group1', RE(r"\B|\b"), [RE(r"(?=\B|\b)")], _group1),
     ]
 
-_group00 = ('_group0', RE(r"\B|\b"), [RE(r"\B\b")], _group0)
+_group00 = ('_group0', RE(r"\B|\b"), [RE(r"\B|\b")], _group0)
 
 class _group11:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [
         ('literal', [RE(r"(?:#t|#f|#\\[^\(\)\[\]\{\}\",'`;#|\\\s]+|#\\.)")]),
         number,
@@ -115,7 +117,7 @@ class _group11:
         # ignore {'begin': '[^\\(\\)\\[\\]\\{\\}",\'`;#|\\\\\\s]+', 'relevance': 0},
         symbol,
         None, # _group02,
-        None, # _group03,
+        None, # _group04,
         comment0,
         comment1,
     ]
@@ -124,14 +126,22 @@ _group11.__name__ = '_group1'
 class _group01:
     default_text_color = DELIMITER
     rules = [
-        ('name', RE(r"[^\(\)\[\]\{\}\",'`;#|\\\s]+"), [RE(r"\B\b")], name0),
-        ('_group1', RE(r"\B|\b"), [RE(r"\B\b")], _group11),
+        ('name', RE(r"[^\(\)\[\]\{\}\",'`;#|\\\s]+"), [RE(r"(?=\))")], name0),
+        ('_group1', RE(r"\B|\b"), [RE(r"(?=\))")], _group11),
     ]
 _group01.__name__ = '_group0'
 
 _group02 = ('_group0', RE(r"\("), [RE(r"\)")], _group01)
 
-_group03 = ('_group0', RE(r"\["), [RE(r"\]")], _group01)
+class _group03:
+    default_text_color = DELIMITER
+    rules = [
+        ('name', RE(r"[^\(\)\[\]\{\}\",'`;#|\\\s]+"), [RE(r"(?=\])")], name0),
+        ('_group1', RE(r"\B|\b"), [RE(r"(?=\])")], _group11),
+    ]
+_group03.__name__ = '_group0'
+
+_group04 = ('_group0', RE(r"\["), [RE(r"\]")], _group03)
 
 rules = [
     ('meta', RE(r"^#!"), [RE(r"$")]),
@@ -143,11 +153,11 @@ rules = [
     string0,
     symbol,
     _group02,
-    _group03,
+    _group04,
     comment0,
     comment1,
 ]
 
 _group1.rules[8] = _group00
 _group11.rules[8] = _group02
-_group11.rules[9] = _group03
+_group11.rules[9] = _group04

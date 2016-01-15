@@ -40,5 +40,5 @@ rules = [
     ('_group0', RE(r"^HTTP/[0-9\.]+"), [RE(r"$")], _group0),
     ('_group1', RE(r"(?=^[A-Z]+ (?:.*?) HTTP/[0-9\.]+$)"), [RE(r"$")], _group1),
     ('attribute', attribute0, [RE(r"$")]),
-    ('_group4', _group40, [RE(r"\B\b")]),
+    ('_group4', _group40, [RE(r"\B|\b")]),
 ]

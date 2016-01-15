@@ -133,13 +133,14 @@ class _group5:
 
 class _group6:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [('keyword', ['extends']), title]
 
 class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['class']),
-        ('_group6', RE(r"\b(?:extends)"), [RE(r"\B\b")], _group6),
+        ('_group6', RE(r"\b(?:extends)"), [RE(r"$")], _group6),
         title,
     ]
 class0.__name__ = 'class'
@@ -162,7 +163,7 @@ rules = [
     ('comment', RE(r"###"), [RE(r"###")], comment),
     comment0,
     ('function', RE(r"(?=^\s*[A-Za-z$_][0-9A-Za-z$_]*\s*=\s*(?:\(.*\))?\s*\B[-=]>)"), [RE(r"[-=]>")], function),
-    ('_group5', RE(r"[:\(,=]\s*"), [RE(r"\B\b")], _group5),
+    ('_group5', RE(r"[:\(,=]\s*"), [RE(r"\B|\b")], _group5),
     ('class', RE(r"\b(?:class)"), [RE(r"$")], class0),
     ('_group7', RE(r"(?=[A-Za-z$_][0-9A-Za-z$_]*:)"), [RE(r"(?=:)")]),
 ]

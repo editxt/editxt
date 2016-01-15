@@ -81,6 +81,6 @@ rules = [
     ('meta', RE(r"#\!?\["), [RE(r"\]")]),
     ('class', RE(r"\b(?:type)"), [RE(r"(?:=|<)")], class0),
     ('class', RE(r"\b(?:trait|enum)"), [RE(r"{")], class2),
-    ('_group1', RE(r"[a-zA-Z]\w*::"), [RE(r"\B\b")], _group1),
+    ('_group1', RE(r"[a-zA-Z]\w*::"), [RE(r"\B|\b")], _group1),
     # ignore {'begin': '->'},
 ]

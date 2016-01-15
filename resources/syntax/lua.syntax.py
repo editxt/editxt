@@ -45,6 +45,7 @@ comment2 = ('comment', RE(r"--\[=*\["), [RE(r"\]=*\]")], comment1)
 
 class params:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [comment0, comment2]
 
 class function:
@@ -52,7 +53,7 @@ class function:
     rules = [
         ('keyword', ['function']),
         ('title', [RE(r"(?:[_a-zA-Z]\w*\.)*(?:[_a-zA-Z]\w*:)?[_a-zA-Z]\w*")]),
-        ('params', RE(r"\("), [RE(r"\B\b")], params),
+        ('params', RE(r"\("), [RE(r"(?=\))")], params),
         comment0,
         comment2,
     ]

@@ -32,7 +32,7 @@ class string:
 
 rules = [
     ('comment', RE(r"#"), [RE(r"$")], comment),
-    ('_group1', RE(r"(?:[a-zA-Z]|\.[a-zA-Z.])[a-zA-Z0-9._]*"), [RE(r"\B\b")], _group1),
+    ('_group1', RE(r"(?:[a-zA-Z]|\.[a-zA-Z.])[a-zA-Z0-9._]*"), [RE(r"\B|\b")], _group1),
     ('number', [RE(r"0[xX][0-9a-fA-F]+[Li]?\b")]),
     ('number', [RE(r"\d+(?:[eE][+\-]?\d*)?L\b")]),
     ('number', [RE(r"\d+\.(?!\d)(?:i\b)?")]),

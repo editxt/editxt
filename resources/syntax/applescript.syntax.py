@@ -89,7 +89,7 @@ rules = [
     ('built_in', built_in1),
     ('literal', literal1),
     ('keyword', keyword1),
-    ('_group0', RE(r"\b(?:on)"), [RE(r"\B\b")], _group0),
+    ('_group0', RE(r"\b(?:on)"), [RE(r"\B|\b")], _group0),
     comment0,
     ('comment', RE(r"\(\*"), [RE(r"\*\)")], comment1),
     ('comment', RE(r"#"), [RE(r"$")], comment),

@@ -44,7 +44,7 @@ class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['class', 'interface', 'trait', 'enum']),
-        ('_group2', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('_group2', RE(r"\b(?:extends|implements)"), [RE(r"(?={)")]),
         ('title', [RE(r"[a-zA-Z_]\w*")]),
     ]
 class0.__name__ = 'class'
@@ -63,7 +63,7 @@ rules = [
     ('string', RE(r"'''"), [RE(r"'''")]),
     ('string', RE(r"\$/"), [RE(r"/\$")]),
     ('string', RE(r"'"), [RE(r"'")], string2),
-    ('regexp', RE(r"~?\/[^\/\n]+\/"), [RE(r"\B\b")], regexp),
+    ('regexp', RE(r"~?\/[^\/\n]+\/"), [RE(r"\B|\b")], regexp),
     ('string', RE(r"\""), [RE(r"\"")], string2),
     ('meta', RE(r"^#!/usr/bin/env"), [RE(r"$")]),
     ('number', [RE(r"\b(?:0b[01]+)")]),

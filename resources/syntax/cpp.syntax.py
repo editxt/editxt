@@ -175,8 +175,8 @@ rules = [
     string2,
     meta0,
     ('_group3', RE(r"\b(?:deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\s*<"), [RE(r">")], _group3),
-    ('_group4', RE(r"[a-zA-Z]\w*::"), [RE(r"\B\b")], _group4),
-    ('_group5', RE(r"\b(?:new|throw|return|else)"), [RE(r"\B\b")]),
+    ('_group4', RE(r"[a-zA-Z]\w*::"), [RE(r"\B|\b")], _group4),
+    ('_group5', RE(r"\b(?:new|throw|return|else)"), [RE(r"\B|\b")]),
     ('function', RE(r"(?=(?:[a-zA-Z]\w*[\*&\s]+)+[a-zA-Z]\w*\s*\()"), [_function0], function),
 ]
 

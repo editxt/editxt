@@ -92,10 +92,11 @@ _group12.__name__ = '_group1'
 
 _group13 = ('_group1', RE(r"\(quote "), [RE(r"\)")], _group12)
 
-_group14 = ('_group1', RE(r"'\|[\s\S]*?\|"), [RE(r"\B\b")], _group1)
+_group14 = ('_group1', RE(r"'\|[\s\S]*?\|"), [RE(r"\B|\b")], _group1)
 
 class _group8:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [
         _group11,
         _group13,
@@ -122,7 +123,7 @@ class _group7:
     rules = [
         ('name', [RE(r"[a-zA-Z_\-\+\*\/\<\=\>\&\#][a-zA-Z0-9_\-\+\*\/\<\=\>\&\#!]*")]),
         ('name', [RE(r"\|[\s\S]*?\|")]),
-        ('_group8', RE(r"\B|\b"), [RE(r"\B\b")], _group8),
+        ('_group8', RE(r"\B|\b"), [RE(r"(?=\))")], _group8),
     ]
 
 _group70 = ('_group7', RE(r"\(\s*"), [RE(r"\)")], _group7)

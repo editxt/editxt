@@ -42,6 +42,7 @@ class string:
 
 class _group4:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [variable, variable0, variable1]
 
 class regexp:
@@ -50,6 +51,7 @@ class regexp:
 
 class _group3:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [
         ('literal', literal),
         comment0,
@@ -58,8 +60,8 @@ class _group3:
         ('_group4', RE(r"(?:[a-z]+):/"), [RE(r"\s")], _group4),
         ('regexp', RE(r"\s\^"), [RE(r"(?=\s|{|;)")], regexp),
         ('regexp', RE(r"~\*?\s+"), [RE(r"(?=\s|{|;)")], regexp),
-        ('regexp', RE(r"\*(?:\.[a-z\-]+)+"), [RE(r"\B\b")], regexp),
-        ('regexp', RE(r"(?:[a-z\-]+\.)+\*"), [RE(r"\B\b")], regexp),
+        ('regexp', RE(r"\*(?:\.[a-z\-]+)+"), [RE(r"(?=;|{)")], regexp),
+        ('regexp', RE(r"(?:[a-z\-]+\.)+\*"), [RE(r"(?=;|{)")], regexp),
         ('number', [RE(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d{1,5})?\b")]),
         ('number', [RE(r"\b\d+[kKmMgGdshdwy]*\b")]),
         variable,
@@ -69,7 +71,7 @@ class _group3:
 
 class _group2:
     default_text_color = DELIMITER
-    rules = [('attribute', attribute0, [RE(r"\B\b")], _group3)]
+    rules = [('attribute', attribute0, [RE(r"(?=;|{)")], _group3)]
 
 rules = [
     comment0,

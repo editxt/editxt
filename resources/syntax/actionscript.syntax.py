@@ -53,7 +53,7 @@ class class2:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['class', 'interface']),
-        ('_group1', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('_group1', RE(r"\b(?:extends|implements)"), [RE(r"(?={)")]),
         title,
     ]
 class2.__name__ = 'class'

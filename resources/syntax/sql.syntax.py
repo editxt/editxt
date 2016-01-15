@@ -225,6 +225,7 @@ comment1 = ('comment', RE(r"--"), [RE(r"$")], comment)
 
 class _group0:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),

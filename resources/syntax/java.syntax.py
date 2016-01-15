@@ -55,7 +55,7 @@ class class0:
     rules = [
         ('keyword', ['class', 'interface']),
         ('keyword', ['class', 'interface']),
-        ('_group2', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('_group2', RE(r"\b(?:extends|implements)"), [RE(r"(?=[{;=])")]),
         title,
     ]
 class0.__name__ = 'class'
@@ -105,7 +105,7 @@ rules = [
     string0,
     string1,
     ('class', RE(r"\b(?:class|interface)"), [_class0], class0),
-    ('_group3', RE(r"\b(?:new|throw|return|else)"), [RE(r"\B\b")]),
+    ('_group3', RE(r"\b(?:new|throw|return|else)"), [RE(r"\B|\b")]),
     ('function', RE(r"(?=(?:[a-zA-Z_]\w*(?:<[a-zA-Z_]\w*>)?\s+)+[a-zA-Z_]\w*\s*\()"), [_function0], function),
     ('number', number1),
     ('meta', [RE(r"@[A-Za-z]+")]),

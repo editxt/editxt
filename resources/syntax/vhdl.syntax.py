@@ -59,6 +59,6 @@ rules = [
     ('comment', RE(r"--"), [RE(r"$")], comment),
     ('string', RE(r"\""), [RE(r"\"")], string),
     ('number', number),
-    ('literal', RE(r"'(?:U|X|0|1|Z|W|L|H|-)'"), [RE(r"\B\b")], literal),
-    ('symbol', RE(r"'[A-Za-z](?:_?[A-Za-z0-9])*"), [RE(r"\B\b")], symbol),
+    ('literal', RE(r"'(?:U|X|0|1|Z|W|L|H|-)'"), [RE(r"\B|\b")], literal),
+    ('symbol', RE(r"'[A-Za-z](?:_?[A-Za-z0-9])*"), [RE(r"\B|\b")], symbol),
 ]

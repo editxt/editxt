@@ -122,9 +122,10 @@ variable5.__name__ = 'variable'
 
 class _group7:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [
         ('keyword', ['when']),
-        ('_group8', RE(r"\b(?:and|not)"), [RE(r"\B\b")]),
+        ('_group8', RE(r"\b(?:and|not)"), [RE(r"(?=\B|\b)")]),
         comment0,
         comment1,
         string,
@@ -149,7 +150,7 @@ class _group6:
     rules = [
         comment0,
         comment1,
-        ('_group7', RE(r"\b(?:when)"), [RE(r"\B\b")], _group7),
+        ('_group7', RE(r"\b(?:when)"), [RE(r"(?=\B|\b)")], _group7),
         ('keyword', [RE(r"all\b")]),
         variable0,
         ('selector-tag', [RE(r"(?:[\w-]+|@{[\w-]+})%?")]),
@@ -160,6 +161,86 @@ class _group6:
         ('_group9', RE(r"\("), [RE(r"\)")], _group9),
         # ignore {'begin': '!important'},
     ]
+
+class _group71:
+    default_text_color = DELIMITER
+    ends_with_parent = True
+    rules = [
+        ('keyword', ['when']),
+        ('_group8', RE(r"\b(?:and|not)"), [RE(r"(?=[;{}])")]),
+        comment0,
+        comment1,
+        string,
+        string0,
+        number0,
+        _group21,
+        number1,
+        _group30,
+        variable,
+        variable0,
+        built_in,
+        attribute,
+        meta,
+    ]
+_group71.__name__ = '_group7'
+
+class _group61:
+    default_text_color = DELIMITER
+    rules = [
+        comment0,
+        comment1,
+        ('_group7', RE(r"\b(?:when)"), [RE(r"(?=[;{}])")], _group71),
+        ('keyword', [RE(r"all\b")]),
+        variable0,
+        ('selector-tag', [RE(r"(?:[\w-]+|@{[\w-]+})%?")]),
+        ('selector-id', [RE(r"#(?:[\w-]+|@{[\w-]+})")]),
+        ('selector-class', [RE(r"\.(?:[\w-]+|@{[\w-]+})")]),
+        ('selector-tag', [RE(r"&")]),
+        ('selector-attr', RE(r"\["), [RE(r"\]")]),
+        ('_group9', RE(r"\("), [RE(r"\)")], _group9),
+        # ignore {'begin': '!important'},
+    ]
+_group61.__name__ = '_group6'
+
+class _group73:
+    default_text_color = DELIMITER
+    ends_with_parent = True
+    rules = [
+        ('keyword', ['when']),
+        ('_group8', RE(r"\b(?:and|not)"), [RE(r"(?={)")]),
+        comment0,
+        comment1,
+        string,
+        string0,
+        number0,
+        _group21,
+        number1,
+        _group30,
+        variable,
+        variable0,
+        built_in,
+        attribute,
+        meta,
+    ]
+_group73.__name__ = '_group7'
+
+class _group63:
+    default_text_color = DELIMITER
+    rules = [
+        comment0,
+        comment1,
+        ('_group7', RE(r"\b(?:when)"), [RE(r"(?={)")], _group73),
+        ('keyword', [RE(r"all\b")]),
+        variable0,
+        ('selector-tag', [RE(r"(?:[\w-]+|@{[\w-]+})%?")]),
+        ('selector-id', [RE(r"#(?:[\w-]+|@{[\w-]+})")]),
+        ('selector-class', [RE(r"\.(?:[\w-]+|@{[\w-]+})")]),
+        ('selector-tag', [RE(r"&")]),
+        ('selector-attr', RE(r"\["), [RE(r"\]")]),
+        ('_group9', RE(r"\("), [RE(r"\)")], _group9),
+        # ignore {'begin': '!important'},
+    ]
+_group63.__name__ = '_group6'
 
 class attribute0:
     default_text_color = DELIMITER
@@ -183,8 +264,8 @@ rules = [
     ('keyword', keyword0, [RE(r"(?=[;{}])")], _group1),
     ('variable', variable2, [RE(r"(?=[;}])")], _group4),
     ('variable', variable5, [RE(r"(?=[;}])")], _group4),
-    ('_group6', RE(r"(?=[\.#:&\[])"), [RE(r"(?=[;{}])")], _group6),
-    ('_group6', RE(r"(?=(?:[\w-]+|@{[\w-]+})[^;]*{)"), [RE(r"(?={)")], _group6),
+    ('_group6', RE(r"(?=[\.#:&\[])"), [RE(r"(?=[;{}])")], _group61),
+    ('_group6', RE(r"(?=(?:[\w-]+|@{[\w-]+})[^;]*{)"), [RE(r"(?={)")], _group63),
     ('attribute', attribute2, [RE(r"(?=[;}])")], _group11),
 ]
 

@@ -37,13 +37,14 @@ number0 = ('number', number)
 
 class _group3:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [string0, string1, number0]
 
 class _group2:
     default_text_color = DELIMITER
     rules = [
         ('keyword', [RE(r"\S+")]),
-        ('_group3', RE(r"\s"), [RE(r"\B\b")], _group3),
+        ('_group3', RE(r"\s"), [RE(r"(?=[{;])")], _group3),
     ]
 
 class _attribute0:
@@ -58,6 +59,7 @@ attribute0.__name__ = 'attribute'
 
 class _group6:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [
         number0,
         string1,
@@ -69,7 +71,8 @@ class _group6:
 
 class _group5:
     default_text_color = DELIMITER
-    rules = [('attribute', attribute0, [RE(r"\B\b")], _group6)]
+    ends_with_parent = True
+    rules = [('attribute', attribute0, [RE(r"(?=;)")], _group6)]
 
 class _group4:
     default_text_color = DELIMITER
@@ -84,7 +87,7 @@ rules = [
     ('selector-class', [RE(r"\.[A-Za-z0-9_-]+")]),
     ('selector-attr', RE(r"\["), [RE(r"\]")]),
     ('selector-pseudo', [RE(r":(?::)?[a-zA-Z0-9\_\-\+\(\)\"']+")]),
-    ('_group1', RE(r"@(?:font-face|page)"), [RE(r"\B\b")], _group1),
+    ('_group1', RE(r"@(?:font-face|page)"), [RE(r"\B|\b")], _group1),
     ('_group2', RE(r"@"), [RE(r"[{;]")], _group2),
     ('selector-tag', [RE(r"[a-zA-Z-][a-zA-Z0-9_-]*")]),
     ('_group4', RE(r"{"), [RE(r"}")], _group4),

@@ -70,6 +70,7 @@ string1 = ('string', RE(r"\|"), [RE(r"\"|$")]) #, string)
 
 class _group2:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [('keyword', ['экспорт']), comment0]
 
 class params:
@@ -80,7 +81,7 @@ class function:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['процедура', 'функция']),
-        ('_group2', RE(r"экспорт"), [RE(r"\B\b")], _group2),
+        ('_group2', RE(r"экспорт"), [RE(r"$")], _group2),
         ('params', RE(r"\("), [RE(r"\)")], params),
         comment0,
         ('title', [RE(r"[a-zA-Zа-яА-Я][a-zA-Z0-9_а-яА-Я]*")]),

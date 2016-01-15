@@ -113,7 +113,7 @@ class _group7:
     default_text_color = DELIMITER
     rules = [('symbol', [RE(r"'[a-zA-Z_][a-zA-Z0-9_.]*'")])]
 
-_group70 = ('_group7', RE(r"(?:->|\.\.?)\s*"), [RE(r"\B\b")], _group7)
+_group70 = ('_group7', RE(r"(?:->|\.\.?)\s*"), [RE(r"(?=\[/no_square_brackets\])")], _group7)
 
 class class0:
     default_text_color = DELIMITER

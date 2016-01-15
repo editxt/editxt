@@ -51,21 +51,22 @@ class _group3:
         ('params', RE(r"\("), [RE(r"\)")]),
     ]
 
-_group30 = ('_group3', RE(r"\b(?:attribute|block|constant|cycle|date|dump|include|max|min|parent|random|range|source|template_from_string)"), [RE(r"\B\b")], _group3)
+_group30 = ('_group3', RE(r"\b(?:attribute|block|constant|cycle|date|dump|include|max|min|parent|random|range|source|template_from_string)"), [RE(r"(?=%})")], _group3)
 
 class _group2:
     default_text_color = DELIMITER
     rules = [('keyword', keyword1), _group30]
 
-_group20 = ('_group2', RE(r"\|[A-Za-z_]+:?"), [RE(r"\B\b")], _group2)
+_group20 = ('_group2', RE(r"\|[A-Za-z_]+:?"), [RE(r"(?=%})")], _group2)
 
 class _group1:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [_group20, _group30]
 
 class template_tag:
     default_text_color = DELIMITER
-    rules = [('name', name2, [RE(r"\B\b")], _group1)]
+    rules = [('name', name2, [RE(r"(?=%})")], _group1)]
 template_tag.__name__ = 'template-tag'
 
 class template_variable:

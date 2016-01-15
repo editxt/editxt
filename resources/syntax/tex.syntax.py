@@ -11,14 +11,16 @@ name1.__name__ = 'name'
 
 class _group1:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [('number', [RE(r"-?\d*\.?\d+(?:pt|pc|mm|cm|in|dd|cc|ex|em)?")])]
 
 class _group0:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [
         ('string', RE(r"\["), [RE(r"\]")]),
         ('string', RE(r"\{"), [RE(r"\}")]),
-        ('_group1', RE(r"\s*=\s*"), [RE(r"\B\b")], _group1),
+        ('_group1', RE(r"\s*=\s*"), [RE(r"(?=\B|\b)")], _group1),
     ]
 
 class name4:
@@ -29,11 +31,11 @@ name4.__name__ = 'name'
 class tag:
     default_text_color = DELIMITER
     rules = [
-        ('name', name1, [RE(r"\B\b")], _group0),
-        ('name', name4, [RE(r"\B\b")], _group0),
+        ('name', name1, [RE(r"(?=\B|\b)")], _group0),
+        ('name', name4, [RE(r"(?=\B|\b)")], _group0),
     ]
 
-tag0 = ('tag', RE(r"\\"), [RE(r"\B\b")], tag)
+tag0 = ('tag', RE(r"\\"), [RE(r"\B|\b")], tag)
 
 class formula:
     default_text_color = DELIMITER

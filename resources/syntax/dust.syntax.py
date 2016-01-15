@@ -17,11 +17,12 @@ class string:
 
 class _group0:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [('string', RE(r"\""), [RE(r"\"")], string)]
 
 class template_tag:
     default_text_color = DELIMITER
-    rules = [('name', name1, [RE(r"\B\b")], _group0)]
+    rules = [('name', name1, [RE(r"(?=\})")], _group0)]
 template_tag.__name__ = 'template-tag'
 
 keyword = """

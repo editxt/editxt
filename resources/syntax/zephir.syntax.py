@@ -37,6 +37,7 @@ comment2.__name__ = 'comment'
 
 class comment4:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [
         ('keyword', ['__halt_compiler']),
         # ignore {'begin': {'pattern': "\\b(a|an|the|are|I|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|like)\\b", 'type': 'RegExp'}},
@@ -102,7 +103,7 @@ class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['class', 'interface']),
-        ('_group2', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('_group2', RE(r"\b(?:extends|implements)"), [RE(r"(?={)")]),
         title,
     ]
 class0.__name__ = 'class'
@@ -120,7 +121,7 @@ rules = [
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"#"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment2),
-    ('comment', RE(r"__halt_compiler.+?;"), [RE(r"\B\b")], comment4),
+    ('comment', RE(r"__halt_compiler.+?;"), [RE(r"\B|\b")], comment4),
     ('string', RE(r"<<<['\"]?\w+['\"]?$"), [RE(r"^\w+;")], string),
     # ignore {'begin': {'pattern': '(::|->)+[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*', 'type': 'RegExp'}},
     ('function', RE(r"\b(?:function)"), [_function0], function),

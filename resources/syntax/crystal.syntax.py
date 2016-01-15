@@ -145,7 +145,7 @@ class _group4:
         regexp13,
     ]
 
-_group40 = ('_group4', RE(r"(?:!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B\b")], _group4)
+_group40 = ('_group4', RE(r"(?:!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"(?=\B|\b)")], _group4)
 
 class _group9:
     default_text_color = DELIMITER
@@ -267,7 +267,7 @@ class symbol0:
     ]
 symbol0.__name__ = 'symbol'
 
-symbol1 = ('symbol', RE(r":"), [RE(r"\B\b")], symbol0)
+symbol1 = ('symbol', RE(r":"), [RE(r"(?=\B|\b)")], symbol0)
 
 number = ('number', [RE(r"\b0b(?:[01_]*[01])(?:_[uif](?:8|16|32|64))?")])
 
@@ -321,11 +321,91 @@ class template_variable:
     ]
 template_variable.__name__ = 'template-variable'
 
+class template_variable1:
+    default_text_color = DELIMITER
+    rules = [
+        ('keyword', keyword),
+        ('literal', ['false', 'nil', 'true']),
+        string1,
+        string2,
+        string3,
+        string5,
+        string7,
+        string9,
+        string11,
+        string12,
+        string13,
+        string14,
+        string15,
+        ('_group4', RE(r"(?:!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"(?=\}\})")], _group4),
+        regexp15,
+        regexp17,
+        regexp19,
+        regexp21,
+        regexp10,
+        regexp11,
+        regexp12,
+        regexp13,
+        meta0,
+        comment0,
+        class1,
+        class3,
+        function0,
+        function2,
+        symbol,
+        ('symbol', RE(r":"), [RE(r"(?=\}\})")], symbol0),
+        number,
+        number0,
+        number1,
+        number3,
+    ]
+template_variable1.__name__ = 'template-variable'
+
+class template_variable3:
+    default_text_color = DELIMITER
+    rules = [
+        ('keyword', keyword),
+        ('literal', ['false', 'nil', 'true']),
+        string1,
+        string2,
+        string3,
+        string5,
+        string7,
+        string9,
+        string11,
+        string12,
+        string13,
+        string14,
+        string15,
+        ('_group4', RE(r"(?:!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"(?=%\})")], _group4),
+        regexp15,
+        regexp17,
+        regexp19,
+        regexp21,
+        regexp10,
+        regexp11,
+        regexp12,
+        regexp13,
+        meta0,
+        comment0,
+        class1,
+        class3,
+        function0,
+        function2,
+        symbol,
+        ('symbol', RE(r":"), [RE(r"(?=%\})")], symbol0),
+        number,
+        number0,
+        number1,
+        number3,
+    ]
+template_variable3.__name__ = 'template-variable'
+
 rules = [
     ('keyword', keyword),
     ('literal', ['false', 'nil', 'true']),
-    ('template-variable', RE(r"\{\{"), [RE(r"\}\}")], template_variable),
-    ('template-variable', RE(r"\{%"), [RE(r"%\}")], template_variable),
+    ('template-variable', RE(r"\{\{"), [RE(r"\}\}")], template_variable1),
+    ('template-variable', RE(r"\{%"), [RE(r"%\}")], template_variable3),
     string1,
     string2,
     string3,

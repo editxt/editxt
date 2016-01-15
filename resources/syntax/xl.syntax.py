@@ -41,6 +41,7 @@ title0.__name__ = 'title'
 
 class _group1:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [
         ('built_in', built_in),
         ('keyword', keyword),
@@ -49,7 +50,7 @@ class _group1:
 
 class function:
     default_text_color = DELIMITER
-    rules = [('title', title0, [RE(r"\B\b")], _group1)]
+    rules = [('title', title0, [RE(r"(?=->)")], _group1)]
 
 class _group2:
     default_text_color = DELIMITER

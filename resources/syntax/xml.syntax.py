@@ -28,18 +28,19 @@ class _group5:
     rules = [
         ('string', RE(r"\""), [RE(r"\"")], string),
         ('string', RE(r"'"), [RE(r"'")], string),
-        ('string', RE(r"[^\s\/>]+"), [RE(r"\B\b")], string),
+        ('string', RE(r"[^\s\/>]+"), [RE(r"(?=>)")], string),
     ]
 
 class _group3:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [
         _group4,
         ('attr', [RE(r"[A-Za-z0-9\._:-]+")]),
-        ('_group5', RE(r"="), [RE(r"\B\b")], _group5),
+        ('_group5', RE(r"="), [RE(r"(?=>)")], _group5),
     ]
 
-_group30 = ('_group3', RE(r"\B|\b"), [RE(r"\B\b")], _group3)
+_group30 = ('_group3', RE(r"\B|\b"), [RE(r"(?=>)")], _group3)
 
 class tag:
     default_text_color = DELIMITER

@@ -33,7 +33,7 @@ class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['message', 'enum', 'service']),
-        ('title', title0, [RE(r"\B\b")]),
+        ('title', title0, [RE(r"(?=\{)")]),
     ]
 class0.__name__ = 'class'
 

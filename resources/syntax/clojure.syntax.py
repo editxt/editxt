@@ -136,6 +136,7 @@ literal = ('literal', [RE(r"\b(?:true|false|nil)\b")])
 
 class _group2:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [
         None, # _group00,
         string0,
@@ -149,13 +150,13 @@ class _group2:
         # ignore {'begin': "[a-zA-Z_\\-!.?+*=<>&#'][a-zA-Z_\\-!.?+*=<>&#'0-9/;:]*", 'relevance': 0},
     ]
 
-_group20 = ('_group2', name2, [RE(r"\B\b")], _group2)
+_group20 = ('_group2', name2, [RE(r"(?=\))")], _group2)
 
 class _group0:
     default_text_color = DELIMITER
     rules = [
-        ('comment', RE(r"comment"), [RE(r"\B\b")], comment),
-        ('name', name2, [RE(r"\B\b")], _group2),
+        ('comment', RE(r"comment"), [RE(r"(?=\))")], comment),
+        ('name', name2, [RE(r"(?=\))")], _group2),
         _group20,
     ]
 

@@ -42,6 +42,6 @@ rules = [
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('number', RE(r"\b(?:\d+'(?:b|h|o|d|B|H|O|D))?[0-9xzXZ]+"), [RE(r"\B\b")], number),
+    ('number', RE(r"\b(?:\d+'(?:b|h|o|d|B|H|O|D))?[0-9xzXZ]+"), [RE(r"\B|\b")], number),
     ('variable', [RE(r"#\((?!parameter).+\)")]),
 ]

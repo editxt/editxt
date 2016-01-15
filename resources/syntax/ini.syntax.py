@@ -19,6 +19,7 @@ class string:
 
 class _group2:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [
         ('literal', [RE(r"\bon|off|true|false|yes|no\b")]),
         ('variable', [RE(r"\$[\w\d\"][\w\d_]*")]),
@@ -35,7 +36,7 @@ class _group1:
     default_text_color = DELIMITER
     rules = [
         ('attr', [RE(r"[a-z0-9\[\]_-]+")]),
-        ('_group2', RE(r"="), [RE(r"\B\b")], _group2),
+        ('_group2', RE(r"="), [RE(r"$")], _group2),
     ]
 
 rules = [

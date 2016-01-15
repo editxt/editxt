@@ -106,7 +106,7 @@ rules = [
     ('literal', ['.False.', '.True.']),
     ('string', RE(r"'"), [RE(r"'")], string),
     ('string', RE(r"\""), [RE(r"\"")], string),
-    ('function', RE(r"\b(?:subroutine|function|program)"), [RE(r"\B\b")], function),
+    ('function', RE(r"\b(?:subroutine|function|program)"), [RE(r"\B|\b")], function),
     ('comment', RE(r"!"), [RE(r"$")], comment),
     ('comment', RE(r"begin_doc"), [RE(r"end_doc")], comment),
     ('number', number),

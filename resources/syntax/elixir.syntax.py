@@ -78,12 +78,12 @@ rules = [
     comment0,
     ('class', RE(r"\b(?:defmodule|defrecord)"), [RE(r"\bdo\b|$|;")], class0),
     ('function', RE(r"\b(?:def|defp|defmacro)"), [RE(r"\B\b")], function),
-    ('symbol', RE(r":"), [RE(r"\B\b")], symbol),
+    ('symbol', RE(r":"), [RE(r"\B|\b")], symbol),
     ('symbol', [RE(r"[a-zA-Z_][a-zA-Z0-9_]*(?:\!|\?)?:")]),
     ('number', number),
     ('variable', [RE(r"(?:\$\W)|(?:(?:\$|\@\@?)(?:\w+))")]),
     # ignore {'begin': '->'},
-    ('_group3', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B\b")], _group3),
+    ('_group3', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B|\b")], _group3),
 ]
 
 subst.rules.extend(rules)

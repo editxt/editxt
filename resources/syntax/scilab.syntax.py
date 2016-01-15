@@ -62,7 +62,7 @@ rules = [
     ('keyword', keyword),
     ('literal', literal),
     ('function', RE(r"\b(?:function)"), [RE(r"$")], function),
-    ('_group0', RE(r"[a-zA-Z_][a-zA-Z_0-9]*(?:'+[\.']*|[\.']+)"), [RE(r"\B\b")]),
+    ('_group0', RE(r"[a-zA-Z_][a-zA-Z_0-9]*(?:'+[\.']*|[\.']+)"), [RE(r"\B|\b")]),
     ('_group1', RE(r"\["), [RE(r"\]'*[\.']*")], _group1),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     number0,

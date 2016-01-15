@@ -77,7 +77,7 @@ class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['aspect']),
-        ('_group2', RE(r"\b(?:extends|implements|pertypewithin|perthis|pertarget|percflowbelow|percflow|issingleton)"), [RE(r"\B\b")]),
+        ('_group2', RE(r"\b(?:extends|implements|pertypewithin|perthis|pertarget|percflowbelow|percflow|issingleton)"), [RE(r"(?=[{;=])")]),
         title,
         ('_group3', RE(r"\([^\)]*"), [RE(r"[)]+")], _group3),
     ]
@@ -88,7 +88,7 @@ class class2:
     rules = [
         ('keyword', ['class', 'interface']),
         ('keyword', ['class', 'interface']),
-        ('_group4', RE(r"\b(?:extends|implements)"), [RE(r"\B\b")]),
+        ('_group4', RE(r"\b(?:extends|implements)"), [RE(r"(?=[{;=])")]),
         title,
     ]
 class2.__name__ = 'class'
@@ -112,7 +112,7 @@ class _group7:
     default_text_color = DELIMITER
     rules = [
         ('keyword', keyword),
-        ('_group8', RE(r"[a-zA-Z_]\w*\s*\("), [RE(r"\B\b")], _group8),
+        ('_group8', RE(r"[a-zA-Z_]\w*\s*\("), [RE(r"(?=[{;])")], _group8),
         string1,
     ]
 
@@ -156,7 +156,7 @@ rules = [
     ('class', RE(r"\b(?:class|interface)"), [_class0], class2),
     ('_group5', RE(r"\b(?:pointcut|after|before|around|throwing|returning)"), [RE(r"[)]")], _group5),
     ('_group7', RE(r"(?=[:])"), [RE(r"[{;]")], _group7),
-    ('_group9', RE(r"\b(?:new|throw)"), [RE(r"\B\b")]),
+    ('_group9', RE(r"\b(?:new|throw)"), [RE(r"\B|\b")]),
     ('function', RE(r"(?=\w+ +\w+(?:\.)?\w+\s*\([^\)]*\)\s*(?:(?:throws)[\w\s,]+)?[\{;])"), [_function0], function),
     number0,
     ('meta', [RE(r"@[A-Za-z]+")]),

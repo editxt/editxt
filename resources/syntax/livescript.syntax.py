@@ -143,13 +143,14 @@ class function:
 
 class _group5:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [('keyword', ['extends']), title]
 
 class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['class']),
-        ('_group5', RE(r"\b(?:extends)"), [RE(r"\B\b")], _group5),
+        ('_group5', RE(r"\b(?:extends)"), [RE(r"$")], _group5),
         title,
     ]
 class0.__name__ = 'class'

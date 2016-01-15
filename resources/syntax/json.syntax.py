@@ -35,6 +35,7 @@ attr1.__name__ = 'attr'
 
 class _group1:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [('literal', ['true', 'false', 'null'])]
 
 class _group0:
@@ -43,6 +44,7 @@ class _group0:
 
 class _group3:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [('literal', ['true', 'false', 'null'])]
 
 class _group2:

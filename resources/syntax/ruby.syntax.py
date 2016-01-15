@@ -74,7 +74,7 @@ string10 = ('string', RE(r"%[qQwWx]?-"), [RE(r"-")], string)
 
 string11 = ('string', RE(r"%[qQwWx]?\|"), [RE(r"\|")], string)
 
-string12 = ('string', RE(r"\B\?(?:\\\d{1,3}|\\x[A-Fa-f0-9]{1,2}|\\u[A-Fa-f0-9]{4}|\\?\S)\b"), [RE(r"\B\b")], string)
+string12 = ('string', RE(r"\B\?(?:\\\d{1,3}|\\x[A-Fa-f0-9]{1,2}|\\u[A-Fa-f0-9]{4}|\\?\S)\b"), [RE(r"$")], string)
 
 _group3 = ('_group3', RE(r"#<"), [RE(r">")])
 
@@ -89,7 +89,7 @@ class class0:
     rules = [
         ('keyword', ['class', 'module']),
         ('title', [RE(r"[A-Za-z_]\w*(?:::\w+)*(?:\?|\!)?")]),
-        ('_group4', RE(r"<\s*"), [RE(r"\B\b")]), #, _group4),
+        ('_group4', RE(r"<\s*"), [RE(r"(?=$|;)")]), #, _group4),
         comment0,
         comment1,
         comment3,
@@ -144,7 +144,7 @@ class symbol0:
     ]
 symbol0.__name__ = 'symbol'
 
-symbol1 = ('symbol', RE(r":"), [RE(r"\B\b")], symbol0)
+symbol1 = ('symbol', RE(r":"), [RE(r"$")], symbol0)
 
 number = [
     RE(r"(?:\b0[0-7_]+)|(?:\b0x[0-9a-fA-F_]+)|(?:\b[1-9][0-9_]*(?:\.[0-9_]+)?)|[0_]\b"),
@@ -170,7 +170,7 @@ class _group8:
         comment3,
     ]
 
-_group80 = ('_group8', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"\B\b")], _group8)
+_group80 = ('_group8', RE(r"(?:!|!=|!==|%|%=|&|&&|&=|\*|\*=|\+|\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\?|\[|\{|\(|\^|\^=|\||\|=|\|\||~)\s*"), [RE(r"$")], _group8)
 
 class _group2:
     default_text_color = DELIMITER

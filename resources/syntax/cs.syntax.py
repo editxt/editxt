@@ -131,6 +131,6 @@ rules = [
     number0,
     ('_group2', RE(r"\b(?:class|interface)"), [RE(r"[{;=]")], _group2),
     ('_group3', RE(r"\b(?:namespace)"), [RE(r"[{;=]")], _group3),
-    ('_group4', RE(r"\b(?:new|return|throw|await)"), [RE(r"\B\b")]),
+    ('_group4', RE(r"\b(?:new|return|throw|await)"), [RE(r"\B|\b")]),
     ('function', RE(r"(?=(?:[a-zA-Z]\w*(?:<[a-zA-Z]\w*>)?\s+)+[a-zA-Z]\w*\s*\()"), [_function0], function),
 ]

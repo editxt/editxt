@@ -34,6 +34,7 @@ string1 = ('string', RE(r"\""), [RE(r"\"")], string)
 
 class _group4:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [
         ('attr', [RE(r":\w+")]),
         string0,
@@ -47,6 +48,7 @@ class _group3:
 
 class _group7:
     default_text_color = DELIMITER
+    ends_with_parent = True
     rules = [
         ('attr', [RE(r"\w+")]),
         string0,
@@ -75,9 +77,9 @@ _group101.__name__ = '_group10'
 
 rules = [
     ('meta', meta),
-    ('comment', RE(r"^\s*(?:!=#|=#|-#|/).*$"), [RE(r"\B\b")], comment),
+    ('comment', RE(r"^\s*(?:!=#|=#|-#|/).*$"), [RE(r"\B|\b")], comment),
     ('_group1', _group10, [RE(r"\n")], 'ruby'),
-    ('tag', RE(r"^\s*%"), [RE(r"\B\b")], tag),
+    ('tag', RE(r"^\s*%"), [RE(r"\B|\b")], tag),
     # ignore {'begin': '^\\s*[=~]\\s*'},
     ('_group10', _group101, [RE(r"}")], 'ruby'),
 ]

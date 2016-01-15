@@ -254,7 +254,7 @@ rules = [
     ('string', [RE(r"`\"[^\r\n]*?\"'")]),
     ('string', [RE(r"\"[^\r\n\"]*\"")]),
     ('built_in', built_in),
-    ('comment', RE(r"^[ 	]*\*.*$"), [RE(r"\B\b")], comment),
+    ('comment', RE(r"^[ 	]*\*.*$"), [RE(r"\B|\b")], comment),
     ('comment', RE(r"//"), [RE(r"$")], comment),
     ('comment', RE(r"/\*"), [RE(r"\*/")], comment),
 ]

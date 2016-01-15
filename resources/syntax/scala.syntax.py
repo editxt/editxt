@@ -57,7 +57,7 @@ class class0:
     default_text_color = DELIMITER
     rules = [
         ('keyword', ['class', 'object', 'trait', 'type']),
-        ('_group1', RE(r"\b(?:extends|with)"), [RE(r"\B\b")]),
+        ('_group1', RE(r"\b(?:extends|with)"), [RE(r"(?=[:={\[\n;])")]),
         ('params', RE(r"\("), [RE(r"\)")]),
         title0,
     ]
