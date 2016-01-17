@@ -1,5 +1,5 @@
 diff --git a/resources/syntax/markdown.syntax.py b/resources/syntax/markdown.syntax.py
-index 4b6841b..1fe8900 100644
+index 0a785bd..ad66189 100644
 --- a/resources/syntax/markdown.syntax.py
 +++ b/resources/syntax/markdown.syntax.py
 @@ -1,5 +1,5 @@
@@ -9,7 +9,14 @@ index 4b6841b..1fe8900 100644
  # source: markdown.js
  name = 'Markdown'
  file_patterns = ['*.markdown', '*.md', '*.mkdown', '*.mkd']
-@@ -62,7 +62,8 @@ rules = [
+@@ -58,16 +58,17 @@ class _group3:
+ 
+ rules = [
+     ('section', RE(r"^#{1,6}"), [RE(r"$")]),
+-    ('section', [RE(r"^.+?\n[=-]{2,}$")]),
+     ('_group0', RE(r"<"), [RE(r">")], 'xml'),
+     ('bullet', [RE(r"^(?:[*+-]|(?:\d+\.))\s+")]),
+     ('strong', [RE(r"[*_]{2}.+?[*_]{2}")]),
      ('emphasis', [RE(r"\*.+?\*")]),
      ('emphasis', [RE(r"_.+?_")]),
      ('quote', RE(r"^>\s+"), [RE(r"$")]),
@@ -18,4 +25,7 @@ index 4b6841b..1fe8900 100644
 +    ('code', [RE(r"``.+?``"), RE(r"`.+?`")]),
      ('code', RE(r"^(?: {4}|	)"), [RE(r"$")]),
      ('_group1', RE(r"^[-\*]{3,}"), [RE(r"$")]),
-     ('_group2', RE(r"(?=\[.+?\][\(\[].*?[\)\]])"), [RE(r"\B\b")], _group2),
+     ('_group2', RE(r"(?=\[.+?\][\(\[].*?[\)\]])"), [RE(r"\B|\b")], _group2),
+     ('_group3', RE(r"(?=^\[.+\]:)"), [RE(r"\B|\b")], _group3),
++    ('section', [RE(r"^.+?\n[=-]{2,}$")]),
+ ]

@@ -665,6 +665,28 @@ def test_Highlighter_color_text():
         ``` code text_color
         *strong* emphasis text_color
         """)
+    yield test("markdown",
+        """
+        ## YAML
+
+        ```yaml
+        ---
+        # comment
+        string_1: "Bar"
+        """,
+        """
+        ## YAML section text_color
+        ``` code text_color
+        yaml tag
+          --- meta text_color YAML
+          # comment YAML
+           comment
+         comment YAML
+          string_1: attr text_color YAML
+          " string YAML
+          Bar string YAML
+          " string YAML
+        """)
 
     yield test("javascript",
         "var x = 'y';",

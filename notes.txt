@@ -22,7 +22,7 @@ Building and packaging
 Python environment setup. RECOMMENDED: use a virtualenv
 (http://pypi.python.org/pypi/virtualenv). Install dependencies::
 
-    mkvirtualenv --python=python3.4 ...
+    mkvirtualenv --python=/opt/local/bin/python3.5 xt
 
     pip install --upgrade pip           # pip-6.0.6
     pip install --upgrade setuptools    # setuptools-11.3.1
@@ -82,7 +82,7 @@ Top priority
 
 Aesthetics
   - syntax highlighting
-    - more lanugages
+x    - more lanugages
     - better language detection (file extension, shebang line, etc.)
     - custom language/extension mapping in user config
     - themes
