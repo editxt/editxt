@@ -67,6 +67,8 @@ class SyntaxFactory():
                             if pattern in self.registry:
                                 overrides.append(pattern)
                             self.registry[pattern] = sdef
+                            if pattern.startswith("*."):
+                                self.by_id.setdefault(pattern[2:], sdef)
                         self.by_id[sdef.id] = sdef
                 except Exception:
                     log.error("error loading syntax definition: %s", filename, exc_info=True)
