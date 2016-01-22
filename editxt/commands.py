@@ -426,7 +426,7 @@ def debug(editor, opts):
         raise CommandError("please specify a sub command")
     sub, args = opts.action
     if sub.name == "mem-profile":
-        editor.document.app.open_error_log(set_current=True)
+        editor.document.app.open_error_log()
         mem_profile()
     elif sub.name == "error":
         raise Exception("raised by debug command")

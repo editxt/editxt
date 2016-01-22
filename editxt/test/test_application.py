@@ -132,7 +132,7 @@ def test_application_will_finish_launching():
                 else:
                     create_window(ed_config)
             if error:
-                open_error_log()
+                open_error_log(set_current=False)
         else:
             create_window()
         with m:
@@ -364,7 +364,7 @@ def test_open_error_log():
                 m.method(app.current_window)() >> (ed if c.has_window else None)
                 if not c.has_window:
                     m.method(app.create_window)() >> ed
-                ed.insert_items([err])
+                ed.insert_items([err], focus=True)
             m.method(app.iter_editors_of_document)(err) >> idocs
             with m:
                 app.open_error_log()

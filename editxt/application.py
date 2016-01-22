@@ -52,6 +52,8 @@ class Error(Exception): pass
 class Application(object):
 
     def __init__(self, profile=None):
+        self.launch_fault = False
+        self.launching = True
         if profile is None:
             profile = self.default_profile()
         self.profile_path = os.path.expanduser(profile)
@@ -164,17 +166,18 @@ class Application(object):
         self.text_commander.load_commands(delegate.textMenu)
         self.text_commander.load_shortcuts(delegate.shortcutsMenu)
         states = list(self.iter_saved_window_states())
+        errors = []
         if states:
-            errors = []
             for state in reversed(states):
                 if isinstance(state, StateLoadFailure):
                     errors.append(state)
                 else:
                     self.create_window(state)
-            if errors:
-                self.open_error_log()
         else:
             self.create_window()
+        self.launching = False
+        if self.launch_fault or errors:
+            self.open_error_log(set_current=False)
 
     def create_window(self, state=None):
         from editxt.window import Window
@@ -259,7 +262,7 @@ class Application(object):
             window = self.current_window()
             if window is None:
                 window = self.create_window()
-            window.insert_items([doc])
+            window.insert_items([doc], focus=set_current)
         else:
             if set_current:
                 self.set_current_editor(editor)

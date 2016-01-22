@@ -84,10 +84,13 @@ class LogViewHandler(logging.StreamHandler):
             return super().emit(record)
         finally:
             if record.levelno > logging.WARNING:
-                try:
-                    self.app.open_error_log(set_current=False)
-                except Exception:
-                    log.warn("cannot open error log", exc_info=True)
+                if self.app.launching:
+                    self.app.launch_fault = True
+                else:
+                    try:
+                        self.app.open_error_log(set_current=False)
+                    except Exception:
+                        log.warn("cannot open error log", exc_info=True)
 
 
 def create_error_log_document(app, closefunc):
