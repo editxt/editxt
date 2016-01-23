@@ -80,6 +80,8 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+Add a way to find file (with end of path) in project
+Add context menu to items in sidebar: Copy file path
 Aesthetics
   - syntax highlighting
 x    - more lanugages
@@ -91,6 +93,10 @@ x    - more lanugages
     - make it faster when transitioning to/from a delimited range near the beginning of a large document
         http://www.stiefels.net/2008/01/22/syntax-highlighting-for-nstextview-with-flex/
         http://code.activestate.com/recipes/457664-hidden-scanner-functionality-in-re-module/
+    - cache syntax definition metadata for faster loading
+      - cache summary in cache.json file in definitions dir
+      - wait to do this until slow enough to notice
+      - profile: loaded 147 defintions in 0.163283s
 x      - custom background color
 x      - with custom colors per language
 x  - font size (make easy to adjust)
@@ -126,11 +132,11 @@ Fix ack command with --after
   - allow options intermixed with paths (VarArgs dispatch)
 Fix ack command
   - wrong default path in project view
+  - add support for ag output formatting
 Allow command view to be resized by dragging divider
 Improve interfaces for creating stand-alone (not shipped with EditXT) commands
 Show document pane scroll bar on left side
 Move editxt.platform.views.CommandView.KEYS into editxt.platform.const?
-Add context menu to items in sidebar: Copy file path
 Add move command to relocate file on disk
 Add py command for quick python command execution
 Add "shell" command for shell command execution (allow piping)

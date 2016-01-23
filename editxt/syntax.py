@@ -31,10 +31,6 @@ import AppKit as ak
 from Foundation import NSRange, NSUnionRange, NSValueTransformer
 from objc import NULL
 
-# from pygments.formatter import Formatter
-# from pygments.lexers import get_lexer_by_name
-# from pygments.styles import get_style_by_name
-
 import editxt.constants as const
 from editxt.datatypes import WeakProperty
 
@@ -187,6 +183,9 @@ class Highlighter(object):
                 start -= 1
             long_range = text.attribute_atIndex_longestEffectiveRange_inRange_
             token, adjrange = long_range(SYNTAX_TOKEN, start, None, (0, tlen))
+            #log.debug("%s %s %s -> %s",
+            #    minrange, start, tuple(adjrange),
+            #    tuple(NSUnionRange(minrange, adjrange)))
             minrange = NSUnionRange(minrange, adjrange)
             offset = minrange[0]
             minend = sum(minrange)
@@ -216,6 +215,7 @@ class Highlighter(object):
         string = text.string()
         theme = self.theme
         langs = self.langs
+        nexts = {}
         end = prevend = offset
         key = ""
         null = NULL
@@ -224,7 +224,7 @@ class Highlighter(object):
             xkey, ignore = get_attribute(x_range, offset, null)
             if xkey:
                 key = xkey
-                lang, ignore = langs[xkey]
+                lang = langs[xkey]
 
         while lang is not None:
             wordinfo = lang.wordinfo
@@ -310,12 +310,12 @@ class Highlighter(object):
                         xkey = info.lang.key if info.lang else key
                         if xkey:
                             if info.lang and xkey not in langs:
-                                langs[xkey] = (info.lang, start)
+                                langs[xkey] = info.lang
+                                nexts[xkey] = start
                             add_attribute(x_range, xkey, rng)
                         else:
                             rem_attribute(x_range, rng)
-                    elif lang and langs.get(lang.key, (None, end - 1))[1] == end:
-                        # FIXME could hit this due to self.langs holding stale start value?
+                    elif lang and nexts.get(lang.key) == end:
                         raise Error("non-advancing range: index={} {} {} {}".format(
                             start,
                             match,
@@ -324,7 +324,8 @@ class Highlighter(object):
                         ))
 
                     if lang is not None:
-                        langs[lang.key] = (lang, start)
+                        langs[lang.key] = lang
+                        nexts[lang.key] = start
                         key = lang.key
                     else:
                         key = ''

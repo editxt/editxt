@@ -192,37 +192,41 @@ def test_Highlighter_color_text():
             long_range = self.attribute_atIndex_longestEffectiveRange_inRange_
             while rng[1] > 0:
                 key, xrng = long_range(SYNTAX_RANGE, rng[0], None, rng)
-                lang = (highlighter.langs[key][0].name if key else "")
+                lang = (highlighter.langs[key].name if key else "")
                 if lang == highlighter.syntaxdef.name:
                     lang = ""
                 #print(lang.strip(), xrng)
                 level = 1 if lang else 0
                 xend = sum(xrng)
                 while True:
-                    attr, attr_range = long_range(SYNTAX_TOKEN, xrng[0], None, full)
-                    colr, x = long_range(fg_color, xrng[0], NULL, full)
-                    text = self[attr_range[0]: sum(attr_range)]
-                    if attr or colr and colr != "text_color" and text.strip():
+                    attr, attr_rng = long_range(SYNTAX_TOKEN, xrng[0], None, full)
+                    color, color_rng = long_range(fg_color, xrng[0], None, full)
+                    if attr:
+                        color_rng = attr_rng
+                    else:
+                        color_rng = intersect_ranges(attr_rng, color_rng)
+                    text = self[color_rng]
+                    if attr or color and color != "text_color" and text.strip():
                         if attr:
                             attr_name = attr
                         else:
                             # default text color, not a matched token
-                            attr_name = "{} {} -".format(lang, colr)
+                            attr_name = "{} {} -".format(lang, color)
                         print(
                             attr_name.ljust(30),
                             (key or '').ljust(15),
-                            repr(text)[1:-1]
+                            repr(text)[1:-1],
                         )
-                        attr = attr.rsplit(" ", 1)[-1] if attr else colr
-                        language = lang if xrng[0] <= attr_range[0] else ("~" + lang)
+                        attr = attr.rsplit(" ", 1)[-1] if attr else color
+                        language = lang if xrng[0] <= color_rng[0] else ("~" + lang)
                         language = language.replace(attr + ".", "$.")
                         lines.append("{}{} {}{}".format(
                             "  " * level,
                             text,
-                            attr if attr == colr else "{} {}".format(attr, colr),
+                            attr if attr == color else "{} {}".format(attr, color),
                             (" " + language) if language else "",
                         ))
-                    start = sum(attr_range)
+                    start = sum(attr_rng)
                     if start >= xend:
                         xend = start
                         break
@@ -258,10 +262,13 @@ def test_Highlighter_color_text():
         hl = Highlighter(theme)
         hl.syntaxdef = get_syntax_definition(lang)
         assert len(pairs) % 2 == 0, "got odd number of edit/expect pairs"
+        string = dedent(string) if string.startswith("\n") else string
         text = Text(string)
         yield test(hl, text, expect)
         for edit, expect in zip(islice(pairs, 0, None, 2),
                                 islice(pairs, 1, None, 2)):
+            edit_text = dedent(edit[2]).lstrip() if edit[2].startswith("\n") else edit[2]
+            edit = edit[0], edit[1], edit_text
             yield test(hl, text, expect, edit)
 
     config = Config(None, schema={"theme": {
@@ -454,7 +461,7 @@ def test_Highlighter_color_text():
         """ string.multiline.double-quote string
         ' """ """ ' string.single-quote string
         ''',
-        (17, 1, ''),
+        (9, 1, ''),
         '''
         r""" string.multiline.double-quote string
           [ keyword.set keyword Regular Expression
@@ -462,7 +469,7 @@ def test_Highlighter_color_text():
         """ string.multiline.double-quote string
         ' """ """ ' string.single-quote string
         ''',
-        (17, 0, ']'),
+        (9, 0, ']'),
         '''
         r""" string.multiline.double-quote string
           [ keyword.set keyword Regular Expression
@@ -680,8 +687,7 @@ def test_Highlighter_color_text():
         yaml tag
           --- meta text_color YAML
           # comment YAML
-           comment
-         comment YAML
+           comment comment YAML
           string_1: attr text_color YAML
           " string YAML
           Bar string YAML
@@ -835,8 +841,7 @@ def test_Highlighter_color_text():
         ) params text_color
         . text_color
         % comment
-        % backwards compatibility
-         comment
+        % backwards compatibility comment
         """)
 
     yield test("erlang",
@@ -854,6 +859,66 @@ def test_Highlighter_color_text():
         }} text_color
         ; function text_color
         """)
+
+    yield from edit("YAML",
+        """
+        #theme:
+        #    text_color: EFEFEF
+        #    selection_color: 584848
+        #    background_color: 101010
+
+
+        font:
+          face: Inconsolata
+          size: 13
+        """,
+        """
+        # comment
+        theme: comment
+        # comment
+            text_color: EFEFEF comment
+        # comment
+            selection_color: 584848 comment
+        # comment
+            background_color: 101010 comment
+        font: attr text_color
+          face: attr text_color
+          size: attr text_color
+        13 number text_color
+        """,
+        (93, 0, """
+        shortcuts:
+          "Command+{": " doc  down"
+          "Command+}": " doc  up"
+        """),
+        """
+        # comment
+        theme: comment
+        # comment
+            text_color: EFEFEF comment
+        # comment
+            selection_color: 584848 comment
+        # comment
+            background_color: 101010 comment
+        shortcuts: attr text_color
+        " string
+        Command+{ string
+        " string
+        " string
+         doc  down string
+        " string
+        " string
+        Command+} string
+        " string
+        " string
+         doc  up string
+        " string
+        font: attr text_color
+          face: attr text_color
+          size: attr text_color
+        13 number text_color
+        """,
+        )
 
     class lang:
         class sub:
@@ -1019,6 +1084,15 @@ def make_definition(rules):
     sdef = SyntaxDefinition("", registry=reg, **args)
     sdef.root_registry = reg # maintain reference from root definition
     return sdef
+
+
+def intersect_ranges(rng1, rng2):
+    """Get the intersection range of the given ranges
+
+    Returns a zero-length range if the given ranges do not intersect
+    """
+    start = max(rng1[0], rng2[0])
+    return (start, max(0, min(sum(rng1), sum(rng2)) - start))
 
 
 class WeakrefableDict(dict): pass
