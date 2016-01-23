@@ -81,7 +81,11 @@ View release stats:
 Top priority
 
 Add a way to find file (with end of path) in project
-Add context menu to items in sidebar: Copy file path
+Add context menu to items in sidebar:
+  - Copy file path
+  - Show in Finder
+Add mv command to move file on disk. Alternately, add moved file detection.
+Prompt for save if file has path but does not exist.
 Aesthetics
   - syntax highlighting
 x    - more lanugages

@@ -20,6 +20,7 @@
 import os
 import sys
 import traceback
+from subprocess import check_output, CalledProcessError
 
 import objc
 from AppKit import NSObject
@@ -36,7 +37,7 @@ def log_python_exception(exception):
         tb = userInfo['__pyobjc_exc_traceback__']
     except KeyError:
         tb = userInfo['__pyobjc_exc_value__'].__traceback__
-    log.error('*** Python exception discarded!\n' +
+    log.error('Python exception discarded\n' +
         ''.join(traceback.format_exception(
             userInfo['__pyobjc_exc_type__'],
             userInfo['__pyobjc_exc_value__'],
@@ -48,19 +49,44 @@ def log_python_exception(exception):
 
 
 def log_objc_exception(exception):
+    stack = get_objc_traceback(exception)
+    if stack:
+        stack = "\nStack trace (most recent call last):\n{}".format(stack)
+    else:
+        stack = ""
+    log.error("ObjC exception discarded: %s: %s%s",
+               exception.name(), exception.reason(), stack)
+    return not stack  # allow objc to lo errors i no stack
+
+
+def get_objc_traceback(exception, cache={}):
+    if cache.get("n/a"):
+        return None
+    if cache:
+       symbolize = cache["symbolize"]
+    else:
+        if os.path.exists('/usr/bin/atos'):
+            # -d flag is to silence warning about atos moving to xcrun command
+            # xcrun prompts "developer tools needs to take control of another
+            # process", which is annoying so we don't use it here.
+            command = ['/usr/bin/atos', '-d', '-p']
+        else:
+            cache["n/a"] = True
+            return None
+        def symbolize(pid, stack):
+            try:
+                out = check_output(command + [str(pid)] + stack.split())
+            except CalledProcessError as exc:
+                cache["n/a"] = True
+                return None
+            if isinstance(out, bytes):
+                out = out.decode('utf-8')
+            lines = [x for x in reversed(out.split("\n")) if x]
+            return "  " + "\n  ".join(lines)
+        cache["symbolize"] = symbolize
     userInfo = exception.userInfo()
     stack = userInfo.get(NSStackTraceKey)
-    if not stack or not os.path.exists('/usr/bin/atos'):
-        return True
-    pipe = os.popen('/usr/bin/atos -p %d %s' % (os.getpid(), stack))
-    stacktrace = pipe.readlines()
-    stacktrace.reverse()
-    stack = ''.join([('  '+line) for line in stacktrace])
-    log.error("ObjC exception %s (reason: %s) discarded\n"
-        "Stack trace (most recent call last):\n%s",
-        exception.name(), exception.reason(), stack)
-    # we logged it, so don't log it for us
-    return False
+    return symbolize(os.getpid(), stack) if stack else None
 
 
 class DebuggingDelegate(NSObject):
@@ -81,10 +107,10 @@ class DebuggingDelegate(NSObject):
             else:
                 return False # don't log it for us
         except:
-            print("*** Exception occurred during exception handler ***",
-                    file=sys.stderr)
-            traceback.print_exc(sys.stderr)
-            return True
+            log.exception("Error in exception handler")
+            sys.stderr.write("Error in exception handler\n")
+            sys.stderr.write(traceback.format_exc())
+            return bool(self.verbosity & LOGSTACKTRACE)
 
     @objc.typedSelector(b'c@:@@I')
     def exceptionHandler_shouldHandleException_mask_(self, sender, exception, aMask):
