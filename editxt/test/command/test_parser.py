@@ -694,6 +694,18 @@ def test_File():
         yield test, "..", ["../"], 0
         yield test, "../", ["dir"], 3
 
+        field = File('dir', default="~/dir")
+        check = make_completions_checker(field)
+        def test(input, output, *args):
+            if input.startswith("/"):
+                input = tmp + "/"
+            with replattr(os.path, "expanduser", expanduser):
+                check(input, output, *args)
+        yield test, "", [], 0
+        check = make_completions_checker(
+                    field.with_context(app.windows[0].projects[0]))
+        yield test, "", ["a.txt", "B\\ file", "b.txt"], 0
+
 def test_DynamicList():
     def get_items(editor):
         return [

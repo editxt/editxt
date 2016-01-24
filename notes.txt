@@ -80,12 +80,13 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+Fix lag (line height bug?) in insert line on OS X 10.11
 Add a way to find file (with end of path) in project
 Add context menu to items in sidebar:
   - Copy file path
   - Show in Finder
-Add mv command to move file on disk. Alternately, add moved file detection.
-Prompt for save if file has path but does not exist.
+Add command to set/change file path. Alternately, add moved file detection.
+Prompt on save if file has path but does not exist on disk.
 Aesthetics
   - syntax highlighting
 x    - more lanugages

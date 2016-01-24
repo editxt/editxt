@@ -780,7 +780,10 @@ class File(String):
 
     def get_completions(self, arg):
         from os.path import exists, expanduser, isabs, isdir, join, sep, split
-        token = super().consume(arg.text, arg.start)[0] or ""
+        if arg.start >= len(arg.text):
+            token = ""
+        else:
+            token = super().consume(arg.text, arg.start)[0] or ""
         if token == '~':
             return [CompleteWord('~/', (lambda:''))]
         if token.startswith('~'):
