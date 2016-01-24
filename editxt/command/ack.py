@@ -30,7 +30,7 @@ import editxt.constants as const
 import editxt.config as config
 from editxt.command.base import command, CommandError
 from editxt.command.parser import CommandParser, File, Regex, RegexPattern, String, VarArgs
-from editxt.command.util import has_editor
+from editxt.command.util import has_editor, get_selection
 from editxt.platform.app import beep
 from editxt.platform.markdown import markdown
 
@@ -47,7 +47,7 @@ DEFAULT_OPTIONS = [
 
 
 @command(arg_parser=CommandParser(
-    Regex("pattern"),
+    Regex("pattern", default=get_selection),
     File("path"),
     VarArgs("options", String("options")),
     # TODO SubParser with dynamic dispatch based on pattern matching

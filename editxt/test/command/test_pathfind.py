@@ -69,7 +69,7 @@ def test_pathfind():
             editor.document.text_storage[:] = "from file.txt import txt"
         m = Mocker()
         view = editor.text_view = m.mock()
-        (view.selectedRange() << selection).count(0, 2)
+        (view.selectedRange() << selection).count(0, 4)
         with m:
             bar = CommandTester(mod.pathfind, editor=editor, output=True)
             bar(command)

@@ -27,7 +27,7 @@ from urllib.parse import quote
 from editxt.command.base import command, CommandError
 from editxt.command.parser import (CommandParser, Choice, File, Options,
     Regex, RegexPattern)
-from editxt.command.util import has_editor
+from editxt.command.util import has_editor, get_selection
 from editxt.platform.markdown import markdown
 from editxt.util import user_path
 
@@ -41,13 +41,6 @@ def base_path(editor=None):
     if not path and editor.file_path and isdir(dirname(editor.file_path)):
         path = dirname(editor.file_path)
     return path
-
-
-def get_selection(editor=None):
-    if editor is None or editor.document is None or editor.selection[1] == 0:
-        return None
-    text = editor.document.text_storage[editor.selection]
-    return RegexPattern(text, default_flags=0)
 
 
 @command(arg_parser=CommandParser(
