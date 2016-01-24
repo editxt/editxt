@@ -627,6 +627,8 @@ class CommandManager(object):
 
     def validate_hotkey(self, value):
         if value is not None:
+            if isinstance(value, str):
+                value = parse_hotkey(value)
             assert len(value) == 2, "invalid hotkey tuple: %r" % (value,)
             # TODO check if a hot key is already in use; ignore if it is
             return value

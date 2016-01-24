@@ -25,7 +25,7 @@ from os.path import dirname, isdir, join, sep
 from urllib.parse import quote
 
 from editxt.command.base import command, CommandError
-from editxt.command.parser import CommandParser, Choice, File, Regex
+from editxt.command.parser import CommandParser, Choice, File, Regex, RegexPattern
 from editxt.command.util import has_editor
 from editxt.platform.markdown import markdown
 from editxt.util import user_path
@@ -42,8 +42,15 @@ def base_path(editor=None):
     return path
 
 
+def get_selection(editor=None):
+    if editor is None or editor.document is None or editor.selection[1] == 0:
+        return None
+    text = editor.document.text_storage[editor.selection]
+    return RegexPattern(text, default_flags=0)
+
+
 @command(arg_parser=CommandParser(
-    Regex("path-pattern"),
+    Regex("path-pattern", default=get_selection),
     File("search-path", default=base_path),
     Choice(
         "open-single-match",
@@ -54,8 +61,9 @@ def base_path(editor=None):
 ), is_enabled=has_editor)
 def pathfind(editor, args):
     """Find file by path"""
-    if not args or not args.path_pattern:
-        raise CommandError("path-pattern is required")
+    if not (args and args.path_pattern):
+        from editxt.commands import show_command_bar
+        return show_command_bar(editor, "pathfind ")
     pattern = args.path_pattern
     search_path = args.search_path
     regex = re.compile(pattern, pattern.flags)

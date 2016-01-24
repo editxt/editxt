@@ -45,7 +45,7 @@ def test_pathfind():
 
     @gentest
     @test_app(initial_config)
-    def base_test(app, command, files=None, config=""):
+    def test(app, command, files=None, config="", selection=(0, 0)):
         tmp = test_app(app).tmp
         os.mkdir(join(tmp, "dir"))
         os.mkdir(join(tmp, "dir", "file"))
@@ -64,8 +64,14 @@ def test_pathfind():
         print(command)
 
         editor = app.windows[0].current_editor
-        bar = CommandTester(mod.pathfind, editor=editor, output=True)
-        bar(command)
+        if editor.document is not None:
+            editor.document.text_storage[:] = "from file.txt import txt"
+        m = Mocker()
+        view = editor.text_view = m.mock()
+        (view.selectedRange() << selection).count(0, 2)
+        with m:
+            bar = CommandTester(mod.pathfind, editor=editor, output=True)
+            bar(command)
         output = bar.output
         if files is None:
             assert output is None, output
@@ -80,6 +86,9 @@ def test_pathfind():
             tapp = test_app(app)
             eq_(tapp.state, tapp.config.replace("*", "") + config)
 
+    yield test("pathfind", ["a_file.txt", "file.txt", "file/txt"], selection=(5, 8))
+
+    base_test = test
     for cfg in [None, "window project(/dir)* editor"]:
         test = base_test if cfg is None else partial(base_test, app_config=cfg)
         yield test("pathfind file\.txt", ["a_file.txt", "file.txt"])
