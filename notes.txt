@@ -81,10 +81,14 @@ View release stats:
 Top priority
 
 Fix lag (line height bug?) in insert line on OS X 10.11
-Add a way to find file (with end of path) in project
+xAdd pathfind command to find file (with given portion of path) in project
+  - default to selected text
+Add "..." alias for project root
 Add context menu to items in sidebar:
   - Copy file path
   - Show in Finder
+Multi-select in file tree
+  - move close button to context menu
 Add command to set/change file path. Alternately, add moved file detection.
 Prompt on save if file has path but does not exist on disk.
 Aesthetics

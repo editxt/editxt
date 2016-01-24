@@ -292,8 +292,8 @@ def get_latest_changes(version):
         print("recent changes not found in changelog.md")
         return ""
     value = match.group(1)
-    parser = commonmark.DocParser()
-    renderer = commonmark.HTMLRenderer()
+    parser = commonmark.Parser()
+    renderer = commonmark.HtmlRenderer()
     return renderer.render(parser.parse(value))
 
 
@@ -311,8 +311,8 @@ def update_change_log_html():
         print("Change Log header not found in changelog.md")
         return False
     value = "".join(lines)
-    parser = commonmark.DocParser()
-    renderer = commonmark.HTMLRenderer()
+    parser = commonmark.Parser()
+    renderer = commonmark.HtmlRenderer()
     updates_html = renderer.render(parser.parse(value))
     with open(join(thisdir, "resources/updater/updates-template.html")) as fh:
         template = fh.read()

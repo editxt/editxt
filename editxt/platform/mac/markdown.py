@@ -31,8 +31,8 @@ NON_HARD_BREAK = re.compile(r"(?<!.\\|  )\n")
 def markdown(value, pre=False, css=""):
     if pre:
         value = NON_HARD_BREAK.sub("\\\n", value.rstrip("\n"))
-    parser = commonmark.DocParser()
-    renderer = commonmark.HTMLRenderer()
+    parser = commonmark.Parser()
+    renderer = commonmark.HtmlRenderer()
     html = renderer.render(parser.parse(value))
     if pre:
         css = PRE_CSS + css

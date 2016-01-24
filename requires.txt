@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
-commonmark>=0.5.4
+commonmark>=0.6.3
 docopt==0.6.1
 py2app==0.9
     altgraph==0.12

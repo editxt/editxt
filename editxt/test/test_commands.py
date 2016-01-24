@@ -51,6 +51,7 @@ def test_load_commands():
         mod.diff,
         mod.grab,
         mod.open_,
+        mod.pathfind,
         mod.python,
         mod.clear_highlighted_text,
         mod.docnav,

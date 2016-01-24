@@ -193,12 +193,14 @@ class test_app(object):
         return self
 
     def __init__(self, config=None):
-        self.config = config
+        if not hasattr(self, "config"):
+            self.config = config
 
     def __call__(self, func):
         @wraps(func)
         def test_app(*args, **kw):
-            with type(self)(self.config) as app:
+            config = kw.pop("app_config", self.config)
+            with type(self)(config) as app:
                 return func(app, *args, **kw)
         return test_app
 
