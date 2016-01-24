@@ -986,6 +986,8 @@ class Regex(Field):
         self.replace = replace
         self.flags = flags
         default = (None, None) if replace and default is None else default
+        if isinstance(default, str):
+            self.placeholder = self.delimit(default)[0]
         super(Regex, self).__init__(name, default)
 
     def consume(self, text, index, _default=None):

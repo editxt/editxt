@@ -82,7 +82,7 @@ Top priority
 
 Fix lag (line height bug?) in insert line on OS X 10.11
 xAdd pathfind command to find file (with given portion of path) in project
-  - default to selected text
+x  - default to selected text
 Add "..." alias for project root
 Add context menu to items in sidebar:
   - Copy file path

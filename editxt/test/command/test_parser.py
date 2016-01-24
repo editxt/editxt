@@ -839,6 +839,9 @@ def test_Regex():
     yield test, "//", 0, ""
     #yield test, "// ", 0, None
 
+    test = make_placeholder_checker(Regex('regex', default="1 2"))
+    yield test, "", 0, "/1 2/"
+
     test = make_arg_string_checker(field)
     yield test, RegexPattern("str"), "/str/"
     yield test, RegexPattern("str", re.I), "/str/i"
