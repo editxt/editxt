@@ -25,7 +25,8 @@ from os.path import dirname, isdir, join, sep
 from urllib.parse import quote
 
 from editxt.command.base import command, CommandError
-from editxt.command.parser import CommandParser, Choice, File, Regex, RegexPattern
+from editxt.command.parser import (CommandParser, Choice, File, Options,
+    Regex, RegexPattern)
 from editxt.command.util import has_editor
 from editxt.platform.markdown import markdown
 from editxt.util import user_path
@@ -58,9 +59,15 @@ def get_selection(editor=None):
         "open-first-match first",
         name="open"
     ),
-), is_enabled=has_editor)
+), is_enabled=has_editor, hotkey="Command+Alt+p")
 def pathfind(editor, args):
     """Find file by path"""
+    if args is None and editor is not None:
+        args = Options(
+            path_pattern=get_selection(editor),
+            search_path=base_path(editor),
+            open="open-single-match",
+        )
     if not (args and args.path_pattern):
         from editxt.commands import show_command_bar
         return show_command_bar(editor, "pathfind ")

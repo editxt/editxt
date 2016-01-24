@@ -54,14 +54,15 @@ def test_pathfind():
             with open(join(tmp, path), "w") as fh:
                 pass
 
-        parts = command.split(' ')
-        if len(parts) > 2:
-            if parts[2].startswith("/"):
-                parts[2] = join(tmp, parts[2].lstrip("/"))
-        assert all(p.startswith(tmp + "/")
-                   for p in parts if p.startswith("/")), parts
-        command = " ".join(parts)
-        print(command)
+        if command:
+            parts = command.split(' ')
+            if len(parts) > 2:
+                if parts[2].startswith("/"):
+                    parts[2] = join(tmp, parts[2].lstrip("/"))
+            assert all(p.startswith(tmp + "/")
+                       for p in parts if p.startswith("/")), parts
+            command = " ".join(parts)
+            print(command)
 
         editor = app.windows[0].current_editor
         if editor.document is not None:
@@ -85,6 +86,9 @@ def test_pathfind():
         if config:
             tapp = test_app(app)
             eq_(tapp.state, tapp.config.replace("*", "") + config)
+
+    # simulate invoke with hotkey
+    yield test(None, ["a_file.txt", "file.txt", "file/txt"], selection=(5, 8))
 
     yield test("pathfind", ["a_file.txt", "file.txt", "file/txt"], selection=(5, 8))
 

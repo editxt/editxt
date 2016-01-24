@@ -645,11 +645,19 @@ class CommandTester(object):
             for command in commands:
                 commander.add_command(command, None, menu)
         self.bar = textcommand.CommandBar(kw.pop("window", window), commander)
+        self.editor = editor
+        self.commands = commands
         # keep references (CommandBar uses weakref)
-        self.refs = (window, commander)
+        self.window = window
+        self.commander = commander
 
     def __call__(self, command):
-        self.bar.execute(command)
+        if command is not None:
+            self.bar.execute(command)
+        else:
+            assert len(self.commands) == 1, "ambiguous command invocation"
+            tag = self.commands[0].name
+            self.commander.do_command(self.editor, TestConfig(tag=lambda:tag))
 
     def __getattr__(self, name):
         return getattr(self.bar, name)
