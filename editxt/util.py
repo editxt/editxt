@@ -188,6 +188,16 @@ def user_path(path, home=os.path.expanduser('~')):
     return path
 
 
+def short_path(path, editor):
+    project_path = editor and editor.project.path
+    if project_path:
+        norm_path = os.path.normpath(path)
+        norm_project = os.path.normpath(project_path)
+        if norm_path.startswith(norm_project + os.sep):
+            return "..." + norm_path[len(norm_project):]
+    return user_path(path)
+
+
 @untested
 def perform_selector(delegate, selector, *args):
     # this is the supported way to call a selector on a delegate:

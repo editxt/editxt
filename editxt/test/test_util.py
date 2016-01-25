@@ -134,6 +134,19 @@ def test_user_path():
     yield test, '%s/file.txt' % home, '~/file.txt'
     yield test, '%s/../%s/file' % (home, os.path.basename(home)), '~/file'
 
+def test_short_path():
+    home = os.path.expanduser('~')
+    if not os.getenv('HOME'):
+        raise SkipTest("os.getenv('HOME') -> %r" % os.getenv('HOME'))
+    def make_editor(project_path):
+        return TestConfig(project=TestConfig(path=project_path))
+    def test(input, output, editor=make_editor(os.path.join(home, "project"))):
+        eq_(mod.short_path(input, editor), output)
+    yield test, '%s-not/file.txt' % home, '%s-not/file.txt' % home
+    yield test, '%s/file.txt' % home, '~/file.txt'
+    yield test, '%s/../%s/file' % (home, os.path.basename(home)), '~/file'
+    yield test, '%s/project/file.txt' % home, '.../file.txt'
+
 def test_Invoker_invoke():
     from editxt.util import Invoker
     called = []

@@ -79,29 +79,33 @@ def test_pathfind():
         else:
             if output is not None:
                 output = output.replace(tmp + "/", "/")
-            message = "\n".join("[{0}](xt://open/{1}{0})".format(*
-                                    f if isinstance(f, tuple) else (f, "/dir/")
-                                ) for f in files)
+            message = "\n".join("[{}](xt://open/{}{})".format(
+                f[0] if isinstance(f, tuple) else f,
+                f[1] if isinstance(f, tuple) else "/dir/",
+                (f[0] if isinstance(f, tuple) else f).replace(".../", "")
+            ) for f in files)
             eq_(output, message)
         if config:
             tapp = test_app(app)
             eq_(tapp.state, tapp.config.replace("*", "") + config)
 
-    # simulate invoke with hotkey
-    yield test(None, ["a_file.txt", "file.txt", "file/txt"], selection=(5, 8))
+    file_txt = [".../a_file.txt", ".../file.txt", ".../file/txt"]
 
-    yield test("pathfind", ["a_file.txt", "file.txt", "file/txt"], selection=(5, 8))
+    # simulate invoke with hotkey
+    yield test(None, file_txt, selection=(5, 8))
+
+    yield test("pathfind", file_txt, selection=(5, 8))
 
     base_test = test
     for cfg in [None, "window project(/dir)* editor"]:
         test = base_test if cfg is None else partial(base_test, app_config=cfg)
-        yield test("pathfind file\.txt", ["a_file.txt", "file.txt"])
-        yield test("pathfind file.txt", ["a_file.txt", "file.txt", "file/txt"])
+        yield test("pathfind file\.txt", [".../a_file.txt", ".../file.txt"])
+        yield test("pathfind file.txt", file_txt)
         yield test("pathfind file\.txt /", [
             ("/file.txt", ""),
-            "a_file.txt",
-            "file.txt",
+            ".../a_file.txt",
+            ".../file.txt",
         ])
         yield test("pathfind a_file", config=" editor[/dir/a_file.txt 0]*")
-        yield test("pathfind a_file  disp", ["a_file.txt"])
+        yield test("pathfind a_file  disp", [".../a_file.txt"])
         yield test("pathfind a_file  first", config=" editor[/dir/a_file.txt 0]*")

@@ -29,7 +29,7 @@ from editxt.command.parser import (CommandParser, Choice, File, Options,
     Regex, RegexPattern)
 from editxt.command.util import has_editor, get_selection
 from editxt.platform.markdown import markdown
-from editxt.util import user_path
+from editxt.util import short_path
 
 log = logging.getLogger(__name__)
 
@@ -85,13 +85,6 @@ def pathfind(editor, args):
         editor.message(message)
     else:
         return "no match for pattern: {}".format(args.path_pattern)
-
-
-def short_path(path, editor):
-    project_path = editor.project.path
-    if project_path and path.startswith(project_path + sep):
-        return path[len(project_path) + 1:]
-    return user_path(path)
 
 
 def path_link(path, editor):
