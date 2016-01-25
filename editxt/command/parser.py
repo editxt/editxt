@@ -762,6 +762,12 @@ class File(String):
             return None
         return self.editor.dirname()
 
+    @property
+    def project_path(self):
+        if self.editor is None or not self.editor.project.path:
+            return None
+        return self.editor.project.path
+
     def consume(self, text, index):
         """Consume a file path
 
@@ -772,6 +778,8 @@ class File(String):
             return path, stop
         if path.startswith('~'):
             path = os.path.expanduser(path)
+        if path.startswith('.../') and self.project_path:
+            path = self.project_path + path[3:]
         if os.path.isabs(path):
             return path, stop
         if self.path is None:
@@ -786,9 +794,15 @@ class File(String):
             token = super().consume(arg.text, arg.start)[0] or ""
         if token == '~':
             return [CompleteWord('~/', (lambda:''))]
+        if token == '...' and self.project_path:
+            return [CompleteWord('.../', (lambda:''))]
         if token.startswith('~'):
             original_length = len(token)
             token = expanduser(token)
+            diff = len(token) - original_length
+        elif token.startswith('.../') and self.project_path:
+            original_length = len(token)
+            token = self.project_path + token[3:]
             diff = len(token) - original_length
         else:
             diff = 0

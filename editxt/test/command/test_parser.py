@@ -627,6 +627,7 @@ def test_File():
         yield test, '../file.txt', 0, (join(tmp, 'dir/../file.txt'), 12)
         yield test, '/file.txt', 0, ('/file.txt', 10)
         yield test, '~/file.txt', 0, (os.path.expanduser('~/file.txt'), 11)
+        yield test, '.../file.txt', 0, (join(tmp, 'dir/file.txt'), 13)
         yield test, '"ab c"', 0, (join(tmp, 'dir/ab c'), 6)
         yield test, "'ab c'", 0, (join(tmp, 'dir/ab c'), 6)
         yield test, "'ab c/'", 0, (join(tmp, 'dir/ab c/'), 7)
@@ -653,6 +654,8 @@ def test_File():
         yield test, "..", ["../"]
         yield test, "../", ["dir", "file.doc", "file.txt"]
         yield test, "../.", [".hidden"]
+        yield test, "...", [".../"]
+        yield test, ".../", ["a.txt", "B\\ file", "b.txt"]
         yield test, "../dir", ["dir/"]
         yield test, "../dir/", ["a.txt", "B\\ file", "b.txt"]
         yield test, "val", []
@@ -687,6 +690,7 @@ def test_File():
         yield test, 'abc', 0, (join(tmp, 'dir/abc'), 4)
         yield test, 'abc ', 0, (join(tmp, 'dir/abc'), 4)
         yield test, 'abc/', 0, (join(tmp, 'dir/abc/'), 5)
+        yield test, '.../abc/', 0, (join(tmp, 'dir/abc/'), 9)
 
         test = make_completions_checker(field)
         yield test, "", [], 0
