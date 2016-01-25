@@ -68,6 +68,7 @@ class CommandBar(object):
         if not text and self.failed_command:
             text = self.failed_command
             select = True
+        self._cached_parser = (None, None, None)
         editor.command_view.activate(self, text, select)
         editor.command_view.__last_completions = [None]
 
