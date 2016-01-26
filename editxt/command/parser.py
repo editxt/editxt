@@ -66,7 +66,7 @@ from functools import partial
 from inspect import signature, Parameter
 from itertools import chain
 
-from editxt.util import short_path
+from editxt.util import user_path
 
 
 class CommandParser(object):
@@ -857,7 +857,7 @@ class File(String):
             if name in names:
                 names.remove(name)
             names.append(CompleteWord(name + "/", lambda:"", len(root) + 1 - diff))
-        return CompletionsList(names, title=short_path(root, self.editor))
+        return CompletionsList(names, title=user_path(root))
 
     def get_placeholder(self, arg):
         if not arg and isinstance(self.default, str):
