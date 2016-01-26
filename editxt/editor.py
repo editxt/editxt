@@ -175,7 +175,6 @@ class Editor(object):
         return user_path(path)
 
     def dirname(self):
-        """Return a tuple: (directory, filename or None)"""
         if self.file_path and os.path.isabs(self.file_path):
             return os.path.dirname(self.file_path)
         return self.project.dirname()

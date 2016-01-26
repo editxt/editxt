@@ -46,9 +46,18 @@ DEFAULT_OPTIONS = [
 ]
 
 
+def get_selection_regex(editor=None):
+    text = get_selection(editor)
+    return RegexPattern(re.escape(text), default_flags=0) if text else None
+
+
+def editor_dirname(editor=None):
+    return None if editor is None else editor.dirname()
+
+
 @command(arg_parser=CommandParser(
-    Regex("pattern", default=get_selection),
-    File("path"),
+    Regex("pattern", default=get_selection_regex),
+    File("path", default=editor_dirname),
     VarArgs("options", String("options")),
     # TODO SubParser with dynamic dispatch based on pattern matching
     # (if it starts with a "-" it's an option, otherwise a file path)

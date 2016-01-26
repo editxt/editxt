@@ -34,17 +34,19 @@ from editxt.util import short_path
 log = logging.getLogger(__name__)
 
 
+def get_selection_regex(editor=None):
+    text = get_selection(editor)
+    return RegexPattern(text, default_flags=0) if text else None
+
+
 def base_path(editor=None):
     if editor is None:
         return None
-    path = editor.project.file_path
-    if not path and editor.file_path and isdir(dirname(editor.file_path)):
-        path = dirname(editor.file_path)
-    return path
+    return editor.project.file_path or editor.dirname()
 
 
 @command(arg_parser=CommandParser(
-    Regex("path-pattern", default=get_selection),
+    Regex("path-pattern", default=get_selection_regex),
     File("search-path", default=base_path),
     Choice(
         "open-single-match",
@@ -57,7 +59,7 @@ def pathfind(editor, args):
     """Find file by path"""
     if args is None and editor is not None:
         args = Options(
-            path_pattern=get_selection(editor),
+            path_pattern=get_selection_regex(editor),
             search_path=base_path(editor),
             open="open-single-match",
         )

@@ -23,7 +23,6 @@ from collections import Counter
 from textwrap import dedent
 
 import editxt.constants as const
-from editxt.command.parser import RegexPattern
 
 log = logging.getLogger(__name__)
 
@@ -38,8 +37,7 @@ def get_selection(editor=None):
     if editor is None or editor.document is None or \
             not editor.selection or editor.selection[1] == 0:
         return None
-    text = editor.document.text_storage[editor.selection]
-    return RegexPattern(text, default_flags=0)
+    return editor.document.text_storage[editor.selection]
 
 
 #_line_splitter = re.compile("([^\n\r\u2028\u2029]*(?:%s)?)" % "|".join(
