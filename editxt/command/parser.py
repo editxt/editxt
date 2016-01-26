@@ -768,6 +768,12 @@ class File(String):
             return None
         return self.editor.project.path
 
+    @staticmethod
+    def relative(path):
+        if os.path.isabs(path):
+            return path.lstrip("/").lstrip(os.path.sep)
+        return path
+
     def consume(self, text, index):
         """Consume a file path
 
@@ -778,8 +784,11 @@ class File(String):
             return path, stop
         if path.startswith('~'):
             path = os.path.expanduser(path)
-        if path.startswith('.../') and self.project_path:
-            path = self.project_path + path[3:]
+        elif self.project_path:
+            if path == '...':
+                path = self.project_path
+            elif path.startswith('.../'):
+                path = os.path.join(self.project_path, self.relative(path[4:]))
         if os.path.isabs(path):
             return path, stop
         if self.path is None:
@@ -802,7 +811,7 @@ class File(String):
             diff = len(token) - original_length
         elif token.startswith('.../') and self.project_path:
             original_length = len(token)
-            token = self.project_path + token[3:]
+            token = join(self.project_path, self.relative(token[4:]))
             diff = len(token) - original_length
         else:
             diff = 0
