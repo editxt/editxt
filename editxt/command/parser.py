@@ -861,7 +861,7 @@ class File(String):
 
     def get_placeholder(self, arg):
         if not arg and isinstance(self.default, str):
-            return self.default
+            return user_path(self.default)
         return super().get_placeholder(arg)
 
     def arg_string(self, value):
