@@ -21,6 +21,6 @@
 # TODO make __version__ more specific (include date and git revision)
 import logging
 
-__version__ = "1.8.1"
+__version__ = "1.9.0a"
 
 log = logging.getLogger(__name__) # for logging unhandled errors

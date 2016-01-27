@@ -3,6 +3,40 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+## 2016-??-?? - 1.9.0
+
+- Added many new syntax definitions derived from the
+  [highlight.js](https://highlightjs.org/) library. Note: the built-in theme
+  does not yet have colors defined for all token types, so tokens in some
+  languages may not be colored as expected. Better theme support is planned for
+  a future release.
+- Syntax definitions now allow `word_groups` and `delimited_ranges` to be
+  combined in a single `rules` list. Use of separate `word_groups` and
+  `delimited_ranges` lists is deprecated, and cannot be used in combination
+  with a consolidated `rules` list.
+- Syntax definition attribute `default_text` (added in 1.8.0) was renamed to
+  `default_text_color`.
+- Add `pathfind` command for finding files by regular expression matching paths
+  (similar to `find /path | grep pattern`). One place where this is very handy
+  is finding the file for an imported Python module. Select the imported module
+  path (example: `editxt.command.find`) and enter the `pathfind` command or use
+  it's hotkey (Command+Alt+P) to quickly find the file for that module. The file
+  will be opened if there is a single match. Otherwise a list of clickable
+  matches will be displayed in the command output area. The default search path
+  is the current project path, and can be set with the `set project_path`
+  command.
+- Add `...` abbreviation for the project path. This is displayed in window
+  titles and other places where abbreviated paths are displayed. It can also be
+  typed in the command bar to reference file paths from the root of the current
+  project. Example: `ack "def delimit" .../editxt`.
+- Use selected text as default pattern for `ack` command.
+- Use first matching choice instead of error on ambiguous argument typed in
+  command bar.
+- Do not open error log in new window on launch.
+- Fix bugs in file command argument parser.
+- Fix `xt` script lag.
+- Fix/reset text attributes on reload document.
+
 ## 2015-11-14 - 1.8.1
 
 - Fix `python` command in packaged EditXT.app
