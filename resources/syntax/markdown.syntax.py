@@ -3,6 +3,7 @@
 # source: markdown.js
 name = 'Markdown'
 file_patterns = ['*.markdown', '*.md', '*.mkdown', '*.mkd']
+comment_token = "x"
 
 class _string0:
     default_text_color = DELIMITER
