@@ -382,6 +382,8 @@ def test_interactive_close():
             window = app.windows[0]
             project = window.projects[0]
             for editor in project.editors:
+                if "/dirty.save" in editor.file_path:
+                    test_app(app).set_content(editor)
                 if "dirty" in editor.document.file_path:
                     make_dirty(editor.document)
             project.interactive_close(callback)
@@ -396,6 +398,7 @@ def test_interactive_close():
     yield test("editor(dirty)", ["close dirty"], False)
     yield test("editor(dirty.save)", ["close dirty.save", "save dirty.save"], False) # save canceled
     yield test("editor(/dirty.save)", ["close dirty.save"])
+    yield test("editor(/dirty.missing)", ["close dirty.missing"], False)
     yield test("editor(dirty.dont_save)", ["close dirty.dont_save"])
     yield test("editor(dirty) project editor(dirty)")
     yield test("editor(/dirty.save) editor(/dirty.save)", ["close dirty.save"])

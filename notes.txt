@@ -83,7 +83,6 @@ Top priority
 Fix lag (line height bug?) in insert line on OS X 10.11
 Multi-select in file tree
   - move close button to context menu
-Prompt on save if file has path but does not exist on disk.
 Add command to set/change file path. Alternately, add moved file detection.
 Aesthetics
   - syntax highlighting

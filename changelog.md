@@ -16,6 +16,7 @@ https://github.com/editxt/editxt for details of what actually happened.
   with a consolidated `rules` list.
 - Syntax definition attribute `default_text` (added in 1.8.0) was renamed to
   `default_text_color`.
+- Add context menu for documents pane.
 - Add `pathfind` command for finding files by regular expression matching paths
   (similar to `find /path | grep pattern`). One place where this is very handy
   is finding the file for an imported Python module. Select the imported module
@@ -29,10 +30,10 @@ https://github.com/editxt/editxt for details of what actually happened.
   titles and other places where abbreviated paths are displayed. It can also be
   typed in the command bar to reference file paths from the root of the current
   project. Example: `ack "def delimit" .../editxt`.
-- Use selected text as default pattern for `ack` command.
-- Use first matching choice instead of error on ambiguous argument typed in
-  command bar.
-- Add context menu for documents pane.
+- Change: use selected text as default pattern for `ack` command.
+- Change: use first matching choice instead of error on ambiguous argument
+  typed in command bar.
+- Change: prompt on save if file has path but does not exist on disk.
 - Do not open error log in new window on launch.
 - Fix bugs in file command argument parser.
 - Fix `xt` script lag.

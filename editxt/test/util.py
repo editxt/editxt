@@ -309,6 +309,14 @@ class test_app(object):
         assert path.lstrip("/")[0] not in "\\:", path.lstrip("/")
         return os.path.join(self.tmp, path.lstrip("/"))
 
+    def set_content(self, editor_or_document, content="test"):
+        assert editor_or_document.file_path.startswith(self.tmp + "/"), \
+               editor_or_document.file_path
+        with open(editor_or_document.file_path, "w") as fh:
+            fh.write("test")
+        # reset file stat to make document.is_externally_modified() -> false
+        editor_or_document.file_path = editor_or_document.file_path
+
     def pretty_path(self, document):
         """Get the path of this document relative to this app's temp dir"""
         path = document.file_path
@@ -422,7 +430,7 @@ def profile(test, *args):
 @contextmanager
 def make_file(name="file.txt", content="text"):
     if os.path.isabs(name):
-        name = name.lstrip(os.path.sep)
+        name = name.lstrip(os.path.sep).lstrip("/")
         assert name and not os.path.isabs(name), name
     with tempdir() as tmp:
         path = os.path.join(tmp, name)

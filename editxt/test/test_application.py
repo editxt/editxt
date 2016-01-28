@@ -885,6 +885,8 @@ def test_should_terminate():
             for item in config.split():
                 if "(" in item:
                     editor = test_app(app).get(item)
+                    if "/doc.save" in editor.file_path:
+                        test_app(app).set_content(editor)
                     make_dirty(editor.document)
             calls = []
             def callback(ok):
@@ -898,6 +900,7 @@ def test_should_terminate():
     yield test("project editor editor project editor")
     yield test("editor(doc.save)", [False]) # no directory -> cancel save
     yield test("editor(/doc.save)", [True])
+    yield test("editor(/doc.missing)", [False])
     yield test("editor(doc.dont_save)", [True])
     yield test("editor(cancel)", [False])
     yield test("editor(doc.dont_save) editor(cancel) editor(/doc.save)", [False])

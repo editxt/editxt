@@ -212,7 +212,7 @@ class Editor(object):
                 log.exception("cannot save %s", path)
             finally:
                 callback(saved)
-        if prompt or not document.has_real_path():
+        if prompt or not document.file_exists():
             window.save_document_as(self, save_with_path)
         elif document.file_changed_since_save():
             window.prompt_to_overwrite(self, save_with_path)

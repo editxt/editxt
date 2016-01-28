@@ -181,7 +181,7 @@ def test_Editor_save():
                     os.mkdir(os.path.dirname(real_path))
                 print("saving as", real_path)
                 callback(real_path)
-            if prompt or path != real_path or "nodir" in path:
+            if prompt or path != real_path or "nodir" in path or "missing" in path:
                 expect(save_document_as(editor, ANY)).call(save_prompt)
             elif has_path_changed() >> ("moved" in path):
                 expect(prompt_to_overwrite(editor, ANY)).call(save_prompt)
@@ -193,9 +193,10 @@ def test_Editor_save():
                 eq_(get_content(real_path), "saved text")
                 eq_(calls, [True])
 
-    # prompt or no real path
+    # prompt or does not exist
     yield test("/existing.txt", prompt=True)
     yield test("missing.txt")
+    yield test("/missing.txt")
     yield test("/nodir/missing.txt")
     yield test("/moved.txt", prompt=True)
 
@@ -204,7 +205,6 @@ def test_Editor_save():
 
     # else
     yield test("/existing.txt")
-    yield test("/missing.txt")
 
 def test_document_set_main_view_of_window():
     @test_app("editor")
@@ -563,6 +563,8 @@ def test_interactive_close():
         with test_app(config) as app:
             window = app.windows[0]
             editor = window.current_editor
+            if "/doc.save" in editor.file_path:
+                test_app(app).set_content(editor)
             if dirty:
                 make_dirty(editor.document)
             editor.interactive_close(callback)
@@ -577,6 +579,7 @@ def test_interactive_close():
     yield test("editor(doc)* editor(doc)", dirty=True)
     yield test("editor(doc.save)*", ["close doc.save", "save doc.save"], dirty=True, close=False) # cancel save
     yield test("editor(/doc.save)*", ["close doc.save"], dirty=True)
+    yield test("editor(/doc.missing)*", ["close doc.missing"], dirty=True, close=False)
     yield test("editor(doc.dont_save)*", ["close doc.dont_save"], dirty=True)
     yield test("editor(doc)*", ["close doc"], dirty=True, close=False)
 

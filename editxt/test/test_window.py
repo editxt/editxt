@@ -716,6 +716,8 @@ def test_Window_should_close():
             for win in app.windows:
                 for project in win.projects:
                     for editor in project.editors:
+                        if "/dirty.save" in editor.file_path:
+                            test_app(app).set_content(editor)
                         if "dirty" in editor.file_path:
                             make_dirty(editor.document)
             result = window.should_close(do_close)
@@ -727,6 +729,7 @@ def test_Window_should_close():
     yield test("editor(dirty)", ["close dirty"], close=False)
     yield test("editor(dirty.save)", ["close dirty.save", "save dirty.save"], close=False) # cancel save
     yield test("editor(/dirty.save)", ["close dirty.save"])
+    yield test("editor(/dirty.missing)", ["close dirty.missing"], close=False)
     yield test("editor(/dirty.dont_save)", ["close dirty.dont_save"])
     yield test("editor(dirty) window project editor(dirty)", should_close=True)
 
