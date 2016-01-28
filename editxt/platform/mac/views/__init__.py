@@ -28,6 +28,7 @@ from .treeview import (
 
 from .commandview import CommandView
 from .listview import ListView
+from .menu import Menu, MenuItem
 
 
 def screen_rect(view, rect=None):

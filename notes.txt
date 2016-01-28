@@ -81,19 +81,12 @@ View release stats:
 Top priority
 
 Fix lag (line height bug?) in insert line on OS X 10.11
-xAdd pathfind command to find file (with given portion of path) in project
-x  - default to selected text
-Add "..." alias for project root
-Add context menu to items in sidebar:
-  - Copy file path
-  - Show in Finder
 Multi-select in file tree
   - move close button to context menu
-Add command to set/change file path. Alternately, add moved file detection.
 Prompt on save if file has path but does not exist on disk.
+Add command to set/change file path. Alternately, add moved file detection.
 Aesthetics
   - syntax highlighting
-x    - more lanugages
     - better language detection (file extension, shebang line, etc.)
     - custom language/extension mapping in user config
     - themes
@@ -106,9 +99,6 @@ x    - more lanugages
       - cache summary in cache.json file in definitions dir
       - wait to do this until slow enough to notice
       - profile: loaded 147 defintions in 0.163283s
-x      - custom background color
-x      - with custom colors per language
-x  - font size (make easy to adjust)
   - fix bug in line number drawing: soft wrap at end of file?
 Fix line counting in TextView.goto_line (should recognize all line break chars)
 Pythonic...

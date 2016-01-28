@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 from editxt.constants import INFO
 from editxt.platform.mac.views import *
+from editxt.platform.mac.views.menu import Menu, MenuItem
 
 class ListView(object):
     """A test list view"""

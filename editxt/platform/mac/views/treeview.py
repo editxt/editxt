@@ -332,6 +332,28 @@ class OutlineView(ak.NSOutlineView):
         # calling super would cause an infinite loop
         # since we're not registered as the first responder
 
+    def menuForEvent_(self, event):
+        point = self.convertPoint_fromView_(event.locationInWindow(), None)
+        row = self.rowAtPoint_(point)
+        item = self.itemAtRow_(row)
+        if item is not None:
+            obj = representedObject(item)
+            # HACK reach around to set object on menu target
+            self._default_menu.target.current_object = obj
+            return super().menuForEvent_(event)
+        return None
+
+    # ----
+    # pythonic interface methods
+
+    @property
+    def default_menu(self):
+        return self._default_menu
+    @default_menu.setter
+    def default_menu(self, menu):
+        self._default_menu = menu
+        self.setMenu_(menu.make_native_menu())
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # HoverButtonCell implementation
 

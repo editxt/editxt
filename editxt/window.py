@@ -23,6 +23,7 @@ import sys
 from collections import defaultdict
 from contextlib import contextmanager
 from itertools import groupby
+from os.path import basename, dirname, isabs, isdir, sep, split
 
 import AppKit as ak
 import Foundation as fn
@@ -31,7 +32,9 @@ import editxt.constants as const
 from editxt.document import TextDocument
 from editxt.editor import Editor
 from editxt.platform.kvo import KVOList
+from editxt.platform.pasteboard import Pasteboard
 from editxt.platform.views import BUTTON_STATE_HOVER, BUTTON_STATE_NORMAL, BUTTON_STATE_PRESSED
+from editxt.platform.views import Menu, MenuItem
 from editxt.platform.window import WindowController
 from editxt.project import Project
 from editxt.textcommand import CommandBar
@@ -62,9 +65,11 @@ class Window(object):
         self._recent_history = None
         self.window_settings_loaded = False
         self.no_document_undo_manager = UndoManager()
+        self.menu = self.make_context_menu()
 
     def window_did_load(self):
         wc = self.wc
+        wc.docsView.default_menu = self.menu
         wc.docsView.setRefusesFirstResponder_(True)
         wc.plusButton.setRefusesFirstResponder_(True)
         wc.plusButton.setImage_(load_image(const.PLUS_BUTTON_IMAGE))
@@ -92,6 +97,21 @@ class Window(object):
 
         if not self.projects:
             self.new_project()
+
+    def make_context_menu(self):
+        def has_path(item):
+            return item and item.file_path
+        def copy_path(item):
+            """Put item path on pasteboard"""
+            Pasteboard().text = item.file_path
+        def close_item(item):
+            def do_close():
+                self.discard_and_focus_recent(item)
+            item.interactive_close(do_close)
+        return Menu([
+            MenuItem("Copy Path", copy_path, is_enabled=has_path),
+            MenuItem("Close", close_item, "Command+w"),
+        ])
 
     def _setstate(self, state):
         if state:
@@ -366,7 +386,6 @@ class Window(object):
 
     @staticmethod
     def _directory_and_filename(path):
-        from os.path import basename, dirname, isabs, isdir, sep, split
         if isabs(path):
             directory, filename = split(path)
             while directory and directory != sep and not isdir(directory):

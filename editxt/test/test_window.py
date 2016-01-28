@@ -93,6 +93,7 @@ def test_window_did_load():
             return img
 
         wc.docsView.setRefusesFirstResponder_(True)
+        wc.docsView.default_menu = ed.menu
         wc.plusButton.setRefusesFirstResponder_(True)
         wc.plusButton.setImage_(load_image(const.PLUS_BUTTON_IMAGE))
         wc.propsViewButton.setRefusesFirstResponder_(True)

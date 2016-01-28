@@ -32,6 +32,7 @@ https://github.com/editxt/editxt for details of what actually happened.
 - Use selected text as default pattern for `ack` command.
 - Use first matching choice instead of error on ambiguous argument typed in
   command bar.
+- Add context menu for documents pane.
 - Do not open error log in new window on launch.
 - Fix bugs in file command argument parser.
 - Fix `xt` script lag.
