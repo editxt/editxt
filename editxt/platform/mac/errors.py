@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import os
+import platform
 import sys
 import traceback
 from subprocess import check_output, CalledProcessError
@@ -29,6 +30,8 @@ from ExceptionHandling import NSLogAndHandleEveryExceptionMask as DEFAULTMASK
 from PyObjCTools.Debugging import isPythonException, LOGSTACKTRACE
 
 from editxt import log
+
+is_debugging = False
 
 
 def log_python_exception(exception):
@@ -65,11 +68,13 @@ def get_objc_traceback(exception, cache={}):
     if cache:
        symbolize = cache["symbolize"]
     else:
-        if os.path.exists('/usr/bin/atos'):
-            # -d flag is to silence warning about atos moving to xcrun command
-            # xcrun prompts "developer tools needs to take control of another
-            # process", which is annoying so we don't use it here.
-            command = ['/usr/bin/atos', '-d', '-p']
+        if is_debugging and os.path.exists('/usr/bin/atos'):
+            command = ['/usr/bin/atos', '-p']
+            if platform.mac_ver()[0].startswith("10.9."):
+                # Warning: /usr/bin/atos is moving and will be removed from a future OS X release.
+                # It is now available in the Xcode developer tools to be invoked via: `xcrun atos`
+                # To silence this warning, pass the '-d' command-line flag to this tool.
+                command.insert(1, '-d')
         else:
             cache["n/a"] = True
             return None

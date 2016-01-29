@@ -23,8 +23,8 @@ import os
 import objc
 from PyObjCTools import AppHelper, Debugging
 
+import editxt.platform.mac.errors as errors
 from editxt.platform.mac.app import AppDelegate
-from editxt.platform.mac.errors import install_exception_handler
 # TODO move Cocoa specific part of valuetrans (all of it?) into platform.mac
 from editxt.valuetrans import register_value_transformers
 
@@ -36,11 +36,12 @@ def init(use_pdb):
     # See pyobjc-core/Modules/objc/objc_util.m
     objc.setVerbose(0)
 
+    errors.is_debugging = use_pdb
     if use_pdb:
         # make PyObjC use our exception handler
-        Debugging.installExceptionHandler = install_exception_handler
+        Debugging.installExceptionHandler = errors.install_exception_handler
     else:
-        install_exception_handler()
+        errors.install_exception_handler()
 
     fix_PyObjCTools_path()
 
