@@ -65,7 +65,7 @@ rules = [
     ('emphasis', [RE(r"\*.+?\*")]),
     ('emphasis', [RE(r"_.+?_")]),
     ('quote', RE(r"^>\s+"), [RE(r"$")]),
-    ('code', "```", ["```"], DynamicRange(r"\S+\s*?$|", "tag")),
+    ('code', RE(r"(?:^ *)```"), ["```"], DynamicRange(r"\S+\s*?$|", "tag")),
     ('code', [RE(r"``.+?``"), RE(r"`.+?`")]),
     ('code', RE(r"^(?: {4}|	)"), [RE(r"$")]),
     ('_group1', RE(r"^[-\*]{3,}"), [RE(r"$")]),
