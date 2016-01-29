@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="4514" systemVersion="12F45" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9531" systemVersion="15C50" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment version="1060" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="4514"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9531"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="EditorWindowController">
@@ -12,12 +12,6 @@
                 <outlet property="docsView" destination="22" id="29"/>
                 <outlet property="mainView" destination="266" id="282"/>
                 <outlet property="plusButton" destination="255" id="264"/>
-                <outlet property="propCharacterEncoding" destination="329" id="355"/>
-                <outlet property="propLanguageSelector" destination="342" id="358"/>
-                <outlet property="propLineEndingType" destination="319" id="352"/>
-                <outlet property="propTabSpacesInput" destination="318" id="351"/>
-                <outlet property="propTabSpacesSelector" destination="313" id="350"/>
-                <outlet property="propWrapLines" destination="312" id="349"/>
                 <outlet property="propsView" destination="304" id="359"/>
                 <outlet property="propsViewButton" destination="306" id="357"/>
                 <outlet property="splitView" destination="259" id="260"/>
@@ -25,8 +19,8 @@
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
-        <customObject id="-3" userLabel="Application"/>
-        <window title="Window" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" wantsToBeColor="NO" visibleAtLaunch="NO" animationBehavior="default" id="5" userLabel="Window" customClass="EditorWindow">
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <window title="Window" autorecalculatesKeyViewLoop="NO" restorable="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="5" userLabel="Window" customClass="EditorWindow">
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="130" y="628" width="621" height="378"/>
@@ -97,16 +91,16 @@
                                                 <connections>
                                                     <binding destination="272" name="enabled" keyPath="selection.document" id="Lve-IN-EzH">
                                                         <dictionary key="options">
-                                                            <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNoSelectionPlaceholder" value="0"/>
+                                                            <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNullPlaceholder" value="0"/>
                                                             <string key="NSValueTransformerName">NSIsNotNil</string>
                                                         </dictionary>
                                                     </binding>
                                                     <binding destination="272" name="selectedValue" keyPath="selection.syntaxdef" previousBinding="483" id="hND-cf-Gy9">
                                                         <dictionary key="options">
-                                                            <bool key="NSRaisesForNotApplicableKeys" value="NO"/>
                                                             <bool key="NSConditionallySetsEnabled" value="NO"/>
+                                                            <bool key="NSRaisesForNotApplicableKeys" value="NO"/>
                                                             <string key="NSValueTransformerName">SyntaxDefTransformer</string>
                                                         </dictionary>
                                                     </binding>
@@ -137,15 +131,15 @@
                                                     <binding destination="-2" name="contentValues" keyPath="characterEncodings" id="452"/>
                                                     <binding destination="272" name="selectedValue" keyPath="selection.character_encoding" previousBinding="452" id="uVh-cu-G6F">
                                                         <dictionary key="options">
-                                                            <bool key="NSRaisesForNotApplicableKeys" value="NO"/>
                                                             <bool key="NSConditionallySetsEnabled" value="NO"/>
+                                                            <bool key="NSRaisesForNotApplicableKeys" value="NO"/>
                                                             <string key="NSValueTransformerName">CharacterEncodingTransformer</string>
                                                         </dictionary>
                                                     </binding>
                                                     <binding destination="272" name="enabled" keyPath="selection.document" id="x8k-Nx-xYT">
                                                         <dictionary key="options">
-                                                            <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNoSelectionPlaceholder" value="0"/>
+                                                            <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNullPlaceholder" value="0"/>
                                                             <string key="NSValueTransformerName">NSIsNotNil</string>
                                                         </dictionary>
@@ -171,8 +165,8 @@
                                                 <connections>
                                                     <binding destination="272" name="enabled" keyPath="selection.document" id="cvv-tO-C9n">
                                                         <dictionary key="options">
-                                                            <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNoSelectionPlaceholder" value="0"/>
+                                                            <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNullPlaceholder" value="0"/>
                                                             <string key="NSValueTransformerName">NSIsNotNil</string>
                                                         </dictionary>
@@ -205,8 +199,8 @@
                                                 <connections>
                                                     <binding destination="272" name="enabled" keyPath="selection.document" id="bX4-pZ-P1Q">
                                                         <dictionary key="options">
-                                                            <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNoSelectionPlaceholder" value="0"/>
+                                                            <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNullPlaceholder" value="0"/>
                                                             <string key="NSValueTransformerName">NSIsNotNil</string>
                                                         </dictionary>
@@ -236,8 +230,8 @@
                                                 <connections>
                                                     <binding destination="272" name="enabled" keyPath="selection.document" id="tr6-zl-LTt">
                                                         <dictionary key="options">
-                                                            <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNoSelectionPlaceholder" value="0"/>
+                                                            <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNullPlaceholder" value="0"/>
                                                             <string key="NSValueTransformerName">NSIsNotNil</string>
                                                         </dictionary>
@@ -261,8 +255,8 @@
                                                 <connections>
                                                     <binding destination="272" name="enabled" keyPath="selection.document" id="fN2-zI-WhO">
                                                         <dictionary key="options">
-                                                            <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNoSelectionPlaceholder" value="0"/>
+                                                            <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNullPlaceholder" value="0"/>
                                                             <string key="NSValueTransformerName">NSIsNotNil</string>
                                                         </dictionary>
@@ -286,7 +280,7 @@
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <subviews>
                                                 <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="firstColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveName="docsView" rowHeight="20" id="22" customClass="OutlineView">
-                                                    <rect key="frame" x="0.0" y="0.0" width="159" height="240"/>
+                                                    <rect key="frame" x="0.0" y="0.0" width="159" height="22"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <size key="intercellSpacing" width="3" height="2"/>
                                                     <color key="backgroundColor" red="0.90196078999999996" green="0.92941176999999997" blue="0.96470588000000002" alpha="1" colorSpace="deviceRGB"/>
@@ -329,8 +323,8 @@
                                                             <connections>
                                                                 <binding destination="272" name="target" keyPath="arrangedObjects.summary_info" id="XSx-QJ-Bdz">
                                                                     <dictionary key="options">
-                                                                        <bool key="NSConditionallySetsEnabled" value="NO"/>
                                                                         <bool key="NSAlwaysPresentsApplicationModalAlerts" value="YES"/>
+                                                                        <bool key="NSConditionallySetsEnabled" value="NO"/>
                                                                     </dictionary>
                                                                 </binding>
                                                             </connections>

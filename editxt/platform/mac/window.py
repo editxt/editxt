@@ -53,12 +53,6 @@ class WindowController(ak.NSWindowController):
     plusButton = objc.IBOutlet()
     propsView = objc.IBOutlet()
     propsViewButton = objc.IBOutlet()
-    #propCharacterEncoding = objc.IBOutlet()
-    #propLanguageSelector = objc.IBOutlet()
-    #propLineEndingType = objc.IBOutlet()
-    #propTabSpacesInput = objc.IBOutlet()
-    #propTabSpacesSelector = objc.IBOutlet()
-    #propWrapLines = objc.IBOutlet()
 
     def __new__(cls, window):
         wc = cls.alloc().initWithWindowNibName_("EditorWindow")
