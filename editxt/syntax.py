@@ -231,12 +231,9 @@ class Highlighter(object):
             text_color = theme.get_syntax_color(lang.text_color)
             #log.debug("key=%s offset=%s", key, offset)
             for match in lang.regex.finditer(string, offset):
-                info = wordinfo.get(match.lastgroup)
+                info = wordinfo[match.lastgroup]
                 #log.debug("    %s %r\n        %s\n        key: %s",
                 #            match.lastgroup, info, match, key)
-                if info is None:
-                    log.error("invalid syntax match: %r", match)
-                    continue
                 start, end = match.span()
 
                 if prevend != start:
@@ -281,7 +278,7 @@ class Highlighter(object):
                             can_exit_early = False
 
                     color = theme.get_syntax_color(info)
-                    #log.debug("%s %s %s", rng, info, color)
+                    #log.debug("%s %s %r", rng, info, color)
                     if color:
                         add_attribute(x_token, info, rng)
                         add_attribute(fg_name, color, rng)
@@ -298,24 +295,14 @@ class Highlighter(object):
                                     lang,
                                 ))
                 if info.event:
-                    #log.debug("key=%s offset=%s length=%s %s", 
-                    #    key, offset, end - offset, "+" if key else "-")
+                    #log.debug("key=%s offset=%s rng=%s", key, offset, rng)
                     if key:
-                        add_attribute(x_range, key, (offset, start - offset))
+                        add_attribute(x_range, key, (offset, end - offset))
                     else:
-                        rem_attribute(x_range, (offset, start - offset))
+                        rem_attribute(x_range, (offset, end - offset))
 
                     lang = info.next
-                    if start != end:
-                        xkey = info.lang.key if info.lang else key
-                        if xkey:
-                            if info.lang and xkey not in langs:
-                                langs[xkey] = info.lang
-                                nexts[xkey] = start
-                            add_attribute(x_range, xkey, rng)
-                        else:
-                            rem_attribute(x_range, rng)
-                    elif lang and nexts.get(lang.key) == end:
+                    if start == end and lang and nexts.get(lang.key) == end:
                         raise Error("non-advancing range: index={} {} {} {}".format(
                             start,
                             match,
@@ -331,6 +318,7 @@ class Highlighter(object):
                         key = ''
 
                     offset = end
+                    #log.debug("info=%r key=%s offset=%s", info, key, offset)
                     break # exit for
             else:
                 break # exit while
@@ -771,6 +759,7 @@ class DynamicRange:
         none = parent.make_definition(self._none, *args, **kw)
         sdef = type(self)(self.lang_pattern, self.color_name)
         sdef.id = ident
+        sdef.name = parent.name
         sdef.key = (parent.key + " " + ident) if parent.key else ident
         sdef.parent = parent
         sdef.lookup_syntax = lookup_syntax
@@ -795,7 +784,7 @@ class DynamicRange:
             self.last_match_value = ""
             match = EMPTY_REGEX.match(string, offset)
         return [match]
-    def get(self, key):
+    def __getitem__(self, key):
         # HACK must be called after `finditer` as in `Highlighter.scan`
         name = self.last_match_value
         if name:

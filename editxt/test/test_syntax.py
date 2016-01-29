@@ -217,14 +217,13 @@ def test_Highlighter_color_text():
                             (key or '').ljust(15),
                             repr(text)[1:-1],
                         )
+                        print_lang = lang and attr and attr.startswith(lang)
                         attr = attr.rsplit(" ", 1)[-1] if attr else color
-                        language = lang if xrng[0] <= color_rng[0] else ("~" + lang)
-                        language = language.replace(attr + ".", "$.")
                         lines.append("{}{} {}{}".format(
                             "  " * level,
                             text,
                             attr if attr == color else "{} {}".format(attr, color),
-                            (" " + language) if language else "",
+                            (" " + lang) if print_lang else "",
                         ))
                     start = sum(attr_rng)
                     if start >= xend:
@@ -344,16 +343,16 @@ def test_Highlighter_color_text():
         r"""
         r" string.double-quote string
           \" operator.escape operator Regular Expression
-        " string.double-quote string
+          " string.double-quote string
         r" string.double-quote string
           \\ operator.escape operator Regular Expression
-        " string.double-quote string
+          " string.double-quote string
         r" string.double-quote string
           \\\" operator.escape operator Regular Expression
-        " string.double-quote string
+          " string.double-quote string
         r" string.double-quote string
           \\\\\" operator.escape operator Regular Expression
-        " string.double-quote string
+          " string.double-quote string
         """)
     yield test("python",
         "'''    for x",
@@ -405,15 +404,15 @@ def test_Highlighter_color_text():
         (0, 4, ''), # bug: error on delete all content
         "",
         )
-    yield from edit("python", r""" "word" """,
+    yield from edit("python", ' "word" ',
         """
         "word" string.double-quote string
         """,
         (1, 0, 'r'),
         """
         r" string.double-quote string
-          word string Regular Expression
-        " string.double-quote string
+          word string
+          " string.double-quote string
         """,
         (1, 1, ''),
         """
@@ -427,16 +426,16 @@ def test_Highlighter_color_text():
           xyz name Regular Expression
           > group.named group Regular Expression
           ) group Regular Expression
-        " string.double-quote string
+          " string.double-quote string
         """,
         (4, 0, ' '),
         """
         r" string.double-quote string
-          ( string Regular Expression
+          ( string
           ? keyword Regular Expression
-           P<xyz> string Regular Expression
+           P<xyz> string
           ) group Regular Expression
-        " string.double-quote string
+          " string.double-quote string
         """,
         (4, 1, ''),
         """
@@ -445,7 +444,7 @@ def test_Highlighter_color_text():
           xyz name Regular Expression
           > group.named group Regular Expression
           ) group Regular Expression
-        " string.double-quote string
+          " string.double-quote string
         """,
         )
     yield from edit("python", '''
@@ -458,7 +457,7 @@ def test_Highlighter_color_text():
           [ keyword.set keyword Regular Expression
           \s operator.class operator Regular Expression
           ] keyword.set keyword Regular Expression
-        """ string.multiline.double-quote string
+          """ string.multiline.double-quote string
         ' """ """ ' string.single-quote string
         ''',
         (9, 1, ''),
@@ -466,7 +465,7 @@ def test_Highlighter_color_text():
         r""" string.multiline.double-quote string
           [ keyword.set keyword Regular Expression
           \s operator.class operator Regular Expression
-        """ string.multiline.double-quote string
+          """ string.multiline.double-quote string
         ' """ """ ' string.single-quote string
         ''',
         (9, 0, ']'),
@@ -475,8 +474,25 @@ def test_Highlighter_color_text():
           [ keyword.set keyword Regular Expression
           \s operator.class operator Regular Expression
           ] keyword.set keyword Regular Expression
-        """ string.multiline.double-quote string
+          """ string.multiline.double-quote string
         ' """ """ ' string.single-quote string
+        ''',
+        )
+    yield from edit("python", '''
+            """x
+            """
+        def
+        ''',
+        '''
+        """x string.multiline.double-quote string
+            """ string.multiline.double-quote string
+        def keyword
+        ''',
+        (16, 0, '\n'),
+        '''
+        """x string.multiline.double-quote string
+            """ string.multiline.double-quote string
+        def keyword
         ''',
         )
 
@@ -564,7 +580,7 @@ def test_Highlighter_color_text():
         <script> tag
           var keyword JavaScript
           'y' string.single-quote js.string JavaScript
-        </script> tag
+          </script> tag
         """)
     yield test("markup",
         "<style>.error { color: red; }</style>",
@@ -576,7 +592,7 @@ def test_Highlighter_color_text():
           : text_color CSS
           ; text_color CSS
           } text_color CSS
-        </style> tag
+          </style> tag
         """)
 
     yield test("markdown",
@@ -591,7 +607,7 @@ def test_Highlighter_color_text():
         Python tag
           def keyword Python
           return keyword Python
-        ``` code text_color
+          ``` code text_color
         """)
 
     yield test("markdown",
@@ -644,7 +660,7 @@ def test_Highlighter_color_text():
           ) text_color Clojure
           user=> meta text_color Clojure REPL
           nil literal text_color Clojure
-        ``` code text_color
+          ``` code text_color
         *Clojure* emphasis text_color
         """)
     yield test("markdown",
@@ -663,13 +679,13 @@ def test_Highlighter_color_text():
         asciidoc tag
           image::images/tiger.png link text_color AsciiDoc
           [ text_color AsciiDoc
-          Tiger string AsciiDoc
+          Tiger string
           ] text_color AsciiDoc
           *strong* strong text_color AsciiDoc
           [quote, Sir Arthur Conan Doyle] meta text_color AsciiDoc
           ____
         When you have eliminated all... quote text_color AsciiDoc
-        ``` code text_color
+          ``` code text_color
         *strong* emphasis text_color
         """)
     yield test("markdown",
@@ -687,10 +703,10 @@ def test_Highlighter_color_text():
         yaml tag
           --- meta text_color YAML
           # comment YAML
-           comment comment YAML
+           comment comment
           string_1: attr text_color YAML
           " string YAML
-          Bar string YAML
+          Bar string
           " string YAML
         """)
 
@@ -706,7 +722,7 @@ def test_Highlighter_color_text():
         var keyword
         / regexp text_color
           * keyword Regular Expression
-        /ig regexp text_color
+          /ig regexp text_color
         """)
     yield test("javascript",
         "/[x-z/ig - var;",
@@ -714,7 +730,7 @@ def test_Highlighter_color_text():
         / regexp text_color
           [ keyword.set keyword Regular Expression
           - operator.range operator Regular Expression
-        /ig regexp text_color
+          /ig regexp text_color
         var keyword
         """)
 

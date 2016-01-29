@@ -81,6 +81,8 @@ View release stats:
 Top priority
 
 Fix lag (line height bug?) in insert line on OS X 10.11
+Fix wrong document highlighted after drag/drop in document pane
+
 Multi-select in file tree
   - move close button to context menu
 Add command to set/change file path. Alternately, add moved file detection.
