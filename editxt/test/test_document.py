@@ -632,7 +632,7 @@ def test_set_syntaxdef(app):
     m = Mocker()
     sd = m.mock(SyntaxDefinition)
     doc = TextDocument(app)
-    m.method(doc.syntaxer.color_text)(doc.text_storage)
+    m.method(doc.color_text)()
     with m:
         doc.syntaxdef = sd
         eq_(doc.syntaxer.syntaxdef, sd)
@@ -649,6 +649,7 @@ def test_update_syntaxer():
         m.property(doc, "syntaxdef")
         m.property(doc, "props")
         syn = doc.syntaxer = m.mock(Highlighter)
+        color_text = m.method(doc.color_text)
         syn.filename >> "<filename %s>" % ("0" if c.namechange else "1")
         new = doc.file_path = "<filename 1>"
         colored = False
@@ -658,11 +659,11 @@ def test_update_syntaxer():
             doc.syntaxdef >> (None if c.newdef else sdef)
             if c.newdef:
                 doc.props.syntaxdef = sdef
-                syn.color_text(ts)
+                color_text()
                 colored = True
         doc.syntax_needs_color = c.needs_color
         if c.needs_color and not colored:
-            syn.color_text(ts)
+            color_text()
         with m:
             doc.update_syntaxer()
             eq_(doc.syntax_needs_color, False)
@@ -690,6 +691,7 @@ def test_TextDocument_on_text_edit(app):
     doc = TextDocument(app)
     with m.off_the_record():
         ts = doc.text_storage = m.mock(ak.NSTextStorage)
+    ts.editedMask() >> -1
     syn = doc.syntaxer = m.mock(Highlighter)
     range = (0, 20)
     syn.color_text(ts, range)

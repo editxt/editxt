@@ -34,6 +34,7 @@ from editxt.controls.alert import Alert
 from editxt.document import DocumentController, Error as DocumentError
 from editxt.linenumbers import LineNumbers
 from editxt.platform.document import setup_main_view, teardown_main_view
+from editxt.platform.events import debounce
 from editxt.platform.kvo import KVOList, KVOProxy, KVOLink
 from editxt.util import noraise, register_undo_callback, user_path, WeakProperty
 
@@ -529,7 +530,11 @@ class Editor(object):
         self.scroll_view.status_view.updateLine_column_selection_(line, col, sel)
 
         if self.document.highlight_selected_text:
-            ftext = text[range]
-            if len(ftext.strip()) < 3 or " " in ftext:
-                ftext = ""
-            self.finder.mark_occurrences(ftext)
+            self.highlight_selection(text, range)
+
+    @debounce
+    def highlight_selection(self, text, range):
+        ftext = text[range]
+        if len(ftext.strip()) < 3 or " " in ftext:
+            ftext = ""
+        self.finder.mark_occurrences(ftext)

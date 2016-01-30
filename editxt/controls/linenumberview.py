@@ -25,6 +25,7 @@ import AppKit as ak
 import Foundation as fn
 from objc import super, NULL
 
+from editxt.platform.mac.events import call_later
 from editxt.platform.mac.views.util import font_smoothing
 from editxt.util import noraise
 
@@ -61,7 +62,6 @@ class LineNumberView(ak.NSRulerView):
         if value > self.ruleThickness():
             self.setRuleThickness_(value)
             if display:
-                from editxt.platform.events import call_later
                 call_later(0, self.setNeedsDisplay_, True)
         return value
 

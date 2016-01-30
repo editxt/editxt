@@ -30,7 +30,6 @@ import editxt.constants as const
 from editxt.controls.alert import Alert
 from editxt.editor import Editor
 from editxt.platform.views import BUTTON_STATE_NORMAL
-from editxt.platform.events import call_later
 from editxt.util import untested, representedObject, short_path, WeakProperty
 
 log = logging.getLogger(__name__)

@@ -32,7 +32,7 @@ import editxt.platform.constants as platform_const
 
 from editxt.command.util import calculate_indent_mode_and_size
 from editxt.controls.alert import Alert
-from editxt.platform.events import call_later
+from editxt.platform.events import call_later, debounce
 from editxt.platform.kvo import KVOLink, KVOProxy
 from editxt.platform.text import Text
 from editxt.syntax import Highlighter
@@ -43,6 +43,7 @@ from editxt.util import (untested, refactor,
 log = logging.getLogger(__name__)
 
 EOLREF = dict((ch, m) for m, ch in const.EOLS.items())
+ALL = object()
 
 
 class DocumentController(object):
@@ -121,6 +122,7 @@ class TextDocument(object):
         self.newline_mode = app.config["newline_mode"]
         self.highlight_selected_text = app.config["theme.highlight_selected_text.enabled"]
         self.syntax_needs_color = False
+        self._edit_range = None
 
         app.on_reload_config(self.reset_text_attributes, self)
         #self.save_hooks = []
@@ -484,7 +486,7 @@ class TextDocument(object):
         return self.syntaxer.syntaxdef
     def _set_syntaxdef(self, value):
         self.syntaxer.syntaxdef = value
-        self.syntaxer.color_text(self.text_storage)
+        self.color_text()
     syntaxdef = property(_get_syntaxdef, _set_syntaxdef)
 
     def update_syntaxer(self):
@@ -495,15 +497,35 @@ class TextDocument(object):
             if self.syntaxdef is not syntaxdef:
                 self.syntax_needs_color = False
                 self.props.syntaxdef = syntaxdef
-                self.syntaxer.color_text(self.text_storage)
+                self.color_text()
                 return
         if self.syntax_needs_color:
             # force re-highlight entire document
             self.syntax_needs_color = False
-            self.syntaxer.color_text(self.text_storage)
+            self.color_text()
 
-    def on_text_edit(self, range):
-        self.syntaxer.color_text(self.text_storage, range)
+    def on_text_edit(self, rng):
+        if self.text_storage.editedMask() == ak.NSTextStorageEditedAttributes:
+            # break color text -> attribute change -> color text -> ...
+            return
+        self.color_text(rng)
+
+    def _coalesce_edit_ranges(self, rng=ALL):
+        rng_ = self._edit_range
+        if rng is ALL or rng_ is ALL:
+            rng = ALL
+        elif rng_ is not None:
+            # union ranges
+            start = min(rng[0], rng_[0])
+            end = max(sum(rng), sum(rng_))
+            rng = (start, end - start)
+        self._edit_range = rng
+        return (self, None if rng is ALL else rng), {}
+
+    @debounce(0.05, _coalesce_edit_ranges)
+    def color_text(self, rng):
+        self.syntaxer.color_text(self.text_storage, rng)
+        self._edit_range = None
 
     def __repr__(self):
         return "<%s 0x%x %s>" % (type(self).__name__, id(self), self.name)
