@@ -80,13 +80,13 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-xFix lag (line height bug?) in insert line on OS X 10.11
-x  - partial fix: coalesce syntax highlight calls
-Fix line number oddities drawing with non-integral font height
-Fix wrong document highlighted after drag/drop in document pane
+Fix bug in scroll view drawing on open/scroll to line > 100
+Fix bug in window title after save new document
+Fix icon in tree on new document with known extension
 
 Multi-select in file tree
   - move close button to context menu
+  - always open document after current document (allow drag/move multiple)
 Add command to set/change file path. Alternately, add moved file detection.
 Aesthetics
   - syntax highlighting
@@ -251,6 +251,9 @@ find/replace text processors
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Bugs
+
+xx Fix line number oddities drawing with non-integral font height
+xx - is this a bug in the Inconsolata font? empty line is shorter than line with text
 
 Bug: error in log on toggle System Preferences > Accessibility > Display > Reduce Contrast
 ERROR editxt - *** Python exception discarded!

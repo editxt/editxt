@@ -199,6 +199,9 @@ class WindowController(ak.NSWindowController):
             subview.removeFromSuperview()
         return False
 
+    def select_editors_in_tree(self, editors):
+        self.docsController.selected_objects = editors
+
     def _update_title(self, editor):
         title = self.windowTitleForDocumentDisplayName_("")
         if editor is not None and editor.file_path and os.path.isabs(editor.file_path):

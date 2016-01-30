@@ -296,6 +296,7 @@ class Window(object):
         if editor is self._current_editor:
             if editor is not None:
                 editor.focus()
+                self.wc.select_editors_in_tree([editor])
             return
         self._current_editor = editor
         if editor is not None:

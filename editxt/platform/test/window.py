@@ -49,6 +49,9 @@ class WindowController(object):
     def setup_current_editor(self, editor):
         return isinstance(editor, Editor)
 
+    def select_editors_in_tree(self, editors):
+        pass
+
     def undo_manager(self):
         return self.window_.undo_manager()
 

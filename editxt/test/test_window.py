@@ -309,6 +309,7 @@ def test_set_current_editor():
         if c.editor_is_current:
             ed._current_editor = dv
             dv.focus()
+            wc.select_editors_in_tree([dv])
         elif c.editor_class is not None:
             ed.recent.push(dv.id >> m.mock())
             setup = c.editor_class is Editor and not c.view_is_main
