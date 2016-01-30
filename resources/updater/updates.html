@@ -51,7 +51,48 @@
     }
   </style>
 </head>
-<body><h2>2015-11-14 - 1.8.1</h2>
+<body><h2>2016-01-30 - 1.9.0</h2>
+<ul>
+<li>Added many new syntax definitions derived from the
+<a href="https://highlightjs.org/">highlight.js</a> library. Note: the built-in theme
+does not yet have colors defined for all token types, so tokens in some
+languages may not be colored as expected. Better theme support is planned for
+a future release.</li>
+<li>Syntax definitions now allow <code>word_groups</code> and <code>delimited_ranges</code> to be
+combined in a single <code>rules</code> list. Use of separate <code>word_groups</code> and
+<code>delimited_ranges</code> lists is deprecated, and cannot be used in combination
+with a consolidated <code>rules</code> list.</li>
+<li>Syntax definition attribute <code>default_text</code> (added in 1.8.0) was renamed to
+<code>default_text_color</code>.</li>
+<li>Add context menu for documents pane.</li>
+<li>Add <code>pathfind</code> command for finding files by regular expression matching paths
+(similar to <code>find /path | grep pattern</code>). One place where this is very handy
+is finding the file for an imported Python module. Select the imported module
+path (example: <code>editxt.command.find</code>) and enter the <code>pathfind</code> command or use
+it's hotkey (Command+Alt+P) to quickly find the file for that module. The file
+will be opened if there is a single match. Otherwise a list of clickable
+matches will be displayed in the command output area. The default search path
+is the current project path, and can be set with the <code>set project_path</code>
+command.</li>
+<li>Add <code>...</code> abbreviation for the project path. This is displayed in window
+titles and other places where abbreviated paths are displayed. It can also be
+typed in the command bar to reference file paths from the root of the current
+project. Example: <code>ack &quot;def delimit&quot; .../editxt</code>.</li>
+<li>Change: use selected text as default pattern for <code>ack</code> command.</li>
+<li>Change: use first matching choice instead of error on ambiguous argument
+typed in command bar.</li>
+<li>Change: prompt on save if file has path but does not exist on disk.</li>
+<li>Do not open error log in new window on launch.</li>
+<li>Convert newlines to match document on paste multi-line text.</li>
+<li>Fix no document selected in tree after drag/drop.</li>
+<li>Fix line numbers overlapping text on goto line &gt; 100 in newly opened document.</li>
+<li>Fix bugs in file command argument parser.</li>
+<li>Fix sluggish line insertion on Mac OS 10.11.</li>
+<li>Remove unnecessary &quot;Paste and Match Style&quot; menu item.</li>
+<li>Hopefully fix <code>xt</code> script lag.</li>
+<li>Fix/reset text attributes on reload document.</li>
+</ul>
+<h2>2015-11-14 - 1.8.1</h2>
 <ul>
 <li>Fix <code>python</code> command in packaged EditXT.app</li>
 </ul>
@@ -83,7 +124,8 @@ right_margin:
   position: 80
   line_color: E6E6E6
   margin_color: F7F7F7
-</code></pre></li>
+</code></pre>
+</li>
 <li>Select line(s) on click/drag in line number view.</li>
 <li>Rescan selection on Replace (Command+=), and replace only if the find
 text/pattern is found in the selection.</li>
@@ -111,7 +153,8 @@ command in the terminal before clicking <strong>Install and Relaunch</strong> du
 update process (adjust the <code>/Applications/EditXT.app</code> part of the path to
 where EditXT.app is located on your local machine):
 <pre><code>chmod +x /Applications/EditXT.app/Contents/Frameworks/Sparkle.framework/Versions/Current/Resources/Autoupdate.app/Contents/MacOS/Autoupdate
-</code></pre></li>
+</code></pre>
+</li>
 <li>Add/update syntax definitions: Bind zone, diff, Jinja, SQL</li>
 <li>Fix packaging issue that broke auto-updater.</li>
 <li>Fix parse error in commands with file arguments.</li>
@@ -123,7 +166,8 @@ command in the terminal before clicking <strong>Install and Relaunch</strong> du
 update process (adjust the <code>/Applications/EditXT.app</code> part of the path to
 where EditXT.app is located on your local machine):
 <pre><code>chmod +x /Applications/EditXT.app/Contents/Frameworks/Sparkle.framework/Versions/Current/Resources/Autoupdate.app/Contents/MacOS/Autoupdate
-</code></pre></li>
+</code></pre>
+</li>
 <li>Better fix for bug in sparkle framework that prevented check for updates.</li>
 <li>Disable font smoothing in views that use the default fixed width font, which
 is currently hard-coded at Monaco 10pt. It appears that the upgrade to
@@ -139,7 +183,8 @@ command in the terminal before clicking <strong>Install and Relaunch</strong> du
 update process (adjust the <code>/Applications/EditXT.app</code> part of the path to
 where EditXT.app is located on your local machine):
 <pre><code>chmod +x /Applications/EditXT.app/Contents/Frameworks/Sparkle.framework/Versions/Current/Resources/Autoupdate.app/Contents/MacOS/Autoupdate
-</code></pre></li>
+</code></pre>
+</li>
 <li>Fix bug in sparkle framework that prevented check for updates.</li>
 <li>Fix deprecated image drawing call.</li>
 <li>Add syntax definition for git diff format.</li>
@@ -173,7 +218,8 @@ Note:
 navigation. These default shortcuts are merged with the custom shortcuts
 specified in the config file.</li>
 <li>Some shortcuts in other menus cannot be overridden with custom shortcuts.</li>
-</ul></li>
+</ul>
+</li>
 <li>Add <code>doc</code> command for document tree navigation. This command can be used
 to focus editors by name, in the order they have been most recently visited
 (<code>previous</code> / <code>next</code>), or by relative position (<code>up</code> / <code>down</code>).</li>
@@ -200,7 +246,8 @@ example:
 <pre><code>command:
   ack:
     path: /usr/local/bin/ack
-</code></pre></li>
+</code></pre>
+</li>
 <li>Add <code>grab</code> command to collect lines matching a pattern.</li>
 <li>Add <code>open</code> command (also <code>xt</code>) for opening files from command bar.</li>
 <li>Add support for invoking commands from project view.</li>
@@ -229,7 +276,8 @@ than currently selected item.</li>
 <li>Internal refactoring and bug fixes: eliminate NSDocument framework.
 <ul>
 <li>Closing a project with modified documents now prompts to save changes.</li>
-</ul></li>
+</ul>
+</li>
 <li>Add recently closed document list as main project view.</li>
 <li>Re-open error log (rather than new document named &quot;EditXT Log&quot;) on launch.</li>
 <li>Allow drag/drop documents to other applications.</li>
@@ -253,7 +301,8 @@ allowing text transformations such as case changes or conditional
 replacements, far beyond what is possible with a regular expression find/
 replace operation. Example replace expression:
 <pre><code>match[1].lower() + match[2]
-</code></pre></li>
+</code></pre>
+</li>
 <li>Dramatic performance boost when highlighting selected text.</li>
 <li>Add count-occurrences action to find command.</li>
 <li>Add right_margin config settings:
@@ -261,7 +310,8 @@ replace operation. Example replace expression:
   position: 80
   line_color: BBDDBB
   margin_color: DDBBDD
-</code></pre></li>
+</code></pre>
+</li>
 <li>Add syntax definitions for shell scripts and Objective C</li>
 </ul>
 <h2>2013-09-26 - 1.3.2</h2>
@@ -285,7 +335,8 @@ replace operation. Example replace expression:
   size: 4
 newline_mode: (LF|CR|CRLF|UNICODE) # default is LF
 soft_wrap: (none|word)
-</code></pre></li>
+</code></pre>
+</li>
 <li>Added commands:
 <ul>
 <li>Clear highlighted text (<code>clear_highlighted_text</code>).</li>
@@ -296,14 +347,17 @@ soft_wrap: (none|word)
 <li><code>indent</code></li>
 <li><code>newline_mode</code></li>
 <li><code>soft_wrap</code></li>
-</ul></li>
-</ul></li>
+</ul>
+</li>
+</ul>
+</li>
 <li>Make Preferences... menu item open config file.</li>
 <li>Add config file (<code>~/.editxt/config.yaml</code>) with selection matching settings:
 <pre><code>highlight_selected_text:
   enabled: (yes|no) # default is yes
   color: FEFF6B
-</code></pre></li>
+</code></pre>
+</li>
 <li>Mark occurrences when counting with the find dialog.</li>
 <li>Mark (highlight) all occurrences of selected text (length &gt; 3, containing
 no spaces), yellow for now.</li>
@@ -314,7 +368,8 @@ no spaces), yellow for now.</li>
 <li>Argument placeholders/hints</li>
 <li>Tab completion</li>
 <li>Command history</li>
-</ul></li>
+</ul>
+</li>
 <li>Improve exception logging.</li>
 <li>Fix bugs related to app termination with unsaved documents.</li>
 <li>Fix log file syntax highlighting.</li>

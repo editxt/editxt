@@ -286,5 +286,59 @@ as python code. It does the same thing as <code>python -c CODE</code> in a termi
       <pubDate>Sat, 14 Nov 2015 11:37:16 -0500</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.8.1/EditXT-v1.8.1-824f7f0.zip" sparkle:version="201511141137.824f7f0" sparkle:shortVersionString="1.8.1" sparkle:dsaSignature="MCwCFF3IVHZTs/dq7tOKJaaO1RZm/3/JAhQDvywIcI8AtWCZAcVEj1gdgFoCuQ==" length="10516363" type="application/octet-stream" />
     </item>
+    <item>
+      <title>Version 1.9.0</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li>Added many new syntax definitions derived from the
+<a href="https://highlightjs.org/">highlight.js</a> library. Note: the built-in theme
+does not yet have colors defined for all token types, so tokens in some
+languages may not be colored as expected. Better theme support is planned for
+a future release.</li>
+<li>Syntax definitions now allow <code>word_groups</code> and <code>delimited_ranges</code> to be
+combined in a single <code>rules</code> list. Use of separate <code>word_groups</code> and
+<code>delimited_ranges</code> lists is deprecated, and cannot be used in combination
+with a consolidated <code>rules</code> list.</li>
+<li>Syntax definition attribute <code>default_text</code> (added in 1.8.0) was renamed to
+<code>default_text_color</code>.</li>
+<li>Add context menu for documents pane.</li>
+<li>Add <code>pathfind</code> command for finding files by regular expression matching paths
+(similar to <code>find /path | grep pattern</code>). One place where this is very handy
+is finding the file for an imported Python module. Select the imported module
+path (example: <code>editxt.command.find</code>) and enter the <code>pathfind</code> command or use
+it's hotkey (Command+Alt+P) to quickly find the file for that module. The file
+will be opened if there is a single match. Otherwise a list of clickable
+matches will be displayed in the command output area. The default search path
+is the current project path, and can be set with the <code>set project_path</code>
+command.</li>
+<li>Add <code>...</code> abbreviation for the project path. This is displayed in window
+titles and other places where abbreviated paths are displayed. It can also be
+typed in the command bar to reference file paths from the root of the current
+project. Example: <code>ack &quot;def delimit&quot; .../editxt</code>.</li>
+<li>Change: use selected text as default pattern for <code>ack</code> command.</li>
+<li>Change: use first matching choice instead of error on ambiguous argument
+typed in command bar.</li>
+<li>Change: prompt on save if file has path but does not exist on disk.</li>
+<li>Do not open error log in new window on launch.</li>
+<li>Convert newlines to match document on paste multi-line text.</li>
+<li>Fix no document selected in tree after drag/drop.</li>
+<li>Fix line numbers overlapping text on goto line &gt; 100 in newly opened document.</li>
+<li>Fix bugs in file command argument parser.</li>
+<li>Fix sluggish line insertion on Mac OS 10.11.</li>
+<li>Remove unnecessary &quot;Paste and Match Style&quot; menu item.</li>
+<li>Hopefully fix <code>xt</code> script lag.</li>
+<li>Fix/reset text attributes on reload document.</li>
+</ul>
+
+        ]]>
+      </description>
+      <sparkle:releaseNotesLink>
+        http://htmlpreview.github.io/?https://raw.github.com/editxt/editxt/blob/master/resources/updater/updates.html
+      </sparkle:releaseNotesLink>
+      <pubDate>Sat, 30 Jan 2016 17:32:19 -0500</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.9.0/EditXT-v1.9.0-460a002.zip" sparkle:version="201601301732.460a002" sparkle:shortVersionString="1.9.0" sparkle:dsaSignature="MCwCFEv+aBXS8Ammt8Op5zTOEXaoJrYCAhRlqkupMDBYa7EEEiZ8KJ7O/ISE0Q==" length="9528638" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
