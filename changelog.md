@@ -3,7 +3,7 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
-## 2016-??-?? - 1.9.0
+## 2016-01-30 - 1.9.0
 
 - Added many new syntax definitions derived from the
   [highlight.js](https://highlightjs.org/) library. Note: the built-in theme
@@ -35,8 +35,13 @@ https://github.com/editxt/editxt for details of what actually happened.
   typed in command bar.
 - Change: prompt on save if file has path but does not exist on disk.
 - Do not open error log in new window on launch.
+- Convert newlines to match document on paste multi-line text.
+- Fix no document selected in tree after drag/drop.
+- Fix line numbers overlapping text on goto line > 100 in newly opened document.
 - Fix bugs in file command argument parser.
-- Fix `xt` script lag.
+- Fix sluggish line insertion on Mac OS 10.11.
+- Remove unnecessary "Paste and Match Style" menu item.
+- Hopefully fix `xt` script lag.
 - Fix/reset text attributes on reload document.
 
 ## 2015-11-14 - 1.8.1

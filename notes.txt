@@ -80,12 +80,11 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Fix bug in window title after save new document
-Fix icon in tree on new document with known extension
-
 Multi-select in file tree
   - move close button to context menu
   - always open document after current document (allow drag/move multiple)
+  - fix icon in tree on new document with known extension
+Fix bug in window title after save new document
 Add command to set/change file path. Alternately, add moved file detection.
 Aesthetics
   - syntax highlighting
