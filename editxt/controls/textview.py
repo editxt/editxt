@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import re
+from contextlib import contextmanager
 
 import objc
 import AppKit as ak
@@ -102,7 +103,7 @@ class TextView(ak.NSTextView):
             return self.app.text_commander.is_command_enabled(self.editor, item)
         return super(TextView, self).validateUserInterfaceItem_(item)
 
-    # Drag/drop ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Drag/drop and copy/paste ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def readSelectionFromPasteboard_type_(self, pasteboard, type_):
         window = self.app.find_window_with_editor(self.editor)
@@ -110,6 +111,13 @@ class TextView(ak.NSTextView):
             if window.accept_drop(None, pasteboard):
                 return True
         return super(TextView, self).readSelectionFromPasteboard_type_(pasteboard, type_)
+
+    def readablePasteboardTypes(self):
+        with temporarily_disable_rich_text(self):
+            return super().readablePasteboardTypes()
+
+    def paste_(self, sender):
+        self.pasteAsPlainText_(sender)
 
     # Right-margin guide ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -184,3 +192,23 @@ class TextView(ak.NSTextView):
     # Conditional font smoothing ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     drawRect_ = font_smoothing(ak.NSTextView.drawRect_)
+
+
+@contextmanager
+def temporarily_disable_rich_text(textview):
+    """Temporarily disable rich text flag
+
+    Hack/workaround for OS X 10.11: `TextView.setRichText_(False)` makes
+    the textview drawing sluggish, which is especially noticeable when
+    inserting new lines.
+
+    According to the Cocoa documentation, the `richText` property was
+    added in 10.10, but this program has been using `setRichText_()`
+    since long before that, and there are abundant sources online that
+    mentioned it's use long before 10.10 was released.
+    """
+    textview.setRichText_(False)
+    try:
+        yield
+    finally:
+        textview.setRichText_(True)

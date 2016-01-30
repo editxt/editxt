@@ -80,7 +80,9 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Fix lag (line height bug?) in insert line on OS X 10.11
+xFix lag (line height bug?) in insert line on OS X 10.11
+x  - partial fix: coalesce syntax highlight calls
+Fix line number oddities drawing with non-integral font height
 Fix wrong document highlighted after drag/drop in document pane
 
 Multi-select in file tree

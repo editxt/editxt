@@ -60,7 +60,8 @@ def setup_main_view(editor, frame):
     text.setTextContainerInset_(fn.NSMakeSize(half_char, half_char)) # width/height
     text.setDrawsBackground_(False)
     text.setSmartInsertDeleteEnabled_(False)
-    text.setRichText_(False)
+    #text.setRichText_(False) # introduces drawing lag in 10.11
+                              # workarounds in TextView copy/paste methods
     text.setUsesFontPanel_(False)
     text.setUsesFindPanel_(True)
     text.setTypingAttributes_(attrs)
