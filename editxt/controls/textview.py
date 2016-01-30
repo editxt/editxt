@@ -73,6 +73,7 @@ class TextView(ak.NSTextView):
         try:
             index = self.editor.line_numbers.index_of(line)
             range = (index + select_start, select_len)
+            self.editor.scroll_view.verticalRulerView().calculate_thickness(line)
             self.setSelectedRange_(range)
             self.scrollRangeToVisible_(range)
         except ValueError:

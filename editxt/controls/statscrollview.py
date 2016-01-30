@@ -57,10 +57,14 @@ class StatusbarScrollView(ak.NSScrollView):
 
         scrollw = ak.NSScroller.scrollerWidth()
         rect = self.bounds()
-        # (status+hscroll) | (content+vscroll)
-        arect, brect = fn.NSDivideRect(rect, None, None, scrollw, fn.NSMaxYEdge)
-        # vscroll | content
-        vscroll_rect, crect = fn.NSDivideRect(brect, None, None, scrollw, fn.NSMaxXEdge)
+        if self.can_overlay_scrollers:
+            # content view is entire bounds
+            crect = rect
+        else:
+            # (status+hscroll) | (content+vscroll)
+            arect, brect = fn.NSDivideRect(rect, None, None, scrollw, fn.NSMaxYEdge)
+            # vscroll | content
+            vscroll_rect, crect = fn.NSDivideRect(brect, None, None, scrollw, fn.NSMaxXEdge)
 
         ruler = self.verticalRulerView()
         if ruler:
@@ -88,12 +92,12 @@ class StatusbarScrollView(ak.NSScrollView):
             # status | scrollers
             status_rect, hrect = fn.NSDivideRect(
                 arect, None, None, status_size.width, fn.NSMinXEdge)
-            vscroll.setFrame_(vscroll_rect)
             if ruler:
                 ruler.setFrame_(rule_rect)
-            status.setFrame_(status_rect)
             content.setFrame_(crect)
+            vscroll.setFrame_(vscroll_rect)
             hscroll.setFrame_(hrect)
+            status.setFrame_(status_rect)
             self.setNeedsDisplay_(True)
 
     def setBackgroundColor_(self, color):

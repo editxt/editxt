@@ -80,7 +80,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Fix bug in scroll view drawing on open/scroll to line > 100
 Fix bug in window title after save new document
 Fix icon in tree on new document with known extension
 
