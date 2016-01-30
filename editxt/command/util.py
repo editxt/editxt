@@ -78,10 +78,13 @@ def iterlines(text, range=(0,)):
 _newlines = re.compile("|".join(
     eol for eol in sorted(const.EOLS.values(), key=len, reverse=True)))
 
+def normalize_newlines(text, eol):
+    return _newlines.sub(eol, text)
+
 def replace_newlines(textview, eol):
     sel = textview.selectedRange()
     text = textview.string()
-    next = _newlines.sub(eol, text)
+    next = normalize_newlines(text, eol)
     if text == next:
         return
     range = (0, len(text))

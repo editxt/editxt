@@ -26,10 +26,13 @@ import AppKit as ak
 import Foundation as fn
 from objc import super
 
+import editxt.constants as const
 from editxt.command.find import FindController
+from editxt.command.util import normalize_newlines
 from editxt.datatypes import WeakProperty
 from editxt.platform.app import beep
 from editxt.platform.mac.views.util import font_smoothing
+from editxt.platform.mac.pasteboard import Pasteboard
 
 log = logging.getLogger(__name__)
 
@@ -118,6 +121,22 @@ class TextView(ak.NSTextView):
 
     def paste_(self, sender):
         self.pasteAsPlainText_(sender)
+
+    def pasteAsPlainText_(self, sender):
+        text = Pasteboard().text
+        if text:
+            self.insertText_(text)
+
+    def pasteAsRichText_(self, sender):
+        self.pasteAsPlainText_(sender)
+
+    def insertText_(self, text):
+        self.insertText_replacementRange_(text, self.selectedRange())
+
+    def insertText_replacementRange_(self, text, rng):
+        eol = const.EOLS[self.editor.newline_mode]
+        text = normalize_newlines(text, eol)
+        super().insertText_replacementRange_(text, rng)
 
     # Right-margin guide ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
