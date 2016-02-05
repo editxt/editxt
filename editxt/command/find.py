@@ -244,6 +244,8 @@ class Finder(object):
         :returns: Number of marked occurrences.
         """
         target = self.find_target()
+        if target is None:
+            return 0
         last_mark = getattr(target, '_Finder__last_mark', (None, 0))
         if last_mark[0] == ftext:
             return last_mark[1]

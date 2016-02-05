@@ -85,14 +85,6 @@ x     cannot reproduce
 Bug: file path gets messed up when relative path goes through removed dir
      (file paths should be converted to real paths on open/save)
 
-Bug reported by Joel on 2016-02-05:
-ERROR editxt - Python exception discarded
-Traceback (most recent call last):
-  File "/Users/Shared/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/platform/mac/events.py", line 57, in do
-  File "/Users/Shared/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/editor.py", line 540, in highlight_selection
-  File "/Users/Shared/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/command/find.py", line 252, in mark_occurrences
-AttributeError: 'NoneType' object has no attribute 'layoutManager'
-
 Multi-select in file tree
   - add icon badge to unsaved documents
   - move close button to context menu
