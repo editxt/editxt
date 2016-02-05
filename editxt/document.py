@@ -481,13 +481,17 @@ class TextDocument(object):
     @property
     def comment_token(self):
         return self.syntaxer.syntaxdef.comment_token
+    @comment_token.setter
+    def comment_token(self, value):
+        self.syntaxer.syntaxdef.comment_token = value
 
-    def _get_syntaxdef(self):
+    @property
+    def syntaxdef(self):
         return self.syntaxer.syntaxdef
-    def _set_syntaxdef(self, value):
+    @syntaxdef.setter
+    def syntaxdef(self, value):
         self.syntaxer.syntaxdef = value
         self.color_text()
-    syntaxdef = property(_get_syntaxdef, _set_syntaxdef)
 
     def update_syntaxer(self):
         filename = os.path.basename(self.file_path)

@@ -80,10 +80,10 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Bug: comment lines in file without comment token -> error
+xBug: comment lines in file without comment token -> error
+x     cannot reproduce
 Bug: file path gets messed up when relative path goes through removed dir
      (file paths should be converted to real paths on open/save)
-Feature: add `set comment_token ...` command
 
 Bug reported by Joel on 2016-02-05:
 ERROR editxt - Python exception discarded

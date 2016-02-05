@@ -724,11 +724,19 @@ class String(Field):
             raise Error("invalid value: {}={!r}".format(self.name, value))
         value = value.replace("\\", "\\\\")
         for char, esc in self.ESCAPES.items():
-            if esc in value and esc not in """\\"'""":
+            if esc in value and esc not in "\"\\'":
                 value = value.replace(esc, "\\" + char)
         if " " in value or value.startswith(("'", '"')):
-            return Regex.delimit(value, delimiters=""""'""")[0]
+            return Regex.delimit(value, delimiters="\"'")[0]
         return value
+
+    def get_placeholder(self, arg):
+        value = self.default
+        if not arg and value:
+            if " " in value or value.startswith(("'", '"')):
+                return Regex.delimit(value, delimiters="\"'")[0]
+            return value
+        return super().get_placeholder(arg)
 
 
 class File(String):

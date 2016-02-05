@@ -578,6 +578,22 @@ def test_String():
     yield test, None, "", 0
     yield test, 5, Error("invalid value: str=5")
 
+    test = make_placeholder_checker(field)
+    yield test, "", 0, "str"
+    yield test, "a", 0, ""
+    yield test, "s", 0, ""
+
+    test = make_placeholder_checker(String('str', default='def'))
+    yield test, "", 0, "def"
+    yield test, "d", 0, ""
+
+    test = make_placeholder_checker(String('str', default='d e f'))
+    yield test, "", 0, '"d e f"'
+    yield test, "a", 0, ""
+
+    test = make_placeholder_checker(String('str', default=''))
+    yield test, "", 0, 'str'
+
 def test_File():
     from editxt.test.util import test_app
     field = File('path')

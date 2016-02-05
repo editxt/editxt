@@ -5,6 +5,8 @@ https://github.com/editxt/editxt for details of what actually happened.
 
 ## 2016-01-30 - 1.9.1
 
+- Add `set comment_token` command, which changes the comment token for the
+  document's language (in all editors) until the program is restarted.
 - Fix default value for skipped regex args in command bar.
 
 ## 2016-01-30 - 1.9.0

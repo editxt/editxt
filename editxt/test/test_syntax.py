@@ -1075,6 +1075,13 @@ def test_NoHighlight_wordinfo():
     nh = NoHighlight("Test", "")
     eq_(nh.wordinfo, None)
 
+def test_SyntaxDefinition_comment_token():
+    class Lang:
+        name = "start-end-lang-no-body"
+        rules = [("keyword", ["def"])]
+    lang = make_definition(Lang)
+    eq_(lang.comment_token, "")
+
 def get_syntax_definition(name, cache={}):
     if isinstance(name, NoHighlight):
         return name

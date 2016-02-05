@@ -151,6 +151,8 @@ def _comment_text(editor, args, pad):
     text = textview.string()
     sel = text.lineRangeForRange_(textview.selectedRange())
     comment_token = editor.document.comment_token
+    if not comment_token:
+        return
     if is_comment_range(text, sel, comment_token):
         func = uncomment_line
     else:
@@ -310,6 +312,16 @@ def _default_project_path(editor=None):
         return None
     return user_path(editor.project.path)
 
+def set_document_variable(editor, command_name, args):
+    assert len(args) == 1, repr(args)
+    for name, value in args:
+        setattr(editor.document, name, value)
+
+def _default_comment_token(editor=None):
+    if editor is None:
+        return None
+    return editor.document.syntaxdef.comment_token
+
 def set_editor_syntaxdef(editor, command_name, args):
     set_editor_variable(editor, "syntaxdef", args)
 
@@ -327,6 +339,9 @@ def set_editor_indent_vars(editor, name, args):
     setattr(proxy, "indent_mode", args.mode)
 
 @command(name="set", arg_parser=CommandParser(SubParser("variable",
+    SubArgs("comment_token",
+        String("comment_token", default=_default_comment_token),
+        setter=set_document_variable),
     SubArgs("font",
         FontFace("face", default=_default_font_attribute("face")),
         Float("size", default=_default_font_attribute("size")),
