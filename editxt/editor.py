@@ -162,6 +162,9 @@ class Editor(object):
         if self.text_view is None:
             return None
         return self.text_view.selectedRange()
+    @selection.setter
+    def selection(self, rng):
+        self.text_view.setSelectedRange_(rng)
 
     @property
     def is_dirty(self):

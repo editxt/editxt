@@ -35,11 +35,14 @@ def test_ack():
     if not mod.is_ack_installed():
         raise SkipTest("ack not installed")
     @gentest
-    def test(command, message="", config="", project_path="/"):
+    def test(command, message="", config="", project_path="/", selection=""):
         config = "window project(/) editor(/dir/b.txt)*"
         with test_app(config) as app, \
                 setup_files(test_app(app).tmp) as tmp:
             editor = app.windows[0].current_editor
+            if selection:
+                editor.document.text_storage[:] = selection
+                editor.text_view = TestConfig(selectedRange=lambda:(0, len(selection)))
             bar = CommandTester(mod.ack, editor=editor, output=True)
             bar(command)
             output = bar.output
@@ -75,6 +78,10 @@ def test_ack():
         "\n"
         "[dir/b.txt](xt://open/dir/../dir/b.txt)\n"
         "[1](xt://open/dir/../dir/b.txt?goto=1):name: [dir/b](xt://open/dir/../dir/b.txt?goto=1.6.5).txt\n")
+    yield test("ack  ..",
+        "[dir/B file](xt://open/dir/../dir/B%20file)\n"
+        "[1](xt://open/dir/../dir/B%20file?goto=1):name: [dir/B ](xt://open/dir/../dir/B%20file?goto=1.6.6)file\n",
+        selection="dir/B ")
     yield test("ack xyz", "no match for pattern: xyz")
 
 def test_exec_shell():

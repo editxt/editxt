@@ -3,6 +3,10 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+## 2016-01-30 - 1.9.1
+
+- Fix default value for skipped regex args in command bar.
+
 ## 2016-01-30 - 1.9.0
 
 - Added many new syntax definitions derived from the

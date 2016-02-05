@@ -1025,7 +1025,7 @@ class Regex(Field):
         """
         if index > len(text):
             return self.default, index
-        if index == len(text):
+        if index == len(text) or text[index] == ' ':
             return self.default, index + 1
         if self.replace and text[index] not in self.DELIMITERS:
             msg = "invalid search pattern: {!r}".format(text[index:])
