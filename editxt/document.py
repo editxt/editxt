@@ -33,6 +33,7 @@ import editxt.platform.constants as platform_const
 from editxt.command.util import calculate_indent_mode_and_size
 from editxt.controls.alert import Alert
 from editxt.platform.events import call_later, debounce
+from editxt.platform.fileref import FileRef
 from editxt.platform.kvo import KVOLink, KVOProxy
 from editxt.platform.text import Text
 from editxt.syntax import Highlighter
@@ -148,11 +149,16 @@ class TextDocument(object):
 
     @property
     def file_path(self):
-        return self._filepath
+        return self._fileref.path
     @file_path.setter
     def file_path(self, value):
-        old_path = getattr(self, "_filepath", None)
-        self._filepath = value
+        ref = getattr(self, "_fileref", None)
+        if ref is None:
+            old_path = None
+            self._fileref = FileRef(value)
+        else:
+            old_path = ref.original_path
+            ref.path = value
         self._refresh_file_mtime() # TODO should this (always) happen here?
         if self.has_real_path():
             self.app.documents.change_document_path(old_path, self)
@@ -294,8 +300,10 @@ class TextDocument(object):
                 raise Error("parent directory is missing: {}".format(self.file_path))
             else:
                 raise Error("file path is not set")
-        self.write_to_file(self.file_path)
-        self.persistent_path = self.file_path
+        path = self.file_path
+        self.write_to_file(path)
+        self.file_path = path  # update FileRef
+        self.persistent_path = path
         for action in [
             self._refresh_file_mtime,
             self.clear_dirty,

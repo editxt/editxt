@@ -33,6 +33,7 @@ def init(platform, use_pdb):
         "font",
         "document",
         "events",
+        "fileref",
         "markdown",
         "pasteboard",
         "text",

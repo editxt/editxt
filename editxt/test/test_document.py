@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+from os.path import join
 
 import AppKit as ak
 import Foundation as fn
@@ -268,7 +269,7 @@ def test_TextDocument_file_changed_since_save():
                     with open(path, "a") as file:
                         file.write("modified")
             result = doc.file_changed_since_save()
-            eq_(result, expected)
+            eq_(result, expected, (doc.file_path, doc.persistent_path))
     yield test(False)
     yield test(True, ["move"])
     yield test(True, ["save", "move"])
@@ -674,6 +675,31 @@ def test_update_syntaxer():
     yield test, c(namechange=True, newdef=True)
     yield test, c(namechange=True, newdef=True, needs_color=True)
     yield test, c(needs_color=True)
+
+@test_app
+def test_TextDocument_should_track_moved_file(app):
+    tmp = test_app(app).tmp
+    path = join(tmp, "file.txt")
+    with open(path, "w", encoding="utf8") as fh:
+        fh.write("moving...")
+    doc = app.document_with_path(path)
+    eq_(doc.file_path, path)
+    new_path = join(tmp, "dir", "moved.txt")
+    os.mkdir(join(tmp, "dir"))
+    os.rename(path, new_path)
+    eq_(doc.file_path, new_path)
+
+@test_app
+def test_TextDocument_should_track_file_moved_after_save(app):
+    tmp = test_app(app).tmp
+    path = join(tmp, "file.txt")
+    doc = app.document_with_path(path)
+    eq_(doc.file_path, path)
+    doc.save()
+    new_path = join(tmp, "dir", "moved.txt")
+    os.mkdir(join(tmp, "dir"))
+    os.rename(path, new_path)
+    eq_(doc.file_path, new_path)
 
 @test_app
 def test_TextDocument_comment_token(app):

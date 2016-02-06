@@ -82,12 +82,16 @@ Top priority
 
 Multi-select in file tree
   - add icon badge to unsaved documents
-  - move close button to context menu
+  - remove close button
   - always open document after current document
   - allow drag/move multiple items at once
   - fix icon in tree on new document with known extension
+  - show directory path in tree if name matches another document
+    tree idea:
+    - project
+      - directory - main view is list of files in this directory
+        - file - name in tree is path relative to directory if in directory
 Fix bug in window title after save new document
-Add command to set/change file path. Alternately, add moved file detection.
 Aesthetics
   - syntax highlighting
     - better language detection (file extension, shebang line, etc.)

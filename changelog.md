@@ -7,6 +7,7 @@ https://github.com/editxt/editxt for details of what actually happened.
 
 - Add `set comment_token` command, which changes the comment token for the
   document's language (in all editors) until the program is restarted.
+- Add moved file detection (update path when file is moved).
 - Fix default value for skipped regex args in command bar.
 - Fix document paths with up-references resulting in unnecessary save prompt.
 
