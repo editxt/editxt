@@ -21,7 +21,7 @@ import logging
 import objc
 import os
 from itertools import count
-from os.path import realpath
+from os.path import dirname, exists, isabs, isdir, islink, normpath, realpath, samefile
 
 import AppKit as ak
 import Foundation as fn
@@ -68,16 +68,31 @@ class DocumentController(object):
     def get_document(self, path):
         """Get a document object for the given path
 
+        Redundant separators and up-level references in absolute paths
+        will be collapsed, and symlinks in the path may be eliminated.
+
         :returns: A new or existing document. If the new document does not
         have a "real" path (see ``TextDocument.has_real_path``) it will not
         be tracked by this controller.
         """
+        if not isabs(path):
+            key = object() # always not found
+        elif islink(path) or not exists(path):
+            path = key = realpath(path)
+        else:
+            key = realpath(path)
+            norm = normpath(path)
+            try:
+                same = samefile(norm, key)
+            except FileNotFoundError:
+                same = False
+            path = norm if same else key
         try:
-            document = self.documents[realpath(path)]
+            document = self.documents[key]
         except KeyError:
             document = TextDocument(self.app, path)
             if document.has_real_path():
-                self.documents[realpath(path)] = document
+                self.documents[realpath(document.file_path)] = document
         return document
 
     def change_document_path(self, old_path, document):
@@ -88,7 +103,7 @@ class DocumentController(object):
         file_path attribute pointing to its new location on disk.
         """
         assert document.has_real_path(), document
-        if old_path and os.path.isabs(old_path):
+        if old_path and isabs(old_path):
             self.documents.pop(realpath(old_path), None)
         self.documents[realpath(document.file_path)] = document
 
@@ -275,7 +290,7 @@ class TextDocument(object):
         :raises: Error if the document does not have a real path.
         """
         if not self.has_real_path():
-            if os.path.isabs(self.file_path):
+            if isabs(self.file_path):
                 raise Error("parent directory is missing: {}".format(self.file_path))
             else:
                 raise Error("file path is not set")
@@ -297,7 +312,7 @@ class TextDocument(object):
 
         The given file path must be an absolute path.
         """
-        if not os.path.isabs(path):
+        if not isabs(path):
             raise Error("cannot write to relative path: {}".format(path))
         data, err = self.data()
         if err is None:
@@ -333,12 +348,11 @@ class TextDocument(object):
         currently assigned file_path. For example, this will not detect if
         file system permissions would prevent writing.
         """
-        return os.path.isabs(self.file_path) and \
-               os.path.exists(os.path.dirname(self.file_path))
+        return isabs(self.file_path) and isdir(dirname(self.file_path))
 
     def file_exists(self):
         """Return True if this file has no absolute path on disk"""
-        return self.has_real_path() and os.path.exists(self.file_path)
+        return self.has_real_path() and exists(self.file_path)
 
     def _refresh_file_mtime(self):
         if self.file_exists():

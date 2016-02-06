@@ -37,8 +37,7 @@ def test_ack():
     @gentest
     def test(command, message="", config="", project_path="/", selection=""):
         config = "window project(/) editor(/dir/b.txt)*"
-        with test_app(config) as app, \
-                setup_files(test_app(app).tmp) as tmp:
+        with test_app(config) as app, setup_files(test_app(app).tmp) as tmp:
             editor = app.windows[0].current_editor
             if selection:
                 editor.document.text_storage[:] = selection

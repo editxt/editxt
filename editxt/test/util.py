@@ -207,7 +207,7 @@ class test_app(object):
     def __enter__(self):
         from editxt.application import Application
         self.tempdir = tempdir()
-        self.tmp = self.tempdir.__enter__()
+        self.tmp = os.path.realpath(self.tempdir.__enter__())
         profile_path = os.path.join(self.tmp, ".profile")
         app = Application(profile_path)
         self.items = {}

@@ -229,8 +229,6 @@ class Application(object):
             # untitled document will get associated with DocumentController on save
             doc = TextDocument(self)
         else:
-            if os.path.islink(path):
-                path = os.path.realpath(path)
             doc = docs.get_document(path)
         return doc
 

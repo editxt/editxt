@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+from os.path import join, realpath
 
 from tempfile import gettempdir
 import AppKit as ak
@@ -96,7 +97,7 @@ def test_init_syntax_definitions():
     sf = SyntaxFactory() >> m.mock(syntax.SyntaxFactory)
     app_log = m.replace("editxt.application.log")
     for path, info in [(rsrc_path, False), ('/editxtdev', True)]:
-        sf.load_definitions(os.path.join(path, const.SYNTAX_DEFS_DIR), info)
+        sf.load_definitions(join(path, const.SYNTAX_DEFS_DIR), info)
     sf.index_definitions()
     with m:
         app.init_syntax_definitions()
@@ -180,7 +181,7 @@ def test_window_will_close_after_app_will_terminate():
         window = app.windows[0]
         app.will_terminate()
         app.discard_window(window)
-        closed_path = os.path.join(app.profile_path, const.STATE_DIR, const.CLOSED_DIR)
+        closed_path = join(app.profile_path, const.STATE_DIR, const.CLOSED_DIR)
         eq_(os.listdir(closed_path), [])
 
 def test_open_path_dialog():
@@ -225,50 +226,85 @@ def test_document_with_path():
         with tempdir() as tmp, test_app() as app:
             docs = app.documents
             eq_(len(docs), 0)
-            path = setup(tmp, app, docs)
+            path = setup(realpath(tmp), app, docs)
+            if isinstance(path, tuple):
+                path, expected_path = path
+            else:
+                expected_path = path
             doc = app.document_with_path(path)
             try:
                 assert isinstance(doc, TextDocument)
                 if os.path.exists(path):
                     assert os.path.samefile(path, doc.file_path)
+                    eq_(expected_path, doc.file_path)
                 else:
-                    eq_(path, doc.file_path)
+                    eq_(expected_path, doc.file_path)
                 eq_(doc.app, app)
             finally:
                 doc.close()
             eq_(len(docs), 0)
 
     def plain_file(tmp, app, docs):
-        path = os.path.join(tmp, "file.txt")
+        path = join(tmp, "file.txt")
         with open(path, "w") as fh:
             fh.write("text")
         return path
 
     def symlink(tmp, app, docs):
         plain = plain_file(tmp, app, docs)
-        path = os.path.join(tmp, "file.sym")
+        path = join(tmp, "file.sym")
         assert plain != path, path
         os.symlink(os.path.basename(plain), path)
-        return path
+        return path, plain
+
+    def broken_symlink(tmp, app, docs):
+        plain = join(tmp, "file.txt")
+        path = join(tmp, "file.sym")
+        assert plain != path, path
+        assert not os.path.exists(plain), plain
+        os.symlink(os.path.basename(plain), path)
+        return path, plain
 
     def document_controller(tmp, app, docs):
         path = plain_file(tmp, app, docs)
-        url = fn.NSURL.fileURLWithPath_(path)
         doc1 = docs.get_document(path)
         doc2 = app.document_with_path(path)
         assert doc1 is doc2, "%r is not %r" % (doc1, doc2)
         return path
 
     def nonexistent_file(tmp, app, docs):
-        path = os.path.join(tmp, "file.txt")
-        doc = app.document_with_path(path)
-        assert not os.path.exists(path), "%s exists (but should not)" % path
+        path = join(tmp, "file.txt")
+        assert not os.path.exists(path), path
         return path
+
+    def nonexistent_path(tmp, app, docs):
+        c_dir = join(tmp, "dir", "c")
+        path = join(c_dir, "..", "file.txt")
+        return path, join(tmp, "dir", "file.txt")
+
+    def upref_path(tmp, app, docs):
+        plain = plain_file(tmp, app, docs)
+        path = join(tmp, "dir", "..", "file.txt")
+        os.mkdir(join(tmp, "dir"))
+        return path, plain
+
+    def upref_path_with_symlink(tmp, app, docs):
+        plain = plain_file(tmp, app, docs)
+        dir_ = join(tmp, "dir")
+        sym_ = join(tmp, "dir", "c")
+        path = join(tmp, "dir", "c", "..", "file.txt")
+        os.mkdir(dir_)
+        os.symlink(dir_, sym_)
+        return path, plain
 
     yield test, plain_file
     yield test, symlink
+    yield test, broken_symlink
     yield test, document_controller
     yield test, nonexistent_file
+    yield test, nonexistent_path
+    yield test, upref_path
+    yield test, upref_path_with_symlink
 
 def test_open_documents_with_paths():
     import editxt.document as edoc

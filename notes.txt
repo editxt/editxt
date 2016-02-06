@@ -80,11 +80,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-xBug: comment lines in file without comment token -> error
-x     cannot reproduce
-Bug: file path gets messed up when relative path goes through removed dir
-     (file paths should be converted to real paths on open/save)
-
 Multi-select in file tree
   - add icon badge to unsaved documents
   - move close button to context menu

@@ -499,7 +499,8 @@ def test_TextDocument_save():
 def test_TextDocument_write_to_path():
     @gentest
     def test(path, error=None):
-        with tempdir() as tmp, test_app() as app:
+        with test_app() as app:
+            tmp = test_app(app).tmp
             doc_path = os.path.join(tmp, "other")
             path, begin_content = setup_path(tmp, path)
             doc = app.document_with_path(doc_path)
