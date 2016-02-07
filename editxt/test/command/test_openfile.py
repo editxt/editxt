@@ -59,9 +59,18 @@ def test_open_command():
     yield test("open file.txt", "editor[~/file.txt 0]*", project_path=None)
 
 def test_open_files():
-    with test_app("project") as app:
+    @gentest
+    @test_app("project")
+    def test(app, filepath, config, create=[]):
         tapp = test_app(app)
+        for name in create:
+            with open(tapp.temp_path(name), "w") as fh:
+                pass
         project = app.windows[0].projects[0]
-        path = tapp.temp_path("file.txt")
+        path = tapp.temp_path(filepath)
         mod.open_files([path], project)
-        eq_(tapp.state, "window project editor[/file.txt 0]*")
+        eq_(tapp.state, "window project " + config)
+
+    yield test("file.txt", "editor[/file.txt 0]*")
+    yield test("file.*", "editor[/file.md 0] editor[/file.txt 1]*",
+               ["filet.t", "file.md", "file.txt"])

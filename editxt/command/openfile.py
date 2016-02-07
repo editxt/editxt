@@ -18,6 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+from glob import escape, iglob
+from os.path import isdir
 
 import editxt.constants as const
 from editxt.command.base import command, CommandError
@@ -46,7 +48,8 @@ def open_(editor, args):
 def open_files(paths, project, index=None):
     """Open files in project
 
-    :param paths: A list of file paths.
+    :param paths: A list of file paths. Paths may contain globbing
+    patterns.
     :param project: The project in which to open paths.
     :param index: The index at which to insert new editors in the
     project's list of editors. Use `-1` to insert at the end. Insert
@@ -60,5 +63,17 @@ def open_files(paths, project, index=None):
                 index = project.editors.index(current) + 1
             except ValueError:
                 pass
-    documents = [project.app.document_with_path(path) for path in paths]
+    documents = [project.app.document_with_path(path) for path in iter_paths(paths)]
     project.window.insert_items(documents, project, index)
+
+
+def iter_paths(paths):
+    """Yield paths, expanding globbing patterns if present"""
+    for path in paths:
+        if path == escape(path):
+            # path does not contain globbing patterns
+            yield path
+        else:
+            for filepath in iglob(path, recursive=True):
+                if not isdir(filepath):
+                    yield filepath
