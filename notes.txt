@@ -80,17 +80,23 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+Fix command autocomplete overlay appearing under main text view
+  it happened after `xt path/*.ext` with no match
+  then Up Arrow, edit command, Tab (to show completions), observe bug
+
+Make syntax highlighter stop for events
 Multi-select in file tree
-  - add icon badge to unsaved documents
+  - add icon badge (or glowing shadow) to unsaved documents
+  - activate unsaved document indocator on window close button
   - remove close button
-  - always open document after current document
   - allow drag/move multiple items at once
-  - fix icon in tree on new document with known extension
-  - show directory path in tree if name matches another document
-    tree idea:
-    - project
-      - directory - main view is list of files in this directory
-        - file - name in tree is path relative to directory if in directory
+Show directory path in tree if name matches another document
+  tree idea:
+  - project
+    - directory - main view is list of files in this directory
+      - file - name in tree is path relative to directory if in directory
+Fix icon in tree on new document with known extension
+Always open document after current document
 Fix bug in window title after save new document
 Aesthetics
   - syntax highlighting

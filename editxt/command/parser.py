@@ -804,7 +804,7 @@ class File(String):
         return os.path.join(self.path, path), stop
 
     def get_completions(self, arg):
-        from os.path import exists, expanduser, isabs, isdir, join, sep, split
+        from os.path import exists, expanduser, isabs, isdir, join, realpath, sep, split
         if arg.start >= len(arg.text):
             token = ""
         else:
@@ -829,7 +829,7 @@ class File(String):
         elif self.path is None:
             return []
         else:
-            base = self.path
+            base = realpath(self.path)
             path = join(base, token)
             diff += len(base) + 1
         root, name = split(path)

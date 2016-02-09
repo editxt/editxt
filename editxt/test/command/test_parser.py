@@ -730,9 +730,16 @@ def test_File():
             with replattr(os.path, "expanduser", expanduser):
                 check(input, output, *args)
         yield test, "", [], 0
-        check = make_completions_checker(
-                    field.with_context(app.windows[0].projects[0]))
+
+        project = app.windows[0].projects[0]
+        check = make_completions_checker(field.with_context(project))
         yield test, "", ["a.txt", "B\\ file", "b.txt"], 0
+        yield test, "./", ["a.txt", "B\\ file", "b.txt"], 2
+
+        with replattr(project, "path",  project.path + "/"):
+            check = make_completions_checker(field.with_context(project))
+            yield test, "", ["a.txt", "B\\ file", "b.txt"], 0
+            yield test, "./", ["a.txt", "B\\ file", "b.txt"], 2
 
 def test_DynamicList():
     def get_items(editor):
