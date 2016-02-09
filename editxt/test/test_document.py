@@ -721,7 +721,7 @@ def test_TextDocument_on_text_edit(app):
     ts.editedMask() >> -1
     syn = doc.syntaxer = m.mock(Highlighter)
     range = (0, 20)
-    syn.color_text(ts, range)
+    syn.color_text(ts, range, timeout=0.05)
     with m:
         doc.on_text_edit(range)
 

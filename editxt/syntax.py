@@ -25,6 +25,7 @@ import runpy
 import string
 from fnmatch import fnmatch
 from itertools import chain, count, groupby
+from time import time
 from weakref import WeakValueDictionary
 
 import AppKit as ak
@@ -33,6 +34,8 @@ from objc import NULL
 
 import editxt.constants as const
 from editxt.datatypes import WeakProperty
+from editxt.platform.events import call_later
+from editxt.util import union_range
 
 log = logging.getLogger(__name__)
 
@@ -153,9 +156,18 @@ class Highlighter(object):
     def __repr__(self):
         return "<{} {}>".format(type(self).__name__, self.syntaxdef.name)
 
-    def color_text(self, text, minrange=None):
+    def color_text(self, text, minrange=None, timeout=None):
         if text.editedMask() == ak.NSTextStorageEditedAttributes:
             return # we don't care if only attributes changed
+        try:
+            cancel = text.__cancel_incomplete_highlight
+        except AttributeError:
+            pass
+        else:
+            del text.__cancel_incomplete_highlight
+            cancelled_range = cancel()
+            if minrange is not None:
+                minrange = union_range(cancelled_range, minrange)
 
         lang = self.syntaxdef
         if lang is None or not lang.wordinfo:
@@ -195,15 +207,34 @@ class Highlighter(object):
             offset = 0
             minend = tlen
 
-        text.beginEditing()
-        try:
-            self.scan(lang, text, offset, minend, tlen)
-        except Exception:
-            log.exception("syntax highlight error")
-        finally:
-            text.endEditing()
+        self.scan(lang, text, offset, minend, tlen, timeout)
 
-    def scan(self, lang, text, offset, minend, tlen):
+    def scan(self, lang, text, offset, minend, tlen, timeout):
+        def continue_scan():
+            text.beginEditing()
+            try:
+                resume_at = next(scanner, None)
+            except Exception:
+                log.exception("syntax highlight error")
+                resume_at = None
+            finally:
+                text.endEditing()
+            if resume_at is None:
+                try:
+                    del text.__cancel_incomplete_highlight
+                except AttributeError:
+                    pass
+            else:
+                cancel_call = call_later(0.01, continue_scan)
+                def cancel():
+                    cancel_call()
+                    return resume_at, max(minend - resume_at, 0)
+                text.__cancel_incomplete_highlight = cancel
+
+        scanner = self.iter_scan(lang, text, offset, minend, tlen, timeout)
+        continue_scan()
+
+    def iter_scan(self, lang, text, offset, minend, tlen, timeout=None):
         x_range = SYNTAX_RANGE
         x_token = SYNTAX_TOKEN
         fg_name = ak.NSForegroundColorAttributeName
@@ -211,6 +242,7 @@ class Highlighter(object):
         add_attribute = text.addAttribute_value_range_
         rem_attribute = text.removeAttribute_range_
         get_attribute = text.attribute_atIndex_effectiveRange_
+        end_time = (time() + timeout) if timeout else None
 
         string = text.string()
         theme = self.theme
@@ -319,7 +351,13 @@ class Highlighter(object):
 
                     offset = end
                     #log.debug("info=%r key=%s offset=%s", info, key, offset)
+                    if end_time is not None and time() > end_time:
+                        yield end
+                        end_time = (time() + timeout) if timeout else None
                     break # exit for
+                if end_time is not None and time() > end_time:
+                    yield end
+                    end_time = (time() + timeout) if timeout else None
             else:
                 break # exit while
         if offset < end:

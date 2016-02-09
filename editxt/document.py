@@ -38,7 +38,7 @@ from editxt.platform.kvo import KVOLink, KVOProxy
 from editxt.platform.text import Text
 from editxt.syntax import Highlighter
 from editxt.undo import UndoManager
-from editxt.util import (untested, refactor,
+from editxt.util import (union_range, untested, refactor,
     fetch_icon, filestat, WeakProperty)
 
 log = logging.getLogger(__name__)
@@ -536,21 +536,18 @@ class TextDocument(object):
             return
         self.color_text(rng)
 
-    def _coalesce_edit_ranges(self, rng=ALL):
+    def _coalesce_edit_ranges(self, rng=None):
         rng_ = self._edit_range
-        if rng is ALL or rng_ is ALL:
-            rng = ALL
+        if rng is None or rng_ is ALL:
+            rng = None
         elif rng_ is not None:
-            # union ranges
-            start = min(rng[0], rng_[0])
-            end = max(sum(rng), sum(rng_))
-            rng = (start, end - start)
-        self._edit_range = rng
-        return (self, None if rng is ALL else rng), {}
+            rng = union_range(rng, rng_)
+        self._edit_range = rng or ALL
+        return (self, rng), {}
 
     @debounce(0.05, _coalesce_edit_ranges)
     def color_text(self, rng):
-        self.syntaxer.color_text(self.text_storage, rng)
+        self.syntaxer.color_text(self.text_storage, rng, timeout=0.05)
         self._edit_range = None
 
     def __repr__(self):

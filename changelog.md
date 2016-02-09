@@ -15,6 +15,7 @@ https://github.com/editxt/editxt for details of what actually happened.
 - Fix command completions view sometimes not drawing.
 - Fix line numbers overlap content text after find next.
 - Fix undo in command bar.
+- Improve responsiveness while highlighting syntax in large files.
 
 ## 2016-01-30 - 1.9.0
 

@@ -286,6 +286,12 @@ def parse_hotkey(hotkey):
         key = getattr(KEY, key, None)
     return key, modifiers
 
+
+def union_range(rng1, rng2):
+    start = min(rng1[0], rng2[0])
+    end = max(sum(rng1), sum(rng2))
+    return (start, end - start)
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 class Error(Exception): pass
