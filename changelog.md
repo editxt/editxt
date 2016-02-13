@@ -13,6 +13,7 @@ https://github.com/editxt/editxt for details of what actually happened.
 - Fix default value for skipped regex args in command bar.
 - Fix document paths with up-references resulting in unnecessary save prompt.
 - Fix command completions view sometimes not drawing.
+- Fix line numbers overlap content text after find next.
 
 ## 2016-01-30 - 1.9.0
 

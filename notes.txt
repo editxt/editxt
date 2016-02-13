@@ -80,12 +80,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Fix command autocomplete overlay appearing under main text view
-  it happened after `xt path/*.ext` with no match
-  then Up Arrow, edit command, Tab (to show completions), observe bug
-  solution: call view.setHidden_(False) before view.setFrame_(frame)
-
-Fix line numbers overlap content text after find next
 Fix undo/redo in command bar
 
 Make syntax highlighter stop for events

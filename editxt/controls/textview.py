@@ -73,18 +73,21 @@ class TextView(ak.NSTextView):
         try:
             index = self.editor.line_numbers.index_of(line)
             range = (index + select_start, select_len)
-            self.editor.scroll_view.verticalRulerView().calculate_thickness(line)
             self.setSelectedRange_(range)
             self.scrollRangeToVisible_(range)
         except ValueError:
             beep()
 
     def scrollRangeToVisible_(self, rng):
-        if rng[0] == self.textStorage().length() and rng[1] == 0:
+        length = self.textStorage().length()
+        if rng[0] == length and rng[1] == 0:
             # HACK not sure why this is necessary
             # The regression it's working around was introduced in
             # 1ac32effc928b43392982c3b4d39d89639fd56b2 : Fixing line numbers
-            rng = (self.textStorage().length() - 1, 1)
+            rng = (length - 1, 1)
+        if length:
+            line = self.editor.line_numbers[min(sum(rng), length - 1)]
+            self.editor.scroll_view.verticalRulerView().calculate_thickness(line)
         super().scrollRangeToVisible_(rng)
 
     # Find panel amd text command interaction ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
