@@ -12,6 +12,7 @@ https://github.com/editxt/editxt for details of what actually happened.
 - Fix tab path expansion in project view when project path has trailing slash.
 - Fix default value for skipped regex args in command bar.
 - Fix document paths with up-references resulting in unnecessary save prompt.
+- Fix command completions view sometimes not drawing.
 
 ## 2016-01-30 - 1.9.0
 

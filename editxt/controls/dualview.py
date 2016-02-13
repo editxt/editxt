@@ -103,8 +103,8 @@ class DualView(ak.NSView):
             rect.size.height += offset.size.height
             rect.origin.x += offset.origin.x
             rect.origin.y += offset.origin.y
-            self.top.setFrame_(rect)
             self.top.setHidden_(False)
+            self.top.setFrame_(rect)
             self.bottom.setHidden_(True)
             return
         if not top_height:
@@ -112,8 +112,8 @@ class DualView(ak.NSView):
             rect.size.height += offset.size.height
             rect.origin.x += offset.origin.x
             rect.origin.y += offset.origin.y
-            self.bottom.setFrame_(rect)
             self.bottom.setHidden_(False)
+            self.bottom.setFrame_(rect)
             self.top.setHidden_(True)
             return
         if top_height + bottom_height > rect.size.height:
@@ -138,10 +138,10 @@ class DualView(ak.NSView):
         bottom_rect.size.height += offset.size.height
         bottom_rect.origin.x += offset.origin.x
         bottom_rect.origin.y += offset.origin.y
-        self.top.setFrame_(top_rect)
         self.top.setHidden_(False)
-        self.bottom.setFrame_(bottom_rect)
+        self.top.setFrame_(top_rect)
         self.bottom.setHidden_(False)
+        self.bottom.setFrame_(bottom_rect)
 
     def setFrame_(self, rect):
         super().setFrame_(rect)
