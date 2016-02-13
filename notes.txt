@@ -80,11 +80,8 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Fix `xt path/to/directory` (should not error)
-
-Make syntax highlighter stop for events
 Multi-select in file tree
-  - add icon badge (or glowing shadow) to unsaved documents
+x  - add icon badge (or glowing red shadow) to unsaved documents
 x  - activate unsaved document indocator on window close button
   - remove close button
   - allow drag/move multiple items at once

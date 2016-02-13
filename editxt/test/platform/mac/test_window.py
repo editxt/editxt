@@ -135,10 +135,12 @@ def test_outlineView_willDisplayCell_forTableColumn_item_():
     m = Mocker()
     view = m.mock(ak.NSOutlineView)
     cell = m.mock(ImageAndTextCell)
-    col, item, icon = m.mock(), m.mock(), m.mock()
+    col, item, editor, icon = m.mock(), m.mock(), m.mock(), m.mock()
     col.identifier() >> "name"
-    representedObject(item).icon() >> icon
+    representedObject(item) >> editor
+    editor.icon() >> icon
     cell.setImage_(icon)
+    cell.editor = editor
     with m:
         ewc.outlineView_willDisplayCell_forTableColumn_item_(view, cell, col, item)
 

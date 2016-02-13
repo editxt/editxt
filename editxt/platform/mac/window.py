@@ -154,8 +154,9 @@ class WindowController(ak.NSWindowController):
         return self.window_.should_select_item(outlineview, item)
 
     def outlineView_willDisplayCell_forTableColumn_item_(self, view, cell, col, item):
+        editor = cell.editor = representedObject(item)
         if col.identifier() == "name":
-            cell.setImage_(representedObject(item).icon())
+            cell.setImage_(editor.icon())
 
     def outlineView_shouldEditTableColumn_item_(self, view, col, item):
         return self.window_.should_edit_item(col, item)

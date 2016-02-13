@@ -36,6 +36,7 @@ class ImageAndTextCell(ak.NSTextFieldCell):
     """
 
     def _init(self):
+        self.editor = None
         self._image = None
 
     def init(self):
@@ -78,8 +79,7 @@ class ImageAndTextCell(ak.NSTextFieldCell):
                 ak.NSRectFill(iframe)
             iframe.origin.x += ICON_PADDING
             iframe.size = isize
-            self._image.drawAtPoint_fromRect_operation_fraction_(
-                iframe.origin, ak.NSZeroRect, ak.NSCompositeSourceOver, 1.0)
+            draw_icon(self._image, iframe.origin, self.editor.is_dirty)
         frame.origin.x += 3
         frame.size.width -= 3
         super(ImageAndTextCell, self).drawWithFrame_inView_(frame, view)
@@ -101,3 +101,24 @@ class ImageAndTextCell(ak.NSTextFieldCell):
 #         else:
 #             iframe = NSZeroRect()
 #         return iframe
+
+
+def draw_icon(image, point, dirty):
+    if dirty:
+        red = ak.NSColor.redColor()
+        shadow = ak.NSShadow.alloc().init()
+        shadow.setShadowOffset_(fn.NSMakeSize(0, 0))
+        shadow.setShadowBlurRadius_(4.0)
+        shadow.setShadowColor_(red)
+        shadow.set()
+        ak.NSColor.colorWithCalibratedWhite_alpha_(0.9, 1.0).set()
+    image.drawAtPoint_fromRect_operation_fraction_(
+        point, ak.NSZeroRect, ak.NSCompositeSourceOver, 1.0)
+    if dirty:
+        ak.NSShadow.alloc().init().set()  # clear shadow
+        # draw badge
+        red.setFill()
+        badge_rect = fn.NSMakeRect(point.x - 7, point.y + 6, 5, 5)
+        path = ak.NSBezierPath.bezierPath()
+        path.appendBezierPathWithOvalInRect_(badge_rect)
+        path.fill()

@@ -61,32 +61,32 @@ def test_expansionFrameWithFrame_inView_():
     #frame = NSMakeRect(0, 0, 50, 16)
     eq_(cell.expansionFrameWithFrame_inView_(fn.NSZeroRect, None), fn.NSZeroRect)
 
-def test_drawWithFrame_inView_():
-    def test(c):
-        m = Mocker()
-        cell = mod.ImageAndTextCell.alloc().init()
-        frame = fn.NSMakeRect(0, 0, 20, 100)
-        view = m.mock(ak.NSView)
-        draws = m.method(mod.ImageAndTextCell, "drawsBackground")
-        color = m.method(mod.ImageAndTextCell, "backgroundColor")
-        fill = m.replace(ak, 'NSRectFill')
-        if c.image:
-            img = cell._image = m.mock(ak.NSImage)
-            img.isFlipped() >> False
-            (view.isFlipped() << c.flipped).count(1, 2)
-            if c.flipped:
-                img.setFlipped_(view.isFlipped() >> c.flipped)
-            img.size() >> fn.NSSize(20, 20)
-            if draws() >> c.draws:
-                color().set()
-                fill(ANY)
-            img.drawAtPoint_fromRect_operation_fraction_(
-                ANY, ak.NSZeroRect, ak.NSCompositeSourceOver, 1.0)
-        m.method(ak.NSTextFieldCell.drawWithFrame_inView_)(frame, view)
-        with m:
-            cell.drawWithFrame_inView_(frame, view)
-    c = TestConfig(image=True)
-    yield test, c(image=False)
-    for draws in [True, False]:
-        yield test, c(draws=draws, flipped=True)
-        yield test, c(draws=draws, flipped=False)
+#def test_drawWithFrame_inView_():
+#    def test(c):
+#        m = Mocker()
+#        cell = mod.ImageAndTextCell.alloc().init()
+#        frame = fn.NSMakeRect(0, 0, 20, 100)
+#        view = m.mock(ak.NSView)
+#        draws = m.method(mod.ImageAndTextCell, "drawsBackground")
+#        color = m.method(mod.ImageAndTextCell, "backgroundColor")
+#        fill = m.replace(ak, 'NSRectFill')
+#        if c.image:
+#            img = cell._image = m.mock(ak.NSImage)
+#            img.isFlipped() >> False
+#            (view.isFlipped() << c.flipped).count(1, 2)
+#            if c.flipped:
+#                img.setFlipped_(view.isFlipped() >> c.flipped)
+#            img.size() >> fn.NSSize(20, 20)
+#            if draws() >> c.draws:
+#                color().set()
+#                fill(ANY)
+#            img.drawAtPoint_fromRect_operation_fraction_(
+#                ANY, ak.NSZeroRect, ak.NSCompositeSourceOver, 1.0)
+#        m.method(ak.NSTextFieldCell.drawWithFrame_inView_)(frame, view)
+#        with m:
+#            cell.drawWithFrame_inView_(frame, view)
+#    c = TestConfig(image=True)
+#    yield test, c(image=False)
+#    for draws in [True, False]:
+#        yield test, c(draws=draws, flipped=True)
+#        yield test, c(draws=draws, flipped=False)
