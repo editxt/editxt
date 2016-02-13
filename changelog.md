@@ -14,6 +14,7 @@ https://github.com/editxt/editxt for details of what actually happened.
 - Fix document paths with up-references resulting in unnecessary save prompt.
 - Fix command completions view sometimes not drawing.
 - Fix line numbers overlap content text after find next.
+- Fix undo in command bar.
 
 ## 2016-01-30 - 1.9.0
 

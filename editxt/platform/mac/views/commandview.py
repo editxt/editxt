@@ -48,6 +48,7 @@ class CommandView(DualView):
 
     def init_frame_(self, command, rect):
         from editxt.textcommand import AutoCompleteMenu
+        self.undo_manager = fn.NSUndoManager.alloc().init()
         self.output = ContentSizedTextView.alloc().initWithFrame_(rect)
         self.output.scroller.setBorderType_(ak.NSBezelBorder)
         self.completions = AutoCompleteMenu(
@@ -280,13 +281,16 @@ class CommandView(DualView):
     #def textDidEndEditing_(self, notification):
     #    self.deactivate()
 
+    def undoManagerForTextView_(self, textview):
+        return self.undo_manager
+
 
 class ContentSizedTextView(ak.NSTextView):
 
     def initWithFrame_(self, rect):
         super(ContentSizedTextView, self).initWithFrame_(rect)
         self.text_did_change_handler = lambda textview: None # no-op by default
-        #self.setAllowsUndo_(True)
+        self.setAllowsUndo_(True)
         self.setVerticallyResizable_(True)
         self.setMaxSize_(ak.NSMakeSize(LARGE_NUMBER_FOR_TEXT, LARGE_NUMBER_FOR_TEXT))
         self.setTextContainerInset_(ak.NSMakeSize(0.0, 2.0))
@@ -387,6 +391,7 @@ class ContentSizedTextView(ak.NSTextView):
             # Have no idea why it does not work without this.
             value = str(value) # TODO revisit since upgrading to Python3
         super(ContentSizedTextView, self).setString_(value)
+        self.undoManager().removeAllActions()
         self.textDidChange_(None)
 
     def setAttributedString_(self, value):
