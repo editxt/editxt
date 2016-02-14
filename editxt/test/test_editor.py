@@ -608,6 +608,7 @@ def test_Editor_close():
                 editor.main_view = m.mock()
                 teardown_main_view(editor.main_view)
             wc.setup_current_editor(ANY)
+            wc.update_dirty_status(False)
             with m:
                 editor.close()
             eq_(editor.command_view, None)

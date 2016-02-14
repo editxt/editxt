@@ -24,6 +24,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from itertools import groupby
 from os.path import basename, dirname, isabs, isdir, sep, split
+from weakref import WeakKeyDictionary
 
 import AppKit as ak
 import Foundation as fn
@@ -66,6 +67,7 @@ class Window(object):
         self.window_settings_loaded = False
         self.no_document_undo_manager = UndoManager()
         self.menu = self.make_context_menu()
+        self._change_callbacks = WeakKeyDictionary()
 
     def window_did_load(self):
         wc = self.wc
@@ -301,6 +303,13 @@ class Window(object):
         self._current_editor = editor
         if editor is not None:
             self.recent.push(editor.id)
+            self.update_dirty_status(editor.is_dirty)
+            if editor not in self._change_callbacks:
+                def callback(dirty):
+                    if self._current_editor is editor:
+                        self.update_dirty_status(dirty)
+                self._change_callbacks[editor] = callback
+                editor.undo_manager.on_has_unsaved_actions_changed(callback)
         if self.wc.setup_current_editor(editor):
             if isinstance(editor, Editor) \
                     and self.find_project_with_editor(editor) is None:
@@ -479,6 +488,9 @@ class Window(object):
             obj = representedObject(item)
             return isinstance(obj, Project) and obj.can_rename()
         return False
+
+    def update_dirty_status(self, dirty):
+        self.wc.update_dirty_status(dirty)
 
     def close_button_clicked(self, row):
         docs_view = self.wc.docsView

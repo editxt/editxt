@@ -314,6 +314,8 @@ def test_set_current_editor():
             ed.recent.push(dv.id >> m.mock())
             setup = c.editor_class is Editor and not c.view_is_main
             wc.setup_current_editor(dv) >> setup
+            wc.update_dirty_status(dv.is_dirty >> True)
+            dv.undo_manager.on_has_unsaved_actions_changed(ANY)
             if setup:
                 if c.proj_is_none:
                     find_project_with_editor(dv) >> None

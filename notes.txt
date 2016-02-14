@@ -83,7 +83,7 @@ Top priority
 Make syntax highlighter stop for events
 Multi-select in file tree
   - add icon badge (or glowing shadow) to unsaved documents
-  - activate unsaved document indocator on window close button
+x  - activate unsaved document indocator on window close button
   - remove close button
   - allow drag/move multiple items at once
 Show directory path in tree if name matches another document

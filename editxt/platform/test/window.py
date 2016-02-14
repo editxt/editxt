@@ -55,6 +55,9 @@ class WindowController(object):
     def undo_manager(self):
         return self.window_.undo_manager()
 
+    def update_dirty_status(self, dirty):
+        self.dirty = dirty
+
     def open_documents(self, directory, filename, open_paths_callback):
         if directory == os.path.expanduser("~"):
             name = "~"
