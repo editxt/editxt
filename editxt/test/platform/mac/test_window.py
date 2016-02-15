@@ -44,7 +44,7 @@ def test_WindowController_passthrough_to_Window():
     def test(*args):
         wc = WindowController(None)
         do_method_pass_through("window_", Window, wc, WC, *args)
-    yield test, ("hoverButton_rowClicked_", "close_button_clicked"), (None, "<row>"), ("<row>",)
+#    yield test, ("hoverButton_rowClicked_", "close_button_clicked"), (None, "<row>"), ("<row>",)
     #yield test, ("windowWillClose_", "window_will_close"), ("<window>",), ()
 #    yield test, ("outlineView_writeItems_toPasteboard_", "write_items_to_pasteboard"), \
 #        ("<ov>", "<items>", "<pasteboard>"), ("<ov>", "<items>", "<pasteboard>"), \
@@ -188,40 +188,40 @@ def test_windowShouldClose_():
         eq_(result, "<should_close>")
 
 
-def test_EditorWindow_add_mouse_moved_responder():
-    window = EditorWindow.alloc().init()
-    obj = object()
-    eq_(window.mouse_moved_responders, set())
-    window.add_mouse_moved_responder(obj)
-    eq_(window.mouse_moved_responders, set([obj]))
-    window.add_mouse_moved_responder(obj)
-    eq_(window.mouse_moved_responders, set([obj]))
-
-def test_EditorWindow_remove_mouse_moved_responder():
-    window = EditorWindow.alloc().init()
-    obj1 = object()
-    obj2 = object()
-    eq_(window.mouse_moved_responders, set())
-    window.remove_mouse_moved_responder(obj1)
-    window.add_mouse_moved_responder(obj1)
-    window.add_mouse_moved_responder(obj2)
-    eq_(window.mouse_moved_responders, set([obj1, obj2]))
-    window.remove_mouse_moved_responder(obj1)
-    eq_(window.mouse_moved_responders, set([obj2]))
-    window.remove_mouse_moved_responder(obj2)
-    window.remove_mouse_moved_responder(obj2) # second remove should not err
-    eq_(window.mouse_moved_responders, set())
-
-def test_EditorWindow_accepts_mouse_move_events():
-    window = EditorWindow.alloc().init()
-    obj1 = object()
-    obj2 = object()
-    eq_(window.acceptsMouseMovedEvents(), False)
-    window.add_mouse_moved_responder(obj1)
-    eq_(window.acceptsMouseMovedEvents(), True)
-    window.add_mouse_moved_responder(obj2)
-    eq_(window.acceptsMouseMovedEvents(), True)
-    window.remove_mouse_moved_responder(obj1)
-    eq_(window.acceptsMouseMovedEvents(), True)
-    window.remove_mouse_moved_responder(obj2)
-    eq_(window.acceptsMouseMovedEvents(), False)
+#def test_EditorWindow_add_mouse_moved_responder():
+#    window = EditorWindow.alloc().init()
+#    obj = object()
+#    eq_(window.mouse_moved_responders, set())
+#    window.add_mouse_moved_responder(obj)
+#    eq_(window.mouse_moved_responders, set([obj]))
+#    window.add_mouse_moved_responder(obj)
+#    eq_(window.mouse_moved_responders, set([obj]))
+#
+#def test_EditorWindow_remove_mouse_moved_responder():
+#    window = EditorWindow.alloc().init()
+#    obj1 = object()
+#    obj2 = object()
+#    eq_(window.mouse_moved_responders, set())
+#    window.remove_mouse_moved_responder(obj1)
+#    window.add_mouse_moved_responder(obj1)
+#    window.add_mouse_moved_responder(obj2)
+#    eq_(window.mouse_moved_responders, set([obj1, obj2]))
+#    window.remove_mouse_moved_responder(obj1)
+#    eq_(window.mouse_moved_responders, set([obj2]))
+#    window.remove_mouse_moved_responder(obj2)
+#    window.remove_mouse_moved_responder(obj2) # second remove should not err
+#    eq_(window.mouse_moved_responders, set())
+#
+#def test_EditorWindow_accepts_mouse_move_events():
+#    window = EditorWindow.alloc().init()
+#    obj1 = object()
+#    obj2 = object()
+#    eq_(window.acceptsMouseMovedEvents(), False)
+#    window.add_mouse_moved_responder(obj1)
+#    eq_(window.acceptsMouseMovedEvents(), True)
+#    window.add_mouse_moved_responder(obj2)
+#    eq_(window.acceptsMouseMovedEvents(), True)
+#    window.remove_mouse_moved_responder(obj1)
+#    eq_(window.acceptsMouseMovedEvents(), True)
+#    window.remove_mouse_moved_responder(obj2)
+#    eq_(window.acceptsMouseMovedEvents(), False)

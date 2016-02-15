@@ -154,7 +154,7 @@ def test__setstate():
         m = Mocker()
         ed = Window(app)
         ed.wc = m.mock(WindowController)
-        ed.discard_and_focus_recent = m.method(ed.discard_and_focus_recent)
+        ed.discard = m.method(ed.discard)
         project_class = m.replace(mod, 'Project')
         ed.recent = m.mock(RecentItemStack)
         ws = m.property(ed, 'window_settings')
@@ -178,7 +178,7 @@ def test__setstate():
                             while len(proj.editors) <= di:
                                 proj.editors.append(Item())
                             ed.recent.push(docs[di].id)
-            ed.discard_and_focus_recent(None)
+            ed.discard(None)
             if 'window_settings' in data:
                 ws.value = data['window_settings']
         with m:
@@ -232,13 +232,14 @@ def test_state():
     yield test, c(projs=[p(42, docs=[35])], recent=[35, 42])
     yield test, c(projs=[p(42, docs=[-32, 35])], recent=[35, 42])
 
-def test_discard_and_focus_recent():
+def test_discard():
     from editxt.util import RecentItemStack
     @test_app
     def test(app, c):
         m = Mocker()
         ed = Window(app)
         ed.wc = m.mock(WindowController)
+        (ed.wc.selected_items << []).count(2)
         ed.projects = projs = []
         ed.recent = m.mock(RecentItemStack)
         app = m.replace(ed, 'app')
@@ -247,7 +248,7 @@ def test_discard_and_focus_recent():
         @mod.contextmanager
         def suspend():
             yield
-        m.method(ed.suspend_recent_updates)() >> suspend()
+        m.method(ed.suspend_recent_updates)(True) >> suspend()
         lookup = {}
         for p in c.hier:
             proj = m.mock(Project)
@@ -273,7 +274,7 @@ def test_discard_and_focus_recent():
         item = m.mock()
         item.id >> c.id
         with m:
-            ed.discard_and_focus_recent(item)
+            ed.discard(item)
     item = lambda i, **kw: TestConfig(id=i, **kw)
     c = TestConfig(id=2, recent=[], hier=[ # hierarchy of items in the window
         item(0, docs=[item(1), item(2), item(3)]),
@@ -309,7 +310,7 @@ def test_set_current_editor():
         if c.editor_is_current:
             ed._current_editor = dv
             dv.focus()
-            wc.select_editors_in_tree([dv])
+            wc.selected_items = [dv]
         elif c.editor_class is not None:
             ed.recent.push(dv.id >> m.mock())
             setup = c.editor_class is Editor and not c.view_is_main
@@ -342,7 +343,7 @@ def test_selected_editor_changed():
         ed.wc = wc = m.mock(WindowController)
         cv = m.property(ed, "current_editor")
         sel = [m.mock() for x in range(c.numsel)]
-        wc.docsController.selected_objects >> sel
+        wc.selected_items >> sel
         if sel:
             if c.is_current_selected:
                 cv.value >> sel[0]
@@ -666,6 +667,23 @@ def test_should_edit_item():
     yield test, c(can_rename=False)
     yield test, c(can_rename=True, result=True)
 
+
+def test_close_item():
+    @gentest
+    def test(index=1, expected="editor(a)*", config="editor(a) editor(b)*"):
+        with test_app(config) as app:
+            window = app.windows[0]
+            item = [editor for project in window.projects
+                           for editor in project.editors][index]
+            window.close_item(item)
+            eq_(test_app(app).state, ("window project " + expected).strip())
+    yield test()
+    yield test(0, "editor(b)*")
+    yield test(0, config="editor(a)* editor(b) editor(c)*", expected="editor(b)*")
+    yield test(2, config="editor(a)* editor(b) editor(c)*", expected="editor(b)*")
+    yield test(config="editor(a)* editor(b) editor(c)*", expected="editor(a)* editor(c)*")
+
+
 def test_close_button_clicked():
     @test_app
     def test(app, row, num_rows, doc_class=None):
@@ -675,7 +693,7 @@ def test_close_button_clicked():
         ed.recent = m.mock()
         dv = ed.wc.docsView >> m.mock(ak.NSOutlineView)
         dv.numberOfRows() >> num_rows
-        discard = m.method(ed.discard_and_focus_recent)
+        discard = m.method(ed.discard)
         if row < num_rows:
             item = m.mock()
             dv.itemAtRow_(row) >> item

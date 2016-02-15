@@ -83,8 +83,12 @@ Top priority
 Multi-select in file tree
 x  - add icon badge (or glowing red shadow) to unsaved documents
 x  - activate unsaved document indocator on window close button
-  - remove close button
-  - allow drag/move multiple items at once
+x  - remove close button
+x  - allow drag/move multiple items at once
+  - fix document dirty indicator not updating
+  - fix tree column width on load (should be same as tree width)
+  - fix select multiple before loading text views, then click Soft Wrap -> error
+  - fix Soft Wrap checkbox is wrong after incrementally selecting multiple
 Show directory path in tree if name matches another document
   tree idea:
   - project

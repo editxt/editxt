@@ -165,20 +165,20 @@ class WindowController(ak.NSWindowController):
         self, view, cell, rect, col, item, mouseloc):
         return self.window_.tooltip_for_item(view, item), rect
 
-    def hoverButton_rowClicked_(self, cell, row):
-        self.window_.close_button_clicked(row)
-
-    @untested
-    def hoverButtonCell_imageForState_row_(self, cell, state, row):
-        from editxt.window import BUTTON_STATE_SELECTED
-        if state is BUTTON_STATE_NORMAL and self.docsView.isRowSelected_(row):
-            state = BUTTON_STATE_SELECTED
-        if row >= 0 and row < self.docsView.numberOfRows():
-            item = self.docsView.itemAtRow_(row)
-            doc = self.docsView.realItemForOpaqueItem_(item)
-            if doc is not None and doc.is_dirty:
-                return self.dirtyImages[state]
-        return self.cleanImages[state]
+#    def hoverButton_rowClicked_(self, cell, row):
+#        self.window_.close_button_clicked(row)
+#
+#    @untested
+#    def hoverButtonCell_imageForState_row_(self, cell, state, row):
+#        from editxt.window import BUTTON_STATE_SELECTED
+#        if state is BUTTON_STATE_NORMAL and self.docsView.isRowSelected_(row):
+#            state = BUTTON_STATE_SELECTED
+#        if row >= 0 and row < self.docsView.numberOfRows():
+#            item = self.docsView.itemAtRow_(row)
+#            doc = self.docsView.realItemForOpaqueItem_(item)
+#            if doc is not None and doc.is_dirty:
+#                return self.dirtyImages[state]
+#        return self.cleanImages[state]
 
     def setup_current_editor(self, editor):
         """Setup the current editor in the window
@@ -188,9 +188,9 @@ class WindowController(ak.NSWindowController):
         main_view = self.mainView
         self._update_title(editor)
         if editor is not None:
-            sel = self.docsController.selected_objects
+            sel = self.selected_items
             if not sel or sel[0] is not editor:
-                self.docsController.selected_objects = [editor]
+                self.selected_items = [editor]
             if editor.main_view not in main_view.subviews():
                 for subview in main_view.subviews():
                     subview.removeFromSuperview()
@@ -200,8 +200,12 @@ class WindowController(ak.NSWindowController):
             subview.removeFromSuperview()
         return False
 
-    def select_editors_in_tree(self, editors):
-        self.docsController.selected_objects = editors
+    @property
+    def selected_items(self):
+        return self.docsController.selected_objects
+    @selected_items.setter
+    def selected_items(self, items):
+        self.docsController.selected_objects = items
 
     def update_dirty_status(self, dirty):
         self.setDocumentEdited_(dirty)
@@ -392,28 +396,28 @@ class SheetCaller(fn.NSObject):
 class EditorWindow(ak.NSWindow):
     """NSWindow subclass that provides mouseMoved events to registered subviews"""
 
-    @property
-    def mouse_moved_responders(self):
-        try:
-            mmr = self._mouse_moved_responders
-        except AttributeError:
-            mmr = self._mouse_moved_responders = set()
-        return mmr
-
-    def add_mouse_moved_responder(self, responder):
-        self.mouse_moved_responders.add(responder)
-        self.setAcceptsMouseMovedEvents_(True)
-
-    def remove_mouse_moved_responder(self, responder):
-        self.mouse_moved_responders.discard(responder)
-        if not self.mouse_moved_responders:
-            self.setAcceptsMouseMovedEvents_(False)
-
-    def mouseMoved_(self, event):
-        super(EditorWindow, self).mouseMoved_(event)
-        for responder in self.mouse_moved_responders:
-            if responder is not self.firstResponder():
-                responder.mouseMoved_(event)
+#    @property
+#    def mouse_moved_responders(self):
+#        try:
+#            mmr = self._mouse_moved_responders
+#        except AttributeError:
+#            mmr = self._mouse_moved_responders = set()
+#        return mmr
+#
+#    def add_mouse_moved_responder(self, responder):
+#        self.mouse_moved_responders.add(responder)
+#        self.setAcceptsMouseMovedEvents_(True)
+#
+#    def remove_mouse_moved_responder(self, responder):
+#        self.mouse_moved_responders.discard(responder)
+#        if not self.mouse_moved_responders:
+#            self.setAcceptsMouseMovedEvents_(False)
+#
+#    def mouseMoved_(self, event):
+#        super(EditorWindow, self).mouseMoved_(event)
+#        for responder in self.mouse_moved_responders:
+#            if responder is not self.firstResponder():
+#                responder.mouseMoved_(event)
 
 
 class OutputPanel(ak.NSPanel):

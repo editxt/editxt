@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9531" systemVersion="15C50" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="5056" systemVersion="13F1603" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none">
     <dependencies>
         <deployment version="1060" identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9531"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="5056"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="EditorWindowController">
@@ -24,7 +24,7 @@
             <windowStyleMask key="styleMask" titled="YES" closable="YES" miniaturizable="YES" resizable="YES"/>
             <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
             <rect key="contentRect" x="130" y="628" width="621" height="378"/>
-            <rect key="screenRect" x="0.0" y="0.0" width="1600" height="1178"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1440" height="878"/>
             <value key="minSize" type="size" width="131.131" height="86"/>
             <view key="contentView" id="6">
                 <rect key="frame" x="0.0" y="0.0" width="621" height="378"/>
@@ -89,8 +89,9 @@
                                                     </menu>
                                                 </popUpButtonCell>
                                                 <connections>
-                                                    <binding destination="272" name="enabled" keyPath="selection.document" id="Lve-IN-EzH">
+                                                    <binding destination="272" name="enabled" keyPath="selection.document" id="cAD-Iw-KSi">
                                                         <dictionary key="options">
+                                                            <integer key="NSMultipleValuesPlaceholder" value="1"/>
                                                             <integer key="NSNoSelectionPlaceholder" value="0"/>
                                                             <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNullPlaceholder" value="0"/>
@@ -136,8 +137,9 @@
                                                             <string key="NSValueTransformerName">CharacterEncodingTransformer</string>
                                                         </dictionary>
                                                     </binding>
-                                                    <binding destination="272" name="enabled" keyPath="selection.document" id="x8k-Nx-xYT">
+                                                    <binding destination="272" name="enabled" keyPath="selection.document" id="ddQ-Bv-luS">
                                                         <dictionary key="options">
+                                                            <integer key="NSMultipleValuesPlaceholder" value="1"/>
                                                             <integer key="NSNoSelectionPlaceholder" value="0"/>
                                                             <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNullPlaceholder" value="0"/>
@@ -163,8 +165,9 @@
                                                     </menu>
                                                 </popUpButtonCell>
                                                 <connections>
-                                                    <binding destination="272" name="enabled" keyPath="selection.document" id="cvv-tO-C9n">
+                                                    <binding destination="272" name="enabled" keyPath="selection.document" id="wW3-J3-m2V">
                                                         <dictionary key="options">
+                                                            <integer key="NSMultipleValuesPlaceholder" value="1"/>
                                                             <integer key="NSNoSelectionPlaceholder" value="0"/>
                                                             <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNullPlaceholder" value="0"/>
@@ -197,8 +200,9 @@
                                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                 </textFieldCell>
                                                 <connections>
-                                                    <binding destination="272" name="enabled" keyPath="selection.document" id="bX4-pZ-P1Q">
+                                                    <binding destination="272" name="enabled" keyPath="selection.document" id="pAK-ni-uKW">
                                                         <dictionary key="options">
+                                                            <integer key="NSMultipleValuesPlaceholder" value="1"/>
                                                             <integer key="NSNoSelectionPlaceholder" value="0"/>
                                                             <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNullPlaceholder" value="0"/>
@@ -228,8 +232,9 @@
                                                     </menu>
                                                 </popUpButtonCell>
                                                 <connections>
-                                                    <binding destination="272" name="enabled" keyPath="selection.document" id="tr6-zl-LTt">
+                                                    <binding destination="272" name="enabled" keyPath="selection.document" id="lMf-Ew-cPR">
                                                         <dictionary key="options">
+                                                            <integer key="NSMultipleValuesPlaceholder" value="1"/>
                                                             <integer key="NSNoSelectionPlaceholder" value="0"/>
                                                             <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNullPlaceholder" value="0"/>
@@ -253,17 +258,19 @@
                                                     <font key="font" metaFont="miniSystem"/>
                                                 </buttonCell>
                                                 <connections>
-                                                    <binding destination="272" name="enabled" keyPath="selection.document" id="fN2-zI-WhO">
+                                                    <binding destination="272" name="enabled" keyPath="selection.document" id="90h-iI-Shx">
                                                         <dictionary key="options">
+                                                            <integer key="NSMultipleValuesPlaceholder" value="1"/>
                                                             <integer key="NSNoSelectionPlaceholder" value="0"/>
                                                             <integer key="NSNotApplicablePlaceholder" value="0"/>
                                                             <integer key="NSNullPlaceholder" value="0"/>
                                                             <string key="NSValueTransformerName">NSIsNotNil</string>
                                                         </dictionary>
                                                     </binding>
-                                                    <binding destination="272" name="value" keyPath="selection.soft_wrap" id="B8k-I6-s4j">
+                                                    <binding destination="272" name="value" keyPath="selection.soft_wrap" id="MgP-80-hvt">
                                                         <dictionary key="options">
                                                             <bool key="NSConditionallySetsEnabled" value="NO"/>
+                                                            <integer key="NSMultipleValuesPlaceholder" value="1"/>
                                                             <string key="NSValueTransformerName">WrapModeTransformer</string>
                                                         </dictionary>
                                                     </binding>
@@ -273,20 +280,20 @@
                                         </subviews>
                                     </customView>
                                     <scrollView borderType="none" autohidesScrollers="YES" horizontalLineScroll="22" horizontalPageScroll="0.0" verticalLineScroll="22" verticalPageScroll="0.0" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" id="21">
-                                        <rect key="frame" x="0.0" y="138" width="159" height="240"/>
+                                        <rect key="frame" x="0.0" y="138" width="158" height="240"/>
                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                         <clipView key="contentView" id="A3x-ig-Kg5">
-                                            <rect key="frame" x="0.0" y="0.0" width="159" height="240"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="158" height="240"/>
                                             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                             <subviews>
-                                                <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="firstColumnOnly" columnReordering="NO" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveName="docsView" rowHeight="20" id="22" customClass="OutlineView">
-                                                    <rect key="frame" x="0.0" y="0.0" width="159" height="22"/>
+                                                <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="firstColumnOnly" columnReordering="NO" columnResizing="NO" emptySelection="NO" autosaveName="docsView" rowHeight="20" id="22" customClass="OutlineView">
+                                                    <rect key="frame" x="0.0" y="0.0" width="161" height="240"/>
                                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                     <size key="intercellSpacing" width="3" height="2"/>
                                                     <color key="backgroundColor" red="0.90196078999999996" green="0.92941176999999997" blue="0.96470588000000002" alpha="1" colorSpace="deviceRGB"/>
                                                     <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                                     <tableColumns>
-                                                        <tableColumn identifier="name" width="136" minWidth="40" maxWidth="1000" id="23">
+                                                        <tableColumn identifier="name" width="158" minWidth="40" maxWidth="1000" id="23">
                                                             <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left">
                                                                 <font key="font" metaFont="smallSystem"/>
                                                                 <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
@@ -303,28 +310,6 @@
                                                                     <dictionary key="options">
                                                                         <bool key="NSAllowsEditingMultipleValuesSelection" value="NO"/>
                                                                         <bool key="NSCreatesSortDescriptor" value="NO"/>
-                                                                    </dictionary>
-                                                                </binding>
-                                                            </connections>
-                                                        </tableColumn>
-                                                        <tableColumn identifier="close" editable="NO" width="17" minWidth="4" maxWidth="1000" id="144">
-                                                            <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left">
-                                                                <font key="font" metaFont="smallSystem"/>
-                                                                <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
-                                                                <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
-                                                            </tableHeaderCell>
-                                                            <buttonCell key="dataCell" type="bevel" bezelStyle="regularSquare" alignment="center" inset="2" id="194" customClass="HoverButtonCell">
-                                                                <behavior key="behavior" lightByContents="YES"/>
-                                                                <font key="font" metaFont="cellTitle"/>
-                                                                <connections>
-                                                                    <outlet property="delegate" destination="-2" id="265"/>
-                                                                </connections>
-                                                            </buttonCell>
-                                                            <connections>
-                                                                <binding destination="272" name="target" keyPath="arrangedObjects.summary_info" id="XSx-QJ-Bdz">
-                                                                    <dictionary key="options">
-                                                                        <bool key="NSAlwaysPresentsApplicationModalAlerts" value="YES"/>
-                                                                        <bool key="NSConditionallySetsEnabled" value="NO"/>
                                                                     </dictionary>
                                                                 </binding>
                                                             </connections>

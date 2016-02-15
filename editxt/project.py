@@ -242,7 +242,9 @@ class Project(object):
         nothing if the editor is not in this project.
         """
         if not self.closing and editor in self.editors:
-            with self.window.suspend_recent_updates():
+            update_current = editor in self.window.selected_items or \
+                             not self.window.selected_items
+            with self.window.suspend_recent_updates(update_current):
                 self.editors.remove(editor)
                 assert editor not in self.editors, (editor, self.editors)
                 self._add_recent(editor.document)

@@ -277,7 +277,10 @@ class test_app(object):
                 if item == "project":
                     items[project] = "project" + name
                     if current:
-                        window.current_editor = project
+                        if not window.selected_items:
+                            window.current_editor = project
+                        else:
+                            window.selected_items.append(project)
                     continue
                 else:
                     items[project] = "project<{}>".format(i)
@@ -290,7 +293,10 @@ class test_app(object):
             items[document] = "document" + name
             project.editors.append(editor)
             if current:
-                window.current_editor = editor
+                if not window.selected_items:
+                    window.current_editor = editor
+                else:
+                    window.selected_items.append(editor)
 
     def document_with_path(self, path):
         """Get document with the given path
@@ -349,13 +355,13 @@ class test_app(object):
             seen = set()
             for window in app.windows:
                 yield name(window)
-                current = window.current_editor
+                selected = window.selected_items
                 for project in window.projects:
-                    star = "*" if project is current else ""
+                    star = "*" if project in selected else ""
                     collapsed = "" if project.expanded else "-"
                     yield collapsed + name(project) + star
                     for editor in project.editors:
-                        star = "*" if editor is current else ""
+                        star = "*" if editor in selected else ""
                         yield name(editor) + star
                         seen.add(editor.document)
             documents = set(app.documents) - seen

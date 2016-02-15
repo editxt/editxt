@@ -37,8 +37,8 @@ class WindowController(object):
 
     def __init__(self, window):
         self.window_ = window
-        self.current_editor = None
         self.prompts = []
+        self.selected_items = []
 
     def document(self):
         return None
@@ -47,10 +47,8 @@ class WindowController(object):
         return None
 
     def setup_current_editor(self, editor):
+        self.selected_items = [editor]
         return isinstance(editor, Editor)
-
-    def select_editors_in_tree(self, editors):
-        pass
 
     def undo_manager(self):
         return self.window_.undo_manager()

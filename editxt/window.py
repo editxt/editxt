@@ -103,16 +103,9 @@ class Window(object):
     def make_context_menu(self):
         def has_path(item):
             return item and item.file_path
-        def copy_path(item):
-            """Put item path on pasteboard"""
-            Pasteboard().text = item.file_path
-        def close_item(item):
-            def do_close():
-                self.discard_and_focus_recent(item)
-            item.interactive_close(do_close)
         return Menu([
-            MenuItem("Copy Path", copy_path, is_enabled=has_path),
-            MenuItem("Close", close_item, "Command+w"),
+            MenuItem("Copy Path", self.copy_path, is_enabled=has_path),
+            MenuItem("Close", self.close_item, "Command+w"),
         ])
 
     def _setstate(self, state):
@@ -133,7 +126,7 @@ class Window(object):
                         self.recent.push(doc.id)
             if 'window_settings' in state:
                 self.window_settings = state['window_settings']
-            self.discard_and_focus_recent(None)
+            self.discard(None)
 
     def __getstate__(self):
         if self._state is not None:
@@ -164,10 +157,11 @@ class Window(object):
 
     state = property(__getstate__, __setstate__)
 
-    def discard_and_focus_recent(self, item):
+    def discard(self, item):
         ident = None if item is None else item.id
         recent = self.recent
-        with self.suspend_recent_updates():
+        update_current = item in self.selected_items or not self.selected_items
+        with self.suspend_recent_updates(update_current):
             for project in list(self.projects):
                 pid = project.id
                 for editor in list(project.editors):
@@ -290,15 +284,16 @@ class Window(object):
     def validate_command(self, item):
         return self.app.text_commander.is_command_enabled(self.current_editor, item)
 
-    def _get_current_editor(self):
+    @property
+    def current_editor(self):
         return self._current_editor
-
-    def _set_current_editor(self, editor):
+    @current_editor.setter
+    def current_editor(self, editor):
         self._recent_history = None
         if editor is self._current_editor:
             if editor is not None:
                 editor.focus()
-                self.wc.select_editors_in_tree([editor])
+                self.selected_items = [editor]
             return
         self._current_editor = editor
         if editor is not None:
@@ -315,10 +310,15 @@ class Window(object):
                     and self.find_project_with_editor(editor) is None:
                 self.insert_items([editor])
 
-    current_editor = property(_get_current_editor, _set_current_editor)
+    @property
+    def selected_items(self):
+        return self.wc.selected_items
+    @selected_items.setter
+    def selected_items(self, value):
+        self.wc.selected_items = value
 
     def selected_editor_changed(self):
-        selected = self.wc.docsController.selected_objects
+        selected = self.selected_items
         if selected and selected[0] is not self.current_editor:
             self.current_editor = selected[0]
 
@@ -489,14 +489,31 @@ class Window(object):
             return isinstance(obj, Project) and obj.can_rename()
         return False
 
+    def copy_path(item):
+        """Put item path on pasteboard
+
+        Put newline-delimited paths on pasteboard if there are multiple
+        items selected and item is one of them.
+        """
+        Pasteboard().text = item.file_path
+
     def update_dirty_status(self, dirty):
         self.wc.update_dirty_status(dirty)
+
+    def close_item(self, item):
+        def do_close():
+            self.discard(item)
+        selected = self.selected_items
+        if item not in selected:
+            selected = [item]
+        for item in selected:
+            item.interactive_close(do_close)
 
     def close_button_clicked(self, row):
         docs_view = self.wc.docsView
         if row < docs_view.numberOfRows():
             def do_close():
-                self.discard_and_focus_recent(item)
+                self.discard(item)
             item = docs_view.itemAtRow_(row)
             item = docs_view.realItemForOpaqueItem_(item)
             item.interactive_close(do_close)

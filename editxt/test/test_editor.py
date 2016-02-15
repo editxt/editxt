@@ -616,7 +616,6 @@ def test_Editor_close():
                     text_storage = doc.text_storage
                 #text_storage.setDelegate_(doc)
                 remove_layout = m.method(text_storage.removeLayoutManager_)
-            wc = editor.project.window.wc = m.mock(WindowController)
             if not (c.tv_is_none or c.ts_is_none):
                 lm = editor.text_view.layoutManager() >> m.mock(ak.NSLayoutManager)
                 remove_layout(lm)
@@ -625,8 +624,6 @@ def test_Editor_close():
             else:
                 editor.main_view = m.mock()
                 teardown_main_view(editor.main_view)
-            wc.setup_current_editor(ANY)
-            wc.update_dirty_status(False)
             with m:
                 editor.close()
             eq_(editor.command_view, None)

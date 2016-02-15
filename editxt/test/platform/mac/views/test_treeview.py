@@ -67,25 +67,25 @@ def test_HoverButtonCell_init():
 #           return mod.BUTTON_STATE_PRESSED if pressed else mod.BUTTON_STATE_HOVER
 #       return mod.BUTTON_STATE_NORMAL
 
-def test_HBC_buttonImageForFrame_inView_():
-    def test(c):
-        m = Mocker()
-        hbc = mod.HoverButtonCell.alloc().init()
-        frame = m.mock(fn.NSRect)
-        view = m.mock(ak.NSOutlineView)
-        point, pressed = hbc.hover_info = c.info
-        if point is not None:
-            m.replace(fn, 'NSPointInRect')(point, frame) >> (point == "in")
-        row = view.rowAtPoint_(frame.origin >> (1, 1)) >> 2
-        dgt = m.property(hbc, "delegate").value >> m.mock(WindowController)
-        image = dgt.hoverButtonCell_imageForState_row_(hbc, c.state, row) >> "<img>"
-        with m:
-            eq_(hbc.buttonImageForFrame_inView_(frame, view), image)
-    c = TestConfig(info=(None, False), state=mod.BUTTON_STATE_NORMAL)
-    yield test, c
-    yield test, c(info=("in", False), state=mod.BUTTON_STATE_HOVER)
-    yield test, c(info=("in", True), state=mod.BUTTON_STATE_PRESSED)
-    yield test, c(info=("out", False))
+#def test_HBC_buttonImageForFrame_inView_():
+#    def test(c):
+#        m = Mocker()
+#        hbc = mod.HoverButtonCell.alloc().init()
+#        frame = m.mock(fn.NSRect)
+#        view = m.mock(ak.NSOutlineView)
+#        point, pressed = hbc.hover_info = c.info
+#        if point is not None:
+#            m.replace(fn, 'NSPointInRect')(point, frame) >> (point == "in")
+#        row = view.rowAtPoint_(frame.origin >> (1, 1)) >> 2
+#        dgt = m.property(hbc, "delegate").value >> m.mock(WindowController)
+#        image = dgt.hoverButtonCell_imageForState_row_(hbc, c.state, row) >> "<img>"
+#        with m:
+#            eq_(hbc.buttonImageForFrame_inView_(frame, view), image)
+#    c = TestConfig(info=(None, False), state=mod.BUTTON_STATE_NORMAL)
+#    yield test, c
+#    yield test, c(info=("in", False), state=mod.BUTTON_STATE_HOVER)
+#    yield test, c(info=("in", True), state=mod.BUTTON_STATE_PRESSED)
+#    yield test, c(info=("out", False))
 
 class MockFrame(object):
     origin = None
@@ -102,33 +102,33 @@ def test_HBC_mouseMovePressHandlers():
         assert hbc.mouseExitedInvalidatesForFrame_(MockFrame)
         eq_(hbc.hover_info, (None, False))
 
-def test_HBC_mouseMoveHandlers():
-    def test(c):
-        m = Mocker()
-        hbc = mod.HoverButtonCell.alloc().init()
-        hbc.hover_info = ("initial", None)
-        frame = m.mock(fn.NSRect)
-        point = c.info[0]
-        pir = m.replace(fn, 'NSPointInRect')
-        if c.method.startswith("mouseUp"):
-            if c.inside is None:
-                hbc.hover_info = (None, None)
-            elif pir("initial", frame) >> c.inside[0] \
-                and pir(point, frame) >> c.inside[1]:
-                row = (m.method(hbc, "controlView")() >> m.mock(ak.NSOutlineView)) \
-                    .rowAtPoint_(point) >> 2
-                (m.property(hbc, "delegate").value >> m.mock(WindowController)) \
-                    .hoverButton_rowClicked_(hbc, row)
-        with m:
-            assert getattr(hbc, c.method)(point, frame)
-            eq_(hbc.hover_info, c.info)
-    c = TestConfig(info=(None, False))
-    yield test, c(method='mouseMoveToPoint_invalidatesForFrame_', info=('point', False))
-    yield test, c(method='mouseUpAtPoint_invalidatesForFrame_', info=('point', False), inside=None)
-    yield test, c(method='mouseUpAtPoint_invalidatesForFrame_', info=('point', False), inside=(False, False))
-    yield test, c(method='mouseUpAtPoint_invalidatesForFrame_', info=('point', False), inside=(True, False))
-    yield test, c(method='mouseUpAtPoint_invalidatesForFrame_', info=('point', False), inside=(False, True))
-    yield test, c(method='mouseUpAtPoint_invalidatesForFrame_', info=('point', False), inside=(True, True))
+#def test_HBC_mouseMoveHandlers():
+#    def test(c):
+#        m = Mocker()
+#        hbc = mod.HoverButtonCell.alloc().init()
+#        hbc.hover_info = ("initial", None)
+#        frame = m.mock(fn.NSRect)
+#        point = c.info[0]
+#        pir = m.replace(fn, 'NSPointInRect')
+#        if c.method.startswith("mouseUp"):
+#            if c.inside is None:
+#                hbc.hover_info = (None, None)
+#            elif pir("initial", frame) >> c.inside[0] \
+#                and pir(point, frame) >> c.inside[1]:
+#                row = (m.method(hbc, "controlView")() >> m.mock(ak.NSOutlineView)) \
+#                    .rowAtPoint_(point) >> 2
+#                (m.property(hbc, "delegate").value >> m.mock(WindowController)) \
+#                    .hoverButton_rowClicked_(hbc, row)
+#        with m:
+#            assert getattr(hbc, c.method)(point, frame)
+#            eq_(hbc.hover_info, c.info)
+#    c = TestConfig(info=(None, False))
+#    yield test, c(method='mouseMoveToPoint_invalidatesForFrame_', info=('point', False))
+#    yield test, c(method='mouseUpAtPoint_invalidatesForFrame_', info=('point', False), inside=None)
+#    yield test, c(method='mouseUpAtPoint_invalidatesForFrame_', info=('point', False), inside=(False, False))
+#    yield test, c(method='mouseUpAtPoint_invalidatesForFrame_', info=('point', False), inside=(True, False))
+#    yield test, c(method='mouseUpAtPoint_invalidatesForFrame_', info=('point', False), inside=(False, True))
+#    yield test, c(method='mouseUpAtPoint_invalidatesForFrame_', info=('point', False), inside=(True, True))
 
 def test_HBC_mouseDragHandlers():
     def test(c):
