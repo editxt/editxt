@@ -92,6 +92,7 @@ def test_Editor_init():
             doc = proj.window.app.document_with_path(path) >> doc
         m.off_the_record(doc.props)
         m.off_the_record(doc.text_storage)
+        m.off_the_record(doc.undo_manager)
         with m:
             result = Editor(proj, **kw)
             eq_(result.project, proj)
@@ -606,7 +607,10 @@ def test_Editor_close():
         with test_app(c.app) as app:
             m = Mocker()
             teardown_main_view = m.replace(mod, 'teardown_main_view')
-            editor = app.windows[0].projects[0].editors[0]
+            window = app.windows[0]
+            editor = window.projects[0].editors[0]
+            make_dirty(editor.document)
+            assert window.is_dirty
             editor.text_view = None if c.tv_is_none else m.mock(ak.NSTextView)
             doc = editor.document
             if c.ts_is_none:
@@ -626,6 +630,10 @@ def test_Editor_close():
                 teardown_main_view(editor.main_view)
             with m:
                 editor.close()
+            if next(window.iter_editors_of_document(doc), None) is not None:
+                assert window.is_dirty
+            else:
+                assert not window.is_dirty
             eq_(editor.command_view, None)
             eq_(editor.scroll_view, None)
             eq_(editor.text_view, None)

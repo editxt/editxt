@@ -207,8 +207,9 @@ class WindowController(ak.NSWindowController):
     def selected_items(self, items):
         self.docsController.selected_objects = items
 
-    def update_dirty_status(self, dirty):
+    def on_dirty_status_changed(self, editor, dirty):
         self.setDocumentEdited_(dirty)
+        self.docsView.itemNeedsDisplay(editor)
 
     def _update_title(self, editor):
         title = self.windowTitleForDocumentDisplayName_("")

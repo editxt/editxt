@@ -315,8 +315,6 @@ def test_set_current_editor():
             ed.recent.push(dv.id >> m.mock())
             setup = c.editor_class is Editor and not c.view_is_main
             wc.setup_current_editor(dv) >> setup
-            wc.update_dirty_status(dv.is_dirty >> True)
-            dv.undo_manager.on_has_unsaved_actions_changed(ANY)
             if setup:
                 if c.proj_is_none:
                     find_project_with_editor(dv) >> None
@@ -357,6 +355,23 @@ def test_selected_editor_changed():
     for ics in (True, False):
         yield test, c(numsel=1, is_current_selected=ics)
         yield test, c(numsel=5, is_current_selected=ics)
+
+def test_on_dirty_status_changed():
+    calls = []
+    def callback(editor, dirty):
+        calls.append(dirty)
+    with test_app("editor") as app:
+        window = app.windows[0]
+        editor = window.projects[0].editors[0]
+        with replattr(window.wc, "on_dirty_status_changed", callback, sigcheck=False):
+            eq_(calls, [])
+            make_dirty(editor.document)
+            eq_(calls, [True])
+            assert window.is_dirty
+
+            editor.undo_manager.savepoint()
+            eq_(calls, [True, False])
+            assert not window.is_dirty
 
 def test_suspend_recent_updates():
     def test(c):

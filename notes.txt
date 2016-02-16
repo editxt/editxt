@@ -85,10 +85,12 @@ x  - add icon badge (or glowing red shadow) to unsaved documents
 x  - activate unsaved document indocator on window close button
 x  - remove close button
 x  - allow drag/move multiple items at once
-  - fix document dirty indicator not updating
+x  - fix document dirty indicator not updating
+  - fix selected item not saved on quit (maybe?)
   - fix tree column width on load (should be same as tree width)
   - fix select multiple before loading text views, then click Soft Wrap -> error
   - fix Soft Wrap checkbox is wrong after incrementally selecting multiple
+  - fix undo in drag/copied dirty editor after close copy
 Show directory path in tree if name matches another document
   tree idea:
   - project

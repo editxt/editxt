@@ -450,8 +450,6 @@ class TextDocument(object):
         """
         if not self.file_exists():
             return
-        undo = self.undo_manager
-        undo.should_remove = False
         textstore = self._text_storage
         self._text_storage = Text()
         try:
@@ -459,7 +457,6 @@ class TextDocument(object):
         finally:
             tempstore = self._text_storage
             self._text_storage = textstore
-            undo.should_remove = True
         if not ok:
             return
         textview = None
@@ -471,7 +468,7 @@ class TextDocument(object):
         range = fn.NSRange(0, textstore.length())
         if textview is None:
             textstore.replaceCharactersInRange_withString_(range, text)
-            undo.removeAllActions()
+            self.undo_manager.removeAllActions()
         elif textview.shouldChangeTextInRange_replacementString_(range, text):
             #state = self.documentState
             textstore.replaceCharactersInRange_withString_(range, text)

@@ -109,6 +109,11 @@ class Editor(object):
         if state is not None:
             self.edit_state = state
 
+        def on_dirty_status_changed(dirty):
+            self.project.window.on_dirty_status_changed(self, dirty)
+        self.undo_manager.on_has_unsaved_actions_changed(on_dirty_status_changed)
+        self.on_dirty_status_changed = on_dirty_status_changed # retain reference
+
     def icon(self):
         return self.document.icon()
 
@@ -474,6 +479,8 @@ class Editor(object):
     def close(self):
         project = self.project
         doc = self.document
+        # remove from window.dirty_editors if present
+        project.window.on_dirty_status_changed(self, False)
         self.project = None # removes editor from project.editors
         if self.text_view is not None and doc.text_storage is not None:
             doc.text_storage.removeLayoutManager_(self.text_view.layoutManager())

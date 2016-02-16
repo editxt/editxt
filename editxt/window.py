@@ -24,7 +24,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from itertools import groupby
 from os.path import basename, dirname, isabs, isdir, sep, split
-from weakref import WeakKeyDictionary
+from weakref import WeakSet
 
 import AppKit as ak
 import Foundation as fn
@@ -67,7 +67,7 @@ class Window(object):
         self.window_settings_loaded = False
         self.no_document_undo_manager = UndoManager()
         self.menu = self.make_context_menu()
-        self._change_callbacks = WeakKeyDictionary()
+        self.dirty_editors = WeakSet()
 
     def window_did_load(self):
         wc = self.wc
@@ -298,13 +298,6 @@ class Window(object):
         self._current_editor = editor
         if editor is not None:
             self.recent.push(editor.id)
-            self.update_dirty_status(editor.is_dirty)
-            if editor not in self._change_callbacks:
-                def callback(dirty):
-                    if self._current_editor is editor:
-                        self.update_dirty_status(dirty)
-                self._change_callbacks[editor] = callback
-                editor.undo_manager.on_has_unsaved_actions_changed(callback)
         if self.wc.setup_current_editor(editor):
             if isinstance(editor, Editor) \
                     and self.find_project_with_editor(editor) is None:
@@ -321,6 +314,17 @@ class Window(object):
         selected = self.selected_items
         if selected and selected[0] is not self.current_editor:
             self.current_editor = selected[0]
+
+    def on_dirty_status_changed(self, editor, dirty):
+        if dirty:
+            self.dirty_editors.add(editor)
+        else:
+            self.dirty_editors.discard(editor)
+        self.wc.on_dirty_status_changed(editor, self.is_dirty)
+
+    @property
+    def is_dirty(self):
+        return bool(self.dirty_editors)
 
     def iter_editors_of_document(self, doc):
         for project in self.projects:

@@ -340,6 +340,7 @@ def test_check_for_external_changes():
     yield test, c(isdirty=True, win_is_none=False, modstat=1, prestat=0, reload=False)
 
 def test_reload_document():
+    from editxt.undo import UndoManager
     def test(c):
         def end():
             with m:
@@ -359,10 +360,7 @@ def test_reload_document():
             doc.text = text
             if c.url_is_none or not c.exists:
                 return end()
-            undo = doc.undo_manager = m.mock(fn.NSUndoManager)
-            with m.order():
-                undo.should_remove = False
-                undo.should_remove = True
+            undo = doc.undo_manager = m.mock(UndoManager)
             if not c.read2_success:
                 os.remove(path)
                 os.mkdir(path)
@@ -371,7 +369,8 @@ def test_reload_document():
             tv = m.mock(ak.NSTextView)
             for i, text_view_exists in enumerate(c.view_state):
                 project = app.windows[0].projects[i]
-                editor = Editor(project, document=doc)
+                with m.off_the_record():
+                    editor = Editor(project, document=doc)
                 editor.text_view = (tv if text_view_exists else None)
                 project.editors.append(editor)
             reset_text_attributes()

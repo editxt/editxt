@@ -161,6 +161,11 @@ class OutlineView(ak.NSOutlineView):
             return ak.NSDragOperationGeneric | ak.NSDragOperationCopy | ak.NSDragOperationMove
         return ak.NSDragOperationCopy # only allow copy on external drag
 
+    def itemNeedsDisplay(self, item):
+        for row, item_ in self.iterVisibleObjects():
+            if item is item_:
+                self.setNeedsDisplayInRect_(self.rectOfRow_(row));
+
 #    def trackMouseEvents(self):
 #        return self._trackMouseEvents
 #
