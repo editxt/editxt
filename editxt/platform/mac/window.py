@@ -73,6 +73,7 @@ class WindowController(ak.NSWindowController):
     @splitter_pos.setter
     def splitter_pos(self, value):
         self.splitView.setFixedSideThickness_(value)
+        self.docsView.sizeLastColumnToFit()
 
     @property
     def properties_hidden(self):

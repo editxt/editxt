@@ -87,7 +87,7 @@ x  - remove close button
 x  - allow drag/move multiple items at once
 x  - fix document dirty indicator not updating
 x  - fix selected item not saved on quit
-  - fix tree column width on load (should be same as tree width)
+x  - fix tree column width on load (should be same as tree width)
   - fix select multiple before loading text views, then click Soft Wrap -> error
   - fix Soft Wrap checkbox is wrong after incrementally selecting multiple
   - fix undo in drag/copied dirty editor after close copy
