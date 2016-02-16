@@ -126,7 +126,8 @@ class Window(object):
                         self.recent.push(doc.id)
             if 'window_settings' in state:
                 self.window_settings = state['window_settings']
-            self.discard(None)
+            with self.suspend_recent_updates():
+                pass # focus recent
 
     def __getstate__(self):
         if self._state is not None:

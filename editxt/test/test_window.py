@@ -154,7 +154,7 @@ def test__setstate():
         m = Mocker()
         ed = Window(app)
         ed.wc = m.mock(WindowController)
-        ed.discard = m.method(ed.discard)
+        ed.suspend_recent_updates = m.method(ed.suspend_recent_updates)
         project_class = m.replace(mod, 'Project')
         ed.recent = m.mock(RecentItemStack)
         ws = m.property(ed, 'window_settings')
@@ -178,7 +178,10 @@ def test__setstate():
                             while len(proj.editors) <= di:
                                 proj.editors.append(Item())
                             ed.recent.push(docs[di].id)
-            ed.discard(None)
+            @mod.contextmanager
+            def focus():
+                yield
+            ed.suspend_recent_updates() >> focus()
             if 'window_settings' in data:
                 ws.value = data['window_settings']
         with m:
