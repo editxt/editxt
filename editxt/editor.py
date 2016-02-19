@@ -109,10 +109,7 @@ class Editor(object):
         if state is not None:
             self.edit_state = state
 
-        def on_dirty_status_changed(dirty):
-            self.project.window.on_dirty_status_changed(self, dirty)
-        self.undo_manager.on_has_unsaved_actions_changed(on_dirty_status_changed)
-        self.on_dirty_status_changed = on_dirty_status_changed # retain reference
+        self.undo_manager.on(self.on_dirty_status_changed)
 
     def icon(self):
         return self.document.icon()
@@ -174,6 +171,9 @@ class Editor(object):
     @property
     def is_dirty(self):
         return self.document.is_dirty()
+
+    def on_dirty_status_changed(self, dirty):
+        self.project.window.on_dirty_status_changed(self, dirty)
 
     def short_path(self, name=True):
         path = self.file_path
@@ -479,6 +479,7 @@ class Editor(object):
     def close(self):
         project = self.project
         doc = self.document
+        self.undo_manager.off(self.on_dirty_status_changed)
         # remove from window.dirty_editors if present
         project.window.on_dirty_status_changed(self, False)
         self.project = None # removes editor from project.editors

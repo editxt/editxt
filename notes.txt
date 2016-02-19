@@ -80,6 +80,9 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+Fix `xt ~/Dropbox\ (Dimagi)/scratch.md`TAB -> error
+Add a (persistent) way to disable move tracking on a file
+
 Multi-select in file tree
 x  - add icon badge (or glowing red shadow) to unsaved documents
 x  - activate unsaved document indocator on window close button
@@ -88,9 +91,11 @@ x  - allow drag/move multiple items at once
 x  - fix document dirty indicator not updating
 x  - fix selected item not saved on quit
 x  - fix tree column width on load (should be same as tree width)
+x  - fix undo in drag/copied dirty editor after close copy
   - fix select multiple before loading text views, then click Soft Wrap -> error
   - fix Soft Wrap checkbox is wrong after incrementally selecting multiple
-  - fix undo in drag/copied dirty editor after close copy
+  - concatenate views on select multiple
+    - allow find/replace across multiple files
 Show directory path in tree if name matches another document
   tree idea:
   - project

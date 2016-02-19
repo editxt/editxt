@@ -17,8 +17,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from weakref import WeakSet
-
 import Foundation as fn
 from objc import super
 
@@ -28,10 +26,13 @@ from editxt.platform.kvo import kvo_change
 class WeakCallbackSet(object):
 
     def __init__(self):
-        self.items = WeakSet()
+        self.items = set()
 
     def add(self, callback):
         self.items.add(callback)
+
+    def remove(self, callback):
+        self.items.remove(callback)
 
     def call(self, *args, **kw):
         for callback in self.items:
@@ -51,7 +52,7 @@ class UndoManager(fn.NSUndoManager):
         self.callbacks = WeakCallbackSet()
         return super(UndoManager, self).init()
 
-    def on_has_unsaved_actions_changed(self, callback):
+    def on(self, callback):
         """Register a callback to be called when the value of
         `has_unsaved_actions()` changes.
 
@@ -61,6 +62,13 @@ class UndoManager(fn.NSUndoManager):
         value that would be returned if `has_unsaved_actions()` were called.
         """
         self.callbacks.add(callback)
+
+    def off(self, callback):
+        """Remove callback tracking unsaved actions changes
+
+        :param callback: The function passed to `on()`.
+        """
+        self.callbacks.remove(callback)
 
     @property
     def actions_since_save(self):

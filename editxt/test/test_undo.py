@@ -81,7 +81,7 @@ def test_UndoManager_has_unsaved_actions():
 
     assert not dups, "duplicate tests: %r" % dups
 
-def test_UndoManager_on_has_unsaved_actions_changed():
+def test_UndoManager_has_unsaved_actions_changed_callbacks():
     def make_callback():
         calls = []
         def callback(value):
@@ -96,15 +96,15 @@ def test_UndoManager_on_has_unsaved_actions_changed():
         cb2 = make_callback()
         cb3 = make_callback()
         undo = mod.UndoManager()
-        undo.on_has_unsaved_actions_changed(cb1)
-        undo.on_has_unsaved_actions_changed(cb2)
-        undo.on_has_unsaved_actions_changed(cb3)
+        undo.on(cb1)
+        undo.on(cb2)
+        undo.on(cb3)
         cb3_callstr = cb3.callstr
-        del cb3
+        undo.off(cb3)
         undo, stack = simulate(actions, undo)
         eq_(cb1.callstr(), changes)
         eq_(cb2.callstr(), changes)
-        eq_(cb3_callstr(), "") # depends on CPython refcouting
+        eq_(cb3_callstr(), "")
         eq_(stack.state, state)
         eq_(undo.has_unsaved_actions(), (changes[-1] == "t" if changes else False))
 

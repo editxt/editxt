@@ -92,7 +92,7 @@ def test_Editor_init():
             doc = proj.window.app.document_with_path(path) >> doc
         m.off_the_record(doc.props)
         m.off_the_record(doc.text_storage)
-        m.off_the_record(doc.undo_manager)
+        doc.undo_manager.on(ANY)
         with m:
             result = Editor(proj, **kw)
             eq_(result.project, proj)
@@ -613,6 +613,7 @@ def test_Editor_close():
             assert window.is_dirty
             editor.text_view = None if c.tv_is_none else m.mock(ak.NSTextView)
             doc = editor.document
+            undo = editor.undo_manager
             if c.ts_is_none:
                 doc.text_storage = None
             else:
@@ -628,6 +629,7 @@ def test_Editor_close():
             else:
                 editor.main_view = m.mock()
                 teardown_main_view(editor.main_view)
+            assert editor.on_dirty_status_changed in undo.callbacks.items
             with m:
                 editor.close()
             if next(window.iter_editors_of_document(doc), None) is not None:
@@ -639,6 +641,7 @@ def test_Editor_close():
             eq_(editor.text_view, None)
             eq_(editor.document, None)
             eq_(editor.proxy, None)
+            assert editor.on_dirty_status_changed not in undo.callbacks.items
             if c.close_doc:
                 eq_(doc.text_storage, None)
                 #if not c.ts_is_none:

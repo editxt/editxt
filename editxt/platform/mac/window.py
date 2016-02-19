@@ -210,7 +210,7 @@ class WindowController(ak.NSWindowController):
 
     def on_dirty_status_changed(self, editor, dirty):
         self.setDocumentEdited_(dirty)
-        self.docsView.itemNeedsDisplay(editor)
+        self.docsView.item_needs_display(editor)
 
     def _update_title(self, editor):
         title = self.windowTitleForDocumentDisplayName_("")
