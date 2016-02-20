@@ -603,6 +603,7 @@ def test_File():
     with test_app("project(/dir) editor") as app:
         tmp = test_app(app).tmp
         os.mkdir(join(tmp, "dir"))
+        os.mkdir(join(tmp, "space dir"))
         for path in [
             "dir/a.txt",
             "dir/b.txt",
@@ -610,6 +611,7 @@ def test_File():
             ".hidden",
             "file.txt",
             "file.doc",
+            "space dir/file",
             #"x y",
         ]:
             assert not isabs(path), path
@@ -675,16 +677,17 @@ def test_File():
         yield test, "b", ["B\\ file", "b.txt"]
         yield test, "B", ["B\\ file"]
         yield test, "..", ["../"]
-        yield test, "../", ["dir", "file.doc", "file.txt"]
+        yield test, "../", ["dir", "file.doc", "file.txt", "space\\ dir"]
         yield test, "../.", [".hidden"]
         yield test, "...", [".../"]
         yield test, ".../", ["a.txt", "B\\ file", "b.txt"]
         yield test, "../dir", ["dir/"]
         yield test, "../dir/", ["a.txt", "B\\ file", "b.txt"]
+        yield test, "../space\\ dir/", ["file"]
         yield test, "val", []
-        yield test, "/", ["dir", "file.doc", "file.txt"]
+        yield test, "/", ["dir", "file.doc", "file.txt", "space\\ dir"]
         yield test, "~", ["~/"]
-        yield test, "~/", ["dir", "file.doc", "file.txt"]
+        yield test, "~/", ["dir", "file.doc", "file.txt", "space\\ dir"]
 
         # delimiter completion
         def test(input, output, start=0):
@@ -697,9 +700,10 @@ def test_File():
         yield test, "", ["a.txt ", "B\\ file ", "b.txt "]
         yield test, "x", []
         yield test, "..", ["../"]
-        yield test, "../", ["dir/", "file.doc ", "file.txt "], 3
+        yield test, "../", ["dir/", "file.doc ", "file.txt ", "space\\ dir/"], 3
         yield test, "../dir", ["dir/"], 3
         yield test, "../di", ["dir/"], 3
+        yield test, "../space\\ dir/", ["file "], 14
         yield test, "~", ["~/"], None
 
         field = File('dir', directory=True)
@@ -720,7 +724,7 @@ def test_File():
         yield test, "", [], 0
         yield test, "a", [], 0
         yield test, "..", ["../"], 0
-        yield test, "../", ["dir"], 3
+        yield test, "../", ["dir", "space\\ dir"], 3
 
         field = File('dir', default="~/dir")
         check = make_completions_checker(field)

@@ -839,10 +839,11 @@ class File(String):
         assert len(sep) == 1, sep
 
         def delim(word):
-            word = word.replace(' ', '\\ ')
+            escaped = word.replace(' ', '\\ ')
+            root_end = sum(2 if c == ' ' else 1 for c in root)
             def get_delimiter():
                 return "/" if isdir(join(root, word)) else " "
-            return CompleteWord(word, get_delimiter, len(root) + 1 - diff)
+            return CompleteWord(escaped, get_delimiter, root_end + 1 - diff)
 
         if not name:
             match = lambda n: not n.startswith(".")
