@@ -455,6 +455,9 @@ def test_clear_highlighted_text():
 
 def test_set_variable():
     from editxt.platform.font import Font
+    fake_text_view = TestConfig(
+        textContainer=lambda:TestConfig(
+            widthTracksTextView=lambda:const.WRAP_NONE))
     class editor:
         class project:
             path = os.path.expanduser("~/project")
@@ -505,7 +508,7 @@ def test_set_variable():
         with test_app("editor*") as app:
             m = Mocker()
             editor = app.windows[0].current_editor
-            editor.text_view = TestConfig(textContainer=lambda:None)
+            editor.text_view = fake_text_view
             proxy = editor.proxy = m.mock()
             do = CommandTester(mod.set_variable, editor=editor)
             if isinstance(attribute, Exception):
@@ -539,7 +542,7 @@ def test_set_variable():
     def test(command, size, mode):
         with test_app("editor*") as app:
             editor = app.windows[0].current_editor
-            editor.text_view = TestConfig(textContainer=lambda:None)
+            editor.text_view = fake_text_view
             do = CommandTester(mod.set_variable, editor=editor)
             do(command)
             eq_(editor.indent_size, size)
@@ -565,7 +568,7 @@ def test_set_variable():
         with test_app("editor*") as app:
             app.syntax_factory = factory
             editor = app.windows[0].current_editor
-            editor.text_view = TestConfig(textContainer=lambda:None)
+            editor.text_view = fake_text_view
             do = CommandTester(mod.set_variable, editor=editor)
             do(command)
             eq_(editor.syntaxdef, lang)
@@ -576,7 +579,7 @@ def test_set_variable():
     def test(command, token):
         with test_app("editor*") as app:
             editor = app.windows[0].current_editor
-            editor.text_view = TestConfig(textContainer=lambda:None)
+            editor.text_view = fake_text_view
             do = CommandTester(mod.set_variable, editor=editor)
             do(command)
             eq_(editor.document.comment_token, token)

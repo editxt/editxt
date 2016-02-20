@@ -260,7 +260,6 @@ class Editor(object):
             self.scroll_view = self.main_view.top
             self.command_view = self.main_view.bottom
             self.text_view = self.scroll_view.documentView() # HACK deep reach
-            self.soft_wrap = self.app.config["soft_wrap"]
             self.set_text_attributes()
             self.reset_edit_state()
             self.on_selection_changed(self.text_view)
@@ -299,12 +298,19 @@ class Editor(object):
         if self.project.window.current_editor is self:
             self.document.update_syntaxer()
 
-    def _get_soft_wrap(self):
-        if self.text_view is None or self.text_view.textContainer() is None:
-            return None
+    @property
+    def soft_wrap(self):
+        if self.text_view is None:
+            return self.edit_state["soft_wrap"]
         wrap = self.text_view.textContainer().widthTracksTextView()
         return const.WRAP_WORD if wrap else const.WRAP_NONE
-    def _set_soft_wrap(self, value):
+    @soft_wrap.setter
+    def soft_wrap(self, value):
+        if self.text_view is None:
+            state = getattr(self, "_state", {})
+            state["soft_wrap"] = value
+            self._state = state
+            return
         wrap = value != const.WRAP_NONE
         tv = self.text_view
         tc = tv.textContainer()
@@ -334,7 +340,6 @@ class Editor(object):
         #     put selection as near to where it was as possible
         # else:
         #     put top visible line at the top of the scroll view
-    soft_wrap = property(_get_soft_wrap, _set_soft_wrap)
 
     @document_property
     def indent_size(self, new, old):
@@ -395,7 +400,8 @@ class Editor(object):
                 self.change_indentation(new_mode, new_size, old_mode, old_size, None)
             register_undo_callback(self.undo_manager, undo)
 
-    def _get_edit_state(self):
+    @property
+    def edit_state(self):
         if self.text_view is not None:
             sel = self.selection
             sp = self.scroll_view.documentVisibleRect().origin
@@ -406,6 +412,7 @@ class Editor(object):
             )
         else:
             state = dict(getattr(self, "_state", {}))
+            state.setdefault("soft_wrap", self.app.config["soft_wrap"])
         upfm_default = bool(self.app.config["updates_path_on_file_move"])
         if bool(self.updates_path_on_file_move) != upfm_default:
             state["updates_path_on_file_move"] = False
@@ -417,12 +424,13 @@ class Editor(object):
             state["path"] = str(self.file_path)
             state.pop("internal", None)
         return state
-    def _set_edit_state(self, state):
+    @edit_state.setter
+    def edit_state(self, state):
         if self.text_view is not None:
             point = state.get("scrollpoint", [0, 0])
             self.point = point
             sel = state.get("selection", [0, 0])
-            self.proxy.soft_wrap = state.get("soft_wrap", const.WRAP_NONE)
+            self.proxy.soft_wrap = state.get("soft_wrap", self.app.config["soft_wrap"])
             # HACK text_view.scrollPoint_ does not work without this
             char_index, ignore = self.text_view.layoutManager() \
                 .characterIndexForPoint_inTextContainer_fractionOfDistanceBetweenInsertionPoints_(
@@ -442,7 +450,6 @@ class Editor(object):
             self._state = state
         if "updates_path_on_file_move" in state:
             self.proxy.updates_path_on_file_move = bool(state["updates_path_on_file_move"])
-    edit_state = property(_get_edit_state, _set_edit_state)
 
     def reset_edit_state(self):
         state = getattr(self, "_state", None)

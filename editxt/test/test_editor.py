@@ -107,7 +107,7 @@ def test_edit_errlog():
         project = app.windows[0].projects[0]
         editor = project.create_editor_with_state({"internal": "errlog"})
         eq_(editor.document, app.errlog.document)
-        eq_(editor.edit_state, {"internal": "errlog"})
+        eq_(editor.edit_state, {"internal": "errlog", "soft_wrap": const.WRAP_NONE})
 
 def test_saved_errlog_serial():
     with test_app("project") as app:
@@ -215,7 +215,6 @@ def test_document_set_main_view_of_window():
         app.config = m.mock()
         editor = app.windows[0].projects[0].editors[0]
         editor.document = doc = m.mock(TextDocument)
-        soft_wrap = m.property(editor, "soft_wrap")
         reset_edit_state = m.method(editor.reset_edit_state)
         set_text_attributes = m.method(editor.set_text_attributes)
         on_selection_changed = m.method(editor.on_selection_changed)
@@ -234,7 +233,6 @@ def test_document_set_main_view_of_window():
             main.top >> scroll
             main.bottom >> m.mock(CommandView)
             scroll.documentView() >> text
-            soft_wrap.value = app.config["soft_wrap"] >> c.soft_wrap
             set_text_attributes()
             reset_edit_state()
             on_selection_changed(text)
@@ -250,61 +248,63 @@ def test_document_set_main_view_of_window():
         with m:
             editor.set_main_view_of_window(view, win)
     c = TestConfig()
-    yield test, c(sv_is_none=True, soft_wrap=const.WRAP_NONE)
-    yield test, c(sv_is_none=False, soft_wrap=const.WRAP_WORD)
+    yield test, c(sv_is_none=True)
+    yield test, c(sv_is_none=False)
 
 def test_get_soft_wrap():
-    def test(c):
+    @test_app("editor")
+    def test(app, c):
         m = Mocker()
-        doc = m.mock(TextDocument)
-        with m.off_the_record():
-            dv = Editor(None, document=doc)
+        editor = app.windows[0].projects[0].editors[0]
+        doc = editor.document
         if c.tv_is_none:
-            dv.text_view = None
+            eq_(editor.text_view, None)
         else:
-            tv = dv.text_view = m.mock(ak.NSTextView)
-            tc = None if c.tc_is_none else m.mock(ak.NSTextContainer)
-            (tv.textContainer() << tc).count(1, 2)
-            if tc is not None:
-                tc.widthTracksTextView() >> \
-                    (True if c.mode == const.WRAP_WORD else False)
+            tv = editor.text_view = m.mock(ak.NSTextView)
+            tc = tv.textContainer() >> m.mock(ak.NSTextContainer)
+            tc.widthTracksTextView() >> \
+                (True if c.mode == const.WRAP_WORD else False)
         with m:
-            result = dv.soft_wrap
-            eq_(result, c.mode)
-    c = TestConfig(tv_is_none=False, tc_is_none=False)
+            eq_(editor.soft_wrap, c.mode)
+    c = TestConfig(tv_is_none=False)
     yield test, c(mode=const.WRAP_NONE)
     yield test, c(mode=const.WRAP_WORD)
-    yield test, c(tv_is_none=True, mode=None)
-    yield test, c(tc_is_none=True, mode=None)
+    yield test, c(tv_is_none=True, mode=const.WRAP_NONE)
 
 def test_set_soft_wrap():
-    def test(c):
+    @gentest
+    @test_app("editor")
+    def test(app, mode, has_text_view):
         m = Mocker()
-        doc = m.mock(TextDocument)
-        wrap = (c.mode != const.WRAP_NONE)
-        with m.off_the_record():
-            dv = Editor(None, document=doc)
-        sv = dv.scroll_view = m.mock(ak.NSScrollView)
-        tv = dv.text_view = m.mock(ak.NSTextView)
-        tc = tv.textContainer() >> m.mock(ak.NSTextContainer)
-        if wrap:
-            size = sv.contentSize() >> m.mock(fn.NSRect)
-            width = size.width >> 100.0
-            tv.setFrameSize_(size)
-            tv.sizeToFit()
-        else:
-            width = const.LARGE_NUMBER_FOR_TEXT
-        tc.setContainerSize_(fn.NSMakeSize(width, const.LARGE_NUMBER_FOR_TEXT))
-        tc.setWidthTracksTextView_(wrap)
-        tv.setHorizontallyResizable_(not wrap)
-        tv.setAutoresizingMask_(ak.NSViewWidthSizable
-            if wrap else ak.NSViewWidthSizable | ak.NSViewHeightSizable)
-        sv.setNeedsDisplay_(True)
+        editor = app.windows[0].projects[0].editors[0]
+        doc = editor.document
+        wrap = mode != const.WRAP_NONE
+        sv = editor.scroll_view = m.mock(ak.NSScrollView)
+        tv = editor.text_view = m.mock(ak.NSTextView) if has_text_view else None
+        if has_text_view:
+            tc = m.mock(ak.NSTextContainer)
+            (tv.textContainer() << tc).count(2)
+            if wrap:
+                size = sv.contentSize() >> m.mock(fn.NSRect)
+                width = size.width >> 100.0
+                tv.setFrameSize_(size)
+                tv.sizeToFit()
+            else:
+                width = const.LARGE_NUMBER_FOR_TEXT
+            tc.setContainerSize_(fn.NSMakeSize(width, const.LARGE_NUMBER_FOR_TEXT))
+            tc.setWidthTracksTextView_(wrap)
+            tv.setHorizontallyResizable_(not wrap)
+            tv.setAutoresizingMask_(ak.NSViewWidthSizable
+                if wrap else ak.NSViewWidthSizable | ak.NSViewHeightSizable)
+            sv.setNeedsDisplay_(True)
+            tc.widthTracksTextView() >> wrap
         with m:
-            dv.soft_wrap = c.mode
-    c = TestConfig(mode=const.WRAP_NONE)
-    yield test, c
-    yield test, c(mode=const.WRAP_WORD)
+            editor.soft_wrap = mode
+            eq_(editor.soft_wrap, mode)
+
+    for htv in [True, False]:
+        yield test(const.WRAP_NONE, has_text_view=htv)
+        yield test(const.WRAP_WORD, has_text_view=htv)
 
 def test_Editor_document_properties():
     def test(c):
@@ -424,6 +424,7 @@ def test_get_edit_state():
                 dv.edit_state = state = dict(key="value")
             else:
                 state = {}
+            state["soft_wrap"] = const.WRAP_NONE
         else:
             dv.text_view = m.mock(ak.NSTextView)
             dv.scroll_view = m.mock(ak.NSScrollView)
@@ -457,47 +458,47 @@ def test_get_edit_state():
 
 def test_set_edit_state():
     from editxt.util import KVOProxy
-    def test(state=None, ts_len=0):
+    @test_app("editor")
+    def test(app, state=None, ts_len=0):
         m = Mocker()
-        doc = m.mock(TextDocument)
-        with m.off_the_record():
-            dv = Editor(None, document=doc)
-        proxy_prop = m.property(dv, "proxy")
+        editor = app.windows[0].projects[0].editors[0]
+        proxy_prop = m.property(editor, "proxy")
+        text_prop = m.property(editor.document, "text_storage")
         if state is None:
-            eq_state = state = {}
+            eq_state = state = {"soft_wrap": const.WRAP_NONE}
         else:
-            dv.line_numbers = m.mock()
-            m.off_the_record(dv.line_numbers)
+            editor.line_numbers = m.mock(mod.LineNumbers)
+            m.off_the_record(editor.line_numbers)
             eq_state = dict(state)
             eq_state.setdefault("selection", [0, 0])
             eq_state.setdefault("scrollpoint", (0, 0))
             eq_state.setdefault("soft_wrap", const.WRAP_NONE)
             point = eq_state["scrollpoint"]
             sel = eq_state["selection"]
-            dv.text_view = m.mock(ak.NSTextView)
-            dv.scroll_view = m.mock(ak.NSScrollView)
-            proxy = m.mock(Editor)
-            (proxy_prop.value << proxy).count(1, 2)
+            editor.text_view = m.mock(ak.NSTextView)
+            editor.scroll_view = m.mock(ak.NSScrollView)
+            proxy = proxy_prop.value >> m.mock(Editor)
             proxy.soft_wrap = eq_state["soft_wrap"]
             if "updates_path_on_file_move" in state:
                 proxy.updates_path_on_file_move = state["updates_path_on_file_move"]
-            dv.text_view.layoutManager() \
+            editor.text_view.layoutManager() \
                 .characterIndexForPoint_inTextContainer_fractionOfDistanceBetweenInsertionPoints_(
                     ANY, ANY, ANY) >> (1, 0)
-            dv.text_view.bounds().size.height >> 10
-            dv.text_view.textContainer()
-            dv.scroll_view.verticalRulerView().invalidateRuleThickness()
-            dv.text_view.scrollPoint_(fn.NSPoint(*point))
-            doc.text_storage.length() >> ts_len
+            editor.text_view.bounds().size.height >> 10
+            editor.text_view.textContainer()
+            editor.scroll_view.verticalRulerView().invalidateRuleThickness()
+            editor.text_view.scrollPoint_(fn.NSPoint(*point))
+            text = text_prop.value >> m.mock(ak.NSTextStorage)
+            text.length() >> ts_len
             if sel[0] > ts_len:
                 sel = (ts_len, 0)
             elif sel[0] + sel[1] > ts_len:
                 sel = (sel[0], ts_len - sel[0])
-            dv.text_view.setSelectedRange_(sel)
+            editor.text_view.setSelectedRange_(sel)
         with m:
-            dv.edit_state = state
-            if not isinstance(state, dict):
-                eq_(state, eq_state)
+            editor.edit_state = state
+        if not isinstance(state, dict):
+            eq_(state, eq_state)
     yield test, # tests case when (doc.text_view is None)
     yield test, {}
     yield test, {"selection": (1, 1)}

@@ -267,10 +267,9 @@
                                                             <string key="NSValueTransformerName">NSIsNotNil</string>
                                                         </dictionary>
                                                     </binding>
-                                                    <binding destination="272" name="value" keyPath="selection.soft_wrap" id="MgP-80-hvt">
+                                                    <binding destination="272" name="value" keyPath="selection.soft_wrap" id="CtT-c1-Ugp">
                                                         <dictionary key="options">
                                                             <bool key="NSConditionallySetsEnabled" value="NO"/>
-                                                            <integer key="NSMultipleValuesPlaceholder" value="1"/>
                                                             <string key="NSValueTransformerName">WrapModeTransformer</string>
                                                         </dictionary>
                                                     </binding>
