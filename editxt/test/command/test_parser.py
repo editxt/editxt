@@ -628,10 +628,10 @@ def test_File():
         field = field.with_context(editor)
 
         test = make_completions_checker(field)
-        yield test, ".../", ["a.txt", "B\\ file", "b.txt"], 4
+        yield test, ".../", ["a.txt", "B file", "b.txt"], 4
         with replattr(editor.project, "path", editor.project.path + "/"):
-            yield test, ".../", ["a.txt", "B\\ file", "b.txt"], 4
-            yield test, "...//", ["a.txt", "B\\ file", "b.txt"], 5
+            yield test, ".../", ["a.txt", "B file", "b.txt"], 4
+            yield test, "...//", ["a.txt", "B file", "b.txt"], 5
 
         test = make_arg_string_checker(field)
         yield test, "/str", "/str"
@@ -671,23 +671,26 @@ def test_File():
             with replattr(os.path, "expanduser", expanduser):
                 arg = mod.Arg(field, input, 0, None)
                 eq_(field.get_completions(arg), output)
-        yield test, "", ["a.txt", "B\\ file", "b.txt"]
+        yield test, "", ["a.txt", "B file", "b.txt"]
         yield test, "a", ["a.txt"]
         yield test, "a.txt", ["a.txt"]
-        yield test, "b", ["B\\ file", "b.txt"]
-        yield test, "B", ["B\\ file"]
+        yield test, "b", ["B file", "b.txt"]
+        yield test, "B", ["B file"]
         yield test, "..", ["../"]
-        yield test, "../", ["dir", "file.doc", "file.txt", "space\\ dir"]
+        yield test, "../", ["dir", "file.doc", "file.txt", "space dir"]
         yield test, "../.", [".hidden"]
         yield test, "...", [".../"]
-        yield test, ".../", ["a.txt", "B\\ file", "b.txt"]
+        yield test, ".../", ["a.txt", "B file", "b.txt"]
         yield test, "../dir", ["dir/"]
-        yield test, "../dir/", ["a.txt", "B\\ file", "b.txt"]
+        yield test, "../dir/", ["a.txt", "B file", "b.txt"]
+        yield test, "../sp", ["space dir"]
+        yield test, "../space\\ d", ["space dir"]
+        yield test, "../space\\ dir", ["space dir/"]
         yield test, "../space\\ dir/", ["file"]
         yield test, "val", []
-        yield test, "/", ["dir", "file.doc", "file.txt", "space\\ dir"]
+        yield test, "/", ["dir", "file.doc", "file.txt", "space dir"]
         yield test, "~", ["~/"]
-        yield test, "~/", ["dir", "file.doc", "file.txt", "space\\ dir"]
+        yield test, "~/", ["dir", "file.doc", "file.txt", "space dir"]
 
         # delimiter completion
         def test(input, output, start=0):
@@ -703,6 +706,10 @@ def test_File():
         yield test, "../", ["dir/", "file.doc ", "file.txt ", "space\\ dir/"], 3
         yield test, "../dir", ["dir/"], 3
         yield test, "../di", ["dir/"], 3
+        yield test, "../sp", ["space\\ dir/"], 3
+        yield test, "../space\\ d", ["space\\ dir/"], 3
+        yield test, "../space\\ dir", ["space\\ dir/"], 3
+        yield test, ".../", ["a.txt ", "B\\ file ", "b.txt "], 4
         yield test, "../space\\ dir/", ["file "], 14
         yield test, "~", ["~/"], None
 
@@ -724,7 +731,7 @@ def test_File():
         yield test, "", [], 0
         yield test, "a", [], 0
         yield test, "..", ["../"], 0
-        yield test, "../", ["dir", "space\\ dir"], 3
+        yield test, "../", ["dir", "space dir"], 3
 
         field = File('dir', default="~/dir")
         check = make_completions_checker(field)
@@ -737,13 +744,13 @@ def test_File():
 
         project = app.windows[0].projects[0]
         check = make_completions_checker(field.with_context(project))
-        yield test, "", ["a.txt", "B\\ file", "b.txt"], 0
-        yield test, "./", ["a.txt", "B\\ file", "b.txt"], 2
+        yield test, "", ["a.txt", "B file", "b.txt"], 0
+        yield test, "./", ["a.txt", "B file", "b.txt"], 2
 
         with replattr(project, "path",  project.path + "/"):
             check = make_completions_checker(field.with_context(project))
-            yield test, "", ["a.txt", "B\\ file", "b.txt"], 0
-            yield test, "./", ["a.txt", "B\\ file", "b.txt"], 2
+            yield test, "", ["a.txt", "B file", "b.txt"], 0
+            yield test, "./", ["a.txt", "B file", "b.txt"], 2
 
 def test_DynamicList():
     def get_items(editor):

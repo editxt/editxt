@@ -824,7 +824,7 @@ class File(String):
         else:
             diff = 0
         if isabs(token):
-            base = "/"
+            base = sep
             path = token
         elif self.path is None:
             return []
@@ -838,12 +838,12 @@ class File(String):
             return []
         assert len(sep) == 1, sep
 
-        def delim(word):
-            escaped = word.replace(' ', '\\ ')
+        def delim(word, dir_delim=sep):
+            escape = lambda word: word.replace(' ', '\\ ')
             root_end = sum(2 if c == ' ' else 1 for c in root)
             def get_delimiter():
-                return "/" if isdir(join(root, word)) else " "
-            return CompleteWord(escaped, get_delimiter, root_end + 1 - diff)
+                return dir_delim if isdir(join(root, word)) else " "
+            return CompleteWord(word, get_delimiter, root_end + 1 - diff, escape)
 
         if not name:
             match = lambda n: not n.startswith(".")
@@ -865,7 +865,7 @@ class File(String):
         if isdir(path) and (name == ".." or name in names):
             if name in names:
                 names.remove(name)
-            names.append(CompleteWord(name + "/", lambda:"", len(root) + 1 - diff))
+            names.append(delim(name + sep, ""))
         return CompletionsList(names, title=user_path(root))
 
     def get_placeholder(self, arg):
@@ -1509,23 +1509,26 @@ class Options(object):
 
 class CompleteWord(str):
 
-    def __new__(cls, _value="", get_delimiter=None, start=None, **kw):
+    def __new__(cls, _value="", get_delimiter=None, start=None, escape=None, **kw):
         obj = super(CompleteWord, cls).__new__(cls, _value)
         if isinstance(_value, CompleteWord):
             if get_delimiter is None:
                 get_delimiter = _value.get_delimiter
             if start is None:
                 start = _value.start
+            if escape is None:
+                escape = _value.escape
             for key, value in _value.__dict__.items():
                 if not key.startswith("_") and key not in kw:
                     setattr(obj, key, value)
         obj.get_delimiter = get_delimiter or (lambda:" ")
         obj.start = start
+        obj.escape = escape or (lambda v: v)
         obj.__dict__.update(kw)
         return obj
 
     def complete(self):
-        return self + self.get_delimiter()
+        return self.escape(self) + self.get_delimiter()
 
 
 class CompletionsList(list):
