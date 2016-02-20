@@ -94,27 +94,13 @@ def test_window_did_load():
 
         wc.docsView.setRefusesFirstResponder_(True)
         wc.docsView.default_menu = ed.menu
+        wc.docsView.registerForDraggedTypes_(
+            [const.DOC_ID_LIST_PBOARD_TYPE, ak.NSFilenamesPboardType])
         wc.plusButton.setRefusesFirstResponder_(True)
         wc.plusButton.setImage_(load_image(const.PLUS_BUTTON_IMAGE))
         wc.propsViewButton.setRefusesFirstResponder_(True)
         wc.propsViewButton.setImage_(load_image(const.PROPS_DOWN_BUTTON_IMAGE))
         wc.propsViewButton.setAlternateImage_(load_image(const.PROPS_UP_BUTTON_IMAGE))
-
-        wc.cleanImages = {
-            cells.BUTTON_STATE_HOVER: load_image(const.CLOSE_CLEAN_HOVER),
-            cells.BUTTON_STATE_NORMAL: load_image(const.CLOSE_CLEAN_NORMAL),
-            cells.BUTTON_STATE_PRESSED: load_image(const.CLOSE_CLEAN_PRESSED),
-            BUTTON_STATE_SELECTED: load_image(const.CLOSE_CLEAN_SELECTED),
-        }
-        wc.dirtyImages = {
-            cells.BUTTON_STATE_HOVER: load_image(const.CLOSE_DIRTY_HOVER),
-            cells.BUTTON_STATE_NORMAL: load_image(const.CLOSE_DIRTY_NORMAL),
-            cells.BUTTON_STATE_PRESSED: load_image(const.CLOSE_DIRTY_PRESSED),
-            BUTTON_STATE_SELECTED: load_image(const.CLOSE_DIRTY_SELECTED),
-        }
-
-        wc.docsView.registerForDraggedTypes_(
-            [const.DOC_ID_LIST_PBOARD_TYPE, ak.NSFilenamesPboardType])
 
         _setstate(state)
         if state:

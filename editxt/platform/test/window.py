@@ -21,7 +21,6 @@ import logging
 import os
 
 from editxt.editor import Editor
-from editxt.platform.views import BUTTON_STATE_NORMAL
 from editxt.util import WeakProperty
 from editxt.test.util import test_app
 

@@ -73,11 +73,6 @@ class Project(object):
             self._deserialize(serial)
         self.reset_serial_cache()
 
-    @property
-    def summary_info(self):
-        """Returns a 4-tuple: ``icon, name, is_dirty, self``"""
-        return (None, self.name, self.is_dirty, self)
-
     def serialize(self):
         data = {"expanded": self.expanded}
         if self.name != const.UNTITLED_PROJECT_NAME:

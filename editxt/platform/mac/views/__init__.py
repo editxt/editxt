@@ -18,17 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
-from .treeview import (
-    OutlineView,
-    HoverButtonCell,
-    BUTTON_STATE_HOVER,
-    BUTTON_STATE_NORMAL,
-    BUTTON_STATE_PRESSED,
-)
-
 from .commandview import CommandView
 from .listview import ListView
 from .menu import Menu, MenuItem
+from .treeview import OutlineView
 
 
 def screen_rect(view, rect=None):

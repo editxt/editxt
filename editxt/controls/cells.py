@@ -91,17 +91,6 @@ class ImageAndTextCell(ak.NSTextFieldCell):
             size.width = 0
         return size
 
-#     def imageFrameForCellFrame_(self, frame):
-#         if self._image is not None:
-#             iframe = NSMakeRect(0, 0, 0, 0)
-#             iframe.size = self._image.size()
-#             iframe.origin = frame.origin
-#             iframe.origin.x += ICON_PADDING
-#             iframe.origin.y += ceil((frame.size.height - iframe.size.height) / 2)
-#         else:
-#             iframe = NSZeroRect()
-#         return iframe
-
 
 def draw_icon(image, point, dirty):
     if dirty:

@@ -34,7 +34,6 @@ from editxt.document import TextDocument
 from editxt.editor import Editor
 from editxt.platform.kvo import KVOList
 from editxt.platform.pasteboard import Pasteboard
-from editxt.platform.views import BUTTON_STATE_HOVER, BUTTON_STATE_NORMAL, BUTTON_STATE_PRESSED
 from editxt.platform.views import Menu, MenuItem
 from editxt.platform.window import WindowController
 from editxt.project import Project
@@ -73,26 +72,12 @@ class Window(object):
         wc = self.wc
         wc.docsView.default_menu = self.menu
         wc.docsView.setRefusesFirstResponder_(True)
+        wc.docsView.registerForDraggedTypes_(self.supported_drag_types)
         wc.plusButton.setRefusesFirstResponder_(True)
         wc.plusButton.setImage_(load_image(const.PLUS_BUTTON_IMAGE))
         wc.propsViewButton.setRefusesFirstResponder_(True)
         wc.propsViewButton.setImage_(load_image(const.PROPS_DOWN_BUTTON_IMAGE))
         wc.propsViewButton.setAlternateImage_(load_image(const.PROPS_UP_BUTTON_IMAGE))
-
-        wc.cleanImages = {
-            BUTTON_STATE_HOVER: load_image(const.CLOSE_CLEAN_HOVER),
-            BUTTON_STATE_NORMAL: load_image(const.CLOSE_CLEAN_NORMAL),
-            BUTTON_STATE_PRESSED: load_image(const.CLOSE_CLEAN_PRESSED),
-            BUTTON_STATE_SELECTED: load_image(const.CLOSE_CLEAN_SELECTED),
-        }
-        wc.dirtyImages = {
-            BUTTON_STATE_HOVER: load_image(const.CLOSE_DIRTY_HOVER),
-            BUTTON_STATE_NORMAL: load_image(const.CLOSE_DIRTY_NORMAL),
-            BUTTON_STATE_PRESSED: load_image(const.CLOSE_DIRTY_PRESSED),
-            BUTTON_STATE_SELECTED: load_image(const.CLOSE_DIRTY_SELECTED),
-        }
-
-        wc.docsView.registerForDraggedTypes_(self.supported_drag_types)
 
         self._setstate(self._state)
         self._state = None
@@ -504,9 +489,6 @@ class Window(object):
         if item not in selected:
             selected = [item]
         Pasteboard().text = "\n".join(item.file_path for item in selected)
-
-    def update_dirty_status(self, dirty):
-        self.wc.update_dirty_status(dirty)
 
     def close_item(self, item):
         """Close editor or project

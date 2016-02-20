@@ -134,6 +134,7 @@ Aesthetics
   - fix bug in line number drawing: soft wrap at end of file?
 Fix line counting in TextView.goto_line (should recognize all line break chars)
 Pythonic...
+  - window.docsView -> window.tree
   - TextView
   - TreeView
 Refactor tests to not depend on py2app bundle

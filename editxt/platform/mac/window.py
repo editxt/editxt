@@ -29,7 +29,6 @@ from PyObjCTools import AppHelper
 import editxt.constants as const
 from editxt.controls.alert import Alert
 from editxt.editor import Editor
-from editxt.platform.views import BUTTON_STATE_NORMAL
 from editxt.util import untested, representedObject, short_path, WeakProperty
 
 log = logging.getLogger(__name__)
@@ -165,21 +164,6 @@ class WindowController(ak.NSWindowController):
     def outlineView_toolTipForCell_rect_tableColumn_item_mouseLocation_(
         self, view, cell, rect, col, item, mouseloc):
         return self.window_.tooltip_for_item(view, item), rect
-
-#    def hoverButton_rowClicked_(self, cell, row):
-#        self.window_.close_button_clicked(row)
-#
-#    @untested
-#    def hoverButtonCell_imageForState_row_(self, cell, state, row):
-#        from editxt.window import BUTTON_STATE_SELECTED
-#        if state is BUTTON_STATE_NORMAL and self.docsView.isRowSelected_(row):
-#            state = BUTTON_STATE_SELECTED
-#        if row >= 0 and row < self.docsView.numberOfRows():
-#            item = self.docsView.itemAtRow_(row)
-#            doc = self.docsView.realItemForOpaqueItem_(item)
-#            if doc is not None and doc.is_dirty:
-#                return self.dirtyImages[state]
-#        return self.cleanImages[state]
 
     def setup_current_editor(self, editor):
         """Setup the current editor in the window
@@ -395,9 +379,11 @@ class SheetCaller(fn.NSObject):
         self.callback(sheet, code)
 
 
-class EditorWindow(ak.NSWindow):
-    """NSWindow subclass that provides mouseMoved events to registered subviews"""
+EditorWindow = ak.NSWindow
 
+#class EditorWindow(ak.NSWindow):
+#    """NSWindow subclass that provides mouseMoved events to registered subviews"""
+#
 #    @property
 #    def mouse_moved_responders(self):
 #        try:

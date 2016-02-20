@@ -95,9 +95,6 @@ class Editor(object):
         self.line_numbers = LineNumbers(self.document.text_storage)
         props = document.props
         self.kvolink = KVOLink([
-            (self.proxy, "icon", self.proxy, "summary_info"),
-            (self.proxy, "name", self.proxy, "summary_info"),
-            (self.proxy, "is_dirty", self.proxy, "summary_info"),
             (props, "is_dirty", self.proxy, "is_dirty"),
             (props, "indent_mode", self.proxy, "indent_mode"),
             (props, "indent_size", self.proxy, "indent_size"),
@@ -136,11 +133,6 @@ class Editor(object):
     @property
     def name(self):
         return self.document.name
-
-    @property
-    def summary_info(self):
-        """Returns a 4-tuple: ``icon, name, is_dirty, self``"""
-        return (self.icon, self.name, self.is_dirty, self)
 
     @property
     def undo_manager(self):
