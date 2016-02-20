@@ -686,6 +686,22 @@ def test_should_edit_item():
     yield test, c(can_rename=True, result=True)
 
 
+def test_copy_path():
+    pasteboard = mod.Pasteboard()
+    @gentest
+    def test(index, text, config="editor(a) editor(b)*"):
+        with test_app(config) as app:
+            window = app.windows[0]
+            item = [editor for project in window.projects
+                           for editor in project.editors][index]
+            window.copy_path(item)
+            eq_(pasteboard.text, text)
+    yield test(0, "a")
+    yield test(1, "b")
+    yield test(0, "a\nc", config="editor(a)* editor(b) editor(c)*")
+    yield test(1, "b", config="editor(a)* editor(b) editor(c)*")
+
+
 def test_close_item():
     @gentest
     def test(index=1, expected="editor(a)*", config="editor(a) editor(b)*"):

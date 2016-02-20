@@ -494,18 +494,26 @@ class Window(object):
             return isinstance(obj, Project) and obj.can_rename()
         return False
 
-    def copy_path(item):
-        """Put item path on pasteboard
+    def copy_path(self, item):
+        """Copy item path to pasteboard
 
         Put newline-delimited paths on pasteboard if there are multiple
-        items selected and item is one of them.
+        items selected and the given item is one of them.
         """
-        Pasteboard().text = item.file_path
+        selected = self.selected_items
+        if item not in selected:
+            selected = [item]
+        Pasteboard().text = "\n".join(item.file_path for item in selected)
 
     def update_dirty_status(self, dirty):
         self.wc.update_dirty_status(dirty)
 
     def close_item(self, item):
+        """Close editor or project
+
+        Close all selected items if there are multiple items selected
+        and the given item is one of them.
+        """
         def do_close():
             self.discard(item)
         selected = self.selected_items
