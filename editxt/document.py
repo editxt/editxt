@@ -127,6 +127,7 @@ class TextDocument(object):
 
     def __init__(self, app, path=None):
         self.app = app
+        self._updates_path_on_file_move = True
         self.file_path = path or const.UNTITLED_DOCUMENT_NAME
         self.persistent_path = path
         self.id = next(DocumentController.id_gen)
@@ -157,19 +158,37 @@ class TextDocument(object):
 
     @property
     def file_path(self):
-        return self._fileref.path
+        if self.updates_path_on_file_move:
+            return self._fileref.path
+        return self._fileref
     @file_path.setter
     def file_path(self, value):
-        ref = getattr(self, "_fileref", None)
-        if ref is None:
-            old_path = None
-            self._fileref = FileRef(value)
+        if self.updates_path_on_file_move:
+            ref = getattr(self, "_fileref", None)
+            if ref is None:
+                old_path = None
+                self._fileref = FileRef(value)
+            else:
+                old_path = ref.original_path
+                ref.path = value
         else:
-            old_path = ref.original_path
-            ref.path = value
+            old_path = getattr(self, "_fileref", None)
+            self._fileref = value
         self._refresh_file_mtime() # TODO should this (always) happen here?
         if self.has_real_path():
             self.app.documents.change_document_path(old_path, self)
+
+    @property
+    def updates_path_on_file_move(self):
+        return self._updates_path_on_file_move
+    @updates_path_on_file_move.setter
+    def updates_path_on_file_move(self, value):
+        path = self.file_path = self.file_path
+        if value:
+            self._fileref = FileRef(path)
+        else:
+            self._fileref = path
+        self._updates_path_on_file_move = value
 
     @property
     def file_mtime(self):

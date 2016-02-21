@@ -372,6 +372,10 @@ class Editor(object):
             self.finder.mark_occurrences("")
         self.document.highlight_selected_text = new
 
+    @document_property
+    def updates_path_on_file_move(self, new, old):
+        self.document.updates_path_on_file_move = new
+
     def change_indentation(self, old_mode, old_size, new_mode, new_size, convert_text):
         if convert_text:
             old_indent = "\t" if old_mode == const.INDENT_MODE_TAB else (" " * old_size)
@@ -397,6 +401,8 @@ class Editor(object):
             )
         else:
             state = dict(getattr(self, "_state", {}))
+        if not self.updates_path_on_file_move:
+            state["updates_path_on_file_move"] = False
         if self.document is self.app.errlog.document \
                 and not self.document.has_real_path():
             state["internal"] = "errlog"
@@ -428,6 +434,8 @@ class Editor(object):
             self.text_view.setSelectedRange_(sel)
         else:
             self._state = state
+        if "updates_path_on_file_move" in state:
+            self.proxy.updates_path_on_file_move = bool(state["updates_path_on_file_move"])
     edit_state = property(_get_edit_state, _set_edit_state)
 
     def reset_edit_state(self):

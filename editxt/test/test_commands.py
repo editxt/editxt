@@ -469,6 +469,7 @@ def test_set_variable():
         indent_mode = const.INDENT_MODE_TAB
         indent_size = 2
         soft_wrap = const.WRAP_WORD
+        updates_path_on_file_move = True
     def test(command, completions, placeholder):
         bar = CommandTester(mod.set_variable, editor=editor)
         eq_(bar.get_completions(command), (completions, None))
@@ -482,6 +483,7 @@ def test_set_variable():
             "newline_mode",
             "project_path",
             "soft_wrap",
+            "updates_path_on_file_move",
         ], "variable ..."
     yield test, "set fo", ["font"], "nt {face} {size} {smooth}".format(
         face=editor.font.face,
@@ -497,6 +499,7 @@ def test_set_variable():
     yield test, "set soft_wrap ", ["yes", "no"], "no"
     yield test, "set soft_wrap o", ["on", "off"], "..."
     yield test, "set soft_wrap x", [], ""
+    yield test, "set updates_path_on_file_move ", ["yes", "no"], "yes"
 
     def test(command, attribute, value=None):
         with test_app("editor*") as app:

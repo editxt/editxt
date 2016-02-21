@@ -417,6 +417,7 @@ def test_get_edit_state():
             dv = Editor(project, document=doc)
         m.property(dv, "soft_wrap")
         m.property(dv, "file_path")
+        doc.updates_path_on_file_move >> True
         if c.tv_is_none:
             if c.set_state:
                 dv.edit_state = state = dict(key="value")
@@ -474,8 +475,11 @@ def test_set_edit_state():
             sel = eq_state["selection"]
             dv.text_view = m.mock(ak.NSTextView)
             dv.scroll_view = m.mock(ak.NSScrollView)
-            proxy = proxy_prop.value >> m.mock(Editor)
+            proxy = m.mock(Editor)
+            (proxy_prop.value << proxy).count(1, 2)
             proxy.soft_wrap = eq_state["soft_wrap"]
+            if "updates_path_on_file_move" in state:
+                proxy.updates_path_on_file_move = state["updates_path_on_file_move"]
             dv.text_view.layoutManager() \
                 .characterIndexForPoint_inTextContainer_fractionOfDistanceBetweenInsertionPoints_(
                     ANY, ANY, ANY) >> (1, 0)
@@ -498,6 +502,7 @@ def test_set_edit_state():
     yield test, {"selection": (1, 1)}
     yield test, {"scrollpoint": (1, 1)}
     yield test, {"soft_wrap": const.WRAP_NONE}
+    yield test, {"updates_path_on_file_move": False}
     yield test, {"scrollpoint": (0, 0), "selection": (0, 0), "soft_wrap": const.WRAP_NONE}
     yield test, {"scrollpoint": (5, 5), "selection": (5, 5), "soft_wrap": const.WRAP_WORD}
     yield test, {"scrollpoint": (0, 0), "selection": (0, 0)}, 2
@@ -522,6 +527,19 @@ def test_reset_edit_state():
             assert getattr(dv, "_state", None) is None
     yield test, True
     yield test, False
+
+@test_app("editor(a) editor(b)")
+def test_updates_path_on_file_move_edit_state(app):
+    m = Mocker()
+    tapp = test_app(app)
+    edit_a = tapp.get("editor(a)")
+    edit_b = tapp.get("editor(b)")
+    assert edit_a.updates_path_on_file_move
+    edit_b.updates_path_on_file_move = False
+    assert "updates_path_on_file_move" not in edit_a.edit_state
+    eq_(edit_b.edit_state["updates_path_on_file_move"], False)
+    edit_b.updates_path_on_file_move = True
+    assert "updates_path_on_file_move" not in edit_b.edit_state
 
 # def test_pasteboard_data():
 #     def test(c):

@@ -702,6 +702,36 @@ def test_TextDocument_should_track_file_moved_after_save(app):
     eq_(doc.file_path, new_path)
 
 @test_app
+def test_TextDocument_should_not_track_moved_file_with_tracking_disabled(app):
+    tmp = test_app(app).tmp
+    path = join(tmp, "file.txt")
+    with open(path, "w", encoding="utf8") as fh:
+        fh.write("moving...")
+    doc = app.document_with_path(path)
+    doc.updates_path_on_file_move = False
+    eq_(doc.file_path, path)
+    new_path = join(tmp, "dir", "moved.txt")
+    os.mkdir(join(tmp, "dir"))
+    os.rename(path, new_path)
+    eq_(doc.file_path, path)
+
+@test_app
+def test_TextDocument_should_update_real_path_on_disable_move_tracking(app):
+    tmp = test_app(app).tmp
+    path = join(tmp, "file.txt")
+    with open(path, "w", encoding="utf8") as fh:
+        fh.write("moving...")
+    doc = app.document_with_path(path)
+    eq_(doc.file_path, path)
+    new_path = join(tmp, "dir", "moved.txt")
+    os.mkdir(join(tmp, "dir"))
+    os.rename(path, new_path)
+    eq_(doc.file_path, new_path)
+    doc.updates_path_on_file_move = False
+    doc2 = app.document_with_path(new_path)
+    assert doc is doc2, (doc, doc2)
+
+@test_app
 def test_TextDocument_comment_token(app):
     from editxt.syntax import Highlighter, SyntaxDefinition
     m = Mocker()

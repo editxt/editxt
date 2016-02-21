@@ -400,6 +400,15 @@ def set_editor_indent_vars(editor, name, args):
                 else const.WRAP_NONE)
         ),
         setter=set_editor_variable),
+    SubArgs("updates_path_on_file_move",
+        Choice(
+            ("yes", True),
+            ("no", False),
+            name="value",
+            default=lambda editor=None:
+                True if editor is None else editor.updates_path_on_file_move,
+        ),
+        setter=set_editor_variable),
 )), is_enabled=has_editor)
 def set_variable(editor, args):
     if args.variable is None:

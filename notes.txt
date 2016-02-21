@@ -80,8 +80,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Add a (persistent) way to disable move tracking on a file
-
 Fix `xt path/to/directory` (should not error)
 
 Make syntax highlighter stop for events
