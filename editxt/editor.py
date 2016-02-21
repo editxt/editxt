@@ -422,7 +422,7 @@ class Editor(object):
             point = state.get("scrollpoint", [0, 0])
             self.point = point
             sel = state.get("selection", [0, 0])
-            self.proxy.soft_wrap = state.get("soft_wrap", self.app.config["soft_wrap"])
+            self.soft_wrap = state.get("soft_wrap", self.app.config["soft_wrap"])
             # HACK text_view.scrollPoint_ does not work without this
             char_index, ignore = self.text_view.layoutManager() \
                 .characterIndexForPoint_inTextContainer_fractionOfDistanceBetweenInsertionPoints_(
@@ -448,6 +448,8 @@ class Editor(object):
         if state is not None:
             self.edit_state = state
             del self._state
+        else:
+            self.soft_wrap = self.app.config["soft_wrap"]
 
     def message(self, msg, msg_type=const.INFO):
         """Display a message in the command view"""

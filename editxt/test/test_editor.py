@@ -463,6 +463,7 @@ def test_set_edit_state():
         m = Mocker()
         editor = app.windows[0].projects[0].editors[0]
         proxy_prop = m.property(editor, "proxy")
+        soft_wrap_prop = m.property(editor, "soft_wrap")
         text_prop = m.property(editor.document, "text_storage")
         if state is None:
             eq_state = state = {"soft_wrap": const.WRAP_NONE}
@@ -477,11 +478,7 @@ def test_set_edit_state():
             sel = eq_state["selection"]
             editor.text_view = m.mock(ak.NSTextView)
             editor.scroll_view = m.mock(ak.NSScrollView)
-            proxy = m.mock(Editor)
-            (proxy_prop.value << proxy).count(1, 2)
-            proxy.soft_wrap = eq_state["soft_wrap"]
-            if "updates_path_on_file_move" in state:
-                proxy.updates_path_on_file_move = state["updates_path_on_file_move"]
+            soft_wrap_prop.value = eq_state["soft_wrap"]
             editor.text_view.layoutManager() \
                 .characterIndexForPoint_inTextContainer_fractionOfDistanceBetweenInsertionPoints_(
                     ANY, ANY, ANY) >> (1, 0)
@@ -496,6 +493,9 @@ def test_set_edit_state():
             elif sel[0] + sel[1] > ts_len:
                 sel = (sel[0], ts_len - sel[0])
             editor.text_view.setSelectedRange_(sel)
+            if "updates_path_on_file_move" in state:
+                proxy = proxy_prop.value >> m.mock(Editor)
+                proxy.updates_path_on_file_move = state["updates_path_on_file_move"]
         with m:
             editor.edit_state = state
         if not isinstance(state, dict):
@@ -513,21 +513,22 @@ def test_set_edit_state():
     yield test, {"scrollpoint": (0, 0), "selection": (0, 2)}, 2
 
 def test_reset_edit_state():
-    def test(_state_exists):
+    @test_app("editor")
+    def test(app, _state_exists):
         m = Mocker()
-        doc = m.mock(TextDocument)
-        with m.off_the_record():
-            dv = Editor(None, document=doc)
-        m.property(dv, "edit_state")
+        editor = app.windows[0].projects[0].editors[0]
+        soft_wrap_property = m.property(editor, "soft_wrap")
+        edit_state_property = m.property(editor, "edit_state")
         _state = m.mock(name="state")
         if _state_exists:
-            dv._state  = _state
-            dv.edit_state = _state
+            editor._state  = _state
+            edit_state_property.value = _state
         else:
-            assert getattr(dv, "_state", None) is None
+            assert getattr(editor, "_state", None) is None
+            soft_wrap_property.value = app.config["soft_wrap"]
         with m:
-            dv.reset_edit_state()
-            assert getattr(dv, "_state", None) is None
+            editor.reset_edit_state()
+            assert getattr(editor, "_state", None) is None
     yield test, True
     yield test, False
 
