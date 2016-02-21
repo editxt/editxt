@@ -3,7 +3,7 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
-## 2016-0?-?? - 1.9.5
+## 2016-02-21 - 1.9.5
 
 - Add wildcard path matching to `open` command.
 - Add `set comment_token` command, which changes the comment token for the
@@ -14,7 +14,7 @@ https://github.com/editxt/editxt for details of what actually happened.
   disable file move detection for globally or individually for each document.
   The default config value is `true` (move detection is enabled by default).
 - Activate window unsaved indocator when current document has unsaved changes.
-- Do not escape spaces in file auto-complete list.
+- Do not escape spaces in command bar file auto-complete list.
 - Fix tab path expansion in project view when project path has trailing slash.
 - Fix default value for skipped regex args in command bar.
 - Fix document paths with up-references resulting in unnecessary save prompt.
