@@ -23,7 +23,7 @@ import re
 import shutil
 import sys
 import time
-from os.path import join
+from os.path import isdir, join
 
 from datetime import datetime
 from setuptools import setup
@@ -64,6 +64,11 @@ else:
     dev = False
     appname = "EditXT"
 
+install = "--install" in sys.argv
+if install:
+    assert not dev, "refusing to install dev build"
+    sys.argv.remove("--install")
+
 package = ('--package' in sys.argv)
 if package:
     assert not dev, 'cannot package dev build'
@@ -92,15 +97,16 @@ print("building %s %s %s.%s" % (appname, version, revision, gitrev))
 
 thisdir = os.path.dirname(os.path.abspath(__file__))
 
+def rmtree(path):
+    if os.path.exists(path):
+        print("removing", path)
+        shutil.rmtree(path)
+
 def clean():
     # remove old build
     if "--noclean" in sys.argv:
         sys.argv.remove("--noclean")
     else:
-        def rmtree(path):
-            print("removing", path)
-            if os.path.exists(path):
-                shutil.rmtree(path)
         rmtree(join(thisdir, "build"))
         rmtree(join(thisdir, "dist", appname + ".app"))
 
@@ -370,3 +376,17 @@ setup(**setup_args)
 if package:
     zip_path = build_zip()
     prepare_sparkle_update(zip_path)
+
+if install:
+    # expects ./dist/Applications to be a symlink to
+    # Applications folder where the app is installed
+    apps_dir = join(thisdir, "dist", "Applications")
+    if isdir(apps_dir):
+        installed_app = join(apps_dir, appname + ".app")
+        rmtree(installed_app)
+        built_app = join(thisdir, "dist", appname + ".app")
+        print("mv {} -> {}".format(built_app, installed_app))
+        os.rename(built_app, installed_app)
+    else:
+        print("cannot install: {} not found".format(apps_dir))
+
