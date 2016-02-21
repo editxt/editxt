@@ -51,7 +51,28 @@
     }
   </style>
 </head>
-<body><h2>2016-01-30 - 1.9.0</h2>
+<body><h2>2016-02-21 - 1.9.5</h2>
+<ul>
+<li>Add wildcard path matching to <code>open</code> command.</li>
+<li>Add <code>set comment_token</code> command, which changes the comment token for the
+document's language (in all editors) until the program is restarted.</li>
+<li>Add moved file detection (update path when file is moved).</li>
+<li>Add config setting (<code>updates_path_on_file_move: true</code>) and command to change
+document-level setting (<code>set updates_path_on_file_move yes</code>) to enable or
+disable file move detection for globally or individually for each document.
+The default config value is <code>true</code> (move detection is enabled by default).</li>
+<li>Activate window unsaved indocator when current document has unsaved changes.</li>
+<li>Do not escape spaces in command bar file auto-complete list.</li>
+<li>Fix tab path expansion in project view when project path has trailing slash.</li>
+<li>Fix default value for skipped regex args in command bar.</li>
+<li>Fix document paths with up-references resulting in unnecessary save prompt.</li>
+<li>Fix command completions view sometimes not drawing.</li>
+<li>Fix line numbers overlap content text after find next.</li>
+<li>Fix undo in command bar.</li>
+<li>Fix command bar auto-complete for directory with space in name.</li>
+<li>Improve responsiveness while highlighting syntax in large files.</li>
+</ul>
+<h2>2016-01-30 - 1.9.0</h2>
 <ul>
 <li>Added many new syntax definitions derived from the
 <a href="https://highlightjs.org/">highlight.js</a> library. Note: the built-in theme

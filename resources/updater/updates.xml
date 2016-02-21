@@ -340,5 +340,39 @@ typed in command bar.</li>
       <pubDate>Sat, 30 Jan 2016 17:32:19 -0500</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.9.0/EditXT-v1.9.0-460a002.zip" sparkle:version="201601301732.460a002" sparkle:shortVersionString="1.9.0" sparkle:dsaSignature="MCwCFEv+aBXS8Ammt8Op5zTOEXaoJrYCAhRlqkupMDBYa7EEEiZ8KJ7O/ISE0Q==" length="9528638" type="application/octet-stream" />
     </item>
+    <item>
+      <title>Version 1.9.5</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li>Add wildcard path matching to <code>open</code> command.</li>
+<li>Add <code>set comment_token</code> command, which changes the comment token for the
+document's language (in all editors) until the program is restarted.</li>
+<li>Add moved file detection (update path when file is moved).</li>
+<li>Add config setting (<code>updates_path_on_file_move: true</code>) and command to change
+document-level setting (<code>set updates_path_on_file_move yes</code>) to enable or
+disable file move detection for globally or individually for each document.
+The default config value is <code>true</code> (move detection is enabled by default).</li>
+<li>Activate window unsaved indocator when current document has unsaved changes.</li>
+<li>Do not escape spaces in command bar file auto-complete list.</li>
+<li>Fix tab path expansion in project view when project path has trailing slash.</li>
+<li>Fix default value for skipped regex args in command bar.</li>
+<li>Fix document paths with up-references resulting in unnecessary save prompt.</li>
+<li>Fix command completions view sometimes not drawing.</li>
+<li>Fix line numbers overlap content text after find next.</li>
+<li>Fix undo in command bar.</li>
+<li>Fix command bar auto-complete for directory with space in name.</li>
+<li>Improve responsiveness while highlighting syntax in large files.</li>
+</ul>
+
+        ]]>
+      </description>
+      <sparkle:releaseNotesLink>
+        http://htmlpreview.github.io/?https://raw.github.com/editxt/editxt/blob/master/resources/updater/updates.html
+      </sparkle:releaseNotesLink>
+      <pubDate>Sun, 21 Feb 2016 15:47:44 -0500</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.9.5/EditXT-v1.9.5-c9b6c40.zip" sparkle:version="201602211547.c9b6c40" sparkle:shortVersionString="1.9.5" sparkle:dsaSignature="MCwCFEzAIE2Hgo++hYNcy4N6TCTBF5gVAhQHuQcBtoFfP2WyTS+gEJRxA3bpTw==" length="9534059" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
