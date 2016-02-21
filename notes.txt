@@ -80,22 +80,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-Fix `xt ~/Dropbox\ (Dimagi)/scratch.md`TAB -> error
-Add a (persistent) way to disable move tracking on a file
-
-Try to open original file after a file has automatically moved:
-ERROR editxt - Python exception discarded
-Traceback (most recent call last):
-  File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/platform/mac/window.py", line 388, in sheetDidEnd_returnCode_contextInfo_
-  File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/platform/mac/window.py", line 248, in callback
-  File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/window.py", line 672, in open_paths
-  File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/window.py", line 735, in insert_items
-  File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/project.py", line 223, in insert_items
-  File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/editor.py", line 95, in __init__
-  File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/linenumbers.py", line 32, in __init__
-AttributeError: 'NoneType' object has no attribute 'on_edit'
-
-
 Multi-select in file tree
 x  - add icon badge (or glowing red shadow) to unsaved documents
 x  - activate unsaved document indocator on window close button
@@ -117,6 +101,7 @@ Show directory path in tree if name matches another document
 Fix icon in tree on new document with known extension
 Always open document after current document
 Fix bug in window title after save new document
+Fix `xt path/to/directory` (should not error)
 Aesthetics
   - syntax highlighting
     - better language detection (file extension, shebang line, etc.)
