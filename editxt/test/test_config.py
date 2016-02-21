@@ -160,6 +160,8 @@ def test_Config_schema():
         "soft_wrap", const.WRAP_NONE, \
         {"error": ["soft_wrap: expected one of (none|word), got 'xyz'"]}
 
+    yield test, {}, "updates_path_on_file_move", True
+
     yield test, {}, "diff_program", "opendiff"
     yield test, {"diff_program": "gdiff -u"}, "diff_program", "gdiff -u"
 

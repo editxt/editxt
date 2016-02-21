@@ -127,7 +127,7 @@ class TextDocument(object):
 
     def __init__(self, app, path=None):
         self.app = app
-        self._updates_path_on_file_move = True
+        self._updates_path_on_file_move = app.config["updates_path_on_file_move"]
         self.file_path = path or const.UNTITLED_DOCUMENT_NAME
         self.persistent_path = path
         self.id = next(DocumentController.id_gen)

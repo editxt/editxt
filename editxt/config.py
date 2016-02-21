@@ -103,6 +103,7 @@ def config_schema(): return {
         const.WRAP_NONE,
         const.WRAP_WORD,
         default=const.WRAP_NONE),
+    "updates_path_on_file_move": Boolean(default=True),
     "command": {
         # namespace for values added by @command decorated functions
     },

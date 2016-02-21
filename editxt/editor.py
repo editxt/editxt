@@ -401,7 +401,8 @@ class Editor(object):
             )
         else:
             state = dict(getattr(self, "_state", {}))
-        if not self.updates_path_on_file_move:
+        upfm_default = bool(self.app.config["updates_path_on_file_move"])
+        if bool(self.updates_path_on_file_move) != upfm_default:
             state["updates_path_on_file_move"] = False
         if self.document is self.app.errlog.document \
                 and not self.document.has_real_path():
