@@ -292,10 +292,7 @@ class Application(object):
         if window is not None:
             editor = window.current_editor
             if editor is not None:
-                # TODO implement this
-                def do_close():
-                    editor.close()
-                editor.interactive_close(do_close)
+                window.close_item(editor)
 
     def document_closed(self, document):
         """Remove document from the list of open documents"""

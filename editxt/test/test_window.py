@@ -703,32 +703,6 @@ def test_close_item():
     yield test(2, config="editor(a)* editor(b) editor(c)*", expected="editor(b)*")
     yield test(config="editor(a)* editor(b) editor(c)*", expected="editor(a)* editor(c)*")
 
-
-def test_close_button_clicked():
-    @test_app
-    def test(app, row, num_rows, doc_class=None):
-        m = Mocker()
-        ed = Window(app)
-        ed.wc = m.mock(WindowController)
-        ed.recent = m.mock()
-        dv = ed.wc.docsView >> m.mock(ak.NSOutlineView)
-        dv.numberOfRows() >> num_rows
-        discard = m.method(ed.discard)
-        if row < num_rows:
-            item = m.mock()
-            dv.itemAtRow_(row) >> item
-            real_item = dv.realItemForOpaqueItem_(item) >> m.mock(doc_class)
-            discard(real_item)
-            def callback(do_close):
-                do_close()
-            expect(real_item.interactive_close(ANY)).call(callback)
-        with m:
-            ed.close_button_clicked(row)
-    yield test, 0, 0
-    yield test, 1, 0
-    for doc_class in (Project, Editor):
-        yield test, 0, 1, doc_class
-
 def test_window_did_become_key():
     @test_app
     def test(app, c):

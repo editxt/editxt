@@ -484,16 +484,13 @@ def test_Application_close_current_document():
     def test(c):
         app = Application()
         m = Mocker()
-        ed = m.mock(Window) if c.has_window else None
-        m.method(app.current_window)() >> ed
+        window = m.mock(Window) if c.has_window else None
+        m.method(app.current_window)() >> window
         if c.has_window:
             editor = m.mock(Editor) if c.has_editor else None
-            ed.current_editor >> editor
+            window.current_editor >> editor
             if c.has_editor:
-                editor.close()
-                def callback(do_close):
-                    do_close()
-                expect(editor.interactive_close(ANY)).call(callback)
+                window.close_item(editor)
         with m:
             app.close_current_document()
     c = TestConfig(has_window=True, has_editor=True)

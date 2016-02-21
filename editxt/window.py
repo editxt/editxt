@@ -504,15 +504,6 @@ class Window(object):
         for item in selected:
             item.interactive_close(do_close)
 
-    def close_button_clicked(self, row):
-        docs_view = self.wc.docsView
-        if row < docs_view.numberOfRows():
-            def do_close():
-                self.discard(item)
-            item = docs_view.itemAtRow_(row)
-            item = docs_view.realItemForOpaqueItem_(item)
-            item.interactive_close(do_close)
-
     def window_did_become_key(self, window):
         editor = self.current_editor
         if isinstance(editor, Editor):
