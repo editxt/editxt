@@ -477,7 +477,8 @@ def test_set_edit_state():
             sel = eq_state["selection"]
             editor.text_view = m.mock(ak.NSTextView)
             editor.scroll_view = m.mock(ak.NSScrollView)
-            proxy = proxy_prop.value >> m.mock(Editor)
+            proxy = m.mock(Editor)
+            (proxy_prop.value << proxy).count(1, 2)
             proxy.soft_wrap = eq_state["soft_wrap"]
             if "updates_path_on_file_move" in state:
                 proxy.updates_path_on_file_move = state["updates_path_on_file_move"]
