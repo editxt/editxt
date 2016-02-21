@@ -91,6 +91,14 @@ class DocumentController(object):
         try:
             document = self.documents[key]
         except KeyError:
+            document = None
+        else:
+            if document.has_real_path() and exists(path) and \
+                    not samefile(path, document.file_path):
+                # file that previously had this path has moved
+                self.change_document_path(path, document)
+                document = None
+        if document is None:
             document = TextDocument(self.app, path)
             if document.has_real_path():
                 self.documents[realpath(document.file_path)] = document

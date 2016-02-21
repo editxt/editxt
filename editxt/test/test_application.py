@@ -19,7 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
-from os.path import join, realpath
+from os.path import join, realpath, samefile
 
 from tempfile import gettempdir
 import AppKit as ak
@@ -235,13 +235,16 @@ def test_document_with_path():
             try:
                 assert isinstance(doc, TextDocument)
                 if os.path.exists(path):
-                    assert os.path.samefile(path, doc.file_path)
+                    assert samefile(path, doc.file_path), (path, doc.file_path)
                     eq_(expected_path, doc.file_path)
                 else:
                     eq_(expected_path, doc.file_path)
                 eq_(doc.app, app)
             finally:
                 doc.close()
+                finalize = getattr(setup, "finalize", None)
+                if finalize is not None:
+                    finalize(tmp, app, docs)
             eq_(len(docs), 0)
 
     def plain_file(tmp, app, docs):
@@ -297,6 +300,23 @@ def test_document_with_path():
         os.symlink(dir_, sym_)
         return path, plain
 
+    def open_after_move_original(tmp, app, docs):
+        plain = plain_file(tmp, app, docs)
+        doc = app.document_with_path(plain)
+        newpath = join(tmp, "moved.txt")
+        os.rename(plain, newpath)
+        return plain_file(tmp, app, docs)
+    def finalize(tmp, app, docs):
+        try:
+            docs = list(docs)
+            eq_(len(docs), 1, docs)
+            path = join(tmp, "moved.txt")
+            assert samefile(docs[0].file_path, path), (docs[0].file_path, path)
+        finally:
+            for doc in docs:
+                doc.close()
+    open_after_move_original.finalize = finalize
+
     yield test, plain_file
     yield test, symlink
     yield test, broken_symlink
@@ -305,6 +325,7 @@ def test_document_with_path():
     yield test, nonexistent_path
     yield test, upref_path
     yield test, upref_path_with_symlink
+    yield test, open_after_move_original
 
 def test_open_documents_with_paths():
     import editxt.document as edoc
