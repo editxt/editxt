@@ -379,9 +379,8 @@ class SheetCaller(fn.NSObject):
         self.callback(sheet, code)
 
 
-EditorWindow = ak.NSWindow
-
-#class EditorWindow(ak.NSWindow):
+class EditorWindow(ak.NSWindow):
+    pass
 #    """NSWindow subclass that provides mouseMoved events to registered subviews"""
 #
 #    @property
