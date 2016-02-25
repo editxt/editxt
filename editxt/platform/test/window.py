@@ -49,6 +49,12 @@ class WindowController(object):
         self.selected_items = [editor]
         return isinstance(editor, Editor)
 
+    def is_current_view(self, editor_main_view):
+        if editor_main_view is None:
+            return False
+        return self.selected_items and \
+            self.selected_items[0].main_view is editor_main_view
+
     def undo_manager(self):
         return self.window_.undo_manager()
 

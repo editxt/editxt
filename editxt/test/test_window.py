@@ -282,7 +282,8 @@ def test_discard():
 def test_get_current_editor():
     with test_app() as app:
         ed = Window(app)
-        ed._current_editor = obj = object()
+        obj = object()
+        ed._current_editor = obj
         eq_(ed.current_editor, obj)
 
 def test_set_current_editor():
@@ -290,29 +291,34 @@ def test_set_current_editor():
     @test_app
     def test(app, c):
         m = Mocker()
-        ed = Window(app)
-        wc = ed.wc = m.mock(WindowController)
-        insert_items = m.method(ed.insert_items)
-        ed.recent = m.mock(RecentItemStack)
-        find_project_with_editor = m.method(ed.find_project_with_editor)
-        dv = (None if c.editor_class is None else m.mock(c.editor_class))
-        if c.editor_is_current:
-            ed._current_editor = dv
-            dv.focus()
-            wc.selected_items = [dv]
-        elif c.editor_class is not None:
-            ed.recent.push(dv.id >> m.mock())
-            setup = c.editor_class is Editor and not c.view_is_main
-            wc.setup_current_editor(dv) >> setup
-            if setup:
-                if c.proj_is_none:
-                    find_project_with_editor(dv) >> None
-                    insert_items([dv])
-                else:
-                    find_project_with_editor(dv) >> m.mock(Project)
+        window = Window(app)
+        wc = window.wc = m.mock(WindowController)
+        insert_items = m.method(window.insert_items)
+        window.recent = m.mock(RecentItemStack)
+        find_project_with_editor = m.method(window.find_project_with_editor)
+        editor = (None if c.editor_class is None else m.mock(c.editor_class))
+        if c.editor_class is None:
+            assert editor is None, editor
+            wc.setup_current_editor(None)
+            wc.selected_items = []
+        else:
+            wc.is_current_view(editor.main_view >> "view") >> c.editor_is_current
+            if c.editor_is_current:
+                editor.focus()
+            else:
+                window.recent.push(editor.id >> m.mock())
+                setup = c.editor_class is Editor and not c.view_is_main
+                wc.setup_current_editor(editor) >> setup
+                if setup:
+                    if c.proj_is_none:
+                        find_project_with_editor(editor) >> None
+                        insert_items([editor])
+                    else:
+                        find_project_with_editor(editor) >> m.mock(Project)
+            wc.selected_items >> []
+            wc.selected_items = [editor]
         with m:
-            ed.current_editor = dv
-        assert ed._current_editor is dv
+            window.current_editor = editor
     c = TestConfig(editor_is_current=False, editor_class=Editor)
     yield test, c(editor_is_current=True)
     yield test, c(editor_class=None)

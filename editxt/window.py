@@ -275,19 +275,22 @@ class Window(object):
         return self._current_editor
     @current_editor.setter
     def current_editor(self, editor):
-        self._recent_history = None
-        if editor is self._current_editor:
-            if editor is not None:
-                editor.focus()
-                self.selected_items = [editor]
-            return
         self._current_editor = editor
-        if editor is not None:
+        self._recent_history = None
+        if editor is None:
+            self.wc.setup_current_editor(None)
+            self.selected_items = []
+            return
+        if self.wc.is_current_view(editor.main_view):
+            editor.focus()
+        else:
             self.recent.push(editor.id)
-        if self.wc.setup_current_editor(editor):
-            if isinstance(editor, Editor) \
-                    and self.find_project_with_editor(editor) is None:
-                self.insert_items([editor])
+            if self.wc.setup_current_editor(editor):
+                if isinstance(editor, Editor) \
+                        and self.find_project_with_editor(editor) is None:
+                    self.insert_items([editor])
+        if not self.selected_items or editor is not self.selected_items[0]:
+            self.selected_items = [editor]
 
     @property
     def selected_items(self):

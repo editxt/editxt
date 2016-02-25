@@ -185,6 +185,11 @@ class WindowController(ak.NSWindowController):
             subview.removeFromSuperview()
         return False
 
+    def is_current_view(self, editor_main_view):
+        if editor_main_view is None:
+            return False
+        return editor_main_view.isDescendantOf_(self.mainView)
+
     @property
     def selected_items(self):
         return self.docsController.selected_objects
