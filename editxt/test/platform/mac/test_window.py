@@ -26,6 +26,7 @@ from mocker import Mocker, expect, ANY, MATCH
 from nose.tools import eq_
 
 from editxt.application import Application
+from editxt.platform.mac.cells import ImageAndTextCell
 from editxt.platform.mac.window import EditorWindow, WindowController
 from editxt.project import Project
 from editxt.util import representedObject
@@ -130,7 +131,6 @@ def test_outlineView_shouldSelectItem_():
         ewc.outlineView_shouldSelectItem_(ov, None)
 
 def test_outlineView_willDisplayCell_forTableColumn_item_():
-    from editxt.controls.cells import ImageAndTextCell
     ewc = WindowController(None)
     m = Mocker()
     view = m.mock(ak.NSOutlineView)

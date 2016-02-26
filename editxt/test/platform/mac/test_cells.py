@@ -26,7 +26,7 @@ from mocker import Mocker, ANY
 from nose.tools import eq_
 from editxt.test.util import TestConfig
 
-import editxt.controls.cells as mod
+import editxt.platform.mac.cells as mod
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ImageAndTextCell tests
