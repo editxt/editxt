@@ -54,10 +54,10 @@ def init(use_pdb):
 
 def run(app, argv, unexpected_error_callback, use_pdb):
     # initialize class definitions (referenced in nib?)
-    import editxt.controls.linenumberview
     import editxt.controls.splitview
     import editxt.controls.textview
     import editxt.platform.mac.cells
+    import editxt.platform.mac.views.linenumberview
 
     register_value_transformers()
     AppDelegate.app = app # HACK global. Would prefer to set an instance variable
