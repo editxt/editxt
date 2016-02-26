@@ -23,7 +23,7 @@ import AppKit as ak
 import Foundation as fn
 from objc import super
 
-from editxt.controls.overlaywindow import OverlayWindow
+from editxt.platform.mac.overlaywindow import OverlayWindow
 
 log = logging.getLogger(__name__)
 
