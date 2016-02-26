@@ -34,6 +34,7 @@ from editxt.controls.textview import TextView
 from editxt.command.base import CommandController
 from editxt.command.base import SheetController, PanelController
 from editxt.command.parser import ArgumentError, CommandParser, Int, Options
+from editxt.platform.alert import Caller
 from editxt.textcommand import CommandHistory
 from editxt.util import KVOProxy
 
@@ -192,7 +193,6 @@ def test_CommandController_save_options():
 
 @setup(SheetController)
 def test_SheetController_begin_sheet():
-    from editxt.controls.alert import Caller
     class FakeEditor(object): pass
     with test_app() as app:
         m = Mocker()

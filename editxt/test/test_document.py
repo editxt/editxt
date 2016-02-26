@@ -34,6 +34,7 @@ from editxt.constants import TEXT_DOCUMENT
 from editxt.application import Application, DocumentController
 from editxt.document import TextDocument
 from editxt.editor import Editor
+from editxt.platform.alert import Alert
 from editxt.util import filestat
 from editxt.window import Window, WindowController
 
@@ -283,7 +284,6 @@ def test_TextDocument_file_changed_since_save():
     yield test(None, create=False)
 
 def test_check_for_external_changes():
-    from editxt.controls.alert import Alert
     @test_app
     def test(app, c):
         def filestat(path):

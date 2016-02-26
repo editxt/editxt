@@ -25,7 +25,7 @@ from nose.tools import eq_
 import AppKit as ak
 import Foundation as fn
 
-from editxt.controls.alert import Alert, Caller
+from editxt.platform.mac.alert import Alert, Caller
 
 log = logging.getLogger(__name__)
 

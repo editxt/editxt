@@ -27,8 +27,8 @@ from objc import super
 
 from editxt.command.parser import CommandParser, Options
 from editxt.command.util import make_command_predicate
-from editxt.controls.alert import Caller
 from editxt.datatypes import WeakProperty
+from editxt.platform.alert import Caller
 from editxt.platform.kvo import KVOProxy
 
 log = logging.getLogger(__name__)

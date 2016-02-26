@@ -28,7 +28,7 @@ from editxt.constants import LARGE_NUMBER_FOR_TEXT
 from editxt.controls.linenumberview import LineNumberView
 from editxt.controls.statscrollview import StatusbarScrollView
 from editxt.controls.textview import TextView
-from editxt.platform.mac.views import CommandView, DualView, SHOULD_RESIZE
+from .views import CommandView, DualView, SHOULD_RESIZE
 
 
 def setup_main_view(editor, frame):

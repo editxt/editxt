@@ -27,9 +27,10 @@ from objc import super
 from PyObjCTools import AppHelper
 
 import editxt.constants as const
-from editxt.controls.alert import Alert
 from editxt.editor import Editor
 from editxt.util import untested, representedObject, short_path, WeakProperty
+
+from .alert import Alert
 
 log = logging.getLogger(__name__)
 

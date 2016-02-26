@@ -31,7 +31,7 @@ import editxt.constants as const
 import editxt.platform.constants as platform_const
 
 from editxt.command.util import calculate_indent_mode_and_size
-from editxt.controls.alert import Alert
+from editxt.platform.alert import Alert
 from editxt.platform.events import call_later, debounce
 from editxt.platform.fileref import FileRef
 from editxt.platform.kvo import KVOLink, KVOProxy
