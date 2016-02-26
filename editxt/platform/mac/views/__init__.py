@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # EditXT
-# Copyright 2007-2013 Daniel Miller <millerdev@gmail.com>
+# Copyright 2007-2016 Daniel Miller <millerdev@gmail.com>
 #
 # This file is part of EditXT, a programmer's text editor for Mac OS X,
 # which can be found at http://editxt.org/.
@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
 from .commandview import CommandView
+from .dualview import DualView, SHOULD_RESIZE
 from .listview import ListView
 from .menu import Menu, MenuItem
 from .treeview import OutlineView

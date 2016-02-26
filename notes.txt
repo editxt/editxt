@@ -93,6 +93,9 @@ x  - fix select multiple before loading text views, then click Soft Wrap -> erro
 x  - fix Soft Wrap checkbox is wrong after incrementally selecting multiple
   - concatenate views on select multiple
     - allow find/replace across multiple files
+  - diff selected files (if there are two)
+  - grab lines from all selected files
+  - change indentation in selected files
 Show directory path in tree if name matches another document
   tree idea:
   - project

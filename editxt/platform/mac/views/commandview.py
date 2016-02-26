@@ -26,7 +26,7 @@ from objc import pyobjc_unicode, super
 
 from editxt.command.parser import CompletionsList
 from editxt.constants import ERROR, HTML, INFO, LARGE_NUMBER_FOR_TEXT
-from editxt.controls.dualview import DualView, SHOULD_RESIZE
+from editxt.platform.mac.views.dualview import DualView, SHOULD_RESIZE
 from editxt.platform.mac.views.util import font_smoothing
 from editxt.platform.kvo import KVOList, KVOProxy
 from editxt.util import load_image
