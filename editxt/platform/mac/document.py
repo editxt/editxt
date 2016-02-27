@@ -25,9 +25,9 @@ import Foundation as fn
 from objc import super
 
 from editxt.constants import LARGE_NUMBER_FOR_TEXT
-from editxt.controls.statscrollview import StatusbarScrollView
 from editxt.controls.textview import TextView
 from .views import CommandView, DualView, LineNumberView, SHOULD_RESIZE
+from .views.statscrollview import StatusbarScrollView
 
 
 def setup_main_view(editor, frame):
