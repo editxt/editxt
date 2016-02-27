@@ -488,7 +488,6 @@ def test_new_project():
             eq_(result.window, ed)
 
 def test_toggle_properties_pane():
-    from editxt.controls.splitview import ThinSplitView
     slow_skip()
     @test_app
     def test(app, c):
@@ -803,7 +802,6 @@ def test_set_window_settings_with_null_settings():
             ed.window_settings = settings
 
 def test_set_window_settings():
-    from editxt.controls.splitview import ThinSplitView
     with test_app() as app:
         m = Mocker()
         ed = Window(app)

@@ -27,7 +27,7 @@ from nose.tools import *
 from editxt.test.util import TestConfig, untested
 
 import editxt.constants as const
-import editxt.controls.splitview as mod
+import editxt.platform.mac.views.splitview as mod
 
 log = logging.getLogger(__name__)
 
