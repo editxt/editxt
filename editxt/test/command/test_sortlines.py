@@ -35,7 +35,7 @@ import editxt.command.sortlines as mod
 import editxt.constants as const
 from editxt.command.sortlines import SortLinesController, SortOptions, sortlines
 from editxt.command.parser import RegexPattern
-from editxt.controls.textview import TextView
+from editxt.platform.views import TextView
 from editxt.test.test_commands import CommandTester
 
 log = logging.getLogger(__name__)

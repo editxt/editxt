@@ -29,7 +29,7 @@ from editxt.test.util import (assert_raises, eq_, TestConfig, replattr,
     tempdir, test_app)
 
 import editxt.command.diff as mod
-from editxt.controls.textview import TextView
+from editxt.platform.views import TextView
 
 log = logging.getLogger(__name__)
 

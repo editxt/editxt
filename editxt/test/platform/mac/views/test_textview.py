@@ -27,9 +27,9 @@ from nose.tools import *
 from editxt.test.util import TestConfig, untested
 
 import editxt.constants as const
-import editxt.controls.textview as mod
-from editxt.controls.textview import TextView
+import editxt.platform.mac.views.textview as mod
 from editxt.editor import Editor
+from editxt.platform.mac.views import TextView
 
 log = logging.getLogger(__name__)
 

@@ -28,7 +28,7 @@ from editxt.test.util import TestConfig, untested
 
 import editxt.constants as const
 import editxt.platform.mac.views.linenumberview as mod
-from editxt.controls.textview import TextView
+from editxt.platform.views import TextView
 
 log = logging.getLogger(__name__)
 

@@ -31,9 +31,9 @@ from editxt.test.util import TestConfig, untested, check_app_state, test_app
 import editxt.command.base as base
 import editxt.command.wraplines as mod
 import editxt.constants as const
-from editxt.controls.textview import TextView
 from editxt.command.wraplines import (WrapLinesController,
     wrap_selected_lines, wraplines)
+from editxt.platform.views import TextView
 
 log = logging.getLogger(__name__)
 

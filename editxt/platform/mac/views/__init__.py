@@ -23,6 +23,7 @@ from .dualview import DualView, SHOULD_RESIZE
 from .linenumberview import LineNumberView
 from .listview import ListView
 from .menu import Menu, MenuItem
+from .textview import TextView
 from .treeview import OutlineView
 
 

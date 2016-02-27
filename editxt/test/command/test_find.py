@@ -36,8 +36,8 @@ from editxt.command.find import (Finder, FindController, FindOptions,
     make_found_range_factory)
 from editxt.command.find import FORWARD, BACKWARD
 from editxt.command.parser import RegexPattern
-from editxt.controls.textview import TextView
 from editxt.editor import Editor
+from editxt.platform.views import TextView
 
 log = logging.getLogger(__name__)
 

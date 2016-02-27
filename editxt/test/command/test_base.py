@@ -30,11 +30,11 @@ from editxt.test.util import (TestConfig, untested, check_app_state, replattr,
 
 import editxt.command.base as mod
 from editxt.application import Application
-from editxt.controls.textview import TextView
 from editxt.command.base import CommandController
 from editxt.command.base import SheetController, PanelController
 from editxt.command.parser import ArgumentError, CommandParser, Int, Options
 from editxt.platform.alert import Caller
+from editxt.platform.views import TextView
 from editxt.textcommand import CommandHistory
 from editxt.util import KVOProxy
 
