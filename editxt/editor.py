@@ -555,6 +555,8 @@ class Editor(object):
 
     @debounce
     def highlight_selection(self, text, range):
+        if self.project is None:
+            return
         ftext = text[range]
         if len(ftext.strip()) < 3 or " " in ftext:
             ftext = ""

@@ -693,3 +693,12 @@ def test_Editor_on_do_command():
         cmd.dismiss()
         return True
     yield test, const.ESCAPE, setup_mocks
+
+@test_app("editor(a)")
+def test_Editor_highlight_selection_after_close(app):
+    m = Mocker()
+    editor = test_app(app).get("editor(a)")
+    editor.document.text = "abcdef"
+    text = editor.line_numbers.text
+    editor.close()
+    editor.highlight_selection(text, (0, 3))  # should not raise

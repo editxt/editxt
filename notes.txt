@@ -80,30 +80,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-After close multiple windows
-  ERROR editxt - Python exception discarded
-  Traceback (most recent call last):
-    File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/platform/mac/events.py", line 57, in do
-    File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/document.py", line 574, in color_text
-    File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/syntax.py", line 160, in color_text
-  AttributeError: 'NoneType' object has no attribute 'editedMask'
-
-  ERROR editxt - Python exception discarded
-  Traceback (most recent call last):
-    File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/editor.py", line 510, in finder
-  AttributeError: 'Editor' object has no attribute '_finder'
-
-  During handling of the above exception, another exception occurred:
-
-  Traceback (most recent call last):
-    File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/platform/mac/events.py", line 57, in do
-    File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/editor.py", line 561, in highlight_selection
-    File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/editor.py", line 515, in finder
-    File "/Users/dmiller/Applications/EditXT.app/Contents/Resources/lib/python3.5/editxt/editor.py", line 116, in app
-  AttributeError: 'NoneType' object has no attribute 'window'
-
-
-
 Multi-select in file tree
 x  - add icon badge (or glowing red shadow) to unsaved documents
 x  - activate unsaved document indocator on window close button

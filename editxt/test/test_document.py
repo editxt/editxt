@@ -754,6 +754,17 @@ def test_TextDocument_on_text_edit(app):
     with m:
         doc.on_text_edit(range)
 
+@test_app
+def test_TextDocument_color_text_with_null_text_storage(app):
+    m = Mocker()
+    doc = TextDocument(app)
+    with m.off_the_record():
+        doc.text_storage = None
+    syn = doc.syntaxer = m.mock()
+    range = (0, 20)
+    with m:
+        doc.color_text(range)
+
 def test_TextDocument_close():
     with test_app() as app:
         doc = TextDocument(app)

@@ -571,8 +571,9 @@ class TextDocument(object):
 
     @debounce(0.05, _coalesce_edit_ranges)
     def color_text(self, rng):
-        self.syntaxer.color_text(self.text_storage, rng, timeout=0.05)
-        self._edit_range = None
+        if self.text_storage is not None:
+            self.syntaxer.color_text(self.text_storage, rng, timeout=0.05)
+            self._edit_range = None
 
     def __repr__(self):
         return "<%s 0x%x %s>" % (type(self).__name__, id(self), self.name)
