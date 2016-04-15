@@ -63,6 +63,7 @@ def log_objc_exception(exception):
 
 
 def get_objc_traceback(exception, cache={}):
+    return None # atos not working on 10.11; didn't troubleshoot
     if cache.get("n/a"):
         return None
     if cache:
