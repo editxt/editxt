@@ -20,13 +20,13 @@
 import logging
 import os
 import shlex
-from os.path import basename, exists, join
+from os.path import basename, exists, join, splitext
 from subprocess import check_call
 from tempfile import gettempdir
 
 from mocker import Mocker, expect, ANY, MATCH
-from editxt.test.util import (assert_raises, eq_, TestConfig, replattr,
-    tempdir, test_app)
+from editxt.test.util import (assert_raises, eq_, make_dirty, TestConfig,
+    Regex, replattr, tempdir, test_app)
 
 import editxt.command.diff as mod
 from editxt.platform.views import TextView
@@ -39,36 +39,57 @@ def test_diff_title():
 
 
 def test_diff():
-    def test(original):
+    def test(original, config="editor"):
         diffed = []
-        def diff_stub(filepath, text, name, diff_program):
-            eq_(filepath, path)
-            eq_(text, "def")
-            eq_(name, "file.txt")
+        text_name = "file.txt"
+        rm = []
+        def diff_stub(path1, path2, diff_program, remove=None):
+            for path in remove:
+                os.remove(path)
+            eq_(path1, path_1)
+            eq_(path2, path_2)
             eq_(diff_program, "opendiff")
             diffed.append(1)
-        with tempdir() as tmp, test_app("editor") as app, \
+        with tempdir() as tmp, test_app(config) as app, \
                 replattr(mod, "external_diff", diff_stub):
-            editor = app.windows[0].projects[0].editors[0]
-            path = editor.file_path = join(tmp, "file.txt")
-            with open(path, mode="w", encoding="utf8") as fh:
-                fh.write("abc")
-            if original:
-                args = None
-            else:
-                path = join(tmp, "other.txt")
+            window = app.windows[0]
+            editor = text_editor = window.projects[0].editors[0]
+            if config == "editor":
+                path = editor.file_path = join(tmp, "file.txt")
                 with open(path, mode="w", encoding="utf8") as fh:
-                    fh.write("other")
-                assert " " not in path, path
-                args = mod.diff.arg_parser.parse(path)
+                    fh.write("abc")
             m = Mocker()
             text_view = editor.text_view = m.mock(TextView)
-            text_view.string() >> "def"
+            path_1 = editor.file_path
+            if original:
+                make_dirty(editor.document)
+                name_ext = splitext(test_app(app).name(editor))
+                path_2 = Regex(r"/file-.*\.txt$")
+                args = None
+                text_view.string() >> "def"
+            elif len(window.selected_items) == 2:
+                editor2 = window.selected_items[1]
+                editor2.text_view = m.mock(TextView)
+                name_ext = splitext(test_app(app).name(editor)[7:-1])
+                path_1 = Regex(r"/{}-.*{}$".format(*name_ext))
+                name_ext = splitext(test_app(app).name(editor2)[7:-1])
+                path_2 = Regex(r"/{}-.*{}$".format(*name_ext))
+                args = None
+                text_view.string() >> "def"
+                editor2.text_view.string() >> "ghi"
+            else:
+                path_1 = join(tmp, "other.txt")
+                path_2 = editor.file_path
+                with open(path_1, mode="w", encoding="utf8") as fh:
+                    fh.write("other")
+                assert " " not in path_1, path_1
+                args = mod.diff.arg_parser.parse(path_1)
             with m:
                 mod.diff(editor, args)
                 assert diffed
     yield test, True
     yield test, False
+    yield test, False, "editor(doc_a.txt)* editor(doc_b.txt)*"
 
 def test_diff_missing_file():
     def test(msg, has_path=False):
@@ -92,25 +113,15 @@ def test_external_diff():
     def popen(command, **kw):
         popen_called.append(True)
         print(command)
-        file2 = None
-        try:
-            eq_(sum(1 for c in command if c == ";"), 1, command)
-            args = shlex.split(command.split(";")[0])
-            print(args)
-            eq_(args[:2], [":", "-d"])
-            file1 = args[2]
-            file2 = args[3]
-            assert basename(file2).startswith("file-"), file2
-            assert basename(file2).endswith(".txt"), file2
-            assert exists(file2), file2
-            check_call(command, **kw)
-            assert not exists(file2), "test file not removed: {}".format(file2)
-        finally:
-            if file2 is not None and exists(file2):
-                os.remove(file2)
+        eq_(sum(1 for c in command if c == ";"), 1, command)
+        args = shlex.split(command.split(";")[0])
+        print(args)
+        eq_(args, ["true", "--arg", path, path])
+        check_call(command, **kw)
+        assert not exists(path), "test file not removed: {}".format(path)
     with tempdir() as tmp, replattr(mod, "Popen", popen):
         path = join(tmp, "file.txt")
         with open(path, mode="w") as fh:
             fh.write("abc")
-        mod.external_diff(path, "def", "file.txt", ": -d")
+        mod.external_diff(path, path, "true --arg", [path])
         assert popen_called, "diff command was not executed"
