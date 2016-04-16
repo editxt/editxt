@@ -40,7 +40,11 @@ def default_range(editor=None):
     VarArgs("options", String("options")),
 ), title="Run Python code")
 def python(editor, args):
-    """Run the contents of the editor or selection in Python"""
+    """Run the contents of the editor or selection in Python
+
+    executable may be a python interpreter executable or a directory
+    such as a virtualenv containing `bin/python`.
+    """
     if args is None:
         from editxt.commands import show_command_bar
         show_command_bar(editor, "python ")
@@ -52,6 +56,10 @@ def python(editor, args):
             python = "python"
     else:
         python = args.executable
+        if os.path.isdir(python):
+            bin = os.path.join(python, "bin", "python")
+            if os.path.exists(bin):
+                python = bin
     if args.scope == "selection":
         code = editor.document.text_storage[editor.selection]
     else:
