@@ -21,7 +21,7 @@ import logging
 import os
 
 import editxt.constants as const
-from editxt.command.ack import exec_shell
+from editxt.command.ag import exec_shell
 from editxt.command.base import command
 from editxt.command.parser import CommandParser, Choice, File, String, VarArgs
 

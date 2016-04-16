@@ -33,7 +33,7 @@ from editxt.platform.app import beep
 from editxt.platform.font import DEFAULT_FONT, get_font
 from editxt.util import user_path
 
-from editxt.command.ack import ack
+from editxt.command.ag import ag
 from editxt.command.changeindent import reindent
 from editxt.command.diff import diff
 from editxt.command.docnav import doc as docnav
@@ -67,7 +67,7 @@ def load_commands():
             sort_lines,
             reindent,
             find,
-            ack,
+            ag,
             diff,
             grab,
             open_,

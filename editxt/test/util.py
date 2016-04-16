@@ -129,7 +129,9 @@ class test_app(object):
     """A context manager that creates an Application object for testing purposes
 
     :param state: A string with details about the app initial state.
-    The string is a space-delimited list of the following names:
+    :param config: App config dict with with dot-delimited keys.
+
+    The state string is a space-delimited list of the following names:
 
         window project editor
 
@@ -160,7 +162,7 @@ class test_app(object):
 
     Usage:
 
-        with test_app("window project editor") as app:
+        with test_app("window project editor", {"command.foo.opt": "x"}) as app:
             ...
             eq_(test_app(app).state, "<expected state>")
 
@@ -182,25 +184,27 @@ class test_app(object):
         r"(\*?)$"
     )
 
-    def __new__(cls, config=None):
+    def __new__(cls, state=None, config=None):
         from editxt.application import Application
-        if isinstance(config, Application):
-            return config.__test_app
+        if isinstance(state, Application):
+            return state.__test_app
         self = super(test_app, cls).__new__(cls)
-        if callable(config):
-            self.__init__()
-            return self(config)
+        if callable(state):
+            self.__init__(config=config)
+            return self(state)
         return self
 
-    def __init__(self, config=None):
-        if not hasattr(self, "config"):
-            self.config = config
+    def __init__(self, state=None, config=None):
+        if not hasattr(self, "init_state"):
+            self.init_state = state
+        self.config = config
 
     def __call__(self, func):
         @wraps(func)
         def test_app(*args, **kw):
+            init_state = kw.pop("init_state", self.init_state)
             config = kw.pop("app_config", self.config)
-            with type(self)(config) as app:
+            with type(self)(state=init_state, config=config) as app:
                 return func(app, *args, **kw)
         return test_app
 
@@ -210,6 +214,18 @@ class test_app(object):
         self.tmp = os.path.realpath(self.tempdir.__enter__())
         profile_path = os.path.join(self.tmp, ".profile")
         app = Application(profile_path)
+        if self.config is not None:
+            def update(data, key, value):
+                if "." in key:
+                    base, sub = key.split(".", 1)
+                    if base not in data:
+                        data[base] = {}
+                    update(data[base], sub, value)
+                else:
+                    data[key] = value
+            for key, value in self.config.items():
+                assert isinstance(key, str), key
+                update(app.config.data, key, value)
         self.items = {}
         self.news = 0
         self.app = app
@@ -231,26 +247,26 @@ class test_app(object):
         return app.__test_app
 
     @classmethod
-    def split(cls, config):
-        return [x for x in cls.split_re.split(config) if x]
+    def split(cls, state):
+        return [x for x in cls.split_re.split(state) if x]
 
     def _setup(self, app):
         from editxt.editor import Editor
         from editxt.project import Project
         from editxt.window import Window
-        config = self.config
+        state = self.init_state
         docs_by_name = {}
         items = self.items
-        if config is None:
+        if state is None:
             return
         window = project = None
-        for i, config_item in enumerate(self.split(config)):
-            match = self.editor_re.match(config_item)
-            assert match, "unknown config item: {}".format(config_item)
+        for i, state_item in enumerate(self.split(state)):
+            match = self.editor_re.match(state_item)
+            assert match, "unknown state item: {}".format(state_item)
             collapsed, item, name, current = match.groups()
             has_ext_name = name and ":" in name
             assert item == "project" or (not collapsed and not has_ext_name), \
-                "unknown config item: {}".format(config_item)
+                "unknown state item: {}".format(state_item)
             if not name:
                 name = "<{}>".format(i)
             if item == "window" or window is None:

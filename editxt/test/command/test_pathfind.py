@@ -41,10 +41,9 @@ def test_pathfind():
         "file.doc",
         "file.txt",
     ]
-    initial_config = "window project(/dir) editor*"
 
     @gentest
-    @test_app(initial_config)
+    @test_app("window project(/dir) editor*")
     def test(app, command, files=None, config="", selection=(0, 0)):
         tmp = test_app(app).tmp
         os.mkdir(join(tmp, "dir"))
@@ -87,7 +86,7 @@ def test_pathfind():
             eq_(output, message)
         if config:
             tapp = test_app(app)
-            eq_(tapp.state, tapp.config.replace("*", "") + config)
+            eq_(tapp.state, tapp.init_state.replace("*", "") + config)
 
     file_txt = [".../a_file.txt", ".../file.txt", ".../file/txt"]
 
@@ -98,7 +97,7 @@ def test_pathfind():
 
     base_test = test
     for cfg in [None, "window project(/dir)* editor"]:
-        test = base_test if cfg is None else partial(base_test, app_config=cfg)
+        test = base_test if cfg is None else partial(base_test, init_state=cfg)
         yield test("pathfind file\.txt", [".../a_file.txt", ".../file.txt"])
         yield test("pathfind file.txt", file_txt)
         yield test("pathfind file\.txt /", [

@@ -383,6 +383,8 @@ class Config(object):
         return value
 
     def get(self, name, default=None):
+        if name in self.valid:
+            return self.valid[name]
         value = self.data
         for part in name.split("."):
             if not isinstance(value, dict):

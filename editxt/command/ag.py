@@ -35,11 +35,14 @@ from editxt.platform.app import beep
 from editxt.platform.markdown import markdown
 
 log = logging.getLogger(__name__)
-ACK_LINE = re.compile(r"(\d+)([:-])(.*)")
+AG_LINE = re.compile(r"""
+    (?P<num>\d*)                    # line number
+    (?P<ranges>;(?:\d+\ \d+,?)*)?   # matched ranges
+    (?P<delim>:)                    # delimiter
+    (?P<text>.*)                    # line content
+""", re.VERBOSE)
 DEFAULT_OPTIONS = [
-    "--heading",
-    "--group",
-    "--break",
+    "--ackmate",
     "--nopager",
     "--nocolor",
     "--print0",
@@ -55,18 +58,26 @@ def editor_dirname(editor=None):
     return None if editor is None else editor.dirname()
 
 
-@command(arg_parser=CommandParser(
-    Regex("pattern", default=get_selection_regex),
-    File("path", default=editor_dirname),
-    VarArgs("options", String("options")),
-    # TODO SubParser with dynamic dispatch based on pattern matching
-    # (if it starts with a "-" it's an option, otherwise a file path)
-), config={"path": config.String("ack")}, is_enabled=has_editor)
-def ack(editor, args):
+@command(
+    name="ag ack",
+    arg_parser=CommandParser(
+        Regex("pattern", default=get_selection_regex),
+        File("path", default=editor_dirname),
+        VarArgs("options", String("options")),
+        # TODO SubParser with dynamic dispatch based on pattern matching
+        # (if it starts with a "-" it's an option, otherwise a file path)
+    ),
+    config={
+        "path": config.String("ag"),
+        "options": config.String(""),
+    },
+    is_enabled=has_editor,
+)
+def ag(editor, args):
     """Search for files matching pattern"""
     if args is None:
         from editxt.commands import show_command_bar
-        show_command_bar(editor, "ack ")
+        show_command_bar(editor, "ag ")
         return
     elif args.pattern is None:
         raise CommandError("please specify a pattern to match")
@@ -75,24 +86,27 @@ def ack(editor, args):
         pattern = RegexPattern(pattern, pattern.flags | re.IGNORECASE)
     elif pattern.flags & re.IGNORECASE:
         args.options.append("--ignore-case")
-    ack_path = editor.app.config.for_command("ack")["path"]
+    ag_path = editor.app.config.for_command("ag")["path"]
+    options = editor.app.config.for_command("ag")["options"].split()
+    options = [o for o in args.options if o] + DEFAULT_OPTIONS + options
     cwd = args.path or editor.dirname()
-    command = [ack_path, pattern] + [o for o in args.options if o] + DEFAULT_OPTIONS
+    command = [ag_path, pattern] + options
     result = exec_shell(command, cwd=cwd)
     if result.returncode == 0:
         msg_type = const.INFO
-        lines = ack_lines(result, pattern, cwd)
+        lines = ag_lines(result, pattern, cwd)
         message = markdown("\n".join(lines), pre=True)
-    elif not is_ack_installed(ack_path):
+    elif not is_ag_installed(ag_path):
         msg_type = const.ERROR
         message = markdown(dedent("""
-            [ack](http://beyondgrep.com/) does not appear to be installed
+            [ag](https://github.com/ggreer/the_silver_searcher#the-silver-searcher)
+            does not appear to be installed
 
-            It may be necessary to set `command.ack.path` in
+            It may be necessary to set `command.ag.path` in
             [Preferences](xt://preferences).
 
             Current setting: `{}`
-        """.format(ack_path)))
+        """.format(ag_path)))
     else:
         msg_type = const.ERROR
         message = result or result.err
@@ -102,22 +116,32 @@ def ack(editor, args):
         return "no match for pattern: {}".format(args.pattern)
 
 
-def ack_lines(result, pattern, cwd):
+ack = ag
+
+
+def ag_lines(result, pattern, cwd):
     if not result:
         yield result.err or "no output"
         return
     regex = re.compile(pattern + r"""|(['"(\[`_])""", pattern.flags)
-    for file_and_lines in result.split("\n"):
-        filepath, *lines = file_and_lines.split("\x00")
-        if not lines:
-            yield filepath
-            continue
-        abspath = os.path.join(cwd, filepath)
-        yield open_link(filepath, abspath)
+    print(repr(result))
+    for i, file_and_lines in enumerate(result.split("\n\n:")):
+        if i:
+            yield ""
+        filepath, lines = file_and_lines.split("\0", 1)
+        lines = lines.rstrip("\0").split("\n")
+        if i == 0:
+            assert filepath.startswith(":"), filepath
+            filepath = filepath[1:]
+        #if not lines:
+        #    yield filepath
+        #    continue
+        absfilepath = os.path.join(cwd, filepath)
+        yield open_link(filepath, absfilepath)
         for line in lines:
-            match = ACK_LINE.match(line)
+            match = AG_LINE.match(line)
             if match:
-                yield link_matches(match, abspath, regex)
+                yield link_matches(absfilepath, **match.groupdict(''))
             else:
                 yield line
 
@@ -143,28 +167,28 @@ def markdown_link(text, url):
     )
 
 
-def link_matches(match, filepath, regex, split=re.compile("(\d+):")):
-    def link(match):
-        if match.groups()[-1]:
-            return "\\" + match.groups()[-1]
-        start, end = match.span()
-        if start > -1:
-            goto = "{}.{}.{}".format(num, start, end - start)
-        else:
-            goto = num
-        return open_link(match.group(0), filepath, goto)
-    num, delim, line = match.group(1, 2, 3)
+def link_matches(filepath, num, ranges, delim, text):
+    def iter_parts(ranges):
+        end = 0
+        if ranges:
+            for rng in ranges.split(","):
+                start, length = [int(n) for n in rng.split()]
+                if start > end:
+                    yield text[end:start]
+                end = start + length
+                goto = "{}.{}.{}".format(num, start, length)
+                yield open_link(text[start:end], filepath, goto)
+        yield text[end:]
     prefix = open_link(num, filepath, num) + delim
-    if delim == "-":
-        return prefix + line
-    return prefix + regex.sub(link, line)
+    line_text = "".join(iter_parts(ranges.lstrip(";")))
+    return open_link(num, filepath, num) + delim + line_text
 
 
-def is_ack_installed(ack_path="ack", recheck=False, result={}):
-    if result.get(ack_path) is not None and not recheck:
-        return result.get(ack_path)
-    result[ack_path] = exec_shell([ack_path, "--version"]).returncode == 0
-    return result[ack_path]
+def is_ag_installed(ag_path="ag", recheck=False, result={}):
+    if result.get(ag_path) is not None and not recheck:
+        return result.get(ag_path)
+    result[ag_path] = exec_shell([ag_path, "--version"]).returncode == 0
+    return result[ag_path]
 
 
 def exec_shell(command, timeout=20, **kw):
@@ -174,6 +198,7 @@ def exec_shell(command, timeout=20, **kw):
     :returns: `CommandResult`, which is a string containing the sdtout
     output from the command. See `CommandResult` docs for more details.
     """
+    log.debug("exec_shell(%r)", command)
     try:
         proc = Popen(command, stdout=PIPE, stderr=STDOUT, **kw)
         out, err = proc.communicate(timeout=timeout)

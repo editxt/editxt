@@ -3,6 +3,18 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+## 2016-... - 1.10.0
+
+- Remove close buttons from file tree.
+- Switch from `ack` to `ag` for faster find-in-file. Unfortunately the `ag`
+  program's options are not compatible with `ack`, so this means you must
+  install `ag` (a.k.a. `the_silver_searcher`) to use the `ag` command. The old
+  `ack` command is an alias for the new `ag` command.
+- Allow multi-selection in file tree. Some commands work differently with
+  multiple files selected. For example, if there are two files selected, the
+  `diff` command will compare them. It is also possible to close multiple files
+  at once by selecting them and then Right Click > Close.
+
 ## 2016-02-21 - 1.9.5
 
 - Add wildcard path matching to `open` command.
