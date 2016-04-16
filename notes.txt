@@ -80,7 +80,14 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+- improve external command output and runner (incremental output)
+- fix ack output when searching HTML
+
 Multi-select in file tree
+  - concatenate views on select multiple
+    - allow find/replace across multiple files
+  - grab lines from all selected files
+  - change indentation in selected files
 x  - add icon badge (or glowing red shadow) to unsaved documents
 x  - activate unsaved document indocator on window close button
 x  - remove close button
@@ -91,11 +98,7 @@ x  - fix tree column width on load (should be same as tree width)
 x  - fix undo in drag/copied dirty editor after close copy
 x  - fix select multiple before loading text views, then click Soft Wrap -> error
 x  - fix Soft Wrap checkbox is wrong after incrementally selecting multiple
-  - concatenate views on select multiple
-    - allow find/replace across multiple files
-  - diff selected files (if there are two)
-  - grab lines from all selected files
-  - change indentation in selected files
+x  - diff selected files (if there are two)
 Show directory path in tree if name matches another document
   tree idea:
   - project

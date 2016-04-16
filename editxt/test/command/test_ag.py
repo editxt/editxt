@@ -88,7 +88,7 @@ def test_exec_shell():
     if not mod.is_ag_installed():
         raise SkipTest("ag not installed")
     with setup_files() as tmp:
-        result = mod.exec_shell(["ag", "dir/[bB]"], cwd=tmp)
+        result = mod.exec_shell(["ag", "dir/[bB]", "--workers=1"], cwd=tmp)
 
         eq_(result, 'dir/B file:1:name: dir/B file\n'
                     'dir/b.txt:1:name: dir/b.txt\n')

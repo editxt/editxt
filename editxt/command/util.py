@@ -20,7 +20,9 @@
 import logging
 import re
 from collections import Counter
+from subprocess import Popen, PIPE, STDOUT, TimeoutExpired
 from textwrap import dedent
+from traceback import format_exc
 
 import editxt.constants as const
 
@@ -73,6 +75,44 @@ def iterlines(text, range=(0,)):
 #     elif text[-1] in u"\n\r\u2028":
 #         r.length -= 1
 #     return r
+
+
+def exec_shell(command, timeout=20, **kw):
+    """Execute shell command
+
+    :param command: A list of command name and arguments.
+    :returns: `CommandResult`, which is a string containing the sdtout
+    output from the command. See `CommandResult` docs for more details.
+    """
+    log.debug("exec_shell(%r)", command)
+    try:
+        proc = Popen(command, stdout=PIPE, stderr=STDOUT, **kw)
+        out, err = proc.communicate(timeout=timeout)
+        returncode = proc.returncode
+    except TimeoutExpired:
+        proc.kill()
+        out, err = proc.communicate().decode("utf-8")
+        returncode = proc.returncode
+    except Exception as exc:
+        out = "{}: {}\n{}".format(type(exc).__name__, exc, format_exc())
+        err = ""
+        returncode = None
+    if isinstance(out, bytes):
+        out = out.decode("utf-8")
+    if isinstance(err, bytes):
+        err = err.decode("utf-8")
+    return CommandResult(out, err, returncode)
+
+
+class CommandResult(str):
+
+    __slots__ = ["err", "returncode"]
+
+    def __new__(cls, out, err="", returncode=None):
+        self = super().__new__(cls, out)
+        self.err = err
+        self.returncode = returncode
+        return self
 
 
 _newlines = re.compile("|".join(
