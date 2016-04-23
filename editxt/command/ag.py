@@ -20,6 +20,7 @@
 import logging
 import os
 import re
+import shlex
 from textwrap import dedent
 from urllib.parse import quote
 
@@ -27,7 +28,7 @@ import editxt.constants as const
 import editxt.config as config
 from editxt.command.base import command, CommandError
 from editxt.command.parser import CommandParser, File, Regex, RegexPattern, String, VarArgs
-from editxt.command.util import exec_shell, get_selection, has_editor
+from editxt.command.util import exec_shell, get_selection, has_editor, threaded_exec_shell
 from editxt.platform.app import beep
 from editxt.platform.markdown import markdown
 
@@ -42,8 +43,15 @@ DEFAULT_OPTIONS = [
     "--ackmate",
     "--nopager",
     "--nocolor",
-    "--print0",
 ]
+AG_NOT_INSTALLED = """
+[ag](https://github.com/ggreer/the_silver_searcher#the-silver-searcher)
+does not appear to be installed
+
+It may be necessary to set `command.ag.path` in [Preferences](xt://preferences).
+
+Current setting: `{}`
+"""
 
 
 def get_selection_regex(editor=None):
@@ -84,63 +92,52 @@ def ag(editor, args):
     elif pattern.flags & re.IGNORECASE:
         args.options.append("--ignore-case")
     ag_path = editor.app.config.for_command("ag")["path"]
-    options = editor.app.config.for_command("ag")["options"].split()
-    options = [o for o in args.options if o] + DEFAULT_OPTIONS + options
+    options = editor.app.config.for_command("ag")["options"]
+    options = DEFAULT_OPTIONS + shlex.split(options)
     cwd = args.path or editor.dirname()
-    command = [ag_path, pattern] + options
-    result = exec_shell(command, cwd=cwd)
-    if result.returncode == 0:
-        msg_type = const.INFO
-        lines = ag_lines(result, pattern, cwd)
-        message = markdown("\n".join(lines), pre=True)
-    elif not is_ag_installed(ag_path):
-        msg_type = const.ERROR
-        message = markdown(dedent("""
-            [ag](https://github.com/ggreer/the_silver_searcher#the-silver-searcher)
-            does not appear to be installed
-
-            It may be necessary to set `command.ag.path` in
-            [Preferences](xt://preferences).
-
-            Current setting: `{}`
-        """.format(ag_path)))
-    else:
-        msg_type = const.ERROR
-        message = result or result.err
-    if message:
-        editor.message(message, msg_type=msg_type)
-    else:
-        return "no match for pattern: {}".format(args.pattern)
+    ag_lines, got_output = make_line_processor(editor, pattern, ag_path, cwd)
+    command = [ag_path, pattern] + [o for o in args.options if o] + options
+    editor.message("")
+    proc = threaded_exec_shell(command, cwd=cwd,
+                               iter_output=ag_lines, got_output=got_output)
+    editor.add_process(proc)
 
 
-ack = ag
+def make_line_processor(editor, pattern, ag_path, cwd):
 
-
-def ag_lines(result, pattern, cwd):
-    if not result:
-        yield result.err or "no output"
-        return
-    regex = re.compile(pattern + r"""|(['"(\[`_])""", pattern.flags)
-    print(repr(result))
-    for i, file_and_lines in enumerate(result.split("\n\n:")):
-        if i:
-            yield ""
-        filepath, lines = file_and_lines.split("\0", 1)
-        lines = lines.rstrip("\0").split("\n")
-        if i == 0:
-            assert filepath.startswith(":"), filepath
-            filepath = filepath[1:]
-        #if not lines:
-        #    yield filepath
-        #    continue
-        absfilepath = os.path.join(cwd, filepath)
-        yield open_link(filepath, absfilepath)
+    def ag_lines(lines):
+        filepath = None
+        absfilepath = None
         for line in lines:
-            match = AG_LINE.match(line)
-            if match:
-                yield link_matches(absfilepath, **match.groupdict(''))
+            line = line.rstrip("\n")
+            line = line.rstrip("\0") # bug in ag adds null char to some lines?
+            if line.startswith(":"):
+                filepath = line[1:]
+                absfilepath = os.path.join(cwd, filepath)
+                yield open_link(filepath, absfilepath) + "\n"
             else:
-                yield line
+                match = AG_LINE.match(line)
+                if match:
+                    yield link_matches(absfilepath, **match.groupdict('')) + "\n"
+                else:
+                    yield line + "\n"
+
+    def got_output(line, returncode):
+        if line is not None:
+            editor.append_message(markdown(line, pre=True))
+        else:
+            editor.process_completed()
+        if returncode:
+            if is_ag_installed(ag_path):
+                if returncode == 1:
+                    message = "no match for pattern: {}".format(pattern)
+                else:
+                    message = "exit code: {}".format(returncode)
+            else:
+                message = markdown(AG_NOT_INSTALLED.format(ag_path))
+            editor.append_message(message, msg_type=const.ERROR)
+
+    return ag_lines, got_output
 
 
 def open_link(text, path, goto=None):

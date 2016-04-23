@@ -19,8 +19,11 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import re
+import time
 from collections import Counter
+from functools import partial
 from subprocess import Popen, PIPE, STDOUT, TimeoutExpired
+from threading import Event
 from textwrap import dedent
 from traceback import format_exc
 
@@ -80,7 +83,10 @@ def iterlines(text, range=(0,)):
 def exec_shell(command, timeout=20, **kw):
     """Execute shell command
 
-    :param command: A list of command name and arguments.
+    :param command: The first argument passed to `subprocess.Popen`.
+    :param timeout: Command timeout, after which the process will be
+    terminated if it has not yet completed (default: 20 seconds).
+    :param **kw: Keyword arguments accepted by `subprocess.Popen`.
     :returns: `CommandResult`, which is a string containing the sdtout
     output from the command. See `CommandResult` docs for more details.
     """
@@ -90,7 +96,7 @@ def exec_shell(command, timeout=20, **kw):
         out, err = proc.communicate(timeout=timeout)
         returncode = proc.returncode
     except TimeoutExpired:
-        proc.kill()
+        proc.terminate()
         out, err = proc.communicate().decode("utf-8")
         returncode = proc.returncode
     except Exception as exc:
@@ -102,6 +108,74 @@ def exec_shell(command, timeout=20, **kw):
     if isinstance(err, bytes):
         err = err.decode("utf-8")
     return CommandResult(out, err, returncode)
+
+
+def threaded_exec_shell(command, got_output, **kw):
+    """Execute shell command, processing output in a thread
+
+    :param command: The first argument passed to `subprocess.Popen`.
+    :param got_output: A two-arg function `got_output(string, returncode)`
+    to be called in the main thread. This function may be called
+    multiple times with chunks of output received from the process, and
+    will be called a final time when the process has terminated. The
+    first argument will be `None` on the final call, and the second
+    argument will be `None` on all calls except for the final call.
+    :param iter_output: An optional generator function taking a single
+    argument, the process stdout stream and yielding processed output.
+    This generator will be executed in a thread.
+    :param **kw: Keyword arguments accepted by `subprocess.Popen`.
+    :returns: The running `subprocess.Popen` object.
+    """
+    from editxt.platform.events import call_in_thread, call_in_main_thread
+
+    def run():
+        buffer = []
+        buffer_start = None
+        buffer_interval = 0.1
+        for line in iter_output:
+            buffer.append(line)
+            if buffer_start is None:
+                buffer_start = time.time()
+            elif buffer_start + buffer_interval < time.time():
+                send_to_main_thread("".join(buffer))
+                time.sleep(0.1)  # allow main thread time to process events
+                buffer = []
+                buffer_start = time.time()
+        if buffer:
+            send_to_main_thread("".join(buffer))
+        proc.wait()
+        send_to_main_thread(None, proc.returncode)
+
+    def main_output(text, returncode=None):
+        if returncode is not None:
+            log.debug("%r -> %s", command, returncode)
+        if not terminated.is_set():
+            got_output(text, returncode)
+
+    send_to_main_thread = partial(call_in_main_thread, main_output)
+
+    log.debug("thread exec %r", command)
+    kw.setdefault("universal_newlines", True)
+    iter_output = kw.pop("iter_output", None)
+    proc = Popen(command, stdout=PIPE, stderr=STDOUT, **kw)
+    if iter_output is None:
+        iter_output = proc.stdout
+    else:
+        iter_output = iter_output(proc.stdout)
+    terminated = Event()
+    call_in_thread(run)
+    proc_terminate = proc.terminate
+    def terminate():
+        # stop queueing output on main thread
+        nonlocal send_to_main_thread
+        send_to_main_thread = lambda text, returncode: None
+        # stop processing queued output on main thread
+        terminated.set()
+        # terminate the process
+        log.debug("terminate %r", command)
+        return proc_terminate()
+    proc.terminate = terminate
+    return proc
 
 
 class CommandResult(str):

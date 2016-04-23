@@ -156,15 +156,17 @@ class CommandView(DualView):
     def activate(self, command, initial_text="", select=False):
         new_activation = not self.active
         self.active = True
+        editor = command.window.current_editor
         if new_activation:
             #self.performSelector_withObject_afterDelay_("selectText:", self, 0)
             # possibly use setSelectedRange
             # http://jeenaparadies.net/weblog/2009/apr/focus-a-nstextfield
-            editor = command.window.current_editor
             font, smooth = self.get_font(editor and editor.text_view)
             self.input.setFont_(font)
             self.input.font_smoothing = smooth
             self.output.setString_("")
+        elif editor is not None:
+            editor.kill_process()
         if new_activation or initial_text:
             self.input.setString_(initial_text)
             if select and initial_text:
@@ -174,10 +176,12 @@ class CommandView(DualView):
             self.window().makeFirstResponder_(self.input)
 
     def deactivate(self):
+        editor = self.command.window.current_editor
+        if editor is not None:
+            editor.kill_process()
         if self.active:
             self.completions.items = []
             self.active = False
-            editor = self.command.window.current_editor
             if editor is not None and self.window() is not None:
                 self.window().makeFirstResponder_(editor.text_view)
             self.command.reset()
@@ -190,27 +194,26 @@ class CommandView(DualView):
 
     def message(self, message, textview=None, msg_type=INFO):
         if not message:
-            self.output.setString_("")
-            self.should_resize()
+            self.dismiss()
             return
         self.output.font_smoothing = True
-        if msg_type == HTML:
-            raise NotImplementedError("convert message to NSAttributedString")
-        elif isinstance(message, ak.NSAttributedString):
-            text = message
-        else:
-            attrs = {}
-            color = MESSAGE_COLORS[msg_type]
-            if color is not None:
-                attrs[ak.NSForegroundColorAttributeName] = color
-            attrs[ak.NSFontAttributeName], smooth = self.get_font(textview)
-            self.output.font_smoothing = smooth
-            text = ak.NSAttributedString.alloc().initWithString_attributes_(
-                message, attrs)
+        font, smooth = self.get_font(textview)
+        text = get_attributed_string(message, msg_type, font)
+        self.output.font_smoothing = smooth
         self.output.setAttributedString_(text)
         self.window().__last_output = text
         if msg_type == ERROR:
             ak.NSBeep()
+        self.should_resize()
+
+    def append_message(self, message, textview=None, msg_type=INFO):
+        if not message:
+            return
+        font, smooth = self.get_font(textview)
+        text = get_attributed_string(message, msg_type, font)
+        self.output.font_smoothing = smooth
+        self.output.append_text(text)
+        self.window().__last_output = self.output.textStorage().copy()
         self.should_resize()
 
     def show_last_message(self):
@@ -283,6 +286,20 @@ class CommandView(DualView):
 
     def undoManagerForTextView_(self, textview):
         return self.undo_manager
+
+
+def get_attributed_string(text, msg_type, font):
+    if msg_type == HTML:
+        raise NotImplementedError("convert text to NSAttributedString")
+    elif not isinstance(text, ak.NSAttributedString):
+        attrs = {}
+        color = MESSAGE_COLORS[msg_type]
+        if color is not None:
+            attrs[ak.NSForegroundColorAttributeName] = color
+        attrs[ak.NSFontAttributeName] = font
+        text = ak.NSAttributedString.alloc().initWithString_attributes_(
+            text, attrs)
+    return text
 
 
 class ContentSizedTextView(ak.NSTextView):
@@ -396,6 +413,12 @@ class ContentSizedTextView(ak.NSTextView):
 
     def setAttributedString_(self, value):
         self.textStorage().setAttributedString_(value)
+        self.textDidChange_(None)
+
+    def append_text(self, text):
+        store = self.textStorage()
+        range = (store.length(), 0)
+        store.replaceCharactersInRange_withAttributedString_(range, text)
         self.textDidChange_(None)
 
     def textDidChange_(self, notification):

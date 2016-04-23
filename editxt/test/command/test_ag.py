@@ -48,6 +48,9 @@ def test_ag():
             output = bar.output
             if output is not None:
                 output = output.replace("xt://open/%s/" % tmp, "xt://open/")
+                if "Traceback (most recent call last):" in output:
+                    print(output)
+                    assert "Traceback (most recent call last):" not in message
             eq_(output, message)
             eq_(test_app(app).state, state)
 

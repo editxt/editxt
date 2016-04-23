@@ -54,7 +54,34 @@ def document_property(do):
     return property(fget, fset)
 
 
-class Editor(object):
+class CommandSubject:
+
+    id = None  # will be overwritten (here for type api for testing)
+    process = None
+    command_view = None
+
+    def message(self, msg, msg_type=const.INFO):
+        """Display a message in the command view output pane"""
+        self.command_view.message(msg, self.text_view, msg_type)
+
+    def append_message(self, msg, msg_type=const.INFO):
+        """Append message to the command view output pane"""
+        self.command_view.append_message(msg, self.text_view, msg_type)
+
+    def add_process(self, proc):
+        self.kill_process()
+        self.process = proc
+
+    def kill_process(self):
+        if self.process is not None:
+            self.process.terminate()
+            self.process_completed()
+
+    def process_completed(self):
+        self.process = None
+
+
+class Editor(CommandSubject):
     """Editor
 
     Reference graph:
@@ -64,7 +91,6 @@ class Editor(object):
             self -> project -> window -> app
     """
 
-    id = None # will be overwritten (put here for type api compliance for testing)
     _project = WeakProperty()
     is_leaf = True
 
@@ -90,7 +116,6 @@ class Editor(object):
         self.main_view = None
         self.text_view = None
         self.scroll_view = None
-        self.command_view = None
         self._goto_line = None
         self.line_numbers = LineNumbers(self.document.text_storage)
         props = document.props
@@ -451,10 +476,6 @@ class Editor(object):
         else:
             self.soft_wrap = self.app.config["soft_wrap"]
 
-    def message(self, msg, msg_type=const.INFO):
-        """Display a message in the command view"""
-        self.command_view.message(msg, self.text_view, msg_type)
-
     def goto_line(self, line):
         if self.text_view is None:
             self._goto_line = line
@@ -483,6 +504,7 @@ class Editor(object):
         self.undo_manager.off(self.on_dirty_status_changed)
         # remove from window.dirty_editors if present
         project.window.on_dirty_status_changed(self, False)
+        self.kill_process()
         self.project = None # removes editor from project.editors
         if self.text_view is not None and doc.text_storage is not None:
             doc.text_storage.removeLayoutManager_(self.text_view.layoutManager())

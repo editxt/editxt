@@ -1,4 +1,5 @@
 from functools import wraps
+from threading import Thread
 
 import AppKit as ak
 
@@ -11,6 +12,16 @@ def call_later(delay, callback, *args, **kw):
     call = DelayedCall.alloc().init_args_kw_(callback, args, kw)
     _CALLS[id(call)] = call
     return call.later(delay)
+
+
+def call_in_main_thread(_callback, *args, **kw):
+    return MainThreadCall.alloc().init_args_kw_(_callback, args, kw)
+
+
+def call_in_thread(_target):
+    thread = Thread(target=_target)
+    thread.daemon = True
+    thread.start()
 
 
 def debounce(delay=0.1, coalesce_args=lambda *a, **k:(a, k)):
@@ -54,4 +65,17 @@ class DelayedCall(ak.NSObject):
 
     def do(self):
         _CALLS.pop(id(self), None)
+        self.callback(*self.args, **self.kw)
+
+
+class MainThreadCall(ak.NSObject):
+
+    def init_args_kw_(self, callback, args, kw):
+        self.callback = callback
+        self.args = args
+        self.kw = kw
+        self.performSelectorOnMainThread_withObject_waitUntilDone_("do", None, True)
+        return self
+
+    def do(self):
         self.callback(*self.args, **self.kw)

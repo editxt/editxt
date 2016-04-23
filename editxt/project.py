@@ -25,7 +25,7 @@ import Foundation as fn
 
 import editxt.constants as const
 from editxt.datatypes import WeakProperty
-from editxt.editor import Editor
+from editxt.editor import Editor, CommandSubject
 from editxt.document import DocumentController, TextDocument
 from editxt.platform.app import add_recent_document
 from editxt.platform.document import add_command_view
@@ -37,9 +37,8 @@ from editxt.platform.views import ListView
 log = logging.getLogger(__name__)
 
 
-class Project(object):
+class Project(CommandSubject):
 
-    id = None # will be overwritten (put here for type api compliance for testing)
     window = WeakProperty()
     document = None
     soft_wrap = None
@@ -67,7 +66,6 @@ class Project(object):
         self.editors = KVOList()
         self.recent = KVOList()
         self.main_view = None
-        self.command_view = None
         self.closing = False
         if serial is not None:
             self._deserialize(serial)
@@ -110,7 +108,7 @@ class Project(object):
         if self.serial_cache != self.serialize():
             #if self.path is not None:
             #    self.save_with_path(self.path)
-            self.window.app.save_window_states()
+            self.app.save_window_states()
             self.reset_serial_cache()
 
     def save_with_path(self, path):
@@ -290,17 +288,12 @@ class Project(object):
         if self is not self.window.current_editor:
             self.window.current_editor = self
 
-    def message(self, msg, msg_type=const.INFO):
-        """Display a message in the command view"""
-        self.command_view.message(msg, msg_type=msg_type)
-
     def interactive_close(self, do_close):
         def dirty_editors():
             def other_project_has(document):
                 return any(editor.project is not self
                            for editor in app.iter_editors_of_document(document))
-            window = self.window
-            app = window.app
+            app = self.app
             seen = set()
             for editor in self.editors:
                 if editor.document in seen:
@@ -311,7 +304,7 @@ class Project(object):
         def callback(should_close):
             if should_close:
                 do_close()
-        self.window.app.async_interactive_close(dirty_editors(), callback)
+        self.app.async_interactive_close(dirty_editors(), callback)
 
     def close(self):
         self.closing = True

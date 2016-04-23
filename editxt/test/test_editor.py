@@ -68,6 +68,16 @@ def verify_editor_interface(editor):
         assert not editor.is_leaf
         assert editor.expanded
 
+    # verify process management interface
+    m = Mocker()
+    proc = m.mock()
+    editor.add_process(proc)
+    proc.terminate()
+    with m:
+        editor.kill_process()
+    editor.process_completed()
+
+
 def test_editor_interface():
     with test_app("editor") as app:
         editor = app.windows[0].projects[0].editors[0]
