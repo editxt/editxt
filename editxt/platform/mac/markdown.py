@@ -30,7 +30,12 @@ NON_HARD_BREAK = re.compile(r"(?<!.\\|  )\n")
 
 def markdown(value, pre=False, css=""):
     if pre:
-        value = NON_HARD_BREAK.sub("\\\n", value.rstrip("\n"))
+        if value == "\n":
+            value = "\u00A0"
+        else:
+            if value[-1:] == "\n":
+                value = value[:-1]
+            value = NON_HARD_BREAK.sub("<br />", value)
     parser = commonmark.Parser()
     renderer = commonmark.HtmlRenderer()
     html = renderer.render(parser.parse(value))
