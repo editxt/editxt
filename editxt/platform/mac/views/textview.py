@@ -30,6 +30,7 @@ import editxt.constants as const
 from editxt.command.find import FindController
 from editxt.command.util import normalize_newlines
 from editxt.datatypes import WeakProperty
+from editxt.events import eventize
 from editxt.platform.app import beep
 from editxt.platform.mac.views.util import font_smoothing
 from editxt.platform.mac.pasteboard import Pasteboard
@@ -37,15 +38,35 @@ from editxt.platform.mac.pasteboard import Pasteboard
 log = logging.getLogger(__name__)
 
 
+class TextViewDelegate(ak.NSObject):
+
+    on_selection_changed = None
+
+    def dealloc(self):
+        self.on_selection_changed = None
+        super().dealloc()
+
+    def textViewDidChangeSelection_(self, notification):
+        textview = notification.object()
+        self.on_selection_changed(textview)
+
+
 class TextView(ak.NSTextView):
 
     app = WeakProperty()
     editor = WeakProperty() #objc.ivar("editor")
 
+    class events:
+        selection_changed = eventize.attr("delegate.on_selection_changed")
+
     def __new__(cls, editor, frame, container):
         self = cls.alloc().initWithFrame_textContainer_(frame, container)
+        eventize(self)
         self.editor = editor
         self.app = editor.project.window.app
+        self.delegate = TextViewDelegate.alloc().init()
+        self.on.selection_changed(editor.on_selection_changed)
+        self.setDelegate_(self.delegate)
         return self
 
 #    def dealloc(self):
@@ -99,6 +120,8 @@ class TextView(ak.NSTextView):
         self.app.text_commander.do_command(self.editor, sender)
 
     def doCommandBySelector_(self, selector):
+        if self.editor.do_command(selector):
+            return
         if not self.app.text_commander.do_command_by_selector(self.editor, selector):
             super(TextView, self).doCommandBySelector_(selector)
 

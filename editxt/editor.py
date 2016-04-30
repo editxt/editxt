@@ -80,6 +80,15 @@ class CommandSubject:
     def process_completed(self):
         self.process = None
 
+    def do_command(self, command):
+        if command == platform_const.ESCAPE and self.command_view is not None:
+            if self.command_view:
+                self.command_view.dismiss()
+            else:
+                self.command_view.show_last_message()
+            return True
+        return False
+
 
 class Editor(CommandSubject):
     """Editor
@@ -537,15 +546,6 @@ class Editor(CommandSubject):
                 self.app,
             )
         return finder
-
-    def on_do_command(self, command):
-        if command == platform_const.ESCAPE and self.command_view is not None:
-            if self.command_view:
-                self.command_view.dismiss()
-            else:
-                self.command_view.show_last_message()
-            return True
-        return False
 
     @noraise
     def on_selection_changed(self, textview):

@@ -70,6 +70,7 @@ def test_TextView_doCommandBySelector_():
     editor = tv.editor = m.mock(Editor)
     tc = app.text_commander >> m.mock(CommandManager)
     selector = m.mock()
+    editor.do_command(selector) >> False
     tc.do_command_by_selector(editor, selector) >> True # omit super call
     with m:
         tv.doCommandBySelector_(selector)

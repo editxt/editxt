@@ -72,11 +72,7 @@ def setup_main_view(editor, frame):
     #scroll.verticalRulerView().invalidateRuleThickness()
     scroll.setRulersVisible_(True)
 
-    main_view = add_command_view(scroll, frame, editor.project.window.command)
-    main_view._text_delegate = TextViewDelegate.alloc().init_(editor)
-    text.setDelegate_(main_view._text_delegate)
-
-    return main_view
+    return add_command_view(scroll, frame, editor.project.window.command)
 
 
 def add_command_view(document_scroller, frame, command_bar):
@@ -102,23 +98,3 @@ def teardown_main_view(main_view):
     text = scroll.documentView()
     text.setDelegate_(None)
     ak.NSNotificationCenter.defaultCenter().removeObserver_(main_view)
-
-
-class TextViewDelegate(ak.NSObject):
-
-    def init_(self, editor):
-        self.on_do_command = editor.on_do_command
-        self.on_selection_changed = editor.on_selection_changed
-        return self
-
-    def dealloc(self):
-        self.on_do_command = None
-        self.on_selection_changed = None
-        super().dealloc()
-
-    def textView_doCommandBySelector_(self, textview, selector):
-        return self.on_do_command(selector)
-
-    def textViewDidChangeSelection_(self, notification):
-        textview = notification.object()
-        self.on_selection_changed(textview)

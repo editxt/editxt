@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 from functools import partial
 
+import AppKit as ak
 from editxt.util import WeakProperty
 
 
@@ -47,7 +48,11 @@ def eventize(obj):
         raise RuntimeError("%r already has 'on' attribute")
     if not hasattr(obj, "events"):
         raise RuntimeError("%s has no 'events' property")
-    obj.on = EventConnector(obj)
+    if isinstance(obj, ak.NSObject):
+        # HACK work around TypeError: cannot create weak reference ...
+        obj.on = ObjcEventConnector(obj)
+    else:
+        obj.on = EventConnector(obj)
 
 
 def attr(path):
@@ -135,6 +140,11 @@ class EventConnector:
     def __getattr__(self, name):
         setup_event = getattr(self._obj.events, name)
         return partial(setup_event, name, self._obj)
+
+
+class ObjcEventConnector(EventConnector):
+
+    _obj = None
 
 
 #class Proxy:
