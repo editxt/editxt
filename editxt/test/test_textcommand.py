@@ -795,11 +795,11 @@ def test_CommandManager_load_shortcuts():
     for i, (hotkey, value) in enumerate(sorted(shorts.items(), key=key)):
         hkey = mod.parse_hotkey(hotkey)
         title = value["name"].default
-        expect.append((menu, title, "doCommand:") + hkey)
+        expect.append((menu, title) + hkey)
         tags[title] = i
     items = []
-    def add_menu_item(menu, title, selector, hotkey, modifiers):
-        items.append((menu, title, selector, hotkey, modifiers))
+    def add_menu_item(menu, title, hotkey, modifiers):
+        items.append((menu, title, hotkey, modifiers))
         return tags[title]
     with test_app() as app:
         ctl = CommandManager("<history>", app=app)
@@ -826,7 +826,7 @@ def test_CommandManager_add_command():
         mi = mi_class.alloc() >> m.mock(ak.NSMenuItem)
         (cmd.title << "<title>").count(2)
         mi.initWithTitle_action_keyEquivalent_(
-            '<title>', "doCommand:" ,"<hotkey>") >> mi
+            '<title>', "doMenuCommand:" ,"<hotkey>") >> mi
         mi.setKeyEquivalentModifierMask_("<keymask>")
         mi.setTag_(tag)
         menu.addItem_(mi)
@@ -843,7 +843,7 @@ def test_CommandManager_validate_hotkey():
     eq_(tc.validate_hotkey(("a", 1)), ("a", 1))
     assert_raises(AssertionError, tc.validate_hotkey, ("a", "b", "c"))
 
-def test_CommandManager_is_command_enabled():
+def test_CommandManager_is_menu_command_enabled():
     def test(c):
         m = Mocker()
         lg = m.replace("editxt.textcommand.log")
@@ -856,11 +856,11 @@ def test_CommandManager_is_command_enabled():
         if c.has_command:
             if c.error:
                 expect(tc.is_enabled(tv)).throw(Exception)
-                lg.error("%s.is_enabled failed", ANY, exc_info=True)
+                lg.exception("%s.is_enabled failed", ANY)
             else:
                 tc.is_enabled(tv) >> c.enabled
         with m:
-            result = tcc.is_command_enabled(tv, mi)
+            result = tcc.is_menu_command_enabled(tv, mi)
             eq_(result, c.enabled)
     c = TestConfig(has_command=True, enabled=False)
     yield test, c(has_command=False)
@@ -868,7 +868,7 @@ def test_CommandManager_is_command_enabled():
     yield test, c(error=False)
     yield test, c(error=False, enabled=True)
 
-def test_CommandManager_do_command():
+def test_CommandManager_do_menu_command():
     def test(c):
         m = Mocker()
         lg = m.replace("editxt.textcommand.log")
@@ -882,15 +882,15 @@ def test_CommandManager_do_command():
             tc(tv, None)
             if c.error:
                 m.throw(Exception)
-                lg.error("%s.execute failed", ANY, exc_info=True)
+                lg.exception("%s.execute failed", ANY)
         with m:
-            tcc.do_command(tv, mi)
+            tcc.do_menu_command(tv, mi)
     c = TestConfig(has_command=True)
     yield test, c(has_command=False)
     yield test, c(error=True)
     yield test, c(error=False)
 
-def test_CommandManager_do_command_by_selector():
+def test_CommandManager_do_command():
     def test(c):
         m = Mocker()
         lg = m.replace("editxt.textcommand.log")
@@ -904,9 +904,9 @@ def test_CommandManager_do_command_by_selector():
             callback(tv, None)
             if c.error:
                 m.throw(Exception)
-                lg.error("%s failed", callback, exc_info=True)
+                lg.exception("%s failed", callback)
         with m:
-            result = tcc.do_command_by_selector(tv, sel)
+            result = tcc.do_command(tv, sel)
             eq_(result, c.result)
     c = TestConfig(has_selector=True, result=False)
     yield test, c(has_selector=False)

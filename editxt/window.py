@@ -264,11 +264,11 @@ class Window(object):
                 self.current_editor = item
                 break
 
-    def do_command(self, sender):
-        self.app.text_commander.do_command(self.current_editor, sender)
+    def do_menu_command(self, sender):
+        self.app.text_commander.do_menu_command(self.current_editor, sender)
 
-    def validate_command(self, item):
-        return self.app.text_commander.is_command_enabled(self.current_editor, item)
+    def validate_menu_command(self, item):
+        return self.app.text_commander.is_menu_command_enabled(self.current_editor, item)
 
     @property
     def current_editor(self):

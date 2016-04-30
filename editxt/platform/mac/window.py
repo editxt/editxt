@@ -133,12 +133,17 @@ class WindowController(ak.NSWindowController):
     def togglePropertiesPane_(self, sender):
         self.window_.toggle_properties_pane()
 
-    def doCommand_(self, sender):
-        self.window_.do_command(sender)
+    def doMenuCommand_(self, sender):
+        self.window_.do_menu_command(sender)
+
+    def doCommandBySelector_(self, selector):
+        editor = self.window_.current_editor
+        if editor is not None:
+            editor.do_command(selector)
 
     def validateUserInterfaceItem_(self, item):
-        if item.action() == "doCommand:":
-            return self.window_.validate_command(item)
+        if item.action() == "doMenuCommand:":
+            return self.window_.validate_menu_command(item)
         # TODO implement validation for commands in file menu, etc.
         return True
 

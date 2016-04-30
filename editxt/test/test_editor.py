@@ -685,15 +685,14 @@ def test_Editor_close():
 
 def test_Editor_do_command():
     import editxt.platform.constants as const
-    def test(command, setup_mocks):
+    @test_app("editor")
+    def test(app, selector, setup_mocks):
         m = Mocker()
-        doc = m.mock(TextDocument)
-        with m.off_the_record():
-            editor = Editor(None, document=doc)
+        editor = app.windows[0].projects[0].editors[0]
         textview = m.mock(ak.NSTextView)
         expected = setup_mocks(m, editor, textview)
         with m:
-            result = editor.do_command(command)
+            result = editor.do_command(selector)
             eq_(result, expected)
 
     yield test, "unknown command", lambda m, dv, tv: False

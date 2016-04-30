@@ -595,7 +595,7 @@ class CommandManager(object):
                 name = cmd["name"] if "name" in cmd else text.lstrip()
             command = make_command(text)
             if key is not None and command is not None:
-                tag = self.add_menu_item(menu, name, "doCommand:", key, mask)
+                tag = self.add_menu_item(menu, name, key, mask)
                 self.commands[tag] = command
             elif key is None:
                 log.warn("unrecognized hotkey: %s", hotkey)
@@ -603,8 +603,7 @@ class CommandManager(object):
     def add_command(self, command, path, menu):
         if command.title is not None:
             key, mask = self.validate_hotkey(command.hotkey)
-            tag = command.__tag = self.add_menu_item(
-                menu, command.title, "doCommand:", key, mask)
+            tag = command.__tag = self.add_menu_item(menu, command.title, key, mask)
             self.commands[tag] = command
         if command.lookup_with_arg_parser:
             self.lookup_full_commands.insert(0, command)
@@ -618,10 +617,10 @@ class CommandManager(object):
         if command.config is not None:
             self.app.config.extend(command.name, command.config)
 
-    def add_menu_item(self, menu, title, selector, key, mask):
+    def add_menu_item(self, menu, title, key, mask):
         tag = next(self.tagger)
         item = ak.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
-            title, "doCommand:", key)
+            title, "doMenuCommand:", key)
         item.setKeyEquivalentModifierMask_(mask)
         item.setTag_(tag)
         menu.addItem_(item)
@@ -636,24 +635,24 @@ class CommandManager(object):
             return value
         return "", 0
 
-    def is_command_enabled(self, editor, sender):
+    def is_menu_command_enabled(self, editor, sender):
         command = self.commands.get(sender.tag())
         if command is not None:
             try:
                 return command.is_enabled(editor)
             except Exception:
-                log.error("%s.is_enabled failed", type(command).__name__, exc_info=True)
+                log.exception("%s.is_enabled failed", type(command).__name__)
         return False
 
-    def do_command(self, editor, sender):
+    def do_menu_command(self, editor, sender):
         command = self.commands.get(sender.tag())
         if command is not None:
             try:
                 command(editor, None)
             except Exception:
-                log.error("%s.execute failed", type(command).__name__, exc_info=True)
+                log.exception("%s.execute failed", type(command).__name__)
 
-    def do_command_by_selector(self, editor, selector):
+    def do_command(self, editor, selector):
         #log.debug(selector)
         callback = self.input_handlers.get(selector)
         if callback is not None:
@@ -661,7 +660,7 @@ class CommandManager(object):
                 callback(editor, None)
                 return True
             except Exception:
-                log.error("%s failed", callback, exc_info=True)
+                log.exception("%s failed", callback)
         return False
 
 

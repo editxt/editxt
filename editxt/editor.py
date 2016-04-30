@@ -80,14 +80,14 @@ class CommandSubject:
     def process_completed(self):
         self.process = None
 
-    def do_command(self, command):
-        if command == platform_const.ESCAPE and self.command_view is not None:
+    def do_command(self, selector):
+        if selector == platform_const.ESCAPE and self.command_view is not None:
             if self.command_view:
                 self.command_view.dismiss()
             else:
                 self.command_view.show_last_message()
             return True
-        return False
+        return self.app.text_commander.do_command(self, selector)
 
 
 class Editor(CommandSubject):

@@ -116,21 +116,20 @@ class TextView(ak.NSTextView):
     def performFindPanelAction_(self, sender):
         FindController.shared_controller(self.app).perform_action(sender)
 
-    def doCommand_(self, sender):
-        self.app.text_commander.do_command(self.editor, sender)
+    def doMenuCommand_(self, sender):
+        self.app.text_commander.do_menu_command(self.editor, sender)
 
     def doCommandBySelector_(self, selector):
-        if self.editor.do_command(selector):
-            return
-        if not self.app.text_commander.do_command_by_selector(self.editor, selector):
+        if not self.editor.do_command(selector):
             super(TextView, self).doCommandBySelector_(selector)
 
     def validateUserInterfaceItem_(self, item):
         if item.action() == "performFindPanelAction:":
             find = FindController.shared_controller(self.app)
             return find.validate_action(item.tag())
-        elif item.action() == "doCommand:":
-            return self.app.text_commander.is_command_enabled(self.editor, item)
+        elif item.action() == "doMenuCommand:":
+            return self.app.text_commander \
+                .is_menu_command_enabled(self.editor, item)
         return super(TextView, self).validateUserInterfaceItem_(item)
 
     # Drag/drop and copy/paste ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

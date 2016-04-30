@@ -684,7 +684,7 @@ class CommandTester(object):
         else:
             assert len(self.commands) == 1, "ambiguous command invocation"
             tag = self.commands[0].name
-            self.commander.do_command(self.editor, TestConfig(tag=lambda:tag))
+            self.commander.do_menu_command(self.editor, TestConfig(tag=lambda:tag))
 
     def __getattr__(self, name):
         return getattr(self.bar, name)

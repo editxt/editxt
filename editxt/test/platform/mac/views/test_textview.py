@@ -50,7 +50,7 @@ def test_TextView_performFindPanelAction_():
     with m:
         tv.performFindPanelAction_(sender)
 
-def test_TextView_doCommand_():
+def test_TextView_doMenuCommand_():
     from editxt.textcommand import CommandManager
     m = Mocker()
     tv = TextView.alloc().init()
@@ -58,9 +58,9 @@ def test_TextView_doCommand_():
     editor = tv.editor = m.mock(Editor)
     tc = app.text_commander >> m.mock(CommandManager)
     sender = m.mock()
-    tc.do_command(editor, sender)
+    tc.do_menu_command(editor, sender)
     with m:
-        tv.doCommand_(sender)
+        tv.doMenuCommand_(sender)
 
 def test_TextView_doCommandBySelector_():
     from editxt.textcommand import CommandManager
@@ -68,10 +68,8 @@ def test_TextView_doCommandBySelector_():
     tv = TextView.alloc().init()
     app = tv.app = m.mock()
     editor = tv.editor = m.mock(Editor)
-    tc = app.text_commander >> m.mock(CommandManager)
-    selector = m.mock()
-    editor.do_command(selector) >> False
-    tc.do_command_by_selector(editor, selector) >> True # omit super call
+    selector = "selector:"
+    editor.do_command(selector) >> False  # omit super call
     with m:
         tv.doCommandBySelector_(selector)
 
@@ -90,17 +88,17 @@ def test_TextView_validateUserInterfaceItem_():
             tag = item.tag() >> 42
             (fc.shared_controller(app) >> m.mock(FindController)). \
                 validate_action(tag) >> True
-        elif c.action == "doCommand:":
+        elif c.action == "doMenuCommand:":
             expectation.count(2)
             tc = app.text_commander >> m.mock(CommandManager)
-            tc.is_command_enabled(editor, item) >> True
+            tc.is_menu_command_enabled(editor, item) >> True
         else:
             raise NotImplementedError # left untested because I don't know how to mock a super call
         with m:
             assert tv.validateUserInterfaceItem_(item)
     c = TestConfig()
     yield test, c(action="performFindPanelAction:")
-    yield test, c(action="doCommand:")
+    yield test, c(action="doMenuCommand:")
 
 def test_TextView_setFrameSize():
     def test(c):
