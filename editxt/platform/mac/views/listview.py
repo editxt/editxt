@@ -24,6 +24,7 @@ import AppKit as ak
 import Foundation as fn
 from objc import super
 
+from editxt.events import eventize
 from editxt.platform.kvo import proxy_target
 
 log = logging.getLogger(__name__)
@@ -55,12 +56,14 @@ class ListView(object):
     changes. ``on_selection_changed(selected_items)``
     """
 
-    def __init__(self, items, colspec, **kw):
+    class events:
+        double_click = eventize.call('delegate.setup_double_click')
+        selection_changed = eventize.attr('delegate.on_selection_changed')
+
+    def __init__(self, items, colspec):
+        eventize(self)
         self.items = items
         self.colspec = colspec
-        self._init_table(**kw)
-
-    def _init_table(self, on_double_click=None, on_selection_changed=None):
         self.controller = ctrl = ak.NSArrayController.alloc().init()
         self.view = view = ak.NSTableView.alloc().init()
         self.scroll = scroll = ak.NSScrollView.alloc().init()
@@ -86,9 +89,6 @@ class ListView(object):
             view.setHeaderView_(None)
 
         self.delegate = TableDelegate.alloc().init_content_(view, ctrl)
-        self.delegate.on_selection_changed = on_selection_changed
-        if on_double_click is not None:
-            self.delegate.setup_double_click(on_double_click)
         view.setDelegate_(self.delegate)
 
     @property
@@ -167,9 +167,12 @@ class TableDelegate(ak.NSObject):
         self.table = table
         self.content = content
         self.on_selection_changed = None
+        self.double_click_callback = None
         return self
 
     def setup_double_click(self, callback):
+        if self.double_click_callback is not None:
+            raise NotImplementedError("cannot add multiple dobule click actions")
         self.double_click_callback = callback
         self.table.setTarget_(self)
         self.table.setDoubleAction_(b"onDoubleClick:")

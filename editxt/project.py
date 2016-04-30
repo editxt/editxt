@@ -274,11 +274,8 @@ class Project(CommandSubject):
         if self.main_view is None:
             def open_recent(item):
                 self.window.current_editor = self.create_editor(item.path)
-            self.listview = ListView(
-                self.recent,
-                RECENT_COLSPEC,
-                on_double_click=open_recent,
-            )
+            self.listview = ListView(self.recent, RECENT_COLSPEC)
+            self.listview.on.double_click(open_recent)
             self.main_view = add_command_view(
                 self.listview.scroll, view.bounds(), self.window.command)
             self.command_view = self.main_view.bottom

@@ -17,27 +17,35 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+import editxt.platform.mac.views as mac_views
 from editxt.constants import INFO
+from editxt.events import eventize
 from editxt.platform.mac.views import *
 from editxt.platform.mac.views.menu import Menu, MenuItem
 
 class ListView(object):
     """A test list view"""
 
-    def __init__(self, items, colspec, **options):
+    events = mac_views.ListView.events
+
+    def __init__(self, items, colspec):
+        eventize(self)
         self.items = items
         self.view = None
         self.frame = None
         self.scroll = None
         self.title = None
         self.selected_row = -1
-        self.options = options
+        class delegate:
+            on_selection_changed = None
+            def setup_double_click(callback):
+                pass
+        self.delegate = delegate
 
     def select(self, index):
         self.selected_row = index if index is not None else -1
-        if 'on_selection_changed' in self.options:
-            self.options['on_selection_changed'](
-                [] if self.selected_row < 0 else [self.items[self.selected_row]])
+        self.delegate.on_selection_changed(
+            [] if self.selected_row < 0 else [self.items[self.selected_row]])
 
     def become_subview_of(self, view):
         self.parent_view = view
@@ -61,8 +69,8 @@ class CommandView(object):
 
     def __init__(self):
         from editxt.textcommand import AutoCompleteMenu
-        self.completions = AutoCompleteMenu(
-            on_selection_changed=self.propose_completion)
+        self.completions = AutoCompleteMenu()
+        self.completions.on.selection_changed(self.propose_completion)
         self.command = None
         self.output_text = ""
         self._last_completions = [None]

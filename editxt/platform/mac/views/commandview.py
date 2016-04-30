@@ -51,8 +51,8 @@ class CommandView(DualView):
         self.undo_manager = fn.NSUndoManager.alloc().init()
         self.output = ContentSizedTextView.alloc().initWithFrame_(rect)
         self.output.scroller.setBorderType_(ak.NSBezelBorder)
-        self.completions = AutoCompleteMenu(
-            on_selection_changed=self.propose_completion)
+        self.completions = AutoCompleteMenu()
+        self.completions.on.selection_changed(self.propose_completion)
         self.completions.view.view.setRefusesFirstResponder_(True) # HACK deep reach
         self.completions.scroller.setBorderType_(ak.NSBezelBorder)
         self.input = ContentSizedTextView.alloc().initWithFrame_(rect)

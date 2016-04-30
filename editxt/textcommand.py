@@ -35,6 +35,7 @@ from editxt.command.parser import ArgumentError, CompleteWord, CompletionsList
 from editxt.command.util import has_editor, markdoc
 from editxt.commands import load_commands, help
 from editxt.config import schema_to_dict
+from editxt.events import eventize
 from editxt.history import History
 from editxt.platform.app import beep
 from editxt.platform.events import call_later
@@ -669,20 +670,21 @@ CommandHistory = History
 
 class AutoCompleteMenu(object):
 
-    def __init__(self, on_double_click=None, on_selection_changed=None):
-        if on_selection_changed is not None:
-            _osc = on_selection_changed
-            def on_selection_changed(items):
-                return _osc([x.value for x in items])
+    class events:
+        double_click = eventize.call("view.on.double_click", dispatch=False)
+        selection_changed = eventize.call("setup_selection_changed")
+
+    def __init__(self):
         from editxt.platform.views import ListView
+        eventize(self)
         self._items = KVOList()
-        self.view = ListView(
-            self._items,
-            [{"name": "value", "title": None}],
-            on_double_click=on_double_click,
-            on_selection_changed=on_selection_changed,
-        )
+        self.view = ListView(self._items, [{"name": "value", "title": None}])
         self.select_range = None
+
+    def setup_selection_changed(self, callback):
+        def adapt(items):
+            callback([x.value for x in items])
+        self.view.on.selection_changed(adapt)
 
     @property
     def scroller(self):
