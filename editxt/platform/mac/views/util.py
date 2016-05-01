@@ -24,9 +24,9 @@ def font_smoothing(draw):
     @wraps(draw)
     def wrapper(self, *args, **kw):
         ak.NSGraphicsContext.saveGraphicsState()
-        context = ak.NSGraphicsContext.currentContext()
-        context.setShouldAntialias_(getattr(self, 'font_smoothing', True))
         try:
+            context = ak.NSGraphicsContext.currentContext()
+            context.setShouldAntialias_(getattr(self, 'font_smoothing', True))
             return draw(self, *args, **kw)
         finally:
             ak.NSGraphicsContext.restoreGraphicsState()
