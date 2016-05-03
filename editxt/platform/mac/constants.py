@@ -113,3 +113,6 @@ class COLOR:
     text_color = _color("textColor")
     selection_color = _color("selectedTextBackgroundColor")
     background_color = _color("controlBackgroundColor")
+
+def get_default_encoding():
+    return 'utf-8'

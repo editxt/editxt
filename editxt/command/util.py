@@ -22,12 +22,14 @@ import re
 import time
 from collections import Counter
 from functools import partial
+from io import TextIOWrapper
 from subprocess import Popen, PIPE, STDOUT, TimeoutExpired
 from threading import Event
 from textwrap import dedent
 from traceback import format_exc
 
 import editxt.constants as const
+from editxt.platform.constants import get_default_encoding
 
 log = logging.getLogger(__name__)
 
@@ -131,46 +133,49 @@ def threaded_exec_shell(command, got_output, **kw):
     def run():
         buffer = []
         buffer_start = None
-        buffer_interval = 0.1
         for line in iter_output:
             buffer.append(line)
             if buffer_start is None:
                 buffer_start = time.time()
-            elif buffer_start + buffer_interval < time.time():
+            elif time.time() > buffer_start + 0.1 or len(buffer) > 20:
                 send_to_main_thread("".join(buffer))
                 time.sleep(0.1)  # allow main thread time to process events
                 buffer = []
                 buffer_start = time.time()
         if buffer:
             send_to_main_thread("".join(buffer))
+        log.debug("wait for %r", command)
         proc.wait()
+        log.debug("%r -> %s (terminated)", command, proc.returncode)
         send_to_main_thread(None, proc.returncode)
 
     def main_output(text, returncode=None):
         if returncode is not None:
             log.debug("%r -> %s", command, returncode)
-        if not terminated.is_set():
+        if not terminated:
             got_output(text, returncode)
 
     send_to_main_thread = partial(call_in_main_thread, main_output)
 
     log.debug("thread exec %r", command)
-    kw.setdefault("universal_newlines", True)
+    encoding = get_default_encoding()
     iter_output = kw.pop("iter_output", None)
     proc = Popen(command, stdout=PIPE, stderr=STDOUT, **kw)
+    stdout = TextIOWrapper(proc.stdout, encoding=encoding, newline=None)
     if iter_output is None:
-        iter_output = proc.stdout
+        iter_output = stdout
     else:
-        iter_output = iter_output(proc.stdout)
-    terminated = Event()
+        iter_output = iter_output(stdout)
+
+    terminated = False
     call_in_thread(run)
     proc_terminate = proc.terminate
     def terminate():
         # stop queueing output on main thread
         nonlocal send_to_main_thread
-        send_to_main_thread = lambda text, returncode: None
+        send_to_main_thread = lambda text, returncode=None: None
         # stop processing queued output on main thread
-        terminated.set()
+        terminated = True
         # terminate the process
         log.debug("terminate %r", command)
         return proc_terminate()

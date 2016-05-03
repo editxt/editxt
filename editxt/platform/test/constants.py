@@ -17,6 +17,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-from editxt.platform.mac.constants import KEY, COLOR
+from editxt.platform.mac.constants import KEY, COLOR, get_default_encoding
 
 ESCAPE = "escape"
