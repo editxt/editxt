@@ -27,8 +27,8 @@ from objc import super
 from PyObjCTools import AppHelper
 
 import editxt.constants as const
-import editxt.platform.constants as platform_const
 from editxt.editor import Editor
+from editxt.platform.constants import ESCAPE
 from editxt.util import untested, representedObject, short_path, WeakProperty
 
 from .alert import Alert
@@ -138,13 +138,13 @@ class WindowController(ak.NSWindowController):
         self.window_.do_menu_command(sender)
 
     def doCommandBySelector_(self, selector):
-        if selector == "cancel:" and selector != platform_const.ESCAPE:
-            # HACK cancelOperation: gets converted to cancel:
-            # http://www.cocoabuilder.com/archive/cocoa/195132-canceloperation-does-not-work-for-trapping-the-escape-key.html
-            selector = platform_const.ESCAPE
         editor = self.window_.current_editor
-        if editor is None or not editor.do_command(selector):
-            super().doCommandBySelector_(selector)
+        if editor is not None:
+            # 'cancelOperation:' gets converted to 'cancel:'; convert it back
+            sel = ESCAPE if selector == "cancel:" else selector
+            if editor.do_command(sel):
+                return
+        super().doCommandBySelector_(selector)
 
     def validateUserInterfaceItem_(self, item):
         if item.action() == "doMenuCommand:":
