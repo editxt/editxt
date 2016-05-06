@@ -80,8 +80,14 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+- fix intermittent slowness
+  - seemed to be in event handling
+  - could type quickly, but events that went through command lookup seemed
+    to be sluggish (home, end, up arrow, down arrow, etc.)
+- fix bug in close multiple windows:
+  unsaved document warning due to doc reload, doc is not actually dirty
+  the fix: disable auto-reload before initiating close
 - improve external command output and runner (incremental output)
-- fix ack output when searching HTML
 
 Multi-select in file tree
   - concatenate views on select multiple

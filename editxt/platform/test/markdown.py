@@ -22,3 +22,6 @@ class AttributedString(str): pass
 
 def markdown(value, pre=False):
     return AttributedString(value)
+
+def html_string(value, pre=False, css=""):
+    return AttributedString(value)

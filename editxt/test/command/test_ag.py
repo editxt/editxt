@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+import re
 from contextlib import contextmanager
 from os.path import isabs, join
 
@@ -51,7 +52,7 @@ def test_ag():
                 if "Traceback (most recent call last):" in output:
                     print(output)
                     assert "Traceback (most recent call last):" not in message
-            eq_(output, message)
+            eq_(output, markup(message))
             eq_(test_app(app).state, state)
 
     yield test("ag ([bB]|size:\ 10)",
@@ -120,3 +121,7 @@ def setup_files(tmp=None):
     else:
         do_setup(tmp)
         yield tmp
+
+
+def markup(text, link=re.compile(r"\[([^\]]+)\]\(([^\)]+)\)")):
+    return link.subn(r"<a href='\2'>\1</a>", text)[0].replace("\n", "<br />")

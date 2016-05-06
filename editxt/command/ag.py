@@ -17,6 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+import html
 import logging
 import os
 import re
@@ -30,7 +31,7 @@ from editxt.command.base import command, CommandError
 from editxt.command.parser import CommandParser, File, Regex, RegexPattern, String, VarArgs
 from editxt.command.util import exec_shell, get_selection, has_editor, threaded_exec_shell
 from editxt.platform.app import beep
-from editxt.platform.markdown import markdown
+from editxt.platform.markdown import html_string, markdown
 
 log = logging.getLogger(__name__)
 AG_LINE = re.compile(r"""
@@ -108,23 +109,24 @@ def make_line_processor(editor, pattern, ag_path, cwd):
     def ag_lines(lines):
         filepath = None
         absfilepath = None
+        br = "<br />"
         for line in lines:
             line = line.rstrip("\n")
             line = line.rstrip("\0") # bug in ag adds null char to some lines?
             if line.startswith(":"):
                 filepath = line[1:]
                 absfilepath = os.path.join(cwd, filepath)
-                yield open_link(filepath, absfilepath) + "\n"
+                yield open_link(filepath, absfilepath) + br
             else:
                 match = AG_LINE.match(line)
                 if match:
-                    yield link_matches(absfilepath, **match.groupdict('')) + "\n"
+                    yield link_matches(absfilepath, **match.groupdict('')) + br
                 else:
-                    yield line + "\n"
+                    yield html.escape(line) + br
 
-    def got_output(line, returncode):
-        if line is not None:
-            editor.append_message(markdown(line, pre=True))
+    def got_output(text, returncode):
+        if text is not None:
+            editor.append_message(html_string(text, pre=True))
         else:
             editor.process_completed()
         if returncode:
@@ -141,7 +143,7 @@ def make_line_processor(editor, pattern, ag_path, cwd):
 
 
 def open_link(text, path, goto=None):
-    """Create markdown "open" link
+    """Create HTML "open" link
 
     :param text: The link text.
     :param path: The path of the file to open.
@@ -151,14 +153,7 @@ def open_link(text, path, goto=None):
     url = "xt://open/" + quote(path)
     if goto is not None:
         url += "?goto={}".format(goto)
-    return markdown_link(text, url)
-
-
-def markdown_link(text, url):
-    return "[{}]({})".format(
-        text.replace("\\", "\\\\").replace("[", "\\[").replace("]", "\\]").replace("_", "\\_"),
-        url
-    )
+    return "<a href='{}'>{}</a>".format(url, html.escape(text))
 
 
 def link_matches(filepath, num, ranges, delim, text):
@@ -168,11 +163,11 @@ def link_matches(filepath, num, ranges, delim, text):
             for rng in ranges.split(","):
                 start, length = [int(n) for n in rng.split()]
                 if start > end:
-                    yield text[end:start]
+                    yield html.escape(text[end:start])
                 end = start + length
                 goto = "{}.{}.{}".format(num, start, length)
                 yield open_link(text[start:end], filepath, goto)
-        yield text[end:]
+        yield html.escape(text[end:])
     prefix = open_link(num, filepath, num) + delim
     line_text = "".join(iter_parts(ranges.lstrip(";")))
     return open_link(num, filepath, num) + delim + line_text

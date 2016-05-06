@@ -40,7 +40,6 @@ def markdown(value, pre=False, css=""):
     renderer = commonmark.HtmlRenderer()
     html = renderer.render(parser.parse(value))
     if pre:
-        css = PRE_CSS + css
         # unfortunately we have to roll our own preformatted text
         # because `white-space: pre` renders double-spaced lines.
         def nbsp(match):
@@ -49,6 +48,12 @@ def markdown(value, pre=False, css=""):
                 return " \u00A0" * (num // 2)
             return " \u00A0" * (num // 2) + " "
         html = SPACE_RE.sub(nbsp, html)
+    return html_string(html, pre, css)
+
+
+def html_string(html, pre=False, css=""):
+    if pre:
+        css = PRE_CSS + css
     else:
         # TODO make the default font/size configurable
         css = DEFAULT_CSS + css
