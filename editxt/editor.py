@@ -57,28 +57,29 @@ def document_property(do):
 class CommandSubject:
 
     id = None  # will be overwritten (here for type api for testing)
-    process = None
     command_view = None
+    command_output = None
 
     def message(self, msg, msg_type=const.INFO):
         """Display a message in the command view output pane"""
         self.command_view.message(msg, self.text_view, msg_type)
 
-    def append_message(self, msg, msg_type=const.INFO):
-        """Append message to the command view output pane"""
-        self.command_view.append_message(msg, self.text_view, msg_type)
+    def get_output_view(self):
+        self.stop_output()
+        self.message("")
+        self.command_output = CommandOutput(self.command_view, self)
+        return self.command_output
 
-    def add_process(self, proc):
-        self.kill_process()
-        self.process = proc
+    def redirect_output_to(self, view):
+        if self.command_output is not None:
+            view.on.close(self.command_output.kill_process)
+            self.command_output.output_view = view
+            self.command_output = None
 
-    def kill_process(self):
-        if self.process is not None:
-            self.process.terminate()
-            self.process_completed()
-
-    def process_completed(self):
-        self.process = None
+    def stop_output(self):
+        if self.command_output is not None:
+            self.command_output.kill_process()
+            self.command_output = None
 
     def do_command(self, selector):
         if selector == platform_const.ESCAPE and self.command_view is not None:
@@ -88,6 +89,29 @@ class CommandSubject:
                 self.command_view.show_last_message()
             return True
         return self.app.text_commander.do_command(self, selector)
+
+
+class CommandOutput:
+
+    editor = WeakProperty()
+
+    def __init__(self, output_view, editor):
+        self.output_view = output_view
+        self.editor = editor
+        self.process = None
+
+    def append_message(self, msg, msg_type=const.INFO):
+        self.output_view.append_message(msg, self.editor.text_view, msg_type)
+
+    def kill_process(self):
+        if self.process is not None:
+            self.process.terminate()
+            self.process_completed()
+
+    def process_completed(self):
+        self.process = None
+        self.output_view = None
+        self.editor.stop_output()
 
 
 class Editor(CommandSubject):
@@ -513,7 +537,7 @@ class Editor(CommandSubject):
         self.undo_manager.off(self.on_dirty_status_changed)
         # remove from window.dirty_editors if present
         project.window.on_dirty_status_changed(self, False)
-        self.kill_process()
+        self.stop_output()
         self.project = None # removes editor from project.editors
         if self.text_view is not None and doc.text_storage is not None:
             doc.text_storage.removeLayoutManager_(self.text_view.layoutManager())

@@ -651,19 +651,19 @@ class CommandTester(object):
             if isinstance(msg, Exception):
                 raise msg
             raise AssertionError(msg)
-        def append_message(msg, msg_type=const.INFO):
-            if self.output is None:
-                self.output = msg
-            else:
-                self.output += msg
-            self.output_msg_type = msg_type
+        class command_view:
+            def append_message(msg, text_view, msg_type=const.INFO):
+                if self.output is None:
+                    self.output = msg
+                else:
+                    self.output += msg
+                self.output_msg_type = msg_type
         class editor:
             text_view = kw.pop("textview", object)
-            command_view = kw.pop("command_view", object)
         editor = kw.pop("editor", editor)
         if not isinstance(editor, type(Mocker().mock())):
             editor.message = message
-            editor.append_message = append_message
+            editor.command_view = kw.pop("command_view", command_view)
         class window:
             current_editor = editor
         with test_app() as app:

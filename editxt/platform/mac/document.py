@@ -72,11 +72,11 @@ def setup_main_view(editor, frame):
     #scroll.verticalRulerView().invalidateRuleThickness()
     scroll.setRulersVisible_(True)
 
-    return add_command_view(scroll, frame, editor.project.window.command)
+    return add_command_view(scroll, frame, editor)
 
 
-def add_command_view(document_scroller, frame, command_bar):
-    command = CommandView.alloc().init_frame_(command_bar, frame)
+def add_command_view(document_scroller, frame, editor):
+    command = CommandView.alloc().init_frame_(editor, frame)
     def doc_height():
         return document_scroller.contentSize().height
     def command_height():

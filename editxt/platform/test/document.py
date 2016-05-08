@@ -24,9 +24,10 @@ def setup_main_view(*args):
 def teardown_main_view(*args):
     pass
 
-def add_command_view(view, frame, command_bar):
+def add_command_view(view, frame, editor):
     class command_view:
-        command = command_bar
+        command = editor.project.window.command
+    command_view.editor = editor
     class main_view:
         top = view
         bottom = command_view

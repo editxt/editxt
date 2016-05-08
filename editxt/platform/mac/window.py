@@ -28,10 +28,12 @@ from PyObjCTools import AppHelper
 
 import editxt.constants as const
 from editxt.editor import Editor
+from editxt.events import eventize
 from editxt.platform.constants import ESCAPE
 from editxt.util import untested, representedObject, short_path, WeakProperty
 
 from .alert import Alert
+from .views.commandview import ContentSizedTextView, get_attributed_string
 
 log = logging.getLogger(__name__)
 
@@ -425,10 +427,16 @@ class EditorWindow(ak.NSWindow):
 
 class OutputPanel(ak.NSPanel):
 
+    handle_close = None
+
+    class events:
+        close = eventize.attr("handle_close")
+
     def __new__(cls, command, text, rect=None):
         self = cls.alloc().init_(rect)
         self.command = command
         self.text = text
+        eventize(self)
         return self
 
     def init_(self, rect):
@@ -442,7 +450,7 @@ class OutputPanel(ak.NSPanel):
         self = super().initWithContentRect_styleMask_backing_defer_(
             rect, style, ak.NSBackingStoreBuffered, True)
         frame = self.frame()
-        self.textview = textview = ak.NSTextView.alloc().initWithFrame_(frame)
+        self.textview = textview = ContentSizedTextView.alloc().initWithFrame_(frame)
         textview.setEditable_(False)
         textview.setSelectable_(True)
         textview.setLinkTextAttributes_({
@@ -490,6 +498,14 @@ class OutputPanel(ak.NSPanel):
         point = window.wc.window().frame().origin
         self.orderFront_(window)
 
+    def append_message(self, message, textview=None, msg_type=const.INFO):
+        if not message:
+            return
+        font, smooth = self.get_font(textview)
+        text = get_attributed_string(message, msg_type, font)
+        self.textview.font_smoothing = smooth
+        self.textview.append_text(text)
+
     @property
     def text(self):
         return self.textview.textStorage()
@@ -502,3 +518,8 @@ class OutputPanel(ak.NSPanel):
         event = ak.NSApp.currentEvent()
         meta = bool(event.modifierFlags() & ak.NSCommandKeyMask)
         return self.command.handle_link(str(link), meta)
+
+    def close(self):
+        if self.handle_close is not None:
+            self.handle_close()
+        return super().close()

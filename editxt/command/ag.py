@@ -96,15 +96,13 @@ def ag(editor, args):
     options = editor.app.config.for_command("ag")["options"]
     options = DEFAULT_OPTIONS + shlex.split(options)
     cwd = args.path or editor.dirname()
-    ag_lines, got_output = make_line_processor(editor, pattern, ag_path, cwd)
+    view = editor.get_output_view()
+    line_processor = make_line_processor(view, pattern, ag_path, cwd)
     command = [ag_path, pattern] + [o for o in args.options if o] + options
-    editor.message("")
-    proc = threaded_exec_shell(command, cwd=cwd,
-                               iter_output=ag_lines, got_output=got_output)
-    editor.add_process(proc)
+    view.process = threaded_exec_shell(command, cwd=cwd, **line_processor)
 
 
-def make_line_processor(editor, pattern, ag_path, cwd):
+def make_line_processor(view, pattern, ag_path, cwd):
 
     def ag_lines(lines):
         filepath = None
@@ -126,9 +124,7 @@ def make_line_processor(editor, pattern, ag_path, cwd):
 
     def got_output(text, returncode):
         if text is not None:
-            editor.append_message(html_string(text, pre=True))
-        else:
-            editor.process_completed()
+            view.append_message(html_string(text, pre=True))
         if returncode:
             if is_ag_installed(ag_path):
                 if returncode == 1:
@@ -137,9 +133,11 @@ def make_line_processor(editor, pattern, ag_path, cwd):
                     message = "exit code: {}".format(returncode)
             else:
                 message = markdown(AG_NOT_INSTALLED.format(ag_path))
-            editor.append_message(message, msg_type=const.ERROR)
+            view.append_message(message, msg_type=const.ERROR)
+        if returncode is not None:
+            view.process_completed()
 
-    return ag_lines, got_output
+    return {"iter_output": ag_lines, "got_output": got_output}
 
 
 def open_link(text, path, goto=None):

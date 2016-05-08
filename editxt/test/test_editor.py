@@ -47,6 +47,7 @@ log = logging.getLogger(__name__)
 
 def verify_editor_interface(editor):
     from editxt.util import KVOProxy
+    from editxt.platform.window import OutputPanel
 
     assert editor.id is not None
     assert not editor.is_dirty
@@ -68,14 +69,35 @@ def verify_editor_interface(editor):
         assert not editor.is_leaf
         assert editor.expanded
 
-    # verify process management interface
+    # verify command output interface
+    m = Mocker()
+    command_view = editor.command_view = m.mock()
+    command_view.message("", None, const.INFO)
+    with m:
+        output = editor.get_output_view()
+    eq_(editor.command_output, output)
+
+    m = Mocker()
+    panel = m.mock(OutputPanel)
+    panel.on.close(output.kill_process)
+    with m:
+        editor.redirect_output_to(panel)
+    eq_(editor.command_output, None)
+
+    m = Mocker()
+    command_view = editor.command_view = m.mock()
+    command_view.message("", None, const.INFO)
+    with m:
+        output = editor.get_output_view()
+    eq_(editor.command_output, output)
+
     m = Mocker()
     proc = m.mock()
-    editor.add_process(proc)
     proc.terminate()
+    output.process = proc
     with m:
-        editor.kill_process()
-    editor.process_completed()
+        editor.stop_output()
+    eq_(editor.command_output, None)
 
 
 def test_editor_interface():

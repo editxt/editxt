@@ -362,14 +362,15 @@ def test_set_name():
 def test_set_main_view_of_window():
     window = TestConfig(command="<command>")
     project = Project(window)
+    eq_(project.main_view, None)
     m = Mocker()
     view = m.mock()
     view.bounds() >> "<frame>"
     win = m.mock()
     with m:
-        eq_(project.main_view, None)
         project.set_main_view_of_window(view, win)
         assert project.main_view is not None
+        eq_(project.command_view.editor, project)
         eq_(project.command_view.command, "<command>")
 
 def test_interactive_close():

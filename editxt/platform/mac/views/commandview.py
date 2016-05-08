@@ -29,13 +29,15 @@ from editxt.constants import ERROR, HTML, INFO, LARGE_NUMBER_FOR_TEXT
 from editxt.platform.mac.views.dualview import DualView, SHOULD_RESIZE
 from editxt.platform.mac.views.util import font_smoothing
 from editxt.platform.kvo import KVOList, KVOProxy
-from editxt.util import load_image
+from editxt.util import load_image, WeakProperty
 
 log = logging.getLogger(__name__)
 ACTIVATE = "activate"
 MESSAGE_COLORS = {INFO: None, ERROR: ak.NSColor.redColor()}
 
 class CommandView(DualView):
+
+    editor = WeakProperty()
 
     class KEYS:
         ESC = "cancelOperation:"
@@ -46,7 +48,7 @@ class CommandView(DualView):
         ENTER = "insertNewline:"
         SELECTION_CHANGED = None
 
-    def init_frame_(self, command, rect):
+    def init_frame_(self, editor, rect):
         from editxt.textcommand import AutoCompleteMenu
         self.undo_manager = fn.NSUndoManager.alloc().init()
         self.output = ContentSizedTextView.alloc().initWithFrame_(rect)
@@ -94,7 +96,8 @@ class CommandView(DualView):
                 textview.placeholder = self.command.get_placeholder(text)
         self.input.text_did_change_handler = text_did_change_handler
         self.setHidden_(True)
-        self.command = command
+        self.editor = editor
+        self.command = editor.project.window.command
         self.active = False
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
             self, "shouldResize:", SHOULD_RESIZE, self.input_group)
@@ -156,17 +159,17 @@ class CommandView(DualView):
     def activate(self, command, initial_text="", select=False):
         new_activation = not self.active
         self.active = True
-        editor = command.window.current_editor
+        editor = self.editor
         if new_activation:
             #self.performSelector_withObject_afterDelay_("selectText:", self, 0)
             # possibly use setSelectedRange
             # http://jeenaparadies.net/weblog/2009/apr/focus-a-nstextfield
-            font, smooth = self.get_font(editor and editor.text_view)
+            font, smooth = self.get_font(editor.text_view)
             self.input.setFont_(font)
             self.input.font_smoothing = smooth
             self.output.setString_("")
-        elif editor is not None:
-            editor.kill_process()
+        else:
+            editor.stop_output()
         if new_activation or initial_text:
             self.input.setString_(initial_text)
             if select and initial_text:
@@ -176,13 +179,12 @@ class CommandView(DualView):
             self.window().makeFirstResponder_(self.input)
 
     def deactivate(self):
-        editor = self.command.window.current_editor
-        if editor is not None:
-            editor.kill_process()
+        editor = self.editor
+        editor.stop_output()
         if self.active:
             self.completions.items = []
             self.active = False
-            if editor is not None and self.window() is not None:
+            if self.window() is not None:
                 self.window().makeFirstResponder_(editor.text_view)
             self.command.reset()
         self.should_resize()
@@ -279,7 +281,9 @@ class CommandView(DualView):
         from editxt.platform.views import screen_rect
         rect = screen_rect(self.output)
         rect.origin.y -= self.popout_button.image().size().height
-        self.command.create_output_panel(self, self.output.textStorage(), rect)
+        text = self.output.textStorage()
+        panel = self.command.create_output_panel(self, text, rect)
+        self.editor.redirect_output_to(panel)
 
     #def textDidEndEditing_(self, notification):
     #    self.deactivate()
