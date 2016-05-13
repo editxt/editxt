@@ -177,21 +177,10 @@ def test_Editor_project():
             "window(A) project(0) editor(b)* window(B) project(1)*")
 
 def test_Editor_window():
-    @test_app("editor")
-    def test(app, has_scroll_view):
-        m = Mocker()
-        win = m.mock(ak.NSWindow)
-        dv = Editor(None, document=app.document_with_path(None))
-        if has_scroll_view:
-            dv.scroll_view = sv = m.mock(ak.NSScrollView)
-            sv.window() >> win
-        else:
-            win = None
-        with m:
-            result = dv.window()
-            eq_(result, win)
-    yield test, True
-    yield test, False
+    with test_app("editor") as app:
+        window = app.windows[0]
+        editor = window.projects[0].editors[0]
+        eq_(editor.window, window)
 
 def test_Editor_save():
     @gentest

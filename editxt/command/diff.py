@@ -36,9 +36,9 @@ def diff(editor, args):
     if args and args.file:
         path1 = args.file
         path2 = get_text_path(editor, remove)
-    elif len(editor.project.window.selected_items) == 2:
+    elif len(editor.window.selected_items) == 2:
         path1 = get_text_path(editor, remove)
-        path2 = get_text_path(editor.project.window.selected_items[1], remove)
+        path2 = get_text_path(editor.window.selected_items[1], remove)
     elif editor.document.has_real_path():
         path1 = editor.file_path
         path2 = get_text_path(editor, remove)

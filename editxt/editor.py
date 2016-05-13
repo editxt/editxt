@@ -88,7 +88,7 @@ class CommandSubject:
             self.command_output.output_view = panel
             self.command_output = None
         self.command_view.dismiss()
-        panel.show(self.project.window)
+        panel.show(self.window)
         return panel
 
     def stop_output(self):
@@ -204,18 +204,16 @@ class Editor(CommandSubject):
         self._project = new
 
     @property
+    def window(self):
+        return self.project.window
+
+    @property
     def name(self):
         return self.document.name
 
     @property
     def undo_manager(self):
         return self.document.undo_manager
-
-    def window(self):
-        """Return the native window of this view (NOT a editxt.window.Window)"""
-        if self.scroll_view is not None:
-            return self.scroll_view.window()
-        return None
 
     @property
     def file_path(self):
@@ -238,7 +236,7 @@ class Editor(CommandSubject):
         return self.document.is_dirty()
 
     def on_dirty_status_changed(self, dirty):
-        self.project.window.on_dirty_status_changed(self, dirty)
+        self.window.on_dirty_status_changed(self, dirty)
 
     def short_path(self, name=True):
         path = self.file_path
@@ -269,7 +267,7 @@ class Editor(CommandSubject):
         of the save operation (True if successful else False).
         """
         document = self.document
-        window = self.project.window
+        window = self.window
         def save_with_path(path):
             saved = False
             try:
@@ -316,7 +314,7 @@ class Editor(CommandSubject):
                 callback(save is not None)
         document = self.document
         save_as = not document.has_real_path()
-        self.project.window.prompt_to_close(self, save_discard_or_cancel, save_as)
+        self.window.prompt_to_close(self, save_discard_or_cancel, save_as)
 
     def set_main_view_of_window(self, view, window):
         frame = view.bounds()
@@ -338,8 +336,8 @@ class Editor(CommandSubject):
         self.document.check_for_external_changes(window)
 
     def focus(self):
-        if self is not self.project.window.current_editor:
-            self.project.window.current_editor = self
+        if self is not self.window.current_editor:
+            self.window.current_editor = self
         elif self.text_view is not None:
             self.text_view.focus()
 
@@ -360,7 +358,7 @@ class Editor(CommandSubject):
         ruler.invalidateRuleThickness()
         view.setTextContainerInset_(fn.NSMakeSize(half_char, half_char)) # width/height
         view.setNeedsDisplay_(True)
-        if self.project.window.current_editor is self:
+        if self.window.current_editor is self:
             self.document.update_syntaxer()
 
     @property

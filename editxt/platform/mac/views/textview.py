@@ -63,7 +63,7 @@ class TextView(ak.NSTextView):
         self = cls.alloc().initWithFrame_textContainer_(frame, container)
         eventize(self)
         self.editor = editor
-        self.app = editor.project.window.app
+        self.app = editor.app
         self.delegate = TextViewDelegate.alloc().init()
         self.on.selection_changed(editor.on_selection_changed)
         self.setDelegate_(self.delegate)

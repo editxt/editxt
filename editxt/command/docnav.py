@@ -175,8 +175,8 @@ def doc(editor, args):
         if new_editor is None:
             new_editor = args.name
         if new_editor is not EditorTreeItem.NO_MATCH and \
-                editor.project.window.focus(new_editor):
+                editor.window.focus(new_editor):
             return
-    elif editor.project.window.focus(args.direction, args.offset):
+    elif editor.window.focus(args.direction, args.offset):
         return
     beep()
