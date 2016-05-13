@@ -21,8 +21,14 @@ import AppKit as ak
 
 from editxt.datatypes import Font
 
+
+def make_font(cocoa_font, smooth):
+    _font = cocoa_font
+    return Font(_font.displayName(), _font.pointSize(), smooth, _font)
+
+
 _font = ak.NSFont.userFixedPitchFontOfSize_(-1.0)
-DEFAULT_FONT = Font(_font.displayName(), _font.pointSize(), True, _font)
+DEFAULT_FONT = make_font(_font, True)
 
 
 def get_font(face, size, smooth, ignore=None):
@@ -30,6 +36,12 @@ def get_font(face, size, smooth, ignore=None):
     if font is None:
         font = ak.NSFont.fontWithName_size_(DEFAULT_FONT.face, size)
     return Font(font.displayName(), font.pointSize(), smooth, font)
+
+
+def get_font_from_view(view, app):
+    if view is not None:
+        return make_font(view.font(), getattr(view, "font_smoothing", True))
+    return app.default_font
 
 
 def get_system_font_names():

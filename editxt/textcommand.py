@@ -42,7 +42,6 @@ from editxt.platform.events import call_later
 from editxt.platform.kvo import KVOList, KVOProxy
 from editxt.platform.markdown import AttributedString
 from editxt.platform.views import CommandView
-from editxt.platform.window import OutputPanel
 from editxt.util import parse_hotkey, WeakProperty
 
 log = logging.getLogger(__name__)
@@ -472,15 +471,6 @@ class CommandBar(object):
                     log.debug("invalid goto: %r (link: %s)", goto, link)
                 else:
                     editors[0].goto_line(num)
-
-    def create_output_panel(self, command_view, text, rect):
-        panel = OutputPanel(self, text, rect)
-        panel.show(self.window)
-        if command_view.command is None:
-            command_view.dismiss()
-        else:
-            command_view.message("")
-        return panel
 
     def reset(self):
         view, self.history_view = self.history_view, None

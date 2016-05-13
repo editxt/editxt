@@ -71,21 +71,24 @@ def verify_editor_interface(editor):
 
     # verify command output interface
     m = Mocker()
-    command_view = editor.command_view = m.mock()
+    command_view = editor.command_view = m.mock(CommandView)
     command_view.message("", None, const.INFO)
     with m:
         output = editor.get_output_view()
     eq_(editor.command_output, output)
 
     m = Mocker()
-    panel = m.mock(OutputPanel)
-    panel.on.close(output.kill_process)
+    command_view = editor.command_view = m.mock(CommandView)
+    command_view.dismiss()
+    rect = m.mock()
     with m:
-        editor.redirect_output_to(panel)
+        panel = editor.create_output_panel("some text", rect)
     eq_(editor.command_output, None)
+    eq_(panel.text, "some text")
+    eq_(panel.rect, rect)
 
     m = Mocker()
-    command_view = editor.command_view = m.mock()
+    command_view = editor.command_view = m.mock(CommandView)
     command_view.message("", None, const.INFO)
     with m:
         output = editor.get_output_view()

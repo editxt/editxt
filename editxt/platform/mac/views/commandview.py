@@ -26,6 +26,7 @@ from objc import pyobjc_unicode, super
 
 from editxt.command.parser import CompletionsList
 from editxt.constants import ERROR, HTML, INFO, LARGE_NUMBER_FOR_TEXT
+from editxt.platform.mac.font import get_font_from_view
 from editxt.platform.mac.views.dualview import DualView, SHOULD_RESIZE
 from editxt.platform.mac.views.util import font_smoothing
 from editxt.platform.kvo import KVOList, KVOProxy
@@ -148,12 +149,10 @@ class CommandView(DualView):
 
     @property
     def output_text(self):
-        return self.output.string()
+        return self.output.textStorage()
 
     def get_font(self, view):
-        if view is not None:
-            return view.font(), getattr(view, "font_smoothing", True)
-        font = self.command.window.app.default_font
+        font = get_font_from_view(view, self.editor.app)
         return font.font, font.smooth
 
     def activate(self, command, initial_text="", select=False):
@@ -215,7 +214,7 @@ class CommandView(DualView):
         text = get_attributed_string(message, msg_type, font)
         self.output.font_smoothing = smooth
         self.output.append_text(text)
-        self.window().__last_output = self.output.textStorage().copy()
+        self.window().__last_output = self.output_text.copy()
         self.should_resize()
 
     def show_last_message(self):
@@ -281,9 +280,7 @@ class CommandView(DualView):
         from editxt.platform.views import screen_rect
         rect = screen_rect(self.output)
         rect.origin.y -= self.popout_button.image().size().height
-        text = self.output.textStorage()
-        panel = self.command.create_output_panel(self, text, rect)
-        self.editor.redirect_output_to(panel)
+        self.editor.create_output_panel(self.output_text, rect)
 
     #def textDidEndEditing_(self, notification):
     #    self.deactivate()

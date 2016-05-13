@@ -20,7 +20,7 @@
 import logging
 import os
 
-from editxt.editor import Editor
+from editxt.events import eventize
 from editxt.util import WeakProperty
 from editxt.test.util import test_app
 
@@ -46,6 +46,7 @@ class WindowController(object):
         return None
 
     def setup_current_editor(self, editor):
+        from editxt.editor import Editor
         self.selected_items = [editor]
         return isinstance(editor, Editor)
 
@@ -113,9 +114,16 @@ class WindowController(object):
 
 class OutputPanel(object):
 
+    handle_close = None
+
+    class events:
+        close = eventize.attr("handle_close")
+
     def __init__(self, command, text, rect=None):
         self.command = command
         self.text = text
+        self.rect = rect
+        eventize(self)
 
     def show(self, window):
         pass

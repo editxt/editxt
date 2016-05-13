@@ -36,6 +36,7 @@ from editxt.platform.alert import Alert
 from editxt.platform.document import setup_main_view, teardown_main_view
 from editxt.platform.events import debounce
 from editxt.platform.kvo import KVOList, KVOProxy, KVOLink
+from editxt.platform.window import OutputPanel
 from editxt.util import noraise, register_undo_callback, user_path, WeakProperty
 
 log = logging.getLogger(__name__)
@@ -70,11 +71,25 @@ class CommandSubject:
         self.command_output = CommandOutput(self.command_view, self)
         return self.command_output
 
-    def redirect_output_to(self, view):
+    def create_output_panel(self, text, rect):
+        """Create a command output panel
+
+        This also redirects output of the currently running command (if
+        any) to the new output panel.
+
+        :param text: A native rich text string to be displayed in the panel.
+        :param rect: The initial size and location in screen coordinates of
+        the output panel.
+        :returns: The output panel object.
+        """
+        panel = OutputPanel(self, text, rect)
         if self.command_output is not None:
-            view.on.close(self.command_output.kill_process)
-            self.command_output.output_view = view
+            panel.on.close(self.command_output.kill_process)
+            self.command_output.output_view = panel
             self.command_output = None
+        self.command_view.dismiss()
+        panel.show(self.project.window)
+        return panel
 
     def stop_output(self):
         if self.command_output is not None:

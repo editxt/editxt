@@ -27,12 +27,12 @@ from objc import super
 from PyObjCTools import AppHelper
 
 import editxt.constants as const
-from editxt.editor import Editor
 from editxt.events import eventize
-from editxt.platform.constants import ESCAPE
 from editxt.util import untested, representedObject, short_path, WeakProperty
 
 from .alert import Alert
+from .constants import ESCAPE
+from .font import get_font_from_view
 from .views.commandview import ContentSizedTextView, get_attributed_string
 
 log = logging.getLogger(__name__)
@@ -501,9 +501,9 @@ class OutputPanel(ak.NSPanel):
     def append_message(self, message, textview=None, msg_type=const.INFO):
         if not message:
             return
-        font, smooth = self.get_font(textview)
-        text = get_attributed_string(message, msg_type, font)
-        self.textview.font_smoothing = smooth
+        font = get_font_from_view(textview, self.app)
+        text = get_attributed_string(message, msg_type, font.font)
+        self.textview.font_smoothing = font.smooth
         self.textview.append_text(text)
 
     @property
