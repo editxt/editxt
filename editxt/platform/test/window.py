@@ -125,5 +125,10 @@ class OutputPanel(object):
         self.rect = rect
         eventize(self)
 
+    def is_waiting(self, waiting=None):
+        if waiting is not None:
+            self.waiting = waiting
+        return getattr(self, "waiting", False)
+
     def show(self, window):
         pass

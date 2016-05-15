@@ -94,6 +94,11 @@ class CommandView(object):
     def message(self, message, textview=None, msg_type=INFO):
         self.output_text = message
 
+    def is_waiting(self, waiting=None):
+        if waiting is not None:
+            self.waiting = waiting
+        return getattr(self, "waiting", False)
+
     def deactivate(self):
         if self.command is not None:
             self.completions.items = []
@@ -104,6 +109,7 @@ class CommandView(object):
     def dismiss(self):
         self.output_text = ""
         self.deactivate()
+        self.is_waiting(False)
 
     def should_resize(self):
         pass

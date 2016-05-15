@@ -111,9 +111,27 @@ class CommandOutput:
     editor = WeakProperty()
 
     def __init__(self, output_view, editor):
-        self.output_view = output_view
+        self._output_view = output_view
         self.editor = editor
-        self.process = None
+        self._process = None
+
+    @property
+    def process(self):
+        return self._process
+    @process.setter
+    def process(self, value):
+        self._process = value
+        if self.output_view is not None:
+            self.output_view.is_waiting(value is not None)
+
+    @property
+    def output_view(self):
+        return self._output_view
+    @output_view.setter
+    def output_view(self, value):
+        self._output_view = value
+        if value is not None:
+            value.is_waiting(self.process is not None)
 
     def append_message(self, msg, msg_type=const.INFO):
         self.output_view.append_message(msg, self.editor.text_view, msg_type)

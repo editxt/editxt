@@ -100,6 +100,7 @@ class CommandView(DualView):
         self.editor = editor
         self.command = editor.project.window.command
         self.active = False
+        self.spinner = None
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
             self, "shouldResize:", SHOULD_RESIZE, self.input_group)
         return self
@@ -108,6 +109,7 @@ class CommandView(DualView):
         self.input = None
         self.completions = None
         self.output = None
+        self.spinner = None
         self.popout_button = None
         self.command = None
         ak.NSNotificationCenter.defaultCenter().removeObserver_(self)
@@ -191,6 +193,7 @@ class CommandView(DualView):
     def dismiss(self):
         if self:
             self.output.setString_("")
+            self.is_waiting(False)
             self.deactivate()
 
     def message(self, message, textview=None, msg_type=INFO):
@@ -253,6 +256,29 @@ class CommandView(DualView):
             self.command.show_help(self.command_text)
         else:
             ak.NSBeep()
+
+    def is_waiting(self, waiting=None):
+        if waiting is not None:
+            self.waiting = waiting
+            if waiting:
+                if self.spinner is None:
+                    rect = ak.NSMakeRect(
+                        self.output.frame().size.width - 32,  # right
+                        2,   # top
+                        16,  # width
+                        16,  # height
+                    )
+                    self.spinner = ak.NSProgressIndicator.alloc().initWithFrame_(rect)
+                    self.spinner.setControlSize_(ak.NSSmallControlSize)
+                    self.spinner.setStyle_(ak.NSProgressIndicatorSpinningStyle)
+                    self.output.addSubview_(self.spinner)
+                elif self.spinner.isHidden():
+                    self.spinner.setHidden_(False)
+                self.spinner.startAnimation_(self)
+            elif self.spinner is not None:
+                self.spinner.setHidden_(True)
+                self.spinner.stopAnimation_(self)
+        return getattr(self, "waiting", False)
 
     def setup_output_popout_button(self):
         button = ak.NSButton.alloc().initWithFrame_(

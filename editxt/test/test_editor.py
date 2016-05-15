@@ -71,29 +71,29 @@ def verify_editor_interface(editor):
 
     # verify command output interface
     m = Mocker()
-    command_view = editor.command_view = m.mock(CommandView)
-    command_view.message("", None, const.INFO)
-    with m:
-        output = editor.get_output_view()
+    command_view = editor.command_view = CommandView()
+    output = editor.get_output_view()
+    assert not command_view.is_waiting()
+    proc = m.mock()
+    output.process = proc
     eq_(editor.command_output, output)
+    assert command_view.is_waiting()
 
-    m = Mocker()
-    command_view = editor.command_view = m.mock(CommandView)
-    command_view.dismiss()
-    rect = m.mock()
-    with m:
-        panel = editor.create_output_panel("some text", rect)
+    rect = object()
+    panel = editor.create_output_panel("some text", rect)
+    assert not command_view.is_waiting()
+    assert panel.is_waiting()
+    eq_(command_view.output_text, "")
     eq_(editor.command_output, None)
     eq_(panel.text, "some text")
     eq_(panel.rect, rect)
-
-    m = Mocker()
-    command_view = editor.command_view = m.mock(CommandView)
-    command_view.message("", None, const.INFO)
+    proc.terminate()
     with m:
-        output = editor.get_output_view()
-    eq_(editor.command_output, output)
+        output.kill_process()
+    assert not panel.is_waiting()
 
+    command_view = editor.command_view = CommandView()
+    output = editor.get_output_view()
     m = Mocker()
     proc = m.mock()
     proc.terminate()

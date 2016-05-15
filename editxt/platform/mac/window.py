@@ -479,6 +479,7 @@ class OutputPanel(ak.NSPanel):
         self.setReleasedWhenClosed_(True)
         self.setHidesOnDeactivate_(False)
         self.setLevel_(ak.NSNormalWindowLevel)
+        self.spinner = None
         self.app = None
         return self
 
@@ -488,6 +489,7 @@ class OutputPanel(ak.NSPanel):
             self.app = None
         self.textview = None
         self.scroller = None
+        self.spinner = None
         self.command = None
         super().dealloc()
 
@@ -505,6 +507,29 @@ class OutputPanel(ak.NSPanel):
         text = get_attributed_string(message, msg_type, font.font)
         self.textview.font_smoothing = font.smooth
         self.textview.append_text(text)
+
+    def is_waiting(self, waiting=None):
+        if waiting is not None:
+            self.waiting = waiting
+            if waiting:
+                if self.spinner is None:
+                    rect = ak.NSMakeRect(
+                        self.textview.frame().size.width - 18,  # right
+                        2,   # top
+                        16,  # width
+                        16,  # height
+                    )
+                    self.spinner = ak.NSProgressIndicator.alloc().initWithFrame_(rect)
+                    self.spinner.setControlSize_(ak.NSSmallControlSize)
+                    self.spinner.setStyle_(ak.NSProgressIndicatorSpinningStyle)
+                    self.textview.addSubview_(self.spinner)
+                elif self.spinner.isHidden():
+                    self.spinner.setHidden_(False)
+                self.spinner.startAnimation_(self)
+            elif self.spinner is not None:
+                self.spinner.setHidden_(True)
+                self.spinner.stopAnimation_(self)
+        return getattr(self, "waiting", False)
 
     @property
     def text(self):

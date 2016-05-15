@@ -658,6 +658,8 @@ class CommandTester(object):
                 else:
                     self.output += msg
                 self.output_msg_type = msg_type
+            def is_waiting(self, waiting=None):
+                pass
         class editor:
             text_view = kw.pop("textview", object)
         editor = kw.pop("editor", editor)
