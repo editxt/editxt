@@ -26,6 +26,7 @@ from objc import pyobjc_unicode, super
 
 from editxt.command.parser import CompletionsList
 from editxt.constants import ERROR, HTML, INFO, LARGE_NUMBER_FOR_TEXT
+from editxt.platform.mac.app import beep
 from editxt.platform.mac.font import get_font_from_view
 from editxt.platform.mac.views.dualview import DualView, SHOULD_RESIZE
 from editxt.platform.mac.views.util import font_smoothing
@@ -207,7 +208,7 @@ class CommandView(DualView):
         self.output.setAttributedString_(text)
         self.window().__last_output = text
         if msg_type == ERROR:
-            ak.NSBeep()
+            beep()
         self.should_resize()
 
     def append_message(self, message, textview=None, msg_type=INFO):
@@ -230,7 +231,7 @@ class CommandView(DualView):
             self.output.setAttributedString_(output)
             self.should_resize()
         else:
-            ak.NSBeep()
+            beep()
 
     def propose_completion(self, items):
         self.command.propose_completion(self, items)
@@ -256,7 +257,7 @@ class CommandView(DualView):
         if self.active:
             self.command.show_help(self.command_text)
         else:
-            ak.NSBeep()
+            beep()
 
     def is_waiting(self, waiting=None):
         if waiting is not None:
