@@ -53,43 +53,18 @@ def log_python_exception(exception):
 
 def log_objc_exception(exception):
     stack = get_objc_traceback(exception)
-    if stack:
-        stack = "\nStack trace (most recent call last):\n{}".format(stack)
-    else:
-        stack = ""
+    stack = "\n{}".format(stack) if stack else ""
     log.error("ObjC exception discarded: %s: %s%s",
-               exception.name(), exception.reason(), stack)
-    return not stack  # allow objc to lo errors i no stack
+        exception.name(), exception.reason(), stack)
+    return False  # tell pyobjc not to log exception
 
 
 def get_objc_traceback(exception, cache={}):
-    return None # atos not working on 10.11; didn't troubleshoot
-    if cache.get("n/a"):
-        return None
-    if cache:
-       symbolize = cache["symbolize"]
-    else:
-        if is_debugging and os.path.exists('/usr/bin/atos'):
-            command = ['/usr/bin/atos', '-p']
-            if platform.mac_ver()[0].startswith("10.9."):
-                # Warning: /usr/bin/atos is moving and will be removed from a future OS X release.
-                # It is now available in the Xcode developer tools to be invoked via: `xcrun atos`
-                # To silence this warning, pass the '-d' command-line flag to this tool.
-                command.insert(1, '-d')
-        else:
-            cache["n/a"] = True
-            return None
-        def symbolize(pid, stack):
-            try:
-                out = check_output(command + [str(pid)] + stack.split())
-            except CalledProcessError as exc:
-                cache["n/a"] = True
-                return None
-            if isinstance(out, bytes):
-                out = out.decode('utf-8')
-            lines = [x for x in reversed(out.split("\n")) if x]
-            return "  " + "\n  ".join(lines)
-        cache["symbolize"] = symbolize
+    def symbolize(pid, stack, atos=['/usr/bin/atos', '-p']):
+        return (
+            "Use this command while process {} is running "
+            "to symbolize Objective-C stack trace: {}"
+        ).format(pid, " ".join(atos + [str(pid)] + stack.split()))
     userInfo = exception.userInfo()
     stack = userInfo.get(NSStackTraceKey)
     return symbolize(os.getpid(), stack) if stack else None
