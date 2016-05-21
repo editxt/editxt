@@ -45,6 +45,35 @@ log = logging.getLogger(__name__)
 # """)
 
 
+def test_CommandSubject_handle_link():
+    @gentest
+    def do(link, config="", expect=True, goto=None, meta=False, *, base_config, get_subject):
+        with test_app(base_config) as app:
+            m = Mocker()
+            subject = get_subject(app)
+            goto_line = m.replace(Editor, "goto_line")
+            if goto is not None:
+                goto_line(goto)
+            with m:
+                eq_(subject.handle_link(link, meta), expect)
+            if config:
+                if "*" in config:
+                    base_config = base_config.replace("*", "")
+                eq_(test_app(app).state, base_config + config)
+    def test(*args, **kw):
+        return do(base_config=base_config, get_subject=get_subject, *args, **kw)
+    for base_config, get_subject in [
+        ("window project* ", lambda app: app.windows[0].projects[0]),
+        ("window project* editor ", lambda app: app.windows[0].projects[0].editors[0]),
+    ]:
+        yield test("http://google.com", expect=False)
+        yield test("xt://open/file.txt", "editor[file.txt 0]*")
+        yield test("xt://open//file.txt", "editor[/file.txt 0]*")
+        yield test("xt://open//file.txt?goto=3", "editor[/file.txt 0]*", goto=3)
+        yield test("xt://open//file.txt?goto=3.10.2", "editor[/file.txt 0]*", goto=(3, 10, 2))
+        yield test("xt://preferences", "editor[/.profile/config.yaml 0]*")
+        yield test("xt://open/file.txt", "editor[file.txt 0]", meta=True)
+
 def verify_editor_interface(editor):
     from editxt.util import KVOProxy
     from editxt.platform.window import OutputPanel

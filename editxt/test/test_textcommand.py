@@ -639,31 +639,6 @@ def test_CommandBar_message():
     yield test, c(msg="command error")
     yield test, c(msg="command error\n\nTraceback...Error!", exc_info=True)
 
-def test_CommandBar_handle_link():
-    from editxt.editor import Editor
-    @gentest
-    def test(link, expect, config="", goto=None, meta=False):
-        base_config = "window project* "
-        with test_app(base_config) as app:
-            m = Mocker()
-            command = app.windows[0].command
-            goto_line = m.replace(Editor, "goto_line")
-            if goto is not None:
-                goto_line(goto)
-            with m:
-                eq_(command.handle_link(link, meta), expect)
-            if config:
-                if "*" in config:
-                    base_config = base_config.replace("*", "")
-                eq_(test_app(app).state, base_config + config)
-    yield test("http://google.com", False)
-    yield test("xt://open/file.txt", True, "editor[file.txt 0]*")
-    yield test("xt://open//file.txt", True, "editor[/file.txt 0]*")
-    yield test("xt://open//file.txt?goto=3", True, "editor[/file.txt 0]*", goto=3)
-    yield test("xt://open//file.txt?goto=3.10.2", True, "editor[/file.txt 0]*", goto=(3, 10, 2))
-    yield test("xt://preferences", True, "editor[/.profile/config.yaml 0]*")
-    yield test("xt://open/file.txt", True, "editor[file.txt 0]", meta=True)
-
 def test_CommandBar_reset():
     with tempdir() as tmp:
         window = type("Window", (object,), {})()

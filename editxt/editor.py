@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+from urllib.parse import urlparse
 
 import AppKit as ak
 import Foundation as fn
@@ -104,6 +105,29 @@ class CommandSubject:
                 self.command_view.show_last_message()
             return True
         return self.app.text_commander.do_command(self, selector)
+
+    def handle_link(self, link, meta=False):
+        """Handle clicked hyperlink
+
+        :param link: Link URL string.
+        :param meta: Command key was pressed if true. Default false.
+        """
+        try:
+            url = urlparse(link)
+        except Exception:
+            log.warn("cannot parse: %r", link, exc_info=True)
+            return False
+        # TODO allow extensions to hook URL handling?
+        if url.scheme != "xt":
+            return False
+        if url.netloc == "open":
+            self.window.open_url(url, link, not meta)
+            return True
+        if url.netloc == "preferences":
+            self.window.app.open_config_file()
+            return True
+        log.warn("unhandled URL: %s", link)
+        return False
 
 
 class CommandOutput:

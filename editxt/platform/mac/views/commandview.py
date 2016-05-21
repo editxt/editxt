@@ -217,7 +217,8 @@ class CommandView(DualView):
         text = get_attributed_string(message, msg_type, font)
         self.output.font_smoothing = smooth
         self.output.append_text(text)
-        self.window().__last_output = self.output_text.copy()
+        if self.window() is not None:
+            self.window().__last_output = self.output_text.copy()
         self.should_resize()
 
     def show_last_message(self):
@@ -249,7 +250,7 @@ class CommandView(DualView):
     def textView_clickedOnLink_atIndex_(self, textview, link, index):
         event = ak.NSApp.currentEvent()
         meta = bool(event.modifierFlags() & ak.NSCommandKeyMask)
-        return self.command.handle_link(str(link), meta)
+        return self.editor.handle_link(str(link), meta)
 
     def commandHelp_(self, sender):
         if self.active:

@@ -432,9 +432,9 @@ class OutputPanel(ak.NSPanel):
     class events:
         close = eventize.attr("handle_close")
 
-    def __new__(cls, command, text, rect=None):
+    def __new__(cls, editor, text, rect=None):
         self = cls.alloc().init_(rect)
-        self.command = command
+        self.editor = editor
         self.text = text
         eventize(self)
         return self
@@ -490,7 +490,7 @@ class OutputPanel(ak.NSPanel):
         self.textview = None
         self.scroller = None
         self.spinner = None
-        self.command = None
+        self.editor = None
         super().dealloc()
 
     def show(self, window):
@@ -542,7 +542,7 @@ class OutputPanel(ak.NSPanel):
     def textView_clickedOnLink_atIndex_(self, textview, link, index):
         event = ak.NSApp.currentEvent()
         meta = bool(event.modifierFlags() & ak.NSCommandKeyMask)
-        return self.command.handle_link(str(link), meta)
+        return self.editor.handle_link(str(link), meta)
 
     def close(self):
         if self.handle_close is not None:

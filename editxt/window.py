@@ -24,6 +24,7 @@ from collections import defaultdict
 from contextlib import contextmanager
 from itertools import groupby
 from os.path import basename, dirname, isabs, isdir, sep, split
+from urllib.parse import parse_qs, unquote, urlparse
 from weakref import WeakSet
 
 import AppKit as ak
@@ -673,6 +674,41 @@ class Window(object):
             item = self.app.find_item_with_id(ident)
             if item is not None:
                 yield item
+
+    def open_url(self, url, link, focus=True):
+        """Open file specified by URL
+
+        The URL must have two attributes:
+        - path : The path to the file. The first leading slash is
+          stripped, so absolute paths must have an extra slash.
+        - query : A query string from which an optional "goto" parameter
+          may be parsed. The goto parameter specifies a line or line +
+          selection (`line.sel_start.sel_length`) to goto/select after
+          opening the file.
+
+        :param url: Parsed URL. See `urllib.parse.urlparse` for structure.
+        :param link: The original URL string.
+        :param focus: Focus newly opened editor.
+        """
+        path = unquote(url.path)
+        if path.startswith("/"):
+            path = path[1:]
+        editors = self.open_paths([path], focus=focus)
+        if editors:
+            assert len(editors) == 1, (link, editors)
+            query = parse_qs(url.query)
+            if "goto" in query:
+                goto = query["goto"][0]
+                try:
+                    if "." in goto:
+                        line, start, end = goto.split(".")
+                        num = (int(line), int(start), int(end))
+                    else:
+                        num = int(goto)
+                except ValueError:
+                    log.debug("invalid goto: %r (link: %s)", goto, link)
+                else:
+                    editors[0].goto_line(num)
 
     def open_paths(self, paths, focus=True):
         return self.insert_items(self.iter_dropped_paths(paths), focus=focus)

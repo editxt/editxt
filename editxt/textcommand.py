@@ -24,7 +24,6 @@ import sys
 import traceback
 from collections import defaultdict
 from itertools import count
-from urllib.parse import parse_qs, unquote, urlparse
 
 import AppKit as ak
 import Foundation as fn
@@ -413,64 +412,6 @@ class CommandBar(object):
                 beep()
         else:
             editor.message(msg, msg_type=msg_type)
-
-    def handle_link(self, link, meta=False):
-        """Handle clicked hyperlink
-
-        :param link: Link URL string.
-        :param meta: Command key was pressed if true. Default false.
-        """
-        try:
-            url = urlparse(link)
-        except Exception:
-            log.warn("cannot parse: %r", link, exc_info=True)
-            return False
-        # TODO allow extensions to hook URL handling?
-        if url.scheme != "xt":
-            return False
-        if url.netloc == "open":
-            self.open_url(url, link, not meta)
-            return True
-        if url.netloc == "preferences":
-            self.window.app.open_config_file()
-            return True
-        log.warn("unhandled URL: %s", link)
-        return False
-
-    def open_url(self, url, link, focus=True):
-        """Open file specified by URL
-
-        The URL must have two attributes:
-        - path : The path to the file. The first leading slash is
-          stripped, so absolute paths must have an extra slash.
-        - query : A query string from which an optional "goto" parameter
-          may be parsed. The goto parameter specifies a line or line +
-          selection (`line.sel_start.sel_length`) to goto/select after
-          opening the file.
-
-        :param url: Parsed URL. See `urllib.parse.urlparse` for structure.
-        :param link: The original URL string.
-        :param focus: Focus newly opened editor.
-        """
-        path = unquote(url.path)
-        if path.startswith("/"):
-            path = path[1:]
-        editors = self.window.open_paths([path], focus=focus)
-        if editors:
-            assert len(editors) == 1, (link, editors)
-            query = parse_qs(url.query)
-            if "goto" in query:
-                goto = query["goto"][0]
-                try:
-                    if "." in goto:
-                        line, start, end = goto.split(".")
-                        num = (int(line), int(start), int(end))
-                    else:
-                        num = int(goto)
-                except ValueError:
-                    log.debug("invalid goto: %r (link: %s)", goto, link)
-                else:
-                    editors[0].goto_line(num)
 
     def reset(self):
         view, self.history_view = self.history_view, None
