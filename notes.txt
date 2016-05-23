@@ -85,6 +85,10 @@ Top priority
   - could type quickly, but events that went through command lookup seemed
     to be sluggish (home, end, up arrow, down arrow, etc.)
   - maybe related to pop-out command output panel?
+  - possible workaround: invoke wrap lines (COMMAND+SHIFT+\) command
+- add "github_url" command
+- add "blame" command
+- make pathfind command run in background and generate incremental output
 
 Multi-select in file tree
   - concatenate views on select multiple

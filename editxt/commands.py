@@ -34,6 +34,7 @@ from editxt.platform.font import DEFAULT_FONT, get_font
 from editxt.util import user_path
 
 from editxt.command.ag import ag
+from editxt.command.blame import blame
 from editxt.command.changeindent import reindent
 from editxt.command.diff import diff
 from editxt.command.docnav import doc as docnav
@@ -68,6 +69,7 @@ def load_commands():
             reindent,
             find,
             ag,
+            blame,
             diff,
             grab,
             open_,

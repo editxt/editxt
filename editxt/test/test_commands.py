@@ -48,6 +48,7 @@ def test_load_commands():
         mod.reindent,
         mod.find,
         mod.ag,
+        mod.blame,
         mod.diff,
         mod.grab,
         mod.open_,
