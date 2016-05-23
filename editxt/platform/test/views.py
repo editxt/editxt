@@ -91,7 +91,7 @@ class CommandView(object):
     def propose_completion(self, items):
         self.command.propose_completion(self, items)
 
-    def message(self, message, textview=None, msg_type=INFO):
+    def message(self, message, msg_type=INFO):
         self.output_text = message
 
     def is_waiting(self, waiting=None):

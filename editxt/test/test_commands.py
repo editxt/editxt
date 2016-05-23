@@ -652,7 +652,7 @@ class CommandTester(object):
                 raise msg
             raise AssertionError(msg)
         class command_view:
-            def append_message(msg, text_view, msg_type=const.INFO):
+            def append_message(msg, msg_type=const.INFO):
                 if self.output is None:
                     self.output = msg
                 else:

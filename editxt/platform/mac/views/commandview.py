@@ -197,12 +197,12 @@ class CommandView(DualView):
             self.is_waiting(False)
             self.deactivate()
 
-    def message(self, message, textview=None, msg_type=INFO):
+    def message(self, message, msg_type=INFO):
         if not message:
             self.dismiss()
             return
         self.output.font_smoothing = True
-        font, smooth = self.get_font(textview)
+        font, smooth = self.get_font(self.editor.text_view)
         text = get_attributed_string(message, msg_type, font)
         self.output.font_smoothing = smooth
         self.output.setAttributedString_(text)
@@ -211,10 +211,10 @@ class CommandView(DualView):
             beep()
         self.should_resize()
 
-    def append_message(self, message, textview=None, msg_type=INFO):
+    def append_message(self, message, msg_type=INFO):
         if not message:
             return
-        font, smooth = self.get_font(textview)
+        font, smooth = self.get_font(self.editor.text_view)
         text = get_attributed_string(message, msg_type, font)
         self.output.font_smoothing = smooth
         self.output.append_text(text)

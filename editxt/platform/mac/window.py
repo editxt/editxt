@@ -500,10 +500,10 @@ class OutputPanel(ak.NSPanel):
         point = window.wc.window().frame().origin
         self.orderFront_(window)
 
-    def append_message(self, message, textview=None, msg_type=const.INFO):
+    def append_message(self, message, msg_type=const.INFO):
         if not message:
             return
-        font = get_font_from_view(textview, self.app)
+        font = get_font_from_view(self.editor.text_view, self.app)
         text = get_attributed_string(message, msg_type, font.font)
         self.textview.font_smoothing = font.smooth
         self.textview.append_text(text)

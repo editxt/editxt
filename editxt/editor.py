@@ -62,9 +62,9 @@ class CommandSubject:
     command_view = None
     command_output = None
 
-    def message(self, msg, msg_type=const.INFO):
+    def message(self, *args, **kw):
         """Display a message in the command view output pane"""
-        self.command_view.message(msg, self.text_view, msg_type)
+        self.command_view.message(*args, **kw)
 
     def get_output_view(self):
         self.stop_output()
@@ -157,8 +157,8 @@ class CommandOutput:
         if value is not None:
             value.is_waiting(self.process is not None)
 
-    def append_message(self, msg, msg_type=const.INFO):
-        self.output_view.append_message(msg, self.editor.text_view, msg_type)
+    def append_message(self, *args, **kw):
+        self.output_view.append_message(*args, **kw)
 
     def kill_process(self):
         if self.process is not None:
