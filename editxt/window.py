@@ -500,13 +500,14 @@ class Window(object):
         Close all selected items if there are multiple items selected
         and the given item is one of them.
         """
-        def do_close():
-            self.discard(item)
+        def do_close(should_close):
+            if should_close:
+                for item in selected:
+                    self.discard(item)
         selected = self.selected_items
         if item not in selected:
             selected = [item]
-        for item in selected:
-            item.interactive_close(do_close)
+        self.app.async_interactive_close(selected, do_close)
 
     def window_did_become_key(self, window):
         editor = self.current_editor

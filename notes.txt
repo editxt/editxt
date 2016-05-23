@@ -85,10 +85,6 @@ Top priority
   - could type quickly, but events that went through command lookup seemed
     to be sluggish (home, end, up arrow, down arrow, etc.)
   - maybe related to pop-out command output panel?
-- fix bugs in close multiple editors:
-  - unsaved document warning due to doc reload, doc is not actually dirty
-    the fix: disable auto-reload before initiating close
-  - dirty editor not closed after click "Do not save"
 
 Multi-select in file tree
   - concatenate views on select multiple

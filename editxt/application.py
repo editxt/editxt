@@ -524,6 +524,7 @@ class Application(object):
                 return
             callback(True)
 
+        dirty_editors = iter(dirty_editors)
         continue_closing()
 
     def will_terminate(self):
