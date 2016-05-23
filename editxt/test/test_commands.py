@@ -50,6 +50,7 @@ def test_load_commands():
         mod.ag,
         mod.blame,
         mod.diff,
+        mod.github_url,
         mod.grab,
         mod.open_,
         mod.pathfind,

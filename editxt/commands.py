@@ -39,6 +39,7 @@ from editxt.command.changeindent import reindent
 from editxt.command.diff import diff
 from editxt.command.docnav import doc as docnav
 from editxt.command.find import find
+from editxt.command.githuburl import github_url
 from editxt.command.grab import grab
 from editxt.command.openfile import open_
 from editxt.command.pathfind import pathfind
@@ -71,6 +72,7 @@ def load_commands():
             ag,
             blame,
             diff,
+            github_url,
             grab,
             open_,
             pathfind,
