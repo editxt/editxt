@@ -53,8 +53,10 @@ class DualView(ak.NSView):
         super(DualView, self).initWithFrame_(rect)
         self.top = top_view
         self.top_height = top_height
+        self.top.setAutoresizingMask_(ak.NSViewNotSizable)
         self.bottom = bottom_view
         self.bottom_height = bottom_height
+        self.bottom.setAutoresizingMask_(ak.NSViewNotSizable)
         self.flex_top = flex_top
         self.min_collapse = min_collapse
         self.addSubview_(self.top)
@@ -62,6 +64,7 @@ class DualView(ak.NSView):
         self.setAutoresizesSubviews_(True)
         self.setAutoresizingMask_(ak.NSViewWidthSizable | ak.NSViewHeightSizable)
         self.subview_offset_rect = ak.NSZeroRect
+        self.resizeSubviewsWithOldSize_(rect)
         return self
 
     def dealloc(self):
@@ -77,7 +80,7 @@ class DualView(ak.NSView):
             self.bottom.setHidden_(not self.bottom_height())
         return super(DualView, self).setHidden_(value)
 
-    def should_resize(self, ignored=None):
+    def should_resize(self):
         """Notify this view's superview that this view wants to be resized
 
         This is intended to be called when subviews want to be resized.
@@ -85,15 +88,14 @@ class DualView(ak.NSView):
         The superview may observe SHOULD_RESIZE notifications posted
         by this view to know when to resize its subviews.
         """
-        self.shouldResize_(ignored)
+        self.shouldResize_(None)
 
     def shouldResize_(self, ignored):
         ak.NSNotificationCenter.defaultCenter() \
             .postNotificationName_object_(SHOULD_RESIZE, self)
 
-    @objc.namedSelector(b"tile:")
-    def tile(self, ignored=None):
-        """Tile subviews within the bounds of this view"""
+    def resizeSubviewsWithOldSize_(self, old_size):
+        """Resize subviews within the bounds of this view"""
         rect = self.bounds()
         top_height = self.top_height()
         bottom_height = self.bottom_height()
@@ -143,15 +145,7 @@ class DualView(ak.NSView):
         self.bottom.setHidden_(False)
         self.bottom.setFrame_(bottom_rect)
 
-    def setFrame_(self, rect):
-        super().setFrame_(rect)
-        self.tile()
-
-    def resizeSubviewsWithOldSize_(self, old_size):
-        self.tile()
-
     def become_subview_of(self, view, focus=None):
-        self.setFrame_(view.bounds())
         view.addSubview_(self)
         if focus:
             assert view.window() is not None, "cannot focus view: %r" % (focus,)

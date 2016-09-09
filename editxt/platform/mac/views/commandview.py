@@ -52,6 +52,7 @@ class CommandView(DualView):
 
     def init_frame_(self, editor, rect):
         from editxt.textcommand import AutoCompleteMenu
+        self.active = False
         self.undo_manager = fn.NSUndoManager.alloc().init()
         self.output = ContentSizedTextView.alloc().initWithFrame_(rect)
         self.output.scroller.setBorderType_(ak.NSBezelBorder)
@@ -100,7 +101,6 @@ class CommandView(DualView):
         self.setHidden_(True)
         self.editor = editor
         self.command = editor.project.window.command
-        self.active = False
         self.spinner = None
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
             self, "shouldResize:", SHOULD_RESIZE, self.input_group)
@@ -363,7 +363,7 @@ class ContentSizedTextView(ak.NSTextView):
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
             self, "textDidChange:", ak.NSTextDidChangeNotification, self)
         self.placeholder = ""
-        #self.setString_(u"")
+        self.preferred_height = rect.size.height
         return self
 
     def dealloc(self):

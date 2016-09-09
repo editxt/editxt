@@ -90,7 +90,7 @@ def add_command_view(document_scroller, frame, editor):
         frame, document_scroller, command, doc_height, command_height)
     ak.NSNotificationCenter.defaultCenter() \
         .addObserver_selector_name_object_(
-            main_view, "tile:", SHOULD_RESIZE, command)
+            main_view, "resizeSubviewsWithOldSize:", SHOULD_RESIZE, command)
     return main_view
 
 

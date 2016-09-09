@@ -86,8 +86,12 @@ Top priority
     to be sluggish (home, end, up arrow, down arrow, etc.)
   - maybe related to pop-out command output panel?
   - possible workaround: invoke wrap lines (COMMAND+SHIFT+\) command
-- add "github_url" command
-- add "blame" command
+  - visual auto-layout - editxt/ui/mainwindow.py
+- use setAutoresizesSubviews(True) and fix borders of DualView
+- fix scroll on soft wrap
+- implement wrap at margin
+- fix "blame" command (doesn't work sometimes)
+- make "github_url" command faster (no pause)
 - make pathfind command run in background and generate incremental output
 
 Multi-select in file tree
@@ -276,6 +280,14 @@ save untitled and unsaved documents in a temporary location
     save undo stack?
 save settings in ~/.editxt/config
 find/replace text processors
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Useful commands
+
+# backup EditXTDev profile
+rsync -av --delete ~/.editxtdev/ ztemp/editxtdev-profile/
+# restore EditXTDev profile from backup
+rsync -av --delete ztemp/editxtdev-profile/ ~/.editxtdev/
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Bugs

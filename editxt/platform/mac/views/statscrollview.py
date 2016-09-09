@@ -120,6 +120,7 @@ class StatusbarScrollView(ak.NSScrollView):
         return overlay
 
     def viewWillMoveToWindow_(self, new_window):
+        super().viewWillMoveToWindow_(new_window)
         if not self.can_overlay_scrollers:
             return
         old_window = self.window()
