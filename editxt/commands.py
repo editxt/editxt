@@ -30,6 +30,7 @@ from editxt.command.parser import (Choice, DynamicList, File, Float, FontFace,
     SubParser)
 from editxt.command.util import has_editor, has_selection, iterlines
 from editxt.platform.app import beep
+from editxt.platform.events import call_later
 from editxt.platform.font import DEFAULT_FONT, get_font
 from editxt.util import user_path
 
@@ -445,16 +446,44 @@ def help(editor, opts):
     editor.project.window.command.show_help(opts.command if opts else "")
 
 
+
+def _default_cprofile_delay(editor=None):
+    if 'cprofile' in globals() and cprofile.stop_profile is not None:
+        return 'stop'
+    return '5'
+
+
 @command(name='debug', arg_parser=CommandParser(SubParser("action",
+    SubArgs("cprofile",
+        String("delay", default=_default_cprofile_delay),
+        Int("run_seconds", default=5),
+        File("path", directory=True, default=_default_project_path),
+    ),
     SubArgs("mem-profile"),
     SubArgs("error"),
     SubArgs("unhandled-error"),
     SubArgs("exec", VarArgs("command", String("command", default=""))),
 )), is_enabled=has_editor)
 def debug(editor, opts):
+    """Debugging commands
+
+    - cprofile: profile python code with cProfile. Arguments are:
+      - delay: number of seconds to delay start of profile or "stop"
+        to stop in-progress profile.
+      - run_seconds: number of seconds to run profile (run
+        indefinitely until stopped if 0).
+      - path: directory in which to write profile output.
+    - mem-profile: write memory profile in EditXT Log.
+    - error: raise an error immediately.
+    - error: raise an unhandled error immediately.
+    - exec: execute a python expression. `app` and `editor` are locals
+      that can be referenced by the expression.
+    """
     if opts.action is None:
         raise CommandError("please specify a sub command")
     sub, args = opts.action
+    if sub.name == "cprofile":
+        cprofile(editor, args.delay, args.run_seconds, args.path)
     if sub.name == "mem-profile":
         editor.document.app.open_error_log()
         mem_profile()
@@ -466,6 +495,78 @@ def debug(editor, opts):
     elif sub.name == "exec":
         command = " ".join(args.command)
         return str(eval(command, {"app": editor.app, "editor": editor}))
+
+
+def cprofile(editor, delay, run_seconds, path):
+    """Start cProfile after delay for run_seconds
+
+    :param delay: Number of seconds to delay before starting profile.
+    Once this delay is expired, the profile will start and its output
+    file will be created in the given directory (`path`). Stop running
+    profile if this value is `"stop"` or there is a profile in progress.
+    :param run_seconds: Number of seconds to run profile. Run until next
+    cprofile command if zero.
+    :param path: A directory path in which to write profile output.
+    """
+    import os
+    from cProfile import Profile
+    from datetime import datetime
+    from pstats import Stats
+    from os.path import expanduser, join
+    if delay == "stop" or cprofile.stop_profile is not None:
+        if cprofile.stop_profile is not None:
+            cprofile.stop_profile()
+        return
+    try:
+        delay = int(delay)
+    except ValueError:
+        editor.message("bad delay: {!r}".format(delay), msg_type=const.ERROR)
+        return
+    profile = Profile()
+    filename = None
+    def start_profile():
+        if profile is None:
+            return
+        nonlocal filename
+        filename = join(
+            expanduser(path),
+            "profile-{:%Y%m%dT%H%M%S}.txt".format(datetime.now()),
+        )
+        with open(filename, "w", encoding="utf8") as fh:
+            fh.write("in progress...")
+        log.info("starting profile %s", filename)
+        profile.enable()
+    def stop_profile():
+        cprofile.stop_profile = None
+        nonlocal profile
+        if filename is None:
+            # cancel before start
+            profile = None
+            return
+        profile.disable()
+        log.info("stopped profile %s", filename)
+        with open(filename, "w", encoding="utf8") as fh:
+            try:
+                stats = Stats(profile, stream=fh)
+            except Exception as err:
+                fh.write("{}: {}".format(type(err).__name__, err))
+            else:
+                stats.sort_stats("ncalls")
+                stats.print_stats()
+                stats.sort_stats("cumtime")
+                stats.print_stats()
+                stats.sort_stats("tottime")
+                stats.print_stats()
+    call_later(delay, start_profile)
+    cprofile.stop_profile = stop_profile
+    if run_seconds > 0:
+        def auto_stop():
+            if cprofile.stop_profile is not None:
+                cprofile.stop_profile()
+        call_later(delay + run_seconds, auto_stop)
+
+cprofile.stop_profile = None
+
 
 def mem_profile():
     import gc
