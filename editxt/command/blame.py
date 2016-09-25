@@ -19,7 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import subprocess
-from os.path import abspath, dirname, isfile
+from os.path import dirname, isfile, realpath
 
 from editxt.command.base import command, CommandError
 from editxt.command.parser import CommandParser, File
@@ -44,7 +44,7 @@ def blame(editor, args):
         raise CommandError("cannot blame file without path")
     subprocess.Popen(
         ["git", "gui", "blame", args.path],
-        cwd=dirname(abspath(args.path)),
+        cwd=dirname(realpath(args.path)),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
