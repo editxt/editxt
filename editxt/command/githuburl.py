@@ -106,6 +106,25 @@ def get_remotes(git_dir):
     return remotes
 
 
+def get_remote_names(editor=None):
+    return [r.name for r in get_git_info(editor).remotes]
+
+
+def get_branch_names(editor=None):
+    info = get_git_info(editor)
+    if info.git_dir is None:
+        return []
+    try:
+        output = check_output(
+            "git branch".split(),
+            cwd=info.git_dir,
+            universal_newlines=True,
+        )
+    except CalledProcessError as err:
+        return []
+    return [o.lstrip('*').strip() for o in output.split("\n") if o and o != '*']
+
+
 def rev_parse(git_dir, opts=""):
     return check_output(
         "git rev-parse {} HEAD".format(opts).split(),
@@ -142,10 +161,15 @@ def has_file_path(editor=None):
 @command(arg_parser=CommandParser(
     String("lines", default=get_selected_lines),
     DynamicList(
+        "rev",
+        get_items=get_branch_names,
+        name_attribute=lambda item: item,
+        default="HEAD",
+    ),
+    DynamicList(
         "remote",
-        get_items=(lambda editor=None: get_git_info(editor).remotes),
-        name_attribute="name",
-        default=default_remote,
+        get_items=get_remote_names,
+        name_attribute=lambda item: item,
     ),
 ), is_enabled=has_file_path, name="github-url")
 def github_url(editor, args):
@@ -155,20 +179,30 @@ def github_url(editor, args):
         return show_command_bar(editor, "github-url ")
     if not (editor and editor.file_path):
         raise CommandError("cannot get github URL without path")
-    if not args.remote:
-        raise CommandError("cannot get github URL without remote name")
     info = get_git_info(editor)
-    rev = rev_parse(info.git_dir, "--abbrev-ref")
-    if rev == "HEAD":
-        rev = rev_parse(info.git_dir)
+    if not args.remote:
+        if info.remotes:
+            remote = info.remotes[0]
+        else:
+            raise CommandError("cannot get github URL without remote name")
+    else:
+        remote = {r.name: r for r in info.remotes}.get(args.remote)
+    if remote is None:
+        raise CommandError("unknown remote: {}".format(args.remote))
+    if args.rev == "HEAD":
+        rev = rev_parse(info.git_dir, "--abbrev-ref")
+        if rev == "HEAD":
+            rev = rev_parse(info.git_dir)
+    else:
+        rev = args.rev
     lines = get_selected_lines(editor)
     if lines:
         if ":" in lines:
             lines = lines.replace(":", "-L")
         lines = "#L" + lines
     link = "https://github.com/{user}/{repo}/blob/{rev}/{path}{line}".format(
-        user=args.remote.user,
-        repo=args.remote.repo,
+        user=remote.user,
+        repo=remote.repo,
         rev=rev,
         path=git_relative_path(editor.file_path, info),
         line=lines,

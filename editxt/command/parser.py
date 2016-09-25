@@ -902,7 +902,11 @@ class DynamicList(String):
         super().__init__(name, default=default)
 
     def with_context(self, editor):
-        return super().with_context(editor, _editor=editor)
+        field = super().with_context(editor, _editor=editor)
+        if not hasattr(self, "editor") or field.editor is not None:
+            return field
+        return type(self)(*self.args, _editor=editor, **self.kwargs)
+
 
     def iteritems(self):
         if isinstance(self.name_attribute, str):
