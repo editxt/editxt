@@ -81,6 +81,11 @@ class TextView(ak.NSTextView):
         """
         return self.editor.font.font
 
+    @property
+    def text(self):
+        # get Text instance
+        return self.editor.document.text_storage
+
     def focus(self):
         self.window().makeFirstResponder_(self)
 

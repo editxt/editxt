@@ -609,23 +609,24 @@ def insert_newline(editor, args):
         textview.scrollRangeToVisible_((sel[0], len(eol)))
 
 def move_to_beginning_of_line(editor, args):
-    textview = editor.text_view
     eol = editor.document.eol
-    sel = textview.selectedRange()
-    text = textview.string()
+    sel = editor.selection
+    text = editor.document.text_storage
     if sel[0] > 0:
         i = text.rfind(eol, 0, sel[0])
         i = 0 if i < 0 else (i + len(eol))
     else:
         i = 0
     new = (i, 0)
-    wslead = _ws.match(text, i)
-    if wslead:
-        new = (wslead.end(), 0)
+    wslead, end = i, len(text)
+    while wslead < end and text[wslead] in ' \t':
+        wslead += 1
+    if wslead != i:
+        new = (wslead, 0)
     if new[0] == sel[0]:
         new = (i, 0)
-    textview.setSelectedRange_(new)
-    textview.scrollRangeToVisible_(new)
+    editor.selection = new
+    editor.text_view.scrollRangeToVisible_(new)
 
 #def move_to_beginning_of_line_and_modify_selection(editor, args):
 

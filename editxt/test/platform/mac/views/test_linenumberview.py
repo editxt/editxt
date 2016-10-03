@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+from contextlib import contextmanager
 
 import AppKit as ak
 import Foundation as fn
@@ -42,6 +43,7 @@ class MockScrollView(object):
     def documentView(self):
         return None
 
+@contextmanager
 def create_lnv(textview=None, scrollview=None):
     if scrollview is None:
         scrollview = MockScrollView()
@@ -49,7 +51,10 @@ def create_lnv(textview=None, scrollview=None):
         scrollview, ak.NSVerticalRuler)
     if textview is not None:
         lnv.textview = textview
-    return lnv
+    try:
+        yield lnv
+    finally:
+        lnv.denotify()
 
 def test_create():
     m = Mocker()
@@ -57,11 +62,12 @@ def test_create():
     tv = m.mock(TextView)
     sv.documentView() >> tv
     not_class = m.replace(fn, 'NSNotificationCenter')
-    notifier = not_class.defaultCenter() >> m.mock(fn.NSNotificationCenter)
+    notifier = m.mock(fn.NSNotificationCenter)
+    (not_class.defaultCenter() << notifier).count(2)
     notifier.addObserver_selector_name_object_(ANY, "invalidateRuleThickness",
         ak.NSTextDidChangeNotification, tv)
-    with m:
-        lnv = create_lnv(scrollview=sv)
+    notifier.removeObserver_(ANY)
+    with m, create_lnv(scrollview=sv) as lnv:
         eq_(lnv.textview, tv)
         eq_(lnv.paragraph_style.alignment(), ak.NSRightTextAlignment)
 
@@ -69,15 +75,15 @@ def test_calculate_thickness():
     def test(c):
         m = Mocker()
         tv = m.mock(TextView)
-        lnv = create_lnv(tv)
-        ruleThickness = m.method(lnv.ruleThickness)
-        ruleThickness() >> 200
-        (tv.editor.line_numbers << []).count(0, 1)
-        font = tv.font() >> m.mock(ak.NSFont)
-        cw = font.advancementForGlyph_(ord("8")).width >> 15
-        with m:
-            result = lnv.calculate_thickness(c.numlines)
-            eq_(result, c.result)
+        with create_lnv(tv) as lnv:
+            ruleThickness = m.method(lnv.ruleThickness)
+            ruleThickness() >> 200
+            (tv.editor.line_numbers << []).count(0, 1)
+            font = tv.font() >> m.mock(ak.NSFont)
+            cw = font.advancementForGlyph_(ord("8")).width >> 15
+            with m:
+                result = lnv.calculate_thickness(c.numlines)
+                eq_(result, c.result)
     c = TestConfig(font_is_none=False)
     yield test, c(numlines=0, result=int(15 * 4.7))
     yield test, c(numlines=1, result=int(15 * 4.7))

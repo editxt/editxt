@@ -29,9 +29,7 @@ from .views import CommandView, DualView, LineNumberView, SHOULD_RESIZE, TextVie
 from .views.statscrollview import StatusbarScrollView
 
 
-def setup_main_view(editor, frame):
-    """Setup main text view with command view for document
-    """
+def setup_scroll_view(editor, frame):
     layout = ak.NSLayoutManager.alloc().init()
     editor.document.text_storage.addLayoutManager_(layout)
     container = ak.NSTextContainer.alloc().initWithContainerSize_(frame.size)
@@ -71,6 +69,13 @@ def setup_main_view(editor, frame):
     scroll.setHasVerticalRuler_(True)
     #scroll.verticalRulerView().invalidateRuleThickness()
     scroll.setRulersVisible_(True)
+    return scroll
+
+
+def setup_main_view(editor, frame):
+    """Setup main text view with command view for document
+    """
+    scroll = setup_scroll_view(editor, frame)
 
     return add_command_view(scroll, frame, editor)
 

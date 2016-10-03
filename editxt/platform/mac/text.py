@@ -100,6 +100,23 @@ class Text(object):
                                             NULL, None, None, (length - 1, 0))
         return end != contents_end
 
+    def rfind(self, sub, start=None, end=None):
+        """Locale-aware reverse find"""
+        if start is None:
+            start = 0
+        else:
+            start = index_to_range(start, 0)[0]
+        if end is None:
+            end = len(self)
+        else:
+            end = index_to_range(end, 0)[0]
+        assert start >= 0, start
+        assert end >= start, (start, end)
+        rng = (start, end - start)
+        i = self.string().rangeOfString_options_range_locale_(
+            sub, fn.NSBackwardsSearch, rng, ak.NSLocale.currentLocale())[0]
+        return -1 if i == fn.NSNotFound else i
+
 
 def composed_length(string, enumerate=False):
     """Get the length of the string as seen by a human

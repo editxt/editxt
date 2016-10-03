@@ -242,44 +242,42 @@ def test_uncomment_line():
     yield test, c(old="x        abc\n", new="        abc\n")
     yield test, c(old="x         abc\n", new="         abc\n")
 
+
 def test_text_commands():
-    from editxt.editor import Editor
-    from editxt.document import TextDocument
+    from editxt.platform.mac.document import setup_scroll_view
     SAME = "<SAME AS INPUT>"
+    tapp = test_app("editor")
+    app = tapp.__enter__()
+    editor = app.windows[0].projects[0].editors[0]
+    editor.on_selection_changed = lambda *a: None
+    editor.scroll_view = setup_scroll_view(editor, fn.NSMakeRect(0, 0, 100, 100))
+    editor.text_view = editor.scroll_view.documentView()
+    def teardown():
+        editor.scroll_view.verticalRulerView().denotify()
+        tapp.__exit__(None, None, None)
     def test(c):
         if c.eol != "\n":
             c.input = c.input.replace("\n", c.eol)
             c.output = c.output.replace("\n", c.eol)
-        result = TestConfig()
-        default = False
-        m = Mocker()
-        editor = m.mock(Editor)
-        tv = editor.text_view >> m.mock(ak.NSTextView)
-        (editor.document.indent_mode << c.mode).count(0, None)
-        (editor.document.indent_size << c.size).count(0, None)
-        (editor.document.eol << c.eol).count(0, None)
-        sel = fn.NSMakeRange(*c.oldsel); (tv.selectedRange() << sel).count(0, None)
-        (tv.string() << fn.NSString.stringWithString_(c.input)).count(0, None)
-        (tv.shouldChangeTextInRange_replacementString_(ANY, ANY) << True).count(0, None)
-        ts = m.mock(ak.NSTextStorage); (tv.textStorage() << ts).count(0, None)
-        c.setup(m, c, TestConfig(locals()))
-        def do_text(sel, repl):
-            result.text = c.input[:sel[0]] + repl + c.input[sel[0] + sel[1]:]
-        expect(ts.replaceCharactersInRange_withString_(ANY, ANY)).call(do_text).count(0, None)
-        def do_sel(sel):
-            result.sel = sel
-        expect(tv.setSelectedRange_(ANY)).call(do_sel).count(0, None)
-        expect(tv.didChangeText()).count(0, None)
-        if c.scroll:
-            tv.scrollRangeToVisible_(ANY)
-        with m:
-            c.method(editor, None)
-            if "text" in result:
-                eq_(result.text, c.output)
-            else:
-                eq_(c.output, SAME)
-            if "sel" in result:
-                eq_(result.sel, c.newsel)
+        editor.document.indent_mode = c.mode
+        editor.document.indent_size = c.size
+        editor.document.eol = c.eol
+        editor.document.text = c.input
+        editor.selection = c.oldsel
+        c.setup(c, TestConfig(locals()))
+        c.method(editor, None)
+        if c.output == SAME:
+            eq_(editor.document.text, c.input)
+        else:
+            eq_(editor.document.text, c.output)
+        if "newsel" in c:
+            eq_(editor.selection, fn.NSMakeRange(*c.newsel))
+            if "prevchar" in c:
+                text = editor.document.text_storage
+                prevchar = c.prevchar
+                if c.eol != "\n":
+                    prevchar = prevchar.replace("\n", c.eol)[-1]
+                eq_(text[(c.newsel[0] - 1, 1)], prevchar)
 
     eols = [const.EOLS[mode] for mode in [
         const.NEWLINE_MODE_UNIX,
@@ -316,6 +314,14 @@ def test_text_commands():
         yield test, c(input="    \n    \n", oldsel=(5 + i, 0), newsel=(9 + i, 0))
         yield test, c(input="    \n    \n", oldsel=(7 + i, 0), newsel=(9 + i, 0))
         yield test, c(input="    \n    \n", oldsel=(9 + i, 0), newsel=(5 + i, 0))
+
+        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(3+i, 0), newsel=(5+i, 0), prevchar=' ')
+        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(4+i, 0), newsel=(5+i, 0), prevchar=' ')
+        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(5+i, 0), newsel=(3+i, 0), prevchar='\n')
+        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(6+i, 0), newsel=(5+i, 0), prevchar=' ')
+        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(10+i*2, 0), newsel=(12+i*2, 0), prevchar=' ')
+        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(11+i*2, 0), newsel=(12+i*2, 0), prevchar=' ')
+        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(12+i*2, 0), newsel=(10+i*2, 0), prevchar='\n')
 
     c = cbase(method=mod.insert_newline)
     for eol in eols:
@@ -398,15 +404,15 @@ def test_text_commands():
         yield test, c(input=" x  ", output="x  ", oldsel=(2, 0), newsel=(0, 3))
 
 
-    def setup(m, c, x):
+    def setup(c, x):
         if c.mode == const.INDENT_MODE_TAB:
-            x.tv.deleteBackward_(None)
+            x.editor.text_view.deleteBackward_(None)
 
     c = cbase(method=mod.delete_backward, setup=setup)
     for eol in eols:
         c = c(mode=const.INDENT_MODE_TAB, eol=eol)
         yield test, c(input="", output=SAME, oldsel=(0, 0), newsel=(0, 0), scroll=False)
-        yield test, c(input="\t", output=SAME, oldsel=(1, 0), newsel=(0, 0), scroll=False)
+        yield test, c(input="\t", output="", oldsel=(1, 0), newsel=(0, 0), scroll=False)
         c = c(mode=const.INDENT_MODE_SPACE, size=2)
         yield test, c(input="", output=SAME, oldsel=(0, 0), newsel=(0, 0), scroll=False)
         yield test, c(input="  ", output=SAME, oldsel=(0, 0), newsel=(0, 0), scroll=False)
@@ -421,7 +427,7 @@ def test_text_commands():
         yield test, c(input="   ", output="  ", oldsel=(3, 0), newsel=(2, 0))
         yield test, c(input="    ", output="  ", oldsel=(4, 0), newsel=(2, 0))
         i = len(eol) - 1
-        yield test, c(input="\n    ", output="\n  ", oldsel=(5+i, 0), newsel=(2+i, 0))
+        yield test, c(input="\n    ", output="\n  ", oldsel=(5+i, 0), newsel=(3+i, 0))
         yield test, c(input="\n    ", output="\n  ", oldsel=(3+i, 0), newsel=(1+i, 0))
         yield test, c(input="\n    ", output="\n   ", oldsel=(2+i, 0), newsel=(1+i, 0))
         c = c(size=4)
@@ -437,6 +443,8 @@ def test_text_commands():
         yield test, c(input="\n      ", output="\n    ", oldsel=(7+i, 0), newsel=(5+i, 0))
         yield test, c(input="\n       ", output="\n    ", oldsel=(8+i, 0), newsel=(5+i, 0))
         yield test, c(input="\n        ", output="\n    ", oldsel=(9+i, 0), newsel=(5+i, 0))
+
+    teardown()
 
 def test_reload_config():
     from editxt.config import Config
