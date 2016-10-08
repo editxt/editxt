@@ -47,13 +47,6 @@ class ListView(object):
             (item.attribute) to a display value for the column.
         type - optional column type, default is "text".
         editable - True if editable. Defaults is False.
-
-    The following optional parameters must be specified as keyword arguments:
-
-    :param on_double_click: optional function to be called when an item in the
-    list is double-clicked. It is called with one argument: the item.
-    :param on_selection_changed: optional function to be called when selection
-    changes. ``on_selection_changed(selected_items)``
     """
 
     class events:

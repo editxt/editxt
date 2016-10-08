@@ -97,7 +97,6 @@ class CommandBar(object):
                     self._auto_complete(command_view, word)
                 if len(words) == 1:
                     command_view.completions.items = []
-                    command_view.should_resize()
             else:
                 self.complete(command_view)
             return True
@@ -128,7 +127,6 @@ class CommandBar(object):
             if command_view.completions:
                 select_range = command_view.completions.select_range
                 command_view.completions.items = []
-                command_view.should_resize()
                 if select_range is not None:
                     command_view.command_text_selected_range = select_range
             elif command_view.output_text:
@@ -157,7 +155,6 @@ class CommandBar(object):
                 completions.title = None
             if completions.items != words:
                 completions.items = words
-                command_view.should_resize()
             completions.select(default_index)
             word = self.common_prefix(words)
             if word and auto_one:
@@ -602,7 +599,10 @@ class AutoCompleteMenu(object):
 
     class events:
         double_click = eventize.call("view.on.double_click", dispatch=False)
+        items_changed = eventize.attr("fire_items_changed")
         selection_changed = eventize.call("setup_selection_changed")
+
+    fire_items_changed = None
 
     def __init__(self):
         from editxt.platform.views import ListView
@@ -643,6 +643,8 @@ class AutoCompleteMenu(object):
     def items(self, items):
         self._items[:] = [KVOProxy(Completion(v)) for v in items]
         self.select_range = None
+        if self.fire_items_changed is not None:
+            self.fire_items_changed()
 
     def select(self, index):
         self.view.select(index)

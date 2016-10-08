@@ -69,8 +69,9 @@ class CommandView(DualView):
             return self.input.preferred_height
         self.input_group = DualView.alloc().init(rect,
             self.completions.scroller, self.input.scroller,
-            completions_height, input_height)
-        self.input_group.subview_offset_rect = fn.NSMakeRect(-1, -1, 2, 1)
+            completions_height, input_height,
+            offset_rect=fn.NSMakeRect(-1, -1, 2, 1))
+        self.completions.on.items_changed(self.input_group.should_resize)
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
             self.input_group, "shouldResize:", SHOULD_RESIZE, self.input)
 
@@ -82,8 +83,8 @@ class CommandView(DualView):
             return self.output.preferred_height if self.output.string() else 0
         super().init(rect,
             self.output.scroller, self.input_group,
-            output_height, input_group_height)
-        self.subview_offset_rect = fn.NSMakeRect(-1, -1, 2, 1)
+            output_height, input_group_height,
+            offset_rect=fn.NSMakeRect(-1, -1, 2, 1))
 
         self.output.setEditable_(False)
         self.output.setSelectable_(True)

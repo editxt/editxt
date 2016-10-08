@@ -27,9 +27,9 @@ SHOULD_RESIZE = "should_resize"
 class DualView(ak.NSView):
 
     @objc.namedSelector(
-        b"init:topView:bottomView:topHeight:bottomHeight:flexTop:minCollapse:")
+        b"init:topView:bottomView:topHeight:bottomHeight:minCollapse:flexTop:offsetRect:")
     def init(self, rect, top_view, bottom_view, top_height, bottom_height,
-             min_collapse=0.2, flex_top=True):
+             min_collapse=0.2, flex_top=True, offset_rect=ak.NSZeroRect):
         """Initialize view with two subviews, top and bottom
 
         :param rect: The initial frame rect for this view.
@@ -49,22 +49,25 @@ class DualView(ak.NSView):
         possible if this is `True` (the default) and the sum of the
         heights of both top and bottom views does not equal the height
         of this view. If this is `False` flex the bottom view.
+        :param offset_rect: Rect used to adjust subview offsets.
         """
         super(DualView, self).initWithFrame_(rect)
         self.top = top_view
         self.top_height = top_height
-        self.top.setAutoresizingMask_(ak.NSViewNotSizable)
+        self.top.setAutoresizingMask_(ak.NSViewWidthSizable
+            | (ak.NSViewHeightSizable if flex_top else ak.NSViewMinYMargin))
         self.bottom = bottom_view
         self.bottom_height = bottom_height
-        self.bottom.setAutoresizingMask_(ak.NSViewNotSizable)
+        self.bottom.setAutoresizingMask_(ak.NSViewWidthSizable
+            | (ak.NSViewMaxYMargin if flex_top else ak.NSViewHeightSizable))
         self.flex_top = flex_top
         self.min_collapse = min_collapse
         self.addSubview_(self.top)
         self.addSubview_(self.bottom)
         self.setAutoresizesSubviews_(True)
         self.setAutoresizingMask_(ak.NSViewWidthSizable | ak.NSViewHeightSizable)
-        self.subview_offset_rect = ak.NSZeroRect
-        self.resizeSubviewsWithOldSize_(rect)
+        self.subview_offset_rect = offset_rect
+        self._resize_subviews()
         return self
 
     def dealloc(self):
@@ -93,8 +96,9 @@ class DualView(ak.NSView):
     def shouldResize_(self, ignored):
         ak.NSNotificationCenter.defaultCenter() \
             .postNotificationName_object_(SHOULD_RESIZE, self)
+        self._resize_subviews()
 
-    def resizeSubviewsWithOldSize_(self, old_size):
+    def _resize_subviews(self):
         """Resize subviews within the bounds of this view"""
         rect = self.bounds()
         top_height = self.top_height()

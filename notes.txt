@@ -80,19 +80,12 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-- fix intermittent slowness
-  - seemed to be in event handling
-  - could type quickly, but events that went through command lookup seemed
-    to be sluggish (home, end, up arrow, down arrow, etc.)
-  - maybe related to pop-out command output panel?
-  - possible workaround: invoke wrap lines (COMMAND+SHIFT+\) command
-  - visual auto-layout - editxt/ui/mainwindow.py
-- use setAutoresizesSubviews(True) and fix borders of DualView
 - fix scroll on soft wrap
 - implement wrap at margin
 - fix "blame" command (doesn't work sometimes)
-- make "github_url" command faster (no pause)
+x- make "github_url" command faster (no pause)
 - make pathfind command run in background and generate incremental output
+- exclude unwanted paths from pathfind
 
 Multi-select in file tree
   - concatenate views on select multiple
@@ -119,6 +112,7 @@ Fix icon in tree on new document with known extension
 Always open document after current document
 Fix bug in window title after save new document
 Fix `xt path/to/directory` (should not error)
+Add support for drag/drop move DualView divider
 Aesthetics
   - syntax highlighting
     - better language detection (file extension, shebang line, etc.)
@@ -139,6 +133,7 @@ Pythonic...
   - window.docsView -> window.tree
   - TextView
   - TreeView
+  - get rid of nib files (see prog-ui branch, new auto layout system in cocoa)
 Refactor tests to not depend on py2app bundle
   - this is a problem on 10.9+ unless py2app main.c is modified
 Fix stdout/stderr and error output

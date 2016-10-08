@@ -33,6 +33,16 @@ def eventize(obj):
             some_action = eventize.attr("obj.path.to.do_some_action")
             other_action = eventize.call("obj.path.to.setup_other_action")
 
+        def __init__(self):
+            self.obj = ObjectThatCallsBackOnEvents()
+
+            # Sets event callback at obj.path.to.do_some_action and
+            # calls obj.path.to.setup_other_action(event_callback)
+            eventize(self)
+
+        def when_action_happens(self):
+            self.obj.path.to.do_some_action("the arg")
+
     def do_something(arg):
         "arg is specifc to the 'some_action' event"
 
@@ -56,6 +66,15 @@ def eventize(obj):
 
 
 def attr(path):
+    """Register callback on object by setting a callback attribute
+
+    The event callback is only set on the object if and when an event
+    listener is attached. It is required that the attribute has an
+    initial value of `None` (it will be overwritten when an event
+    listener is attached). This allows for the event producer to
+    efficiently skip all event dispatching if no listeners are
+    configured.
+    """
     def setup_event(name, obj, callback):
         orig = obj
         if "." in path:
@@ -86,6 +105,11 @@ def attr(path):
 
 
 def call(path, dispatch=True):
+    """Register event callback on object by calling a method
+
+    The method identified by `path` is only called if and when an event
+    listener is attached.
+    """
     def setup_event(name, obj, callback):
         if "." in path:
             parts = path.split('.')
