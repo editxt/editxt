@@ -14,6 +14,8 @@ https://github.com/editxt/editxt for details of what actually happened.
   multiple files selected. For example, if there are two files selected, the
   `diff` command will compare them. It is also possible to close multiple files
   at once by selecting them and then Right Click > Close.
+- Fixed sluggish line number redrawing after lose and regain app focus when
+  command view was active.
 
 ## 2016-02-21 - 1.9.5
 

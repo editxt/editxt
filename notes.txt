@@ -661,6 +661,113 @@ The following two tests fail when test_mockerext is run first followed by the en
     error: PySubclass is overriding existing Objective-C class
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# debugging tool for observing all method calls on a class
+# AOPython aopython
+
+import re
+from objc import selector as objc_selector
+from inspect import ismethod, isfunction
+from functools import wraps
+
+def describe(obj, name, args, kw):
+    def rep(value):
+        try:
+            return repr(value)
+        except Exception:
+            return "<{}>".format(type(value).__name__)
+    argStr = ', '.join([rep(a) for a in args]
+       + ['%s=%s' % (k, rep(v)) for k, v in kw.items()])
+    #print('%s.%s(%s)' % (obj.__name__, name, argStr))
+
+def weave(obj, test, excludes, stop=[1]):
+    assert isinstance(obj, type), obj
+    def wrap(obj, name, method):
+        if isinstance(method, objc_selector):
+            # objc method
+            @wraps(method)
+            def wrapped(self, *args, **kw):
+                describe(obj, name, args, kw)
+                #if name == "window" and stop:
+                #    import bug; bug.trace()
+                #return method(self, *args, **kw)
+                supe = super(new_class, self)
+                return getattr(supe, name)(*args, **kw)
+            wrapped.selector = method.selector
+        else:
+            # normal python method
+            raise NotImplementedError((obj, name, method))
+            #@wraps(method)
+            #def wrapped(*args, **kw):
+            #    describe(obj, name, args, kw)
+            #    return method(*args, **kw)
+        return wrapped
+    def half(names, first=True):
+        index = int(len(names) / 2)
+        if index == 0:
+            raise Exception(names)
+        if first:
+            return names[:-index]
+        return names[index:]
+    members = {}
+    names = dir(obj)
+    filtered_names = names
+    #filtered_names = half(filtered_names) # not in here
+    filtered_names = half(filtered_names, False)
+    filtered_names = half(filtered_names)
+    #filtered_names = half(filtered_names) # not in here
+    filtered_names = half(filtered_names, False)
+    #filtered_names = half(filtered_names, False) # not in here
+    filtered_names = half(filtered_names)
+    filtered_names = half(filtered_names)
+    #filtered_names = half(filtered_names) # not in here
+    filtered_names = half(filtered_names, False)
+    filtered_names = half(filtered_names, False)
+    #filtered_names = half(filtered_names, False) # not in here
+    filtered_names = half(filtered_names)
+    filtered_names = half(filtered_names)
+    filtered_names = half(filtered_names)
+    filtered_names = half(filtered_names)
+    #filtered_names = half(filtered_names, False)
+
+    print(set(filtered_names))
+    #import sys; sys.exit()
+    for name in filtered_names:
+        attr = getattr(obj, name)
+        if name in excludes or not can_advise(attr):
+            continue
+        #print("wrapping {}.{}".format(obj.__name__, name))
+        members[name] = wrap(obj, name, attr)
+    new_class = type("Weaved" + obj.__name__, (obj,), members)
+    return new_class
+
+exclude_re = re.compile(r"^([A-Z_]|ns|isNS)")
+def can_advise(obj):
+    cancall = hasattr(obj, "__call__")
+    if cancall:
+        match = exclude_re.search(obj.__name__)
+#        if match:
+#            print("excluded", obj.__name__)
+    return cancall and not match and not getattr(obj, "isClassMethod", False)
+
+WeavedStatusbarScrollView = weave(
+    StatusbarScrollView,
+    test=can_advise,
+    excludes={
+        'getRectsBeingDrawn_count_', # crasher with nice error
+        'sortSubviewsUsingFunction_context_', # crasher; hard to find
+
+        # reduce noise
+        'isFlipped',
+        'window',
+        'documentView',
+        'contentView',
+        'inLiveResize',
+        'canDrawSubviewsIntoLayer',
+        'isRotatedFromBase',
+    },
+)
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 TODO
 
 Projects:

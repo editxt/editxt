@@ -136,6 +136,28 @@ class StatusbarScrollView(ak.NSScrollView):
         if self.can_overlay_scrollers and self.overlay is not None:
             self.overlay.attachToView_(self)
 
+    def drawRect_(self, rect):
+        # Super strange fix for bug that caused sluggish line number
+        # redrawing (scroll view was invalidating entire line number
+        # view on each drawRect_ call) after switching to another
+        # application and then back again when command view was active.
+        return super(StatusbarScrollView, self).drawRect_(rect)
+        # How the this fix was found:
+        #
+        # Used cProfile to count the methods being called before and
+        # after triggering the bug. Noticed that `LineNumberView.
+        # draw_line_numbers` was called at the normal rate before and
+        # after, but `editor.line_numbers.iter_from` was called many
+        # more times after the bug was invoked. Added a `print(rect)`
+        # statement to the `LineNumberView.drawRect_` verify this.
+        #
+        # Then made a tool to override all methods of this class to
+        # print their method signature on each call. Noticed that the
+        # bug went away when this tool was in use. Used a binary search
+        # to narrow down which method override "fixed" the bug. The
+        # debugging tool can be found in notes.txt; search for
+        # "AOPython".
+
 
 class StatusView(ak.NSView):
 
