@@ -30,7 +30,6 @@ import editxt.platform.constants as platform_const
 
 from editxt.command.find import Finder, FindOptions
 from editxt.command.util import change_indentation, replace_newlines
-from editxt.constants import LARGE_NUMBER_FOR_TEXT
 from editxt.document import DocumentController, Error as DocumentError
 from editxt.linenumbers import LineNumbers
 from editxt.platform.alert import Alert
@@ -407,8 +406,7 @@ class Editor(CommandSubject):
     def soft_wrap(self):
         if self.text_view is None:
             return self.edit_state["soft_wrap"]
-        wrap = self.text_view.textContainer().widthTracksTextView()
-        return const.WRAP_WORD if wrap else const.WRAP_NONE
+        return self.text_view.soft_wrap()
     @soft_wrap.setter
     def soft_wrap(self, value):
         if self.text_view is None:
@@ -416,35 +414,7 @@ class Editor(CommandSubject):
             state["soft_wrap"] = value
             self._state = state
             return
-        wrap = value != const.WRAP_NONE
-        tv = self.text_view
-        tc = tv.textContainer()
-        if wrap:
-            mask = ak.NSViewWidthSizable
-            size = self.scroll_view.contentSize()
-            width = size.width
-        else:
-            mask = ak.NSViewWidthSizable | ak.NSViewHeightSizable
-            width = LARGE_NUMBER_FOR_TEXT
-        # TODO
-        # if selection is visible:
-        #     get position of selection
-        # else:
-        #     get position top visible line
-        tc.setContainerSize_(fn.NSMakeSize(width, LARGE_NUMBER_FOR_TEXT))
-        tc.setWidthTracksTextView_(wrap)
-        tv.setHorizontallyResizable_(not wrap)
-        tv.setAutoresizingMask_(mask)
-        if wrap:
-            #tv.setConstrainedFrameSize_(size) #doesn't seem to work
-            tv.setFrameSize_(size)
-            tv.sizeToFit()
-        self.scroll_view.setNeedsDisplay_(True)
-        # TODO
-        # if selection was visible:
-        #     put selection as near to where it was as possible
-        # else:
-        #     put top visible line at the top of the scroll view
+        self.text_view.soft_wrap(value)
 
     @document_property
     def indent_size(self, new, old):

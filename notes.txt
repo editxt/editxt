@@ -83,7 +83,6 @@ Top priority
 - fix scroll on soft wrap
 - implement wrap at margin
 - fix "blame" command (doesn't work sometimes)
-x- make "github_url" command faster (no pause)
 - make pathfind command run in background and generate incremental output
 - exclude unwanted paths from pathfind
 

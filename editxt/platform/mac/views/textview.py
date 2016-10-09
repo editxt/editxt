@@ -104,6 +104,39 @@ class TextView(ak.NSTextView):
         except ValueError:
             beep()
 
+    def soft_wrap(self, value=None):
+        if value is None:
+            wrap = self.textContainer().widthTracksTextView()
+            return const.WRAP_WORD if wrap else const.WRAP_NONE
+        wrap = value != const.WRAP_NONE
+        scroll_view = self.editor.scroll_view
+        if wrap:
+            mask = ak.NSViewWidthSizable
+            size = scroll_view.contentSize()
+            width = size.width
+        else:
+            mask = ak.NSViewWidthSizable | ak.NSViewHeightSizable
+            width = const.LARGE_NUMBER_FOR_TEXT
+        # if selection is visible:
+        #     get position of selection
+        # else:
+        #     get position top visible line
+        container = self.textContainer()
+        container.setContainerSize_(fn.NSMakeSize(width, const.LARGE_NUMBER_FOR_TEXT))
+        container.setWidthTracksTextView_(wrap)
+        self.setHorizontallyResizable_(not wrap)
+        self.setAutoresizingMask_(mask)
+        if wrap:
+            #self.setConstrainedFrameSize_(size) #doesn't seem to work
+            self.setFrameSize_(size)
+            self.sizeToFit()
+        scroll_view.setNeedsDisplay_(True)
+        # TODO
+        # if selection was visible:
+        #     put selection as near to where it was as possible
+        # else:
+        #     put top visible line at the top of the scroll view
+
     def scrollRangeToVisible_(self, rng):
         length = self.textStorage().length()
         if rng[0] == length and rng[1] == 0:

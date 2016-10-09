@@ -624,9 +624,7 @@ def test_clear_highlighted_text():
 
 def test_set_variable():
     from editxt.platform.font import Font
-    fake_text_view = TestConfig(
-        textContainer=lambda:TestConfig(
-            widthTracksTextView=lambda:const.WRAP_NONE))
+    fake_text_view = TestConfig(soft_wrap=lambda:const.WRAP_NONE)
     class editor:
         class project:
             path = os.path.expanduser("~/project")

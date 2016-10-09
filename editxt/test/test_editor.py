@@ -305,6 +305,7 @@ def test_document_set_main_view_of_window():
     yield test, c(sv_is_none=False)
 
 def test_get_soft_wrap():
+    from editxt.platform.views import TextView
     @test_app("editor")
     def test(app, c):
         m = Mocker()
@@ -313,10 +314,8 @@ def test_get_soft_wrap():
         if c.tv_is_none:
             eq_(editor.text_view, None)
         else:
-            tv = editor.text_view = m.mock(ak.NSTextView)
-            tc = tv.textContainer() >> m.mock(ak.NSTextContainer)
-            tc.widthTracksTextView() >> \
-                (True if c.mode == const.WRAP_WORD else False)
+            tv = editor.text_view = m.mock(TextView)
+            tv.soft_wrap() >> c.mode
         with m:
             eq_(editor.soft_wrap, c.mode)
     c = TestConfig(tv_is_none=False)
@@ -325,6 +324,7 @@ def test_get_soft_wrap():
     yield test, c(tv_is_none=True, mode=const.WRAP_NONE)
 
 def test_set_soft_wrap():
+    from editxt.platform.views import TextView
     @gentest
     @test_app("editor")
     def test(app, mode, has_text_view):
@@ -332,25 +332,10 @@ def test_set_soft_wrap():
         editor = app.windows[0].projects[0].editors[0]
         doc = editor.document
         wrap = mode != const.WRAP_NONE
-        sv = editor.scroll_view = m.mock(ak.NSScrollView)
-        tv = editor.text_view = m.mock(ak.NSTextView) if has_text_view else None
+        tv = editor.text_view = m.mock(TextView) if has_text_view else None
         if has_text_view:
-            tc = m.mock(ak.NSTextContainer)
-            (tv.textContainer() << tc).count(2)
-            if wrap:
-                size = sv.contentSize() >> m.mock(fn.NSRect)
-                width = size.width >> 100.0
-                tv.setFrameSize_(size)
-                tv.sizeToFit()
-            else:
-                width = const.LARGE_NUMBER_FOR_TEXT
-            tc.setContainerSize_(fn.NSMakeSize(width, const.LARGE_NUMBER_FOR_TEXT))
-            tc.setWidthTracksTextView_(wrap)
-            tv.setHorizontallyResizable_(not wrap)
-            tv.setAutoresizingMask_(ak.NSViewWidthSizable
-                if wrap else ak.NSViewWidthSizable | ak.NSViewHeightSizable)
-            sv.setNeedsDisplay_(True)
-            tc.widthTracksTextView() >> wrap
+            tv.soft_wrap(mode)
+            tv.soft_wrap() >> mode
         with m:
             editor.soft_wrap = mode
             eq_(editor.soft_wrap, mode)
