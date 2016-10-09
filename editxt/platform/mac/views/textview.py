@@ -24,7 +24,7 @@ from contextlib import contextmanager
 import objc
 import AppKit as ak
 import Foundation as fn
-from objc import super
+from objc import super, NULL
 
 import editxt.constants as const
 from editxt.command.find import FindController
@@ -138,10 +138,7 @@ class TextView(ak.NSTextView):
         else:
             mask = ak.NSViewWidthSizable | ak.NSViewHeightSizable
             width = const.LARGE_NUMBER_FOR_TEXT
-        # if selection is visible:
-        #     get position of selection
-        # else:
-        #     get position top visible line
+        visible_range = self.get_visible_char_range()
         container = self.textContainer()
         container.setContainerSize_(fn.NSMakeSize(width, const.LARGE_NUMBER_FOR_TEXT))
         container.setWidthTracksTextView_(wrap)
@@ -151,12 +148,25 @@ class TextView(ak.NSTextView):
             #self.setConstrainedFrameSize_(size) #doesn't seem to work
             self.setFrameSize_(size)
             self.sizeToFit()
+        self.scrollRangeToVisible_(visible_range)
         scroll_view.setNeedsDisplay_(True)
-        # TODO
-        # if selection was visible:
-        #     put selection as near to where it was as possible
-        # else:
-        #     put top visible line at the top of the scroll view
+
+    def get_visible_char_range(self):
+        visible_rect = self.visibleRect()
+        origin = self.textContainerOrigin()
+        rect = ak.NSOffsetRect(visible_rect, -origin.x, -origin.y)
+        lm = self.layoutManager()
+        tc = self.textContainer()
+        glyph_range = lm.glyphRangeForBoundingRect_inTextContainer_(rect, tc)
+        return lm.characterRangeForGlyphRange_actualGlyphRange_(glyph_range, None)[0]
+
+    def char_index_at_point(self, point, adjust_x=True):
+        if adjust_x:
+            # move x value to text container origin
+            point.x = self.textContainerOrigin().x
+        return self.layoutManager() \
+            .characterIndexForPoint_inTextContainer_fractionOfDistanceBetweenInsertionPoints_(
+                point, self.textContainer(), NULL)[0]
 
     def scrollRangeToVisible_(self, rng):
         length = self.textStorage().length()

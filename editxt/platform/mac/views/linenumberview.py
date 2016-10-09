@@ -23,7 +23,7 @@ import re
 import objc
 import AppKit as ak
 import Foundation as fn
-from objc import super, NULL
+from objc import super
 
 from editxt.platform.mac.events import call_later
 from editxt.platform.mac.views.util import font_smoothing
@@ -101,14 +101,8 @@ class LineNumberView(ak.NSRulerView):
         self.draw_line_numbers(rect, colors.line_number_color)
 
     def char_index_at_point(self, point, adjust_x=True):
-        view = self.textview
-        view_point = self.convertPoint_toView_(point, view)
-        if adjust_x:
-            view_point.x = view.textContainerOrigin().x
-        return view.layoutManager() \
-            .characterIndexForPoint_inTextContainer_fractionOfDistanceBetweenInsertionPoints_(
-                view_point, view.textContainer(), NULL)[0]
-        return index
+        view_point = self.convertPoint_toView_(point, self.textview)
+        return self.textview.char_index_at_point(view_point, adjust_x)
 
     @font_smoothing
     def draw_line_numbers(self, rect, color):

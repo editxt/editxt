@@ -80,7 +80,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-- fix scroll on soft wrap
 - implement wrap at margin
 - fix "blame" command (doesn't work sometimes)
 - make pathfind command run in background and generate incremental output
