@@ -104,6 +104,27 @@ class TextView(ak.NSTextView):
         except ValueError:
             beep()
 
+    def select(self, rng):
+        self.setSelectedRange_(rng)
+
+    def setSelectedRanges_affinity_stillSelecting_(self, ranges, affinity, flag):
+        if self.editor.newline_mode == const.NEWLINE_MODE_WINDOWS:
+            # HACK workaround for shift+left-arrow after
+            # moveToEndOfLineAndModifySelection_ selecting
+            # to middle of CRLF sequence (invalid character range).
+            text = self.text
+            text_length = len(text)
+            def adjust(value):
+                rng = value.rangeValue()
+                end = sum(rng)
+                if (rng[1] and end and end < text_length - 1 and
+                        text[end - 1] == "\r" and text[end] == "\n"):
+                    rng = (rng[0], rng[1] - 1)
+                    value = ak.NSValue.valueWithRange_(rng)
+                return value
+            ranges = [adjust(rng) for rng in ranges]
+        super().setSelectedRanges_affinity_stillSelecting_(ranges, affinity, flag)
+
     def soft_wrap(self, value=None):
         if value is None:
             wrap = self.textContainer().widthTracksTextView()

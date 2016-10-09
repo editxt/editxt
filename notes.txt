@@ -658,6 +658,8 @@ The following two tests fail when test_mockerext is run first followed by the en
 # debugging tool for observing all method calls on a class
 # AOPython aopython
 
+# see methodwatch decorator in editxt.test.methodwatch
+
 import re
 from objc import selector as objc_selector
 from inspect import ismethod, isfunction

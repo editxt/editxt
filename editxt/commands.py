@@ -99,10 +99,10 @@ def load_commands():
             "moveToLeftEndOfLine:": move_to_beginning_of_line,
             "moveToBeginningOfLineAndModifySelection:": select_to_beginning_of_line,
             "moveToLeftEndOfLineAndModifySelection:": select_to_beginning_of_line,
-            "moveToEndOfLine:": move_to_end_of_line,
-            "moveToRightEndOfLine:": move_to_end_of_line,
-            "moveToEndOfLineAndModifySelection:": select_to_end_of_line,
-            "moveToRightEndOfLineAndModifySelection:": select_to_end_of_line,
+            #"moveToEndOfLine:": move_to_end_of_line,
+            #"moveToRightEndOfLine:": move_to_end_of_line,
+            #"moveToEndOfLineAndModifySelection:": select_to_end_of_line,
+            #"moveToRightEndOfLineAndModifySelection:": select_to_end_of_line,
             "deleteBackward:": delete_backward,
             #"deleteForward:": delete_forward,
         }
@@ -651,40 +651,43 @@ def select_to_beginning_of_line(editor, args):
     editor.selection = new
     editor.text_view.scrollRangeToVisible_(new)
 
-def find_end_of_line(editor, selection=None):
-    eol = editor.document.eol
-    sel = selection or editor.selection
-    text = editor.document.text_storage
-    i = sel[0]
-    end = len(text)
-    if eol == "\r\n" and i and i < end and text[i] == '\n' and text[i-1] == '\r':
-        # special case move to start of CRLF if in middle
-        i -= 1
-    else:
-        eols = const.NEWLINE_CHARS
-        while i < end and text[i] not in eols:
-            i += 1
-    return i
-
-def move_to_end_of_line(editor, args):
-    new = (find_end_of_line(editor), 0)
-    editor.selection = new
-    editor.text_view.scrollRangeToVisible_(new)
-
-def select_to_end_of_line(editor, args):
-    sel = editor.selection
-    end_sel = sum(sel)
-    end = find_end_of_line(editor, (end_sel, 0))
-    if end < end_sel:
-        # selection ended in the middle of CRLF; move to beginning of CRLF
-        if sel[0] > end:
-            new = (end, 0)
-        else:
-            new = (sel[0], end - sel[0])
-    else:
-        new = (sel[0], end - sel[0])
-    editor.selection = new
-    editor.text_view.scrollRangeToVisible_(new)
+# Not using this because NSTextView provides no easy way to set
+# the selection anchor after setting selection with setSelectedRange...
+# Shift+Left Arrow after Shift+End modified left end of selection.
+#def find_end_of_line(editor, selection=None):
+#    eol = editor.document.eol
+#    sel = selection or editor.selection
+#    text = editor.document.text_storage
+#    i = sel[0]
+#    end = len(text)
+#    if eol == "\r\n" and i and i < end and text[i] == '\n' and text[i-1] == '\r':
+#        # special case move to start of CRLF if in middle
+#        i -= 1
+#    else:
+#        eols = const.NEWLINE_CHARS
+#        while i < end and text[i] not in eols:
+#            i += 1
+#    return i
+#
+#def move_to_end_of_line(editor, args):
+#    new = (find_end_of_line(editor), 0)
+#    editor.selection = new
+#    editor.text_view.scrollRangeToVisible_(new)
+#
+#def select_to_end_of_line(editor, args):
+#    sel = editor.selection
+#    end_sel = sum(sel)
+#    end = find_end_of_line(editor, (end_sel, 0))
+#    if end < end_sel:
+#        # selection ended in the middle of CRLF; move to beginning of CRLF
+#        if sel[0] > end:
+#            new = (end, 0)
+#        else:
+#            new = (sel[0], end - sel[0])
+#    else:
+#        new = (sel[0], end - sel[0])
+#    editor.selection = new
+#    editor.text_view.scrollRangeToVisible_(new)
 
 def delete_backward(editor, args):
     textview = editor.text_view

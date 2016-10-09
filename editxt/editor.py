@@ -270,7 +270,7 @@ class Editor(CommandSubject):
         return self.text_view.selectedRange()
     @selection.setter
     def selection(self, rng):
-        self.text_view.setSelectedRange_(rng)
+        self.text_view.select(rng)
 
     @property
     def is_dirty(self):
