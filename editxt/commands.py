@@ -97,8 +97,12 @@ def load_commands():
             "insertNewline:": insert_newline,
             "moveToBeginningOfLine:": move_to_beginning_of_line,
             "moveToLeftEndOfLine:": move_to_beginning_of_line,
-            #"moveToBeginningOfLineAndModifySelection:":
-            #    select_to_beginning_of_line,
+            "moveToBeginningOfLineAndModifySelection:": select_to_beginning_of_line,
+            "moveToLeftEndOfLineAndModifySelection:": select_to_beginning_of_line,
+            "moveToEndOfLine:": move_to_end_of_line,
+            "moveToRightEndOfLine:": move_to_end_of_line,
+            "moveToEndOfLineAndModifySelection:": select_to_end_of_line,
+            "moveToRightEndOfLineAndModifySelection:": select_to_end_of_line,
             "deleteBackward:": delete_backward,
             #"deleteForward:": delete_forward,
         }
@@ -608,27 +612,79 @@ def insert_newline(editor, args):
         textview.didChangeText()
         textview.scrollRangeToVisible_((sel[0], len(eol)))
 
-def move_to_beginning_of_line(editor, args):
+def find_beginning_of_line(editor, selection=None):
     eol = editor.document.eol
-    sel = editor.selection
+    sel = selection or editor.selection
     text = editor.document.text_storage
     if sel[0] > 0:
         i = text.rfind(eol, 0, sel[0])
         i = 0 if i < 0 else (i + len(eol))
     else:
         i = 0
-    new = (i, 0)
     wslead, end = i, len(text)
     while wslead < end and text[wslead] in ' \t':
         wslead += 1
-    if wslead != i:
-        new = (wslead, 0)
-    if new[0] == sel[0]:
-        new = (i, 0)
+    return wslead if wslead != i and wslead != sel[0] else i
+
+def move_to_beginning_of_line(editor, args):
+    new = (find_beginning_of_line(editor), 0)
     editor.selection = new
     editor.text_view.scrollRangeToVisible_(new)
 
-#def move_to_beginning_of_line_and_modify_selection(editor, args):
+def select_to_beginning_of_line(editor, args):
+    sel = editor.selection
+    start = sel[0]
+    end = sum(sel)
+    i = find_beginning_of_line(editor)
+    if i > start:
+        j = find_beginning_of_line(editor, (i, 0))
+        assert j <= start, (sel, i, j)
+        if j < start:
+            new = (j, end - j)
+        elif i <= end:
+            # all whitespace at beginning of line is selected
+            new = (i, end - i)
+        else:
+            new = (j, max(i, end) - j)
+    else:
+        new = (i, end - i)
+    editor.selection = new
+    editor.text_view.scrollRangeToVisible_(new)
+
+def find_end_of_line(editor, selection=None):
+    eol = editor.document.eol
+    sel = selection or editor.selection
+    text = editor.document.text_storage
+    i = sel[0]
+    end = len(text)
+    if eol == "\r\n" and i and i < end and text[i] == '\n' and text[i-1] == '\r':
+        # special case move to start of CRLF if in middle
+        i -= 1
+    else:
+        eols = const.NEWLINE_CHARS
+        while i < end and text[i] not in eols:
+            i += 1
+    return i
+
+def move_to_end_of_line(editor, args):
+    new = (find_end_of_line(editor), 0)
+    editor.selection = new
+    editor.text_view.scrollRangeToVisible_(new)
+
+def select_to_end_of_line(editor, args):
+    sel = editor.selection
+    end_sel = sum(sel)
+    end = find_end_of_line(editor, (end_sel, 0))
+    if end < end_sel:
+        # selection ended in the middle of CRLF; move to beginning of CRLF
+        if sel[0] > end:
+            new = (end, 0)
+        else:
+            new = (sel[0], end - sel[0])
+    else:
+        new = (sel[0], end - sel[0])
+    editor.selection = new
+    editor.text_view.scrollRangeToVisible_(new)
 
 def delete_backward(editor, args):
     textview = editor.text_view

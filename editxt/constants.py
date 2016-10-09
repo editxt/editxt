@@ -88,6 +88,8 @@ EOLS = {
 #    "\x01": "\u0001",
 }
 
+NEWLINE_CHARS = '\n\r\u2028\u2029'
+
 CHARACTER_ENCODINGS = [
     Foundation.NSUTF8StringEncoding,
     Foundation.NSUnicodeStringEncoding,

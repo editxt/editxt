@@ -24,6 +24,7 @@ from collections import namedtuple
 from os.path import dirname, isabs, isdir, join, sep
 from subprocess import check_output, CalledProcessError
 
+from editxt.constants import NEWLINE_CHARS
 from editxt.command.base import command, CommandError
 from editxt.command.parser import CommandParser, DynamicList, String
 from editxt.platform.markdown import html_string
@@ -32,7 +33,6 @@ _cache = None
 log = logging.getLogger(__name__)
 GitInfo = namedtuple("GitInfo", "git_dir remotes expires file_path")
 DEFAULT_GIT_INFO = GitInfo(None, [], None, None)
-NEWLINE_CHARS = '\n\r\u2028\u2029'
 
 
 class Remote(namedtuple("Remote", "name user repo")):
