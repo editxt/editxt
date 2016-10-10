@@ -34,6 +34,7 @@ def test_pathfind_title():
 
 def test_pathfind():
     filesystem = [
+        ".git/file.doc",  # excluded by default
         "dir/a_file.txt",
         "dir/file.txt",
         "dir/file_b.txt",
@@ -46,6 +47,7 @@ def test_pathfind():
     @test_app("window project(/dir) editor*")
     def test(app, command, files=None, config="", selection=(0, 0)):
         tmp = test_app(app).tmp
+        os.mkdir(join(tmp, ".git"))
         os.mkdir(join(tmp, "dir"))
         os.mkdir(join(tmp, "dir", "file"))
         for path in filesystem:
@@ -108,3 +110,11 @@ def test_pathfind():
         yield test("pathfind a_file", config=" editor[/dir/a_file.txt 0]*")
         yield test("pathfind a_file  disp", [".../a_file.txt"])
         yield test("pathfind a_file  first", config=" editor[/dir/a_file.txt 0]*")
+
+    cfg = {"command.pathfind.exclude_patterns": ["*.txt", "txt", ".git"]}
+    test = partial(base_test, app_config=cfg)
+    yield test("pathfind file / disp", [("/file.doc", "")])
+    yield test("pathfind file.doc / all", [
+        ("/file.doc", ""),
+        ("/.git/file.doc", ""),
+    ])

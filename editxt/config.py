@@ -164,6 +164,16 @@ class Dict(Type):
         raise ValueError("{}: expected dict, got {!r}".format(key, value))
 
 
+class List(Type):
+
+    def validate(self, value, key):
+        if value is NOT_SET:
+            return self.default
+        if isinstance(value, list):
+            return value
+        raise ValueError("{}: expected list, got {!r}".format(key, value))
+
+
 class String(Type):
 
     def validate(self, value, key):

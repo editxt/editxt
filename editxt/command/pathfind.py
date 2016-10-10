@@ -20,10 +20,12 @@
 import logging
 import os
 import re
+from fnmatch import fnmatch
 from functools import partial
-from os.path import dirname, isdir, join, sep
+from os.path import basename, dirname, isdir, join, sep
 from urllib.parse import quote
 
+import editxt.config as config
 from editxt.command.base import command, CommandError
 from editxt.command.parser import (CommandParser, Choice, File, Options,
     Regex, RegexPattern)
@@ -45,16 +47,21 @@ def base_path(editor=None):
     return editor.project.file_path or editor.dirname()
 
 
-@command(arg_parser=CommandParser(
-    Regex("path-pattern", default=get_selection_regex),
-    File("search-path", default=base_path),
-    Choice(
-        "open-single-match",
-        "display-matched-paths",
-        "open-first-match first",
-        name="open"
+@command(
+    arg_parser=CommandParser(
+        Regex("path-pattern", default=get_selection_regex),
+        File("search-path", default=base_path),
+        Choice(
+            "open-single-match",
+            "display-matched-paths",
+            "open-first-match first",
+            "all-matched-paths",  # do not hide pathfind.exclude_patterns
+            name="open"
+        ),
     ),
-), is_enabled=has_editor, hotkey="Command+Alt+p")
+    config={"exclude_patterns": config.List(["*.pyc", ".git", ".svn", ".hg"])},
+    is_enabled=has_editor, hotkey="Command+Alt+p"
+)
 def pathfind(editor, args):
     """Find file by path"""
     if args is None and editor is not None:
@@ -72,10 +79,19 @@ def pathfind(editor, args):
     if not search_path:
         return "please specify search path"
     paths = []
+    exclude = editor.app.config.for_command("pathfind")["exclude_patterns"]
+    if args.open == "all-matched-paths":
+        is_excluded = lambda path: False
+    else:
+        def is_excluded(path):
+            filename = basename(path)
+            return any(fnmatch(filename, pattern) for pattern in exclude)
     for dirpath, dirnames, filenames in os.walk(search_path):
+        if is_excluded(dirpath):
+            continue
         for name in filenames:
             path = join(dirpath, name)
-            if regex.search(path):
+            if regex.search(path) and not is_excluded(path):
                 paths.append(path)
     if len(paths) == 1 and args.open == "open-single-match":
         editor.project.window.open_paths(paths, focus=True)

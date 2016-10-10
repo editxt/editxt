@@ -80,10 +80,10 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-- implement wrap at margin
 - fix "blame" command (doesn't work sometimes)
 - make pathfind command run in background and generate incremental output
 - exclude unwanted paths from pathfind
+- add "unique" command for removing duplicate lines
 
 Multi-select in file tree
   - concatenate views on select multiple
@@ -111,6 +111,7 @@ Always open document after current document
 Fix bug in window title after save new document
 Fix `xt path/to/directory` (should not error)
 Add support for drag/drop move DualView divider
+Implement wrap at margin
 Aesthetics
   - syntax highlighting
     - better language detection (file extension, shebang line, etc.)
