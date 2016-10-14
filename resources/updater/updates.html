@@ -51,7 +51,44 @@
     }
   </style>
 </head>
-<body><h2>2016-02-21 - 1.9.5</h2>
+<body><h2>2016-10-14 - 1.10.0</h2>
+<ul>
+<li>Remove close buttons from file tree. Right-click &gt; Close or or Command+W
+instead.</li>
+<li>Switch from <code>ack</code> to <code>ag</code> for faster find-in-file. Unfortunately the <code>ag</code>
+program's options are not compatible with <code>ack</code>, so this means you must
+install <code>ag</code> (a.k.a. <code>the_silver_searcher</code>) to use the <code>ag</code> command. The old
+<code>ack</code> command is an alias for the new <code>ag</code> command. The <code>ag</code> command also now
+runs in a background thread.</li>
+<li>Allow multi-selection in file tree. Some commands work differently with
+multiple files selected. For example, if there are two files selected, the
+<code>diff</code> command will compare them. It is also possible to close multiple files
+at once by selecting them and then Right Click &gt; Close.</li>
+<li>The <code>python</code> command's <code>executable</code> argument now accepts a virtualenv path
+(or any directory containing an executable at <code>bin/python</code>) from which it will
+automatically derive the Python executable path.</li>
+<li>Add <code>blame</code> command, which invokes <code>git gui blame</code> on the current file.</li>
+<li>Add <code>github-url</code> command, which creates a link to the github page for the
+current file.</li>
+<li>Exclude unwanted files and directories from the pathfind command. The default
+set of excluded files is:
+<pre><code>command:
+  pathfind:
+    exclude_patterns:
+      - *.pyc
+      - .git
+      - .hg
+      - .svn
+</code></pre>
+This can be customized in the config file.</li>
+<li>Maintain scroll position on soft wrap toggle.</li>
+<li>Fixed sluggish typing and line number redrawing bug.</li>
+<li>Fixed newlines in markdown output.</li>
+<li>Fixed Escape key in project main view.</li>
+<li>Fixed move to beginning of line (Home, Command+Left Arrow) with unicode.</li>
+<li>Fixed bugs in Home/End cursor movement and selection.</li>
+</ul>
+<h2>2016-02-21 - 1.9.5</h2>
 <ul>
 <li>Add wildcard path matching to <code>open</code> command.</li>
 <li>Add <code>set comment_token</code> command, which changes the comment token for the

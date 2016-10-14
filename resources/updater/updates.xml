@@ -374,5 +374,55 @@ The default config value is <code>true</code> (move detection is enabled by defa
       <pubDate>Sun, 21 Feb 2016 15:47:44 -0500</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.9.5/EditXT-v1.9.5-c9b6c40.zip" sparkle:version="201602211547.c9b6c40" sparkle:shortVersionString="1.9.5" sparkle:dsaSignature="MCwCFEzAIE2Hgo++hYNcy4N6TCTBF5gVAhQHuQcBtoFfP2WyTS+gEJRxA3bpTw==" length="9534059" type="application/octet-stream" />
     </item>
+    <item>
+      <title>Version 1.10.0</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li>Remove close buttons from file tree. Right-click &gt; Close or or Command+W
+instead.</li>
+<li>Switch from <code>ack</code> to <code>ag</code> for faster find-in-file. Unfortunately the <code>ag</code>
+program's options are not compatible with <code>ack</code>, so this means you must
+install <code>ag</code> (a.k.a. <code>the_silver_searcher</code>) to use the <code>ag</code> command. The old
+<code>ack</code> command is an alias for the new <code>ag</code> command. The <code>ag</code> command also now
+runs in a background thread.</li>
+<li>Allow multi-selection in file tree. Some commands work differently with
+multiple files selected. For example, if there are two files selected, the
+<code>diff</code> command will compare them. It is also possible to close multiple files
+at once by selecting them and then Right Click &gt; Close.</li>
+<li>The <code>python</code> command's <code>executable</code> argument now accepts a virtualenv path
+(or any directory containing an executable at <code>bin/python</code>) from which it will
+automatically derive the Python executable path.</li>
+<li>Add <code>blame</code> command, which invokes <code>git gui blame</code> on the current file.</li>
+<li>Add <code>github-url</code> command, which creates a link to the github page for the
+current file.</li>
+<li>Exclude unwanted files and directories from the pathfind command. The default
+set of excluded files is:
+<pre><code>command:
+  pathfind:
+    exclude_patterns:
+      - *.pyc
+      - .git
+      - .hg
+      - .svn
+</code></pre>
+This can be customized in the config file.</li>
+<li>Maintain scroll position on soft wrap toggle.</li>
+<li>Fixed sluggish typing and line number redrawing bug.</li>
+<li>Fixed newlines in markdown output.</li>
+<li>Fixed Escape key in project main view.</li>
+<li>Fixed move to beginning of line (Home, Command+Left Arrow) with unicode.</li>
+<li>Fixed bugs in Home/End cursor movement and selection.</li>
+</ul>
+
+        ]]>
+      </description>
+      <sparkle:releaseNotesLink>
+        http://htmlpreview.github.io/?https://raw.github.com/editxt/editxt/blob/master/resources/updater/updates.html
+      </sparkle:releaseNotesLink>
+      <pubDate>Fri, 14 Oct 2016 13:18:47 -0400</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.10.0/EditXT-v1.10.0-160f68b.zip" sparkle:version="201610141318.160f68b" sparkle:shortVersionString="1.10.0" sparkle:dsaSignature="MCwCFGX654B3H5TmWRgD3YOrUfUcAS1OAhQJeM2UF0BMnm05EhT3lme6iGaBcA==" length="9281378" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
