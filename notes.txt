@@ -86,7 +86,7 @@ Top priority
 
 Multi-select in file tree
   - concatenate views on select multiple
-    - allow find/replace across multiple files
+  - allow find/replace across multiple files
   - grab lines from all selected files
   - change indentation in selected files
 x  - add icon badge (or glowing red shadow) to unsaved documents

@@ -3,19 +3,43 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
-## 2016-... - 1.10.0
+## 2016-10-14 - 1.10.0
 
-- Remove close buttons from file tree.
+- Remove close buttons from file tree. Right-click > Close or or Command+W
+  instead.
 - Switch from `ack` to `ag` for faster find-in-file. Unfortunately the `ag`
   program's options are not compatible with `ack`, so this means you must
   install `ag` (a.k.a. `the_silver_searcher`) to use the `ag` command. The old
-  `ack` command is an alias for the new `ag` command.
+  `ack` command is an alias for the new `ag` command. The `ag` command also now
+  runs in a background thread.
 - Allow multi-selection in file tree. Some commands work differently with
   multiple files selected. For example, if there are two files selected, the
   `diff` command will compare them. It is also possible to close multiple files
   at once by selecting them and then Right Click > Close.
-- Fixed sluggish line number redrawing after lose and regain app focus when
-  command view was active.
+- The `python` command's `executable` argument now accepts a virtualenv path
+  (or any directory containing an executable at `bin/python`) from which it will
+  automatically derive the Python executable path.
+- Add `blame` command, which invokes `git gui blame` on the current file.
+- Add `github-url` command, which creates a link to the github page for the
+  current file.
+- Exclude unwanted files and directories from the pathfind command. The default
+  set of excluded files is:
+  ```
+  command:
+    pathfind:
+      exclude_patterns:
+        - *.pyc
+        - .git
+        - .hg
+        - .svn
+  ```
+  This can be customized in the config file.
+- Maintain scroll position on soft wrap toggle.
+- Fixed sluggish typing and line number redrawing bug.
+- Fixed newlines in markdown output.
+- Fixed Escape key in project main view.
+- Fixed move to beginning of line (Home, Command+Left Arrow) with unicode.
+- Fixed bugs in Home/End cursor movement and selection.
 
 ## 2016-02-21 - 1.9.5
 
