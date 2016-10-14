@@ -23,7 +23,7 @@ A programmer's text editor for Mac OS X
     - Up/Down moves up and down in the document tree.
     - Left/Right navigates most recently visited documents.
   - `doc FILENAME` command to switch to editor by name.
-- `ack` (http://beyondgrep.com/) code search tool integration.
+- `ag` (http://geoff.greer.fm/ag/) code search tool integration.
 - `grab` command to grab (think grep) lines from the current document.
 - Diff tool integration for viewing differences between the current (unsaved)
   document and the file on disk.

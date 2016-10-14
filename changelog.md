@@ -28,10 +28,10 @@ https://github.com/editxt/editxt for details of what actually happened.
   command:
     pathfind:
       exclude_patterns:
-        - *.pyc
-        - .git
-        - .hg
-        - .svn
+        - "*.pyc"
+        - ".git"
+        - ".hg"
+        - ".svn"
   ```
   This can be customized in the config file.
 - Maintain scroll position on soft wrap toggle.
