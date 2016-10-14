@@ -46,6 +46,7 @@ from editxt.command.openfile import open_
 from editxt.command.pathfind import pathfind
 from editxt.command.python import python
 from editxt.command.sortlines import sort_lines
+from editxt.command.unique import unique_lines
 from editxt.command.wraplines import wrap_at_margin, wrap_lines
 
 log = logging.getLogger(__name__)
@@ -68,6 +69,7 @@ def load_commands():
             wrap_at_margin,
             wrap_lines,
             sort_lines,
+            unique_lines,
             reindent,
             find,
             ag,

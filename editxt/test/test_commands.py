@@ -45,6 +45,7 @@ def test_load_commands():
         mod.wrap_at_margin,
         mod.wrap_lines,
         mod.sort_lines,
+        mod.unique_lines,
         mod.reindent,
         mod.find,
         mod.ag,
@@ -829,6 +830,7 @@ class CommandTester(object):
                 pass
         class editor:
             text_view = kw.pop("textview", object)
+            selection = classproperty(lambda cls: cls.text_view.selectedRange())
         editor = kw.pop("editor", editor)
         if not isinstance(editor, type(Mocker().mock())):
             editor.message = message
@@ -857,3 +859,12 @@ class CommandTester(object):
 
     def __getattr__(self, name):
         return getattr(self.bar, name)
+
+
+class classproperty:
+
+    def __init__(self, fget):
+        self.fget = fget
+
+    def __get__(self, obj, type):
+        return self.fget(type)

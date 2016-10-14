@@ -35,7 +35,7 @@ log = logging.getLogger(__name__)
 
 
 def has_selection(editor):
-    return editor.text_view and editor.text_view.selectedRange().length > 0
+    return editor.text_view and editor.selection[1] > 0
 
 def has_editor(editor):
     return editor is not None
