@@ -82,7 +82,6 @@ Top priority
 
 - fix "blame" command (doesn't work sometimes)
 - make pathfind command run in background and generate incremental output
-- exclude unwanted paths from pathfind
 - add "unique" command for removing duplicate lines
 
 Multi-select in file tree

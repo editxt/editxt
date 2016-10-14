@@ -83,9 +83,10 @@ def pathfind(editor, args):
     if args.open == "all-matched-paths":
         is_excluded = lambda path: False
     else:
+        excluders = [make_matcher(pattern) for pattern in exclude]
         def is_excluded(path):
             filename = basename(path)
-            return any(fnmatch(filename, pattern) for pattern in exclude)
+            return any(x(filename) for x in excluders)
     for dirpath, dirnames, filenames in os.walk(search_path):
         if is_excluded(dirpath):
             continue
@@ -110,3 +111,19 @@ def path_link(path, editor):
         rel=short_path(path, editor),
         path=quote(path),
     )
+
+
+def make_matcher(pattern):
+    if is_literal(pattern):
+        return lambda value: value == pattern
+    if pattern.startswith("*") and is_literal(pattern[1:]):
+        tail = pattern[1:]
+        return lambda value: value.endswith(tail)
+    if pattern.endswith("*") and is_literal(pattern[:-1]):
+        head = pattern[:-1]
+        return lambda value: value.startswith(head)
+    return partial(fnmatch, pattern=pattern)
+
+
+def is_literal(pattern):
+    return not any(char in pattern for char in "*?[")
