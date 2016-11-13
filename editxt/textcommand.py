@@ -319,7 +319,12 @@ class CommandBar(object):
         word = next(match)
         if next(match, False):
             # use empty delimiter if there are two or more matching words
-            return CompleteWord(prefix, lambda:"", getattr(word, 'start', None))
+            return CompleteWord(
+                prefix,
+                lambda:"",
+                getattr(word, 'start', None),
+                getattr(word, 'escape', None),
+            )
         return word
 
     def auto_complete(self, text, word, replace_range):
