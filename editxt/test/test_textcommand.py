@@ -368,19 +368,23 @@ def test_CommandBar_common_prefix():
         "test_ab",
         "test_ba",
         "test_bab",
+        "test_c xz",
+        "test_c xyz",
         "text_xyz",
     ]
     bar = CommandTester()
+    def escape(value):
+        return value.replace(" ", "\\ ")
 
     @gentest
     def test(word, expect, complete="", start=0):
         delim = lambda:"/"
-        words = [CompleteWord(w, delim, start)
+        words = [CompleteWord(w, delim, start, escape)
                  for w in word_list if w.startswith(word)]
         prefix = bar.common_prefix(words)
         eq_(prefix, expect)
         if complete is not None:
-            eq_(prefix.complete(), prefix + complete)
+            eq_(prefix.complete(), complete or expect)
             eq_(prefix.start, start)
 
     yield test("x", "", None)
@@ -388,9 +392,10 @@ def test_CommandBar_common_prefix():
     yield test("t", "te")
     yield test("tes", "test_")
     yield test("tes", "test_", start=42)
-    yield test("test_a", "test_ab", "/")
+    yield test("test_a", "test_ab", "test_ab/")
     yield test("test_b", "test_ba")
-    yield test("tex", "text_xyz", "/")
+    yield test("test_c", "test_c x", "test_c\\ x")
+    yield test("tex", "text_xyz", "text_xyz/")
 
 def test_CommandBar_auto_complete():
     @command(arg_parser=CommandParser(

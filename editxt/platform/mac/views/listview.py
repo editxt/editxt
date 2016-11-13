@@ -62,6 +62,7 @@ class ListView(object):
         self.scroll = scroll = ak.NSScrollView.alloc().init()
         scroll.setHasHorizontalScroller_(True)
         scroll.setHasVerticalScroller_(True)
+        scroll.setAutohidesScrollers_(True)
         scroll.setAutoresizingMask_(ak.NSViewWidthSizable | ak.NSViewHeightSizable)
         scroll.setDocumentView_(view)
 
