@@ -39,6 +39,7 @@ def setup_scroll_view(editor, frame):
     scroll = StatusbarScrollView.alloc().initWithFrame_(frame)
     scroll.setHasHorizontalScroller_(True)
     scroll.setHasVerticalScroller_(True)
+    scroll.setAutohidesScrollers_(True)
     scroll.setAutoresizingMask_(ak.NSViewWidthSizable | ak.NSViewHeightSizable)
 
     text = TextView(editor, frame, container)
