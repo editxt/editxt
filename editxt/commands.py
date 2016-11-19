@@ -256,9 +256,9 @@ def indent_lines(editor, args):
         textview.textStorage().replaceCharactersInRange_withString_(sel, seltext)
         textview.didChangeText()
         if select:
-            textview.setSelectedRange_((sel[0], len(seltext)))
+            editor.selection = (sel[0], len(seltext))
         else:
-            textview.scrollRangeToVisible_((sel[0] + len(seltext), 0))
+            textview.scrollRangeToVisible_(editor.selection)
 
 
 @command(title="Un-indent Selected Lines", hotkey=("[", ak.NSCommandKeyMask))
@@ -613,7 +613,7 @@ def insert_newline(editor, args):
     if textview.shouldChangeTextInRange_replacementString_(sel, rep):
         text[sel] = rep
         textview.didChangeText()
-        textview.scrollRangeToVisible_((sel[0], len(rep)))
+        textview.scrollRangeToVisible_(editor.selection)
 
 def find_beginning_of_line(editor, selection=None):
     eol = editor.document.eol
@@ -722,4 +722,4 @@ def delete_backward(editor, args):
     if textview.shouldChangeTextInRange_replacementString_(sel, ""):
         textview.textStorage().replaceCharactersInRange_withString_(sel, "")
         textview.didChangeText()
-        textview.scrollRangeToVisible_((sel[0], 0))
+        textview.scrollRangeToVisible_(editor.selection)
