@@ -596,23 +596,24 @@ _ws = re.compile(r"([\t ]+)", re.UNICODE | re.MULTILINE)
 
 def insert_newline(editor, args):
     textview = editor.text_view
-    eol = editor.document.eol
-    sel = textview.selectedRange()
-    text = textview.string()
-    if sel.location > 0:
-        i = text.rfind(eol, 0, sel[0])
-        i = 0 if i < 0 else (i + len(eol))
-        indent = _ws.match(text, i)
-        if indent:
-            eol += indent.group()[:sel[0]-i]
-        if i != sel[0]:
-            wslead = _ws.match(text, sel[0])
-            if wslead:
+    eol = rep = editor.document.eol
+    sel = editor.selection
+    text = editor.document.text_storage
+    if sel[0] > 0:
+        string = text.string()
+        prev_eol = text.rfind(eol, 0, sel[0])
+        line_start = 0 if prev_eol < 0 else (prev_eol + len(eol))
+        if line_start != sel[0]:
+            indent = _ws.match(string, line_start, sel[0])
+            if indent:
+                rep += indent.group()
+            wslead = _ws.match(string, sel[0])
+            if wslead and not sel[1]:
                 sel[1] += len(wslead.group())
-    if textview.shouldChangeTextInRange_replacementString_(sel, eol):
-        textview.textStorage().replaceCharactersInRange_withString_(sel, eol)
+    if textview.shouldChangeTextInRange_replacementString_(sel, rep):
+        text[sel] = rep
         textview.didChangeText()
-        textview.scrollRangeToVisible_((sel[0], len(eol)))
+        textview.scrollRangeToVisible_((sel[0], len(rep)))
 
 def find_beginning_of_line(editor, selection=None):
     eol = editor.document.eol

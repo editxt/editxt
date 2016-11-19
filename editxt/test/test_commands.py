@@ -491,13 +491,20 @@ def test_text_commands():
         yield test, c(input="  ", output="  \n  ", oldsel=(2, 0))
         yield test, c(input="    ", output=" \n ", oldsel=(1, 0))
         yield test, c(input="\t", output="\t\n\t", oldsel=(1, 0))
-        yield test, c(input="  a bc", output="  a\n  bc", oldsel=(3, 0))
-        yield test, c(input="  a bc", output="  a\n  c", oldsel=(3, 1))
         yield test, c(input="a bc", output="a\nbc", oldsel=(1, 0))
+        yield test, c(input="a bc", output="a\nc", oldsel=(1, 2))
+        yield test, c(input="  a bc", output="\n  a bc", oldsel=(0, 0))
+        yield test, c(input="  a bc", output="\n a bc", oldsel=(0, 1))
+        yield test, c(input="  a bc", output=" \n a bc", oldsel=(1, 0))
+        yield test, c(input="  a bc", output=" \n a bc", oldsel=(1, 1))
+        yield test, c(input="  a bc", output="  a\n  bc", oldsel=(3, 0))
+        yield test, c(input="  a bc", output="  a\n  bc", oldsel=(3, 1))
+        yield test, c(input="  a bc", output="  a\n  c", oldsel=(3, 2))
+        yield test, c(input="   a bc", output=" \n a bc", oldsel=(1, 0))
+        yield test, c(input="   a bc", output="  \n  a bc", oldsel=(2, 0))
         i = len(eol) - 1
         yield test, c(input=" a\n b", output=" a\n b\n ", oldsel=(5 + i, 0))
         yield test, c(input="\n x", output="\n\n x", oldsel=(1 + i, 0))
-
 
     c = cbase(method=mod.indent_lines)
     for eol in eols:
