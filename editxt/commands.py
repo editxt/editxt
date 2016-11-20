@@ -600,16 +600,16 @@ def insert_newline(editor, args):
     sel = editor.selection
     text = editor.document.text_storage
     if sel[0] > 0:
-        string = text.string()
         prev_eol = text.rfind(eol, 0, sel[0])
         line_start = 0 if prev_eol < 0 else (prev_eol + len(eol))
         if line_start != sel[0]:
-            indent = _ws.match(string, line_start, sel[0])
+            indent = text.count_chars(' \t', line_start, sel[0])
             if indent:
-                rep += indent.group()
-            wslead = _ws.match(string, sel[0])
-            if wslead and not sel[1]:
-                sel[1] += len(wslead.group())
+                rep += text[(line_start, indent)]
+            if not sel[1]:
+                wslead = text.count_chars(' \t', sel[0])
+                if wslead:
+                    sel[1] += wslead
     if textview.shouldChangeTextInRange_replacementString_(sel, rep):
         text[sel] = rep
         textview.didChangeText()

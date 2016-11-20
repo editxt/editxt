@@ -117,6 +117,30 @@ class Text(object):
             sub, fn.NSBackwardsSearch, rng, ak.NSLocale.currentLocale())[0]
         return -1 if i == fn.NSNotFound else i
 
+    def count_chars(self, chars, start, end=None):
+        """Count the number of characters starting at index
+
+        :param chars: A set of characters to match while counting.
+        Counting stops when a character is found that is not in this
+        set.
+        :param start: The index from which to start counting.
+        :param end: The index at which to stop counting. Defaults to the
+        length of the string.
+        :returns: A number greater than or equal to zero.
+        """
+        string = self.store.string()
+        length = string.length()
+        if start < 0:
+            raise NotImplementedError('not tested, or needed yet')
+        if end is None or end > length:
+            end = length
+        elif end < 0:
+            raise NotImplementedError('not tested, or needed yet')
+        index = start
+        while index < end and string.characterAtIndex_(index) in chars:
+            index += 1
+        return index - start
+
 
 def composed_length(string, enumerate=False):
     """Get the length of the string as seen by a human

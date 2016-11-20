@@ -23,6 +23,7 @@ import os
 from mocker import Mocker, expect, ANY, MATCH
 import AppKit as ak
 import Foundation as fn
+import objc
 from editxt.test.command import FakeTextView
 from editxt.test.util import assert_raises, eq_, TestConfig, replattr, test_app
 
@@ -250,6 +251,60 @@ def test_uncomment_line():
 
 
 def test_text_commands():
+    def _nsdiff(string):
+        value = string.length() - len(string)
+        assert value >= 0, (value, repr(string))
+        return value
+
+    def py_range(string, rng):
+        """Convert NSString range to python unicode character range"""
+        offset, length = rng
+        offset -= _nsdiff(string.substringWithRange_((0, offset)))
+        if length:
+            length -= _nsdiff(string.substringWithRange_(rng))
+        return offset, length
+
+    def objc_range(string, rng):
+        """Convert python unicode character range to NSString range"""
+        offset, length = rng
+        offset += _nsdiff(ak.NSString.stringWithString_(string[:offset]))
+        if length:
+            length += _nsdiff(ak.NSString.stringWithString_(string[rng:sum(rng)]))
+        return offset, length
+
+    def get_selection(string, expected=None):
+        if '^' not in string and expected is not None:
+            return expected, string
+        num = string.count('^')
+        assert num > 0, "no selection markers: {!r}".format(string)
+        assert num < 3, "too many selection markers: {!r}".format(string)
+        i = string.find('^')
+        if num == 1:
+            sel = (i, 0)
+        else:
+            sel = (i, string.find('^', i + 1) - i - 1)
+        if expected is not None:
+            eq_(sel, expected)
+        return objc_range(string, sel), string.replace('^', '')
+
+    def mark_selection(string_or_editor, sel=None):
+        if isinstance(string_or_editor, str):
+            if sel is None:
+                if '^' in string_or_editor:
+                    return string_or_editor
+                raise Exception("no selection to add")
+            string = string_or_editor
+            if '^' in string:
+                get_selection(string, sel)  # verify already marked
+                return string
+        else:
+            string = string_or_editor.document.text
+            sel = py_range(string, getattr(string_or_editor, "selection"))
+        assert '^' not in string, repr(string)
+        if sel[1]:
+            string = string[:sum(sel)] + '^' + string[sum(sel):]
+        return string[:sel[0]] + '^' + string[sel[0]:]
+
     from editxt.platform.mac.document import setup_scroll_view
     SAME = "<SAME AS INPUT>"
     tapp = test_app("editor")
@@ -265,25 +320,29 @@ def test_text_commands():
         if c.eol != "\n":
             c.input = c.input.replace("\n", c.eol)
             c.output = c.output.replace("\n", c.eol)
+        oldsel, input = get_selection(c.input, c._get("oldsel"))
         editor.document.indent_mode = c.mode
         editor.document.indent_size = c.size
         editor.document.eol = c.eol
-        editor.document.text = c.input
-        editor.selection = c.oldsel
+        editor.document.text = input
+        editor.selection = oldsel
         c.setup(c, TestConfig(locals()))
         c.method(editor, None)
         if c.output == SAME:
-            eq_(editor.document.text, c.input)
+            eq_(editor.document.text, input)
+        elif 'newsel' in c or '^' in c.output:
+            eq_(mark_selection(editor), mark_selection(c.output, c._get("newsel")))
         else:
-            eq_(editor.document.text, c.output)
-        if "newsel" in c:
-            eq_(editor.selection, fn.NSMakeRange(*c.newsel))
+            eq_(editor.document.text, c.output.replace('^', ''))
+        if "newsel" in c or '^' in c.output:
+            newsel = get_selection(c.output, c._get("newsel"))[0]
+            eq_(editor.selection, fn.NSMakeRange(*newsel))
             if "prevchar" in c:
                 text = editor.document.text_storage
                 prevchar = c.prevchar
                 if c.eol != "\n":
                     prevchar = prevchar.replace("\n", c.eol)[-1]
-                eq_(text[(c.newsel[0] - 1, 1)], prevchar)
+                eq_(text[(newsel[0] - 1, 1)], prevchar)
 
     eols = [const.EOLS[mode] for mode in [
         const.NEWLINE_MODE_UNIX,
@@ -484,6 +543,8 @@ def test_text_commands():
 #    yield test, c(eol='\r\n', input="  \n  ", oldsel=(3, 0), newsel=(2, 0), prevchar=" ")
 
     c = cbase(method=mod.insert_newline)
+    uchar = '\U0001f34c'
+    uchar4 = uchar * 4
     for eol in eols:
         c = c(eol=eol)
         yield test, c(input="", output="\n", oldsel=(0, 0))
@@ -505,6 +566,7 @@ def test_text_commands():
         i = len(eol) - 1
         yield test, c(input=" a\n b", output=" a\n b\n ", oldsel=(5 + i, 0))
         yield test, c(input="\n x", output="\n\n x", oldsel=(1 + i, 0))
+        yield test, c(input=uchar4 + "\n    x^\n", output=uchar4 + "\n    x\n    ^\n")
 
     c = cbase(method=mod.indent_lines)
     for eol in eols:
