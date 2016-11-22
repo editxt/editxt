@@ -169,31 +169,31 @@ class Highlighter(object):
             if minrange is not None:
                 minrange = union_range(cancelled_range, minrange)
 
+        store = text.store
         lang = self.syntaxdef
         if lang is None or not lang.wordinfo:
             if not minrange or minrange[0] == 0:
-                rng = (0, text.length())
-                rem_attribute = text.removeAttribute_range_
+                rng = (0, len(text))
+                rem_attribute = store.removeAttribute_range_
                 rem_attribute(SYNTAX_TOKEN, rng)
                 rem_attribute(SYNTAX_RANGE, rng)
                 fg_name = ak.NSForegroundColorAttributeName
-                add_attribute = text.addAttribute_value_range_
+                add_attribute = store.addAttribute_value_range_
                 add_attribute(fg_name, self.theme.text_color, rng)
             return
 
-        tlen = text.length()
+        tlen = len(text)
         if not tlen:
             return
         if minrange is not None and self.langs is not None:
             start = max(minrange[0] - 1, 0)
-            string = text.string()
             whitespace = lang.whitespace
             start = max(minrange[0] - 1, 0)
             while start > 0:
-                if string[start] in whitespace:
+                if text[start] in whitespace:
                     break
                 start -= 1
-            long_range = text.attribute_atIndex_longestEffectiveRange_inRange_
+            long_range = store.attribute_atIndex_longestEffectiveRange_inRange_
             token, adjrange = long_range(SYNTAX_TOKEN, start, None, (0, tlen))
             #log.debug("%s %s %s -> %s",
             #    minrange, start, tuple(adjrange),
@@ -211,14 +211,15 @@ class Highlighter(object):
 
     def scan(self, lang, text, offset, minend, tlen, timeout):
         def continue_scan():
-            text.beginEditing()
+            store = text.store
+            store.beginEditing()
             try:
                 resume_at = next(scanner, None)
             except Exception:
                 log.exception("syntax highlight error")
                 resume_at = None
             finally:
-                text.endEditing()
+                store.endEditing()
             if resume_at is None:
                 try:
                     del text.__cancel_incomplete_highlight
@@ -238,13 +239,13 @@ class Highlighter(object):
         x_range = SYNTAX_RANGE
         x_token = SYNTAX_TOKEN
         fg_name = ak.NSForegroundColorAttributeName
-        long_range = text.attribute_atIndex_longestEffectiveRange_inRange_
-        add_attribute = text.addAttribute_value_range_
-        rem_attribute = text.removeAttribute_range_
-        get_attribute = text.attribute_atIndex_effectiveRange_
+        store = text.store
+        long_range = store.attribute_atIndex_longestEffectiveRange_inRange_
+        add_attribute = store.addAttribute_value_range_
+        rem_attribute = store.removeAttribute_range_
+        get_attribute = store.attribute_atIndex_effectiveRange_
         end_time = (time() + timeout) if timeout else None
 
-        string = text.string()
         theme = self.theme
         langs = self.langs
         nexts = {}
@@ -262,7 +263,7 @@ class Highlighter(object):
             wordinfo = lang.wordinfo
             text_color = theme.get_syntax_color(lang.text_color)
             #log.debug("key=%s offset=%s", key, offset)
-            for match in lang.regex.finditer(string, offset):
+            for match in text.finditer(lang.regex, offset):
                 info = wordinfo[match.lastgroup]
                 #log.debug("    %s %r\n        %s\n        key: %s",
                 #            match.lastgroup, info, match, key)
@@ -814,7 +815,7 @@ class DynamicRange:
     @property
     def text_color(self):
         return self.parent.text_color
-    def finditer(self, string, offset):
+    def finditer(self, string, offset, end):
         match = self.lang_pattern.match(string, offset)
         if match:
             self.last_match_value = match.group(0).strip()

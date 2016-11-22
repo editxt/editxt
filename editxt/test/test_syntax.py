@@ -309,6 +309,14 @@ def test_Highlighter_color_text():
         # TODO comment.single-line comment
         """)
     yield test("python",
+        "# \U0001f612 \U0001f34c\ndef f(self, x): x # TODO",
+        """
+        # \U0001f612 \U0001f34c comment.single-line comment
+        def keyword
+        self builtin
+        # TODO comment.single-line comment
+        """)
+    yield test("python",
         "'\nfor x",
         """
         ' string.single-quote string
