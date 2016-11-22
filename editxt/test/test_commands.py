@@ -643,6 +643,13 @@ def test_text_commands():
         yield test, c(input="\n    ", output="\n  ", oldsel=(3+i, 0), newsel=(1+i, 0))
         yield test, c(input="\n    ", output="\n   ", oldsel=(2+i, 0), newsel=(1+i, 0))
         c = c(size=4)
+        yield test, c(input="    ^", output="^")
+        yield test, c(input="          ^", output="        ^")
+        yield test, c(input="    x  ^", output="    x ^")
+        yield test, c(input="    x   ^", output="    x  ^")
+        yield test, c(input="    x    ^", output="    x   ^")
+        yield test, c(input="    x     ^", output="    x   ^")
+        yield test, c(input="    x      ^", output="    x   ^")
         yield test, c(input="\n    ", output="\n", oldsel=(5+i, 0), newsel=(1+i, 0))
         yield test, c(input="\nx ", output="\nx", oldsel=(3+i, 0), newsel=(2+i, 0))
         yield test, c(input="\nx  ", output="\nx ", oldsel=(4+i, 0), newsel=(3+i, 0))
@@ -655,6 +662,11 @@ def test_text_commands():
         yield test, c(input="\n      ", output="\n    ", oldsel=(7+i, 0), newsel=(5+i, 0))
         yield test, c(input="\n       ", output="\n    ", oldsel=(8+i, 0), newsel=(5+i, 0))
         yield test, c(input="\n        ", output="\n    ", oldsel=(9+i, 0), newsel=(5+i, 0))
+        yield test, c(input="\n           ^ ", output="\n        ^ ")
+        uchar3 = uchar * 3
+        yield test, c(input=uchar3 + "\n    ^x\n", output=uchar3 + "\n^x\n")
+        yield test, c(input=uchar3 + "\n    x^\n", output=uchar3 + "\n    ^\n")
+        yield test, c(input=uchar3 + "\n      ^\n", output=uchar3 + "\n    ^\n")
 
     teardown()
 

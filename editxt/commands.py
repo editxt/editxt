@@ -598,7 +598,7 @@ def insert_newline(editor, args):
     textview = editor.text_view
     eol = rep = editor.document.eol
     sel = editor.selection
-    text = editor.document.text_storage
+    text = editor.text
     if sel[0] > 0:
         prev_eol = text.rfind(eol, 0, sel[0])
         line_start = 0 if prev_eol < 0 else (prev_eol + len(eol))
@@ -618,7 +618,7 @@ def insert_newline(editor, args):
 def find_beginning_of_line(editor, selection=None):
     eol = editor.document.eol
     sel = selection or editor.selection
-    text = editor.document.text_storage
+    text = editor.text
     if sel[0] > 0:
         i = text.rfind(eol, 0, sel[0])
         i = 0 if i < 0 else (i + len(eol))
@@ -660,7 +660,7 @@ def select_to_beginning_of_line(editor, args):
 #def find_end_of_line(editor, selection=None):
 #    eol = editor.document.eol
 #    sel = selection or editor.selection
-#    text = editor.document.text_storage
+#    text = editor.text
 #    i = sel[0]
 #    end = len(text)
 #    if eol == "\r\n" and i and i < end and text[i] == '\n' and text[i-1] == '\r':
@@ -697,29 +697,28 @@ def delete_backward(editor, args):
     if editor.document.indent_mode == const.INDENT_MODE_TAB:
         textview.deleteBackward_(None)
         return
-    sel = textview.selectedRange()
-    if sel.length == 0:
-        if sel.location == 0:
+    sel = editor.selection
+    if sel[1] == 0:
+        i = j = sel[0]
+        if i == 0:
             return
-        text = textview.string()
-        i = sel[0]
-        while i > 0 and text[i - 1] == " ":
-            i -= 1
-        delete = sel[0] - i
+        text = editor.text
+        size = editor.document.indent_size
+        min_j = max(0, i - size - 1)
+        while j > min_j and text[j - 1] == " ":
+            j -= 1
+        delete = i - j
         if delete < 1:
             delete = 1
         elif delete > 1:
-            i = text.lineRangeForRange_((i, 0))[0]
-            size = editor.document.indent_size
-            maxdel = (sel[0] - i) % size
-            if maxdel == 0:
-                maxdel = size
+            line_start = next(text.iter_line_ranges(j))[0]
+            maxdel = (i - line_start) % size or size
             if delete > maxdel:
                 delete = maxdel
-            elif delete < sel[0] - i:
+            elif delete < i - line_start:
                 delete = 1
-        sel = (sel[0] - delete, delete)
+        sel = (i - delete, delete)
     if textview.shouldChangeTextInRange_replacementString_(sel, ""):
-        textview.textStorage().replaceCharactersInRange_withString_(sel, "")
+        editor.text[sel] = ""
         textview.didChangeText()
         textview.scrollRangeToVisible_(editor.selection)
