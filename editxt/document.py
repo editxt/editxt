@@ -118,7 +118,8 @@ class DocumentController(object):
 
     def discard(self, document):
         """Remove document from controller"""
-        self.documents.pop(realpath(document.file_path), None)
+        if document.file_path is not None:
+            self.documents.pop(realpath(document.file_path), None)
 
 
 class TextDocument(object):

@@ -83,6 +83,7 @@ Top priority
 - fix "blame" command (doesn't work sometimes)
 - make pathfind command run in background and generate incremental output
 - add "unique" command for removing duplicate lines
+- regex/python syntax highlighting in find/replace dialog
 
 Multi-select in file tree
   - concatenate views on select multiple

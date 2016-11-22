@@ -775,3 +775,10 @@ def test_TextDocument_close():
         eq_(doc.text_storage, None)
         assert not hasattr(doc, "_disable_text_edit_callback")
         eq_(doc.props, None)
+
+def test_TextDocument_close_with_no_path():
+    with test_app() as app:
+        doc = TextDocument(app)
+        doc.updates_path_on_file_move = False
+        doc._fileref = None
+        doc.close()
