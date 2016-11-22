@@ -21,22 +21,50 @@ import AppKit as ak
 import Foundation as fn
 from objc import NULL
 
+from editxt.command.find import Match
+
 
 class Text(object):
+    """Text storage class
+
+    All indexes used by this class are hexichar indexes (what Apple
+    calls *unichar*), which are UTF-16-encoded code units.
+    See https://www.objc.io/issues/9-strings/unicode/ for more details.
+    """
 
     def __init__(self, value=""):
         self.store = ak.NSTextStorage.alloc() \
             .initWithString_attributes_(value, {})
         self._delegate = TextStorageDelegate.alloc().init_(self.store)
+        self._surrogates = []
+        def prune_surrogates(rng):
+            items = self._surrogates
+            if items is None:
+                rng = self.string().rangeOfCharacterFromSet_options_range_(
+                        UNICODE_SUPPLEMENTARY_PLANES, 0, rng)
+                if rng[0] != ak.NSNotFound:
+                    self._surrogates = [rng[0]]
+            else:
+                start = rng[0]
+                while items and items[-1] > start:
+                    items.pop()
+        self.on_edit(prune_surrogates)
 
     def on_edit(self, callback):
         return self._delegate.register_edit_callback(callback)
 
     def __getattr__(self, name):
+        # TODO remove this
+        # - python code should not need direct access to NSTextStorage
+        # - all non-python code should use self.store directly
         return getattr(self.store, name)
 
     def __getitem__(self, index):
-        """Get a string for the given index or slice"""
+        """Get a string for the given index or slice
+
+        Index must be a hexichar index. In the case of slices or ranges,
+        all must use hexichar indices.
+        """
         string = self.store.string()
         rng = index_to_range(index, string.length())
         return string.substringWithRange_(rng)
@@ -61,11 +89,6 @@ class Text(object):
 
     def iter_line_ranges(self, start=0, stop=None):
         """Generate line ranges
-
-        Start and stop are hexichar (what Apple calls *unichar*)
-        indexes, which are UTF-16-encoded code units.
-        See http://www.objc.io/issue-9/unicode.html for more details
-        on measuring the length of a string.
 
         :param start: Hexichar index from which to start iterating.
         The default is zero (0).
@@ -117,6 +140,78 @@ class Text(object):
             sub, fn.NSBackwardsSearch, rng, ak.NSLocale.currentLocale())[0]
         return -1 if i == fn.NSNotFound else i
 
+    def search(self, regex, pos=None, endpos=None):
+        """Search this text with the given regex
+
+        Indexes passed to this object are expected to be NSString
+        hexichar indexes. Indexes retrieved from the resulting match
+        object (if any) will be NSString hexichar indexes.
+        """
+        pos = 0 if pos is None else self._codepoint_index(pos)
+        end = self._codepoint_index(len(self) if endpos is None else pos)
+        match = regex.search(self.string(), pos)
+        return TextMatch(match, self) if match is not None else None
+
+    def finditer(self, regex, pos=None, endpos=None):
+        """Iterfind on this text with the given regex
+
+        Indexes passed to this object are expected to be NSString
+        hexichar indexes. Indexes retrieved from the resulting match
+        object (if any) will be NSString hexichar indexes.
+        """
+        pos = 0 if pos is None else self._codepoint_index(pos)
+        end = self._codepoint_index(len(self) if endpos is None else endpos)
+        for match in regex.finditer(self.string(), pos, end):
+            yield TextMatch(match, self)
+
+    def _codepoint_index(self, hexichar_index):
+        """hexichar index -> codepoint index"""
+        if self._surrogates is None:
+            return hexichar_index
+        return self._convert_index(hexichar_index, -1)
+
+    def _hexichar_index(self, codepoint_index):
+        """codepoint index -> hexichar index"""
+        if self._surrogates is None:
+            return codepoint_index
+        return self._convert_index(codepoint_index)
+
+    def _convert_index(self, index, direction=1):
+        """Convert from Unicode code point index to NSString hexichar index
+
+        Or the opposite if direction is `-1`
+        """
+        surrs = self._surrogates
+        length = len(self)
+        if index < 0 or index > length:
+            raise IndexError("index {} out of bounds; string length {}".format(
+                index, length))
+        # TODO binary search
+        for i in surrs:
+            if i >= index:
+                return index
+            index += direction
+        get_range = self.string().rangeOfCharacterFromSet_options_range_
+        notfound = ak.NSNotFound
+        chars = UNICODE_SUPPLEMENTARY_PLANES # surrogate pairs
+        start = (surrs[-1] + 1) if surrs else 0
+        while start < length:
+            rng = get_range(chars, 0, (start, length - start))
+            i = rng[0]
+            if i == notfound:
+                break
+            assert rng[1] == 2, rng
+            surrs.append(i)
+            if i > index:
+                return index
+            index += direction
+            start = sum(rng)
+        if not surrs:
+            self._surrogates = None
+        else:
+            surrs.append(length + 1)
+        return index
+
     def count_chars(self, chars, start, end=None):
         """Count the number of characters starting at index
 
@@ -137,6 +232,7 @@ class Text(object):
         elif end < 0:
             raise NotImplementedError('not tested, or needed yet')
         index = start
+        # TODO test with emoji (characterAtIndex_ will fail)
         while index < end and string.characterAtIndex_(index) in chars:
             index += 1
         return index - start
@@ -212,3 +308,32 @@ class TextStorageDelegate(ak.NSObject):
         store = notification.object()
         for callback in list(self.callbacks):
             callback(store.editedRange())
+
+
+UNICODE_SUPPLEMENTARY_PLANES = ak.NSCharacterSet.characterSetWithRange_((0x10000, 0xFFFFF))
+
+
+class TextMatch(Match):
+
+    def __init__(self, match, text):
+        super().__init__(match)
+        self.text = text
+
+    def start(self, group=None):
+        raise NotImplementedError
+
+    def end(self, group=None):
+        raise NotImplementedError
+
+    def span(self, *group):
+        start, end = self.match.span(*group)
+        if start > 0:
+            start = self.text._hexichar_index(start)
+        if end > 0:
+            end = self.text._hexichar_index(end)
+        return start, end
+
+    def range(self, *group):
+        """Get a range tuple (offset, length) for the group"""
+        start, end = self.span(*group)
+        return (start, end - start)

@@ -17,12 +17,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+import re
 from functools import partial
 
 import Foundation as fn
 
 import editxt.platform.mac.text as mod
-
 from editxt.test.util import assert_raises, eq_, gentest, TestConfig
 
 
@@ -39,9 +39,7 @@ def test_Text_len():
 
 
 def test_Text_getitem():
-    TEXT = "the quick brown fox"
-    def test(rng, expect, string=TEXT):
-        text = mod.Text(string)
+    def test(rng, expect):
         with assert_raises(expect if not isinstance(expect, str) else None):
             if callable(rng):
                 result = rng(text)
@@ -50,6 +48,7 @@ def test_Text_getitem():
         if isinstance(expect, str):
             eq_(result, expect)
 
+    text = mod.Text("the quick brown fox")
     yield test, 0, 't'
     yield test, 1, 'h'
     yield test, 18, 'x'
@@ -71,11 +70,52 @@ def test_Text_getitem():
     yield test, Range(1, 3), "he "
     yield test, Range(16, 3), "fox"
 
-    # TODO test unicode
-#    yield test, 'ab', 2
-#    yield test, '\u00e9', 1
-#    yield test, 'e\u0301', 2
-#    yield test, '\U0001f612', 2, 1
+    text = mod.Text("lol \U0001f612 awe\u0301 \U0001f34c")
+    yield test, (0, 3), 'lol'
+    #yield test, (4, 1), '?'
+    yield test, (4, 2), '\U0001f612'
+    #yield test, (5, 1), '?'
+    yield test, 10, '\u0301'
+    #yield test, 12, '?'
+    yield test, (12, 2), '\U0001f34c'
+
+
+def test_Text_search():
+    text = mod.Text("WATCHOUT! \U0001f34c don't slip eee\u0301e")
+    def test(pattern, expect_span, *args):
+        match = text.search(re.compile(pattern), *args)
+        print(repr(match))
+        eq_(text[match.range()], match[0])
+        eq_(match.span(), expect_span)
+
+    yield test, r"AT", (1, 3)
+    yield test, r" . ", (9, 13)
+    yield test, r"e*.e", (25, 29), 25
+    yield test, r"o", (14, 15), 10, 15
+
+    text = mod.Text("plain text")
+    yield test, r"xt", (8, 10)
+    assert text._surrogates is None, text._surrogates
+
+
+def test_Text_finditer():
+    text = mod.Text("lol \U0001f612 \U0001f34c slipping awe\u0301 \U0001f34c")
+    def test(pattern, expect_spans, *args):
+        spans = []
+        texts = []
+        matches = []
+        for match in text.finditer(re.compile(pattern), *args):
+            print(repr(match))
+            span = match.span()
+            spans.append(span)
+            texts.append(text[span[0]:span[1]])
+            matches.append(match[0])
+        eq_(texts, matches)
+        eq_(spans, expect_spans)
+
+    yield test, r" [^ ]+", [(3, 6), (6, 9), (9, 18), (18, 23), (23, 26)]
+    yield test, r" .(?= |$)", [(6, 9), (23, 26)], 4
+    yield test, r" .(?= |$)", [(6, 9)], 4, 9
 
 
 def test_composed_length():
