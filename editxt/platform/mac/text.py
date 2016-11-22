@@ -132,13 +132,17 @@ class Text(object):
 
     def find(self, sub, start=None, end=None):
         """Locale-aware find"""
-        return self._find(sub, start, end)
+        return self.find_range(sub, start, end)[0]
 
     def rfind(self, sub, start=None, end=None):
         """Locale-aware reverse find"""
-        return self._find(sub, start, end, True)
+        return self.find_range(sub, start, end, True)[0]
 
-    def _find(self, sub, start, end, reverse=False):
+    def find_range(self, sub, start=None, end=None, reverse=False, matchcase=True):
+        """Locale-aware find range
+
+        :returns: A range tuple `(offset, length)`, `(-1, 0)` if not found.
+        """
         if start is None:
             start = 0
         else:
@@ -151,9 +155,11 @@ class Text(object):
         assert end >= start, (start, end)
         rng = (start, end - start)
         options = fn.NSBackwardsSearch if reverse else 0
-        i = self.string().rangeOfString_options_range_locale_(
-            sub, options, rng, ak.NSLocale.currentLocale())[0]
-        return -1 if i == fn.NSNotFound else i
+        if not matchcase:
+            options |= fn.NSCaseInsensitiveSearch
+        rng = self.string().rangeOfString_options_range_locale_(
+            sub, options, rng, ak.NSLocale.currentLocale())
+        return (-1, 0) if rng[0] == fn.NSNotFound else rng
 
     def search(self, regex, pos=None, endpos=None):
         """Search this text with the given regex

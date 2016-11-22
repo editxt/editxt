@@ -37,7 +37,9 @@ from editxt.command.find import (Finder, FindController, FindOptions,
 from editxt.command.find import FORWARD, BACKWARD
 from editxt.command.parser import RegexPattern
 from editxt.editor import Editor
+from editxt.platform.text import Text
 from editxt.platform.views import TextView
+from editxt.window import Window
 
 log = logging.getLogger(__name__)
 
@@ -108,23 +110,20 @@ def test_find_command():
 
 def test_Finder_mark_occurrences():
     def test(c):
-        text = "the text is made of many texts"
+        string = "the text is made of many texts"
         m = Mocker()
-        tv = m.mock(TextView)
-        tv._Finder__last_mark >> (None, 0)
-        tv._Finder__last_mark = (c.options.find_text, c.count)
-        ts = tv.textStorage() >> m.mock(ak.NSTextStorage)
+        editor = m.mock(Editor)
+        editor._Finder__last_mark >> (None, 0)
+        editor._Finder__last_mark = (c.options.find_text, c.count)
         app = m.mock('editxt.application.Application')
         app.theme["highlight_selected_text.color"] >> "<color>"
-        full_range = fn.NSMakeRange(0, ts.length() >> len(text))
-        layout = tv.layoutManager()
+        (editor.text << Text(string)).count(1, None)
+        full_range = (0, len(string))
+        layout = editor.text_view.layoutManager()
         layout.removeTemporaryAttribute_forCharacterRange_(
             ak.NSBackgroundColorAttributeName, full_range)
-        find_target = lambda: tv
-        finder = Finder(find_target, c.options, app)
+        finder = Finder((lambda: editor), c.options, app)
         if c.options.find_text:
-            text = fn.NSString.alloc().initWithString_(text)
-            (tv.string() << text).count(1, None)
             mark_range = layout.addTemporaryAttribute_value_forCharacterRange_ >> m.mock()
             mark = mark_range(ak.NSBackgroundColorAttributeName, ANY, ANY)
             expect(mark).count(c.count)
@@ -148,23 +147,17 @@ def test_Finder():
         m = Mocker()
         beep = m.replace(mod, "beep")
         options = make_options(c)
-        tv = m.mock(TextView)
-        tv.selectedRange() >> fn.NSMakeRange(*c.select)
-        (tv.string() << fn.NSString.alloc().initWithString_(c.text)).count(0, 1)
-        result = [c.text]
-        def replace(range, value):
-            start, end = range
-            result[0] = c.text[:start] + value + c.text[start + end:]
+        editor = m.mock(Editor)
+        editor.selection >> c.select
+        (editor.text << Text(c.text)).count(0, None)
+        tv = m.mock(ak.NSTextView)
+        (editor.text_view << tv).count(0, 1)
         (tv.shouldChangeTextInRange_replacementString_(ANY, ANY) << True).count(0, 1)
-        ts = tv.textStorage()
-        expect(ts).count(0, 1)
-        expect(ts.replaceCharactersInRange_withString_(ANY, ANY)).call(replace).count(0, 1)
         expect(tv.didChangeText()).count(0, 1)
         expect(tv.setNeedsDisplay_(True)).count(0, 1)
         if c.expect is BEEP:
-            result = [BEEP]
             beep()
-        finder = Finder((lambda: tv), options, None)
+        finder = Finder((lambda: editor), options, None)
         with m:
             if isinstance(c.expect, Exception):
                 def check(err):
@@ -174,7 +167,10 @@ def test_Finder():
                     getattr(finder, c.action)(None)
             else:
                 getattr(finder, c.action)(None)
-                eq_(result[0], c.expect)
+                if c.expect is BEEP:
+                    eq_(editor.text[:], c.text)
+                else:
+                    eq_(editor.text[:], c.expect)
     c = TestConfig(text="The quick Fox is a brown fox", select=(0, 16))
 
     c = c(search="literal", action="replace_one")
@@ -269,6 +265,28 @@ def test_Finder():
         expect=mod.CommandError(
             "cannot compile regex '(' : missing ), unterminated subpattern at position 0"))
 
+    c = TestConfig(
+        text="The \U0001f612 Fox is a \U0001f34c fox",
+        search="literal",
+        action="replace_one",
+    )
+    yield test, c(
+        find="Fox", replace="cat",
+        select=(7, 7),
+        expect="The \U0001f612 cat is a \U0001f34c fox")
+    yield test, c(
+        find="[Ff]ox", replace="dog",
+        select=(0, 0),
+        search="regex",
+        action="replace_all",
+        expect="The \U0001f612 dog is a \U0001f34c dog")
+    yield test, c(
+        find="[Ff]ox", replace="match[0].upper()",
+        select=(7, 7),
+        search="python-replace",
+        action="replace_one",
+        expect="The \U0001f612 FOX is a \U0001f34c fox")
+
 def test_FindController_shared_controller():
     with test_app() as app:
         fc = FindController.shared_controller(app)
@@ -282,11 +300,11 @@ def test_FindController_validate_action():
             m = Mocker()
             fc = FindController(app)
             if c.tag in fc.action_registry:
-                tv = (m.mock(TextView) if c.has_target else None)
-                m.method(fc.find_target)() >> tv
+                editor = (m.mock(Editor) if c.has_target else None)
+                m.method(fc.get_editor)() >> editor
                 if c.has_target:
                     if c.tag in mod.SELECTION_REQUIRED_ACTIONS:
-                        tv.selectedRange().length >> c.sel
+                        editor.selection >> (0, c.sel)
             with m, replattr(fc, 'options', FindOptions()):
                 result = fc.validate_action(c.tag)
                 eq_(result, c.result)
@@ -320,7 +338,7 @@ def test_FindController_perform_action():
             fc = FindController(app)
             flog = m.replace("editxt.command.find.log")
             beep = m.replace(mod, "beep")
-            find_target = m.method(fc.find_target)
+            get_editor = m.method(fc.get_editor)
             sender = m.mock()
             (sender.tag() << c.tag).count(1, 2)
             func = None
@@ -335,9 +353,9 @@ def test_FindController_perform_action():
                     err = mod.CommandError("error!")
                     expect(func(sender)).throw(err)
                     beep()
-                    target = find_target() >> (m.mock() if c.target else None)
+                    editor = get_editor() >> (m.mock() if c.target else None)
                     if c.target:
-                        target.editor.message("error!", msg_type=const.ERROR)
+                        editor.message("error!", msg_type=const.ERROR)
                     else:
                         flog.warn(err)
                 else:
@@ -483,15 +501,15 @@ def test_FindController_finder_find():
             dobeep = True
             direction = "<direction>"
             _find = m.method(fc.finder._find)
-            tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
+            editor = m.replace(fc.finder, 'get_editor')() >> (m.mock(TextView) if c.has_tv else None)
             if c.has_tv:
                 m.replace(fc.finder, "options").find_text >> c.ftext
                 if c.ftext:
                     found = TestConfig(range="<range>")
-                    _find(tv, direction) >> (found if c.found else None)
+                    _find(editor, direction) >> (found if c.found else None)
                     if c.found:
-                        tv.setSelectedRange_(found.range)
-                        tv.scrollRangeToVisible_(found.range)
+                        editor.selection = found.range
+                        editor.text_view.scrollRangeToVisible_(found.range)
                         dobeep = False
             if dobeep:
                 beep()
@@ -542,17 +560,17 @@ def test_FindController__replace_all():
             fc = FindController(app)
             beep = m.replace(mod, 'beep')
             dobeep = True
-            tv = m.replace(fc.finder, 'find_target')() >> (m.mock(TextView) if c.has_tv else None)
+            editor = m.replace(fc.finder, 'get_editor')() >> (m.mock(Editor) if c.has_tv else None)
             options = m.replace(fc.finder, "options")
             ftext = options.find_text >> c.ftext
-            range = (tv.selectedRange() >> fn.NSRange(*c.sel)) if c.has_tv else None
+            range = (editor.selection >> c.sel) if c.has_tv else None
             if c.has_tv and c.ftext and ((c.sel_only and c.sel[1] > 0) or not c.sel_only):
-                text = tv.string() >> c.text
+                text = editor.text >> Text(c.text)
                 if not c.sel_only:
                     if (options.wrap_around >> c.wrap):
-                        range = fn.NSMakeRange(0, 0)
+                        range = (0, 0)
                     else:
-                        range = fn.NSMakeRange(range[0], len(text) - range[0])
+                        range = (range[0], len(text) - range[0])
                 if options.regular_expression >> c.regex:
                     finditer = m.method(fc.finder.regexfinditer)
                 elif options.match_entire_word >> c.mword:
@@ -567,21 +585,20 @@ def test_FindController__replace_all():
                 items = []
                 FoundRange = make_found_range_factory(
                     FindOptions(regular_expression=c.regex, match_entire_word=c.mword))
-                for r in c.ranges:
-                    found = FoundRange(fn.NSMakeRange(*r))
+                for rng in c.ranges:
+                    found = FoundRange(rng)
                     if ranges:
-                        rtexts.append(text[sum(ranges[-1]):r[0]])
+                        rtexts.append(text[sum(ranges[-1]):rng[0]])
                     ranges.append(found.range)
                     rtexts.append(rtext)
                     items.append(found)
                 finditer(text, ftext, range, FORWARD, False) >> items
                 if ranges:
                     start = c.ranges[0][0]
-                    range = fn.NSMakeRange(start, sum(c.ranges[-1]) - start)
+                    range = (start, sum(c.ranges[-1]) - start)
                     value = "".join(rtexts)
+                    tv = editor.text_view >> m.mock(TextView)
                     if tv.shouldChangeTextInRange_replacementString_(range, value) >> c.replace:
-                        ts = tv.textStorage() >> m.mock(ak.NSTextStorage)
-                        ts.replaceCharactersInRange_withString_(range, value)
                         tv.didChangeText()
                         tv.setNeedsDisplay_(True)
                         dobeep = False
@@ -590,6 +607,8 @@ def test_FindController__replace_all():
                 beep()
             with m:
                 fc.finder._replace_all(c.sel_only)
+                if c.ranges and c.replace:
+                    eq_(text[:], "<XEXX>")
     c = TestConfig(has_tv=True, text="<TEXT>", ftext="T", rtext="X",
         sel_only=False, sel=(1, 0), wrap=False, regex=False, mword=False,
         ranges=[], replace=True, beep=True)
@@ -612,7 +631,7 @@ def test_FindController_count_occurrences():
             fc = FindController(app)
             flash = m.method(fc.flash_status_text)
             mark = m.method(fc.finder.mark_occurrences)
-            tv = m.method(fc.find_target)() >> (m.mock(TextView) if c.has_tv else None)
+            m.method(fc.get_editor)() >> (m.mock(Editor) if c.has_tv else None)
             if c.has_tv:
                 ftext = "<find>"
                 mark(ftext, c.regex) >> c.cnt
@@ -630,35 +649,30 @@ def test_FindController_count_occurrences():
     yield test, c(cnt=42)
     yield test, c(has_tv=False)
 
-def test_FindController_find_target():
-    from editxt.window import Window
-    from editxt.editor import Editor
+def test_FindController_get_editor():
     def test(c):
         with test_app() as app:
             m = Mocker()
             fc = FindController(app)
             iter_windows = m.method(app.iter_windows)
-            if c.has_ed:
-                ed = m.mock(Window)
-                x = iter([ed])
-                editor = ed.current_editor >> (m.mock(Editor) if c.has_editor else None)
-                if c.has_editor:
-                    editor.text_view >> (m.mock(TextView) if c.has_tv else None)
+            if c.has_window:
+                window = m.mock(Window)
+                x = iter([window])
+                window.current_editor >> (m.mock(Editor) if c.has_editor else None)
             else:
                 x = iter([])
             iter_windows() >> x
             assert fc.app is not None
             with m:
-                result = fc.find_target()
-                if c.has_ed and c.has_tv:
+                result = fc.get_editor()
+                if c.has_editor:
                     assert result is not None
                 else:
                     eq_(result, None)
-    c = TestConfig(has_ed=False, has_editor=False, has_tv=False)
+    c = TestConfig(has_window=False, has_editor=False)
     yield test, c
-    yield test, c(has_ed=True)
-    yield test, c(has_ed=True, has_editor=True)
-    yield test, c(has_ed=True, has_editor=True, has_tv=True)
+    yield test, c(has_window=True)
+    yield test, c(has_window=True, has_editor=True)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Test FindOptions

@@ -195,8 +195,8 @@ class Finder(object):
 
     app = WeakProperty()
 
-    def __init__(self, find_target, options, app):
-        self.find_target = find_target
+    def __init__(self, get_editor, options, app):
+        self.get_editor = get_editor
         self.options = options
         self.options.app = app
         self.app = app
@@ -208,16 +208,17 @@ class Finder(object):
         self.find(BACKWARD)
 
     def replace_one(self, sender):
-        target = self.find_target()
-        if target is not None:
-            found = self._find(target, FORWARD, constrain_to_selection=True)
+        editor = self.get_editor()
+        if editor is not None:
+            found = self._find(editor, FORWARD, constrain_to_selection=True)
             if found is not None:
                 rng = found.range
                 rtext = found.expand(self.options.replace_text)
-                if target.shouldChangeTextInRange_replacementString_(rng, rtext):
-                    target.textStorage().replaceCharactersInRange_withString_(rng, rtext)
-                    target.didChangeText()
-                    target.setNeedsDisplay_(True)
+                textview = editor.text_view
+                if textview.shouldChangeTextInRange_replacementString_(rng, rtext):
+                    editor.text[rng] = rtext
+                    textview.didChangeText()
+                    textview.setNeedsDisplay_(True)
                     return
         beep()
 
@@ -233,7 +234,7 @@ class Finder(object):
         return "Found {} occurrence{}".format(num, ("" if num == 1 else "s"))
 
     def mark_occurrences(self, ftext, regex=False, color=None):
-        """Mark occurrences of ftext in target
+        """Mark occurrences of ftext in editor
 
         This method always clears all existing text marks, and marks
         nothing if the given `ftext` is an empty string.
@@ -243,22 +244,22 @@ class Finder(object):
         :color: Color used to mark ranges. Yellow (#FEFF6B) by default.
         :returns: Number of marked occurrences.
         """
-        target = self.find_target()
-        if target is None:
+        editor = self.get_editor()
+        if editor is None:
             return 0
-        last_mark = getattr(target, '_Finder__last_mark', (None, 0))
+        last_mark = getattr(editor, '_Finder__last_mark', (None, 0))
         if last_mark[0] == ftext:
             return last_mark[1]
         if color is None:
             color = self.app.theme["highlight_selected_text.color"]
-        layout = target.layoutManager()
-        full_range = fn.NSMakeRange(0, target.textStorage().length())
+        text = editor.text
+        layout = editor.text_view.layoutManager()
+        full_range = (0, len(text))
         layout.removeTemporaryAttribute_forCharacterRange_(
             ak.NSBackgroundColorAttributeName, full_range)
         if not ftext:
-            target._Finder__last_mark = (ftext, 0)
+            editor._Finder__last_mark = (ftext, 0)
             return 0
-        text = target.string()
         options = self.options
         original_ftext = ftext
         if regex and options.regular_expression:
@@ -274,20 +275,20 @@ class Finder(object):
         for found in finditer(text, ftext, full_range, FORWARD, False):
             mark_range(attr, color, found.range)
             count += 1
-        target._Finder__last_mark = (original_ftext, count)
+        editor._Finder__last_mark = (original_ftext, count)
         return count
 
     def find(self, direction):
-        target = self.find_target()
-        if target is not None and self.options.find_text:
-            found = self._find(target, direction)
+        editor = self.get_editor()
+        if editor is not None and self.options.find_text:
+            found = self._find(editor, direction)
             if found is not None:
-                target.setSelectedRange_(found.range)
-                target.scrollRangeToVisible_(found.range)
+                editor.selection = found.range
+                editor.text_view.scrollRangeToVisible_(found.range)
                 return
         beep()
 
-    def _find(self, target, direction, constrain_to_selection=False):
+    def _find(self, editor, direction, constrain_to_selection=False):
         """Return the range of the found text or None if not found"""
         options = self.options
         ftext = options.find_text
@@ -298,13 +299,13 @@ class Finder(object):
             finditer = self.regexfinditer
         else:
             finditer = self.simplefinditer
-        selection = target.selectedRange()
-        range = fn.NSMakeRange(selection.location, 0)
+        selection = editor.selection
+        range = (selection[0], 0)
         if constrain_to_selection:
-            if selection.length == 0:
+            if selection[1] == 0:
                 return None
             selection, range = range, selection
-        text = target.string()
+        text = editor.text
         for i, found in enumerate(finditer(text, ftext, range, direction, True)):
             if found is WRAPTOKEN:
                 # TODO show wrap overlay
@@ -316,22 +317,22 @@ class Finder(object):
         return None
 
     def _replace_all(self, in_selection=False):
-        target = self.find_target()
+        editor = self.get_editor()
         ftext = self.options.find_text
-        range = None if target is None else target.selectedRange()
-        if target is None or not ftext or (in_selection and range.length == 0):
+        range = None if editor is None else editor.selection
+        if editor is None or not ftext or (in_selection and range[1] == 0):
             beep()
             return
-        text = target.string()
+        text = editor.text
         options = self.options
         if not in_selection:
             if options.wrap_around:
-                range = fn.NSMakeRange(0, 0)
+                range = (0, 0)
             else:
                 # Replace all to the end of the file. Logically there should be
                 # another option: replace all (backward) to the beginning of the
                 # file, but there's no way to do that with the interface.
-                range = fn.NSMakeRange(range.location, len(text) - range.location)
+                range = (range[0], len(text) - range[0])
         if options.regular_expression:
             finditer = self.regexfinditer
         elif options.match_entire_word:
@@ -347,17 +348,18 @@ class Finder(object):
             if range0 is None:
                 range0 = range
             else:
-                rtexts.append(text[sum(range1):range.location])
+                rtexts.append(text[sum(range1):range[0]])
             range1 = range
             rtexts.append(found.expand(rtext))
         if range0 is not None:
-            start = range0.location
-            range = fn.NSMakeRange(start, sum(range1) - start)
+            start = range0[0]
+            range = (start, sum(range1) - start)
             value = "".join(rtexts)
-            if target.shouldChangeTextInRange_replacementString_(range, value):
-                target.textStorage().replaceCharactersInRange_withString_(range, value)
-                target.didChangeText()
-                target.setNeedsDisplay_(True)
+            view = editor.text_view
+            if view.shouldChangeTextInRange_replacementString_(range, value):
+                text[range] = value
+                view.didChangeText()
+                view.setNeedsDisplay_(True)
                 return
         beep()
 
@@ -369,24 +371,24 @@ class Finder(object):
         then WRAPTOKEN is yielded when the search wraps around the beginning/end
         of the file
         """
-        opts = 0
+        opts = {}
         options = self.options
         if options.ignore_case:
-            opts |= fn.NSCaseInsensitiveSearch
+            opts["matchcase"] = False
         forwardSearch = (direction == FORWARD)
         if forwardSearch:
-            startindex = index = range.location
+            startindex = index = range[0]
         else:
-            startindex = index = range.location + range.length
-            opts |= fn.NSBackwardsSearch
-        if range.length == 0:
+            startindex = index = sum(range)
+            opts["reverse"] = True
+        if range[1] == 0:
             if options.wrap_around:
-                range = fn.NSMakeRange(0, text.length())
+                range = (0, len(text))
             elif forwardSearch:
-                range = fn.NSMakeRange(startindex, text.length() - startindex)
+                range = (startindex, len(text) - startindex)
             else:
-                range = fn.NSMakeRange(0, startindex)
-        endindex = range.location + range.length
+                range = (0, startindex)
+        endindex = sum(range)
         FoundRange = make_found_range_factory(options)
         wrapped = False
         while True:
@@ -395,25 +397,25 @@ class Finder(object):
                     if index >= startindex:
                         break # searched to or beyond where we started
                     else:
-                        frange = fn.NSRange(index, startindex - index)
+                        start, end = index, startindex
                 else:
-                    frange = fn.NSRange(index, endindex - index)
+                    start, end = index, endindex
             else:
                 if wrapped:
                     if index <= startindex:
                         break # searched to or beyond where we started
                     else:
-                        frange = fn.NSRange(startindex, index - startindex)
+                        start, end = startindex, index
                 else:
-                    frange = fn.NSRange(range.location, index - range.location)
-            found = text.rangeOfString_options_range_(ftext, opts, frange)
-            if found and found.length > 0 and found.location < endindex:
+                    start, end = range[0], index
+            found = text.find_range(ftext, start, end, **opts)
+            if -1 < found[0] < endindex:
                 yield FoundRange(found)
-                index = found.location + (found.length if forwardSearch else 0)
+                index = found[0] + (found[1] if forwardSearch else 0)
             elif options.wrap_around and not wrapped:
                 if yield_on_wrap:
                     yield WRAPTOKEN
-                index = range.location if forwardSearch else endindex
+                index = range[0] if forwardSearch else endindex
                 wrapped = True
             else:
                 break
@@ -438,22 +440,20 @@ class Finder(object):
             FoundRange = make_found_range_factory(options)
             backward = (direction == BACKWARD)
             wrapped = False
-            endindex = range.location + range.length
+            endindex = sum(range)
             while True:
-                if range.length > 0:
-                    itr = regex.finditer(text, range.location, endindex)
+                if range[1] > 0:
+                    itr = text.finditer(regex, range[0], endindex)
                 elif (wrapped and backward) or (not wrapped and not backward):
-                    itr = regex.finditer(text, range.location)
+                    itr = text.finditer(regex, range[0])
                 else:
-                    itr = regex.finditer(text, 0, range.location)
+                    itr = text.finditer(regex, 0, range[0])
                 if backward:
                     itr = reversed(list(itr))
                 for match in itr:
-                    s = match.start()
-                    e = match.end()
                     #log.debug("searching for %r found %r at (%s, %s)", ftext, match.group(), s, e)
-                    yield FoundRange(fn.NSMakeRange(s, e - s), match)
-                if options.wrap_around and not wrapped and range.length == 0:
+                    yield FoundRange(match.range(), match)
+                if options.wrap_around and not wrapped and range[1] == 0:
                     if yield_on_wrap:
                         yield WRAPTOKEN
                     wrapped = True
@@ -479,7 +479,7 @@ class FindController(PanelController):
 
     def __init__(self, app):
         super(FindController, self).__init__(app)
-        self.finder = Finder(self.find_target, self.options, app)
+        self.finder = Finder(self.get_editor, self.options, app)
         self.action_registry = {
             ak.NSFindPanelActionShowFindPanel: self.show_find_panel,
             ak.NSFindPanelActionNext: self.find_next,
@@ -496,9 +496,9 @@ class FindController(PanelController):
     @objc_delegate
     def windowDidLoad(self):
         self.gui.window().setLevel_(ak.NSFloatingWindowLevel)
-        target = self.find_target()
-        if target is not None:
-            font = target.editor.document.default_text_attributes()[ak.NSFontAttributeName]
+        editor = self.get_editor()
+        if editor is not None:
+            font = editor.document.default_text_attributes()[ak.NSFontAttributeName]
             self.gui.find_text.setFont_(font)
             self.gui.replace_text.setFont_(font)
 
@@ -510,10 +510,10 @@ class FindController(PanelController):
 
     def validate_action(self, tag):
         if tag in self.action_registry:
-            target = self.find_target()
-            if target is not None:
+            editor = self.get_editor()
+            if editor is not None:
                 if tag in SELECTION_REQUIRED_ACTIONS:
-                    return target.selectedRange().length > 0
+                    return editor.selection[1] > 0
                 return True
         return False
 
@@ -523,9 +523,9 @@ class FindController(PanelController):
             self.action_registry.get(sender.tag(), default)(sender)
         except CommandError as err:
             beep()
-            target = self.find_target()
-            if target is not None:
-                target.editor.message(str(err), msg_type=const.ERROR)
+            editor = self.get_editor()
+            if editor is not None:
+                editor.message(str(err), msg_type=const.ERROR)
             else:
                 log.warn(err)
 
@@ -566,11 +566,11 @@ class FindController(PanelController):
         self.finder.find_next(sender)
 
     def set_find_text_with_selection(self, sender):
-        target = self.find_target()
-        if target is not None:
-            range = target.selectedRange()
-            if range.length > 0:
-                text = target.string().substringWithRange_(range)
+        editor = self.get_editor()
+        if editor is not None:
+            range = editor.selection
+            if range[1] > 0:
+                text = editor.text[range]
                 if self.options.regular_expression:
                     text = re.escape(text)
                 self.options.find_text = text
@@ -650,20 +650,16 @@ class FindController(PanelController):
 
     # Utility methods ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    def find_target(self):
+    def get_editor(self):
         try:
             window = next(self.app.iter_windows())
         except StopIteration:
-            pass
-        else:
-            editor = window.current_editor
-            if editor is not None:
-                return editor.text_view
-        return None
+            return None
+        return window.current_editor
 
     def count_occurrences(self, ftext, regex):
-        target = self.find_target()
-        if target is not None and ftext:
+        editor = self.get_editor()
+        if editor is not None and ftext:
             count = self.finder.mark_occurrences(ftext, regex)
             if count:
                 self.flash_status_text("%i occurrences" % count)
@@ -774,7 +770,7 @@ class StatusFlasher(fn.NSObject):
 class BaseFoundRange(object):
 
     def __init__(self, range, match=None):
-        self.range = range
+        self.range = range #fn.NSMakeRange(range)
         self.match = match
 
 

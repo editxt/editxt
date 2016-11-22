@@ -594,7 +594,7 @@ class Editor(CommandSubject):
             finder = self._finder
         except Exception:
             finder = self._finder = Finder(
-                (lambda:self.text_view),
+                (lambda:self),
                 FindOptions(ignore_case=False, wrap_around=False),
                 self.app,
             )
