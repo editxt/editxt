@@ -78,6 +78,9 @@ class Text(object):
         else:
             self.store.replaceCharactersInRange_withString_(rng, value)
 
+    def __contains__(self, value):
+        return self.store.string().containsString_(value)
+
     def __len__(self):
         return self.store.length()
 
@@ -123,8 +126,15 @@ class Text(object):
                                             NULL, None, None, (length - 1, 0))
         return end != contents_end
 
+    def find(self, sub, start=None, end=None):
+        """Locale-aware find"""
+        return self._find(sub, start, end)
+
     def rfind(self, sub, start=None, end=None):
         """Locale-aware reverse find"""
+        return self._find(sub, start, end, True)
+
+    def _find(self, sub, start, end, reverse=False):
         if start is None:
             start = 0
         else:
@@ -136,8 +146,9 @@ class Text(object):
         assert start >= 0, start
         assert end >= start, (start, end)
         rng = (start, end - start)
+        options = fn.NSBackwardsSearch if reverse else 0
         i = self.string().rangeOfString_options_range_locale_(
-            sub, fn.NSBackwardsSearch, rng, ak.NSLocale.currentLocale())[0]
+            sub, options, rng, ak.NSLocale.currentLocale())[0]
         return -1 if i == fn.NSNotFound else i
 
     def search(self, regex, pos=None, endpos=None):
@@ -319,19 +330,25 @@ class TextMatch(Match):
         super().__init__(match)
         self.text = text
 
-    def start(self, group=None):
-        raise NotImplementedError
+    def __repr__(self):
+        try:
+            value = "{!r} span={}".format(self[0], self.span())
+        except Exception:
+            value = repr(self.match)
+        return "<{} {}>".format(type(self).__name__, value)
 
-    def end(self, group=None):
-        raise NotImplementedError
+    def __str__(self):
+        return repr(self)
+
+    def start(self, *group):
+        return self.text._hexichar_index(self.match.start(*group))
+
+    def end(self, *group):
+        return self.text._hexichar_index(self.match.end(*group))
 
     def span(self, *group):
         start, end = self.match.span(*group)
-        if start > 0:
-            start = self.text._hexichar_index(start)
-        if end > 0:
-            end = self.text._hexichar_index(end)
-        return start, end
+        return self.text._hexichar_index(start), self.text._hexichar_index(end)
 
     def range(self, *group):
         """Get a range tuple (offset, length) for the group"""

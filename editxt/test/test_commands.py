@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+import re
 
 from mocker import Mocker, expect, ANY, MATCH
 import AppKit as ak
@@ -30,6 +31,7 @@ from editxt.test.util import assert_raises, eq_, TestConfig, replattr, test_app
 import editxt.constants as const
 import editxt.commands as mod
 from editxt.command.parser import ArgumentError, CommandParser, Int, Options
+from editxt.platform.text import Text
 
 log = logging.getLogger(__name__)
 
@@ -251,41 +253,21 @@ def test_uncomment_line():
 
 
 def test_text_commands():
-    def _nsdiff(string):
-        value = string.length() - len(string)
-        assert value >= 0, (value, repr(string))
-        return value
-
-    def py_range(string, rng):
-        """Convert NSString range to python unicode character range"""
-        offset, length = rng
-        offset -= _nsdiff(string.substringWithRange_((0, offset)))
-        if length:
-            length -= _nsdiff(string.substringWithRange_(rng))
-        return offset, length
-
-    def objc_range(string, rng):
-        """Convert python unicode character range to NSString range"""
-        offset, length = rng
-        offset += _nsdiff(ak.NSString.stringWithString_(string[:offset]))
-        if length:
-            length += _nsdiff(ak.NSString.stringWithString_(string[rng:sum(rng)]))
-        return offset, length
-
     def get_selection(string, expected=None):
         if '^' not in string and expected is not None:
             return expected, string
         num = string.count('^')
         assert num > 0, "no selection markers: {!r}".format(string)
         assert num < 3, "too many selection markers: {!r}".format(string)
-        i = string.find('^')
+        text = Text(string)
+        i = text.find("^")
         if num == 1:
             sel = (i, 0)
         else:
-            sel = (i, string.find('^', i + 1) - i - 1)
+            sel = (i, text.find('^', i + 1) - i - 1)
         if expected is not None:
             eq_(sel, expected)
-        return objc_range(string, sel), string.replace('^', '')
+        return sel, string.replace('^', '')
 
     def mark_selection(string_or_editor, sel=None):
         if isinstance(string_or_editor, str):
@@ -297,13 +279,15 @@ def test_text_commands():
             if '^' in string:
                 get_selection(string, sel)  # verify already marked
                 return string
+            text = Text(string)
         else:
-            string = string_or_editor.document.text
-            sel = py_range(string, getattr(string_or_editor, "selection"))
-        assert '^' not in string, repr(string)
-        if sel[1]:
-            string = string[:sum(sel)] + '^' + string[sum(sel):]
-        return string[:sel[0]] + '^' + string[sel[0]:]
+            text = string_or_editor.text
+            sel = string_or_editor.selection
+        assert '^' not in text, repr(text)
+        i, j = sel[0], sum(sel)
+        if i == j:
+            return text[:i] + '^' + text[i:]
+        return text[:i] + '^' + text[i:j] + '^' + text[j:]
 
     from editxt.platform.mac.document import setup_scroll_view
     SAME = "<SAME AS INPUT>"
@@ -324,25 +308,24 @@ def test_text_commands():
         editor.document.indent_mode = c.mode
         editor.document.indent_size = c.size
         editor.document.eol = c.eol
-        editor.document.text = input
+        editor.text[:] = input
         editor.selection = oldsel
         c.setup(c, TestConfig(locals()))
         c.method(editor, None)
         if c.output == SAME:
-            eq_(editor.document.text, input)
+            eq_(editor.text[:], input)
         elif 'newsel' in c or '^' in c.output:
             eq_(mark_selection(editor), mark_selection(c.output, c._get("newsel")))
         else:
-            eq_(editor.document.text, c.output.replace('^', ''))
+            eq_(editor.text[:], c.output.replace('^', ''))
         if "newsel" in c or '^' in c.output:
             newsel = get_selection(c.output, c._get("newsel"))[0]
             eq_(editor.selection, fn.NSMakeRange(*newsel))
             if "prevchar" in c:
-                text = editor.document.text_storage
                 prevchar = c.prevchar
                 if c.eol != "\n":
                     prevchar = prevchar.replace("\n", c.eol)[-1]
-                eq_(text[(newsel[0] - 1, 1)], prevchar)
+                eq_(editor.text[(newsel[0] - 1, 1)], prevchar)
 
     eols = [const.EOLS[mode] for mode in [
         const.NEWLINE_MODE_UNIX,
@@ -380,13 +363,13 @@ def test_text_commands():
         yield test, c(input="    \n    \n", oldsel=(7 + i, 0), newsel=(9 + i, 0))
         yield test, c(input="    \n    \n", oldsel=(9 + i, 0), newsel=(5 + i, 0))
 
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(3+i, 0), newsel=(5+i, 0), prevchar=' ')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(4+i, 0), newsel=(5+i, 0), prevchar=' ')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(5+i, 0), newsel=(3+i, 0), prevchar='\n')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(6+i, 0), newsel=(5+i, 0), prevchar=' ')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(10+i*2, 0), newsel=(12+i*2, 0), prevchar=' ')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(11+i*2, 0), newsel=(12+i*2, 0), prevchar=' ')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(12+i*2, 0), newsel=(10+i*2, 0), prevchar='\n')
+        yield test, c(input="  \n^  '\U0001f34c'\n  '", newsel=(5+i, 0), prevchar=' ')
+        yield test, c(input="  \n ^ '\U0001f34c'\n  '", newsel=(5+i, 0), prevchar=' ')
+        yield test, c(input="  \n  ^'\U0001f34c'\n  '", newsel=(3+i, 0), prevchar='\n')
+        yield test, c(input="  \n  '^\U0001f34c'\n  '", newsel=(5+i, 0), prevchar=' ')
+        yield test, c(input="  \n  '\U0001f34c'\n^  '", newsel=(12+i*2, 0), prevchar=' ')
+        yield test, c(input="  \n  '\U0001f34c'\n ^ '", newsel=(12+i*2, 0), prevchar=' ')
+        yield test, c(input="  \n  '\U0001f34c'\n  ^'", newsel=(10+i*2, 0), prevchar='\n')
 
     c = cbase(method=mod.select_to_beginning_of_line, output=SAME)
     for eol in eols:
@@ -450,24 +433,24 @@ def test_text_commands():
         yield test, c(input="    \n    \n", oldsel=(9+i, 0), newsel=(5+i, 4))
         yield test, c(input="    \n    \n", oldsel=(9+i, 1+i), newsel=(5+i, 5+i))
 
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(3+i, 0), newsel=(3+i, 2), prevchar='\n')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(3+i, 1), newsel=(3+i, 2), prevchar='\n')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(3+i, 2), newsel=(5+i, 0), prevchar=' ')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(3+i, 3), newsel=(5+i, 1), prevchar=' ')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(4+i, 0), newsel=(3+i, 1), prevchar='\n')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(4+i, 1), newsel=(3+i, 2), prevchar='\n')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(5+i, 0), newsel=(3+i, 2), prevchar='\n')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(5+i, 1), newsel=(3+i, 3), prevchar='\n')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(6+i, 0), newsel=(5+i, 1), prevchar=' ')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(10+i*2, 0), newsel=(10+i*2, 2), prevchar='\n')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(10+i*2, 1), newsel=(10+i*2, 2), prevchar='\n')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(10+i*2, 2), newsel=(12+i*2, 0), prevchar=' ')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(10+i*2, 3), newsel=(12+i*2, 1), prevchar=' ')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(11+i*2, 0), newsel=(10+i*2, 1), prevchar='\n')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(11+i*2, 1), newsel=(10+i*2, 2), prevchar='\n')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(12+i*2, 0), newsel=(10+i*2, 2), prevchar='\n')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(12+i*2, 1), newsel=(10+i*2, 3), prevchar='\n')
-        yield test, c(input="  \n  '\U0001f34c'\n  '", oldsel=(13+i*2, 0), newsel=(12+i*2, 1), prevchar=' ')
+        yield test, c(input="  \n^  '\U0001f34c'\n  '",  newsel=(3+i, 2), prevchar='\n')
+        yield test, c(input="  \n^ ^ '\U0001f34c'\n  '", newsel=(3+i, 2), prevchar='\n')
+        yield test, c(input="  \n^  ^'\U0001f34c'\n  '", newsel=(5+i, 0), prevchar=' ')
+        yield test, c(input="  \n^  '^\U0001f34c'\n  '", newsel=(5+i, 1), prevchar=' ')
+        yield test, c(input="  \n ^ '\U0001f34c'\n  '",  newsel=(3+i, 1), prevchar='\n')
+        yield test, c(input="  \n ^ ^'\U0001f34c'\n  '", newsel=(3+i, 2), prevchar='\n')
+        yield test, c(input="  \n  ^'\U0001f34c'\n  '",  newsel=(3+i, 2), prevchar='\n')
+        yield test, c(input="  \n  ^'^\U0001f34c'\n  '", newsel=(3+i, 3), prevchar='\n')
+        yield test, c(input="  \n  '^\U0001f34c'\n  '",  newsel=(5+i, 1), prevchar=' ')
+        yield test, c(input="  \n  '\U0001f34c'\n^  '",  newsel=(10+i*2, 2), prevchar='\n')
+        yield test, c(input="  \n  '\U0001f34c'\n^ ^ '", newsel=(10+i*2, 2), prevchar='\n')
+        yield test, c(input="  \n  '\U0001f34c'\n^  ^'", newsel=(12+i*2, 0), prevchar=' ')
+        yield test, c(input="  \n  '\U0001f34c'\n^  '^", newsel=(12+i*2, 1), prevchar=' ')
+        yield test, c(input="  \n  '\U0001f34c'\n ^ '",  newsel=(10+i*2, 1), prevchar='\n')
+        yield test, c(input="  \n  '\U0001f34c'\n ^ ^'", newsel=(10+i*2, 2), prevchar='\n')
+        yield test, c(input="  \n  '\U0001f34c'\n  ^'",  newsel=(10+i*2, 2), prevchar='\n')
+        yield test, c(input="  \n  '\U0001f34c'\n  ^'^", newsel=(10+i*2, 3), prevchar='\n')
+        yield test, c(input="  \n  '\U0001f34c'\n  '^",  newsel=(12+i*2, 1), prevchar=' ')
 
 #    c = cbase(method=mod.move_to_end_of_line, output=SAME)
 #    for eol in eols:

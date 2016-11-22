@@ -206,7 +206,7 @@ class Editor(CommandSubject):
         self.text_view = None
         self.scroll_view = None
         self._goto_line = None
-        self.line_numbers = LineNumbers(self.document.text_storage)
+        self.line_numbers = LineNumbers(self.text)
         props = document.props
         self.kvolink = KVOLink([
             (props, "is_dirty", self.proxy, "is_dirty"),
@@ -251,6 +251,10 @@ class Editor(CommandSubject):
     @property
     def name(self):
         return self.document.name
+
+    @property
+    def text(self):
+        return self.document.text_storage
 
     @property
     def undo_manager(self):
