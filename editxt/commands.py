@@ -159,8 +159,8 @@ def pad_comment_text(editor, args):
 
 def _comment_text(editor, args, pad):
     textview = editor.text_view
-    text = textview.string()
-    sel = text.lineRangeForRange_(textview.selectedRange())
+    text = editor.text
+    sel = text.line_range(editor.selection)
     comment_token = editor.document.comment_token
     if not comment_token:
         return
@@ -176,8 +176,8 @@ def _comment_text(editor, args, pad):
     )
     seltext = "".join(func(line, *args) for line in iterlines(text, sel))
     if textview.shouldChangeTextInRange_replacementString_(sel, seltext):
-        textview.textStorage().replaceCharactersInRange_withString_(sel, seltext)
-        textview.setSelectedRange_((sel[0], len(seltext)))
+        editor.text[sel] = seltext
+        editor.selection = (sel[0], len(seltext))
         textview.didChangeText()
 
 def is_comment_range(text, range, comment_token):
@@ -234,14 +234,14 @@ def indent_lines(editor, args):
     else:
         istr = " " * editor.document.indent_size
     textview = editor.text_view
-    sel = textview.selectedRange()
-    text = textview.string()
+    sel = editor.selection
+    text = editor.text
     if sel.length == 0:
         size = len(istr)
         if size == 1:
             seltext = istr
         else:
-            line_start = text.lineRangeForRange_(sel).location
+            line_start = text.line_range(sel)[0]
             seltext = istr[:size - (sel.location - line_start) % size]
         select = False
     else:
@@ -249,11 +249,11 @@ def indent_lines(editor, args):
             if line.strip():
                 return istr + line
             return line.lstrip(" \t")
-        sel = text.lineRangeForRange_(sel)
+        sel = text.line_range(sel)
         seltext = "".join(indent(line) for line in iterlines(text, sel))
         select = True
     if textview.shouldChangeTextInRange_replacementString_(sel, seltext):
-        textview.textStorage().replaceCharactersInRange_withString_(sel, seltext)
+        text[sel] = seltext
         textview.didChangeText()
         if select:
             editor.selection = (sel[0], len(seltext))
@@ -277,13 +277,13 @@ def dedent_lines(editor, args):
                 break
         return line[remove:]
     textview = editor.text_view
-    text = textview.string()
-    sel = text.lineRangeForRange_(textview.selectedRange())
+    text = editor.text
+    sel = text.line_range(editor.selection)
     seltext = "".join(dedent(line) for line in iterlines(text, sel))
     if len(seltext) != sel.length:
         if textview.shouldChangeTextInRange_replacementString_(sel, seltext):
-            textview.textStorage().replaceCharactersInRange_withString_(sel, seltext)
-            textview.setSelectedRange_((sel[0], len(seltext)))
+            text[sel] = seltext
+            editor.selection = (sel[0], len(seltext))
             textview.didChangeText()
 
 
@@ -711,7 +711,7 @@ def delete_backward(editor, args):
         if delete < 1:
             delete = 1
         elif delete > 1:
-            line_start = next(text.iter_line_ranges(j))[0]
+            line_start = text.line_range((j, 0))[0]
             maxdel = (i - line_start) % size or size
             if delete > maxdel:
                 delete = maxdel

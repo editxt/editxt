@@ -90,6 +90,10 @@ class Text(object):
     def __repr__(self):
         return repr(self.store.string())
 
+    def line_range(self, rng):
+        """Get line range for a range of text"""
+        return self.string().lineRangeForRange_(rng)
+
     def iter_line_ranges(self, start=0, stop=None):
         """Generate line ranges
 
