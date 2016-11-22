@@ -160,8 +160,9 @@ if __name__ == "__main__":
         eq_(result, (mode, size))
 
     yield test, None, None, "x\nx\nx\n"
+    yield test, None, None, " x\nx\n"
     yield test, TAB, None, "x\n\tx\nx\n"
-    yield test, SPACE, None, " x\nx\n"
+    yield test, TAB, None, " x\n\tx\nx\n"
     yield test, SPACE, 2, " x\n    \n  x\n"
     yield test, SPACE, 4, program
     yield test, SPACE, 4, program.replace(" foo()", "foo()")

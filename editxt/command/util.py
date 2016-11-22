@@ -293,8 +293,9 @@ def calculate_indent_mode_and_size(text, sample_lines=256):
         if not line.strip():
             continue
         if line.startswith(" "):
-            space = True
             indent = len(line) - len(line.lstrip(" "))
+            if indent > 1:
+                space = True
             if indent != last_size:
                 last_size = indent
                 sizes[indent] += 1
