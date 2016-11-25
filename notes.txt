@@ -80,10 +80,12 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+- regex/python syntax highlighting in find/replace dialog
+- fix home/end when line-wrap is on
 - fix "blame" command (doesn't work sometimes)
 - make pathfind command run in background and generate incremental output
 - add "unique" command for removing duplicate lines
-- regex/python syntax highlighting in find/replace dialog
+- allow sections of a document to be collapsed/expanded
 
 Multi-select in file tree
   - concatenate views on select multiple

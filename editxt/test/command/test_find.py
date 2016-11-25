@@ -845,3 +845,11 @@ def test_Match():
 
 # def test():
 #     assert False, "stop"
+
+def test_minimal_regex_escape():
+    def test(input, output):
+        eq_(mod.minimal_regex_escape(input), output)
+
+    yield test, ".*+?\\|-^$()[]{", "\\.\\*\\+\\?\\\\\\|\\-\\^\\$\\(\\)\\[\\]\\{"
+    yield test, "( \n\t )", "\\( \n\t \\)"
+    yield test, "}:!", "}:!"

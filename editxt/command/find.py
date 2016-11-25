@@ -572,7 +572,7 @@ class FindController(PanelController):
             if range[1] > 0:
                 text = editor.text[range]
                 if self.options.regular_expression:
-                    text = re.escape(text)
+                    text = minimal_regex_escape(text)
                 self.options.find_text = text
 
     # Panel actions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -885,3 +885,9 @@ def save_to_find_pasteboard(text):
     pboard = ak.NSPasteboard.pasteboardWithName_(ak.NSFindPboard)
     pboard.declareTypes_owner_([ak.NSStringPboardType], None)
     pboard.setString_forType_(text, ak.NSStringPboardType)
+
+
+REGEX_SPECIAL_CHARS = re.compile(r"([.*+?\\|\-\^$()\[\]{])")
+
+def minimal_regex_escape(string):
+    return REGEX_SPECIAL_CHARS.sub(r"\\\1", string)
