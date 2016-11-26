@@ -651,11 +651,8 @@ class FindController(PanelController):
     # Utility methods ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     def get_editor(self):
-        try:
-            window = next(self.app.iter_windows())
-        except StopIteration:
-            return None
-        return window.current_editor
+        window = next(self.app.iter_windows(), None)
+        return window.current_editor if window is not None else None
 
     def count_occurrences(self, ftext, regex):
         editor = self.get_editor()

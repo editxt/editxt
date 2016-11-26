@@ -347,8 +347,7 @@ class TextMatch(Match):
             value = repr(self.match)
         return "<{} {}>".format(type(self).__name__, value)
 
-    def __str__(self):
-        return repr(self)
+    __str__ = __repr__
 
     def start(self, *group):
         return self.text._hexichar_index(self.match.start(*group))
