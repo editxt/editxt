@@ -336,10 +336,18 @@ def test_Highlighter_color_text():
         Q = "\\\\\""
         ''',
         r"""
-        "\"" string.double-quote string
-        "\\" string.double-quote string
-        "\\\"" string.double-quote string
-        "\\\\\"" string.double-quote string
+        " string.double-quote string
+        \" operator.escape operator
+        " string.double-quote string
+        " string.double-quote string
+        \\ operator.escape operator
+        " string.double-quote string
+        " string.double-quote string
+        \\\" operator.escape operator
+        " string.double-quote string
+        " string.double-quote string
+        \\\\\" operator.escape operator
+        " string.double-quote string
         """)
     yield test("python",
         r"""
@@ -364,15 +372,34 @@ def test_Highlighter_color_text():
         """)
     yield test("python",
         "'''    for x",
-        "'''    for x string.multiline.single-quote")
+        """
+        ''' string.multiline.single-quote
+            for x string.multiline.single-quote
+        """)
     yield test("python",
         "'''    for x'''",
-        "'''    for x''' string.multiline.single-quote")
+        """
+        ''' string.multiline.single-quote
+            for x string.multiline.single-quote
+        ''' string.multiline.single-quote
+        """)
+    yield test("python",
+        "'begin\\\nend'",
+        """
+        ' string.single-quote string
+        begin string
+        \\
+         operator.escape.continuation operator
+        end string
+        ' string.single-quote string
+        """)
     yield test("python",
         '''"""A doc string\nWith multiple lines\n"""''',
         '''
-        """A doc string string.multiline.double-quote string
-        With multiple lines string.multiline.double-quote string
+        """ string.multiline.double-quote string
+        A doc string
+        With multiple lines
+         string
         """ string.multiline.double-quote string
         ''')
     yield from edit("python", "\ndef f(",
@@ -395,7 +422,8 @@ def test_Highlighter_color_text():
         (2, 0, '"'),
         '''
         """ string.multiline.double-quote string
-        def f( string.multiline.double-quote string
+        
+        def f( string
         ''',
 
         (2, 1, ''),
@@ -414,7 +442,9 @@ def test_Highlighter_color_text():
         )
     yield from edit("python", ' "word" ',
         """
-        "word" string.double-quote string
+        " string.double-quote string
+        word string
+        " string.double-quote string
         """,
         (1, 0, 'r'),
         """
@@ -424,7 +454,9 @@ def test_Highlighter_color_text():
         """,
         (1, 1, ''),
         """
-        "word" string.double-quote string
+        " string.double-quote string
+        word string
+        " string.double-quote string
         """,
         )
     yield from edit("python", r"""r"(?P<xyz>)" """,
@@ -466,7 +498,9 @@ def test_Highlighter_color_text():
           \s operator.class operator Regular Expression
           ] keyword.set keyword Regular Expression
           """ string.multiline.double-quote string
-        ' """ """ ' string.single-quote string
+        ' string.single-quote string
+         """ """  string
+        ' string.single-quote string
         ''',
         (9, 1, ''),
         '''
@@ -474,7 +508,9 @@ def test_Highlighter_color_text():
           [ keyword.set keyword Regular Expression
           \s operator.class operator Regular Expression
           """ string.multiline.double-quote string
-        ' """ """ ' string.single-quote string
+        ' string.single-quote string
+         """ """  string
+        ' string.single-quote string
         ''',
         (9, 0, ']'),
         '''
@@ -483,7 +519,9 @@ def test_Highlighter_color_text():
           \s operator.class operator Regular Expression
           ] keyword.set keyword Regular Expression
           """ string.multiline.double-quote string
-        ' """ """ ' string.single-quote string
+        ' string.single-quote string
+         """ """  string
+        ' string.single-quote string
         ''',
         )
     yield from edit("python", '''
@@ -492,14 +530,18 @@ def test_Highlighter_color_text():
         def
         ''',
         '''
-        """x string.multiline.double-quote string
-            """ string.multiline.double-quote string
+        """ string.multiline.double-quote string
+        x
+             string
+        """ string.multiline.double-quote string
         def keyword
         ''',
         (16, 0, '\n'),
         '''
-        """x string.multiline.double-quote string
-            """ string.multiline.double-quote string
+        """ string.multiline.double-quote string
+        x
+             string
+        """ string.multiline.double-quote string
         def keyword
         ''',
         )

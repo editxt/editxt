@@ -21,6 +21,23 @@ name = "Python"
 file_patterns = ["*.py", "*.pyw"]
 comment_token = "#"
 
+class PyString:
+    default_text_color = DELIMITER
+    rules = [
+        ("operator.escape", [
+            RE(r"""\\[\\'"abfnrtv]"""),
+        ]),
+        ("operator.escape.char", [
+            RE(r"\\[0-7]{1,3}"),
+            RE(r"\\x[0-9a-fA-F]{2}"),
+            RE(r"\\u[0-9a-fA-F]{4}"),
+            RE(r"\\U[0-9a-fA-F]{8}"),
+        ]),
+        ("operator.escape.continuation", [
+            RE(r"\\(?:\n|\r\n|\r)"),
+        ]),
+    ]
+
 rules = [
     ("keyword", """
         and       del       from      not       while    
@@ -34,24 +51,12 @@ rules = [
     ("comment.single-line", [RE("#.*")]),
     #("operator", "== != < > <= >=".split()),
 
-    ("string.multiline.double-quote", RE(r'(?<!r)[bu]?"""'), ['"""']),
-    ("string.multiline.single-quote", RE(r"(?<!r)[bu]?'''"), ["'''"]),
-    ("string.double-quote", RE('(?<!r)[bu]?"'), [
-        RE(r'(?:(?:[^\\]|(?<="))(?:\\\\)*)"'),
-        RE(r"(?<!\\)$"),
-    ]),
-    ("string.single-quote", RE("(?<!r)[bu]?'"), [
-        RE(r"(?:(?:[^\\]|(?<='))(?:\\\\)*)'"),
-        RE(r"(?<!\\)$"),
-    ]),
+    ("string.multiline.double-quote", RE(r'(?<!r)[bu]?"""'), ['"""'], PyString),
+    ("string.multiline.single-quote", RE(r"(?<!r)[bu]?'''"), ["'''"], PyString),
+    ("string.double-quote", RE(r'(?<!r)[bu]?"'), [RE(r'"|$')], PyString),
+    ("string.single-quote", RE(r"(?<!r)[bu]?'"), [RE(r"'|$")], PyString),
     ("string.multiline.double-quote", RE(r'(?:br|rb|ur|ru|r)"""'), ['"""'], "regular-expression"),
     ("string.multiline.single-quote", RE(r"(?:br|rb|ur|ru|r)'''"), ["'''"], "regular-expression"),
-    ("string.double-quote", RE('(?:br|rb|ur|ru|r)"'), [
-        RE(r'"'),
-        RE(r"(?<!\\)$"),
-    ], "regular-expression"),
-    ("string.single-quote", RE("(?:br|rb|ur|ru|r)'"), [
-        RE(r"'"),
-        RE(r"(?<!\\)$"),
-    ], "regular-expression"),
+    ("string.double-quote", RE(r'(?:br|rb|ur|ru|r)"'), [RE(r'"|$')], "regular-expression"),
+    ("string.single-quote", RE(r"(?:br|rb|ur|ru|r)'"), [RE(r"'|$")], "regular-expression"),
 ]
