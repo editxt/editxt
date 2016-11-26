@@ -71,7 +71,7 @@ def find(editor, args):
     assert args is not None, editor
     opts = FindOptions(**args.__dict__)
     save_to_find_pasteboard(opts.find_text)
-    finder = Finder(lambda:editor.text_view, opts, editor.app)
+    finder = Finder(lambda:editor, opts, editor.app)
     return getattr(finder, args.action)(None)
 
 

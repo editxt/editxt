@@ -64,12 +64,11 @@ def test_find_command():
         options = make_options(c)
         options.app = app
         editor = m.mock(Editor)
-        tv = editor.text_view >> m.mock(ak.NSTextView)
         editor.app >> app
         finder_cls = m.replace("editxt.command.find.Finder")
         save_paste = m.replace(mod, "save_to_find_pasteboard")
-        def check_options(get_tv, args, app):
-            eq_(get_tv(), tv)
+        def check_options(get_editor, args, app):
+            eq_(get_editor(), editor)
             eq_(args, options)
         finder = m.mock(Finder)
         save_paste(c.find)
