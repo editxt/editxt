@@ -3,6 +3,7 @@
 # source: bash.js
 name = 'Bash'
 file_patterns = ['*.bash', '*.sh', '*.zsh']
+comment_token = "#"
 
 built_in = """
     break cd continue eval exec exit export getopts hash pwd readonly
