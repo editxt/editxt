@@ -27,7 +27,6 @@ import Foundation as fn
 from objc import super, NULL
 
 import editxt.constants as const
-from editxt.command.find import FindController
 from editxt.command.util import normalize_newlines
 from editxt.datatypes import WeakProperty
 from editxt.events import eventize
@@ -182,8 +181,13 @@ class TextView(ak.NSTextView):
 
     # Find panel amd text command interaction ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    @property
+    def _find_controller(self):
+        from editxt.command.find import FindController
+        return FindController.shared_controller(self.app)
+
     def performFindPanelAction_(self, sender):
-        FindController.shared_controller(self.app).perform_action(sender)
+        self._find_controller.perform_action(sender)
 
     def doMenuCommand_(self, sender):
         self.app.text_commander.do_menu_command(self.editor, sender)
@@ -194,7 +198,7 @@ class TextView(ak.NSTextView):
 
     def validateUserInterfaceItem_(self, item):
         if item.action() == "performFindPanelAction:":
-            find = FindController.shared_controller(self.app)
+            find = self._find_controller
             return find.validate_action(item.tag())
         elif item.action() == "doMenuCommand:":
             return self.app.text_commander \

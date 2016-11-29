@@ -21,8 +21,6 @@ import AppKit as ak
 import Foundation as fn
 from objc import NULL
 
-from editxt.command.find import Match
-
 
 class Text(object):
     """Text storage class
@@ -334,11 +332,19 @@ class TextStorageDelegate(ak.NSObject):
 UNICODE_SUPPLEMENTARY_PLANES = ak.NSCharacterSet.characterSetWithRange_((0x10000, 0xFFFFF))
 
 
-class TextMatch(Match):
+class TextMatch:
 
     def __init__(self, match, text):
-        super().__init__(match)
+        self.match = match
         self.text = text
+
+    def __getattr__(self, name):
+        return getattr(self.match, name)
+
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            return "".join(self.match.groups()[key])
+        return self.match.group(key)
 
     def __repr__(self):
         try:

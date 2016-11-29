@@ -40,13 +40,13 @@ log = logging.getLogger(__name__)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 def test_TextView_performFindPanelAction_():
-    from editxt.command.find import FindController
+    import editxt.command.find as find
     m = Mocker()
     tv = TextView.alloc().init()
     app = tv.app = m.mock("editxt.application.Application")
-    fc = m.replace(mod, "FindController")
+    fc = m.replace(find, "FindController")
     sender = m.mock()
-    (fc.shared_controller(app) >> m.mock(FindController)).perform_action(sender)
+    (fc.shared_controller(app) >> m.mock(find.FindController)).perform_action(sender)
     with m:
         tv.performFindPanelAction_(sender)
 
@@ -74,11 +74,11 @@ def test_TextView_doCommandBySelector_():
         tv.doCommandBySelector_(selector)
 
 def test_TextView_validateUserInterfaceItem_():
-    from editxt.command.find import FindController
+    import editxt.command.find as find
     from editxt.textcommand import CommandManager
     def test(c):
         m = Mocker()
-        fc = m.replace(mod, "FindController")
+        fc = m.replace(find, "FindController")
         tv = TextView.alloc().init()
         app = tv.app = m.mock()
         editor = tv.editor = m.mock(Editor)
@@ -86,7 +86,7 @@ def test_TextView_validateUserInterfaceItem_():
         expectation = (item.action() << c.action)
         if c.action == "performFindPanelAction:":
             tag = item.tag() >> 42
-            (fc.shared_controller(app) >> m.mock(FindController)). \
+            (fc.shared_controller(app) >> m.mock(find.FindController)). \
                 validate_action(tag) >> True
         elif c.action == "doMenuCommand:":
             expectation.count(2)

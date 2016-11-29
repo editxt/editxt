@@ -1,0 +1,1 @@
+from editxt.platform.mac.ui.findpanel import FindPanel

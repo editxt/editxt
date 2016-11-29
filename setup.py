@@ -187,7 +187,6 @@ prepare_build(
         'resources/PythonApplet.icns',
         'resources/MainMenu.nib',
         'resources/EditorWindow.nib',
-        'resources/FindPanel.nib',
         'resources/OpenPath.nib',
         'resources/SortLines.nib',
         'resources/WrapLines.nib',

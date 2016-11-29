@@ -34,6 +34,7 @@ from editxt.command.util import make_command_predicate
 from editxt.datatypes import WeakProperty
 from editxt.platform.app import beep
 from editxt.platform.kvo import KVOProxy, KVOLink
+from editxt.platform.ui.findpanel import FindPanel
 
 log = logging.getLogger(__name__)
 
@@ -465,7 +466,7 @@ class FindController(PanelController):
     """Window controller for find panel"""
 
     COMMAND = find
-    NIB_NAME = "FindPanel"
+    PANEL_CLASS = FindPanel
     OPTIONS_KEY = const.FIND_PANEL_OPTIONS_KEY
     OPTIONS_FACTORY = FindOptions
 
@@ -492,15 +493,6 @@ class FindController(PanelController):
             ACTION_FIND_SELECTED_TEXT: self.find_selected_text,
             ACTION_FIND_SELECTED_TEXT_REVERSE: self.find_selected_text_reverse,
         }
-
-    @objc_delegate
-    def windowDidLoad(self):
-        self.gui.window().setLevel_(ak.NSFloatingWindowLevel)
-        editor = self.get_editor()
-        if editor is not None:
-            font = editor.document.default_text_attributes()[ak.NSFontAttributeName]
-            self.gui.find_text.setFont_(font)
-            self.gui.replace_text.setFont_(font)
 
     @property
     def find_text(self):
@@ -533,7 +525,7 @@ class FindController(PanelController):
         self.options.willChangeValueForKey_("recent_finds") # HACK
         self.load_options() # restore state
         self.options.didChangeValueForKey_("recent_finds") # HACK force reload
-        self.gui.showWindow_(self)
+        self.gui.show()
         self.find_text.selectText_(sender)
 
     def find_next(self, sender):
@@ -580,31 +572,31 @@ class FindController(PanelController):
     @objc_delegate
     def panelFindNext_(self, sender):
         if self.save_options():
-            self.gui.window().orderOut_(sender)
+            self.gui.window.orderOut_(sender)
             self.finder.find_next(sender)
 
     @objc_delegate
     def panelFindPrevious_(self, sender):
         if self.save_options():
-            self.gui.window().orderOut_(sender)
+            self.gui.window.orderOut_(sender)
             self.finder.find_previous(sender)
 
     @objc_delegate
     def panelReplace_(self, sender):
         if self.save_options():
-            self.gui.window().orderOut_(sender)
+            self.gui.window.orderOut_(sender)
             self.finder.replace_one(sender)
 
     @objc_delegate
     def panelReplaceAll_(self, sender):
         if self.save_options():
-            self.gui.window().orderOut_(sender)
+            self.gui.window.orderOut_(sender)
             self.finder.replace_all(sender)
 
     @objc_delegate
     def panelReplaceAllInSelection_(self, sender):
         if self.save_options():
-            self.gui.window().orderOut_(sender)
+            self.gui.window.orderOut_(sender)
             self.finder.replace_all_in_selection(sender)
 
     @objc_delegate
@@ -708,7 +700,7 @@ class FindController(PanelController):
                 ak.NSBeginAlertSheet(
                     title,
                     "OK", None, None,
-                    self.gui.window(), None, None, None, 0,
+                    self.gui.window, None, None, None, 0,
                     str(error),
                 );
                 return False

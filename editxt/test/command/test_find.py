@@ -389,7 +389,7 @@ def test_FindController_show_find_panel():
         m.method(fc.load_options)()
         opts.didChangeValueForKey_("recent_finds")
         m.property(fc, "find_text")
-        m.method(fc.gui.showWindow_)(fc)
+        m.method(fc.gui.show)()
         fc.find_text.selectText_(sender)
         with m:
             fc.show_find_panel(sender)
@@ -438,8 +438,9 @@ def test_FindController_actions():
     yield test, c(meth="replace_and_find_next", do=do)
 
     def do(m, c, fc, sender):
+        window = fc.gui.window = m.mock(ak.NSWindow)
         if m.method(fc.save_options)() >> c.saved:
-            (m.method(fc.gui.window)() >> m.mock(ak.NSWindow)).orderOut_(sender)
+            window.orderOut_(sender)
             m.method(fc.finder, c.real)(sender)
     for saved in (True, False):
         cx = c(saved=saved, do=do)
@@ -541,7 +542,7 @@ def test_FindController_validate_expression():
                     sheet(
                         ANY,
                         "OK", None, None,
-                        gui.window() >> "<window>", None, None, None, 0,
+                        gui.window >> "<window>", None, None, None, 0,
                         ANY,
                     );
             with m:

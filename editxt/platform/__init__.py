@@ -38,6 +38,7 @@ def init(platform, use_pdb):
         "markdown",
         "pasteboard",
         "text",
+        "ui.findpanel",
         "views",
         "window",
     ]

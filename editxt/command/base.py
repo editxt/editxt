@@ -148,7 +148,11 @@ class CommandController(object):
     OPTIONS_FACTORY = Options       # A callable that creates default options.
                                     # If this is a function, it should accept
                                     # one arguemnt (`self`).
-    #NIB_NAME = "NibFilename"       # Abstract attribute.
+
+    # NIB_NAME and PANEL_CLASS are mutually exclusive
+    #NIB_NAME = "NibFilename"       # Abstract attribute
+    #PANEL_CLASS = PanelClass       # Abstract attribute
+
     #COMMAND = <command>            # Abstract attribute: command callable
 
     app = WeakProperty()
@@ -180,13 +184,19 @@ class CommandController(object):
         return Class
 
     def __init__(self, app):
-        self.gui = self.controller_class().create(self, self.NIB_NAME)
         self.app = app
+        self.options = KVOProxy(self.OPTIONS_FACTORY())
+        PanelClass = getattr(self, "PANEL_CLASS", None)
+        if PanelClass is not None:
+            assert not hasattr(self, "NIB_NAME"), type(self).__name__
+            self.gui = PanelClass(self)
+            self.gui.window.setFrameAutosaveName_(PanelClass.__name__)
+        else:
+            self.gui = self.controller_class().create(self, self.NIB_NAME)
         if hasattr(self.COMMAND, 'im_func'):
             self.command = self.COMMAND.__func__ # HACK
         else:
             self.command = self.COMMAND
-        self.options = KVOProxy(self.OPTIONS_FACTORY())
         self.load_options()
 
     @property
