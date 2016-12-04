@@ -526,7 +526,7 @@ class FindController(PanelController):
         self.load_options() # restore state
         self.options.didChangeValueForKey_("recent_finds") # HACK force reload
         self.gui.show()
-        self.find_text.selectText_(sender)
+        self.find_text.select()
 
     def find_next(self, sender):
         return self.finder.find_next(sender)

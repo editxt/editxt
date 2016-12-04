@@ -24,7 +24,7 @@ import Foundation as fn
 from objc import super
 
 import editxt.constants as const
-from editxt.platform.app import beep
+from editxt.platform.mac.views.util import font_smoothing
 
 
 class FindPanel(ak.NSObject):
@@ -95,30 +95,26 @@ def _setup(obj):
     window.setMinSize_(ak.NSMakeSize(510, 250))
     window.setLevel_(ak.NSFloatingWindowLevel)
 
-    find_text = obj.find_text = ak.NSTextField.alloc().initWithFrame_(
+    find_text = obj.find_text = SyntaxTextView.alloc().initWithFrame_(
         ak.NSMakeRect(20, 11, 346, 56))
     find_text.setAutoresizingMask_(ak.NSViewWidthSizable | ak.NSViewHeightSizable)
-    find_text.setAllowsEditingTextAttributes_(False)
-    find_text.setEditable_(True)
     find_text.setFont_(ak.NSFont.fontWithName_size_("Monaco", 12))
-    find_text.setLineBreakMode_(ak.NSLineBreakByWordWrapping)
-    find_text.setPlaceholderString_("Find")
-    find_text.setUsesSingleLineMode_(False)
+    find_text.scroller.setBorderType_(ak.NSBezelBorder)
+    find_text.placeholder = "Find"
+    find_text.on_enter_key_pressed = lambda: obj.panelFindNext_(find_text)
     find_text.bind_toObject_withKeyPath_options_(
         "value", obj, "options.find_text", {
             ak.NSContinuouslyUpdatesValueBindingOption: 1,
             ak.NSRaisesForNotApplicableKeysBindingOption: 1,
         })
 
-    replace_text = obj.replace_text = ak.NSTextField.alloc().initWithFrame_(
+    replace_text = obj.replace_text = SyntaxTextView.alloc().initWithFrame_(
         ak.NSMakeRect(20, 85, 346, 56))
     replace_text.setAutoresizingMask_(ak.NSViewWidthSizable | ak.NSViewHeightSizable)
-    replace_text.setAllowsEditingTextAttributes_(False)
-    replace_text.setEditable_(True)
     replace_text.setFont_(ak.NSFont.fontWithName_size_("Monaco", 12))
-    replace_text.setLineBreakMode_(ak.NSLineBreakByWordWrapping)
-    replace_text.setPlaceholderString_("Replace")
-    replace_text.setUsesSingleLineMode_(False)
+    replace_text.scroller.setBorderType_(ak.NSBezelBorder)
+    replace_text.placeholder = "Replace"
+    replace_text.on_enter_key_pressed = lambda: obj.panelFindNext_(find_text)
     replace_text.bind_toObject_withKeyPath_options_(
         "value", obj, "options.replace_text", {
             ak.NSContinuouslyUpdatesValueBindingOption: 1,
@@ -292,7 +288,7 @@ def _setup(obj):
         ak.NSViewMinXMargin | ak.NSViewMaxXMargin | ak.NSViewMinYMargin |
         ak.NSViewWidthSizable | ak.NSViewHeightSizable)
 
-    top.addSubview_(find_text)
+    top.addSubview_(find_text.scroller)
     top.addSubview_(recents_menu)
     top.addSubview_(show_find_matches)
 
@@ -304,7 +300,7 @@ def _setup(obj):
         ak.NSViewMinXMargin | ak.NSViewMaxXMargin | ak.NSViewMaxYMargin |
         ak.NSViewWidthSizable | ak.NSViewHeightSizable)
 
-    bot.addSubview_(replace_text)
+    bot.addSubview_(replace_text.scroller)
     bot.addSubview_(show_replace_matches)
 
     bot.addSubview_(icase_checkbox)
@@ -324,4 +320,148 @@ def _setup(obj):
     main.addSubview_(top)
     main.addSubview_(bot)
 
+    window.setAutorecalculatesKeyViewLoop_(False)
+    window.setInitialFirstResponder_(find_text)
+    key_view_loop = [
+        find_text,
+        replace_text,
+        icase_checkbox,
+        match_word_checkbox,
+        regex_checkbox,
+        regex_help,
+        wrap_checkbox,
+        pyrep_checkbox,
+        find_next,
+        find_prev,
+        replace_one,
+        replace_all,
+        replace_in_selection,
+        cancel,
+    ]
+    next_views = list(key_view_loop)
+    next_views.append(next_views.pop(0))
+    for key_view, next_view in zip(key_view_loop, next_views):
+        key_view.setNextKeyView_(next_view)
+
     return window
+
+
+class SyntaxTextView(ak.NSTextView):
+
+    def initWithFrame_(self, rect):
+        super(SyntaxTextView, self).initWithFrame_(rect)
+        self.has_focus = False
+        self.on_enter_key_pressed = lambda: None
+        self.on_text_change = lambda textview: None # no-op by default
+        self.setAllowsUndo_(True)
+        self.setVerticallyResizable_(True)
+        self.setMaxSize_(
+            ak.NSMakeSize(const.LARGE_NUMBER_FOR_TEXT, const.LARGE_NUMBER_FOR_TEXT))
+        self.setSmartInsertDeleteEnabled_(False)
+        self.setRichText_(False)
+        self.setUsesFontPanel_(False)
+        self.setUsesFindPanel_(False)
+        self._setup_scrollview(rect)
+
+        ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
+            self, "textDidChange:", ak.NSTextDidChangeNotification, self)
+        return self
+
+    def dealloc(self):
+        self.scroller = None
+        super(SyntaxTextView, self).dealloc()
+
+    @property
+    def placeholder(self):
+        return self._placeholder
+    @placeholder.setter
+    def placeholder(self, value):
+        self._placeholder = ak.NSString.stringWithString_(value)
+
+    def _setup_scrollview(self, rect):
+        self.scroller = scroller = FocusRingScrollView.alloc().initWithFrame_(rect)
+        scroller.setHasHorizontalScroller_(False)
+        scroller.setHasVerticalScroller_(True)
+        scroller.setAutohidesScrollers_(True)
+        scroller.setAutoresizingMask_(
+            ak.NSViewWidthSizable | ak.NSViewHeightSizable)
+        container = self.textContainer()
+        container.setContainerSize_(
+            ak.NSMakeSize(rect.size.width, const.LARGE_NUMBER_FOR_TEXT))
+        container.setWidthTracksTextView_(True)
+        self.setAutoresizingMask_(ak.NSViewWidthSizable | ak.NSViewHeightSizable)
+        self.sizeToFit()
+        scroller.setDocumentView_(self)
+
+    def select(self, rng=None):
+        if rng is None:
+            rng = (0, self.stringValue().length())
+        self.setSelectedRange_(rng)
+
+    def stringValue(self):
+        return self.textStorage().string()
+
+    def keyDown_(self, event):
+        code = event.keyCode()
+        mod = event.modifierFlags() & ak.NSDeviceIndependentModifierFlagsMask
+        if code == kVK_Tab:
+            if not mod:
+                self.window().selectNextKeyView_(self)
+            elif mod == ak.NSShiftKeyMask:
+                self.window().selectPreviousKeyView_(self)
+            elif mod == ak.NSAlternateKeyMask:
+                self.doCommandBySelector_("insertTab:")
+            else:
+                super().keyDown_(event)
+        elif not mod and (code == kVK_Return or code == kVK_ANSI_KeypadEnter):
+            self.on_enter_key_pressed()
+        else:
+            super().keyDown_(event)
+
+    def textDidChange_(self, notification):
+        self.on_text_change(self)
+
+    @font_smoothing
+    def drawRect_(self, rect):
+        super(SyntaxTextView, self).drawRect_(rect)
+        if not self.stringValue() and self.placeholder \
+                and not self.isHiddenOrHasHiddenAncestor():
+            self.lockFocus()
+            point = self.textContainerOrigin()
+            point.x += self.textContainer().lineFragmentPadding()
+            self.placeholder.drawAtPoint_withAttributes_(
+                point, {
+                    ak.NSFontAttributeName: self.font(),
+                    ak.NSForegroundColorAttributeName: ak.NSColor.lightGrayColor(),
+                })
+            self.unlockFocus()
+
+    def shouldDrawInsertionPoint(self):
+        # do not draw blinking cursor when view is not first responder (focused)
+        # not sure why this is necessary
+        return self.has_focus
+
+    def becomeFirstResponder(self):
+        self.has_focus = True
+        self.scroller.setKeyboardFocusRingNeedsDisplayInRect_(self.scroller.bounds())
+        return True
+
+    def resignFirstResponder(self):
+        self.has_focus = False
+        self.scroller.setKeyboardFocusRingNeedsDisplayInRect_(self.scroller.bounds())
+        return True
+
+
+# key code constants - see <HIToolbox/Events.h>
+kVK_Return                    = 0x24
+kVK_Tab                       = 0x30
+kVK_ANSI_KeypadEnter          = 0x4C
+
+
+class FocusRingScrollView(ak.NSScrollView):
+
+    def drawRect_(self, rect):
+        super(FocusRingScrollView, self).drawRect_(rect)
+        if self.window().firstResponder() is self.documentView():
+            ak.NSSetFocusRingStyle(ak.NSFocusRingOnly);
+            ak.NSRectFill(self.bounds())
