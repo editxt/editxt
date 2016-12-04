@@ -80,8 +80,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-- fix undo after paste then type (should only undo typing)
-- regex/python syntax highlighting in find/replace dialog
 - fix home/end when line-wrap is on
 - fix "blame" command (doesn't work sometimes)
 - make pathfind command run in background and generate incremental output

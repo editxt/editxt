@@ -224,7 +224,9 @@ class TextView(ak.NSTextView):
     def pasteAsPlainText_(self, sender):
         text = Pasteboard().text
         if text:
+            self.breakUndoCoalescing()
             self.insertText_(text)
+            self.breakUndoCoalescing()
 
     def pasteAsRichText_(self, sender):
         self.pasteAsPlainText_(sender)
