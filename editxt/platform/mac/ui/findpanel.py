@@ -24,6 +24,9 @@ import Foundation as fn
 from objc import super
 
 import editxt.constants as const
+from editxt.events import eventize
+from editxt.platform.mac.font import get_font_from_view
+from editxt.platform.mac.text import Text
 from editxt.platform.mac.views.util import font_smoothing
 
 
@@ -37,6 +40,19 @@ class FindPanel(ak.NSObject):
         self.controller.options.app = controller.app # HACK for recent_finds binding
         self.window = _setup(self)
         return self
+
+    @property
+    def font(self):
+        return get_font_from_view(self.find_text, self.controller.app)
+    @font.setter
+    def font(self, value):
+        """Set font for find/replace text
+
+        :param value: `editxt.datatypes.Font` object
+        """
+        font = value.font
+        self.find_text.setFont_(font)
+        self.replace_text.setFont_(font)
 
     def options(self):
         return self.controller.options
@@ -229,7 +245,7 @@ def _setup(obj):
             ak.NSRaisesForNotApplicableKeysBindingOption: 1,
         })
 
-    regex_checkbox = obj.regex_checkbox = ak.NSButton.alloc().initWithFrame_(
+    regex_checkbox = obj.regex_checkbox = ClickButton.alloc().initWithFrame_(
         ak.NSMakeRect(18, 21, 151, 18))
     regex_checkbox.setTitle_("Regular Expression")
     regex_checkbox.setButtonType_(ak.NSSwitchButton)
@@ -260,7 +276,7 @@ def _setup(obj):
             ak.NSRaisesForNotApplicableKeysBindingOption: 1,
         })
 
-    pyrep_checkbox = obj.pyrep_checkbox = ak.NSButton.alloc().initWithFrame_(
+    pyrep_checkbox = obj.pyrep_checkbox = ClickButton.alloc().initWithFrame_(
         ak.NSMakeRect(204, 41, 164, 18))
     pyrep_checkbox.setTitle_("Python Replace")
     pyrep_checkbox.setButtonType_(ak.NSSwitchButton)
@@ -352,7 +368,6 @@ class SyntaxTextView(ak.NSTextView):
         super(SyntaxTextView, self).initWithFrame_(rect)
         self.has_focus = False
         self.on_enter_key_pressed = lambda: None
-        self.on_text_change = lambda textview: None # no-op by default
         self.setAllowsUndo_(True)
         self.setVerticallyResizable_(True)
         self.setMaxSize_(
@@ -361,10 +376,9 @@ class SyntaxTextView(ak.NSTextView):
         self.setRichText_(False)
         self.setUsesFontPanel_(False)
         self.setUsesFindPanel_(False)
+        self.text = Text()
+        self.layoutManager().replaceTextStorage_(self.text.store)
         self._setup_scrollview(rect)
-
-        ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
-            self, "textDidChange:", ak.NSTextDidChangeNotification, self)
         return self
 
     def dealloc(self):
@@ -418,9 +432,6 @@ class SyntaxTextView(ak.NSTextView):
         else:
             super().keyDown_(event)
 
-    def textDidChange_(self, notification):
-        self.on_text_change(self)
-
     @font_smoothing
     def drawRect_(self, rect):
         super(SyntaxTextView, self).drawRect_(rect)
@@ -452,7 +463,7 @@ class SyntaxTextView(ak.NSTextView):
         return True
 
 
-# key code constants - see <HIToolbox/Events.h>
+# key code constants from <HIToolbox/Events.h>
 kVK_Return                    = 0x24
 kVK_Tab                       = 0x30
 kVK_ANSI_KeypadEnter          = 0x4C
@@ -465,3 +476,22 @@ class FocusRingScrollView(ak.NSScrollView):
         if self.window().firstResponder() is self.documentView():
             ak.NSSetFocusRingStyle(ak.NSFocusRingOnly);
             ak.NSRectFill(self.bounds())
+
+
+class ClickButton(ak.NSButton):
+
+    class events:
+        click = eventize.attr("_on_click")
+
+    _on_click = None
+
+    def initWithFrame_(self, rect):
+        super().initWithFrame_(rect)
+        eventize(self)
+        self.setTarget_(self)
+        self.setAction_("onClick:")
+        return self
+
+    def onClick_(self, sender):
+        if self._on_click is not None:
+            self._on_click()

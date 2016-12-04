@@ -214,6 +214,7 @@ class test_app(object):
         self.tmp = os.path.realpath(self.tempdir.__enter__())
         profile_path = os.path.join(self.tmp, ".profile")
         app = Application(profile_path)
+        app.syntax_factory = {}
         if self.config is not None:
             def update(data, key, value):
                 if "." in key:

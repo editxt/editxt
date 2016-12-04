@@ -30,12 +30,19 @@ def eventize(obj):
 
     class Obj:
         class events:
+            change = eventize.attr("_on_change")
             some_action = eventize.attr("obj.path.to.do_some_action")
             other_action = eventize.call("setup_other_action")
+
+        _on_change = None
 
         def __init__(self):
             eventize(self)
             self.obj = ObjectThatCallsBackOnEvents()
+
+        def _internal_change_logic(self):
+            if self._on_change is not None:
+                self._on_change(self)
 
         def setup_other_action(self, callback):
             def adapt(value):
@@ -43,7 +50,11 @@ def eventize(obj):
             self.obj.on.some_other_thing(adapt)
 
         def when_action_happens(self):
-            self.obj.path.to.do_some_action("the arg")
+            if self.obj.path.to.do_some_action is not None:
+                self.obj.path.to.do_some_action("the arg")
+
+    def react_to_change(obj):
+        "obj is specific 'change' event"
 
     def do_something(arg):
         "arg is specifc to the 'some_action' event"
@@ -53,8 +64,8 @@ def eventize(obj):
 
     obj = Obj()
 
-    # Set event d at obj.path.to.do_some_action
-    # and call obj.setup_other_action(callback)
+    # Setup event handlers
+    obj.on.change(react_to_change)
     obj.on.some_action(do_something)
     obj.on.other_action(do_other)
     """

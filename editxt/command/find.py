@@ -33,8 +33,11 @@ from editxt.command.parser import Choice, Regex, RegexPattern, CommandParser, Op
 from editxt.command.util import make_command_predicate
 from editxt.datatypes import WeakProperty
 from editxt.platform.app import beep
+from editxt.platform.events import debounce
 from editxt.platform.kvo import KVOProxy, KVOLink
 from editxt.platform.ui.findpanel import FindPanel
+from editxt.syntax import Highlighter
+from editxt.util import union_range
 
 log = logging.getLogger(__name__)
 
@@ -480,6 +483,7 @@ class FindController(PanelController):
 
     def __init__(self, app):
         super(FindController, self).__init__(app)
+        self.setup_syntax_highlighting()
         self.finder = Finder(self.get_editor, self.options, app)
         self.action_registry = {
             ak.NSFindPanelActionShowFindPanel: self.show_find_panel,
@@ -493,6 +497,48 @@ class FindController(PanelController):
             ACTION_FIND_SELECTED_TEXT: self.find_selected_text,
             ACTION_FIND_SELECTED_TEXT_REVERSE: self.find_selected_text_reverse,
         }
+
+    def setup_syntax_highlighting(self):
+        def setup(view, syntax_control, get_syntax):
+            ALL = object()
+            edit_range = None
+            highlighter = Highlighter(self.app.theme)
+            highlighter.syntaxdef = get_syntax()
+            view.highlighter = highlighter
+            def coalesce_edit_ranges(rng=None):
+                nonlocal edit_range
+                rng_ = edit_range
+                if rng is None or rng_ is ALL:
+                    rng = None
+                elif rng_ is not None:
+                    rng = union_range(rng, rng_)
+                edit_range = rng or ALL
+                return (rng,), {}
+            @debounce(0.05, coalesce_edit_ranges)
+            def color_text(rng):
+                nonlocal edit_range
+                highlighter.color_text(view.text, rng, timeout=0.05)
+                edit_range = None
+            def text_changed(rng):
+                if view.text.editedMask() == ak.NSTextStorageEditedAttributes:
+                    # break color text -> attribute change -> color text -> ...
+                    return
+                color_text(rng)
+            view.text.on_edit(text_changed)
+            def change_syntax():
+                syntaxdef = get_syntax()
+                if highlighter.syntaxdef is not syntaxdef:
+                    highlighter.syntaxdef = syntaxdef
+                    color_text()
+            syntax_control.on.click(change_syntax)
+        def get_find_text_syntax():
+            return self.app.syntax_factory.get("regular-expression"
+                if self.options.regular_expression else "plain-text")
+        def get_replace_text_syntax():
+            return self.app.syntax_factory.get("python"
+                if self.options.python_replace else "plain-text")
+        setup(self.gui.find_text, self.gui.regex_checkbox, get_find_text_syntax)
+        setup(self.gui.replace_text, self.gui.pyrep_checkbox, get_replace_text_syntax)
 
     @property
     def find_text(self):
@@ -525,6 +571,9 @@ class FindController(PanelController):
         self.options.willChangeValueForKey_("recent_finds") # HACK
         self.load_options() # restore state
         self.options.didChangeValueForKey_("recent_finds") # HACK force reload
+        editor = self.get_editor()
+        if editor is not None:
+            self.gui.font = editor.font
         self.gui.show()
         self.find_text.select()
 
