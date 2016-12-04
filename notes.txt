@@ -82,8 +82,6 @@ Top priority
 
 - fix home/end when line-wrap is on
 - make pathfind command run in background and generate incremental output
-- add "unique" command for removing duplicate lines
-- allow sections of a document to be collapsed/expanded
 
 Multi-select in file tree
   - concatenate views on select multiple
@@ -106,6 +104,7 @@ Show directory path in tree if name matches another document
   - project
     - directory - main view is list of files in this directory
       - file - name in tree is path relative to directory if in directory
+Allow sections of a document to be collapsed/expanded
 Fix icon in tree on new document with known extension
 Always open document after current document
 Fix bug in window title after save new document
