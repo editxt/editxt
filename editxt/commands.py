@@ -42,7 +42,7 @@ from editxt.command.docnav import doc as docnav
 from editxt.command.find import find
 from editxt.command.githuburl import github_url
 from editxt.command.grab import grab
-from editxt.command.openfile import open_
+from editxt.command.openfile import open_, open_files
 from editxt.command.pathfind import pathfind
 from editxt.command.python import python
 from editxt.command.sortlines import sort_lines
@@ -82,6 +82,7 @@ def load_commands():
             python,
             clear_highlighted_text,
             docnav,
+            preferences,
             reload_config,
             set_variable,
             help,
@@ -285,6 +286,12 @@ def dedent_lines(editor, args):
             text[sel] = seltext
             editor.selection = (sel[0], len(seltext))
             textview.didChangeText()
+
+
+@command(name=["preferences", "config"])
+def preferences(editor, args):
+    """Open config file"""
+    open_files([editor.app.config.path], editor.project)
 
 
 @command(title="Reload config", is_enabled=has_editor)

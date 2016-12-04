@@ -81,7 +81,6 @@ View release stats:
 Top priority
 
 - fix home/end when line-wrap is on
-- add "preferences" command (alias "config")
 - make pathfind command run in background and generate incremental output
 - add "unique" command for removing duplicate lines
 - allow sections of a document to be collapsed/expanded

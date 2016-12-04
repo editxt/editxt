@@ -61,6 +61,7 @@ def test_load_commands():
         mod.python,
         mod.clear_highlighted_text,
         mod.docnav,
+        mod.preferences,
         mod.reload_config,
         mod.set_variable,
         mod.help,
