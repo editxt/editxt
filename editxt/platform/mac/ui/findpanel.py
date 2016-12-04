@@ -96,6 +96,7 @@ class FindPanel(ak.NSObject):
 
     def show(self):
         self.window.makeKeyAndOrderFront_(self)
+        self.window.makeFirstResponder_(self.find_text)
 
 
 def _setup(obj):
@@ -220,7 +221,7 @@ def _setup(obj):
     cancel.setTitle_("Cancel")
     cancel.setBezelStyle_(ak.NSRoundedBezelStyle)
     cancel.setAutoresizingMask_(ak.NSViewMinXMargin | ak.NSViewMaxYMargin)
-    cancel.setTarget_(obj)
+    cancel.setTarget_(window)
     cancel.setAction_("performClose:")
 
     icase_checkbox = obj.icase_checkbox = ak.NSButton.alloc().initWithFrame_(
