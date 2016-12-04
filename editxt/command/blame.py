@@ -19,11 +19,13 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import subprocess
-from os.path import dirname, isfile, realpath
+from os.path import dirname, isabs, isfile, realpath
 
+import editxt.config as config
+import editxt.constants as const
 from editxt.command.base import command, CommandError
 from editxt.command.parser import CommandParser, File
-from editxt.command.util import has_editor
+from editxt.command.util import has_editor, threaded_exec_shell
 
 log = logging.getLogger(__name__)
 
@@ -32,19 +34,50 @@ def file_path(editor=None):
     return editor.file_path if editor is not None else None
 
 
-@command(arg_parser=CommandParser(
-    File("path", default=file_path),
-), is_enabled=has_editor)
+@command(
+    arg_parser=CommandParser(
+        File("path", default=file_path),
+    ),
+    config={
+        "git_path": config.String("git"),
+    },
+    is_enabled=has_editor)
 def blame(editor, args):
-    """Invoke git gui blame on file path"""
+    """Invoke `git gui blame` on file path
+
+    Example configuration:
+
+        command:
+          blame:
+            git_path: /opt/local/bin/git
+    """
     if not args:
         from editxt.commands import show_command_bar
         return show_command_bar(editor, "blame ")
     if not (args.path and isfile(args.path)):
         raise CommandError("cannot blame file without path")
-    subprocess.Popen(
-        ["git", "gui", "blame", args.path],
+    git_path = editor.app.config.for_command("blame")["git_path"]
+    command = [git_path, "gui", "blame", args.path]
+    output = []
+    def got_output(text, returncode):
+        if returncode is None:
+            output.append(text)
+        else:
+            if returncode:
+                if git_path == "git":
+                    try:
+                        command[0] = subprocess.check_output(
+                            ["which", "git"], universal_newlines=True).strip()
+                    except subprocess.CalledProcessError:
+                        pass
+                output.insert(0, " ".join(command) + "\n")
+                output.append("\nexit code: {}".format(returncode))
+                view.append_message("".join(output), msg_type=const.ERROR)
+            view.process_completed()
+    view = editor.get_output_view()
+    view.process = threaded_exec_shell(
+        command,
         cwd=dirname(realpath(args.path)),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        got_output=got_output,
+        kill_on_cancel=False,
     )

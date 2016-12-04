@@ -112,7 +112,7 @@ def exec_shell(command, timeout=20, **kw):
     return CommandResult(out, err, returncode)
 
 
-def threaded_exec_shell(command, got_output, **kw):
+def threaded_exec_shell(command, *, got_output, kill_on_cancel=True, **kw):
     """Execute shell command, processing output in a thread
 
     :param command: The first argument passed to `subprocess.Popen`.
@@ -125,6 +125,8 @@ def threaded_exec_shell(command, got_output, **kw):
     :param iter_output: An optional generator function taking a single
     argument, the process stdout stream and yielding processed output.
     This generator will be executed in a thread.
+    :param kill_on_cancel: When true (the default), kill the subprocess if
+    the command is canceled. Otherwise just stop collecting output.
     :param **kw: Keyword arguments accepted by `subprocess.Popen`.
     :returns: The running `subprocess.Popen` object.
     """
@@ -178,7 +180,7 @@ def threaded_exec_shell(command, got_output, **kw):
         terminated = True
         # terminate the process
         log.debug("terminate %r", command)
-        return proc_terminate()
+        return proc_terminate() if kill_on_cancel else False
     proc.terminate = terminate
     return proc
 
