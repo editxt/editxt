@@ -80,7 +80,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-- hotkeys for find dialog buttons
 - fix home/end when line-wrap is on
 - make pathfind command run in background and generate incremental output
 

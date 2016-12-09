@@ -25,6 +25,7 @@ from objc import super
 
 import editxt.constants as const
 from editxt.events import eventize
+from editxt.platform.mac.constants import KEY
 from editxt.platform.mac.font import get_font_from_view
 from editxt.platform.mac.text import Text
 from editxt.platform.mac.views.util import font_smoothing
@@ -194,6 +195,8 @@ def _setup(obj):
     find_prev.setAutoresizingMask_(ak.NSViewMinXMargin | ak.NSViewMinYMargin)
     find_prev.setTarget_(obj)
     find_prev.setAction_("panelFindPrevious:")
+    find_prev.setKeyEquivalentModifierMask_(KEY.Modifier.Command)
+    find_prev.setKeyEquivalent_("G")
 
     replace_one = obj.replace_one = ak.NSButton.alloc().initWithFrame_(
         ak.NSMakeRect(387, 113, 109, 32))
@@ -202,6 +205,8 @@ def _setup(obj):
     replace_one.setAutoresizingMask_(ak.NSViewMinXMargin | ak.NSViewMinYMargin)
     replace_one.setTarget_(obj)
     replace_one.setAction_("panelReplace:")
+    replace_one.setKeyEquivalentModifierMask_(KEY.Modifier.Command)
+    replace_one.setKeyEquivalent_("=")
 
     replace_all = obj.replace_all = ak.NSButton.alloc().initWithFrame_(
         ak.NSMakeRect(387, 81, 109, 32))
@@ -268,6 +273,7 @@ def _setup(obj):
     regex_help.setAutoresizingMask_(ak.NSViewMaxXMargin | ak.NSViewMaxYMargin)
     regex_help.setTarget_(obj)
     regex_help.setAction_("regexHelp:")
+    regex_help.setKeyEquivalent_(KEY.F1)
 
     wrap_checkbox = obj.wrap_checkbox = ak.NSButton.alloc().initWithFrame_(
         ak.NSMakeRect(204, 61, 164, 18))
