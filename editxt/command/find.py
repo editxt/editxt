@@ -575,7 +575,6 @@ class FindController(PanelController):
         if editor is not None:
             self.gui.font = editor.font
         self.gui.show()
-        self.find_text.select()
 
     def find_next(self, sender):
         return self.finder.find_next(sender)

@@ -97,6 +97,9 @@ class FindPanel(ak.NSObject):
     def show(self):
         self.window.makeKeyAndOrderFront_(self)
         self.window.makeFirstResponder_(self.find_text)
+        self.find_text.select()
+        self.replace_text.select((0, 0))
+        self.replace_text.select_on_next_focus = True
 
 
 def _setup(obj):
@@ -368,6 +371,7 @@ class SyntaxTextView(ak.NSTextView):
     def initWithFrame_(self, rect):
         super(SyntaxTextView, self).initWithFrame_(rect)
         self.has_focus = False
+        self.select_on_next_focus = False
         self.on_enter_key_pressed = lambda: None
         self.setAllowsUndo_(True)
         self.setVerticallyResizable_(True)
@@ -456,6 +460,9 @@ class SyntaxTextView(ak.NSTextView):
     def becomeFirstResponder(self):
         self.has_focus = True
         self.scroller.setKeyboardFocusRingNeedsDisplayInRect_(self.scroller.bounds())
+        if self.select_on_next_focus:
+            self.select_on_next_focus = False
+            self.select()
         return True
 
     def resignFirstResponder(self):

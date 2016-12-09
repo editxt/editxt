@@ -390,7 +390,6 @@ def test_FindController_show_find_panel():
         opts.didChangeValueForKey_("recent_finds")
         m.property(fc, "find_text")
         m.method(fc.gui.show)()
-        fc.find_text.select()
         with m:
             fc.show_find_panel(sender)
 
