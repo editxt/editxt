@@ -80,9 +80,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-- fix home/end when line-wrap is on
-- make pathfind command run in background and generate incremental output
-
 Multi-select in file tree
   - concatenate views on select multiple
   - allow find/replace across multiple files
@@ -104,11 +101,13 @@ Show directory path in tree if name matches another document
   - project
     - directory - main view is list of files in this directory
       - file - name in tree is path relative to directory if in directory
+Fix home/end when line-wrap is on
 Allow sections of a document to be collapsed/expanded
 Fix icon in tree on new document with known extension
 Always open document after current document
 Fix bug in window title after save new document
 Fix `xt path/to/directory` (should not error)
+Make pathfind command run in background and generate incremental output
 Add support for drag/drop move DualView divider
 Implement wrap at margin
 Aesthetics

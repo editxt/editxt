@@ -455,8 +455,10 @@ class Finder(object):
                 if backward:
                     itr = reversed(list(itr))
                 for match in itr:
+                    s = match.start()
+                    e = match.end()
                     #log.debug("searching for %r found %r at (%s, %s)", ftext, match.group(), s, e)
-                    yield FoundRange(match.range(), match)
+                    yield FoundRange((s, e - s), match)
                 if options.wrap_around and not wrapped and range[1] == 0:
                     if yield_on_wrap:
                         yield WRAPTOKEN

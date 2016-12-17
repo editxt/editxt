@@ -167,8 +167,12 @@ class Text(object):
         object (if any) will be NSString hexichar indexes.
         """
         pos = 0 if pos is None else self._codepoint_index(pos)
-        end = self._codepoint_index(len(self) if endpos is None else pos)
-        match = regex.search(self.string(), pos)
+        if self._surrogates is None:
+            if endpos is None:
+                return regex.search(self.string(), pos)
+            return regex.search(self.string(), pos, endpos)
+        end = self._codepoint_index(len(self) if endpos is None else endpos)
+        match = regex.search(self.string(), pos, end)
         return TextMatch(match, self) if match is not None else None
 
     def finditer(self, regex, pos=None, endpos=None):
@@ -179,9 +183,13 @@ class Text(object):
         object (if any) will be NSString hexichar indexes.
         """
         pos = 0 if pos is None else self._codepoint_index(pos)
+        if self._surrogates is None:
+            if endpos is None:
+                return regex.finditer(self.string(), pos)
+            return regex.finditer(self.string(), pos, endpos)
         end = self._codepoint_index(len(self) if endpos is None else endpos)
-        for match in regex.finditer(self.string(), pos, end):
-            yield TextMatch(match, self)
+        return (TextMatch(match, self)
+            for match in regex.finditer(self.string(), pos, end))
 
     def _codepoint_index(self, hexichar_index):
         """hexichar index -> codepoint index"""
@@ -224,7 +232,7 @@ class Text(object):
             if i > index:
                 return index
             index += direction
-            start = sum(rng)
+            start = i + 2
         if not surrs:
             self._surrogates = None
         else:
@@ -341,11 +349,6 @@ class TextMatch:
     def __getattr__(self, name):
         return getattr(self.match, name)
 
-    def __getitem__(self, key):
-        if isinstance(key, slice):
-            return "".join(self.match.groups()[key])
-        return self.match.group(key)
-
     def __repr__(self):
         try:
             value = "{!r} span={}".format(self[0], self.span())
@@ -364,8 +367,3 @@ class TextMatch:
     def span(self, *group):
         start, end = self.match.span(*group)
         return self.text._hexichar_index(start), self.text._hexichar_index(end)
-
-    def range(self, *group):
-        """Get a range tuple (offset, length) for the group"""
-        start, end = self.span(*group)
-        return (start, end - start)

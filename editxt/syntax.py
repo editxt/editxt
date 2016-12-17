@@ -815,7 +815,7 @@ class DynamicRange:
     @property
     def text_color(self):
         return self.parent.text_color
-    def finditer(self, string, offset, end):
+    def finditer(self, string, offset):
         match = self.lang_pattern.match(string, offset)
         if match:
             self.last_match_value = match.group(0).strip()

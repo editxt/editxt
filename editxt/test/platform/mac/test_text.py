@@ -85,7 +85,7 @@ def test_Text_search():
     def test(pattern, expect_span, *args):
         match = text.search(re.compile(pattern), *args)
         print(repr(match))
-        eq_(text[match.range()], match[0])
+        eq_(text[match.start():match.end()], match.group(0))
         eq_(match.span(), expect_span)
 
     yield test, r"AT", (1, 3)
@@ -109,7 +109,7 @@ def test_Text_finditer():
             span = match.span()
             spans.append(span)
             texts.append(text[span[0]:span[1]])
-            matches.append(match[0])
+            matches.append(match.group(0))
         eq_(texts, matches)
         eq_(spans, expect_spans)
 
