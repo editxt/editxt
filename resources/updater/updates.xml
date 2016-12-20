@@ -424,5 +424,40 @@ This can be customized in the config file.</li>
       <pubDate>Fri, 14 Oct 2016 13:18:47 -0400</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.10.0/EditXT-v1.10.0-160f68b.zip" sparkle:version="201610141318.160f68b" sparkle:shortVersionString="1.10.0" sparkle:dsaSignature="MCwCFGX654B3H5TmWRgD3YOrUfUcAS1OAhQJeM2UF0BMnm05EhT3lme6iGaBcA==" length="9281378" type="application/octet-stream" />
     </item>
+    <item>
+      <title>Version 1.11.0</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li>Add <code>unique</code> command for removing duplicate lines.</li>
+<li>Add <code>preferences</code> command (also aliased as <code>config</code>).</li>
+<li>Add regular expression and Python syntax highlighting in find dialog.</li>
+<li>Syntax highlighting: add bash comment token <code>#</code> for commenting multiple lines
+when Shell syntax is enabled.</li>
+<li>Syntax highlighting: highlight escape sequences in Python strings.</li>
+<li>Only escape characters in find dialog that have special meaning in regular
+expressions. This means that characters like space and tab are not escaped.</li>
+<li>Show <code>blame</code> command error on non-zero exit.</li>
+<li>Fix undo after type, paste, then type some more.</li>
+<li>Fix bug in indentation mode/size detection: line with single leading space is
+not considered to be an indented line.</li>
+<li>Fix editing commands (insert newline, indent, find/replace) and syntax
+highlighting in documents with emoji.</li>
+<li>Fix insert newline removing characters when selected text had leading
+spaces.</li>
+<li>Fix closing document with no path.</li>
+<li>Fix command argument completion bugs.</li>
+<li>Fix scrollbars showing when not needed.</li>
+</ul>
+
+        ]]>
+      </description>
+      <sparkle:releaseNotesLink>
+        http://htmlpreview.github.io/?https://raw.github.com/editxt/editxt/blob/master/resources/updater/updates.html
+      </sparkle:releaseNotesLink>
+      <pubDate>Tue, 20 Dec 2016 08:33:56 -0500</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.11.0/EditXT-v1.11.0-865e9d9.zip" sparkle:version="201612200833.865e9d9" sparkle:shortVersionString="1.11.0" sparkle:dsaSignature="MC0CFGf9r28EZ1UmSQxqhEuOU5THgxFQAhUAkKOAWO5STuQn3V3afljg8o+JPx4=" length="9279926" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>

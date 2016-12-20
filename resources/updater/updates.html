@@ -51,7 +51,29 @@
     }
   </style>
 </head>
-<body><h2>2016-10-14 - 1.10.0</h2>
+<body><h2>2016-12-20 - 1.11.0</h2>
+<ul>
+<li>Add <code>unique</code> command for removing duplicate lines.</li>
+<li>Add <code>preferences</code> command (also aliased as <code>config</code>).</li>
+<li>Add regular expression and Python syntax highlighting in find dialog.</li>
+<li>Syntax highlighting: add bash comment token <code>#</code> for commenting multiple lines
+when Shell syntax is enabled.</li>
+<li>Syntax highlighting: highlight escape sequences in Python strings.</li>
+<li>Only escape characters in find dialog that have special meaning in regular
+expressions. This means that characters like space and tab are not escaped.</li>
+<li>Show <code>blame</code> command error on non-zero exit.</li>
+<li>Fix undo after type, paste, then type some more.</li>
+<li>Fix bug in indentation mode/size detection: line with single leading space is
+not considered to be an indented line.</li>
+<li>Fix editing commands (insert newline, indent, find/replace) and syntax
+highlighting in documents with emoji.</li>
+<li>Fix insert newline removing characters when selected text had leading
+spaces.</li>
+<li>Fix closing document with no path.</li>
+<li>Fix command argument completion bugs.</li>
+<li>Fix scrollbars showing when not needed.</li>
+</ul>
+<h2>2016-10-14 - 1.10.0</h2>
 <ul>
 <li>Remove close buttons from file tree. Right-click &gt; Close or or Command+W
 instead.</li>
@@ -75,10 +97,10 @@ set of excluded files is:
 <pre><code>command:
   pathfind:
     exclude_patterns:
-      - "*.pyc"
-      - ".git"
-      - ".hg"
-      - ".svn"
+      - &quot;*.pyc&quot;
+      - &quot;.git&quot;
+      - &quot;.hg&quot;
+      - &quot;.svn&quot;
 </code></pre>
 This can be customized in the config file.</li>
 <li>Maintain scroll position on soft wrap toggle.</li>
