@@ -3,6 +3,28 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+## 2016-12-20 - 1.11.0
+
+- Add `unique` command for removing duplicate lines.
+- Add `preferences` command (also aliased as `config`).
+- Add regular expression and Python syntax highlighting in find dialog.
+- Syntax highlighting: add bash comment token `#` for commenting multiple lines
+  when Shell syntax is enabled.
+- Syntax highlighting: highlight escape sequences in Python strings.
+- Only escape characters in find dialog that have special meaning in regular
+  expressions. This means that characters like space and tab are not escaped.
+- Show `blame` command error on non-zero exit.
+- Fix undo after type, paste, then type some more.
+- Fix bug in indentation mode/size detection: line with single leading space is
+  not considered to be an indented line.
+- Fix editing commands (insert newline, indent, find/replace) and syntax
+  highlighting in documents with emoji.
+- Fix insert newline removing characters when selected text had leading
+  spaces.
+- Fix closing document with no path.
+- Fix command argument completion bugs.
+- Fix scrollbars showing when not needed.
+
 ## 2016-10-14 - 1.10.0
 
 - Remove close buttons from file tree. Right-click > Close or or Command+W
