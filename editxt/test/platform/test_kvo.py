@@ -269,8 +269,10 @@ class KVOLinkItem(fn.NSObject):
         self.subj = subj
         self.proxy = mod.KVOProxy(self)
         return self
+    @objc.python_method
     def _set_path(self, value):
         self.subj.key = value
+    @objc.python_method
     def _get_path(self):
         return self.subj.key
 

@@ -149,6 +149,7 @@ class DualView(ak.NSView):
         self.bottom.setHidden_(False)
         self.bottom.setFrame_(bottom_rect)
 
+    @objc.python_method
     def become_subview_of(self, view, focus=None):
         view.addSubview_(self)
         if focus:

@@ -21,7 +21,7 @@ import logging
 
 import AppKit as ak
 import Foundation as fn
-from objc import Category, IBOutlet, super
+from objc import Category, IBOutlet, python_method, super
 
 from editxt.platform.kvo import proxy_target
 from editxt.util import representedObject
@@ -142,6 +142,7 @@ class OutlineView(ak.NSOutlineView):
             return ak.NSDragOperationGeneric | ak.NSDragOperationCopy | ak.NSDragOperationMove
         return ak.NSDragOperationCopy # only allow copy on external drag
 
+    @python_method
     def item_needs_display(self, item):
         for row, item_ in self.iterVisibleObjects():
             if item is item_:

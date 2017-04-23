@@ -131,6 +131,7 @@ class AbstractNameTransformer(fn.NSValueTransformer):
         self.names = []
         return self
 
+    @objc.python_method
     def add_named_object(self, name, obj):
         self.names.append(name)
         self.rtrans_dict[name] = obj
@@ -173,6 +174,7 @@ class SyntaxDefTransformer(AbstractNameTransformer):
         self.add_named_object("None", None)
         return self
 
+    @objc.python_method
     def update_definitions(self, defs):
         for sdef in defs:
             self.add_named_object(sdef.name, sdef)

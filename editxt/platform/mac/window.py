@@ -178,6 +178,7 @@ class WindowController(ak.NSWindowController):
         self, view, cell, rect, col, item, mouseloc):
         return self.window_.tooltip_for_item(view, item), rect
 
+    @objc.python_method
     def setup_current_editor(self, editor):
         """Setup the current editor in the window
 
@@ -198,6 +199,7 @@ class WindowController(ak.NSWindowController):
             subview.removeFromSuperview()
         return False
 
+    @objc.python_method
     def is_current_view(self, editor_main_view):
         if editor_main_view is None:
             return False
@@ -210,10 +212,12 @@ class WindowController(ak.NSWindowController):
     def selected_items(self, items):
         self.docsController.selected_objects = items
 
+    @objc.python_method
     def on_dirty_status_changed(self, editor, dirty):
         self.setDocumentEdited_(dirty)
         self.docsView.item_needs_display(editor)
 
+    @objc.python_method
     def _update_title(self, editor):
         title = self.windowTitleForDocumentDisplayName_("")
         if editor is not None and editor.file_path and os.path.isabs(editor.file_path):
@@ -244,6 +248,7 @@ class WindowController(ak.NSWindowController):
         self.window_.window_will_close()
         self.window().setDelegate_(None)
 
+    @objc.python_method
     def open_documents(self, directory, filename, open_paths_callback):
         panel = ak.NSOpenPanel.alloc().init()
         panel.setShowsHiddenFiles_(True)
@@ -261,6 +266,7 @@ class WindowController(ak.NSWindowController):
             directory, filename, self.window(),
             self.sheet_caller, "sheetDidEnd:returnCode:contextInfo:", 0)
 
+    @objc.python_method
     def save_document_as(self, directory, filename, save_with_path):
         panel = ak.NSSavePanel.alloc().init()
         panel.setShowsHiddenFiles_(True)
@@ -278,6 +284,7 @@ class WindowController(ak.NSWindowController):
             directory, filename, self.window(),
             self.sheet_caller, "sheetDidEnd:returnCode:contextInfo:", 0)
 
+    @objc.python_method
     def prompt_to_overwrite(self, file_path, save_with_path, save_as, diff_with_original):
         self.alert = alert = Alert.alloc().init()
         alert.setAlertStyle_(ak.NSInformationalAlertStyle)
@@ -307,6 +314,7 @@ class WindowController(ak.NSWindowController):
                 save_with_path(None)
         alert.beginSheetModalForWindow_withCallback_(self.window(), respond)
 
+    @objc.python_method
     def prompt_to_close(self, file_path, save_discard_or_cancel, save_as):
         self.alert = alert = Alert.alloc().init()
         alert.setAlertStyle_(ak.NSInformationalAlertStyle)
@@ -493,6 +501,7 @@ class OutputPanel(ak.NSPanel):
         self.editor = None
         super().dealloc()
 
+    @objc.python_method
     def show(self, window):
         self.app = app = window.app
         if self not in app.panels:
@@ -500,6 +509,7 @@ class OutputPanel(ak.NSPanel):
         point = window.wc.window().frame().origin
         self.orderFront_(window)
 
+    @objc.python_method
     def append_message(self, message, msg_type=const.INFO):
         if not message:
             return
@@ -508,6 +518,7 @@ class OutputPanel(ak.NSPanel):
         self.textview.font_smoothing = font.smooth
         self.textview.append_text(text)
 
+    @objc.python_method
     def is_waiting(self, waiting=None):
         if waiting is not None:
             self.waiting = waiting

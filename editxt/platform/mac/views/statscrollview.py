@@ -21,7 +21,7 @@ import logging
 
 import AppKit as ak
 import Foundation as fn
-from objc import super
+from objc import python_method, super
 
 from editxt.platform.mac.overlaywindow import OverlayWindow
 
@@ -176,6 +176,7 @@ class StatusView(ak.NSView):
             self.fields.append(field)
         return self
 
+    @python_method
     def tile_with_ruler_width(self, width, uniform=False):
         """Tile subviews with vertical ruler width
 

@@ -88,6 +88,7 @@ class TextView(ak.NSTextView):
     def focus(self):
         self.window().makeFirstResponder_(self)
 
+    @objc.python_method
     def goto_line(self, line):
         # TODO move this into editor
         if isinstance(line, (tuple, list)):
@@ -103,6 +104,7 @@ class TextView(ak.NSTextView):
         except ValueError:
             beep()
 
+    @objc.python_method
     def select(self, rng):
         self.setSelectedRange_(rng)
 
@@ -124,6 +126,7 @@ class TextView(ak.NSTextView):
             ranges = [adjust(rng) for rng in ranges]
         super().setSelectedRanges_affinity_stillSelecting_(ranges, affinity, flag)
 
+    @objc.python_method
     def soft_wrap(self, value=None):
         if value is None:
             wrap = self.textContainer().widthTracksTextView()
@@ -150,6 +153,7 @@ class TextView(ak.NSTextView):
         self.scrollRangeToVisible_(visible_range)
         scroll_view.setNeedsDisplay_(True)
 
+    @objc.python_method
     def get_visible_char_range(self):
         visible_rect = self.visibleRect()
         origin = self.textContainerOrigin()
@@ -159,6 +163,7 @@ class TextView(ak.NSTextView):
         glyph_range = lm.glyphRangeForBoundingRect_inTextContainer_(rect, tc)
         return lm.characterRangeForGlyphRange_actualGlyphRange_(glyph_range, None)[0]
 
+    @objc.python_method
     def char_index_at_point(self, point, adjust_x=True):
         if adjust_x:
             # move x value to text container origin

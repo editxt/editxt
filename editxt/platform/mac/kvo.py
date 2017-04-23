@@ -109,26 +109,33 @@ class KVOList(fn.NSObject):
     def __repr__(self):
         return '%s(%r)' % (type(self).__name__, list(self))
 
+    @objc.python_method
     def append(self, obj):
         self.mutableArrayValueForKey_("items").append(proxy(obj))
 
+    @objc.python_method
     def extend(self, items):
         self.mutableArrayValueForKey_("items").extend(
             proxy(item) for item in items)
 
+    @objc.python_method
     def index(self, obj):
         return self._items.index(proxy(obj))
 
+    @objc.python_method
     def insert(self, index, obj):
         self.mutableArrayValueForKey_("items").insert(index, proxy(obj))
 
+    @objc.python_method
     def remove(self, obj):
         self.mutableArrayValueForKey_("items").remove(proxy(obj))
 
+    @objc.python_method
     def pop(self, item=None):
         args = () if item is None else (item,)
         return proxy_target(self.mutableArrayValueForKey_("items").pop(*args))
 
+    @objc.python_method
     def count(self, item):
         return list(self).count(item)
 

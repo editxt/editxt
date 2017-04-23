@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import Foundation as fn
-from objc import super
+from objc import python_method, super
 
 from editxt.platform.kvo import kvo_change
 
@@ -52,6 +52,7 @@ class UndoManager(fn.NSUndoManager):
         self.callbacks = WeakCallbackSet()
         return super(UndoManager, self).init()
 
+    @python_method
     def on(self, callback):
         """Register a callback to be called when the value of
         `has_unsaved_actions()` changes.
@@ -63,6 +64,7 @@ class UndoManager(fn.NSUndoManager):
         """
         self.callbacks.add(callback)
 
+    @python_method
     def off(self, callback):
         """Remove callback tracking unsaved actions changes
 

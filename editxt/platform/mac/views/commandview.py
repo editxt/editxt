@@ -22,7 +22,7 @@ import math
 
 import AppKit as ak
 import Foundation as fn
-from objc import pyobjc_unicode, super
+from objc import pyobjc_unicode, python_method, super
 
 from editxt.command.parser import CompletionsList
 from editxt.constants import ERROR, HTML, INFO, LARGE_NUMBER_FOR_TEXT
@@ -135,6 +135,7 @@ class CommandView(DualView):
     def command_text(self, value):
         self.input.setString_(value)
 
+    @python_method
     def replace_command_text_range(self, range, text):
         if self.input.shouldChangeTextInRange_replacementString_(range, text):
             self.input.replaceCharactersInRange_withString_(range, text)
@@ -155,10 +156,12 @@ class CommandView(DualView):
     def output_text(self):
         return self.output.textStorage()
 
+    @python_method
     def get_font(self, view):
         font = get_font_from_view(view, self.editor.app)
         return font.font, font.smooth
 
+    @python_method
     def activate(self, command, initial_text="", select=False):
         new_activation = not self.active
         self.active = True
@@ -198,6 +201,7 @@ class CommandView(DualView):
             self.is_waiting(False)
             self.deactivate()
 
+    @python_method
     def message(self, message, msg_type=INFO):
         if not message:
             self.dismiss()
@@ -212,6 +216,7 @@ class CommandView(DualView):
             beep()
         self.should_resize()
 
+    @python_method
     def append_message(self, message, msg_type=INFO):
         if not message:
             return
@@ -223,6 +228,7 @@ class CommandView(DualView):
             self.window().__last_output = self.output_text.copy()
         self.should_resize()
 
+    @python_method
     def show_last_message(self):
         try:
             output = self.window().__last_output
@@ -234,6 +240,7 @@ class CommandView(DualView):
         else:
             beep()
 
+    @python_method
     def propose_completion(self, items):
         self.command.propose_completion(self, items)
 
@@ -371,6 +378,7 @@ class ContentSizedTextView(ak.NSTextView):
         self.scroller = None
         super(ContentSizedTextView, self).dealloc()
 
+    @python_method
     def _setup_scrollview(self, rect):
         self.scroller = scroller = ak.NSScrollView.alloc().initWithFrame_(rect)
         scroller.setHasHorizontalScroller_(False)
@@ -445,6 +453,7 @@ class ContentSizedTextView(ak.NSTextView):
         self.textStorage().setAttributedString_(value)
         self.textDidChange_(None)
 
+    @python_method
     def append_text(self, text):
         store = self.textStorage()
         range = (store.length(), 0)

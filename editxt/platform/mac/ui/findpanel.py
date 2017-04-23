@@ -21,7 +21,7 @@ import objc
 
 import AppKit as ak
 import Foundation as fn
-from objc import super
+from objc import python_method, super
 
 import editxt.constants as const
 from editxt.events import eventize
@@ -403,6 +403,7 @@ class SyntaxTextView(ak.NSTextView):
     def placeholder(self, value):
         self._placeholder = ak.NSString.stringWithString_(value)
 
+    @python_method
     def _setup_scrollview(self, rect):
         self.scroller = scroller = FocusRingScrollView.alloc().initWithFrame_(rect)
         scroller.setHasHorizontalScroller_(False)

@@ -109,6 +109,7 @@ def test_MockerExt_PyObjC_num_args_check():
     class PySubclass(NSObject):
         def method_with_zero_args(self):
             pass
+        @objc.python_method
         def method_with_one_arg(self, arg):
             pass
     c = TestConfig()

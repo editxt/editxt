@@ -351,10 +351,12 @@ class CallbackObserver(fn.NSObject):
         self.options = options
         callback.__observer = self
         return self
+    @objc.python_method
     def activate(self, instance):
         if hasattr(instance, "__pyobjc_object__"):
             instance = instance.__pyobjc_object__
         instance.addObserver_forKeyPath_options_context_(self, self.keypath, self.options, 0)
+    @objc.python_method
     def deactivate(self, instance):
         instance.removeObserver_forKeyPath_(self, self.keypath)
     def __call__(self, oldvalue, newvalue):

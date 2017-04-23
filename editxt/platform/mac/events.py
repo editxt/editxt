@@ -2,6 +2,7 @@ from functools import wraps
 from threading import Thread
 
 import AppKit as ak
+import objc
 
 
 def call_later(delay, callback, *args, **kw):
@@ -55,6 +56,7 @@ class DelayedCall(ak.NSObject):
         self.kw = kw
         return self
 
+    @objc.python_method
     def later(self, delay):
         self.performSelector_withObject_afterDelay_("do", None, delay)
         return self.cancel

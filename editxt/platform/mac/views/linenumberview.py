@@ -50,6 +50,7 @@ class LineNumberView(ak.NSRulerView):
     def denotify(self):
         fn.NSNotificationCenter.defaultCenter().removeObserver_(self)
 
+    @objc.python_method
     def calculate_thickness(self, min_count=0, display=True):
         if not min_count:
             min_count = len(self.textview.editor.line_numbers)
@@ -100,6 +101,7 @@ class LineNumberView(ak.NSRulerView):
         ))
         self.draw_line_numbers(rect, colors.line_number_color)
 
+    @objc.python_method
     def char_index_at_point(self, point, adjust_x=True):
         view_point = self.convertPoint_toView_(point, self.textview)
         return self.textview.char_index_at_point(view_point, adjust_x)

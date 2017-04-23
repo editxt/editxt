@@ -312,7 +312,7 @@ class ReplacedMethod(object):
                     original = objtype.instanceMethodForSelector_(func.selector)
                     original = _method_wrapper(original, nargs)
                     log.info("replaced %s.%s", objtype.__name__, selstr)
-                except TypeError:
+                except (TypeError, AttributeError):
                     log.warn("cannot get instance method for %s", selstr)
                     original = None
                 rep.original_method = original

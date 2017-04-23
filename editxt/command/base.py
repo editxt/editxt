@@ -23,7 +23,7 @@ from functools import wraps
 
 import AppKit as ak
 import Foundation as fn
-from objc import super
+from objc import python_method, super
 
 from editxt.command.parser import CommandParser, Options
 from editxt.command.util import make_command_predicate
@@ -252,6 +252,7 @@ class _BaseCommandController(ak.NSWindowController):
 
     controller = WeakProperty()
 
+    @python_method
     @classmethod
     def create(cls, controller, nib_name):
         obj = cls.alloc().initWithWindowNibName_(nib_name)

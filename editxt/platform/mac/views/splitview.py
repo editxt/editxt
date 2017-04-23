@@ -156,11 +156,13 @@ class ThinSplitView(ak.NSSplitView):
 
     # slider animation ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+    @objc.python_method
     def is_view_visible(self, index, min_thickness=0.0):
         view = self.subviews()[index]
         dim = "width" if self.isVertical() else "height"
         return getattr(view.bounds().size, dim) > min_thickness
 
+    @objc.python_method
     def show_view(self, index, thickness):
         view = self.subviews()[index]
         rect = view.frame()
@@ -173,6 +175,7 @@ class ThinSplitView(ak.NSSplitView):
         setattr(rect.size, dim, thickness)
         self._animate_view(view, rect, self.animation_delegate)
 
+    @objc.python_method
     def hide_view(self, index):
         view = self.subviews()[index]
         rect = view.frame()
@@ -185,6 +188,7 @@ class ThinSplitView(ak.NSSplitView):
         setattr(rect.size, dim, 0.0)
         self._animate_view(view, rect)
 
+    @objc.python_method
     def _animate_view(self, view, rect, delegate=None):
         resize = fn.NSDictionary.dictionaryWithObjectsAndKeys_(
             view, ak.NSViewAnimationTargetKey,

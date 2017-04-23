@@ -366,12 +366,24 @@ def build_zip():
     return zip.filename
 
 
+def fix_app_site_packages():
+    # HACK for py2app with Python 3.6 venv
+    site_packages = join(os.environ["VIRTUAL_ENV"], "lib/python3.6/site-packages")
+    app_site_packages = join(thisdir, 'dist', appname + '.app',
+        "Contents/Resources/lib/python3.6/site-packages")
+    assert os.path.exists(site_packages), site_packages
+    assert not os.path.exists(app_site_packages), app_site_packages
+    os.symlink(site_packages, app_site_packages)
+
+
 if "--html-only" in sys.argv:
     update_change_log_html()
     sys.exit()
 
 clean()
 setup(**setup_args)
+if "-A" in sys.argv:
+    fix_app_site_packages()
 if package:
     zip_path = build_zip()
     prepare_sparkle_update(zip_path)

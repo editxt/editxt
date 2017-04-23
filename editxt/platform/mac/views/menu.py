@@ -22,7 +22,7 @@ from itertools import count
 
 import AppKit as ak
 import Foundation as fn
-from objc import Category, IBOutlet, super
+from objc import Category, IBOutlet, python_method, super
 
 from editxt.util import parse_hotkey, representedObject, WeakProperty
 
@@ -74,6 +74,7 @@ class MenuTarget(ak.NSObject):
         self.tags = count(1)
         return self
 
+    @python_method
     def add_callback(self, callback):
         tag = next(self.tags)
         self.map[tag] = callback

@@ -92,6 +92,7 @@ class ListView(object):
         space = self.view.intercellSpacing().height
         return (self.view.rowHeight() + space) * len(self.items) + header
 
+    @objc.python_method
     def become_subview_of(self, view, focus=True):
         self.scroll.setFrame_(view.bounds())
         view.addSubview_(self.scroll)
@@ -126,6 +127,7 @@ class ListView(object):
         """Get the last selected row"""
         return self.view.selectedRow()
 
+    @objc.python_method
     def select(self, indexes, extend=False):
         """Select the given indexes
         """
@@ -164,6 +166,7 @@ class TableDelegate(ak.NSObject):
         self.double_click_callback = None
         return self
 
+    @objc.python_method
     def setup_double_click(self, callback):
         if self.double_click_callback is not None:
             raise NotImplementedError("cannot add multiple dobule click actions")

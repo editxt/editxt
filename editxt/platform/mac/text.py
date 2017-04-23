@@ -19,7 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import AppKit as ak
 import Foundation as fn
-from objc import NULL
+from objc import NULL, python_method
 
 
 class Text(object):
@@ -321,6 +321,7 @@ class TextStorageDelegate(ak.NSObject):
         self.callbacks = set()
         return self
 
+    @python_method
     def register_edit_callback(self, callback):
         self.callbacks.add(callback)
         return lambda: self.callbacks.discard(callback)
