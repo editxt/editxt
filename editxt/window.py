@@ -372,7 +372,7 @@ class Window(object):
             def diff_with_original():
                 from editxt.command.diff import diff
                 save_with_path(None) # cancel save operation
-                diff(editor.text_view, self, None)
+                diff(editor.text_view, self)
         self.wc.prompt_to_overwrite(
             editor.file_path, save_with_path, save_as, diff_with_original)
 
