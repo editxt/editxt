@@ -234,10 +234,13 @@ class Finder(object):
 
     def count_occurrences(self, sender):
         num = self.mark_occurrences(
-            self.options.find_text, self.options.regular_expression)
+            self.options.find_text,
+            self.options.regular_expression,
+            timeout=30,
+        )
         return "Found {} occurrence{}".format(num, ("" if num == 1 else "s"))
 
-    def mark_occurrences(self, ftext, regex=False, color=None):
+    def mark_occurrences(self, ftext, regex=False, color=None, timeout=3.0):
         """Mark occurrences of ftext in editor
 
         This method always clears all existing text marks, and marks
@@ -246,7 +249,9 @@ class Finder(object):
         :ftext: A string of text to find/mark.
         :regex: Boolean value indicating if ftext is a regular expression.
         :color: Color used to mark ranges. Yellow (#FEFF6B) by default.
-        :returns: Number of marked occurrences.
+        :timeout: Abort marking after this many seconds.
+        :returns: Number of marked occurrences. -1 on timeout before all
+        occurrences were found.
         """
         editor = self.get_editor()
         if editor is None:
@@ -276,9 +281,13 @@ class Finder(object):
         count = 0
         attr = ak.NSBackgroundColorAttributeName
         mark_range = layout.addTemporaryAttribute_value_forCharacterRange_
+        end_time = time.time() + timeout
         for found in finditer(text, ftext, full_range, FORWARD, False):
             mark_range(attr, color, found.range)
             count += 1
+            if time.time() > end_time:
+                count = -1
+                break
         editor._Finder__last_mark = (original_ftext, count)
         return count
 
@@ -296,6 +305,8 @@ class Finder(object):
         """Return the range of the found text or None if not found"""
         options = self.options
         ftext = options.find_text
+        if not ftext:
+            return None
         if options.regular_expression:
             finditer = self.regexfinditer
         elif options.match_entire_word:
@@ -375,54 +386,9 @@ class Finder(object):
         then WRAPTOKEN is yielded when the search wraps around the beginning/end
         of the file
         """
-        opts = {}
-        options = self.options
-        if options.ignore_case:
-            opts["matchcase"] = False
-        forwardSearch = (direction == FORWARD)
-        if forwardSearch:
-            startindex = index = range[0]
-        else:
-            startindex = index = sum(range)
-            opts["reverse"] = True
-        if range[1] == 0:
-            if options.wrap_around:
-                range = (0, len(text))
-            elif forwardSearch:
-                range = (startindex, len(text) - startindex)
-            else:
-                range = (0, startindex)
-        endindex = sum(range)
-        FoundRange = make_found_range_factory(options)
-        wrapped = False
-        while True:
-            if forwardSearch:
-                if wrapped:
-                    if index >= startindex:
-                        break # searched to or beyond where we started
-                    else:
-                        start, end = index, startindex
-                else:
-                    start, end = index, endindex
-            else:
-                if wrapped:
-                    if index <= startindex:
-                        break # searched to or beyond where we started
-                    else:
-                        start, end = startindex, index
-                else:
-                    start, end = range[0], index
-            found = text.find_range(ftext, start, end, **opts)
-            if -1 < found[0] < endindex:
-                yield FoundRange(found)
-                index = found[0] + (found[1] if forwardSearch else 0)
-            elif options.wrap_around and not wrapped:
-                if yield_on_wrap:
-                    yield WRAPTOKEN
-                index = range[0] if forwardSearch else endindex
-                wrapped = True
-            else:
-                break
+        # turns out text.finditer is WAY faster than text.find_range
+        ftext = re.escape(ftext)
+        return self.regexfinditer(text, ftext, range, direction, yield_on_wrap)
 
     def regexfinditer(self, text, ftext, range, direction, yield_on_wrap):
         """Yields FoundRanges of text matched by ftext (a regular expression)
@@ -699,8 +665,10 @@ class FindController(PanelController):
     def count_occurrences(self, ftext, regex):
         editor = self.get_editor()
         if editor is not None and ftext:
-            count = self.finder.mark_occurrences(ftext, regex)
-            if count:
+            count = self.finder.mark_occurrences(ftext, regex, timeout=30)
+            if count < 0:
+                self.flash_status_text("Too many to count")
+            elif count:
                 self.flash_status_text("%i occurrences" % count)
             else:
                 self.flash_status_text("Not found")

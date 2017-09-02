@@ -147,7 +147,7 @@ def test_Finder():
         beep = m.replace(mod, "beep")
         options = make_options(c)
         editor = m.mock(Editor)
-        editor.selection >> c.select
+        (editor.selection << c.select).count(0, None)
         (editor.text << Text(c.text)).count(0, None)
         tv = m.mock(ak.NSTextView)
         (editor.text_view << tv).count(0, 1)
@@ -633,7 +633,7 @@ def test_FindController_count_occurrences():
             m.method(fc.get_editor)() >> (m.mock(Editor) if c.has_tv else None)
             if c.has_tv:
                 ftext = "<find>"
-                mark(ftext, c.regex) >> c.cnt
+                mark(ftext, c.regex, timeout=30) >> c.cnt
                 if c.cnt:
                     flash("%i occurrences" % c.cnt)
                 else:
