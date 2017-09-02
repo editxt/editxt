@@ -30,9 +30,8 @@ log = logging.getLogger(__name__)
 
 class Caller(fn.NSObject):
 
-    @objc.namedSelector(b"init:")
-    def init(self, callback):
-        self = super(Caller, self).init()
+    def __new__(cls, callback):
+        self = cls.alloc().init()
         self.callback = callback
         return self
 
@@ -49,6 +48,6 @@ class Alert(ak.NSAlert):
     """
 
     def beginSheetModalForWindow_withCallback_(self, window, callback):
-        self.caller = Caller.alloc().init(callback)
+        self.caller = Caller(callback)
         self.beginSheetModalForWindow_modalDelegate_didEndSelector_contextInfo_(
             window, self.caller, "alertDidEnd:returnCode:contextInfo:", 0)

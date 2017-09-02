@@ -366,13 +366,13 @@ class Window(object):
         """
         def save_as():
             self.save_document_as(editor, save_with_path)
-        if editor.text_view is None:
+        if editor is None:
             diff_with_original = None
         else:
             def diff_with_original():
                 from editxt.command.diff import diff
-                save_with_path(None) # cancel save operation
-                diff(editor.text_view, self)
+                from editxt.command.parser import Options
+                diff(editor, Options(file=editor.file_path))
         self.wc.prompt_to_overwrite(
             editor.file_path, save_with_path, save_as, diff_with_original)
 

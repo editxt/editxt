@@ -35,13 +35,13 @@ def diff(editor, args):
     remove = []
     if args and args.file:
         path1 = args.file
-        path2 = get_text_path(editor, remove)
+        path2 = get_temp_path(editor, remove)
     elif len(editor.window.selected_items) == 2:
-        path1 = get_text_path(editor, remove)
-        path2 = get_text_path(editor.window.selected_items[1], remove)
+        path1 = get_temp_path(editor, remove)
+        path2 = get_temp_path(editor.window.selected_items[1], remove)
     elif editor.document.has_real_path():
         path1 = editor.file_path
-        path2 = get_text_path(editor, remove)
+        path2 = get_temp_path(editor, remove)
     else:
         raise CommandError("file has not been saved")
     if not os.path.exists(path1):
@@ -62,14 +62,14 @@ def external_diff(path1, path2, diff_program, remove=None):
     """
     cmd = diff_program + " " + list2cmdline([path1, path2])
     if remove:
-        cmd += "; " + list2cmdline(["rm", "-v"] + remove)
+        cmd += "; " + list2cmdline(["rm"] + remove)
     # TODO should use editor encoding?
     with open("/dev/null", mode="w", encoding="utf-8") as null:
         Popen(cmd, shell=True,
               stdin=None, stdout=null, stderr=null, close_fds=True)
 
 
-def get_text_path(editor, remove):
+def get_temp_path(editor, remove):
     if editor.document.has_real_path() and not editor.is_dirty:
         return editor.file_path
     name, ext = os.path.splitext(editor.file_path or "untitled")

@@ -294,23 +294,25 @@ class WindowController(ak.NSWindowController):
         alert.addButtonWithTitle_("Replace")
         # may need to use .objectAtIndex_(1) instead of [1]
         # http://stackoverflow.com/questions/16627894/how-to-make-the-nsalerts-2nd-button-the-return-button
-        alert.buttons()[1].setKeyEquivalent_(" ") # space bar -> replace
+        alert.buttons()[1].setKeyEquivalent_(" ") # space bar -> replace (doesn't seem to work)
         diff = diff_with_original is not None
         if diff:
+            alert.on_diff = OnClick(lambda sender: diff_with_original())
             alert.addButtonWithTitle_("Diff")
-            alert.buttons()[2].setKeyEquivalent_("d")
+            button = alert.buttons()[2]
+            button.setKeyEquivalent_("d")
+            button.setTarget_(alert.on_diff)
+            button.setAction_("act:")
         alert.addButtonWithTitle_("Cancel")
         def respond(response, end_alert):
+            end_alert()
             if response == ak.NSAlertFirstButtonReturn:
-                end_alert()
                 save_as()
             elif response == ak.NSAlertSecondButtonReturn:
-                end_alert()
+                # replace
                 save_with_path(file_path)
-            elif diff and response == ak.NSAlertThirdButtonReturn:
-                diff_with_original()
             else:
-                end_alert()
+                # cancel
                 save_with_path(None)
         alert.beginSheetModalForWindow_withCallback_(self.window(), respond)
 
@@ -403,6 +405,17 @@ class SheetCaller(fn.NSObject):
     @objc.typedSelector(b'v@:@ii')
     def sheetDidEnd_returnCode_contextInfo_(self, sheet, code, context):
         self.callback(sheet, code)
+
+
+class OnClick(fn.NSObject):
+
+    def __new__(cls, callback):
+        self = cls.alloc().init()
+        self.callback = callback
+        return self
+
+    def act_(self, sender):
+        self.callback(sender)
 
 
 class EditorWindow(ak.NSWindow):
