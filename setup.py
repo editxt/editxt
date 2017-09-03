@@ -130,7 +130,7 @@ prepare_build(
         # work as expected without it!!
         #argv_emulation=True,
         packages=["editxt"],
-        frameworks=["resources/Sparkle-1.8.0/Sparkle.framework"],
+#        frameworks=["resources/Sparkle-1.8.0/Sparkle.framework"], # not working, needs fixing
         plist=dict(
             CFBundleGetInfoString = "%s %s.%s" % (version, revision, gitrev),
             CFBundleShortVersionString = version,

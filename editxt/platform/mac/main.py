@@ -61,8 +61,8 @@ def run(app, argv, unexpected_error_callback, use_pdb):
 
     register_value_transformers()
     AppDelegate.app = app # HACK global. Would prefer to set an instance variable
-    if not use_pdb:
-        AppDelegate.updater = load_sparkle()
+#    if not use_pdb:
+#        AppDelegate.updater = load_sparkle()
 
     AppHelper.runEventLoop(argv, unexpected_error_callback, pdb=use_pdb)
 
