@@ -19,10 +19,10 @@
 
 commonmark>=0.6.3
 docopt==0.6.1
-py2app==0.12
-    altgraph==0.13
+py2app==0.14
+    altgraph==0.14
     macholib==1.8
-    modulegraph==0.14
+    modulegraph==0.15
 
 pyobjc-core==3.2.1
 pyobjc-framework-Cocoa==3.2.1
