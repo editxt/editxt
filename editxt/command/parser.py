@@ -814,36 +814,34 @@ class File(String):
         if token == '...' and self.project_path:
             return [CompleteWord('.../', (lambda:''))]
         if token.startswith('~'):
-            original_length = len(token)
-            token = expanduser(token)
-            diff = len(token) - original_length
-        elif token.startswith('.../') and self.project_path:
-            original_length = len(token)
-            token = join(self.project_path, self.relative(token[4:]))
-            diff = len(token) - original_length
+            path = expanduser(token)
+        elif token.startswith('.../') and self.project_path and isabs(self.project_path):
+            path = join(self.project_path, self.relative(token[4:]))
         else:
-            diff = 0
-        if isabs(token):
-            base = sep
             path = token
-        elif self.path is None:
-            return []
-        else:
-            base = realpath(self.path)
-            path = join(base, token)
-            diff += len(base) + 1
+        if not isabs(path):
+            if self.path is None:
+                return []
+            else:
+                path = join(realpath(self.path), path)
         root, name = split(path)
-        assert len(base) <= len(root), (base, root)
         if not exists(root):
             return []
-        assert len(sep) == 1, sep
+        if name == token:
+            start = 0
+        else:
+            if name:
+                assert token.endswith(name), (token, name)
+                token_dir = token[:-len(name)]
+            else:
+                token_dir = token
+            start = sum(2 if c == ' ' else 1 for c in token_dir)
 
         def delim(word, dir_delim=sep):
             escape = lambda word: word.replace(' ', '\\ ')
-            root_end = sum(2 if c == ' ' else 1 for c in root)
             def get_delimiter():
                 return dir_delim if isdir(join(root, word)) else " "
-            return CompleteWord(word, get_delimiter, root_end + 1 - diff, escape)
+            return CompleteWord(word, get_delimiter, start, escape)
 
         if not name:
             match = lambda n: not n.startswith(".")

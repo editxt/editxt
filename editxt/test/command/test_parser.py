@@ -632,6 +632,17 @@ def test_File():
         with replattr(editor.project, "path", editor.project.path + "/"):
             yield test, ".../", ["a.txt", "B file", "b.txt"], 4
             yield test, "...//", ["a.txt", "B file", "b.txt"], 5
+        with replattr(
+                (app.documents, "change_document_path", lambda *a: None),
+                (editor.project, "path", None),
+                (editor, "file_path", join(tmp, "space dir/file")),
+                sigcheck=False
+            ):
+            yield test, "", ["file"], 0
+            yield test, "../", ["dir", "file.doc", "file.txt", "space dir"], 3
+            #yield test, "..//", ["dir", "file.doc", "file.txt", "space dir"], 4
+            yield test, "../f", ["file.doc", "file.txt"], 3
+            yield test, "../dir/", ["a.txt", "B file", "b.txt"], 7
 
         test = make_arg_string_checker(field)
         yield test, "/str", "/str"
