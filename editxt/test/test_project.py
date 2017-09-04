@@ -221,7 +221,7 @@ def test_save():
 
 def test_create_editor_with_state():
     with test_app() as app:
-        window = TestConfig(app=app)
+        window = TestConfig(app=app, current_editor=None)
         project = Project(window)
         state = {"path": "Untitled"}
         result = project.create_editor_with_state(state)

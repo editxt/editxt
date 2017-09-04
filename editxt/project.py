@@ -188,7 +188,15 @@ class Project(CommandSubject):
         inserted and the editor that should receive focus.
         """
         if index < 0:
-            index = len(self.editors)
+            if self.window is not None:
+                current = self.window.current_editor
+                if current is not None:
+                    try:
+                        index = self.editors.index(current) + 1
+                    except ValueError:
+                        pass
+            if index < 0:
+                index = len(self.editors)
         is_move = action == const.MOVE
         is_copy = action == const.COPY
         focus = None

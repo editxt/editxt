@@ -733,7 +733,7 @@ class Window(object):
         :param project: The parent project into which items are being inserted.
             Documents will be inserted in the current project if unspecified.
         :param index: The index in the outline view or parent project at which
-            the item(s) should be inserted. Append if < 0 (the default).
+            the item(s) should be inserted. Add after current if < 0 (default).
         :param action: What to do with items that are already open in
             this window:
 

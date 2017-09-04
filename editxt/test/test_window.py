@@ -1197,8 +1197,14 @@ def test_insert_items():
                 else:
                     args = (name_to_item[c.project],)
             else:
+                if parent is None:
+                    project = window.get_current_project()
+                    if project is not None:
+                        parent = "project(%s)" % project.name
                 if parent is not None:
                     parent = name_to_item[parent[8:-1]]
+                    if index < 0:
+                        index = len(parent.editors)
                 args = (parent, index, c.action)
 
             print('drop(%s) %s at %s of %s' % (c.action, c.drop[0], index, parent))
