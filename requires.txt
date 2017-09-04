@@ -19,7 +19,7 @@
 
 commonmark>=0.6.3
 docopt==0.6.1
-py2app==0.14
+py2app==0.11
     altgraph==0.14
     macholib==1.8
     modulegraph==0.15

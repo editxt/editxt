@@ -61,8 +61,8 @@ def run(app, argv, unexpected_error_callback, use_pdb):
 
     register_value_transformers()
     AppDelegate.app = app # HACK global. Would prefer to set an instance variable
-#    if not use_pdb:
-#        AppDelegate.updater = load_sparkle()
+    if not use_pdb:
+        AppDelegate.updater = load_sparkle()
 
     AppHelper.runEventLoop(argv, unexpected_error_callback, pdb=use_pdb)
 
@@ -86,27 +86,4 @@ def load_sparkle():
     base_path = join(dirname(os.environ['RESOURCEPATH']), 'Frameworks')
     bundle_path = abspath(join(base_path, 'Sparkle.framework'))
     objc.loadBundle('Sparkle', globals(), bundle_path=bundle_path)
-    swizzle_SUWindowController()
     return SUUpdater.sharedUpdater()
-
-
-def swizzle_SUWindowController():
-    def swizzle(old):
-        def swizzleWithNewMethod_(f):
-            # http://permalink.gmane.org/gmane.comp.python.pyobjc.devel/5446
-            cls = old.definingClass
-            objc.classAddMethod(cls, old.selector, objc.selector(
-                f,
-                selector=old.selector,
-                signature=old.signature
-            ))
-            log.debug("Swizzled %s.%s",
-                cls.__name__,
-                old.selector.decode('ascii'),
-            )
-            return f
-        return swizzleWithNewMethod_
-
-    @swizzle(SUWindowController.initWithHost_windowNibName_)
-    def initWithHost_windowNibName_(self, host, nibName):
-        return self.initWithWindowNibName_owner_(nibName, self)

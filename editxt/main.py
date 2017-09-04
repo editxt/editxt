@@ -40,6 +40,10 @@ import docopt
 import editxt
 import editxt.platform as platform
 
+# HACK https://bitbucket.org/ronaldoussoren/pyobjc/issues/185
+# TODO remove when upgrading to py2app 0.13+
+import _sysconfigdata_m_darwin_darwin
+
 log = logging.getLogger(__name__)
 
 DEFAULT_LOGGING_CONFIG = {
