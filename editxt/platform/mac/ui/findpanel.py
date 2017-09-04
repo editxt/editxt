@@ -242,6 +242,8 @@ def _setup(obj):
         "value", obj, "options.ignore_case", {
             ak.NSRaisesForNotApplicableKeysBindingOption: 1,
         })
+    icase_checkbox.setKeyEquivalentModifierMask_(KEY.Modifier.Command)
+    icase_checkbox.setKeyEquivalent_("i")
 
     match_word_checkbox = obj.match_word_checkbox = ak.NSButton.alloc().initWithFrame_(
         ak.NSMakeRect(18, 41, 151, 18))
