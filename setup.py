@@ -111,11 +111,7 @@ def clean():
         rmtree(join(thisdir, "dist", appname + ".app"))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-setup_args = {}
-def prepare_build(**kw):
-    setup_args.update(kw)
-
-prepare_build(
+setup_args = dict(
     name=appname,
     app=['boot.py'],
     version=version,
@@ -130,7 +126,7 @@ prepare_build(
         # work as expected without it!!
         #argv_emulation=True,
         packages=["editxt"],
-#        frameworks=["resources/Sparkle-1.8.0/Sparkle.framework"], # not working, needs fixing
+        frameworks=["resources/Sparkle-1.18.1/Sparkle.framework"],
         plist=dict(
             CFBundleGetInfoString = "%s %s.%s" % (version, revision, gitrev),
             CFBundleShortVersionString = version,
@@ -235,7 +231,7 @@ def fix_virtualenv_boot():
 
 def prepare_sparkle_update(zip_path):
     sig = check_output([
-        join(thisdir, "resources/Sparkle-1.8.0/bin/sign_update.sh"),
+        join(thisdir, "resources/Sparkle-1.18.1/bin/sign_update"),
         zip_path,
         join(thisdir, "resources/updater/dsa_priv.pem"),
     ], universal_newlines=True).strip()
