@@ -133,7 +133,7 @@ class CommandView(DualView):
 
     @command_text.setter
     def command_text(self, value):
-        self.input.setString_(value)
+        self.input.text_data = get_text_data(value, INFO, self.editor)
 
     @python_method
     def replace_command_text_range(self, range, text):
@@ -157,11 +157,6 @@ class CommandView(DualView):
         return self.output.textStorage()
 
     @python_method
-    def get_font(self, view):
-        font = get_font_from_view(view, self.editor.app)
-        return font.font, font.smooth
-
-    @python_method
     def activate(self, command, initial_text="", select=False):
         new_activation = not self.active
         self.active = True
@@ -170,14 +165,11 @@ class CommandView(DualView):
             #self.performSelector_withObject_afterDelay_("selectText:", self, 0)
             # possibly use setSelectedRange
             # http://jeenaparadies.net/weblog/2009/apr/focus-a-nstextfield
-            font, smooth = self.get_font(editor.text_view)
-            self.input.setFont_(font)
-            self.input.font_smoothing = smooth
-            self.output.setString_("")
+            self.output.text_data = get_text_data("", INFO, editor)
         else:
             editor.stop_output()
         if new_activation or initial_text:
-            self.input.setString_(initial_text)
+            self.input.text_data = get_text_data(initial_text, INFO, editor)
             if select and initial_text:
                 self.command_text_selected_range = (0, len(initial_text))
             self.should_resize()
@@ -197,7 +189,7 @@ class CommandView(DualView):
 
     def dismiss(self):
         if self:
-            self.output.setString_("")
+            self.output.text_data = get_text_data("", INFO, self.editor)
             self.is_waiting(False)
             self.deactivate()
 
@@ -206,11 +198,7 @@ class CommandView(DualView):
         if not message:
             self.dismiss()
             return
-        self.output.font_smoothing = True
-        font, smooth = self.get_font(self.editor.text_view)
-        text_data = {"text": get_attributed_string(message, msg_type, font)}
-        self.output.font_smoothing = smooth
-        self.output.text_data = text_data
+        self.output.text_data = get_text_data(message, msg_type, self.editor)
         self.window().__last_output = text_data
         if msg_type == ERROR:
             beep()
@@ -220,10 +208,7 @@ class CommandView(DualView):
     def append_message(self, message, msg_type=INFO):
         if not message:
             return
-        font, smooth = self.get_font(self.editor.text_view)
-        text = get_attributed_string(message, msg_type, font)
-        self.output.font_smoothing = smooth
-        self.output.append_text(text)
+        self.output.append_text(message, msg_type)
         if self.window() is not None:
             self.window().__last_output = self.output.text_data
         self.should_resize()
@@ -319,14 +304,19 @@ class CommandView(DualView):
         rect.origin.y -= self.popout_button.image().size().height
         self.editor.create_output_panel(self.output.text_data, rect)
 
-    #def textDidEndEditing_(self, notification):
-    #    self.deactivate()
-
     def undoManagerForTextView_(self, textview):
         return self.undo_manager
 
 
-def get_attributed_string(text, msg_type, font):
+def get_text_data(text, msg_type, editor):
+    font = get_font_from_view(editor.text_view, editor.app)
+    return {
+        "text": _get_attributed_string(text, msg_type, font.font),
+        "font": font,
+    }
+
+
+def _get_attributed_string(text, msg_type, font):
     if msg_type == HTML:
         raise NotImplementedError("convert text to NSAttributedString")
     elif not isinstance(text, ak.NSAttributedString):
@@ -347,6 +337,7 @@ class ContentSizedTextView(ak.NSTextView):
     def __new__(cls, app, rect):
         self = cls.alloc().initWithFrame_(rect)
         self.app = app
+        self._font = app.default_font
         return self
 
     def initWithFrame_(self, rect):
@@ -425,6 +416,7 @@ class ContentSizedTextView(ak.NSTextView):
     @property
     def text_data(self):
         return {
+            "font": self._font,
             # copy so future changes do not affect this value
             "text": self.textStorage().copy(),
             # do not copy so future visited links are referenced
@@ -432,14 +424,21 @@ class ContentSizedTextView(ak.NSTextView):
         }
     @text_data.setter
     def text_data(self, value):
-        full_range = (0, len(self.textStorage()))
-        self.textStorage().setAttributedString_(value["text"])
         self.layoutManager().removeTemporaryAttribute_forCharacterRange_(
-            ak.NSForegroundColorAttributeName, full_range)
+            ak.NSForegroundColorAttributeName, (0, len(self.textStorage())))
+
+        self._font = font = value["font"]
+        self.font_smoothing = font.smooth
+        self.placeholder_attrs.setObject_forKey_(font.font, ak.NSFontAttributeName)
+
+        self.textStorage().setAttributedString_(value["text"])
+
         link_ranges = value.get("visited_links", [])
         for rng in link_ranges:
             self._mark_visited_link(rng)
         self._visited_links = link_ranges
+
+        self.undoManager().removeAllActions()
         self.textDidChange_(None)
 
     def reset_preferred_height(self):
@@ -490,23 +489,9 @@ class ContentSizedTextView(ak.NSTextView):
         )
         return rng if info is not None else None
 
-    def setFont_(self, value):
-        super(ContentSizedTextView, self).setFont_(value)
-        self.placeholder_attrs.setObject_forKey_(value, ak.NSFontAttributeName)
-        self.textDidChange_(None)
-
-    def setString_(self, value):
-        if isinstance(value, pyobjc_unicode):
-            # Convert value to unicode to make setString_ work.
-            # Have no idea why it does not work without this.
-            value = str(value) # TODO revisit since upgrading to Python3
-        super(ContentSizedTextView, self).setString_(value)
-        self._visited_links = []
-        self.undoManager().removeAllActions()
-        self.textDidChange_(None)
-
     @python_method
-    def append_text(self, text):
+    def append_text(self, text, msg_type):
+        text = _get_attributed_string(text, msg_type, self._font.font)
         store = self.textStorage()
         range = (store.length(), 0)
         store.replaceCharactersInRange_withAttributedString_(range, text)

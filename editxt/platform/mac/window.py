@@ -32,8 +32,7 @@ from editxt.util import untested, representedObject, short_path, WeakProperty
 
 from .alert import Alert
 from .constants import ESCAPE
-from .font import get_font_from_view
-from .views.commandview import ContentSizedTextView, get_attributed_string
+from .views.commandview import ContentSizedTextView
 
 log = logging.getLogger(__name__)
 
@@ -450,17 +449,20 @@ class OutputPanel(ak.NSPanel):
 
     handle_close = None
 
+    app = WeakProperty()
+    editor = WeakProperty()
+
     class events:
         close = eventize.attr("handle_close")
 
     def __new__(cls, editor, text_data, rect=None):
-        self = cls.alloc().init_(rect)
+        self = cls.alloc().init_frame_(editor.app, rect)
         self.editor = editor
         self.textview.text_data = text_data
         eventize(self)
         return self
 
-    def init_(self, rect):
+    def init_frame_(self, app, rect):
         if rect is None:
             rect = ak.NSMakeRect(100, 100, 400, 300)
         style = (
@@ -471,7 +473,7 @@ class OutputPanel(ak.NSPanel):
         self = super().initWithContentRect_styleMask_backing_defer_(
             rect, style, ak.NSBackingStoreBuffered, True)
         frame = self.frame()
-        self.textview = textview = ContentSizedTextView(editor.app, frame)
+        self.textview = textview = ContentSizedTextView(app, frame)
         textview.setEditable_(False)
         textview.setSelectable_(True)
         textview.setLinkTextAttributes_({
@@ -501,13 +503,13 @@ class OutputPanel(ak.NSPanel):
         self.setHidesOnDeactivate_(False)
         self.setLevel_(ak.NSNormalWindowLevel)
         self.spinner = None
-        self.app = None
+        self.app = app
         return self
 
     def dealloc(self):
         if self.app is not None and self in self.app.panels:
             self.app.panels.remove(self)
-            self.app = None
+        self.app = None
         self.textview = None
         self.scroller = None
         self.spinner = None
@@ -526,10 +528,7 @@ class OutputPanel(ak.NSPanel):
     def append_message(self, message, msg_type=const.INFO):
         if not message:
             return
-        font = get_font_from_view(self.editor.text_view, self.app)
-        text = get_attributed_string(message, msg_type, font.font)
-        self.textview.font_smoothing = font.smooth
-        self.textview.append_text(text)
+        self.textview.append_text(message, msg_type)
 
     @objc.python_method
     def is_waiting(self, waiting=None):
