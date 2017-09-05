@@ -57,6 +57,7 @@ def config_schema(): return {
         "text_color": Color(default=platform.COLOR.text_color),
         "selection_color": Color(default=platform.COLOR.selection_color),
         "background_color": Color(default=platform.COLOR.background_color),
+        "visited_link_color": Color(default=get_color("720E74")),
         "highlight_selected_text": {
             "enabled": Boolean(default=True),
             "color": Color(default=get_color("FEFF6B")),

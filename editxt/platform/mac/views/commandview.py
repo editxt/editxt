@@ -54,13 +54,13 @@ class CommandView(DualView):
         from editxt.textcommand import AutoCompleteMenu
         self.active = False
         self.undo_manager = fn.NSUndoManager.alloc().init()
-        self.output = ContentSizedTextView.alloc().initWithFrame_(rect)
+        self.output = ContentSizedTextView(editor.app, rect)
         self.output.scroller.setBorderType_(ak.NSBezelBorder)
         self.completions = AutoCompleteMenu()
         self.completions.on.selection_changed(self.propose_completion)
         self.completions.view.view.setRefusesFirstResponder_(True) # HACK deep reach
         self.completions.scroller.setBorderType_(ak.NSBezelBorder)
-        self.input = ContentSizedTextView.alloc().initWithFrame_(rect)
+        self.input = ContentSizedTextView(editor.app, rect)
         self.input.scroller.setBorderType_(ak.NSBezelBorder)
 
         def completions_height():
@@ -208,10 +208,10 @@ class CommandView(DualView):
             return
         self.output.font_smoothing = True
         font, smooth = self.get_font(self.editor.text_view)
-        text = get_attributed_string(message, msg_type, font)
+        text_data = {"text": get_attributed_string(message, msg_type, font)}
         self.output.font_smoothing = smooth
-        self.output.setAttributedString_(text)
-        self.window().__last_output = text
+        self.output.text_data = text_data
+        self.window().__last_output = text_data
         if msg_type == ERROR:
             beep()
         self.should_resize()
@@ -225,17 +225,17 @@ class CommandView(DualView):
         self.output.font_smoothing = smooth
         self.output.append_text(text)
         if self.window() is not None:
-            self.window().__last_output = self.output_text.copy()
+            self.window().__last_output = self.output.text_data
         self.should_resize()
 
     @python_method
     def show_last_message(self):
         try:
-            output = self.window().__last_output
+            text_data = self.window().__last_output
         except AttributeError:
-            output = None
-        if output:
-            self.output.setAttributedString_(output)
+            text_data = None
+        if text_data and text_data["text"]:
+            self.output.text_data = text_data
             self.should_resize()
         else:
             beep()
@@ -259,6 +259,7 @@ class CommandView(DualView):
     def textView_clickedOnLink_atIndex_(self, textview, link, index):
         event = ak.NSApp.currentEvent()
         meta = bool(event.modifierFlags() & ak.NSCommandKeyMask)
+        textview.visited_link(index)
         return self.editor.handle_link(str(link), meta)
 
     def commandHelp_(self, sender):
@@ -316,7 +317,7 @@ class CommandView(DualView):
         from editxt.platform.views import screen_rect
         rect = screen_rect(self.output)
         rect.origin.y -= self.popout_button.image().size().height
-        self.editor.create_output_panel(self.output_text, rect)
+        self.editor.create_output_panel(self.output.text_data, rect)
 
     #def textDidEndEditing_(self, notification):
     #    self.deactivate()
@@ -340,6 +341,13 @@ def get_attributed_string(text, msg_type, font):
 
 
 class ContentSizedTextView(ak.NSTextView):
+
+    app = WeakProperty()
+
+    def __new__(cls, app, rect):
+        self = cls.alloc().initWithFrame_(rect)
+        self.app = app
+        return self
 
     def initWithFrame_(self, rect):
         super(ContentSizedTextView, self).initWithFrame_(rect)
@@ -372,6 +380,7 @@ class ContentSizedTextView(ak.NSTextView):
             self, "textDidChange:", ak.NSTextDidChangeNotification, self)
         self.placeholder = ""
         self.preferred_height = rect.size.height
+        self._visited_links = []
         return self
 
     def dealloc(self):
@@ -413,6 +422,26 @@ class ContentSizedTextView(ak.NSTextView):
             text.setAttributes_range_(self.placeholder_attrs, (tlen, len(value)))
         text.endEditing()
 
+    @property
+    def text_data(self):
+        return {
+            # copy so future changes do not affect this value
+            "text": self.textStorage().copy(),
+            # do not copy so future visited links are referenced
+            "visited_links": self._visited_links,
+        }
+    @text_data.setter
+    def text_data(self, value):
+        full_range = (0, len(self.textStorage()))
+        self.textStorage().setAttributedString_(value["text"])
+        self.layoutManager().removeTemporaryAttribute_forCharacterRange_(
+            ak.NSForegroundColorAttributeName, full_range)
+        link_ranges = value.get("visited_links", [])
+        for rng in link_ranges:
+            self._mark_visited_link(rng)
+        self._visited_links = link_ranges
+        self.textDidChange_(None)
+
     def reset_preferred_height(self):
         """Get preferred height for enclosing scroll view
         """
@@ -435,6 +464,32 @@ class ContentSizedTextView(ak.NSTextView):
         self.preferred_height \
             = height + self.textContainerInset().height * 2 + border_width
 
+    @python_method
+    def visited_link(self, index):
+        link_range = self._get_link_range(index)
+        if link_range is not None:
+            self._mark_visited_link(link_range)
+            self._visited_links.append(link_range)
+
+    @python_method
+    def _mark_visited_link(self, link_range):
+        self.layoutManager().addTemporaryAttribute_value_forCharacterRange_(
+            ak.NSForegroundColorAttributeName,
+            self.app.theme["visited_link_color"],
+            link_range,
+        )
+
+    @python_method
+    def _get_link_range(self, index):
+        store = self.textStorage()
+        info, rng = store.attribute_atIndex_longestEffectiveRange_inRange_(
+            ak.NSLinkAttributeName,
+            index,
+            None,
+            (0, store.length())
+        )
+        return rng if info is not None else None
+
     def setFont_(self, value):
         super(ContentSizedTextView, self).setFont_(value)
         self.placeholder_attrs.setObject_forKey_(value, ak.NSFontAttributeName)
@@ -446,11 +501,8 @@ class ContentSizedTextView(ak.NSTextView):
             # Have no idea why it does not work without this.
             value = str(value) # TODO revisit since upgrading to Python3
         super(ContentSizedTextView, self).setString_(value)
+        self._visited_links = []
         self.undoManager().removeAllActions()
-        self.textDidChange_(None)
-
-    def setAttributedString_(self, value):
-        self.textStorage().setAttributedString_(value)
         self.textDidChange_(None)
 
     @python_method

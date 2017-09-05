@@ -71,18 +71,19 @@ class CommandSubject:
         self.command_output = CommandOutput(self.command_view, self)
         return self.command_output
 
-    def create_output_panel(self, text, rect):
+    def create_output_panel(self, text_data, rect):
         """Create a command output panel
 
         This also redirects output of the currently running command (if
         any) to the new output panel.
 
-        :param text: A native rich text string to be displayed in the panel.
+        :param text_data: text data to be displayed in the panel (see
+        `ContentSizedTextView.text_data`).
         :param rect: The initial size and location in screen coordinates of
         the output panel.
         :returns: The output panel object.
         """
-        panel = OutputPanel(self, text, rect)
+        panel = OutputPanel(self, text_data, rect)
         if self.command_output is not None:
             panel.on.close(self.command_output.kill_process)
             self.command_output.output_view = panel

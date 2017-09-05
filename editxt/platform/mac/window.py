@@ -453,10 +453,10 @@ class OutputPanel(ak.NSPanel):
     class events:
         close = eventize.attr("handle_close")
 
-    def __new__(cls, editor, text, rect=None):
+    def __new__(cls, editor, text_data, rect=None):
         self = cls.alloc().init_(rect)
         self.editor = editor
-        self.text = text
+        self.textview.text_data = text_data
         eventize(self)
         return self
 
@@ -471,7 +471,7 @@ class OutputPanel(ak.NSPanel):
         self = super().initWithContentRect_styleMask_backing_defer_(
             rect, style, ak.NSBackingStoreBuffered, True)
         frame = self.frame()
-        self.textview = textview = ContentSizedTextView.alloc().initWithFrame_(frame)
+        self.textview = textview = ContentSizedTextView(editor.app, frame)
         textview.setEditable_(False)
         textview.setSelectable_(True)
         textview.setLinkTextAttributes_({
@@ -555,17 +555,10 @@ class OutputPanel(ak.NSPanel):
                 self.spinner.stopAnimation_(self)
         return getattr(self, "waiting", False)
 
-    @property
-    def text(self):
-        return self.textview.textStorage()
-
-    @text.setter
-    def text(self, value):
-        self.textview.textStorage().setAttributedString_(value)
-
     def textView_clickedOnLink_atIndex_(self, textview, link, index):
         event = ak.NSApp.currentEvent()
         meta = bool(event.modifierFlags() & ak.NSCommandKeyMask)
+        textview.visited_link(index)
         return self.editor.handle_link(str(link), meta)
 
     def close(self):
