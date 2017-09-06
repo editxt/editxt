@@ -198,7 +198,8 @@ class CommandView(DualView):
         if not message:
             self.dismiss()
             return
-        self.output.text_data = get_text_data(message, msg_type, self.editor)
+        text_data = get_text_data(message, msg_type, self.editor)
+        self.output.text_data = text_data
         self.window().__last_output = text_data
         if msg_type == ERROR:
             beep()
