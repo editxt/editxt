@@ -327,7 +327,9 @@ def _get_attributed_string(text, msg_type, font):
             attrs[ak.NSForegroundColorAttributeName] = color
         attrs[ak.NSFontAttributeName] = font
         text = ak.NSAttributedString.alloc().initWithString_attributes_(
-            text, attrs)
+            str(text),  # str(...) because objc.pyobjc_unicode -> empty string
+            attrs,
+        )
     return text
 
 
