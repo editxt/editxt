@@ -429,6 +429,7 @@ class ContentSizedTextView(ak.NSTextView):
             ak.NSForegroundColorAttributeName, (0, len(self.textStorage())))
 
         self._font = font = value["font"]
+        self.setFont_(font.font)
         self.font_smoothing = font.smooth
         self.placeholder_attrs.setObject_forKey_(font.font, ak.NSFontAttributeName)
 
