@@ -205,7 +205,7 @@ def test_SheetController_begin_sheet():
             return (callback.__name__ == "sheet_did_end"
                 and callback.__self__ is slc)
         clr_class = m.replace(mod, "Caller")
-        clr = clr_class.alloc().init(MATCH(cb)) >> m.mock(Caller)
+        clr = clr_class(MATCH(cb)) >> m.mock(Caller)
         pnl = m.method(slc.gui.window)() >> m.mock(ak.NSPanel)
         nsapp = m.replace(ak, 'NSApp', spec=False)
         nsapp.beginSheet_modalForWindow_modalDelegate_didEndSelector_contextInfo_(

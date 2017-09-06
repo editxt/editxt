@@ -221,7 +221,7 @@ class SheetController(CommandController):
         super(SheetController, self).__init__(editor.app)
 
     def begin_sheet(self, sender):
-        self.caller = Caller.alloc().init(self.sheet_did_end)
+        self.caller = Caller(self.sheet_did_end)
         ak.NSApp.beginSheet_modalForWindow_modalDelegate_didEndSelector_contextInfo_(
             self.gui.window(), self.editor.text_view.window(), self.caller,
             "alertDidEnd:returnCode:contextInfo:", 0)
