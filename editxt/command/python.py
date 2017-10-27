@@ -19,6 +19,8 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
+import re
+from textwrap import dedent
 
 import editxt.constants as const
 from editxt.command.base import command
@@ -26,6 +28,8 @@ from editxt.command.parser import CommandParser, Choice, File, String, VarArgs
 from editxt.command.util import exec_shell
 
 log = logging.getLogger(__name__)
+PRINT = re.compile(r"\bprint\b")
+WS = re.compile(r"\s+")
 
 
 def default_range(editor=None):
@@ -64,6 +68,7 @@ def python(editor, args):
         code = editor.document.text_storage[editor.selection]
     else:
         code = editor.document.text
+    code = print_last_line(dedent(code))
     cwd = editor.dirname()
     command = [python] + [o for o in args.options if o] + ["-c", code]
     env = dict(os.environ)
@@ -83,3 +88,24 @@ def python(editor, args):
         editor.message(message, msg_type=msg_type)
     else:
         return "no output"
+
+
+def print_last_line(code):
+    head = code
+    last_line = ""
+    while head.strip() and not last_line.strip():
+        parts = head.rsplit("\n", 1)
+        if len(parts) > 1:
+            head, last_line = parts
+        else:
+            head = ""
+            last_line = parts[0]
+    # TODO split last line on ';'
+    if last_line and not (WS.match(last_line) or PRINT.search(last_line)):
+        last_line = "__result__ = " + last_line
+        return "\n".join([
+            head,
+            last_line,
+            "if __result__ is not None: print(__result__)"
+        ])
+    return code
