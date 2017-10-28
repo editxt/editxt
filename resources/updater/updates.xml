@@ -459,5 +459,31 @@ spaces.</li>
       <pubDate>Tue, 20 Dec 2016 08:33:56 -0500</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.11.0/EditXT-v1.11.0-865e9d9.zip" sparkle:version="201612200833.865e9d9" sparkle:shortVersionString="1.11.0" sparkle:dsaSignature="MC0CFGf9r28EZ1UmSQxqhEuOU5THgxFQAhUAkKOAWO5STuQn3V3afljg8o+JPx4=" length="9279926" type="application/octet-stream" />
     </item>
+    <item>
+      <title>Version 1.12.0</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li>Auto-print last expression of <code>python</code> command input.</li>
+<li>Change color of visited links in command output.</li>
+<li>Command+i in find dialog to toggle ignore case.</li>
+<li>Change new document insertion position in document tree to be consistent:
+after current document.</li>
+<li>Fix off-by-one error in command bar path autocompletion.</li>
+<li>Fix freeze on highlight text in large file.</li>
+<li>Fix diff on save after file changed on disk.</li>
+<li>Fix diff on prompt to overwrite.</li>
+<li>Upgrade to Python 3.6.</li>
+</ul>
+
+        ]]>
+      </description>
+      <sparkle:releaseNotesLink>
+        http://htmlpreview.github.io/?https://raw.github.com/editxt/editxt/blob/master/resources/updater/updates.html
+      </sparkle:releaseNotesLink>
+      <pubDate>Sat, 28 Oct 2017 11:59:13 -0400</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.12.0/EditXT-v1.12.0-ac21a06.zip" sparkle:version="201710281159.ac21a06" sparkle:shortVersionString="1.12.0" sparkle:dsaSignature="MCwCFG6cFzmn8oCv/zhV6YVzgTNLhJaOAhQb+O+QMNQpk8HxPPXYYAS2zJaKiw==" length="9404468" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
