@@ -20,7 +20,6 @@
 import ast
 import logging
 import os
-import re
 from textwrap import dedent
 
 import editxt.constants as const
@@ -29,8 +28,6 @@ from editxt.command.parser import CommandParser, Choice, File, String, VarArgs
 from editxt.command.util import exec_shell
 
 log = logging.getLogger(__name__)
-PRINT = re.compile(r"\bprint\b")
-WS = re.compile(r"\s+")
 
 
 def default_range(editor=None):
