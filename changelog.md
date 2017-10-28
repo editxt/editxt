@@ -3,6 +3,19 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+## 2017-10-28 - 1.12.0
+
+- Auto-print last expression of `python` command input.
+- Change color of visited links in command output.
+- Command+i in find dialog to toggle ignore case.
+- Change new document insertion position in document tree to be consistent:
+  after current document.
+- Fix off-by-one error in command bar path autocompletion.
+- Fix freeze on highlight text in large file.
+- Fix diff on save after file changed on disk.
+- Fix diff on prompt to overwrite.
+- Upgrade to Python 3.6.
+
 ## 2016-12-20 - 1.11.0
 
 - Add `unique` command for removing duplicate lines.
