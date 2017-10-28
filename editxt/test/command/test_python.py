@@ -18,8 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 from editxt.test.test_commands import CommandTester
-from editxt.test.util import (assert_raises, eq_, expect_beep, gentest,
-    TestConfig, test_app)
+from editxt.test.util import eq_, gentest, Regex, test_app
 
 import editxt.command.python as mod
 
@@ -39,6 +38,7 @@ def test_doc():
             eq_(bar.output, output)
 
     yield test("1 + 1", "2\n")
+    yield test("print(1 + 1)", "2\n")
     yield test("  2 + 2", "4\n")
     yield test("  print('hi')\n  2 + 2\n", "hi\n4\n")
     yield test("""
@@ -46,4 +46,28 @@ def test_doc():
             return x
         """,
         "no output"
+    )
+    yield test("""
+        (1
+            + 2)
+        """,
+        "3\n"
+    )
+    yield test("""
+        (1
+            + 2)
+        # comment
+        """,
+        "3\n"
+    )
+    yield test("""
+        x = 4
+        y = 1;x + y
+        """,
+        "5\n"
+    )
+    yield test("""
+        print "not with python 3"
+        """,
+        Regex("SyntaxError"),
     )

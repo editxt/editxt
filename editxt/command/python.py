@@ -17,6 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+import ast
 import logging
 import os
 import re
@@ -91,21 +92,27 @@ def python(editor, args):
 
 
 def print_last_line(code):
-    head = code
-    last_line = ""
-    while head.strip() and not last_line.strip():
-        parts = head.rsplit("\n", 1)
-        if len(parts) > 1:
-            head, last_line = parts
-        else:
-            head = ""
-            last_line = parts[0]
-    # TODO split last line on ';'
-    if last_line and not (WS.match(last_line) or PRINT.search(last_line)):
-        last_line = "__result__ = " + last_line
-        return "\n".join([
-            head,
-            last_line,
-            "if __result__ is not None: print(__result__)"
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return code
+    if tree.body and isinstance(tree.body[-1], ast.Expr):
+        offset = get_node_offset(tree.body[-1], code)
+        code = "".join([
+            code[:offset],
+            "__result__ = ",
+            code[offset:],
+            "\nif __result__ is not None: print(__result__)",
         ])
     return code
+
+
+def get_node_offset(node, code):
+    if node.lineno == 1:
+        return node.col_offset
+    total = 0
+    for num, line in enumerate(code.splitlines(True), start=1):
+        if num == node.lineno:
+            return total + node.col_offset
+        total += len(line)
+    raise ValueError("line out of bounds: {}".format(node.lineno))
