@@ -457,51 +457,92 @@ def test_CommandBar_get_history():
     ]
 
     yield test, [
-        A("!", "a"),
+        A("", "a"),
         A("a", "b"),
-        A("by", "c"),
+        A("b", "c"),
         A("c", None),
         A("c", None),
-        v("c", "by"),
-        v("bz", "a"),
-        A("a", "bz"),
-        v("bz", "a"),
-        v("a", "!"),
-        v("!", None),
-        v("!", None),
-    ]
-
-    yield test, [
-        A("", "a"),
-        A("x", "b"),
-        v("b", "x"),
+        v("c", "b"),
+        v("b", "a"),
+        A("a", "b"),
+        v("b", "a"),
         v("a", ""),
-        A("", "a"),
+        v("", None),
+        v("", None),
+    ]
+
+def test_CommandBar_get_history_matching_input():
+    def test(nav):
+        with tempdir() as tmp:
+            history = mod.CommandHistory(tmp)
+            for item in reversed(["abc", "amx", "x12", "amber", "x123", "y"]):
+                history.append(item)
+            window = type("FakeWindow", (object,), {})()
+            commander = CommandManager(history)
+            bar = mod.CommandBar(window, commander)
+
+            for input, direction, history in nav:
+                dirchar = "v" if direction else "A"
+                print("{}({!r}, {!r})".format(dirchar, input, history))
+                eq_(bar.get_history(input, forward=direction), history)
+
+    A = lambda input, history: (input, False, history) # moveUp
+    v = lambda input, history: (input, True, history)  # moveDown
+
+    yield test, [
+        A("a", "abc"),
+        v("abc", "a"),
+        v("a", None),
+        v("a", None),
     ]
 
     yield test, [
-        A("x", "a"),
-        v("a", "x"),
-        A("x", "a"),
-        v("a", "x"),
-        A("x", "a"),
+        A("a", "abc"),
+        A("abc", "amx"),
+        A("amx", "amber"),
+        A("amber", None),
+        v("amber", "amx"),
+        v("amx", "abc"),
+        A("am", "amx"),
+        A("amx", "amber"),
+        A("amber", None),
+        v("amber", "amx"),
+        v("amx", "am"),
+        v("am", None),
+        v("am", None),
     ]
 
     yield test, [
-        A("-", "a"),
-        A("ax", "b"),
-        v("b", "ax"),
-        A("ax", "b"),
-        v("b", "ax"),
-        A("ax", "b"),
-        v("b", "ax"),
-        v("ax", "-"),
+        A("a", "abc"),
+        A("abc", "amx"),
+        A("amx", "amber"),
+        A("x1", "x123"),
+        A("x123", None),
+        A("x123", None),
+        v("x", "x1"),
+        A("a", None),
+        v("a", "amx"),
+        A("am", "amber"),
+        A("a", None),
+        v("x", "x12"),
+        v("x12", None),
+    ]
+
+    yield test, [
+        A("a", "abc"),
+        A("abc", "amx"),
+        A("am", "amber"),   # edit: amx -> am
+        v("am", "am"),      # edit: amber -> am
+        v("am", None),      # index: 1 (amx -> am)
+        A("am", "am"),      # index: 3 (amber -> am)
+        v("am", "am"),      # index: 1 (amx -> am)
+        v("am", None),      # index: 1 (amx -> am)
     ]
 
 def test_CommandBar_get_history_concurrently():
     with tempdir() as tmp:
         history = mod.CommandHistory(tmp)
-        for item in reversed("abc"):
+        for item in reversed(["abc", "amx", "x12", "amber", "x123", "y1"]):
             history.append(item)
         window = type("FakeWindow", (object,), {})()
         commander = CommandManager(history)
@@ -510,52 +551,52 @@ def test_CommandBar_get_history_concurrently():
         bar3 = mod.CommandBar(window, commander)
         bar4 = mod.CommandBar(window, commander)
 
-        eq_(bar1.get_history("x"), "a")
+        eq_(bar1.get_history("x"), "x12")
 
-        eq_(bar2.get_history(""), "a")
-        eq_(bar2.get_history("y"), "b")
+        eq_(bar2.get_history(""), "abc")
+        eq_(bar2.get_history("y"), "y1")
 
-        eq_(bar3.get_history(""), "a")
-        eq_(bar3.get_history("a"), "b")
-        eq_(bar3.get_history("z"), "c") # <-- "z" will move to 0 (with "b")
+        eq_(bar3.get_history(""), "abc")
+        eq_(bar3.get_history("abc"), "amx")
+        eq_(bar3.get_history("z"), None)
 
-        history.append("b")
+        history.append("z1")
 
         # current index "a", "x" in new command buffer
-        eq_(bar1.get_history("a"), "c")
-        eq_(bar1.get_history("c"), None)
-        eq_(bar1.get_history("c", True), "a")
-        eq_(bar1.get_history("a", True), "b")
-        eq_(bar1.get_history("b", True), "x")
+        eq_(bar1.get_history("x12"), "x123")
+        eq_(bar1.get_history("x123"), None)
+        eq_(bar1.get_history("x123", True), "x12")
+        eq_(bar1.get_history("x12", True), "x")
         eq_(bar1.get_history("x", True), None)
 
-        # current index "b", "y" at 0
-        eq_(bar2.get_history("B"), "y") # <-- "B" now at 0
-        eq_(bar2.get_history("y"), "c")
-        eq_(bar2.get_history("c"), None)
-        eq_(bar2.get_history("c", True), "y")
-        eq_(bar2.get_history("y", True), "B")
-        eq_(bar2.get_history("B", True), "")
-        eq_(bar2.get_history("", True), None)
+        # current index 5 ("y1"), "y" at 0
+        eq_(bar2.get_history("y1"), None)
+        eq_(bar2.get_history("y1", True), "y")
+        eq_(bar2.get_history("y", True), None)
+        eq_(bar2.get_history("a", True), None) # <-- "a" now at 0
+        eq_(bar2.get_history("a"), "amx")
+        eq_(bar2.get_history("amx", True), "a")
+        eq_(bar2.get_history("a", True), None)
 
-        # current index "c", "z" at 1
+        # current index 1 ("amx", "z")
         eq_(bar3.get_history("c"), None)
-        eq_(bar3.get_history("C", True), "a")
-        eq_(bar3.get_history("a"), "C")
-        eq_(bar3.get_history("C", True), "a")
-        eq_(bar3.get_history("a", True), "z")
-        eq_(bar3.get_history("z", True), "") # <-- "z" moved to 0
-        eq_(bar3.get_history("", True), None)
+        eq_(bar3.get_history("z", True), "z1")
+        eq_(bar3.get_history("z1"), "z")
+        eq_(bar3.get_history("z", True), "z1")
+        eq_(bar3.get_history("z1", True), None)
+        eq_(bar3.get_history("z", True), None) # <-- "z1" -> "z"
+        eq_(bar3.get_history("z"), "z")
 
-        eq_(bar4.get_history("A", True), None)
-        eq_(bar4.get_history("A"), "b")
-        eq_(bar4.get_history("b"), "a")
-        eq_(bar4.get_history("a"), "c")
-        eq_(bar4.get_history("c"), None)
-        eq_(bar4.get_history("c", True), "a")
-        eq_(bar4.get_history("a", True), "b")
-        eq_(bar4.get_history("b", True), "A")
-        eq_(bar4.get_history("A", True), None)
+        eq_(bar4.get_history("", True), None)
+        eq_(bar4.get_history(""), "z1")
+        eq_(bar4.get_history("z1"), "abc")
+        eq_(bar4.get_history("abc"), "amx")
+        eq_(bar4.get_history("amx"), "x12")
+        eq_(bar4.get_history("x12", True), "amx")
+        eq_(bar4.get_history("amx", True), "abc")
+        eq_(bar4.get_history("abc", True), "z1")
+        eq_(bar4.get_history("z1", True), "")
+        eq_(bar4.get_history("", True), None)
 
 def test_CommandBar_history_reset_on_execute():
     from editxt.editor import Editor

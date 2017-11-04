@@ -172,6 +172,8 @@ class History(object):
         :returns: Command text or ``None`` if index does not reference a
         valid item in history.
         """
+        if index < 0:
+            return None
         if self.zeropage is None:
             self._initialize()
         zero = self.zeropage
@@ -212,6 +214,7 @@ class HistoryView(object):
         self.history_index = -1
         self.history_edits = {}
         self.current_history = None
+        self.search_text = ""
 
     def update(self, moved=None, removed=()):
         """Update this view's pointers to reflect a history change
@@ -240,26 +243,31 @@ class HistoryView(object):
     def get(self, current_item, forward=False):
         """Get next item in history
 
+        When getting the first time or if `current_item` is different
+        than it was when it was retrieved from this history view, only
+        items starting with the contents of `current_item` will be
+        considered as valid next history items.
+
         :param current_item: Current history item (saved for later traversal).
         :param forward: Get older item if false (default) else newer.
         :returns: Text of next item in history.
         """
-        last_index = self.history_index
-        index = last_index + (-1 if forward else 1)
-        if index < -1:
-            return None
-        if index == -1:
-            text = self.history_edits.get(-1, "")
-        else:
-            text = self.history[index]
-            if text is None:
+        direction = -1 if forward else 1
+        index = self.history_index
+        if index < 0 or current_item != self.current_history:
+            self.history_edits[index] = current_item
+            self.search_text = current_item
+        while True:
+            index += direction
+            if index < -1:
                 return None
-        if last_index < 0 or current_item != self.current_history:
-            self.history_edits[last_index] = current_item
-        else:
-            self.history_edits.pop(last_index, None)
+            text = self.history_edits.get(index)
+            if text is None or not text.startswith(self.search_text):
+                text = self.history[index]
+                if text is None:
+                    return None
+            if text.startswith(self.search_text):
+                break
         self.history_index = index
         self.current_history = text
-        if index in self.history_edits:
-            return self.history_edits[index]
         return text
