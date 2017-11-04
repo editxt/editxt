@@ -79,6 +79,8 @@ def python(editor, args):
     if result.returncode == 0:
         msg_type = const.INFO
         message = str(result)
+        if message.endswith("\n"):
+            message = message[:-1]
     else:
         msg_type = const.ERROR
         message = result or result.err

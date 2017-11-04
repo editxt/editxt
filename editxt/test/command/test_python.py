@@ -37,10 +37,10 @@ def test_doc():
             bar(command)
             eq_(bar.output, output)
 
-    yield test("1 + 1", "2\n")
-    yield test("print(1 + 1)", "2\n")
-    yield test("  2 + 2", "4\n")
-    yield test("  print('hi')\n  2 + 2\n", "hi\n4\n")
+    yield test("1 + 1", "2")
+    yield test("print(1 + 1)", "2")
+    yield test("  2 + 2", "4")
+    yield test("  print('hi')\n  2 + 2\n", "hi\n4")
     yield test("""
         def f(x):
             return x
@@ -51,20 +51,20 @@ def test_doc():
         (1
             + 2)
         """,
-        "3\n"
+        "3"
     )
     yield test("""
         (1
             + 2)
         # comment
         """,
-        "3\n"
+        "3"
     )
     yield test("""
         x = 4
         y = 1;x + y
         """,
-        "5\n"
+        "5"
     )
     yield test("""
         print "not with python 3"
