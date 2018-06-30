@@ -109,7 +109,7 @@ def wraplines(lines, options, textview=None):
         yield ""
     else:
         yield ""
-        raise StopIteration
+        return
     leading = ""
     indent = regexp.match(frag).group()
     comment = regexp is not WHITESPACE and bool(indent.strip())

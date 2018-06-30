@@ -46,13 +46,28 @@ build_date = datetime.now()
 revision = build_date.strftime("%Y%m%d%H%M")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Fix modulegraph 0.12 bug : http://stackoverflow.com/q/25394320/10840
 
-def _fix_modulegraph():
-    import modulegraph.modulegraph as mod
-    mod.ModuleGraph.scan_code = mod.ModuleGraph._scan_code
-    mod.ModuleGraph.load_module = mod.ModuleGraph._load_module
-_fix_modulegraph()
+def _fix_py2app_plistlib():
+    # Fix py2app 0.11 on Python 3.7
+    import plistlib
+
+    class Plist(dict):
+
+        @classmethod
+        def fromFile(cls, filename):
+            with open(filename, "rb") as fp:
+                value = plistlib.load(fp)
+            plist = cls()
+            plist.update(value)
+            return plist
+
+        def write(self, path):
+            with plistlib._maybe_open(path, 'wb') as fp:
+                plistlib.dump(self, fp)
+
+    plistlib.Dict = type("Dict", (dict,), {})
+    plistlib.Plist = Plist
+_fix_py2app_plistlib()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -363,12 +378,14 @@ def build_zip():
 
 
 def fix_app_site_packages():
-    # HACK for py2app with Python 3.6 venv
-    site_packages = join(os.environ["VIRTUAL_ENV"], "lib/python3.6/site-packages")
+    # HACK for py2app with Python 3 in venv
+    pyver = f"python{sys.version_info.major}.{sys.version_info.minor}"
+    site_packages = join(os.environ["VIRTUAL_ENV"], f"lib/{pyver}/site-packages")
     app_site_packages = join(thisdir, 'dist', appname + '.app',
-        "Contents/Resources/lib/python3.6/site-packages")
+        f"Contents/Resources/lib/{pyver}/site-packages")
     assert os.path.exists(site_packages), site_packages
     assert not os.path.exists(app_site_packages), app_site_packages
+    assert not os.path.exists(app_site_packages + ".zip"), app_site_packages
     os.symlink(site_packages, app_site_packages)
 
 

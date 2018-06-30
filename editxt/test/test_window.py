@@ -793,13 +793,12 @@ def test_get_window_settings():
 def test_set_window_settings_with_null_settings():
     with test_app() as app:
         ed = Window(app)
-        m = Mocker()
-        settings = m.mock(dict)
-        settings.get("frame_string") >> None
-        settings.get("splitter_pos") >> None
-        settings.get("properties_hidden", False) >> False
-        with m:
-            ed.window_settings = settings
+        class FakeWindowController(TestConfig):
+            def __setattr__(self, name, value):
+                self.__dict__[name] = value
+        ed.wc = FakeWindowController()
+        ed.window_settings = {}
+        eq_(ed.wc, FakeWindowController(properties_hidden=False))
 
 def test_set_window_settings():
     with test_app() as app:

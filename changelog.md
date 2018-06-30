@@ -3,6 +3,12 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+## 2018-06-30 - 1.12.1
+
+- Strip trailing newline from `python` command output.
+- Filter command bar history with command text (incomplete: slow if no match).
+- Upgrade to Python 3.7.
+
 ## 2017-10-28 - 1.12.0
 
 - Auto-print last expression of `python` command input.

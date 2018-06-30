@@ -29,6 +29,8 @@ Python environment setup. RECOMMENDED: use a virtualenv
     # optional: PyYAML with LibYAML
     sudo port install libyaml
     CFLAGS="-I/opt/local/include" pip install pyyaml --global-option="--with-libyaml"
+    # if that breaks, try this (Python 3.7)
+    CFLAGS="-I/opt/local/include" pip install "pyyaml==4.2b2" --global-option="--with-libyaml"
 
     pip install --requirement=requires.txt
 
