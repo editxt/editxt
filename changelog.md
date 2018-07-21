@@ -8,6 +8,7 @@ https://github.com/editxt/editxt for details of what actually happened.
 - Strip trailing newline from `python` command output.
 - Filter command bar history with command text (incomplete: slow if no match).
 - Upgrade to Python 3.7.
+- Fix bug in syntax highlighting that could cause edits to be invisible.
 
 ## 2017-10-28 - 1.12.0
 
