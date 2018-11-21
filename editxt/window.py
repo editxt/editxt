@@ -326,7 +326,7 @@ class Window(object):
 
     def open_documents(self):
         editor = self.current_editor
-        if editor is not None:
+        if editor is not None and editor.dirname():
             directory = editor.dirname()
         else:
             directory = os.path.expanduser("~")

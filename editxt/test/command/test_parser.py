@@ -619,7 +619,7 @@ def test_File():
                 pass
 
         test = make_consume_checker(field)
-        yield test, "relative.txt", 0, Error("cannot make absolute path (no context): relative.txt")
+        yield test, "relative.txt", 0, ("relative.txt", 13)
 
         test = make_completions_checker(field)
         yield test, "", []

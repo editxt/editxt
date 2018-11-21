@@ -3,7 +3,16 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
-## 2018-06-30 - 1.12.1
+## 2018-11-? - 1.12.2
+
+- Behavior change: make `ag` command search project directory by default rather
+  than the directory of the current file. Use `ag PATTERN .` to search the
+  current directory (old behavior). Fall back to directory of current editor's
+  file if project directory is not set. Changed default project path to null
+  rather than user's home directory because having `ag` recursively search the
+  entire home directory by default could be pretty annoying.
+
+## 2018-06-30 - 1.12.1 (unreleased)
 
 - Strip trailing newline from `python` command output.
 - Filter command bar history with command text (incomplete: slow if no match).

@@ -150,7 +150,7 @@ class Project(CommandSubject):
         if self.path:
             assert os.path.isabs(self.path), self.path
             return self.path
-        return os.path.expanduser("~")
+        return None
 
     def editor_for_path(self, path):
         """Get the editor for the given path

@@ -797,10 +797,8 @@ class File(String):
                 path = self.project_path
             elif path.startswith('.../'):
                 path = os.path.join(self.project_path, self.relative(path[4:]))
-        if os.path.isabs(path):
+        if os.path.isabs(path) or self.path is None:
             return path, stop
-        if self.path is None:
-            raise Error("cannot make absolute path (no context): {}".format(path))
         return os.path.join(self.path, path), stop
 
     def get_completions(self, arg):
@@ -872,11 +870,9 @@ class File(String):
         return super().get_placeholder(arg)
 
     def arg_string(self, value):
-        if self.path is None:
-            raise Error("cannot get arg string (no context): {}".format(value))
         if value and value.endswith((os.path.sep, "/")):
             raise Error("not a file: {}={!r}".format(self.name, value))
-        if value.startswith(os.path.join(self.path, "")):
+        if self.path and value.startswith(os.path.join(self.path, "")):
             value = value[len(self.path) + 1:]
         else:
             home = os.path.expanduser("~/")

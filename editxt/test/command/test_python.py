@@ -26,7 +26,7 @@ import editxt.command.python as mod
 def test_doc():
     @gentest
     def test(code, output, command="python", select=(0, 0)):
-        with test_app("window project(/) editor*") as app:
+        with test_app("window project editor*") as app:
             editor = app.windows[0].current_editor
             editor.document.text = code
             class textview:

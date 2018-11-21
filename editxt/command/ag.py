@@ -60,15 +60,17 @@ def get_selection_regex(editor=None):
     return RegexPattern(re.escape(text), default_flags=0) if text else None
 
 
-def editor_dirname(editor=None):
-    return None if editor is None else editor.dirname()
+def project_dirname(editor=None):
+    if editor is None:
+        return None
+    return editor.project.dirname() or editor.dirname()
 
 
 @command(
     name="ag ack",
     arg_parser=CommandParser(
         Regex("pattern", default=get_selection_regex),
-        File("path", default=editor_dirname),
+        File("path", default=project_dirname),
         VarArgs("options", String("options")),
         # TODO SubParser with dynamic dispatch based on pattern matching
         # (if it starts with a "-" it's an option, otherwise a file path)
@@ -96,6 +98,8 @@ def ag(editor, args):
     options = editor.app.config.for_command("ag")["options"]
     options = DEFAULT_OPTIONS + shlex.split(options)
     cwd = args.path or editor.dirname()
+    if cwd is None:
+        raise CommandError("please specify a search path")
     view = editor.get_output_view()
     line_processor = make_line_processor(view, pattern, ag_path, cwd)
     command = [ag_path, pattern] + [o for o in args.options if o] + options

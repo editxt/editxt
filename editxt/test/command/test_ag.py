@@ -36,9 +36,8 @@ def test_ag():
     if not mod.is_ag_installed():
         raise SkipTest("ag not installed")
     @gentest
-    def test(command, message="", project_path="/", selection=""):
+    def test(command, message="", selection="", state="window project(/) editor(/dir/b.txt)*"):
         cfg = {"command.ag.options": "--workers=1"}
-        state = "window project(/) editor(/dir/b.txt)*"
         with test_app(state, cfg) as app, setup_files(test_app(app).tmp) as tmp:
             editor = app.windows[0].current_editor
             if selection:
@@ -56,11 +55,11 @@ def test_ag():
             eq_(test_app(app).state, state)
 
     yield test("ag ([bB]|size:\ 10)",
-        "[B file](xt://open/dir/B%20file)\n"
+        "[dir/B file](xt://open/dir/B%20file)\n"
         "[1](xt://open/dir/B%20file?goto=1):name: dir/[B](xt://open/dir/B%20file?goto=1.10.1) file\n"
         "[2](xt://open/dir/B%20file?goto=2):[size: 10](xt://open/dir/B%20file?goto=2.0.8)\n"
         "\n"
-        "[b.txt](xt://open/dir/b.txt)\n"
+        "[dir/b.txt](xt://open/dir/b.txt)\n"
         "[1](xt://open/dir/b.txt?goto=1):name: dir/[b](xt://open/dir/b.txt?goto=1.10.1).txt\n")
     yield test("ag dir/[bB] ..",
         "[dir/B file](xt://open/dir/../dir/B%20file)\n"
@@ -87,6 +86,47 @@ def test_ag():
         "[1](xt://open/dir/../dir/B%20file?goto=1):name: [dir/B ](xt://open/dir/../dir/B%20file?goto=1.6.6)file\n",
         selection="dir/B ")
     yield test("ag xyz", "no match for pattern: xyz")
+    yield test("ag txt",
+        "[dir/a.txt](xt://open/dir/a.txt)\n"
+        "[1](xt://open/dir/a.txt?goto=1):name: dir/a.[txt](xt://open/dir/a.txt?goto=1.12.3)\n"
+        "\n"
+        "[dir/b.txt](xt://open/dir/b.txt)\n"
+        "[1](xt://open/dir/b.txt?goto=1):name: dir/b.[txt](xt://open/dir/b.txt?goto=1.12.3)\n"
+        "\n"
+        "[e.txt](xt://open/e.txt)\n"
+        "[1](xt://open/e.txt?goto=1):name: e.[txt](xt://open/e.txt?goto=1.8.3)\n")
+    yield test("ag txt .",
+        "[a.txt](xt://open/dir/./a.txt)\n"
+        "[1](xt://open/dir/./a.txt?goto=1):name: dir/a.[txt](xt://open/dir/./a.txt?goto=1.12.3)\n"
+        "\n"
+        "[b.txt](xt://open/dir/./b.txt)\n"
+        "[1](xt://open/dir/./b.txt?goto=1):name: dir/b.[txt](xt://open/dir/./b.txt?goto=1.12.3)\n")
+    yield test("ag txt ..",
+        "[dir/a.txt](xt://open/dir/../dir/a.txt)\n"
+        "[1](xt://open/dir/../dir/a.txt?goto=1):name: dir/a.[txt](xt://open/dir/../dir/a.txt?goto=1.12.3)\n"
+        "\n"
+        "[dir/b.txt](xt://open/dir/../dir/b.txt)\n"
+        "[1](xt://open/dir/../dir/b.txt?goto=1):name: dir/b.[txt](xt://open/dir/../dir/b.txt?goto=1.12.3)\n"
+        "\n"
+        "[e.txt](xt://open/dir/../e.txt)\n"
+        "[1](xt://open/dir/../e.txt?goto=1):name: e.[txt](xt://open/dir/../e.txt?goto=1.8.3)\n")
+    yield test("ag txt ...",
+        "[dir/a.txt](xt://open/dir/a.txt)\n"
+        "[1](xt://open/dir/a.txt?goto=1):name: dir/a.[txt](xt://open/dir/a.txt?goto=1.12.3)\n"
+        "\n"
+        "[dir/b.txt](xt://open/dir/b.txt)\n"
+        "[1](xt://open/dir/b.txt?goto=1):name: dir/b.[txt](xt://open/dir/b.txt?goto=1.12.3)\n"
+        "\n"
+        "[e.txt](xt://open/e.txt)\n"
+        "[1](xt://open/e.txt?goto=1):name: e.[txt](xt://open/e.txt?goto=1.8.3)\n")
+    yield test("ag txt",
+        "[a.txt](xt://open/dir/a.txt)\n"
+        "[1](xt://open/dir/a.txt?goto=1):name: dir/a.[txt](xt://open/dir/a.txt?goto=1.12.3)\n"
+        "\n"
+        "[b.txt](xt://open/dir/b.txt)\n"
+        "[1](xt://open/dir/b.txt?goto=1):name: dir/b.[txt](xt://open/dir/b.txt?goto=1.12.3)\n",
+        state="window project editor(/dir/b.txt)*")
+    yield test("ag xyz", "please specify a search path", state="window project editor*")
 
 def test_exec_shell():
     if not mod.is_ag_installed():
@@ -108,6 +148,7 @@ def setup_files(tmp=None):
             "dir/a.txt",
             "dir/b.txt",
             "dir/B file",
+            "e.txt",
         ]:
             assert not isabs(path), path
             with open(join(tmp, path), "w") as fh:
