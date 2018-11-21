@@ -20,14 +20,24 @@
 import ast
 import logging
 import os
+from distutils.spawn import find_executable
 from textwrap import dedent
 
 import editxt.constants as const
-from editxt.command.base import command
+from editxt.command.base import command, CommandError
 from editxt.command.parser import CommandParser, Choice, File, String, VarArgs
 from editxt.command.util import exec_shell
 
 log = logging.getLogger(__name__)
+
+
+def get_python_executable(editor=None):
+    if editor is not None:
+        try:
+            return editor.app.config.for_command("python")["executable"]
+        except KeyError:
+            pass
+    return find_executable("python")
 
 
 def default_range(editor=None):
@@ -37,7 +47,7 @@ def default_range(editor=None):
 
 
 @command(arg_parser=CommandParser(
-    File("executable"),
+    File("executable", default=get_python_executable),
     Choice("all", "selection", name="scope", default=default_range),
     VarArgs("options", String("options")),
 ), title="Run Python code")
@@ -51,17 +61,15 @@ def python(editor, args):
         from editxt.commands import show_command_bar
         show_command_bar(editor, "python ")
         return
-    if not args.executable:
-        try:
-            python = editor.app.config.for_command("python")["executable"]
-        except KeyError:
-            python = "python"
-    else:
-        python = args.executable
-        if os.path.isdir(python):
-            bin = os.path.join(python, "bin", "python")
-            if os.path.exists(bin):
-                python = bin
+    python = args.executable
+    if not python:
+        raise CommandError("please specify python executable")
+    if os.path.isdir(python):
+        bin = os.path.join(python, "bin", "python")
+        if os.path.exists(bin):
+            python = bin
+        else:
+            raise CommandError("not found: %s" % bin)
     if args.scope == "selection":
         code = editor.document.text_storage[editor.selection]
     else:
