@@ -76,6 +76,14 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+- python 2 vs 3 print syntax (print ... vs print(...))
+- `reverse` command - reverse lines, characters, etc.
+- sort, python commands are broken in doc dragged from other window
+  result pane in wrong window
+- make pathfind command do smart search first, then fall back to exhaustive
+- undo-close document, project?
+- save list of recently closed projects
+
 Multi-select in file tree
   - concatenate views on select multiple
   - allow find/replace across multiple files
