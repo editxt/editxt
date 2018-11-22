@@ -76,9 +76,9 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-- make pathfind command do smart search first, then fall back to exhaustive
-  - use ag to implement faster pathfind
+- split/unsplit \s+
 - python 2 vs 3 print syntax (print ... vs print(...))
+  - use python3 interpreter by default
 - `reverse` command - reverse lines, characters, etc.
 - sort, python commands are broken in doc dragged from other window
   result pane in wrong window

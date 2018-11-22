@@ -25,12 +25,12 @@ from functools import partial
 from os.path import basename, dirname, isdir, join, sep
 from urllib.parse import quote
 
-import editxt.config as config
+from editxt.command.ag import make_line_processor, open_link
 from editxt.command.base import command, CommandError
 from editxt.command.parser import (CommandParser, Choice, File, Options,
     Regex, RegexPattern)
-from editxt.command.util import has_editor, get_selection
-from editxt.platform.markdown import markdown
+from editxt.command.util import has_editor, get_selection, threaded_exec_shell
+from editxt.platform.markdown import html_string, markdown
 from editxt.util import short_path
 
 log = logging.getLogger(__name__)
@@ -52,15 +52,13 @@ def base_path(editor=None):
         Regex("path-pattern", default=get_selection_regex),
         File("search-path", default=base_path),
         Choice(
-            "open-single-match",
-            "display-matched-paths",
-            "open-first-match first",
-            "all-matched-paths",  # do not hide pathfind.exclude_patterns
-            name="open"
+            ("source-files", False),
+            ("unrestricted", True),
+            name="unrestricted",
         ),
     ),
-    config={"exclude_patterns": config.List(["*.pyc", ".git", ".svn", ".hg"])},
-    is_enabled=has_editor, hotkey="Command+Alt+p"
+    is_enabled=has_editor,
+    hotkey="Command+Alt+p",
 )
 def pathfind(editor, args):
     """Find file by path"""
@@ -68,62 +66,39 @@ def pathfind(editor, args):
         args = Options(
             path_pattern=get_selection_regex(editor),
             search_path=base_path(editor),
-            open="open-single-match",
+            unrestricted=False,
         )
     if not (args and args.path_pattern):
         from editxt.commands import show_command_bar
         return show_command_bar(editor, "pathfind ")
     pattern = args.path_pattern
     search_path = args.search_path
-    regex = re.compile(pattern, pattern.flags)
     if not search_path:
         return "please specify search path"
-    paths = []
-    exclude = editor.app.config.for_command("pathfind")["exclude_patterns"]
-    if args.open == "all-matched-paths":
-        is_excluded = lambda path: False
-    else:
-        excluders = [make_matcher(pattern) for pattern in exclude]
-        def is_excluded(path):
-            filename = basename(path)
-            return any(x(filename) for x in excluders)
-    for dirpath, dirnames, filenames in os.walk(search_path):
-        if is_excluded(dirpath):
-            continue
-        for name in filenames:
-            path = join(dirpath, name)
-            if regex.search(path) and not is_excluded(path):
-                paths.append(path)
-    if len(paths) == 1 and args.open == "open-single-match":
-        editor.project.window.open_paths(paths, focus=True)
-    elif paths and args.open == "open-first-match":
-        editor.project.window.open_paths(paths[:1], focus=True)
-    elif paths:
-        link = partial(path_link, editor=editor)
-        message = markdown("\n".join(link(path) for path in paths), pre=True)
-        editor.message(message)
-    else:
-        return "no match for pattern: {}".format(args.path_pattern)
+    ag_path = editor.app.config.for_command("ag")["path"]
+    view = editor.get_output_view()
+    line_proc = make_path_processor(view, pattern, ag_path, search_path, editor)
+    command = [
+        ag_path,
+        '--files-with-matches',
+        '--file-search-regex', pattern,
+        '.',  # match every file (even empty files when unrestricted)
+    ]
+    if args.unrestricted:
+        command.insert(-1, "--unrestricted")
+    view.process = threaded_exec_shell(command, cwd=search_path, **line_proc)
 
 
-def path_link(path, editor):
-    return "[{rel}](xt://open/{path})".format(
-        rel=short_path(path, editor),
-        path=quote(path),
-    )
+def make_path_processor(view, pattern, ag_path, search_path, editor):
 
+    def iter_path_lines(lines):
+        br = "<br />"
+        for line in lines:
+            line = line.rstrip("\n")
+            line = line.rstrip("\0") # bug in ag adds null char to some lines?
+            path = join(search_path, line)
+            yield open_link(line, path) + br
 
-def make_matcher(pattern):
-    if is_literal(pattern):
-        return lambda value: value == pattern
-    if pattern.startswith("*") and is_literal(pattern[1:]):
-        tail = pattern[1:]
-        return lambda value: value.endswith(tail)
-    if pattern.endswith("*") and is_literal(pattern[:-1]):
-        head = pattern[:-1]
-        return lambda value: value.startswith(head)
-    return partial(fnmatch, pattern=pattern)
-
-
-def is_literal(pattern):
-    return not any(char in pattern for char in "*?[")
+    kw = make_line_processor(view, pattern, ag_path, search_path)
+    kw["iter_output"] = iter_path_lines
+    return kw

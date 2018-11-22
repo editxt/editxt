@@ -25,6 +25,8 @@ from mocker import Mocker, expect, ANY, MATCH
 from editxt.test.util import eq_, gentest, test_app
 
 import editxt.command.pathfind as mod
+import editxt.config as config
+from editxt.command.ag import is_ag_installed
 from editxt.test.test_commands import CommandTester
 
 
@@ -33,9 +35,13 @@ def test_pathfind_title():
 
 
 def test_pathfind():
+    if not is_ag_installed():
+        raise SkipTest("ag not installed")
+
     filesystem = [
-        ".git/file.doc",  # excluded by default
+        ".git/file.txt",  # excluded by default
         "dir/a_file.txt",
+        "dir/file.pyc",
         "dir/file.txt",
         "dir/file_b.txt",
         "dir/file/txt",
@@ -45,7 +51,11 @@ def test_pathfind():
 
     @gentest
     @test_app("window project(/dir) editor*")
-    def test(app, command, files=None, config="", selection=(0, 0)):
+    def test(app, command, files=None, selection=(0, 0)):
+        app.config.extend("ag", {
+            "path": config.String("ag"),
+            "options": config.String(""),
+        })
         tmp = test_app(app).tmp
         os.mkdir(join(tmp, ".git"))
         os.mkdir(join(tmp, "dir"))
@@ -53,7 +63,9 @@ def test_pathfind():
         for path in filesystem:
             assert not isabs(path), path
             with open(join(tmp, path), "w") as fh:
-                pass
+                fh.write(" ")
+        with open(join(tmp, ".gitignore"), "w") as fh:
+            fh.write("*.pyc\n")
 
         if command:
             parts = command.split(' ')
@@ -80,17 +92,13 @@ def test_pathfind():
         else:
             if output is not None:
                 output = output.replace(tmp + "/", "/")
-            message = "\n".join("[{}](xt://open/{}{})".format(
-                f[0] if isinstance(f, tuple) else f,
-                f[1] if isinstance(f, tuple) else "/dir/",
-                (f[0] if isinstance(f, tuple) else f).replace(".../", "")
+            expect = " ".join("<a href='xt://open/{0}{1}'>{1}</a>".format(
+                "/" if f.startswith("/") else "/dir/",
+                f[1:] if f.startswith("/") else f,
             ) for f in files)
-            eq_(output, message)
-        if config:
-            tapp = test_app(app)
-            eq_(tapp.state, tapp.init_state.replace("*", "") + config)
+            eq_(" ".join(sorted(x for x in output.split("<br />") if x)), expect)
 
-    file_txt = [".../a_file.txt", ".../file.txt", ".../file/txt"]
+    file_txt = ["a_file.txt", "file.txt", "file/txt"]
 
     # simulate invoke with hotkey
     yield test(None, file_txt, selection=(5, 8))
@@ -100,21 +108,19 @@ def test_pathfind():
     base_test = test
     for cfg in [None, "window project(/dir)* editor"]:
         test = base_test if cfg is None else partial(base_test, init_state=cfg)
-        yield test("pathfind file\.txt", [".../a_file.txt", ".../file.txt"])
         yield test("pathfind file.txt", file_txt)
-        yield test("pathfind file\.txt /", [
-            ("/file.txt", ""),
-            ".../a_file.txt",
-            ".../file.txt",
+        yield test("pathfind file\.txt", ["a_file.txt", "file.txt"])
+        yield test("pathfind file\. /", [
+            "/dir/a_file.txt",
+            "/dir/file.txt",
+            "/file.doc",
+            "/file.txt",
         ])
-        yield test("pathfind a_file", config=" editor[/dir/a_file.txt 0]*")
-        yield test("pathfind a_file  disp", [".../a_file.txt"])
-        yield test("pathfind a_file  first", config=" editor[/dir/a_file.txt 0]*")
-
-    cfg = {"command.pathfind.exclude_patterns": ["*.txt", "txt", ".git"]}
-    test = partial(base_test, app_config=cfg)
-    yield test("pathfind file / disp", [("/file.doc", "")])
-    yield test("pathfind file.doc / all", [
-        ("/file.doc", ""),
-        ("/.git/file.doc", ""),
-    ])
+        yield test("pathfind file\. / unrestricted", [
+            "/.git/file.txt",
+            "/dir/a_file.txt",
+            "/dir/file.pyc",
+            "/dir/file.txt",
+            "/file.doc",
+            "/file.txt",
+        ])
