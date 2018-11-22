@@ -23,6 +23,7 @@ import os
 from distutils.spawn import find_executable
 from textwrap import dedent
 
+import editxt.config as config
 import editxt.constants as const
 from editxt.command.base import command, CommandError
 from editxt.command.parser import CommandParser, Choice, File, String, VarArgs
@@ -34,10 +35,14 @@ log = logging.getLogger(__name__)
 def get_python_executable(editor=None):
     if editor is not None:
         try:
-            return editor.app.config.for_command("python")["executable"]
+            value = editor.app.config.for_command("python")["executable"]
         except KeyError:
             pass
-    return find_executable("python")
+    else:
+        value = "python"
+    if os.path.sep in value:
+        return value
+    return find_executable(value)
 
 
 def default_range(editor=None):
@@ -46,11 +51,15 @@ def default_range(editor=None):
     return "all"
 
 
-@command(arg_parser=CommandParser(
-    File("executable", default=get_python_executable),
-    Choice("all", "selection", name="scope", default=default_range),
-    VarArgs("options", String("options")),
-), title="Run Python code")
+@command(
+    arg_parser=CommandParser(
+        File("executable", default=get_python_executable),
+        Choice("all", "selection", name="scope", default=default_range),
+        VarArgs("options", String("options")),
+    ),
+    config={"executable": config.String("python")},
+    title="Run Python code",
+)
 def python(editor, args):
     """Run the contents of the editor or selection in Python
 

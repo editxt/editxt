@@ -16,6 +16,8 @@ https://github.com/editxt/editxt for details of what actually happened.
   automatically open the first match, but that was a bad feature anyway because
   it forced an exhaustive search before displaying any output. The new command
   searches in the background and shows matches as they are found.
+- Improve `python` command executable resolution and display of default value
+  on command line.
 
 ## 2018-06-30 - 1.12.1 (unreleased)
 
