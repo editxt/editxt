@@ -47,6 +47,7 @@ def test_load_commands():
         mod.dedent_lines,
         mod.wrap_at_margin,
         mod.wrap_lines,
+        mod.split_text,
         mod.sort_lines,
         mod.unique_lines,
         mod.reindent,
@@ -869,10 +870,12 @@ class CommandTester(object):
             assert "error" not in kw, \
                 "CommandTester: cannot use both 'output' and 'error' kwargs"
             self.output = None
+
         class menu:
             @staticmethod
             def addItem_(item):
                 pass
+
         def message(msg, msg_type=const.INFO):
             if kw.get("output"):
                 self.output = msg
@@ -884,6 +887,7 @@ class CommandTester(object):
             if isinstance(msg, Exception):
                 raise msg
             raise AssertionError(msg)
+
         class command_view:
             def append_message(msg, msg_type=const.INFO):
                 if self.output is None:
@@ -891,12 +895,33 @@ class CommandTester(object):
                 else:
                     self.output += msg
                 self.output_msg_type = msg_type
+
             def is_waiting(self, waiting=None):
                 pass
+
         class editor:
-            text_view = kw.pop("textview", object)
+            text_view = kw.pop("textview", None)
             selection = classproperty(lambda cls: cls.text_view.selectedRange())
+
         editor = kw.pop("editor", editor)
+        if "sel" in kw and editor.text_view is None:
+
+            class textview:
+                _selection = kw["sel"]
+
+                @classmethod
+                def select(cls, rng):
+                    cls._selection = rng
+
+                @classmethod
+                def selectedRange(cls):
+                    return cls._selection
+
+                @staticmethod
+                def shouldChangeTextInRange_replacementString_(rng, text):
+                    return True
+
+            editor.text_view = textview
         if not isinstance(editor, type(Mocker().mock())):
             editor.message = message
             editor.command_view = kw.pop("command_view", command_view)

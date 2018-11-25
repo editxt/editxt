@@ -85,13 +85,25 @@ def gentest(test):
     def assemble_test_args(*args, **kw):
         def run_test_with(*ignore):
             rval = test(*args, **kw)
-            assert rval is None, "test returned unexpected value: %r" % (value,)
+            assert rval is None, "test returned unexpected value: %r" % (rval,)
         display_args = args
         if kw:
             visible_kw = {k: v for k, v in kw.items() if not k.startswith("_")}
             display_args += (KeywordArgs(visible_kw),)
         return (run_test_with,) + display_args
+
+    def make_partial(assembler):
+        def partial(*args, **kw):
+            def assemble(*more_args, **more_kw):
+                new_kw = dict(kw, **more_kw)
+                return assembler(*(args + more_args), **new_kw)
+            assemble.test = test
+            assemble.partial = make_partial(assemble)
+            return assemble
+        return partial
+
     assemble_test_args.test = test
+    assemble_test_args.partial = make_partial(assemble_test_args)
     return assemble_test_args
 
 

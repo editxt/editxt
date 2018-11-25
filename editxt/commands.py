@@ -46,6 +46,7 @@ from editxt.command.openfile import open_, open_files
 from editxt.command.pathfind import pathfind
 from editxt.command.python import python
 from editxt.command.sortlines import sort_lines
+from editxt.command.split import split_text
 from editxt.command.unique import unique_lines
 from editxt.command.wraplines import wrap_at_margin, wrap_lines
 
@@ -68,6 +69,7 @@ def load_commands():
             dedent_lines,
             wrap_at_margin,
             wrap_lines,
+            split_text,
             sort_lines,
             unique_lines,
             reindent,
