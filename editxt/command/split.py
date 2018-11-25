@@ -21,9 +21,10 @@ import logging
 import re
 
 from editxt.command.base import command
-from editxt.command.parser import CommandParser, Regex
-from editxt.command.util import has_editor, iterlines
+from editxt.command.parser import CommandParser, Regex, String
+from editxt.command.util import has_editor, has_selection, iterlines
 from editxt.command.wraplines import WHITESPACE
+from editxt.platform.app import beep
 
 log = logging.getLogger(__name__)
 
@@ -49,6 +50,25 @@ def split_text(editor, args):
         editor.selection = (sel[0], len(output))
 
 
+@command(name="join unsplit", title="Join (unsplit) lines...",
+    arg_parser=CommandParser(String("delimiter", default=' ')),
+    is_enabled=has_selection)
+def join_lines(editor, args):
+    """Join selected lines into a single line"""
+    if args is None:
+        args = join_lines.arg_parser.default_options()
+    eol = editor.document.eol
+    if not editor.selection[1]:
+        beep()
+        return
+    sel = editor.text.line_range(editor.selection)
+    lines = iterlines(editor.text, sel)
+    output = args.delimiter.join(_unsplit(lines, eol)) + eol
+    if editor.text_view.shouldChangeTextInRange_replacementString_(sel, output):
+        editor.text[sel] = output
+        editor.selection = (sel[0], len(output))
+
+
 def _split(lines, pattern, eol):
     regex = re.compile(pattern, pattern.flags)
     leading = None
@@ -62,3 +82,21 @@ def _split(lines, pattern, eol):
         for item in regex.split(line):
             if item:
                 yield leading + item
+
+
+def _unsplit(lines, eol):
+    def lstrip(text):
+        leading = len(WHITESPACE.match(text).group(0))
+        return text[leading:]
+    line = next(lines, None)
+    if line is None:
+        return
+    line = line.rstrip(eol)
+    if line:
+        yield line
+    for line in lines:
+        if not line:
+            continue
+        line = lstrip(line).rstrip(eol)
+        if line:
+            yield line

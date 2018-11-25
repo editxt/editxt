@@ -76,7 +76,6 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-- split/unsplit \s+
 - `reverse` command - reverse lines, characters, etc.
 - sort, python commands are broken in doc dragged from other window
   result pane in wrong window

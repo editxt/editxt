@@ -48,6 +48,7 @@ def test_load_commands():
         mod.wrap_at_margin,
         mod.wrap_lines,
         mod.split_text,
+        mod.join_lines,
         mod.sort_lines,
         mod.unique_lines,
         mod.reindent,

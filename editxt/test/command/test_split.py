@@ -71,3 +71,45 @@ def test_split_text():
 
     yield test(text="abc def\nghi mno pqr\nstu vwx\n", sel=(8, 0),
              result="abc def\nghi\nmno\npqr\nstu vwx\n", call=True)
+
+
+def test_join_text():
+    @gentest
+    @test_app("editor*")
+    def test(app, text, result, delim=None, sel=None, call=False):
+        command = ["join"]
+        if delim is not None:
+            command.append(delim)
+        editor = app.windows[0].current_editor
+        editor.document.text = text
+        if sel is None:
+            sel = (0, len(text))
+        bar = CommandTester(mod.join_lines, editor=editor, sel=sel)
+        if call:
+            mod.join_lines(editor, None)
+        else:
+            bar(" ".join(command))
+        eq_(editor.document.text, result)
+
+    yield test(text="", result="")
+    yield test(text="\n", result="\n")
+    yield test(text="Hello\nworld\n", result="Hello world\n")
+    yield test(text="Hi\nworld\n", result="Hi world\n")
+    yield test(text="  Hello\n  world\n", result="  Hello world\n")
+    yield test(text="  Hello\n  world,\n  hi\n", result="  Hello world, hi\n")
+    yield test(text="\tHello\n\tworld,\n\thi\n", result="\tHello world, hi\n")
+    yield test(text="abc\ndef\nghi\nmno\npqr\nstu\n",
+             result="abc def ghi mno pqr stu\n")
+    yield test(text="abc\ndef\nghi\n", result="abc def ghi\n")
+
+    yield test(text="abc def\nghi\nmno\npqr\nstu vwx\n", sel=(8, 12),
+             result="abc def\nghi mno pqr\nstu vwx\n")
+    yield test(text="abc def\nghi\nmno\npqr\nstu vwx\n", sel=(9, 11),
+             result="abc def\nghi mno pqr\nstu vwx\n")
+    yield test(text="abc def\nghi\nmno\npqr\nstu vwx\n", sel=(11, 7),
+             result="abc def\nghi mno pqr\nstu vwx\n")
+
+    yield test(text="Hello\nworld", result="Hello, world\n", delim=r"', '")
+
+    yield test(text="abc def\nghi\nmno\npqr\nstu vwx\n", sel=(8, 12),
+             result="abc def\nghi mno pqr\nstu vwx\n", call=True)

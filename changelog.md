@@ -11,6 +11,7 @@ https://github.com/editxt/editxt for details of what actually happened.
   file if project directory is not set. Changed default project path to null
   rather than user's home directory because having `ag` recursively search the
   entire home directory by default could be pretty annoying.
+- Add `split` and `join` commands.
 - Improve performance of `pathfind` command. It now searches source files only
   by default (using `ag` under the covers). It is no longer possible to
   automatically open the first match, but that was a bad feature anyway because
