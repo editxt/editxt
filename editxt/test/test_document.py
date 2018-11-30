@@ -339,8 +339,11 @@ def test_check_for_external_changes():
     yield test, c(isdirty=True, win_is_none=False, modstat=1, prestat=0, reload=True)
     yield test, c(isdirty=True, win_is_none=False, modstat=1, prestat=0, reload=False)
 
+
 def test_reload_document():
     from editxt.undo import UndoManager
+    from editxt.platform.views import TextView
+
     def test(c):
         def end():
             with m:
@@ -366,7 +369,7 @@ def test_reload_document():
                 os.mkdir(path)
                 return end()
             text = "disk"
-            tv = m.mock(ak.NSTextView)
+            tv = m.mock(TextView)
             for i, text_view_exists in enumerate(c.view_state):
                 project = app.windows[0].projects[i]
                 with m.off_the_record():
@@ -393,7 +396,7 @@ def test_reload_document():
             # HACK use timed invocation to allow didChangeText notification
             # to update change count before _clearUndo is invoked
             call_later(0, doc.clear_dirty)
-            tv.setSelectedRange_(fn.NSRange(0, 0)) # TODO remove
+            tv.select((0, 0))
             reset_text_attributes()
             m.method(doc.update_syntaxer)()
             end()

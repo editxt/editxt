@@ -50,7 +50,7 @@ def sort_lines(editor, args):
         sorter = SortLinesController(editor)
         sorter.begin_sheet(None)
     else:
-        sortlines(editor.text_view, args)
+        sortlines(editor, args)
 
 
 class SortOptions(Options):
@@ -88,13 +88,12 @@ class SortLinesController(SheetController):
 
     @objc_delegate
     def sort_(self, sender):
-        sortlines(self.editor.text_view, self.options)
+        sortlines(self.editor, self.options)
         self.save_options()
         self.cancel_(sender)
 
 
-def sortlines(textview, opts):
-    text = textview.string()
+def sortlines(editor, opts):
     if opts.sort_regex[0]:
         regex = re.compile(opts.sort_regex[0], flags=opts.sort_regex[0].flags)
         if opts.sort_regex[1]:
@@ -121,13 +120,10 @@ def sortlines(textview, opts):
                     matched = tuple(matched.get(g - 1, "") for g in groups)
                 line = (0,) + matched
         return line
+    text = editor.text
     if opts.selection:
-        range = text.lineRangeForRange_(textview.selectedRange())
+        range = text.line_range(editor.selection)
     else:
         range = (0, len(text))
     output = "".join(sorted(iterlines(text, range), key=key, reverse=opts.reverse))
-    if textview.shouldChangeTextInRange_replacementString_(range, output):
-        textview.textStorage().replaceCharactersInRange_withString_(range, output)
-        textview.didChangeText()
-        if opts.selection:
-            textview.setSelectedRange_(range)
+    editor.put(output, range, select=opts.selection)

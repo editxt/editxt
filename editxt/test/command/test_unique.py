@@ -19,9 +19,6 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 
-from editxt.test.command import FakeTextView
-from editxt.test.util import TestConfig, untested, check_app_state, test_app
-
 import editxt.command.unique as mod
 from testil import eq_
 from editxt.test.test_commands import CommandTester
@@ -51,12 +48,12 @@ editxt
 editxt.platform
 """
 
+
 def test_unique_command():
     def test(command, expected, selection=(0, 0), sel_after=None):
-        tv = FakeTextView(TEXT, selection)
-        do = CommandTester(mod.unique_lines, textview=tv)
+        do = CommandTester(mod.unique_lines, text=TEXT, sel=selection)
         do(command)
-        eq_(tv.text, expected, tv.text)
+        eq_(str(do.editor.text), expected, do.editor.text)
         if sel_after is not None:
             eq_(do.editor.selection, sel_after)
 

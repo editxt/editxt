@@ -179,10 +179,8 @@ def _comment_text(editor, args, pad):
         pad,
     )
     seltext = "".join(func(line, *args) for line in iterlines(text, sel))
-    if textview.shouldChangeTextInRange_replacementString_(sel, seltext):
-        editor.text[sel] = seltext
-        editor.selection = (sel[0], len(seltext))
-        textview.didChangeText()
+    editor.put(seltext, sel, select=True)
+
 
 def is_comment_range(text, range, comment_token):
     comments = 0
@@ -256,13 +254,8 @@ def indent_lines(editor, args):
         sel = text.line_range(sel)
         seltext = "".join(indent(line) for line in iterlines(text, sel))
         select = True
-    if textview.shouldChangeTextInRange_replacementString_(sel, seltext):
-        text[sel] = seltext
-        textview.didChangeText()
-        if select:
-            editor.selection = (sel[0], len(seltext))
-        else:
-            textview.scrollRangeToVisible_(editor.selection)
+    if editor.put(seltext, sel, select=select) and not select:
+        textview.scrollRangeToVisible_(editor.selection)
 
 
 @command(title="Un-indent Selected Lines", hotkey=("[", ak.NSCommandKeyMask))
@@ -285,10 +278,7 @@ def dedent_lines(editor, args):
     sel = text.line_range(editor.selection)
     seltext = "".join(dedent(line) for line in iterlines(text, sel))
     if len(seltext) != sel.length:
-        if textview.shouldChangeTextInRange_replacementString_(sel, seltext):
-            text[sel] = seltext
-            editor.selection = (sel[0], len(seltext))
-            textview.didChangeText()
+        editor.put(seltext, sel, select=True)
 
 
 @command(name=["preferences", "config"])
@@ -620,10 +610,9 @@ def insert_newline(editor, args):
                 wslead = text.count_chars(' \t', sel[0])
                 if wslead:
                     sel[1] += wslead
-    if textview.shouldChangeTextInRange_replacementString_(sel, rep):
-        text[sel] = rep
-        textview.didChangeText()
+    if editor.put(rep, sel):
         textview.scrollRangeToVisible_(editor.selection)
+
 
 def find_beginning_of_line(editor, selection=None):
     eol = editor.document.eol
@@ -728,7 +717,5 @@ def delete_backward(editor, args):
             elif delete < i - line_start:
                 delete = 1
         sel = (i - delete, delete)
-    if textview.shouldChangeTextInRange_replacementString_(sel, ""):
-        editor.text[sel] = ""
-        textview.didChangeText()
+    if editor.put("", sel):
         textview.scrollRangeToVisible_(editor.selection)

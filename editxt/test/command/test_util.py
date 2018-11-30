@@ -19,29 +19,24 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 from mocker import Mocker, ANY
 from AppKit import NSMakeRange, NSRange, NSTextStorage, NSTextView
-#from Foundation import *
-from editxt.test.util import eq_, gentest, TestConfig
+from editxt.test.util import eq_, TestConfig
 
 import editxt.constants as const
 import editxt.command.util as mod
-from editxt.command.parser import ArgumentError, CommandParser, Int, Options
+
 
 def test_replace_newlines():
     def test(c):
-        result = []
         m = Mocker()
-        tv = m.mock(NSTextView)
-        tv.string() >> c.input
-        sel = tv.selectedRange() >> m.mock(NSRange)
+        editor = m.mock()
+        editor.text >> c.input
+        sel = editor.selection >> m.mock(NSRange)
         if c.input != c.output:
             rng = NSMakeRange(0, len(c.input))
-            tv.shouldChangeTextInRange_replacementString_(rng, ANY) >> True
-            ts = tv.textStorage() >> m.mock(NSTextStorage)
-            ts.replaceCharactersInRange_withString_(rng, c.output)
-            tv.didChangeText()
-            tv.setSelectedRange_(sel)
+            editor.put(ANY, rng) >> True
+            editor.selection = sel
         with m:
-            mod.replace_newlines(tv, c.eol)
+            mod.replace_newlines(editor, c.eol)
     c = TestConfig(eol=const.EOLS[const.NEWLINE_MODE_UNIX])
     yield test, c(input="", output="")
     yield test, c(input="\r\n", output="\n")
@@ -49,6 +44,7 @@ def test_replace_newlines():
     yield test, c(input="\r \n", output="\n \n")
     yield test, c(input="\r \n \u2028", output="\n \n \n")
     yield test, c(input="\r \r\n\n \u2028", output="\n \n\n \n")
+
 
 def test_markdoc():
     def test(input, output):
@@ -67,8 +63,10 @@ def test_markdoc():
                   In
                 """, "# Line 1\nLine 2\n  In\n"
 
+
 def test_change_indentation():
     from editxt.document import TextDocument
+
     def test(c):
         if c.eol != "\n":
             c.input = c.input.replace("\n", c.eol)
@@ -131,6 +129,7 @@ def test_change_indentation():
         yield test, c(input="\t\tx\n", output="      x\n")
         yield test, c(input="\t\tx\t\t\n", output="      x\t\t\n")
         yield test, c(input="\tx\n\t\ty\n", output="   x\n      y\n")
+
 
 def test_calculate_indent_mode_and_size():
     TAB = const.INDENT_MODE_TAB

@@ -36,20 +36,13 @@ def get_default_range(editor=None):
 ))
 def unique_lines(editor, args):
     """Remove duplicate lines"""
-    textview = editor.text_view
-    text = textview.string()
+    text = editor.text
     if args.selection:
-        range = text.lineRangeForRange_(editor.selection)
+        range = text.line_range(editor.selection)
     else:
         range = (0, len(text))
     output = "".join(unique(iterlines(text, range)))
-    if textview.shouldChangeTextInRange_replacementString_(range, output):
-        textview.textStorage().replaceCharactersInRange_withString_(range, output)
-        textview.didChangeText()
-        if args.selection:
-            if len(output) != editor.selection[1]:
-                range = (range[0], len(output))
-            editor.selection = range
+    editor.put(output, range, select=args.selection)
 
 
 def unique(lines):

@@ -460,26 +460,22 @@ class TextDocument(object):
             self._text_storage = textstore
         if not ok:
             return
-        textview = None
-        for editor in self.app.iter_editors_of_document(self):
-            textview = editor.text_view
-            if textview is not None:
+        editor = None
+        for ed in self.app.iter_editors_of_document(self):
+            if ed.text_view is not None:
+                editor = ed
                 break
         text = tempstore.string()
         range = fn.NSRange(0, textstore.length())
-        if textview is None:
-            textstore.replaceCharactersInRange_withString_(range, text)
+        if editor is None:
+            textstore[range] = text
             self.undo_manager.removeAllActions()
-        elif textview.shouldChangeTextInRange_replacementString_(range, text):
-            #state = self.documentState
-            textstore.replaceCharactersInRange_withString_(range, text)
-            #self.documentState = state
-            textview.didChangeText()
-            textview.breakUndoCoalescing()
+        elif editor.put(text, range):
+            editor.text_view.breakUndoCoalescing()
             # HACK use timed invocation to allow didChangeText notification
             # to update change count before _clearUndo is invoked
             call_later(0, self.clear_dirty)
-            textview.setSelectedRange_(fn.NSRange(0, 0))
+            editor.selection = (0, 0)
             self.reset_text_attributes()
             self.update_syntaxer()
 

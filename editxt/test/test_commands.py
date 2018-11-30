@@ -19,18 +19,14 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
-import re
 
-from mocker import Mocker, expect, ANY, MATCH
+from mocker import Mocker
 import AppKit as ak
 import Foundation as fn
-import objc
-from editxt.test.command import FakeTextView
-from editxt.test.util import assert_raises, eq_, TestConfig, replattr, test_app
+from editxt.test.util import assert_raises, eq_, TestConfig, test_app
 
 import editxt.constants as const
 import editxt.commands as mod
-from editxt.command.parser import ArgumentError, CommandParser, Int, Options
 from editxt.platform.text import Text
 
 log = logging.getLogger(__name__)
@@ -832,9 +828,8 @@ def test_panel_actions():
         if c.func is not None:
             func = m.replace("editxt.command.{}.{}".format(c.mod, c.func.__name__))
         if c.args:
-            tv = editor.text_view >> m.mock(ak.NSTextView)
             args = '<args>'
-            func(tv, args)
+            func(editor, args)
         else:
             args = None
             ctl = ctl_class(editor) >> m.mock(c.ctl)
@@ -903,12 +898,23 @@ class CommandTester(object):
         class editor:
             text_view = kw.pop("textview", None)
             selection = classproperty(lambda cls: cls.text_view.selectedRange())
+            text = Text(kw.pop("text", ""))
+
+            @classmethod
+            def put(cls, text, rng, select=False):
+                cls.text[rng] = text
+                if select:
+                    cls.selection = (rng[0], len(text))
 
         editor = kw.pop("editor", editor)
         if "sel" in kw and editor.text_view is None:
 
             class textview:
                 _selection = kw["sel"]
+
+                @staticmethod
+                def string():
+                    return str(editor.text)
 
                 @classmethod
                 def select(cls, rng):
@@ -921,6 +927,10 @@ class CommandTester(object):
                 @staticmethod
                 def shouldChangeTextInRange_replacementString_(rng, text):
                     return True
+
+                @staticmethod
+                def didChangeText():
+                    pass
 
             editor.text_view = textview
         if not isinstance(editor, type(Mocker().mock())):

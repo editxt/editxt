@@ -58,7 +58,7 @@ def iterlines(text, range=(0,)):
     intersect with that range will be yielded.
     """
     if not text:
-        yield text
+        yield str(text)
     else:
         if not hasattr(text, "iterlines"):
             from editxt.platform.text import Text
@@ -199,20 +199,20 @@ class CommandResult(str):
 _newlines = re.compile("|".join(
     eol for eol in sorted(const.EOLS.values(), key=len, reverse=True)))
 
+
 def normalize_newlines(text, eol):
     return _newlines.sub(eol, text)
 
-def replace_newlines(textview, eol):
-    sel = textview.selectedRange()
-    text = textview.string()
+
+def replace_newlines(editor, eol):
+    sel = editor.selection
+    text = str(editor.text)
     next = normalize_newlines(text, eol)
     if text == next:
         return
     range = (0, len(text))
-    if textview.shouldChangeTextInRange_replacementString_(range, next):
-        textview.textStorage().replaceCharactersInRange_withString_(range, next)
-        textview.didChangeText()
-        textview.setSelectedRange_(sel)
+    if editor.put(next, range):
+        editor.selection = sel
 
 
 def markdoc(text, *args, header=True, **kw):

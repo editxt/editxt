@@ -42,12 +42,10 @@ def split_text(editor, args):
     if args is None:
         args = split_text.arg_parser.default_options()
     eol = editor.document.eol
-    sel = editor.text.line_range(editor.selection)
-    lines = iterlines(editor.text, sel)
-    output = eol.join(_split(lines, args.pattern, eol)) + eol
-    if editor.text_view.shouldChangeTextInRange_replacementString_(sel, output):
-        editor.text[sel] = output
-        editor.selection = (sel[0], len(output))
+    rng = editor.text.line_range(editor.selection)
+    lines = iterlines(editor.text, rng)
+    text = eol.join(_split(lines, args.pattern, eol)) + eol
+    editor.put(text, rng, select=True)
 
 
 @command(name="join unsplit", title="Join (unsplit) lines...",
@@ -61,12 +59,10 @@ def join_lines(editor, args):
     if not editor.selection[1]:
         beep()
         return
-    sel = editor.text.line_range(editor.selection)
-    lines = iterlines(editor.text, sel)
-    output = args.delimiter.join(_unsplit(lines, eol)) + eol
-    if editor.text_view.shouldChangeTextInRange_replacementString_(sel, output):
-        editor.text[sel] = output
-        editor.selection = (sel[0], len(output))
+    rng = editor.text.line_range(editor.selection)
+    lines = iterlines(editor.text, rng)
+    text = args.delimiter.join(_unsplit(lines, eol)) + eol
+    editor.put(text, rng, select=True)
 
 
 def _split(lines, pattern, eol):

@@ -17,15 +17,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
-import logging
-import re
-from functools import partial
-
-from mocker import Mocker, expect, ANY, MATCH
-from nose.tools import eq_
-from editxt.test.command import FakeTextView
 from editxt.test.test_commands import CommandTester
-from editxt.test.util import assert_raises, gentest, TestConfig, test_app
+from editxt.test.util import eq_, gentest, test_app
 
 import editxt.command.openfile as mod
 

@@ -18,22 +18,16 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
-import os
-from contextlib import closing
-from tempfile import gettempdir
 
-import AppKit as ak
-import Foundation as fn
-from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
-from nose.tools import *
-from editxt.test.util import TestConfig, untested, check_app_state, test_app
+from mocker import Mocker
+from editxt.test.util import eq_, TestConfig, test_app
 
 import editxt.command.base as base
 import editxt.command.wraplines as mod
 import editxt.constants as const
 from editxt.command.wraplines import (WrapLinesController,
     wrap_selected_lines, wraplines)
-from editxt.platform.views import TextView
+from editxt.platform.text import Text
 
 log = logging.getLogger(__name__)
 
@@ -41,11 +35,11 @@ log = logging.getLogger(__name__)
 def test_wrap_to_margin_guide():
     m = Mocker()
     editor = m.mock()
-    tv = editor.text_view >> m.mock(ak.NSTextView)
     wrap = m.replace(mod, 'wrap_selected_lines')
-    wrap(tv, mod.Options(wrap_column=const.DEFAULT_RIGHT_MARGIN, indent=True))
+    wrap(editor, mod.Options(wrap_column=const.DEFAULT_RIGHT_MARGIN, indent=True))
     with m:
         mod.wrap_at_margin(editor, None)
+
 
 def test_WrapLinesController_default_options():
     with test_app() as app:
@@ -56,61 +50,58 @@ def test_WrapLinesController_default_options():
             indent=True,
         ))
 
+
 def test_WrapLinesController_wrap_():
     with test_app() as app:
         m = Mocker()
-        editor = base.Options(app=app, text_view=m.mock(TextView))
+        editor = base.Options(app=app)
         cmd = m.replace(mod, 'wrap_selected_lines')
         ctl = WrapLinesController(editor)
-        cmd(editor.text_view, ctl.options)
+        cmd(editor, ctl.options)
         m.method(ctl.save_options)()
         m.method(ctl.cancel_)(None)
         with m:
             ctl.wrap_(None)
 
+
 def test_wrap_selected_lines():
     def test(c):
         m = Mocker()
         opts = "<options>"
-        tv = m.mock(TextView)
-        ts = tv.textStorage() >> m.mock(ak.NSTextStorage)
+        editor = m.mock()
         wrap = m.replace(mod, 'wraplines')
         iterlines = m.replace("editxt.command.wraplines.iterlines")
-        text = tv.string() >> fn.NSString.stringWithString_(c.text)
+        text = Text(c.text)
+        (editor.text << text).count(2)
         sel = (0, len(text)) if c.sel is None else c.sel
-        sel = text.lineRangeForRange_(tv.selectedRange() >> sel)
-        eol = tv.editor.document.eol >> m.mock()
+        sel = text.line_range(editor.selection >> sel)
+        eol = editor.document.eol >> m.mock()
+        tok = editor.document.comment_token >> "x"
         lines = iterlines(text, sel) >> "<lines>"
-        eol.join(wrap(lines, opts, tv) >> [c.result]) >> c.result
-        tv.shouldChangeTextInRange_replacementString_(sel, c.result) >> True
+        eol.join(wrap(lines, opts, tok) >> [c.result]) >> c.result
         output = []
-        def callback(range, text):
+
+        def callback(text, range, select):
             output.append(text)
-        expect(ts.replaceCharactersInRange_withString_(sel, c.result)).call(callback)
-        tv.didChangeText()
-        tv.setSelectedRange_((sel[0], len(c.result)))
+        (editor.put(c.result, sel, select=True) << True).call(callback)
         with m:
-            wrap_selected_lines(tv, opts)
+            wrap_selected_lines(editor, opts)
             eq_(c.result, output[0])
     c = TestConfig(col=30, ind=False, sel=None)
     yield test, c(text="Hello world", result="Hello world")
     yield test, c(text="Hello\nworld", result="Hello", sel=(0, 5))
 
+
 def test_wraplines():
     from editxt.command.util import iterlines
+
     def test(c):
-        m = Mocker()
-        tv = m.mock(TextView)
-        if c.ind:
-            tv.editor.document.comment_token >> c.comment
         opts = TestConfig(wrap_column=c.wid, indent=c.ind)
-        text = fn.NSString.stringWithString_(c.text)
+        text = Text(c.text)
         sel = (0, len(c.text))
-        with m:
-            if c._get("debug", False):
-                import pdb; pdb.set_trace()
-            output = "\n".join(wraplines(iterlines(text, sel), opts, tv))
-            eq_(c.result, output)
+        ctok = c.comment if c.ind else None
+        output = "\n".join(wraplines(iterlines(text, sel), opts, ctok))
+        eq_(output, c.result)
     c = TestConfig(ind=False)
     yield test, c(text="", result="\n", wid=80)
     yield test, c(text="\n", result="\n", wid=80)

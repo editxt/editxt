@@ -149,11 +149,10 @@ def test_Finder():
         editor = m.mock(Editor)
         (editor.selection << c.select).count(0, None)
         (editor.text << Text(c.text)).count(0, None)
-        tv = m.mock(ak.NSTextView)
-        (editor.text_view << tv).count(0, 1)
-        (tv.shouldChangeTextInRange_replacementString_(ANY, ANY) << True).count(0, 1)
-        expect(tv.didChangeText()).count(0, 1)
-        expect(tv.setNeedsDisplay_(True)).count(0, 1)
+
+        def put(text, rng, select=False):
+            editor.text[rng] = text
+        (editor.put(ANY, ANY) << (c.expect is not BEEP)).call(put).count(0, 1)
         if c.expect is BEEP:
             beep()
         finder = Finder((lambda: editor), options, None)
@@ -558,8 +557,8 @@ def test_FindController__replace_all():
             m = Mocker()
             fc = FindController(app)
             beep = m.replace(mod, 'beep')
-            dobeep = True
-            editor = m.replace(fc.finder, 'get_editor')() >> (m.mock(Editor) if c.has_tv else None)
+            editor = (m.mock(Editor) if c.has_tv else None)
+            m.replace(fc.finder, 'get_editor')() >> editor
             options = m.replace(fc.finder, "options")
             ftext = options.find_text >> c.ftext
             range = (editor.selection >> c.sel) if c.has_tv else None
@@ -596,13 +595,11 @@ def test_FindController__replace_all():
                     start = c.ranges[0][0]
                     range = (start, sum(c.ranges[-1]) - start)
                     value = "".join(rtexts)
-                    tv = editor.text_view >> m.mock(TextView)
-                    if tv.shouldChangeTextInRange_replacementString_(range, value) >> c.replace:
-                        tv.didChangeText()
-                        tv.setNeedsDisplay_(True)
-                        dobeep = False
-            eq_(dobeep, c.beep)
-            if dobeep:
+
+                    def put(val, rng, select=False):
+                        text[rng] = val
+                    (editor.put(value, range) << c.replace).call(put)
+            if c.beep:
                 beep()
             with m:
                 fc.finder._replace_all(c.sel_only)

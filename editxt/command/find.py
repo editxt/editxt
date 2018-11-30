@@ -218,11 +218,7 @@ class Finder(object):
             if found is not None:
                 rng = found.range
                 rtext = found.expand(self.options.replace_text)
-                textview = editor.text_view
-                if textview.shouldChangeTextInRange_replacementString_(rng, rtext):
-                    editor.text[rng] = rtext
-                    textview.didChangeText()
-                    textview.setNeedsDisplay_(True)
+                if editor.put(rtext, rng):
                     return
         beep()
 
@@ -370,11 +366,7 @@ class Finder(object):
             start = range0[0]
             range = (start, sum(range1) - start)
             value = "".join(rtexts)
-            view = editor.text_view
-            if view.shouldChangeTextInRange_replacementString_(range, value):
-                text[range] = value
-                view.didChangeText()
-                view.setNeedsDisplay_(True)
+            if editor.put(value, range):
                 return
         beep()
 

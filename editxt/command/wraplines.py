@@ -49,7 +49,7 @@ def wrap_lines(editor, args):
         wrapper = WrapLinesController(editor)
         wrapper.begin_sheet(None)
     else:
-        wrap_selected_lines(editor.text_view, args)
+        wrap_selected_lines(editor, args)
 
 
 @command(title="Hard Wrap At Margin",
@@ -62,7 +62,7 @@ def wrap_at_margin(editor, args):
     opts = Options()
     opts.wrap_column = const.DEFAULT_RIGHT_MARGIN
     opts.indent = args.indent if args is not None else True
-    wrap_selected_lines(editor.text_view, opts)
+    wrap_selected_lines(editor, opts)
 
 
 class WrapLinesController(SheetController):
@@ -77,31 +77,25 @@ class WrapLinesController(SheetController):
 
     @objc_delegate
     def wrap_(self, sender):
-        wrap_selected_lines(self.editor.text_view, self.options)
+        wrap_selected_lines(self.editor, self.options)
         self.save_options()
         self.cancel_(sender)
 
-def wrap_selected_lines(textview, options):
-    text = textview.string()
-    sel = text.lineRangeForRange_(textview.selectedRange())
-    eol = textview.editor.document.eol
-    lines = iterlines(text, sel)
-    output = eol.join(wraplines(lines, options, textview))
-    if textview.shouldChangeTextInRange_replacementString_(sel, output):
-        textview.textStorage().replaceCharactersInRange_withString_(sel, output)
-        textview.didChangeText()
-        textview.setSelectedRange_((sel[0], len(output)))
 
-def wraplines(lines, options, textview=None):
+def wrap_selected_lines(editor, options):
+    sel = editor.text.line_range(editor.selection)
+    eol = editor.document.eol
+    comment_token = re.escape(editor.document.comment_token)
+    lines = iterlines(editor.text, sel)
+    output = eol.join(wraplines(lines, options, comment_token))
+    editor.put(output, sel, select=True)
+
+
+def wraplines(lines, options, comment_token=""):
     width = options.wrap_column
     regexp = WHITESPACE
-    if options.indent:
-        if textview is not None:
-            token = re.escape(textview.editor.document.comment_token)
-        else:
-            token = ""
-        if token:
-            regexp = re.compile(r"^[ \t]*(?:%s *)?" % token)
+    if options.indent and comment_token:
+        regexp = re.compile(r"^[ \t]*(?:%s *)?" % comment_token)
     for frag in lines:
         frag = frag.rstrip()
         if frag:

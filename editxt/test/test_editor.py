@@ -391,8 +391,9 @@ def test_Editor_document_properties():
         if not c.undoing:
             undoman.isRedoing() >> c.redoing
         if not (c.undoing or c.redoing):
-            x.repnl(x.dv.text_view, const.EOLS[x.c.value])
+            x.repnl(x.dv, const.EOLS[x.c.value])
         setattr(x.doc.props, c.attr, c.value)
+
         def _undo(undoman, undo):
             undo()
         expect(x.regundo(undoman, ANY)).call(_undo)

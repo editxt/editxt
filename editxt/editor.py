@@ -407,6 +407,28 @@ class Editor(CommandSubject):
         if self.window.current_editor is self:
             self.document.update_syntaxer()
 
+    def put(self, text, rng, select=False):
+        """Put text in range
+
+        :param text: text to replace range.
+        :param rng: range of text to replace.
+        :param select: select the edited text if true.
+        :returns: true if the change was applied, otherwise false.
+        """
+        should_change = (
+            self.text_view is None or
+            self.text_view.shouldChangeTextInRange_replacementString_(rng, text)
+        )
+        if should_change:
+            self.text[rng] = text
+            if self.text_view is not None:
+                if select:
+                    self.selection = (rng[0], len(text))
+                self.text_view.didChangeText()
+            return True
+        log.warn("cannot change text in range %s", rng)
+        return False
+
     @property
     def soft_wrap(self):
         if self.text_view is None:
@@ -438,8 +460,9 @@ class Editor(CommandSubject):
     def newline_mode(self, new, old):
         undoman = self.undo_manager
         if not (undoman.isUndoing() or undoman.isRedoing()):
-            replace_newlines(self.text_view, const.EOLS[new])
+            replace_newlines(self, const.EOLS[new])
         self.document.props.newline_mode = new
+
         def undo():
             self.proxy.newline_mode = old
         register_undo_callback(undoman, undo)

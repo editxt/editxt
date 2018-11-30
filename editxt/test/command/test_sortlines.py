@@ -18,24 +18,16 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
-import os
-import re
-from contextlib import closing
-from tempfile import gettempdir
 
-import AppKit as ak
-import Foundation as fn
-from mocker import Mocker, MockerTestCase, expect, ANY, MATCH
-from nose.tools import *
-from editxt.test.command import FakeTextView
-from editxt.test.util import TestConfig, untested, check_app_state, test_app
+from mocker import Mocker, ANY
+from testil import eq_
+from editxt.test.util import TestConfig, test_app
 
 import editxt.command.base as base
 import editxt.command.sortlines as mod
-import editxt.constants as const
 from editxt.command.sortlines import SortLinesController, SortOptions, sortlines
 from editxt.command.parser import RegexPattern
-from editxt.platform.views import TextView
+from editxt.platform.text import Text
 from editxt.test.test_commands import CommandTester
 
 log = logging.getLogger(__name__)
@@ -48,18 +40,19 @@ Jkl 4 1 246
     
 """
 
+
 def test_sort_command():
     def test(command, expected):
         m = Mocker()
-        tv = FakeTextView(TEXT)
-        do = CommandTester(mod.sort_lines, textview=tv)
+        do = CommandTester(mod.sort_lines, text=TEXT, sel=(0, 0))
         with m:
             do(command)
-            eq_(sort_result(tv.text), expected, TEXT)
+            eq_(sort_result(do.editor.text), expected, TEXT)
 
     yield test, "sort", "|0gadJ|4|0"
     yield test, "sort all", "|0|4dagJ|0"
     yield test, "sort all   match-case", "|0|4dJag|0"
+
 
 def test_SortLinesController_default_options():
     with test_app() as app:
@@ -67,6 +60,7 @@ def test_SortLinesController_default_options():
         ctl = SortLinesController(editor)
         for name, value in SortOptions.DEFAULTS.items():
             eq_(getattr(ctl.options, name), value, name)
+
 
 def test_SortLinesController_load_options():
     def test(hist, opts):
@@ -90,17 +84,19 @@ def test_SortLinesController_load_options():
         "match_pattern": "\2\1",
     }
 
+
 def test_SortLinesController_sort_():
     m = Mocker()
     sort = m.replace(mod, 'sortlines')
     with test_app() as app:
-        editor = base.Options(app=app, text_view="text_view")
+        editor = base.Options(app=app)
         slc = SortLinesController(editor)
-        sort("text_view", slc.options)
+        sort(editor, slc.options)
         m.method(slc.save_options)()
         m.method(slc.cancel_)(None)
         with m:
             slc.sort_(None)
+
 
 def test_sortlines():
     optmap = [
@@ -117,24 +113,20 @@ def test_sortlines():
         opts = SortOptions(**{opt: c.opts[abbr]
             for abbr, opt in optmap if abbr in c.opts})
         m = Mocker()
-        tv = m.mock(TextView)
-        ts = tv.textStorage() >> m.mock(ak.NSTextStorage)
-        text = tv.string() >> fn.NSString.stringWithString_(c.text)
+        editor = m.mock()
+        text = editor.text >> Text(c.text)
         if opts.selection:
-            sel = tv.selectedRange() >> c.sel
-            sel = text.lineRangeForRange_(sel)
+            sel = editor.selection >> c.sel
+            sel = text.line_range(sel)
         else:
             sel = c.sel
-        tv.shouldChangeTextInRange_replacementString_(sel, ANY) >> True
         output = []
-        def callback(range, text):
+
+        def put(text, range, select=False):
             output.append(text)
-        expect(ts.replaceCharactersInRange_withString_(sel, ANY)).call(callback)
-        tv.didChangeText()
-        if opts.selection:
-            tv.setSelectedRange_(sel)
+        (editor.put(ANY, sel, select=opts.selection) << True).call(put)
         with m:
-            sortlines(tv, opts)
+            sortlines(editor, opts)
             eq_(sort_result(output[0]), c.result, output[0])
     op = TestConfig()
     tlen = len(TEXT)
@@ -150,14 +142,15 @@ def test_sortlines():
     op = op(reg=True, sch=r"\d")
     yield test, c(result="|0|4dagJ|0", opts=op(reg=False))
     yield test, c(result="gdaJ|0|4|0", opts=op)
-    yield test, c(result="daJg|0|4|0", opts=op(sch="(\d) (\d)", mch=r"\2\1"))
+    yield test, c(result="daJg|0|4|0", opts=op(sch=r"(\d) (\d)", mch=r"\2\1"))
     # TODO test and implement numeric match (checkbox is currently hidden)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # test helpers
 
 def sort_result(value):
     def ch(line):
-        value = line.lstrip(" ")
-        return value[0] if value else "|%i" % len(line)
-    return "".join(ch(line) for line in value.split("\n"))
+        val = line.lstrip(" ")
+        return val[0] if val else "|%i" % len(line)
+    return "".join(ch(line) for line in str(value).split("\n"))
