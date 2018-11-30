@@ -21,7 +21,8 @@ import os
 from functools import partial
 from os.path import isabs, join
 
-from mocker import Mocker, expect, ANY, MATCH
+from mocker import Mocker
+from nose.plugins.skip import SkipTest
 from editxt.test.util import eq_, gentest, test_app
 
 import editxt.command.pathfind as mod
@@ -109,14 +110,14 @@ def test_pathfind():
     for cfg in [None, "window project(/dir)* editor"]:
         test = base_test if cfg is None else partial(base_test, init_state=cfg)
         yield test("pathfind file.txt", file_txt)
-        yield test("pathfind file\.txt", ["a_file.txt", "file.txt"])
-        yield test("pathfind file\. /", [
+        yield test("pathfind file\\.txt", ["a_file.txt", "file.txt"])
+        yield test("pathfind file\\. /", [
             "/dir/a_file.txt",
             "/dir/file.txt",
             "/file.doc",
             "/file.txt",
         ])
-        yield test("pathfind file\. / unrestricted", [
+        yield test("pathfind file\\. / unrestricted", [
             "/.git/file.txt",
             "/dir/a_file.txt",
             "/dir/file.pyc",

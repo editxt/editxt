@@ -26,11 +26,10 @@ from functools import partial
 import AppKit as ak
 import Foundation as fn
 
-from mocker import Mocker, expect, ANY, MATCH
-from nose.tools import *
+from mocker import Mocker, ANY
+from testil import eq_
 
 import editxt.constants as const
-from editxt.application import Application
 from editxt.window import WindowController, Window
 from editxt.document import DocumentController, TextDocument
 from editxt.editor import Editor
@@ -790,15 +789,18 @@ def test_get_window_settings():
     yield test, c(props_hidden=True)
     yield test, c(props_hidden=False)
 
+
 def test_set_window_settings_with_null_settings():
     with test_app() as app:
         ed = Window(app)
+
         class FakeWindowController(TestConfig):
             def __setattr__(self, name, value):
                 self.__dict__[name] = value
         ed.wc = FakeWindowController()
         ed.window_settings = {}
         eq_(ed.wc, FakeWindowController(properties_hidden=False))
+
 
 def test_set_window_settings():
     with test_app() as app:

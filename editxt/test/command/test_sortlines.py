@@ -32,6 +32,8 @@ from editxt.test.test_commands import CommandTester
 
 log = logging.getLogger(__name__)
 
+# warning: this flake8 noqa applies to entire file
+# flake8: noqa: W293
 TEXT = """
 ghi 1 2 012
 abc 3 1 543

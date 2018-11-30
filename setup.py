@@ -47,6 +47,7 @@ revision = build_date.strftime("%Y%m%d%H%M")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 def _fix_py2app_plistlib():
     # Fix py2app 0.11 on Python 3.7
     import plistlib
@@ -67,6 +68,8 @@ def _fix_py2app_plistlib():
 
     plistlib.Dict = type("Dict", (dict,), {})
     plistlib.Plist = Plist
+
+
 _fix_py2app_plistlib()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -42,13 +42,16 @@ log = logging.getLogger(__name__)
 class IllBehaved(Int):
     def get_placeholder(self, text, index):
         raise Exception("bang!")
+
     def get_completions(self, token):
         raise Exception("bang!")
+
 
 class TitleChoice(Choice):
     def __init__(self, *args, title=None, **kw):
         super().__init__(*args, **kw)
         self.title = title
+
     def get_completions(self, arg):
         items = super().get_completions(arg)
         return CompletionsList(items, title=self.title)
@@ -66,6 +69,7 @@ def test_CommandBar_window():
     del window, text_commander
     eq_(cmd.window, None)
     eq_(cmd.text_commander, None)
+
 
 def test_CommandBar_on_key_press():
     @command(arg_parser=CommandParser(
@@ -189,6 +193,7 @@ def test_CommandBar_on_key_press():
 
     yield test("c", BACK_TAB)
 
+
 def test_CommandBar_execute():
     @gentest
     def test(text, fail=True, beep=False, config="editor*", message=None,
@@ -233,6 +238,7 @@ def test_CommandBar_execute():
     yield test("cmd", call=1, fail=False, history=True)
     yield test("cmd m", call=1, fail=False, message="message", history=True)
     yield test(" cmd m", call=1, fail=False, message="message")
+
 
 def test_CommandBar_get_placeholder():
     def test(c):
@@ -297,6 +303,7 @@ def test_CommandBar_get_placeholder():
     yield test, c(text='/x// y ', expect="")
     yield test, c(text='/x// a', expect="")
     yield test, c(text='ill', expect="")
+
 
 def test_CommandBar_get_completions():
     class HexDigit(Int):
@@ -363,6 +370,7 @@ def test_CommandBar_get_completions():
     yield test('/abc/ ', ["yes", "no"])
     yield test('ill ', [])
 
+
 def test_CommandBar_common_prefix():
     word_list = [
         "test_ab",
@@ -378,7 +386,8 @@ def test_CommandBar_common_prefix():
 
     @gentest
     def test(word, expect, complete="", start=0):
-        delim = lambda:"/"
+        def delim():
+            return "/"
         words = [CompleteWord(w, delim, start, escape)
                  for w in word_list if w.startswith(word)]
         prefix = bar.common_prefix(words)
@@ -396,6 +405,7 @@ def test_CommandBar_common_prefix():
     yield test("test_b", "test_ba")
     yield test("test_c", "test_c x", "test_c\\ x")
     yield test("tex", "text_xyz", "text_xyz/")
+
 
 def test_CommandBar_auto_complete():
     @command(arg_parser=CommandParser(
@@ -431,6 +441,7 @@ def test_CommandBar_auto_complete():
     yield test("di", word, (2, 0), ("DIR/", (0, 2), (2, 2)))
     yield test("di/file.txt", word, (2, 0), ("DIR", (0, 2), (2, 1)))
 
+
 def test_CommandBar_get_history():
     def test(nav):
         with tempdir() as tmp:
@@ -446,8 +457,8 @@ def test_CommandBar_get_history():
                 print("{}({!r}, {!r})".format(dirchar, input, history))
                 eq_(bar.get_history(input, forward=direction), history)
 
-    A = lambda input, history: (input, False, history) # moveUp
-    v = lambda input, history: (input, True, history)  # moveDown
+    def A(input, history): return (input, False, history)  # moveUp    # noqa: E704
+    def v(input, history): return (input, True, history)   # moveDown  # noqa: E704,E306
 
     yield test, [
         A("", "a"),
@@ -471,6 +482,7 @@ def test_CommandBar_get_history():
         v("", None),
     ]
 
+
 def test_CommandBar_get_history_matching_input():
     def test(nav):
         with tempdir() as tmp:
@@ -486,8 +498,8 @@ def test_CommandBar_get_history_matching_input():
                 print("{}({!r}, {!r})".format(dirchar, input, history))
                 eq_(bar.get_history(input, forward=direction), history)
 
-    A = lambda input, history: (input, False, history) # moveUp
-    v = lambda input, history: (input, True, history)  # moveDown
+    def A(input, history): return (input, False, history)  # moveUp    # noqa: E704
+    def v(input, history): return (input, True, history)   # moveDown  # noqa: E704,E306
 
     yield test, [
         A("a", "abc"),
@@ -539,6 +551,7 @@ def test_CommandBar_get_history_matching_input():
         v("am", None),      # index: 1 (amx -> am)
     ]
 
+
 def test_CommandBar_get_history_concurrently():
     with tempdir() as tmp:
         history = mod.CommandHistory(tmp)
@@ -573,7 +586,7 @@ def test_CommandBar_get_history_concurrently():
         eq_(bar2.get_history("y1"), None)
         eq_(bar2.get_history("y1", True), "y")
         eq_(bar2.get_history("y", True), None)
-        eq_(bar2.get_history("a", True), None) # <-- "a" now at 0
+        eq_(bar2.get_history("a", True), None)  # <-- "a" now at 0
         eq_(bar2.get_history("a"), "amx")
         eq_(bar2.get_history("amx", True), "a")
         eq_(bar2.get_history("a", True), None)
@@ -584,7 +597,7 @@ def test_CommandBar_get_history_concurrently():
         eq_(bar3.get_history("z1"), "z")
         eq_(bar3.get_history("z", True), "z1")
         eq_(bar3.get_history("z1", True), None)
-        eq_(bar3.get_history("z", True), None) # <-- "z1" -> "z"
+        eq_(bar3.get_history("z", True), None)  # <-- "z1" -> "z"
         eq_(bar3.get_history("z"), "z")
 
         eq_(bar4.get_history("", True), None)
@@ -597,6 +610,7 @@ def test_CommandBar_get_history_concurrently():
         eq_(bar4.get_history("abc", True), "z1")
         eq_(bar4.get_history("z1", True), "")
         eq_(bar4.get_history("", True), None)
+
 
 def test_CommandBar_history_reset_on_execute():
     from editxt.editor import Editor
@@ -619,6 +633,7 @@ def test_CommandBar_history_reset_on_execute():
             bar.execute("cmd")
             eq_(bar.history_view, None)
             eq_(list(history), ["cmd"])
+
 
 def test_CommandBar_show_help():
     from editxt.commands import help
@@ -663,8 +678,10 @@ def test_CommandBar_show_help():
     yield test("cmd ", mod.markdoc(cmd.__doc__))
     # TODO argument help
 
+
 def test_CommandBar_message():
     from editxt.editor import Editor
+
     def test(c):
         m = Mocker()
         window = m.mock()
@@ -684,6 +701,7 @@ def test_CommandBar_message():
     c = TestConfig(text="command error", exc_info=None)
     yield test, c(msg="command error")
     yield test, c(msg="command error\n\nTraceback...Error!", exc_info=True)
+
 
 def test_CommandBar_reset():
     with tempdir() as tmp:
@@ -712,6 +730,7 @@ def test_CommandManager_init():
         eq_(ctl.input_handlers, {})
         eq_(ctl.editems, {})
 
+
 def test_CommandManager_lookup():
     def test(c):
         m = Mocker()
@@ -736,6 +755,7 @@ def test_CommandManager_lookup():
     yield test, c(commands=[cmd, cm2], result=cm2)
     yield test, c(commands=[cmd, cm2], lookup='cm', result=cmd)
 
+
 def test_CommandManager_lookup_full_command():
     def test(c):
         m = Mocker()
@@ -758,6 +778,7 @@ def test_CommandManager_lookup_full_command():
     yield test, c(commands=[cmd])
     yield test, c(commands=[num])
     yield test, c(commands=[num], lookup='123', result=(num, Options(value=123)))
+
 
 def test_CommandManager_load_commands():
     def test(c):
@@ -783,8 +804,10 @@ def test_CommandManager_load_commands():
     yield test, c(commands=0, handlers=0)
     yield test, c(commands=2, handlers=2)
 
+
 def test_CommandManager_load_shortcuts():
     from editxt.config import config_schema
+
     @command
     def doc(editor, opts):
         pass
@@ -792,7 +815,9 @@ def test_CommandManager_load_shortcuts():
     menu = const.Constant("menu")
     expect = []
     tags = {doc: doc.name}
-    key = lambda kv: kv[1]["rank"].default
+
+    def key(kv):
+        return kv[1]["rank"].default
     for i, (hotkey, value) in enumerate(sorted(shorts.items(), key=key)):
         hkey = mod.parse_hotkey(hotkey)
         title = value["name"].default
@@ -809,6 +834,7 @@ def test_CommandManager_load_shortcuts():
         ctl.load_shortcuts(menu)
         eq_(items, expect)
         eq_(set(ctl.commands), set(tags.values()))
+
 
 def test_CommandManager_add_command():
     def test(c):
@@ -836,13 +862,14 @@ def test_CommandManager_add_command():
             assert ctl.commands[tag] is cmd, (ctl.commands[tag], cmd)
     c = TestConfig()
     yield test, c
-    #yield test, c
+
 
 def test_CommandManager_validate_hotkey():
     tc = CommandManager("<history>")
     eq_(tc.validate_hotkey(None), ("", 0))
     eq_(tc.validate_hotkey(("a", 1)), ("a", 1))
     assert_raises(AssertionError, tc.validate_hotkey, ("a", "b", "c"))
+
 
 def test_CommandManager_is_menu_command_enabled():
     def test(c):
@@ -869,6 +896,7 @@ def test_CommandManager_is_menu_command_enabled():
     yield test, c(error=False)
     yield test, c(error=False, enabled=True)
 
+
 def test_CommandManager_do_menu_command():
     def test(c):
         m = Mocker()
@@ -890,6 +918,7 @@ def test_CommandManager_do_menu_command():
     yield test, c(has_command=False)
     yield test, c(error=True)
     yield test, c(error=False)
+
 
 def test_CommandManager_do_command():
     def test(c):

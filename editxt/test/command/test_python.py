@@ -29,6 +29,7 @@ def test_doc():
         with test_app("window project editor*") as app:
             editor = app.windows[0].current_editor
             editor.document.text = code
+
             class textview:
                 def selectedRange():
                     return select
@@ -41,32 +42,37 @@ def test_doc():
     yield test("print(1 + 1)", "2")
     yield test("  2 + 2", "4")
     yield test("  print('hi')\n  2 + 2\n", "hi\n4")
-    yield test("""
+    yield test(
+        """
         def f(x):
             return x
         """,
         "no output"
     )
-    yield test("""
+    yield test(
+        """
         (1
             + 2)
         """,
         "3"
     )
-    yield test("""
+    yield test(
+        """
         (1
             + 2)
         # comment
         """,
         "3"
     )
-    yield test("""
+    yield test(
+        """
         x = 4
         y = 1;x + y
         """,
         "5"
     )
-    yield test("""
+    yield test(
+        """
         print "not with python 3"
         """,
         Regex("SyntaxError"),

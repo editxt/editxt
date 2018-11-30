@@ -212,7 +212,7 @@ class Highlighter(object):
     def scan(self, lang, text, offset, minend, tlen, timeout):
         def continue_scan():
             if tlen != len(text):
-                return # text changed -> abort
+                return  # text changed -> abort
             store = text.store
             store.beginEditing()
             try:

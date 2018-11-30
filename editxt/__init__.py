@@ -23,4 +23,4 @@ import logging
 
 __version__ = "1.12.2"
 
-log = logging.getLogger(__name__) # for logging unhandled errors
+log = logging.getLogger(__name__)  # for logging unhandled errors

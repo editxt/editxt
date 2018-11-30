@@ -51,6 +51,7 @@ def test_open_command():
     yield test("open", error="please specify a file path")
     yield test("open file.txt", "editor[file.txt 0]*", project_path=None)
 
+
 def test_open_files():
     @gentest
     @test_app("project")

@@ -17,6 +17,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+
+# flake8: noqa: E501
 import logging
 import os
 import re
@@ -54,7 +56,7 @@ def test_ag():
             eq_(output, markup(message))
             eq_(test_app(app).state, state)
 
-    yield test("ag ([bB]|size:\ 10)",
+    yield test("ag ([bB]|size:\\ 10)",
         "[dir/B file](xt://open/dir/B%20file)\n"
         "[1](xt://open/dir/B%20file?goto=1):name: dir/[B](xt://open/dir/B%20file?goto=1.10.1) file\n"
         "[2](xt://open/dir/B%20file?goto=2):[size: 10](xt://open/dir/B%20file?goto=2.0.8)\n"
@@ -127,6 +129,7 @@ def test_ag():
         "[1](xt://open/dir/b.txt?goto=1):name: dir/b.[txt](xt://open/dir/b.txt?goto=1.12.3)\n",
         state="window project editor(/dir/b.txt)*")
     yield test("ag xyz", "please specify a search path", state="window project editor*")
+
 
 def test_exec_shell():
     if not mod.is_ag_installed():

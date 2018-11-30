@@ -18,20 +18,13 @@
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
-import os
-import re
-from fnmatch import fnmatch
-from functools import partial
-from os.path import basename, dirname, isdir, join, sep
-from urllib.parse import quote
+from os.path import join
 
 from editxt.command.ag import make_line_processor, open_link
-from editxt.command.base import command, CommandError
+from editxt.command.base import command
 from editxt.command.parser import (CommandParser, Choice, File, Options,
     Regex, RegexPattern)
 from editxt.command.util import has_editor, get_selection, threaded_exec_shell
-from editxt.platform.markdown import html_string, markdown
-from editxt.util import short_path
 
 log = logging.getLogger(__name__)
 
@@ -95,7 +88,7 @@ def make_path_processor(view, pattern, ag_path, search_path, editor):
         br = "<br />"
         for line in lines:
             line = line.rstrip("\n")
-            line = line.rstrip("\0") # bug in ag adds null char to some lines?
+            line = line.rstrip("\0")  # bug in ag adds null char to some lines?
             path = join(search_path, line)
             yield open_link(line, path) + br
 
