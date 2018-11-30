@@ -1,5 +1,9 @@
 [flake8]
 exclude = .git,__pycache__,build,dist,resources,ztemp
+
+# error codes
+# http://flake8.pycqa.org/en/latest/user/violations.html
+# https://pycodestyle.readthedocs.io/en/latest/intro.html#error-codes
 ignore =
     # continuation line over-indented for visual indent
     E127,
@@ -7,4 +11,5 @@ ignore =
     E128,
     # line break after binary operator
     W504
+
 max-line-length = 90
