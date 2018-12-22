@@ -23,11 +23,11 @@ from contextlib import closing
 
 import AppKit as ak
 import Foundation as fn
-from mocker import Mocker, expect, ANY, MATCH
-from nose.tools import *
+from mocker import Mocker, expect, ANY
+from nose.tools import eq_
 from editxt.test.test_document import property_value_util, get_content
 from editxt.test.util import (assert_raises, gentest, make_dirty, make_file,
-    TestConfig, replattr, tempdir, test_app)
+    TestConfig, replattr, test_app)
 
 import editxt.constants as const
 import editxt.editor as mod
@@ -74,10 +74,8 @@ def test_CommandSubject_handle_link():
         yield test("xt://preferences", "editor[/.profile/config.yaml 0]*")
         yield test("xt://open/file.txt", "editor[file.txt 0]", meta=True)
 
-def verify_editor_interface(editor):
-    from editxt.util import KVOProxy
-    from editxt.platform.window import OutputPanel
 
+def verify_editor_interface(editor):
     assert editor.id is not None
     assert not editor.is_dirty
     assert hasattr(editor, "file_path")
