@@ -75,6 +75,33 @@ def test_CommandSubject_handle_link():
         yield test("xt://open/file.txt", "editor[file.txt 0]", meta=True)
 
 
+def test_CommandOutput_append_message():
+    class fake_view:
+
+        def message(value):
+            actions.append(value)
+
+        def append_message(*args, **kw):
+            assert False, "this should not be called"
+
+        def is_waiting(value):
+            if value:
+                actions.append("is_waiting")
+
+    class proc:
+        def terminate():
+            actions.append("terminate")
+
+    actions = []
+    sub = mod.CommandSubject()
+    sub.command_view = fake_view
+    out = sub.get_output_view()
+    out.process = proc
+    sub.stop_output()
+    out.append_message("should be silently ignored")
+    eq_(actions, ["", "is_waiting", "terminate"])
+
+
 def verify_editor_interface(editor):
     assert editor.id is not None
     assert not editor.is_dirty

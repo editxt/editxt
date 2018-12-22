@@ -23,6 +23,7 @@ https://github.com/editxt/editxt for details of what actually happened.
   on command line.
 - Fix: command executed in wrong window after drag/drop editor to a different
   window.
+- Fix: command with external process is terminated when output is closed.
 - Updates for macOS 10.13 High Sierra
 
 ## 2018-06-30 - 1.12.1 (unreleased)

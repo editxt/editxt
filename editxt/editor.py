@@ -158,7 +158,8 @@ class CommandOutput:
             value.is_waiting(self.process is not None)
 
     def append_message(self, *args, **kw):
-        self.output_view.append_message(*args, **kw)
+        if self.output_view is not None:
+            self.output_view.append_message(*args, **kw)
 
     def kill_process(self):
         if self.process is not None:
