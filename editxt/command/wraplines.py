@@ -41,7 +41,7 @@ POS_WHITESPACE = re.compile(r"[ \t]+")
     hotkey=("\\", ak.NSCommandKeyMask | ak.NSShiftKeyMask),
     is_enabled=has_selection,
     arg_parser=CommandParser(  # TODO test
-        Int('wrap_column', default=const.DEFAULT_RIGHT_MARGIN),
+        Int('wrap_column', default=const.DEFAULT_WRAP_COLUMN),
         Choice(('indent', True), ('no-indent', False)),
     ))
 def wrap_lines(editor, args):
@@ -60,7 +60,7 @@ def wrap_lines(editor, args):
     is_enabled=has_selection)
 def wrap_at_margin(editor, args):
     opts = Options()
-    opts.wrap_column = const.DEFAULT_RIGHT_MARGIN
+    opts.wrap_column = const.DEFAULT_WRAP_COLUMN
     opts.indent = args.indent if args is not None else True
     wrap_selected_lines(editor, opts)
 
@@ -73,7 +73,7 @@ class WrapLinesController(SheetController):
 
     def OPTIONS_FACTORY(self):
         return Options(
-            wrap_column=const.DEFAULT_RIGHT_MARGIN,
+            wrap_column=const.DEFAULT_WRAP_COLUMN,
             indent=True,
         )
 

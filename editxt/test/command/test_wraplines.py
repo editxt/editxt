@@ -36,7 +36,7 @@ def test_wrap_to_margin_guide():
     m = Mocker()
     editor = m.mock()
     wrap = m.replace(mod, 'wrap_selected_lines')
-    wrap(editor, mod.Options(wrap_column=const.DEFAULT_RIGHT_MARGIN, indent=True))
+    wrap(editor, mod.Options(wrap_column=const.DEFAULT_WRAP_COLUMN, indent=True))
     with m:
         mod.wrap_at_margin(editor, None)
 
@@ -46,7 +46,7 @@ def test_WrapLinesController_default_options():
         editor = base.Options(app=app)
         ctl = WrapLinesController(editor)
         eq_(ctl.options._target, mod.Options(
-            wrap_column=const.DEFAULT_RIGHT_MARGIN,
+            wrap_column=const.DEFAULT_WRAP_COLUMN,
             indent=True,
         ))
 

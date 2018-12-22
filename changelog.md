@@ -12,6 +12,7 @@ https://github.com/editxt/editxt for details of what actually happened.
   rather than user's home directory because having `ag` recursively search the
   entire home directory by default could be pretty annoying.
 - Add `isort` command for sorting Python import statements.
+- Hard-wrap (`wrap` command) now defaults to 79 instead of 80 characters.
 - Add `split` and `join` commands.
 - Improve performance of `pathfind` command. It now searches source files only
   by default (using `ag` under the covers). It is no longer possible to
