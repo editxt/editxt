@@ -21,6 +21,8 @@ https://github.com/editxt/editxt for details of what actually happened.
   searches in the background and shows matches as they are found.
 - Improve `python` command executable resolution and display of default value
   on command line.
+- Fix: command executed in wrong window after drag/drop editor to a different
+  window.
 - Updates for macOS 10.13 High Sierra
 
 ## 2018-06-30 - 1.12.1 (unreleased)

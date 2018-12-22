@@ -101,7 +101,6 @@ class CommandView(DualView):
         self.input.text_did_change_handler = text_did_change_handler
         self.setHidden_(True)
         self.editor = editor
-        self.command = editor.project.window.command
         self.spinner = None
         ak.NSNotificationCenter.defaultCenter().addObserver_selector_name_object_(
             self, "shouldResize:", SHOULD_RESIZE, self.input_group)
@@ -113,7 +112,6 @@ class CommandView(DualView):
         self.output = None
         self.spinner = None
         self.popout_button = None
-        self.command = None
         ak.NSNotificationCenter.defaultCenter().removeObserver_(self)
         ak.NSNotificationCenter.defaultCenter().removeObserver_(self.input_group)
         self.input_group = None
@@ -126,6 +124,10 @@ class CommandView(DualView):
     def preferred_height(self):
         # top_height and bottom_height are members of DualView
         return self.top_height() + self.bottom_height()
+
+    @property
+    def command(self):
+        return self.editor.window.command
 
     @property
     def command_text(self):

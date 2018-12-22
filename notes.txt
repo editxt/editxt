@@ -79,7 +79,6 @@ Top priority
 - sort, python commands are broken in doc dragged from other window
   result pane in wrong window
 - ESCAPE when searching with ag should kill ag
-  - long `ag` search or `pathfind` should not block editor
 - undo-close document, project?
 - save list of recently closed projects
 xx- `reverse` command - reverse lines, words, characters, etc.
