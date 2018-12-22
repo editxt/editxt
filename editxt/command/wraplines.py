@@ -40,7 +40,7 @@ POS_WHITESPACE = re.compile(r"[ \t]+")
 @command(name='wrap', title="Hard Wrap...",
     hotkey=("\\", ak.NSCommandKeyMask | ak.NSShiftKeyMask),
     is_enabled=has_selection,
-    arg_parser=CommandParser( # TODO test
+    arg_parser=CommandParser(  # TODO test
         Int('wrap_column', default=const.DEFAULT_RIGHT_MARGIN),
         Choice(('indent', True), ('no-indent', False)),
     ))
@@ -54,8 +54,8 @@ def wrap_lines(editor, args):
 
 @command(title="Hard Wrap At Margin",
     hotkey=("\\", ak.NSCommandKeyMask),
-    arg_parser=CommandParser( # TODO test
-        Choice(('indent', True), ('no-indent', False)), # TODO default to last used value
+    arg_parser=CommandParser(  # TODO test
+        Choice(('indent', True), ('no-indent', False)),  # TODO default to last used value
     ),
     is_enabled=has_selection)
 def wrap_at_margin(editor, args):
@@ -70,10 +70,12 @@ class WrapLinesController(SheetController):
 
     COMMAND = wrap_lines
     NIB_NAME = "WrapLines"
-    OPTIONS_FACTORY = lambda self:Options(
-        wrap_column=const.DEFAULT_RIGHT_MARGIN,
-        indent=True,
-    )
+
+    def OPTIONS_FACTORY(self):
+        return Options(
+            wrap_column=const.DEFAULT_RIGHT_MARGIN,
+            indent=True,
+        )
 
     @objc_delegate
     def wrap_(self, sender):
