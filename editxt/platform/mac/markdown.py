@@ -21,7 +21,7 @@ import re
 
 import AppKit as ak
 import Foundation as fn
-import CommonMark as commonmark
+import commonmark
 
 AttributedString = ak.NSAttributedString
 

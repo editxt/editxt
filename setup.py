@@ -29,7 +29,7 @@ from datetime import datetime
 from setuptools import setup
 from subprocess import check_output, Popen, PIPE
 
-import CommonMark as commonmark
+import commonmark
 
 
 if hasattr(sys, 'real_prefix'):
