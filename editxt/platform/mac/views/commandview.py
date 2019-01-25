@@ -502,7 +502,7 @@ class ContentSizedTextView(ak.NSTextView):
         self.textDidChange_(None)
 
     def textDidChange_(self, notification):
-        if self._placeholder:
+        if self._placeholder and len(self.textStorage()):
             self.placeholder = self._placeholder
         elif self._h4w_text != self.textStorage():
             self._h4w_text.setAttributedString_(self.textStorage())
