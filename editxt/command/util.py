@@ -243,7 +243,8 @@ def change_indentation(textview, old_indent, new_indent, size):
     attr_change = (new_indent == "\t")
     text_change = (old_indent != new_indent)
     if attr_change or text_change:
-        text = next = textview.string()
+        # HACK str(...) because objc.pyobjc_unicode -> EXC_BAD_ACCESS
+        text = next = str(textview.string())
         if text_change:
             #next = text.replace(old_indent, new_indent)
             # TODO detect comment characters at the beginning of a line and

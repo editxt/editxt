@@ -55,7 +55,8 @@ class ErrorLog(object):
     
     def write(self, value):
         range = (self.text.length(), 0)
-        self.text.replaceCharactersInRange_withString_(range, value)
+        # HACK str(value) because objc.pyobjc_unicode -> EXC_BAD_ACCESS
+        self.text.replaceCharactersInRange_withString_(range, str(value))
         if self._document is not None:
             self._document.clear_dirty()
 

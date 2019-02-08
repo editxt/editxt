@@ -74,7 +74,8 @@ class Text(object):
         if isinstance(value, ak.NSAttributedString):
             self.store.replaceCharactersInRange_withAttributedString_(rng, value)
         else:
-            self.store.replaceCharactersInRange_withString_(rng, value)
+            # HACK str(value) because objc.pyobjc_unicode -> EXC_BAD_ACCESS
+            self.store.replaceCharactersInRange_withString_(rng, str(value))
 
     def __contains__(self, value):
         return self.store.string().containsString_(value)

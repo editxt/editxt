@@ -138,7 +138,8 @@ class CommandView(DualView):
     @python_method
     def replace_command_text_range(self, range, text):
         if self.input.shouldChangeTextInRange_replacementString_(range, text):
-            self.input.replaceCharactersInRange_withString_(range, text)
+            # HACK str(text) because objc.pyobjc_unicode -> EXC_BAD_ACCESS
+            self.input.replaceCharactersInRange_withString_(range, str(text))
             self.input.didChangeText()
         else:
             # is this the right thing to do here?
@@ -412,7 +413,8 @@ class ContentSizedTextView(ak.NSTextView):
         text.setAttributedString_(self.textStorage())
         if value:
             tlen = len(self.textStorage())
-            text.replaceCharactersInRange_withString_((tlen, 0), value)
+            # HACK str(value) because objc.pyobjc_unicode -> EXC_BAD_ACCESS
+            text.replaceCharactersInRange_withString_((tlen, 0), str(value))
             text.setAttributes_range_(self.placeholder_attrs, (tlen, len(value)))
         text.endEditing()
 
