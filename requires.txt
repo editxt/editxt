@@ -18,21 +18,21 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 
 commonmark>=0.8.1
-docopt==0.6.1
+docopt==0.6.2
 py2app==0.11
     altgraph==0.14
     macholib==1.8
     modulegraph==0.15
 
-pyobjc-core==4.2.2
-pyobjc-framework-Cocoa==4.2.2
-pyobjc-framework-ExceptionHandling==4.2.2
+pyobjc-core==5.1.2
+pyobjc-framework-Cocoa==5.1.2
+pyobjc-framework-ExceptionHandling==5.1.2
 
 pyyaml==4.2b2  # TODO upgrade once new version is out
 
 # for testing
-#mocker>=1.1.1 # not python3 compatible yet, patch manually
+#mocker~=1.1.1 # not python3 compatible yet, patch manually
 MacFSEvents>=0.4
-nose>=1.3.0
-testil>=1.1
-pybug>=1.0
+nose~=1.3.0
+testil~=1.1
+pybug~=1.0
