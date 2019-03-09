@@ -100,6 +100,7 @@ class LineNumberView(ak.NSRulerView):
             rect.size.height
         ))
         self.draw_line_numbers(rect, colors.line_number_color)
+        self._display_skipped_rect_if_necessary(rect)
 
     @objc.python_method
     def char_index_at_point(self, point, adjust_x=True):
@@ -149,7 +150,7 @@ class LineNumberView(ak.NSRulerView):
             rects, n = char_rects((char_index, 0), null_range, container, None)
             if not n:
                 continue
-            y_pos = (convert_point(rects[0].origin, view).y + y_offset)
+            y_pos = convert_point(rects[0].origin, view).y + y_offset
             if y_pos < y_min:
                 continue
             if y_pos > y_max:
@@ -166,6 +167,30 @@ class LineNumberView(ak.NSRulerView):
                 text.drawWithRect_options_attributes_(draw_rect, 0, attr)
             if line > self.line_count:
                 self.calculate_thickness(line)
+
+    @objc.python_method
+    def _display_skipped_rect_if_necessary(self, rect):
+        """HACK fix line number drawing on High Sierra
+
+        Some regions of the ruler view are not redrawn on scroll,
+        resulting in garbled line numbers.
+        """
+        new_y = self.convertPoint_toView_(self.bounds().origin, self.textview).y
+        old_y = getattr(self, "old_y", None)
+        self.old_y = new_y
+        if old_y is not None:
+            delta_y = abs(new_y - old_y)
+            if delta_y > rect.size.height:
+                skipped_height = delta_y - rect.size.height
+                if rect.origin.y == 0:
+                    skipped_top = rect.size.height
+                else:
+                    skipped_top = rect.origin.y - skipped_height
+                skipped_rect = (
+                    (rect.origin.x, skipped_top),
+                    (rect.size.width, skipped_height),
+                )
+                self.setNeedsDisplayInRect_(skipped_rect)
 
     @noraise
     def mouseDown_(self, event):
