@@ -57,6 +57,7 @@ def test_load_commands():
         mod.open_,
         mod.pathfind,
         mod.python,
+        mod.sort_imports,
         mod.clear_highlighted_text,
         mod.docnav,
         mod.preferences,
@@ -897,6 +898,7 @@ class CommandTester(object):
 
         class editor:
             text_view = kw.pop("textview", None)
+            file_path = None
             selection = classproperty(lambda cls: cls.text_view.selectedRange())
             text = Text(kw.pop("text", ""))
 

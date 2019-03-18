@@ -42,6 +42,7 @@ from editxt.command.docnav import doc as docnav
 from editxt.command.find import find
 from editxt.command.githuburl import github_url
 from editxt.command.grab import grab
+from editxt.command.isort import sort_imports
 from editxt.command.openfile import open_, open_files
 from editxt.command.pathfind import pathfind
 from editxt.command.python import python
@@ -83,6 +84,7 @@ def load_commands():
             open_,
             pathfind,
             python,
+            sort_imports,
             clear_highlighted_text,
             docnav,
             preferences,

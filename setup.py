@@ -31,6 +31,11 @@ from subprocess import check_output, Popen, PIPE
 
 import commonmark
 
+# prevent AttributeError: module 'pip._vendor.requests' has no attribute 'Session'
+# this is caused by `isort.finder`, which imports `pip._internal.download`
+import pip
+import pip._internal.download
+import pip._vendor.requests
 
 if hasattr(sys, 'real_prefix'):
     # HACK fixes for py2app + virtualenv

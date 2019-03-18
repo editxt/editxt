@@ -19,6 +19,7 @@
 
 commonmark>=0.8.1
 docopt==0.6.2
+isort==4.3.15
 py2app==0.11
     altgraph==0.14
     macholib==1.8
