@@ -902,6 +902,9 @@ class CommandTester(object):
             selection = classproperty(lambda cls: cls.text_view.selectedRange())
             text = Text(kw.pop("text", ""))
 
+            def dirname():
+                return None
+
             @classmethod
             def put(cls, text, rng, select=False):
                 cls.text[rng] = text
