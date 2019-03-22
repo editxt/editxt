@@ -485,5 +485,41 @@ after current document.</li>
       <pubDate>Sat, 28 Oct 2017 11:59:13 -0400</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.12.0/EditXT-v1.12.0-ac21a06.zip" sparkle:version="201710281159.ac21a06" sparkle:shortVersionString="1.12.0" sparkle:dsaSignature="MCwCFG6cFzmn8oCv/zhV6YVzgTNLhJaOAhQb+O+QMNQpk8HxPPXYYAS2zJaKiw==" length="9404468" type="application/octet-stream" />
     </item>
+    <item>
+      <title>Version 1.13.0</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li>Behavior change: make <code>ag</code> command search project directory by default rather
+than the directory of the current file. Use <code>ag PATTERN .</code> to search the
+current directory (old behavior). Fall back to directory of current editor's
+file if project directory is not set. Changed default project path to null
+rather than user's home directory because having <code>ag</code> recursively search the
+entire home directory by default could be pretty annoying.</li>
+<li>Add <code>isort</code> command for sorting Python import statements.</li>
+<li>Hard-wrap (<code>wrap</code> command) now defaults to 79 instead of 80 characters.</li>
+<li>Add <code>split</code> and <code>join</code> commands.</li>
+<li>Improve performance of <code>pathfind</code> command. It now searches source files only
+by default (using <code>ag</code> under the covers). It is no longer possible to
+automatically open the first match, but that was a bad feature anyway because
+it forced an exhaustive search before displaying any output. The new command
+searches in the background and shows matches as they are found.</li>
+<li>Improve <code>python</code> command executable resolution and display of default value
+on command line.</li>
+<li>Fix: command executed in wrong window after drag/drop editor to a different
+window.</li>
+<li>Fix: command with external process is terminated when output is closed.</li>
+<li>Updates for macOS 10.13 High Sierra</li>
+</ul>
+
+        ]]>
+      </description>
+      <sparkle:releaseNotesLink>
+        http://htmlpreview.github.io/?https://raw.github.com/editxt/editxt/blob/master/resources/updater/updates.html
+      </sparkle:releaseNotesLink>
+      <pubDate>Fri, 22 Mar 2019 16:56:22 -0400</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.13.0/EditXT-v1.13.0-7cc0be4.zip" sparkle:version="201903221656.7cc0be4" sparkle:shortVersionString="1.13.0" sparkle:dsaSignature="MC0CFQCMVVONgWfiO+6SsrK770tY4r6DEAIUIl+LSb5H7VzqOTFABfIxbtmHtD0=" length="13219064" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>
