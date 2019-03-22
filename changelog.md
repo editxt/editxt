@@ -3,7 +3,7 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
-## 2018-11-? - 1.12.2
+## 2019-03-22 - 1.13.0
 
 - Behavior change: make `ag` command search project directory by default rather
   than the directory of the current file. Use `ag PATTERN .` to search the
@@ -11,6 +11,7 @@ https://github.com/editxt/editxt for details of what actually happened.
   file if project directory is not set. Changed default project path to null
   rather than user's home directory because having `ag` recursively search the
   entire home directory by default could be pretty annoying.
+- Add `isort` command for sorting Python import statements.
 - Add `split` and `join` commands.
 - Improve performance of `pathfind` command. It now searches source files only
   by default (using `ag` under the covers). It is no longer possible to
@@ -19,6 +20,7 @@ https://github.com/editxt/editxt for details of what actually happened.
   searches in the background and shows matches as they are found.
 - Improve `python` command executable resolution and display of default value
   on command line.
+- Updates for macOS 10.13 High Sierra
 
 ## 2018-06-30 - 1.12.1 (unreleased)
 

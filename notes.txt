@@ -76,13 +76,14 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
-- `reverse` command - reverse lines, characters, etc.
 - sort, python commands are broken in doc dragged from other window
   result pane in wrong window
 - ESCAPE when searching with ag should kill ag
   - long `ag` search or `pathfind` should not block editor
 - undo-close document, project?
 - save list of recently closed projects
+xx- `reverse` command - reverse lines, words, characters, etc.
+x  Use a python script in the editor: print("\n".join(reversed("""...""".split("\n"))))
 
 Multi-select in file tree
   - concatenate views on select multiple
