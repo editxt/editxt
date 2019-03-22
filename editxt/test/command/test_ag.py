@@ -22,6 +22,7 @@
 import logging
 import os
 import re
+from collections import Counter
 from contextlib import contextmanager
 from os.path import isabs, join
 
@@ -53,7 +54,10 @@ def test_ag():
                 if "Traceback (most recent call last):" in output:
                     print(output)
                     assert "Traceback (most recent call last):" not in message
-            eq_(output, markup(message))
+            assert_same_items(
+                output.split("<br />"),
+                markup(message).split("<br />"),
+            )
             eq_(test_app(app).state, state)
 
     yield test("ag ([bB]|size:\\ 10)",
@@ -137,10 +141,36 @@ def test_exec_shell():
     with setup_files() as tmp:
         result = mod.exec_shell(["ag", "dir/[bB]", "--workers=1"], cwd=tmp)
 
-        eq_(result, 'dir/B file:1:name: dir/B file\n'
-                    'dir/b.txt:1:name: dir/b.txt\n')
+        assert_same_items(result.split("\n"), [
+            'dir/B file:1:name: dir/B file',
+            'dir/b.txt:1:name: dir/b.txt',
+            '',
+        ])
         eq_(result.err, None)
         eq_(result.returncode, 0)
+
+
+def assert_same_items(lines1, lines2):
+    """Assert items in the first sequence are the same as items in the second
+
+    In this context, "same" means has the same number of occurrences of
+    each item in each sequence. The order in which items occur in the
+    sequences is not important. Items must be hashable.
+    """
+    def diff(first, second, second_name="second", occurrence_diff=True):
+        for key, count in first.items():
+            if key not in second:
+                yield "{!r} not in {}".format(key, second_name)
+            elif second[key] != count and occurrence_diff:
+                yield "{!r} occurrences: {} != {}".format(key, count, second[key])
+
+    counts1 = Counter(lines1)
+    counts2 = Counter(lines2)
+    if counts1 != counts2:
+        result = ["items not equal"]
+        result.extend(diff(counts1, counts2))
+        result.extend(diff(counts2, counts1, "first", occurrence_diff=False))
+        raise AssertionError("\n".join(result))
 
 
 @contextmanager

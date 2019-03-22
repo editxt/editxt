@@ -66,5 +66,4 @@ def test_open_files():
         eq_(tapp.state, "window project " + config)
 
     yield test("file.txt", "editor[/file.txt 0]*")
-    yield test("file.*", "editor[/file.md 0] editor[/file.txt 1]*",
-               ["filet.t", "file.md", "file.txt"])
+    yield test("file.*", "editor[/file.md 0]*", ["filet.t", "file.md"])

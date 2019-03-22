@@ -176,7 +176,7 @@ def filestat(path):
     """
     try:
         value = os.stat(path)
-        return _Stat(value[6], value[8])
+        return _Stat(value.st_size, value.st_mtime)
     except OSError:
         return None
 
