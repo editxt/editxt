@@ -695,7 +695,10 @@ def select_to_beginning_of_line(editor, args):
 
 def delete_backward(editor, args):
     textview = editor.text_view
-    if editor.document.indent_mode == const.INDENT_MODE_TAB:
+    if (
+        editor.document.indent_mode == const.INDENT_MODE_TAB
+        or len(editor.selections) > 1
+    ):
         textview.deleteBackward_(None)
         return
     sel = editor.selection

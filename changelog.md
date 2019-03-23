@@ -3,6 +3,10 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
+## 2019-??-?? - 1.13.?
+
+- Delete all selected ranges on backspace
+
 ## 2019-03-22 - 1.13.0
 
 - Behavior change: make `ag` command search project directory by default rather

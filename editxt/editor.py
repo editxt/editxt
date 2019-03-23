@@ -279,6 +279,16 @@ class Editor(CommandSubject):
         self.text_view.select(rng)
 
     @property
+    def selections(self):
+        if self.text_view is None:
+            return []
+        return self.text_view.selectedRanges()
+    @selections.setter
+    def selections(self, ranges):
+        self.text_view.setSelectedRanges_affinity_stillSelecting_(
+            ranges, ak.NSSelectionAffinityDownstream, False)
+
+    @property
     def is_dirty(self):
         return self.document.is_dirty()
 
