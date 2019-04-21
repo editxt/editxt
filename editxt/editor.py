@@ -162,6 +162,7 @@ class CommandOutput:
         self._output_view = output_view
         self.editor = editor
         self._process = None
+        self.has_output = False
 
     @property
     def process(self):
@@ -182,6 +183,7 @@ class CommandOutput:
             value.is_waiting(self.process is not None)
 
     def append_message(self, *args, **kw):
+        self.has_output = True
         if self.output_view is not None:
             self.output_view.append_message(*args, **kw)
 

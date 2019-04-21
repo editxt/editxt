@@ -107,6 +107,8 @@ def make_line_processor(view, cmd_path, tmp_path):
                 message = markdown(NOT_INSTALLED.format(cmd_path))
             view.append_message(message, msg_type=const.ERROR)
         if returncode is not None:
+            if not view.has_output:
+                view.append_message("Clean code")
             if tmp_path is not None:
                 os.remove(tmp_path)
             view.process_completed()
