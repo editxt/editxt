@@ -44,6 +44,7 @@ from editxt.command.flake8 import flake8
 from editxt.command.githuburl import github_url
 from editxt.command.grab import grab
 from editxt.command.isort import sort_imports
+from editxt.command.markdown import markdown
 from editxt.command.openfile import open_, open_files
 from editxt.command.pathfind import pathfind
 from editxt.command.python import python
@@ -83,6 +84,7 @@ def load_commands():
             flake8,
             github_url,
             grab,
+            markdown,
             open_,
             pathfind,
             python,

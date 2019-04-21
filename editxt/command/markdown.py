@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # EditXT
-# Copyright 2007-2013 Daniel Miller <millerdev@gmail.com>
+# Copyright 2007-2019 Daniel Miller <millerdev@gmail.com>
 #
 # This file is part of EditXT, a programmer's text editor for Mac OS X,
 # which can be found at http://editxt.org/.
@@ -17,10 +17,24 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
+import objc
 
-# TODO make __version__ more specific (include date and git revision)
-import logging
+from editxt.command.base import command
+from editxt.command.parser import Choice, CommandParser, Options
+from editxt.command.util import has_selection
+from editxt.platform.markdown import markdown as format_markdown
 
-__version__ = "1.14.0"
 
-log = logging.getLogger(__name__)  # for logging unhandled errors
+def default_scope(editor=None):
+    return editor is not None and has_selection(editor)
+
+
+@command(name='markdown', title="Render markdown",
+    arg_parser=CommandParser(
+        Choice(('selection', True), ('all', False), default=default_scope),
+    ))
+def markdown(editor, args):
+    if args is None:
+        args = Options(selection=False)
+    sel = editor.selection if args.selection else (0, len(editor.text))
+    return format_markdown(editor.text[sel])

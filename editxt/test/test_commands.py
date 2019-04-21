@@ -55,6 +55,7 @@ def test_load_commands():
         mod.flake8,
         mod.github_url,
         mod.grab,
+        mod.markdown,
         mod.open_,
         mod.pathfind,
         mod.python,
