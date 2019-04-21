@@ -194,11 +194,12 @@ def threaded_exec_shell(command, *, got_output, kill_on_cancel=True, **kw):
 
 
 IGNORE_ENV = {
-    "PYTHONDONTWRITEBYTECODE",
-    "EXECUTABLEPATH",
-    "RESOURCEPATH",
-    "PYTHONPATH",
     "ARGVZERO",
+    "EXECUTABLEPATH",
+    "PYTHONDONTWRITEBYTECODE",
+    "PYTHONHOME",
+    "PYTHONPATH",
+    "RESOURCEPATH",
 }
 
 
