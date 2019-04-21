@@ -74,6 +74,12 @@ def test_CommandSubject_handle_link():
         yield test("xt://preferences", "editor[/.profile/config.yaml 0]*")
         yield test("xt://open/file.txt", "editor[file.txt 0]", meta=True)
 
+    def get_subject(app):
+        return app.windows[0].projects[0].editors[0]
+
+    base_config = "window project editor*"
+    yield test("xt://goto/1.10.2", goto=(1, 10, 2))
+
 
 def test_CommandOutput_append_message():
     class fake_view:

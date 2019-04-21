@@ -52,6 +52,7 @@ def test_load_commands():
         mod.ag,
         mod.blame,
         mod.diff,
+        mod.flake8,
         mod.github_url,
         mod.grab,
         mod.open_,

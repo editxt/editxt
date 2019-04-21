@@ -19,6 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import re
+import os
 import time
 from collections import Counter
 from functools import partial
@@ -93,8 +94,9 @@ def exec_shell(command, timeout=20, **kw):
     output from the command. See `CommandResult` docs for more details.
     """
     log.debug("exec_shell(%r)", command)
+    env = {k: v for k, v in os.environ.items() if k not in IGNORE_ENV}
     try:
-        proc = Popen(command, stdout=PIPE, stderr=STDOUT, **kw)
+        proc = Popen(command, stdout=PIPE, stderr=STDOUT, env=env, **kw)
         out, err = proc.communicate(timeout=timeout)
         returncode = proc.returncode
     except TimeoutExpired:
@@ -128,7 +130,7 @@ def threaded_exec_shell(command, *, got_output, kill_on_cancel=True, **kw):
     :param kill_on_cancel: When true (the default), kill the subprocess if
     the command is canceled. Otherwise just stop collecting output.
     :param **kw: Keyword arguments accepted by `subprocess.Popen`.
-    :returns: The running `subprocess.Popen` object.
+    :returns: The running `subprocess.Popen` object or `None`.
     """
     from editxt.platform.events import call_in_thread, call_in_main_thread
 
@@ -162,7 +164,13 @@ def threaded_exec_shell(command, *, got_output, kill_on_cancel=True, **kw):
     log.debug("thread exec %r", command)
     encoding = get_default_encoding()
     iter_output = kw.pop("iter_output", None)
-    proc = Popen(command, stdout=PIPE, stderr=STDOUT, **kw)
+    env = {k: v for k, v in os.environ.items() if k not in IGNORE_ENV}
+    try:
+        proc = Popen(command, stdout=PIPE, stderr=STDOUT, env=env, **kw)
+    except FileNotFoundError:
+        log.warn("cannot open process: %s", command, exc_info=True)
+        got_output(None, -1)
+        return None
     stdout = TextIOWrapper(proc.stdout, encoding=encoding, newline=None)
     if iter_output is None:
         iter_output = stdout
@@ -183,6 +191,15 @@ def threaded_exec_shell(command, *, got_output, kill_on_cancel=True, **kw):
         return proc_terminate() if kill_on_cancel else False
     proc.terminate = terminate
     return proc
+
+
+IGNORE_ENV = {
+    "PYTHONDONTWRITEBYTECODE",
+    "EXECUTABLEPATH",
+    "RESOURCEPATH",
+    "PYTHONPATH",
+    "ARGVZERO",
+}
 
 
 class CommandResult(str):

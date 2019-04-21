@@ -19,7 +19,7 @@
 # along with EditXT.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 import os
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote
 
 import AppKit as ak
 import Foundation as fn
@@ -123,11 +123,35 @@ class CommandSubject:
         if url.netloc == "open":
             self.window.open_url(url, link, not meta)
             return True
+        if url.netloc == "goto":
+            goto = unquote(url.path)
+            if goto.startswith("/"):
+                goto = goto[1:]
+            self.handle_goto(goto, link)
+            return True
         if url.netloc == "preferences":
             self.window.app.open_config_file()
             return True
         log.warn("unhandled URL: %s", link)
         return False
+
+    def handle_goto(self, goto, link="N/A"):
+        """Goto the line and position specified by the given string
+
+        :param goto: string: "<line>.<position>.<length>"
+        :param link: The original URL string.
+        """
+        try:
+            if "." in goto:
+                line, start, end = goto.split(".")
+                num = (int(line), int(start), int(end))
+            else:
+                num = int(goto)
+        except ValueError:
+            log.debug("invalid goto: %r (link: %s)", goto, link)
+        else:
+            self.goto_line(num)
+            self.focus()
 
 
 class CommandOutput:

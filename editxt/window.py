@@ -700,16 +700,7 @@ class Window(object):
             query = parse_qs(url.query)
             if "goto" in query:
                 goto = query["goto"][0]
-                try:
-                    if "." in goto:
-                        line, start, end = goto.split(".")
-                        num = (int(line), int(start), int(end))
-                    else:
-                        num = int(goto)
-                except ValueError:
-                    log.debug("invalid goto: %r (link: %s)", goto, link)
-                else:
-                    editors[0].goto_line(num)
+                editors[0].handle_goto(goto, link)
 
     def open_paths(self, paths, focus=True):
         return self.insert_items(self.iter_dropped_paths(paths), focus=focus)

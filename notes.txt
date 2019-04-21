@@ -81,6 +81,12 @@ Top priority
 xx- `reverse` command - reverse lines, words, characters, etc.
 x  Use a python script in the editor: print("\n".join(reversed("""...""".split("\n"))))
 
+- infrastructure for commands like flake8: project "settings"
+  - example {"virtualenv": "~/code/virtualenvs/xt"}
+  - interpreted as yaml
+  - editable in a text view on the main project view?
+  - editable with `set project virtualenv ~/code/virtualenvs/xt`
+    - convert "project_path" setting to `set project path ...`
 Multi-select in file tree
   - concatenate views on select multiple
   - allow find/replace across multiple files
