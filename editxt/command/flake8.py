@@ -112,9 +112,8 @@ def make_line_processor(view, cmd_path, tmp_path):
 def output_line(editor, path, line, pos, text):
     if path != editor.file_path:
         path = None
-    return "{}:{}: {}".format(
+    return "{}  {}".format(
         link(path, line, 0, line),
-        link(path, line, pos, pos),
         link(path, line, pos, text),
     )
 
