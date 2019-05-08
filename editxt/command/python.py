@@ -86,13 +86,7 @@ def python(editor, args):
     code = print_last_line(dedent(code))
     cwd = editor.dirname()
     command = [python] + [o for o in args.options if o] + ["-c", code]
-    env = dict(os.environ)
-    env.pop("PYTHONHOME", None)
-    env.pop("PYTHONPATH", None)
-    env.pop("PYTHONDONTWRITEBYTECODE", None)
-    env.pop("EXECUTABLEPATH", None)
-    env.pop("RESOURCEPATH", None)
-    result = exec_shell(command, cwd=cwd, env=env)
+    result = exec_shell(command, cwd=cwd)
     if result.returncode == 0:
         msg_type = const.INFO
         message = str(result)
