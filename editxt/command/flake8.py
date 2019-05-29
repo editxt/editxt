@@ -37,7 +37,7 @@ CMD_OPTIONS = ["--exit-zero"]
 OUTPUT_LINE = re.compile(r"""
     (?P<path>.+):       # file path
     (?P<line>\d+):      # line number
-    (?P<pos>\d+):       # line position
+    (?P<pos>-?\d+):     # line position
     \s*
     (?P<text>.+)        # text
 """, re.VERBOSE)
@@ -113,12 +113,13 @@ def output_line(editor, path, line, pos, text):
     if path != editor.file_path:
         path = None
     return "{}  {}".format(
-        link(path, line, 0, line),
+        link(path, line, 1, line),
         link(path, line, pos, text),
     )
 
 
 def link(path, line, pos, text):
+    pos = max(int(pos) - 1, 0)
     goto = "{}.{}.0".format(line, pos)
     if path is None:
         url = "xt://goto/{}".format(goto)
