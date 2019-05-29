@@ -57,8 +57,11 @@ def blame(editor, args):
     if not (args.path and isfile(args.path)):
         raise CommandError("cannot blame file without path")
     git_path = editor.app.config.for_command("blame")["git_path"]
-    command = [git_path, "gui", "blame", args.path]
+    index = editor.selection[0]
+    line = "--line={}".format(editor.line_numbers[index])
+    command = [git_path, "gui", "blame", line, args.path]
     output = []
+
     def got_output(text, returncode):
         if returncode is None:
             output.append(text)
@@ -74,6 +77,7 @@ def blame(editor, args):
                 output.append("\nexit code: {}".format(returncode))
                 view.append_message("".join(output), msg_type=const.ERROR)
             view.process_completed()
+
     view = editor.get_output_view()
     view.process = threaded_exec_shell(
         command,
