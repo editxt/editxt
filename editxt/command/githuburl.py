@@ -159,7 +159,6 @@ def has_file_path(editor=None):
 
 
 @command(arg_parser=CommandParser(
-    String("lines", default=get_selected_lines),
     DynamicList(
         "rev",
         get_items=get_branch_names,
@@ -171,6 +170,7 @@ def has_file_path(editor=None):
         get_items=get_remote_names,
         name_attribute=lambda item: item,
     ),
+    String("lines", default=get_selected_lines),
 ), is_enabled=has_file_path, name="github-url")
 def github_url(editor, args):
     """Get GitHub URL"""
