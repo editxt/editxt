@@ -75,7 +75,7 @@ def flake8(editor, args):
     view = editor.get_output_view()
     line_processor = make_line_processor(view, cmd_path, tmp_path)
     command = [cmd_path, filepath] + [o for o in args.options if o] + options
-    view.process = threaded_exec_shell(command, **line_processor)
+    view.process = threaded_exec_shell(command, cwd="/", **line_processor)
 
 
 def make_line_processor(view, cmd_path, tmp_path):
