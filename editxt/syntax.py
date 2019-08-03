@@ -414,7 +414,7 @@ class SyntaxDefinition(NoHighlight):
             ),
             ('comment.multi-line', '<!--', ['-->']),
             ('string.double-quoted', '"', ['"', '\n']),
-            ('tag', RE('<style(?:\s[^>]*?)?>'), ['</style>'], 'css'),
+            ('tag', RE('<style(?:\\s[^>]*?)?>'), ['</style>'], 'css'),
         ]
         ```
         Word groups are two-tuples consisting of a color name and a list
@@ -442,6 +442,11 @@ class SyntaxDefinition(NoHighlight):
         color as the range delimiter.
     :param comment_token: The comment token to use when block-commenting
         a region of text.
+    :param definition_rules: namespace used by the `def` command.
+        Attributes:
+        - ag_filetype_options: optional list of `ag` options used to
+            limit search by file type (example: ["--py"]).
+        - delimiters: list of delimiter start/end pairs (tuples).
     :param disabled: True if this definition is disabled.
     :param flags: Regular expression flags for this language.
     """
@@ -451,6 +456,7 @@ class SyntaxDefinition(NoHighlight):
         "file_patterns",
         "rules",
         "comment_token",
+        "definition_rules",
         "disabled",
         "flags",
         "whitespace",
@@ -467,7 +473,8 @@ class SyntaxDefinition(NoHighlight):
 
     def __init__(self, filename, name, *, file_patterns=(),
             rules=(), word_groups=(), delimited_ranges=(),
-            comment_token="", disabled=False, flags=re.MULTILINE,
+            comment_token="", definition_rules=None,
+            disabled=False, flags=re.MULTILINE,
             whitespace=whitespace, default_text_color="", registry=None,
             _id=None, _lang_ids=None, _ends=None, _next=None, _key=""):
         super().__init__(name, comment_token, disabled, _id=_id)
@@ -481,6 +488,7 @@ class SyntaxDefinition(NoHighlight):
                     filename, name)
         else:
             self.rules = list(word_groups) + list(delimited_ranges)
+        self.definition_rules = definition_rules
         self.ends = _ends
         self.next = _next
         self.key = _key

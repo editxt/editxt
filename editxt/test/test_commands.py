@@ -58,6 +58,7 @@ def test_load_commands():
         mod.markdown,
         mod.open_,
         mod.pathfind,
+        mod.find_definition,
         mod.python,
         mod.sort_imports,
         mod.clear_highlighted_text,

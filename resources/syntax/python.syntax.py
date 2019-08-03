@@ -21,6 +21,14 @@ name = "Python"
 file_patterns = ["*.py", "*.pyw"]
 comment_token = "#"
 
+class definition_rules:
+    ag_filetype_options = ["--py"]
+    delimiters = [
+        (r"\bclass[ \t]+", r"[ \t]*[(:]"),
+        (r"\bdef[ \t]+", r"[ \t]*\("),
+        (r"\b", r"[ \t]*="),
+    ]
+
 class PyString:
     default_text_color = DELIMITER
     rules = [

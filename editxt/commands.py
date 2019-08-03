@@ -34,7 +34,7 @@ from editxt.platform.events import call_later
 from editxt.platform.font import DEFAULT_FONT, get_font
 from editxt.util import user_path
 
-from editxt.command.ag import ag
+from editxt.command.ag import ag, find_definition
 from editxt.command.blame import blame
 from editxt.command.changeindent import reindent
 from editxt.command.diff import diff
@@ -87,6 +87,7 @@ def load_commands():
             markdown,
             open_,
             pathfind,
+            find_definition,
             python,
             sort_imports,
             clear_highlighted_text,

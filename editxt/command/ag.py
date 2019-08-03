@@ -83,12 +83,8 @@ def project_dirname(editor=None):
 )
 def ag(editor, args):
     """Search for files matching pattern"""
-    if args is None:
-        from editxt.commands import show_command_bar
-        show_command_bar(editor, "ag ")
+    if _should_exit_early(editor, args, "ag"):
         return
-    elif args.pattern is None:
-        raise CommandError("please specify a pattern to match")
     pattern = args.pattern
     if "-i" in args.options or "--ignore-case" in args.options:
         pattern = RegexPattern(pattern, pattern.flags | re.IGNORECASE)
@@ -104,6 +100,52 @@ def ag(editor, args):
     line_processor = make_line_processor(view, pattern, ag_path, cwd)
     command = [ag_path, pattern] + [o for o in args.options if o] + options
     view.process = threaded_exec_shell(command, cwd=cwd, **line_processor)
+
+
+@command(
+    name="def",
+    arg_parser=CommandParser(
+        Regex("pattern", default=get_selection_regex),
+        File("path", default=project_dirname),
+        VarArgs("options", String("options")),
+        # TODO SubParser with dynamic dispatch based on pattern matching
+        # (if it starts with a "-" it's an option, otherwise a file path)
+    ),
+    is_enabled=has_editor,
+)
+def find_definition(editor, args):
+    """Find definition
+
+    Search in files for definitions matching the specified pattern
+    based on current file's definition syntax rules.
+    See `editxt.syntax.SyntaxDefinition.definition_rules`
+    """
+    if _should_exit_early(editor, args, "def"):
+        return
+    def_pattern = args.pattern
+    rules = editor.syntaxdef.definition_rules
+    delims = getattr(rules, "delimiters", None)
+    if delims is None:
+        raise CommandError(
+            "{} language definition has no definition delimiters"
+            .format(editor.syntaxdef.name)
+        )
+    args.pattern = RegexPattern(
+        "|".join(start + def_pattern + end for start, end in delims),
+        def_pattern.flags,
+    )
+    args.options.extend(getattr(rules, "ag_filetype_options", []))
+    ag(editor, args)
+
+
+def _should_exit_early(editor, args, command_name):
+    if args is None:
+        from editxt.commands import show_command_bar
+        show_command_bar(editor, command_name + " ")
+        return True
+    elif args.pattern is None:
+        raise CommandError("please specify a pattern to match")
+    return False
 
 
 def make_line_processor(view, pattern, ag_path, cwd):
