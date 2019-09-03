@@ -543,8 +543,56 @@ def test_Highlighter_color_text():
              string
         """ string.multiline.double-quote string
         def keyword
-        ''',
-        )
+        ''')
+    yield test("python",
+        " f'a{x and y}b' ",
+        '''
+        f' string.single-quote string
+        a string
+        { group.expression group
+        and keyword
+        } group.expression group
+        b string
+        ' string.single-quote string
+        ''')
+    yield test("python",
+        " f'_{x and y!r}_' ",
+        '''
+        f' string.single-quote string
+        _ string
+        { group.expression group
+        and keyword
+        !r} group.expression group
+        _ string
+        ' string.single-quote string
+        ''')
+    yield test("python",
+        " f'_{x and y!a:->+#37,.2d}_' ",
+        '''
+        f' string.single-quote string
+        _ string
+        { group.expression group
+        and keyword
+        !a:->+#37,.2d} group.expression group
+        _ string
+        ' string.single-quote string
+        ''')
+    yield test("python",
+        " f' {({{1: \"{\"} for x in y})!s} ' ",
+        '''
+        f' string.single-quote string
+        { group.expression group
+        ({{ text_color
+        " string.double-quote string
+        { string
+        " string.double-quote string
+        } text_color
+        for keyword
+        in keyword
+        }) text_color
+        !s} group.expression group
+        ' string.single-quote string
+        ''')
 
     yield test("markup",
         """<div""",

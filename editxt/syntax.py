@@ -87,6 +87,7 @@ class SyntaxFactory():
             "DynamicRange": DynamicRange,
             "re": re,
             "RE": RE,
+            "compact_regex": compact_regex,
             "registry": self,
         }
         ns = runpy.run_path(filename, ns)
@@ -846,14 +847,16 @@ class DynamicRange:
 
 class RE(object):
     next = None
+
     def __init__(self, pattern):
         self.pattern = pattern
+
     def __repr__(self):
-        return "RE(%r)" % (self.pattern,)
+        return f"RE({self.pattern!r})"
+
     def __eq__(self, other):
         return isinstance(other, type(self)) and self.pattern == other.pattern
-    def __ne__(self, other):
-        return not (self == other)
+
     def __hash__(self):
         return hash((RE, self.pattern))
 
@@ -883,12 +886,14 @@ def is_syntax_class(obj):
         or hasattr(obj, "word_groups") \
         or hasattr(obj, "delimited_ranges")
 
+
 def lookahead(pattern):
     # could return wrong result sometimes, probaby doesn't matter
     if pattern.startswith("(?=") and pattern.endswith(")"):
             # and ")" not in pattern[3:-1]:
         return pattern
     return r"(?={})".format(pattern)
+
 
 def escape(token, word_char=None):
     if hasattr(token, "pattern"):
@@ -901,12 +906,43 @@ def escape(token, word_char=None):
             token = token + r"\b"
     return token.replace(re.escape("\n"), "\\n")
 
+
 def disjunction(tokens):
     return "|".join(escape(t, WORD_CHAR) for t in tokens)
+
 
 def may_match(token, patterns=[r"\b\B", r"\B\b"]):
     return escape(token) not in patterns
 
+
 def unique(items):
     seen = set()
     return (item for item in items if item not in seen and not seen.add(item))
+
+
+def compact_regex(expr):
+    """Convert verbose regex to compact form
+
+    https://stackoverflow.com/a/14919203
+    """
+    CM1_RX = re.compile(r'(?<!\\)((\\{2})*)#.*$(?m)')
+    CM2_RX = re.compile(r'(\\)?((\\{2})*)(#)')
+    WS_RX = re.compile(r'(\\)?((\\{2})*)(\s)\s*')
+
+    def strip_escapes(match):
+        if match.group(1) is None:
+            # if even slashes: delete space and retain slashes
+            return match.group(2)
+        if (match.group(1) == '\\'):
+            # if number of slashes is odd: delete slash and keep space (or 'comment')
+            return match.group(2) + match.group(4)
+        # error
+        raise Exception(f"bad match: {match!r}")
+
+    return WS_RX.sub(
+        strip_escapes,
+        CM2_RX.sub(
+            strip_escapes,
+            CM1_RX.sub("\\1", expr)
+        )
+    )
