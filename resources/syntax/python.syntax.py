@@ -47,15 +47,33 @@ class PyString:
     ]
 
 _keywords = ("keyword", """
-    and       del       from      not       while    
-    as        elif      global    or        with     
-    assert    else      if        pass      yield    
-    break     except    import    class     in       
-    raise     continue  finally   is        return   
-    def       for       lambda    try       nonlocal
+    and       as        assert    async     await     break     class
+    continue  def       del       elif      else      except    finally
+    for       from      global    if        import    in        is
+    lambda    nonlocal  not       or        pass      raise     return
+    try       while     with      yield
 """.split())
 
-_builtins = ("builtin", "self True False None".split())
+_builtin_constants = (
+    "builtin", "self True False None NotImplemented Ellipsis".split()
+)
+
+_builtin_functions = ("name", """
+    __import__    abs           all           any           ascii
+    bin           bool          breakpoint    bytearray     bytes
+    callable      chr           classmethod   compile       complex
+    delattr       dict          dir           divmod        enumerate
+    eval          exec          filter        float         format
+    frozenset     getattr       globals       hasattr       hash
+    help          hex           id            input         int
+    isinstance    issubclass    iter          len           list
+    locals        map           max           memoryview    min
+    next          object        oct           open          ord
+    pow           print         property      range         repr
+    reversed      round         set           setattr       slice
+    sorted        staticmethod  str           sum           super
+    tuple         type          vars          zip
+""".split())
 
 class FString:
     # https://www.python.org/dev/peps/pep-0498/
@@ -106,7 +124,8 @@ class Expression:
     default_text_color = "text_color"
     rules = [
         _keywords,
-        _builtins,
+        _builtin_constants,
+        _builtin_functions,
     ] + _strings
 
 Expression.rules.extend(
@@ -119,7 +138,38 @@ FString.rules.append(
 
 rules = [
     _keywords,
-    _builtins,
+    _builtin_constants,
+    _builtin_functions,
     ("comment.single-line", [RE("#.*")]),
     #("operator", "== != < > <= >=".split()),
 ] + _strings
+
+
+'''
+def columnize(words):
+    words = sorted(words)
+    width = max(len(w) for w in words) + 2
+    n_cols = int((79 - 4) / width)
+    n_rows = int(len(words) / n_cols) + 1
+    print("\n".join(
+        "".join(
+            f"{words[row * n_cols + col]:<{width}}"
+            for col in range(n_cols)
+            if row * n_cols + col < len(words)
+        ).strip()
+        for row in range(n_rows)
+    ))
+    print()
+
+columnize("""
+abs delattr hash memoryview set all dict help min setattr any dir hex next
+slice ascii divmod id object sorted bin enumerate input oct staticmethod bool
+eval int open str breakpoint exec isinstance ord sum bytearray filter
+issubclass pow super bytes float iter print tuple callable format len property
+type chr frozenset list range vars classmethod getattr locals repr zip compile
+globals map reversed __import__ complex hasattr max round
+""".split())
+
+import keyword
+columnize(k for k in keyword.kwlist if not k.istitle())
+'''

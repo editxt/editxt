@@ -76,6 +76,10 @@ View release stats:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Top priority
 
+- fix crash on undo beyond reload
+- command+click on import line -> pathfind -> show menu with links
+- command+click on identifier -> ag -> show menu with links
+  show lines with def/class/assignment
 - undo-close document, project?
 - save list of recently closed projects
 xx- `reverse` command - reverse lines, words, characters, etc.

@@ -5,7 +5,12 @@ https://github.com/editxt/editxt for details of what actually happened.
 
 ## 2019-??-?? - 1.13.?
 
-- Delete all selected ranges on backspace
+- Update Python syntax definition
+  - Add support for f-strings.
+  - Add `async` and `await` keywords.
+  - Add `NotImplemented` and `Ellipsis` built-in constants.
+  - Add built-in functions.
+- Delete all selected ranges on backspace.
 
 ## 2019-03-22 - 1.13.0
 
