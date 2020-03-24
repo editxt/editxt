@@ -51,7 +51,25 @@
     }
   </style>
 </head>
-<body><h2>2019-03-22 - 1.13.0</h2>
+<body><h2>2020-03-23 - 1.14.0</h2>
+<ul>
+<li>Update Python syntax definition
+<ul>
+<li>Add support for f-strings.</li>
+<li>Add <code>async</code> and <code>await</code> keywords.</li>
+<li>Add <code>NotImplemented</code> and <code>Ellipsis</code> built-in constants.</li>
+<li>Add built-in functions.</li>
+</ul>
+</li>
+<li>Add <code>def</code> command to find selected function definition (requires syntax
+definition support: <code>definition_rules</code>).</li>
+<li>Add <code>markdown</code> command to render text as markdown.</li>
+<li>Add <code>flake8</code> command.</li>
+<li>Delete all selected ranges on backspace.</li>
+<li>Go to selected line on blame.</li>
+<li>Changed: swap order of first two <code>github-url</code> arguments.</li>
+</ul>
+<h2>2019-03-22 - 1.13.0</h2>
 <ul>
 <li>Behavior change: make <code>ag</code> command search project directory by default rather
 than the directory of the current file. Use <code>ag PATTERN .</code> to search the

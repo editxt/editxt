@@ -82,6 +82,7 @@ Top priority
   show lines with def/class/assignment
 - undo-close document, project?
 - save list of recently closed projects
+- fix #15 Vertical resizing of a window can permanently hide items in the document tree
 xx- `reverse` command - reverse lines, words, characters, etc.
 x  Use a python script in the editor: print("\n".join(reversed("""...""".split("\n"))))
 

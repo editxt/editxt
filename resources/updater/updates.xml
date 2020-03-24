@@ -521,5 +521,36 @@ window.</li>
       <pubDate>Fri, 22 Mar 2019 16:56:22 -0400</pubDate>
       <enclosure url="https://github.com/editxt/editxt/releases/download/1.13.0/EditXT-v1.13.0-7cc0be4.zip" sparkle:version="201903221656.7cc0be4" sparkle:shortVersionString="1.13.0" sparkle:dsaSignature="MC0CFQCMVVONgWfiO+6SsrK770tY4r6DEAIUIl+LSb5H7VzqOTFABfIxbtmHtD0=" length="13219064" type="application/octet-stream" />
     </item>
+    <item>
+      <title>Version 1.14.0</title>
+      <description>
+        <![CDATA[
+          <h2>Changes</h2>
+          <ul>
+<li>Update Python syntax definition
+<ul>
+<li>Add support for f-strings.</li>
+<li>Add <code>async</code> and <code>await</code> keywords.</li>
+<li>Add <code>NotImplemented</code> and <code>Ellipsis</code> built-in constants.</li>
+<li>Add built-in functions.</li>
+</ul>
+</li>
+<li>Add <code>def</code> command to find selected function definition (requires syntax
+definition support: <code>definition_rules</code>).</li>
+<li>Add <code>markdown</code> command to render text as markdown.</li>
+<li>Add <code>flake8</code> command.</li>
+<li>Delete all selected ranges on backspace.</li>
+<li>Go to selected line on blame.</li>
+<li>Changed: swap order of first two <code>github-url</code> arguments.</li>
+</ul>
+
+        ]]>
+      </description>
+      <sparkle:releaseNotesLink>
+        http://htmlpreview.github.io/?https://raw.github.com/editxt/editxt/blob/master/resources/updater/updates.html
+      </sparkle:releaseNotesLink>
+      <pubDate>Mon, 23 Mar 2020 20:57:47 -0400</pubDate>
+      <enclosure url="https://github.com/editxt/editxt/releases/download/1.14.0/EditXT-v1.14.0-a696d79.zip" sparkle:version="202003232057.a696d79" sparkle:shortVersionString="1.14.0" sparkle:dsaSignature="MCwCFBkcbL91SVArLhtwN3aifVXmQ8hfAhQCDEeVdqESqr3rWXijyKV7leunlw==" length="13471469" type="application/octet-stream" />
+    </item>
   </channel>
 </rss>

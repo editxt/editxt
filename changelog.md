@@ -3,14 +3,20 @@
 This file contains notable new features and other large changes. See
 https://github.com/editxt/editxt for details of what actually happened.
 
-## 2019-??-?? - 1.13.?
+## 2020-03-23 - 1.14.0
 
 - Update Python syntax definition
   - Add support for f-strings.
   - Add `async` and `await` keywords.
   - Add `NotImplemented` and `Ellipsis` built-in constants.
   - Add built-in functions.
+- Add `def` command to find selected function definition (requires syntax
+  definition support: `definition_rules`).
+- Add `markdown` command to render text as markdown.
+- Add `flake8` command.
 - Delete all selected ranges on backspace.
+- Go to selected line on blame.
+- Changed: swap order of first two `github-url` arguments.
 
 ## 2019-03-22 - 1.13.0
 
