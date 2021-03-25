@@ -29,7 +29,7 @@ pyobjc-core==5.1.2
 pyobjc-framework-Cocoa==5.1.2
 pyobjc-framework-ExceptionHandling==5.1.2
 
-pyyaml==4.2b2  # TODO upgrade once new version is out
+pyyaml==5.4  # TODO upgrade once new version is out
 
 # for testing
 #mocker~=1.1.1 # not python3 compatible yet, patch manually
